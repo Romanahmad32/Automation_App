@@ -1,8 +1,8 @@
-﻿using AutomationService.Features.WordAutomation.Presentation.Dtos;
+using AutomationService.Features.WordAutomation.Presentation.Dtos;
 
 namespace AutomationService.Features.WordAutomation.Domain.Services;
 
 public interface IWordAutomationService
 {
-    public void GenerateReplacedDocument(WordReplacementDto replacementDto);
+    public DocumentGenerationResult GenerateReplacedDocument(WordReplacementDto replacementDto);
 }

@@ -1,58 +1,99 @@
-﻿using System.Reflection;
 using System.Text.RegularExpressions;
 using AutomationService.Features.WordAutomation.Presentation.Dtos;
+using Microsoft.Extensions.Options;
 using Xceed.Document.NET;
-using Xceed.Drawing;
 using Xceed.Words.NET;
 
 namespace AutomationService.Features.WordAutomation.Domain.Services;
 
-public class WordAutomationService() : IWordAutomationService
+public sealed partial class WordAutomationService : IWordAutomationService
 {
-    public void GenerateReplacedDocument(WordReplacementDto replacementDto)
+    private const string PlaceholderPattern = @"\{\{(.*?)\}\}";
+    private readonly ILogger<WordAutomationService> _logger;
+    private string _outputDirectory;
+
+    public WordAutomationService(
+        ILogger<WordAutomationService> logger,
+        IOptions<WordAutomationOptions> options,
+        IHostEnvironment hostEnvironment)
     {
-        var replacePatterns = new Dictionary<string, string>(
-                replacementDto.ReplacePatterns,
-                StringComparer.OrdinalIgnoreCase) // Ignoriert Groß-/Kleinschreibung
-            {
-                { "Today", DateTime.Today.ToShortDateString() }
-            };
-        // Load a document.
-        using (var document = DocX.Load(replacementDto.FileName + ".docx"))
-        {
-            if (document == null)
-            {
-                throw new FileNotFoundException($"The file {replacementDto.FileName}.docx could not be found");
-            }
-
-            // Check if all the replace patterns are used in the loaded document.
-            if (document.FindUniqueByPattern(@"\{\{(.*?)\}\}", RegexOptions.IgnoreCase).Count > 0)
-            {
-                // Do the replacement of all the found tags and with green bold strings.
-                var replaceTextOptions = new FunctionReplaceTextOptions()
-                {
-                    FindPattern = @"\{\{(.*?)\}\}",
-                    RegExOptions = RegexOptions.IgnoreCase,
-                    NewFormatting = new Formatting() { Bold = true, FontColor = Color.Green },
-                    RegexMatchHandler = (findStr) =>
-                    {
-                        Console.WriteLine($"Findstr : {findStr}");
-
-                        if (replacePatterns.TryGetValue(findStr, out var match))
-                        {
-                            return match;
-                        }
-
-                        return $"{{{{{findStr}}}}}";
-                    }
-                };
-                document.ReplaceText(replaceTextOptions);
-                // Save this document to disk.
-                // Use a custom format like HH-mm-ss or HH_mm_ss
-                string timestamp = DateTime.Now.ToString("HH-mm-ss");
-                string date = DateTime.Now.ToShortDateString();
-                document.SaveAs($"{replacementDto.FileName}_{date}_gen.docx");
-            }
-        }
+        _logger = logger;
+        var settings = options.Value;
+        _outputDirectory = Path.GetFullPath(Path.Combine(hostEnvironment.ContentRootPath, settings.OutputDirectory));
+        Directory.CreateDirectory(_outputDirectory);
     }
+
+    public DocumentGenerationResult GenerateReplacedDocument(WordReplacementDto replacementDto)
+    {
+        ArgumentNullException.ThrowIfNull(replacementDto);
+
+        if(replacementDto.OutputDirectory != "")
+        {
+            _outputDirectory = Path.GetFullPath(replacementDto.OutputDirectory);
+            Directory.CreateDirectory(_outputDirectory);
+        }
+        
+        var templatePath = replacementDto.TemplateFilePath;
+        var rawFileName = Path.GetFileNameWithoutExtension(templatePath);
+        var replacementValues = BuildReplacementValues(replacementDto.ReplacePatterns);
+        var unresolvedPlaceholders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        using var document = DocX.Load(templatePath);
+        var placeholders = document.FindUniqueByPattern(PlaceholderPattern, RegexOptions.IgnoreCase);
+
+        if (placeholders.Count > 0)
+        {
+            document.ReplaceText(new FunctionReplaceTextOptions
+            {
+                FindPattern = PlaceholderPattern,
+                RegExOptions = RegexOptions.IgnoreCase,
+                NewFormatting = new Formatting(),
+                RegexMatchHandler = key =>
+                {
+                    if (replacementValues.TryGetValue(key, out var value))
+                        return value;
+                    unresolvedPlaceholders.Add(key);
+                    return $"{{{{{key}}}}}";
+                }
+            });
+        }
+
+        var outputFileName = $"{rawFileName}_{DateTime.UtcNow:yyyy-MM-dd}_gen.docx";
+        var outputPath = Path.Combine(_outputDirectory, outputFileName);
+        document.SaveAs(outputPath);
+
+        if (unresolvedPlaceholders.Count > 0)
+        {
+            _logger.LogWarning(
+                "Document generated with unresolved placeholders for template {Template}: {Placeholders}",
+                templatePath,
+                string.Join(", ", unresolvedPlaceholders));
+        }
+
+        return new DocumentGenerationResult(outputPath, unresolvedPlaceholders.ToList());
+    }
+
+    private static Dictionary<string, string> BuildReplacementValues(Dictionary<string, string> replacePatterns)
+    {
+        if (replacePatterns is null)
+            throw new ArgumentException("ReplacePatterns is required.", nameof(replacePatterns));
+
+        var values = new Dictionary<string, string>(replacePatterns, StringComparer.OrdinalIgnoreCase)
+        {
+            ["Today"] = DateTime.UtcNow.ToString("dd.MM.yyyy")
+        };
+
+        foreach (var key in values.Keys)
+        {
+            if (!AllowedPlaceholderKeyPattern().IsMatch(key))
+                throw new ArgumentException(
+                    $"Placeholder key '{key}' is invalid. Use only letters, digits, '_' or '-'.",
+                    nameof(replacePatterns));
+        }
+
+        return values;
+    }
+
+    [GeneratedRegex("^[A-Za-z0-9_-]+$", RegexOptions.Compiled)]
+    private static partial Regex AllowedPlaceholderKeyPattern();
 }

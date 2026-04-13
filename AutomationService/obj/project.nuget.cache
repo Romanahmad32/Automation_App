@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "h7srIJmsdPA=",
+  "dgSpecHash": "StTbRl+B+DU=",
   "success": true,
-  "projectFilePath": "C:\\Users\\roman\\RiderProjects\\AutomationService\\AutomationService\\AutomationService.csproj",
+  "projectFilePath": "C:\\Users\\roman\\Automation_App\\AutomationService\\AutomationService\\AutomationService.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\roman\\.nuget\\packages\\docx\\5.0.0\\docx.5.0.0.nupkg.sha512",
     "C:\\Users\\roman\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.3\\microsoft.aspnetcore.openapi.10.0.3.nupkg.sha512",

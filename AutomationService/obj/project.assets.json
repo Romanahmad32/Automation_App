@@ -792,11 +792,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\roman\\RiderProjects\\AutomationService\\AutomationService\\AutomationService.csproj",
+      "projectUniqueName": "C:\\Users\\roman\\Automation_App\\AutomationService\\AutomationService\\AutomationService.csproj",
       "projectName": "AutomationService",
-      "projectPath": "C:\\Users\\roman\\RiderProjects\\AutomationService\\AutomationService\\AutomationService.csproj",
+      "projectPath": "C:\\Users\\roman\\Automation_App\\AutomationService\\AutomationService\\AutomationService.csproj",
       "packagesPath": "C:\\Users\\roman\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\roman\\RiderProjects\\AutomationService\\AutomationService\\obj\\",
+      "outputPath": "C:\\Users\\roman\\Automation_App\\AutomationService\\AutomationService\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

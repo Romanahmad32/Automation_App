@@ -14,13 +14,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Remove="AutomationService.Tests\**\*.cs" />
       <Folder Include="Core\" />
-      <Folder Include="Features\WordAutomation\Data\Models\" />
-      <Folder Include="Features\WordAutomation\Data\Repository\" />
-      <Folder Include="Features\WordAutomation\Domain\Entities\" />
-      <Folder Include="Features\WordAutomation\Domain\Mappings\" />
-      <Folder Include="Features\WordAutomation\Domain\Specifications\" />
-      <Folder Include="Features\WordAutomation\Presentation\Mappings\" />
+      <Folder Include="Generated\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="AGENTS.md" />
     </ItemGroup>
 
 </Project>
