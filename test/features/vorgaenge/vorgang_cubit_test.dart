@@ -1,15 +1,16 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/data/datasources/local_vorgaenge_datasource.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/offene_anfrage.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/offene_anfragen_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// In-Memory-Ersatz für die Datei-Persistenz.
 class _FakeVorgaengeDatasource implements LocalVorgaengeDatasource {
+  List<Vorgang> vorgaenge = const [];
   ZentralrufReplyData? vorgangsdaten;
   List<OffeneAnfrage> offeneAnfragen = const [];
-  List<Vorgang> vorgaenge = const [];
 
   @override
   Future<List<Vorgang>> loadVorgaenge() async => vorgaenge;
@@ -34,58 +35,63 @@ class _FakeVorgaengeDatasource implements LocalVorgaengeDatasource {
 
 void main() {
   late _FakeVorgaengeDatasource datasource;
-  late OffeneAnfragenCubit cubit;
+  late VorgangCubit cubit;
 
   setUp(() {
     datasource = _FakeVorgaengeDatasource();
-    cubit = OffeneAnfragenCubit(datasource);
+    cubit = VorgangCubit(datasource);
   });
 
   tearDown(() => cubit.close());
 
-  test('registriere legt offene Anfrage an und persistiert sie', () async {
-    await cubit.registriere('84/26 C03_GG-CK 321');
+  test('registriereAnfrage legt Vorgang an und persistiert ihn', () async {
+    await cubit.registriereAnfrage('84/26 C03_GG-CK 321');
 
     expect(cubit.state, hasLength(1));
-    expect(cubit.state.single.referenz, '84/26 C03_GG-CK 321');
-    expect(datasource.offeneAnfragen, hasLength(1));
+    expect(cubit.state.single.status, VorgangStatus.angefragt);
+    expect(datasource.vorgaenge, hasLength(1));
   });
 
   test('gleiche Referenz wird nicht doppelt geführt', () async {
-    await cubit.registriere('84/26 C03_GG-CK 321');
-    await cubit.registriere('84/26 C03_GG-CK 321');
+    await cubit.registriereAnfrage('84/26 C03_GG-CK 321');
+    await cubit.registriereAnfrage('84/26 C03_GG-CK 321');
 
     expect(cubit.state, hasLength(1));
   });
 
-  test(
-    'findeZuReferenz ist tolerant bei Schreibweise und Whitespace',
-    () async {
-      await cubit.registriere('84/26 C03_GG-CK 321');
+  test('uebernehmeAntwort ordnet über die Referenz zu und schaltet weiter',
+      () async {
+    await cubit.registriereAnfrage('84/26 C03_GG-CK 321');
+    await cubit.uebernehmeAntwort(
+      const ZentralrufReplyData(
+        referenz: '84/26  c03_gg-ck 321',
+        versichererName: 'HUK',
+      ),
+    );
 
-      expect(cubit.findeZuReferenz('84/26  c03_gg-ck 321 '), isNotNull);
-      expect(cubit.findeZuReferenz('85/26 C03_GG-CK 321'), isNull);
-      expect(cubit.findeZuReferenz(null), isNull);
-    },
-  );
-
-  test('beantwortet entfernt die Anfrage aus Liste und Persistenz', () async {
-    await cubit.registriere('84/26 C03_GG-CK 321');
-    await cubit.beantwortet('84/26 C03_GG-CK 321');
-
-    expect(cubit.state, isEmpty);
-    expect(datasource.offeneAnfragen, isEmpty);
+    expect(cubit.state, hasLength(1));
+    expect(cubit.state.single.status, VorgangStatus.beantwortet);
+    expect(cubit.state.single.gegner, 'HUK');
   });
 
-  test('stellt persistierte Anfragen beim Erzeugen wieder her', () async {
-    datasource.offeneAnfragen = [
-      OffeneAnfrage(
+  test('findeZuReferenz ist tolerant bei Schreibweise und Whitespace',
+      () async {
+    await cubit.registriereAnfrage('84/26 C03_GG-CK 321');
+
+    expect(cubit.findeZuReferenz('84/26  c03_gg-ck 321 '), isNotNull);
+    expect(cubit.findeZuReferenz('85/26 C03_GG-CK 321'), isNull);
+    expect(cubit.findeZuReferenz(null), isNull);
+  });
+
+  test('stellt persistierte Vorgänge beim Erzeugen wieder her', () async {
+    datasource.vorgaenge = [
+      Vorgang.ausAnfrage(
         referenz: '12/26 C03_HG-E 1427',
         angefragtAm: DateTime(2026, 6, 1),
       ),
     ];
 
-    final restored = OffeneAnfragenCubit(datasource);
+    final restored = VorgangCubit(datasource);
     // _restore läuft asynchron im Konstruktor an.
     await Future<void>.delayed(Duration.zero);
 

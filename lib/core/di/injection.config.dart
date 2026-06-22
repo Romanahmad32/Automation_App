@@ -109,6 +109,8 @@ import 'package:automation_app/features/settings/domain/usecases/save_kanzlei_se
     as _i104;
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart'
     as _i195;
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart'
+    as _i847;
 import 'package:automation_app/features/word_automation/data/datasources/word_automation_datasource.dart'
     as _i287;
 import 'package:automation_app/features/word_automation/data/repositories/api_word_automation_repository.dart'
@@ -253,6 +255,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i953.ApiZentralrufReplyRepository(
         gh<_i56.ZentralrufReplyDatasource>(),
       ),
+    );
+    gh.lazySingleton<_i847.VorgangCubit>(
+      () => _i847.VorgangCubit(gh<_i398.LocalVorgaengeDatasource>()),
     );
     gh.lazySingleton<_i641.OffeneAnfragenCubit>(
       () => _i641.OffeneAnfragenCubit(gh<_i398.LocalVorgaengeDatasource>()),

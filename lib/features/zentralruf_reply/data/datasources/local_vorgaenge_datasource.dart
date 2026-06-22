@@ -2,15 +2,24 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/offene_anfrage.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:path_provider_windows/path_provider_windows.dart';
 
 /// Lokale Persistenz für den Zentralruf-Workflow (Req. 3.3 "speichern"):
-/// die zuletzt übernommenen Vorgangsdaten sowie die Liste der gestarteten,
-/// noch unbeantworteten Anfragen. Gleiches Dateischema wie die übrigen
-/// lokalen Speicher (JSON im Anwendungsordner, atomar mit .bak-Sicherung).
+/// die Vorgänge (gemeinsame Klammer über den Lebenszyklus) und — übergangsweise
+/// noch — die alten Einzelschlüssel (zuletzt übernommene Vorgangsdaten + Liste
+/// offener Anfragen), aus denen beim ersten Laden migriert wird. Gleiches
+/// Dateischema wie die übrigen lokalen Speicher (JSON im Anwendungsordner,
+/// atomar mit .bak-Sicherung).
 abstract class LocalVorgaengeDatasource {
+  /// Lädt die Vorgänge. Existiert noch kein `vorgaenge`-Schlüssel, wird einmalig
+  /// aus dem alten Stand (offeneAnfragen + vorgangsdaten) migriert.
+  Future<List<Vorgang>> loadVorgaenge();
+
+  Future<void> saveVorgaenge(List<Vorgang> vorgaenge);
+
   Future<ZentralrufReplyData?> loadVorgangsdaten();
 
   Future<void> saveVorgangsdaten(ZentralrufReplyData? data);
@@ -35,6 +44,32 @@ class LocalVorgaengeDatasourceImpl implements LocalVorgaengeDatasource {
     return LocalVorgaengeDatasourceImpl._(
       file: File('$supportPath/zentralruf_vorgaenge.json'),
     );
+  }
+
+  @override
+  Future<List<Vorgang>> loadVorgaenge() async {
+    final store = await _load();
+    final list = store['vorgaenge'];
+    if (list is List) {
+      return [
+        for (final entry in list)
+          if (entry is Map<String, dynamic>) Vorgang.fromJson(entry),
+      ];
+    }
+    // Noch kein neues Schema → einmalige Migration aus dem Alt-Stand. Die
+    // Alt-Schlüssel bleiben bewusst erhalten, bis saveVorgaenge das neue Schema
+    // schreibt (gefahrloser Übergang, solange die alten Cubits noch laufen).
+    return Vorgang.migriereAusLegacy(
+      offeneAnfragen: await loadOffeneAnfragen(),
+      letzteAntwort: await loadVorgangsdaten(),
+    );
+  }
+
+  @override
+  Future<void> saveVorgaenge(List<Vorgang> vorgaenge) async {
+    final store = await _load();
+    store['vorgaenge'] = [for (final vorgang in vorgaenge) vorgang.toJson()];
+    await _writeAtomically(store);
   }
 
   @override
