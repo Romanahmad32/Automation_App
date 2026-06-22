@@ -31,11 +31,3 @@ final class PrefillZentralrufFormEvent extends ZentralrufEvent {
     this.rechtsgebiet = Rechtsgebiet.verkehrsrecht,
   });
 }
-
-/// Bestätigt das Hochzählen der laufenden Auftragsnummer auf [neueNummer]
-/// (Halbautomatik). Setzt den Wert absolut, ist also idempotent.
-final class ErhoeheAuftragsnummerEvent extends ZentralrufEvent {
-  final int neueNummer;
-
-  const ErhoeheAuftragsnummerEvent(this.neueNummer);
-}

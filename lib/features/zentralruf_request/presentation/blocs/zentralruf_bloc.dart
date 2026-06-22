@@ -17,18 +17,15 @@ part 'zentralruf_state.dart';
 class ZentralrufBloc extends Bloc<ZentralrufEvent, ZentralrufState> {
   final UseCase<ZentralrufPrefillResult, ZentralrufRequest> prefillForm;
   final UseCase<KanzleiSettings, NoParams> _getKanzleiSettings;
-  final UseCase<KanzleiSettings, KanzleiSettings> _saveKanzleiSettings;
   final VorgangCubit _vorgaenge;
 
   ZentralrufBloc(
     this.prefillForm,
     this._getKanzleiSettings,
-    this._saveKanzleiSettings,
     this._vorgaenge,
   ) : super(ZentralrufInitial()) {
     on<LoadZentralrufDefaultsEvent>(_onLoadDefaults);
     on<PrefillZentralrufFormEvent>(_onPrefillFormEvent);
-    on<ErhoeheAuftragsnummerEvent>(_onErhoeheAuftragsnummer);
   }
 
   Future<void> _onLoadDefaults(
@@ -44,7 +41,9 @@ class ZentralrufBloc extends Bloc<ZentralrufEvent, ZentralrufState> {
         ),
       );
     }
-    // Bei Fehler bleibt es bei den Formular-Standardwerten.
+    // Bei Fehler bleibt es bei den Formular-Standardwerten. Die laufende
+    // Auftragsnummer wird hier nur angezeigt; hochgezählt wird sie erst beim
+    // Abschluss eines Vorgangs (Req. 3.2).
   }
 
   Future<void> _onPrefillFormEvent(
@@ -75,47 +74,12 @@ class ZentralrufBloc extends Bloc<ZentralrufEvent, ZentralrufState> {
           mandantName: event.mandantName,
         );
 
-        // Fortzählung der laufenden Auftragsnummer (Req. 3.2): ohne
-        // Einstellungen kein Vorschlag; im Automatik-Modus direkt erhöhen,
-        // sonst dem Anwalt zur Bestätigung vorschlagen.
-        if (settings == null) {
-          emit(ZentralrufPrefillSuccess(prefillResult));
-          return;
-        }
-        final naechste = settings.laufendeAuftragsnummer + 1;
-        if (settings.auftragsnummerAutomatischErhoehen) {
-          await _saveKanzleiSettings(
-            settings.copyWith(laufendeAuftragsnummer: naechste),
-          );
-          emit(
-            ZentralrufPrefillSuccess(
-              prefillResult,
-              auftragsnummerErhoehtAuf: naechste,
-            ),
-          );
-        } else {
-          emit(
-            ZentralrufPrefillSuccess(
-              prefillResult,
-              auftragsnummerVorschlag: naechste,
-            ),
-          );
-        }
+        // Die laufende Auftragsnummer wird hier bewusst NICHT hochgezählt: Eine
+        // Anfrage kann scheitern oder wiederholt werden. Die Fortzählung
+        // (Req. 3.2) passiert erst beim Abschluss des Vorgangs
+        // (VorgangCubit.abschliessen).
+        emit(ZentralrufPrefillSuccess(prefillResult));
     }
-  }
-
-  Future<void> _onErhoeheAuftragsnummer(
-    ErhoeheAuftragsnummerEvent event,
-    Emitter<ZentralrufState> emit,
-  ) async {
-    final settings = await _ladeEinstellungen();
-    if (settings == null) return;
-
-    // Absolut setzen statt zu addieren → mehrfaches Bestätigen bleibt idempotent.
-    await _saveKanzleiSettings(
-      settings.copyWith(laufendeAuftragsnummer: event.neueNummer),
-    );
-    emit(ZentralrufAuftragsnummerErhoeht(event.neueNummer));
   }
 
   Future<KanzleiSettings?> _ladeEinstellungen() async {

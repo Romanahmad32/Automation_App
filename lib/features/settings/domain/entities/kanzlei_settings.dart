@@ -48,10 +48,6 @@ class KanzleiSettings extends Equatable {
   /// Abteilungskürzel für das Referenzformat (z. B. "C03").
   final String abteilung;
 
-  /// Wenn true, wird die laufende Auftragsnummer nach einer Anfrage ohne
-  /// Rückfrage automatisch erhöht; sonst erst nach Bestätigung durch den Anwalt.
-  final bool auftragsnummerAutomatischErhoehen;
-
   /// Hintergrundfarbe der Titelzeile der Schadensaufstellungs-Tabelle
   /// als Hex-Wert "RRGGBB" (ohne '#').
   final String tabellenkopfFarbeHex;
@@ -72,7 +68,6 @@ class KanzleiSettings extends Equatable {
     this.telefonnummer = '',
     this.laufendeAuftragsnummer = defaultLaufendeAuftragsnummer,
     this.abteilung = defaultAbteilung,
-    this.auftragsnummerAutomatischErhoehen = false,
     this.tabellenkopfFarbeHex = defaultTabellenkopfFarbeHex,
     this.aktenStammordner = '',
   });
@@ -89,7 +84,6 @@ class KanzleiSettings extends Equatable {
     String? telefonnummer,
     int? laufendeAuftragsnummer,
     String? abteilung,
-    bool? auftragsnummerAutomatischErhoehen,
     String? tabellenkopfFarbeHex,
     String? aktenStammordner,
   }) {
@@ -104,9 +98,6 @@ class KanzleiSettings extends Equatable {
       laufendeAuftragsnummer:
       laufendeAuftragsnummer ?? this.laufendeAuftragsnummer,
       abteilung: abteilung ?? this.abteilung,
-      auftragsnummerAutomatischErhoehen:
-      auftragsnummerAutomatischErhoehen ??
-          this.auftragsnummerAutomatischErhoehen,
       tabellenkopfFarbeHex: tabellenkopfFarbeHex ?? this.tabellenkopfFarbeHex,
       aktenStammordner: aktenStammordner ?? this.aktenStammordner,
     );
@@ -130,8 +121,6 @@ class KanzleiSettings extends Equatable {
       (json['laufendeAuftragsnummer'] as num?)?.toInt() ??
           defaultLaufendeAuftragsnummer,
       abteilung: json['abteilung'] as String? ?? defaultAbteilung,
-      auftragsnummerAutomatischErhoehen:
-      json['auftragsnummerAutomatischErhoehen'] as bool? ?? false,
       tabellenkopfFarbeHex:
       json['tabellenkopfFarbeHex'] as String? ??
           defaultTabellenkopfFarbeHex,
@@ -150,7 +139,6 @@ class KanzleiSettings extends Equatable {
         'telefonnummer': telefonnummer,
         'laufendeAuftragsnummer': laufendeAuftragsnummer,
         'abteilung': abteilung,
-        'auftragsnummerAutomatischErhoehen': auftragsnummerAutomatischErhoehen,
         'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
         'aktenStammordner': aktenStammordner,
       };
@@ -167,7 +155,6 @@ class KanzleiSettings extends Equatable {
         telefonnummer,
         laufendeAuftragsnummer,
         abteilung,
-        auftragsnummerAutomatischErhoehen,
         tabellenkopfFarbeHex,
         aktenStammordner,
       ];

@@ -50,7 +50,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
       value: KanzleiSettings.defaultAbteilung,
       validators: [Validators.required],
     ),
-    'auftragsnummerAutomatischErhoehen': FormControl<bool>(value: false),
     'tabellenkopfFarbeHex': FormControl<String>(
       value: KanzleiSettings.defaultTabellenkopfFarbeHex,
       validators: [
@@ -82,8 +81,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'telefonnummer': settings.telefonnummer,
       'laufendeAuftragsnummer': settings.laufendeAuftragsnummer.toString(),
       'abteilung': settings.abteilung,
-      'auftragsnummerAutomatischErhoehen':
-      settings.auftragsnummerAutomatischErhoehen,
       'tabellenkopfFarbeHex': settings.tabellenkopfFarbeHex,
       'aktenStammordner': settings.aktenStammordner,
     });
@@ -107,8 +104,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
           int.tryParse(read('laufendeAuftragsnummer')) ??
               KanzleiSettings.defaultLaufendeAuftragsnummer,
           abteilung: read('abteilung'),
-          auftragsnummerAutomatischErhoehen:
-          (value['auftragsnummerAutomatischErhoehen'] as bool?) ?? false,
           tabellenkopfFarbeHex: read(
             'tabellenkopfFarbeHex',
           ).replaceFirst('#', '').toUpperCase(),
@@ -228,7 +223,8 @@ class _AppSettingsViewState extends State<AppSettingsView>
                           'Die laufende Auftragsnummer und die Abteilung '
                               'bilden die Referenz (Nr/Jahr Abteilung_Kennzeichen). '
                               'Die Auftragsnummer wird in der Zentralruf-Anfrage '
-                              'automatisch vorbelegt.',
+                              'automatisch vorbelegt und beim Abschluss eines '
+                              'Vorgangs um eins hochgezählt.',
                           children: [
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +257,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
                                 ),
                               ],
                             ),
-                            const _AutoErhoehenSwitch(),
                           ],
                         ),
                         FormSection(
@@ -331,34 +326,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
         labelText: label,
         border: const OutlineInputBorder(),
       ),
-    );
-  }
-}
-
-/// Schalter, ob die laufende Auftragsnummer nach einer Anfrage automatisch
-/// (ohne Rückfrage) oder erst nach Bestätigung des Anwalts hochgezählt wird.
-class _AutoErhoehenSwitch extends StatelessWidget {
-  const _AutoErhoehenSwitch();
-
-  @override
-  Widget build(BuildContext context) {
-    return ReactiveValueListenableBuilder<bool>(
-      formControlName: 'auftragsnummerAutomatischErhoehen',
-      builder: (context, control, _) {
-        final automatisch = control.value ?? false;
-        return SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          value: automatisch,
-          onChanged: (v) => control.value = v,
-          title: const Text('Auftragsnummer automatisch hochzählen'),
-          subtitle: Text(
-            automatisch
-                ? 'Nach jeder Anfrage wird die Nummer ohne Rückfrage erhöht.'
-                : 'Nach jeder Anfrage wird die Erhöhung zur Bestätigung '
-                'vorgeschlagen.',
-          ),
-        );
-      },
     );
   }
 }

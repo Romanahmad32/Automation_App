@@ -35,12 +35,6 @@ class _FakeGetSettings implements UseCase<KanzleiSettings, NoParams> {
       Left(LocalFailure(message: 'keine Einstellungen'));
 }
 
-class _FakeSaveSettings implements UseCase<KanzleiSettings, KanzleiSettings> {
-  @override
-  Future<Either<Failure, KanzleiSettings>> call(KanzleiSettings params) async =>
-      Right(params);
-}
-
 /// Für die ErhoeheAuftragsnummer-Abhängigkeit des VorgangCubit; in diesem Test
 /// wird kein Vorgang abgeschlossen, daher genügt ein No-op-Repository.
 class _FakeSettingsRepository implements KanzleiSettingsRepository {
@@ -94,7 +88,6 @@ void main() {
           ),
         ),
         _FakeGetSettings(),
-        _FakeSaveSettings(),
         vorgaenge,
       );
 
