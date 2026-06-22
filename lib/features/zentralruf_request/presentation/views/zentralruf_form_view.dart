@@ -88,6 +88,8 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
 
   bool _withGeschaedigter = false;
 
+  bool _withUnfallhergang = false;
+
   /// True, sobald der Anwender die Referenz selbst bearbeitet hat. Danach wird
   /// die Vorschau nicht mehr automatisch aus den Feldern überschrieben.
   bool _referenzManuallyEdited = false;
@@ -251,213 +253,249 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
       },
       child: ReactiveForm(
         formGroup: _form,
-        // Die gesamte Seite scrollt (volle Breite, Scrollbar am Seitenrand);
-        // der Formularinhalt bleibt darin zentriert und breitenbegrenzt.
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 16,
-                children: [
-                  // Auftrag und Unfall nebeneinander, damit die Seitenbreite auf
-                  // großen Fenstern genutzt wird (gleiche Kartenhöhe via
-                  // IntrinsicHeight + stretch).
-                  IntrinsicHeight(
-                    child: Row(
+        // Der Formularinhalt scrollt (zentriert und breitenbegrenzt); die
+        // Aktionsleiste bleibt unten am Rand angeheftet und scrollt nicht mit.
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 16,
                       children: [
-                        Expanded(
-                          child: FormSection(
-                            icon: Icons.assignment_outlined,
-                            title: 'Auftrag',
+                        // Auftrag und Unfall nebeneinander, damit die Seitenbreite auf
+                        // großen Fenstern genutzt wird (gleiche Kartenhöhe via
+                        // IntrinsicHeight + stretch).
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Expanded(
-                                    flex: 3,
-                                    child: GeneralTextField<String>(
-                                      labelText: 'Auftragsnummer',
-                                      formControlName: 'auftragsnummer',
+                              Expanded(
+                                child: FormSection(
+                                  icon: Icons.assignment_outlined,
+                                  title: 'Auftrag',
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: const [
+                                        Expanded(
+                                          flex: 3,
+                                          child: GeneralTextField<String>(
+                                            labelText: 'Auftragsnummer',
+                                            formControlName: 'auftragsnummer',
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          flex: 2,
+                                          child: GeneralTextField<String>(
+                                            labelText: 'Jahr',
+                                            formControlName: 'auftragsjahr',
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    flex: 2,
-                                    child: GeneralTextField<String>(
-                                      labelText: 'Jahr',
-                                      formControlName: 'auftragsjahr',
+                                    const GeneralTextField<String>(
+                                      labelText: 'Abteilung (z. B. C03)',
+                                      formControlName: 'abteilung',
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                              const GeneralTextField<String>(
-                                labelText: 'Abteilung (z. B. C03)',
-                                formControlName: 'abteilung',
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: FormSection(
+                                  icon: Icons.directions_car_outlined,
+                                  title: 'Unfall',
+                                  children: [
+                                    GeneralTextField<String>(
+                                      labelText:
+                                          'Kennzeichen des Unfallgegners (z. B. HG-E 1427)',
+                                      formControlName: 'kennzeichenSchaediger',
+                                      validationMessages: _kennzeichenMessages,
+                                    ),
+                                    // Direkt tippbar; das Kalender-Icon öffnet den Dialog.
+                                    GermanDateField(
+                                      formControlName: 'schadentag',
+                                      labelText: 'Unfalldatum',
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime.now(),
+                                      validationMessages: {
+                                        GermanDateField.rangeError: (_) =>
+                                            'Der Unfalltag kann nicht in der Zukunft liegen',
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: FormSection(
-                            icon: Icons.directions_car_outlined,
-                            title: 'Unfall',
-                            children: [
-                              GeneralTextField<String>(
-                                labelText:
-                                    'Kennzeichen des Unfallgegners (z. B. HG-E 1427)',
-                                formControlName: 'kennzeichenSchaediger',
-                                validationMessages: _kennzeichenMessages,
-                              ),
-                              // Direkt tippbar; das Kalender-Icon öffnet den Dialog.
-                              GermanDateField(
-                                formControlName: 'schadentag',
-                                labelText: 'Unfalldatum',
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime.now(),
-                                validationMessages: {
-                                  GermanDateField.rangeError: (_) =>
-                                      'Der Unfalltag kann nicht in der Zukunft liegen',
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  FormSection(
-                    icon: Icons.bookmark_outline,
-                    title: 'Referenz',
-                    children: [
-                      GeneralTextField<String>(
-                        labelText: 'Referenz (Vorschau, bearbeitbar)',
-                        formControlName: 'referenz',
-                        inputDecoration: InputDecoration(
-                          helperText: _referenzManuallyEdited
-                              ? 'Manuell bearbeitet – wird so an das Formular übergeben.'
-                              : 'Wird automatisch aus den Feldern oben erzeugt.',
-                          helperMaxLines: 2,
-                          suffixIcon: _referenzManuallyEdited
-                              ? IconButton(
-                                  icon: const Icon(Icons.restart_alt),
-                                  tooltip:
-                                      'Automatisch aus den Feldern erzeugen',
-                                  onPressed: _resetReferenz,
-                                )
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  FormSection(
-                    icon: Icons.person_outline,
-                    title: 'Geschädigter',
-                    subtitle:
-                        'Optional — nur ausfüllen, wenn die Daten dem '
-                        'Zentralruf-Formular mitgegeben werden sollen.',
-                    trailing: Switch(
-                      value: _withGeschaedigter,
-                      onChanged: (value) =>
-                          setState(() => _withGeschaedigter = value),
-                    ),
-                    children: [
-                      if (_withGeschaedigter) ...[
-                        const GeneralTextField<String>(
-                          labelText: 'Name des Geschädigten',
-                          formControlName: 'geschaedigterName',
-                        ),
-                        const GeneralTextField<String>(
-                          labelText: 'Straße und Hausnummer',
-                          formControlName: 'geschaedigterStrasseHausnummer',
-                        ),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Expanded(
-                              flex: 2,
-                              child: GeneralTextField<String>(
-                                labelText: 'PLZ',
-                                formControlName: 'geschaedigterPostleitzahl',
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              flex: 5,
-                              child: GeneralTextField<String>(
-                                labelText: 'Ort',
-                                formControlName: 'geschaedigterOrt',
+                        FormSection(
+                          icon: Icons.bookmark_outline,
+                          title: 'Referenz',
+                          children: [
+                            GeneralTextField<String>(
+                              labelText: 'Referenz (Vorschau, bearbeitbar)',
+                              formControlName: 'referenz',
+                              inputDecoration: InputDecoration(
+                                helperText: _referenzManuallyEdited
+                                    ? 'Manuell bearbeitet – wird so an das Formular übergeben.'
+                                    : 'Wird automatisch aus den Feldern oben erzeugt.',
+                                helperMaxLines: 2,
+                                suffixIcon: _referenzManuallyEdited
+                                    ? IconButton(
+                                        icon: const Icon(Icons.restart_alt),
+                                        tooltip:
+                                            'Automatisch aus den Feldern erzeugen',
+                                        onPressed: _resetReferenz,
+                                      )
+                                    : null,
                               ),
                             ),
                           ],
                         ),
-                        GeneralTextField<String>(
-                          labelText:
-                              'Kennzeichen des Geschädigten (z. B. HG-E 1427)',
-                          formControlName: 'geschaedigterKennzeichen',
-                          validationMessages: _kennzeichenMessages,
+                        FormSection(
+                          icon: Icons.person_outline,
+                          title: 'Geschädigter',
+                          subtitle:
+                              'Optional — nur ausfüllen, wenn die Daten dem '
+                              'Zentralruf-Formular mitgegeben werden sollen.',
+                          trailing: Switch(
+                            value: _withGeschaedigter,
+                            onChanged: (value) =>
+                                setState(() => _withGeschaedigter = value),
+                          ),
+                          children: [
+                            if (_withGeschaedigter) ...[
+                              const GeneralTextField<String>(
+                                labelText: 'Name des Geschädigten',
+                                formControlName: 'geschaedigterName',
+                              ),
+                              const GeneralTextField<String>(
+                                labelText: 'Straße und Hausnummer',
+                                formControlName:
+                                    'geschaedigterStrasseHausnummer',
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Expanded(
+                                    flex: 2,
+                                    child: GeneralTextField<String>(
+                                      labelText: 'PLZ',
+                                      formControlName:
+                                          'geschaedigterPostleitzahl',
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 5,
+                                    child: GeneralTextField<String>(
+                                      labelText: 'Ort',
+                                      formControlName: 'geschaedigterOrt',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              GeneralTextField<String>(
+                                labelText:
+                                    'Kennzeichen des Geschädigten (z. B. HG-E 1427)',
+                                formControlName: 'geschaedigterKennzeichen',
+                                validationMessages: _kennzeichenMessages,
+                              ),
+                            ],
+                          ],
+                        ),
+                        FormSection(
+                          icon: Icons.car_crash_outlined,
+                          title: 'Unfallhergang',
+                          subtitle:
+                              'Optional — Angaben zum Unfall für die spätere '
+                              'Akten- und Schreibenerstellung.',
+                          trailing: Switch(
+                            value: _withUnfallhergang,
+                            onChanged: (value) =>
+                                setState(() => _withUnfallhergang = value),
+                          ),
+                          children: [
+                            if (_withUnfallhergang) ...[
+                              const GeneralTextField<String>(
+                                labelText:
+                                    'Unfallort (Straße und Ort, z. B. Am Ulmenrück, '
+                                    'Frankfurt am Main)',
+                                formControlName: 'unfallort',
+                              ),
+                              GeneralTextField<String>(
+                                labelText: 'Unfalluhrzeit (z. B. 14:05)',
+                                formControlName: 'unfalluhrzeit',
+                                validationMessages: _uhrzeitMessages,
+                              ),
+                              GeneralTextField<String>(
+                                labelText:
+                                    'Polizeiliche Vorgangsnummer (z. B. VU/1234567/2026)',
+                                formControlName: 'polizeiVorgangsnummer',
+                                validationMessages: _vorgangsnummerMessages,
+                              ),
+                            ],
+                          ],
                         ),
                       ],
-                    ],
-                  ),
-                  FormSection(
-                    icon: Icons.car_crash_outlined,
-                    title: 'Unfallhergang',
-                    subtitle:
-                        'Optional — Angaben zum Unfall für die spätere '
-                        'Akten- und Schreibenerstellung.',
-                    children: [
-                      const GeneralTextField<String>(
-                        labelText:
-                            'Unfallort (Straße und Ort, z. B. Am Ulmenrück, '
-                            'Frankfurt am Main)',
-                        formControlName: 'unfallort',
-                      ),
-                      GeneralTextField<String>(
-                        labelText: 'Unfalluhrzeit (z. B. 14:05)',
-                        formControlName: 'unfalluhrzeit',
-                        validationMessages: _uhrzeitMessages,
-                      ),
-                      GeneralTextField<String>(
-                        labelText:
-                            'Polizeiliche Vorgangsnummer (z. B. VU/1234567/2026)',
-                        formControlName: 'polizeiVorgangsnummer',
-                        validationMessages: _vorgangsnummerMessages,
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: BlocBuilder<ZentralrufBloc, ZentralrufState>(
-                      builder: (context, state) {
-                        final isLoading = state is ZentralrufLoading;
-                        return ReactiveFormConsumer(
-                          builder: (context, formGroup, child) {
-                            return FilledButton.icon(
-                              icon: isLoading
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.open_in_browser),
-                              label: const Text('Anfrageformular ausfüllen'),
-                              onPressed: (formGroup.valid && !isLoading)
-                                  ? _submit
-                                  : null,
-                            );
-                          },
-                        );
-                      },
                     ),
                   ),
-                ],
+                ),
+              ),
+            ),
+            _buildAktionsleiste(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Aktionsleiste, die unten am Rand angeheftet bleibt (scrollt nicht mit dem
+  /// Formular) und denselben breitenbegrenzten/rechtsbündigen Rahmen wie der
+  /// Formularinhalt verwendet.
+  Widget _buildAktionsleiste(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      elevation: 8,
+      color: theme.colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: BlocBuilder<ZentralrufBloc, ZentralrufState>(
+                builder: (context, state) {
+                  final isLoading = state is ZentralrufLoading;
+                  return ReactiveFormConsumer(
+                    builder: (context, formGroup, child) {
+                      return FilledButton.icon(
+                        icon: isLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.open_in_browser),
+                        label: const Text('Anfrageformular ausfüllen'),
+                        onPressed: (formGroup.valid && !isLoading)
+                            ? _submit
+                            : null,
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ),
