@@ -74,6 +74,23 @@ void main() {
     expect(cubit.state.single.gegner, 'HUK');
   });
 
+  test('uebernehmeAntwort ohne passende Anfrage legt eigenen Vorgang an',
+      () async {
+    await cubit.uebernehmeAntwort(
+      const ZentralrufReplyData(
+        referenz: '99/26 C03_HG-X 9',
+        versichererName: 'Allianz',
+      ),
+    );
+
+    expect(cubit.state, hasLength(1));
+    final vorgang = cubit.state.single;
+    expect(vorgang.referenz, '99/26 C03_HG-X 9');
+    expect(vorgang.status, VorgangStatus.beantwortet);
+    expect(vorgang.gegner, 'Allianz');
+    expect(datasource.vorgaenge, hasLength(1));
+  });
+
   test('findeZuReferenz ist tolerant bei Schreibweise und Whitespace',
       () async {
     await cubit.registriereAnfrage('84/26 C03_GG-CK 321');

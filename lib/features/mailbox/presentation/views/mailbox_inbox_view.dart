@@ -4,8 +4,8 @@ import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/offene_anfragen_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/vorgangsdaten_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/manual_reply_input.dart';
@@ -35,10 +35,14 @@ class _MailboxInboxViewState extends State<MailboxInboxView> {
   bool _manualMode = false;
 
   void _gemeinsamUebernehmen(ZentralrufReplyData daten) {
+    // Antwort über die Referenz dem richtigen Vorgang zuordnen und ihn auf
+    // „Beantwortet" schalten (Req. 3.3) — so bleiben mehrere offene Vorgänge
+    // sauber unterscheidbar.
+    getIt<VorgangCubit>().uebernehmeAntwort(daten);
+    // Übergangsweise zusätzlich in den globalen „letzten" Blob, aus dem der
+    // Word-Assistent noch vorbelegt; entfällt, sobald er aus dem Vorgang liest
+    // (Phase 4).
     getIt<VorgangsdatenCubit>().uebernehmen(daten);
-    if (daten.referenz case final referenz?) {
-      getIt<OffeneAnfragenCubit>().beantwortet(referenz);
-    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(

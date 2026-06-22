@@ -188,8 +188,7 @@ class Vorgang extends Equatable {
   }
 
   /// Referenzvergleich tolerant gegenüber Groß-/Kleinschreibung und
-  /// Mehrfach-Leerzeichen (Mailprogramme brechen Zeilen gern um) — dieselbe
-  /// Normalisierung wie im bisherigen OffeneAnfragenCubit.
+  /// Mehrfach-Leerzeichen (Mailprogramme brechen Zeilen gern um).
   static bool gleicheReferenz(String a, String b) =>
       normalizeReferenz(a) == normalizeReferenz(b);
 

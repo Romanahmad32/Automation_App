@@ -8,7 +8,6 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cub
 import 'package:automation_app/features/zentralruf_reply/data/datasources/local_vorgaenge_datasource.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/offene_anfrage.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/offene_anfragen_cubit.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart';
 import 'package:automation_app/features/zentralruf_request/presentation/blocs/zentralruf_bloc.dart';
@@ -68,7 +67,6 @@ void main() {
     () async {
       final datasource = _FakeVorgaengeDatasource();
       final vorgaenge = VorgangCubit(datasource);
-      final offene = OffeneAnfragenCubit(datasource);
       final bloc = ZentralrufBloc(
         _FakePrefill(
           const ZentralrufPrefillResult(
@@ -79,7 +77,6 @@ void main() {
         ),
         _FakeGetSettings(),
         _FakeSaveSettings(),
-        offene,
         vorgaenge,
       );
 
@@ -111,7 +108,6 @@ void main() {
 
       await bloc.close();
       await vorgaenge.close();
-      await offene.close();
     },
   );
 }

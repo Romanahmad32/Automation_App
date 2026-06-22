@@ -149,8 +149,6 @@ import 'package:automation_app/features/zentralruf_reply/domain/repositories/zen
     as _i304;
 import 'package:automation_app/features/zentralruf_reply/domain/usecases/parse_zentralruf_reply.dart'
     as _i772;
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/offene_anfragen_cubit.dart'
-    as _i641;
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/vorgangsdaten_cubit.dart'
     as _i653;
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart'
@@ -258,9 +256,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i847.VorgangCubit>(
       () => _i847.VorgangCubit(gh<_i398.LocalVorgaengeDatasource>()),
-    );
-    gh.lazySingleton<_i641.OffeneAnfragenCubit>(
-      () => _i641.OffeneAnfragenCubit(gh<_i398.LocalVorgaengeDatasource>()),
     );
     gh.lazySingleton<_i653.VorgangsdatenCubit>(
       () => _i653.VorgangsdatenCubit(gh<_i398.LocalVorgaengeDatasource>()),
@@ -416,6 +411,16 @@ extension GetItInjectableX on _i174.GetIt {
         >(),
       ),
     );
+    gh.factory<_i1002.ZentralrufBloc>(
+      () => _i1002.ZentralrufBloc(
+        gh<
+          _i223.UseCase<_i146.ZentralrufPrefillResult, _i208.ZentralrufRequest>
+        >(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i609.KanzleiSettings>>(),
+        gh<_i847.VorgangCubit>(),
+      ),
+    );
     gh.factory<_i263.TemplatePdfPreviewBloc>(
       () => _i263.TemplatePdfPreviewBloc(
         gh<_i223.UseCase<_i100.Uint8List, _i324.ConvertDocxToPdfParams>>(),
@@ -435,17 +440,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i702.TemplatePlaceholdersBloc>(
       () => _i702.TemplatePlaceholdersBloc(
         gh<_i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>>(),
-      ),
-    );
-    gh.factory<_i1002.ZentralrufBloc>(
-      () => _i1002.ZentralrufBloc(
-        gh<
-          _i223.UseCase<_i146.ZentralrufPrefillResult, _i208.ZentralrufRequest>
-        >(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i609.KanzleiSettings>>(),
-        gh<_i641.OffeneAnfragenCubit>(),
-        gh<_i847.VorgangCubit>(),
       ),
     );
     gh.factory<_i347.FormTemplateDataBloc>(
