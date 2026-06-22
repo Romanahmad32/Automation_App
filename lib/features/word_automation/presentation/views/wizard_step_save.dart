@@ -1,9 +1,13 @@
 import 'dart:io';
 
+import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
@@ -52,20 +56,7 @@ class WizardStepSave extends StatelessWidget {
               const SizedBox(height: 32),
               const Divider(),
               const SizedBox(height: 16),
-              Text(
-                'Nächster Schritt im Mandat:',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'E-Mail mit dem Anspruchsschreiben zusammenstellen und '
-                'versenden (§3.7) — dieser Schritt ist noch nicht verfügbar.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-              ),
+              const _VorgangAbschliessenSection(),
             ],
           ),
         ),
@@ -230,6 +221,20 @@ class _AktenAblageSectionState extends State<_AktenAblageSection> {
         listener: (context, state) {
           if (state.status == AblageStatus.fehler && state.message != null) {
             _hinweis(state.message!);
+          } else if (state.status == AblageStatus.erfolg) {
+            // Ablage geglückt: den gewählten Vorgang auf „abgelegt" weiter-
+            // schalten und Ablageort vermerken (nur vorwärts).
+            final vorgang = context.read<WizardCubit>().state.selectedVorgang;
+            if (vorgang != null &&
+                vorgang.status.index < VorgangStatus.abgelegt.index) {
+              getIt<VorgangCubit>().aktualisiere(
+                vorgang.copyWith(
+                  status: VorgangStatus.abgelegt,
+                  dokumentPfad: state.zielpfad,
+                  aktenOrdner: _aktenOrdner(),
+                ),
+              );
+            }
           }
         },
         builder: (context, state) {
@@ -738,6 +743,128 @@ class _KeinStammordnerHinweis extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Abschluss des Vorgangs (Req. 3.2 / 3.7): markiert den Auftrag als erledigt
+/// (Status „versendet"), zählt die laufende Auftragsnummer in den Einstellungen
+/// hoch und nimmt den Vorgang damit ins Sachgebiete-Register auf. Greift den
+/// gewählten Vorgang live aus dem [VorgangCubit] ab, damit der Status nach dem
+/// Abschluss sofort umschlägt.
+class _VorgangAbschliessenSection extends StatelessWidget {
+  const _VorgangAbschliessenSection();
+
+  Future<void> _abschliessen(BuildContext context, Vorgang vorgang) async {
+    final bestaetigt = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Vorgang abschließen?'),
+        content: Text(
+          'Der Vorgang „${vorgang.referenz}" wird als erledigt markiert und '
+          'ins Sachgebiete-Register aufgenommen. Die laufende Auftragsnummer '
+          'wird für den nächsten Auftrag um eins hochgezählt.\n\n'
+          'Das Versenden der E-Mail (§3.7) erfolgt weiterhin manuell.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Abschließen'),
+          ),
+        ],
+      ),
+    );
+    if (bestaetigt != true || !context.mounted) return;
+    await getIt<VorgangCubit>().abschliessen(vorgang);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Vorgang abgeschlossen und ins Register aufgenommen. Die laufende '
+          'Auftragsnummer wurde hochgezählt.',
+        ),
+        duration: Duration(seconds: 4),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selected = context.watch<WizardCubit>().state.selectedVorgang;
+
+    if (selected == null) {
+      return Column(
+        children: [
+          Text(
+            'Vorgang abschließen',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleSmall,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Diesem Dokument ist kein Vorgang zugeordnet. Wählen Sie im ersten '
+            'Schritt einen Vorgang, um ihn nach dem Versand abzuschließen '
+            '(Auftragsnummer hochzählen, Registereintrag).',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return BlocBuilder<VorgangCubit, List<Vorgang>>(
+      bloc: getIt<VorgangCubit>(),
+      builder: (context, vorgaenge) {
+        final aktuell =
+            getIt<VorgangCubit>().findeZuReferenz(selected.referenz) ?? selected;
+        final abgeschlossen = aktuell.status == VorgangStatus.versendet;
+
+        return Column(
+          children: [
+            Text(
+              'Vorgang abschließen',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${aktuell.referenz} · Status: ${aktuell.status.displayName}',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (abgeschlossen)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'Abgeschlossen und ins Register aufgenommen.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              )
+            else
+              FilledButton.icon(
+                onPressed: () => _abschliessen(context, aktuell),
+                icon: const Icon(Icons.task_alt),
+                label: const Text('Vorgang abschließen'),
+              ),
+          ],
+        );
+      },
     );
   }
 }

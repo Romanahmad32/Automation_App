@@ -27,6 +27,7 @@ class _AppShellPageState extends State<AppShellPage> {
         const WordAutomationRoute(),
         const FormTemplateManagementStackRoute(),
         const MandantenStackRoute(),
+        const RegisterRoute(),
         SettingsRoute(),
       ],
       builder: (context, child) {

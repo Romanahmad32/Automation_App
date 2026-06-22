@@ -1,3 +1,8 @@
+import 'package:automation_app/core/general_classes/failures/failure.dart';
+import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
+import 'package:automation_app/features/settings/domain/usecases/erhoehe_auftragsnummer.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
@@ -33,13 +38,41 @@ class _FakeVorgaengeDatasource implements LocalVorgaengeDatasource {
       offeneAnfragen = anfragen;
 }
 
+/// In-Memory-Einstellungen, um das Hochzählen der Auftragsnummer zu prüfen.
+class _FakeSettingsRepository implements KanzleiSettingsRepository {
+  KanzleiSettings settings;
+
+  _FakeSettingsRepository(this.settings);
+
+  @override
+  Future<Either<Failure, KanzleiSettings>> getSettings() async =>
+      Right(settings);
+
+  @override
+  Future<Either<Failure, KanzleiSettings>> saveSettings(
+    KanzleiSettings neu,
+  ) async {
+    settings = neu;
+    return Right(neu);
+  }
+}
+
 void main() {
   late _FakeVorgaengeDatasource datasource;
+  late _FakeSettingsRepository settingsRepository;
   late VorgangCubit cubit;
+
+  VorgangCubit baueCubit() => VorgangCubit(
+    datasource,
+    ErhoeheAuftragsnummer(settingsRepository),
+  );
 
   setUp(() {
     datasource = _FakeVorgaengeDatasource();
-    cubit = VorgangCubit(datasource);
+    settingsRepository = _FakeSettingsRepository(
+      const KanzleiSettings(laufendeAuftragsnummer: 84),
+    );
+    cubit = baueCubit();
   });
 
   tearDown(() => cubit.close());
@@ -108,12 +141,36 @@ void main() {
       ),
     ];
 
-    final restored = VorgangCubit(datasource);
+    final restored = baueCubit();
     // _restore läuft asynchron im Konstruktor an.
     await Future<void>.delayed(Duration.zero);
 
     expect(restored.state, hasLength(1));
     expect(restored.findeZuReferenz('12/26 C03_HG-E 1427'), isNotNull);
     await restored.close();
+  });
+
+  test('abschliessen schaltet auf versendet und zählt die Nummer hoch',
+      () async {
+    await cubit.registriereAnfrage('84/26 C03_GG-CK 321');
+    final vorgang = cubit.state.single;
+
+    await cubit.abschliessen(vorgang);
+
+    final abgeschlossen = cubit.findeZuReferenz('84/26 C03_GG-CK 321')!;
+    expect(abgeschlossen.status, VorgangStatus.versendet);
+    expect(abgeschlossen.abgeschlossenAm, isNotNull);
+    expect(settingsRepository.settings.laufendeAuftragsnummer, 85);
+  });
+
+  test('abschliessen zählt einen bereits versendeten Vorgang nicht erneut hoch',
+      () async {
+    await cubit.registriereAnfrage('84/26 C03_GG-CK 321');
+    await cubit.abschliessen(cubit.state.single);
+    expect(settingsRepository.settings.laufendeAuftragsnummer, 85);
+
+    // Erneuter Aufruf darf die Nummer nicht weiter erhöhen.
+    await cubit.abschliessen(cubit.state.single);
+    expect(settingsRepository.settings.laufendeAuftragsnummer, 85);
   });
 }

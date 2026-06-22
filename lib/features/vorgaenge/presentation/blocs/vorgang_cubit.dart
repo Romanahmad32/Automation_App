@@ -1,5 +1,7 @@
+import 'package:automation_app/features/settings/domain/usecases/erhoehe_auftragsnummer.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/zentralruf_reply/data/datasources/local_vorgaenge_datasource.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,8 +16,9 @@ import 'package:injectable/injectable.dart';
 @lazySingleton
 class VorgangCubit extends Cubit<List<Vorgang>> {
   final LocalVorgaengeDatasource _datasource;
+  final ErhoeheAuftragsnummer _erhoeheAuftragsnummer;
 
-  VorgangCubit(this._datasource) : super(const []) {
+  VorgangCubit(this._datasource, this._erhoeheAuftragsnummer) : super(const []) {
     _restore();
   }
 
@@ -76,6 +79,21 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
 
   /// Speichert einen geänderten Vorgang (Upsert über die Referenz).
   Future<void> aktualisiere(Vorgang vorgang) => _upsert(vorgang);
+
+  /// Schließt den Vorgang ab (Versand erledigt): Status → „versendet",
+  /// Abschlusszeitpunkt gesetzt und die laufende Auftragsnummer in den
+  /// Einstellungen hochgezählt (Req. 3.2). Bereits abgeschlossene Vorgänge
+  /// werden nicht erneut hochgezählt.
+  Future<void> abschliessen(Vorgang vorgang) async {
+    if (vorgang.status == VorgangStatus.versendet) return;
+    await _upsert(
+      vorgang.copyWith(
+        status: VorgangStatus.versendet,
+        abgeschlossenAm: DateTime.now(),
+      ),
+    );
+    await _erhoeheAuftragsnummer.call();
+  }
 
   /// Liefert den Vorgang zur Referenz, falls vorhanden (tolerant gegenüber
   /// Schreibweise und Whitespace).

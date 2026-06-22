@@ -49,6 +49,11 @@ class AppSidebar extends StatelessWidget {
       label: 'Mandanten',
     ),
     (
+      icon: Icons.table_chart_outlined,
+      selectedIcon: Icons.table_chart,
+      label: 'Register',
+    ),
+    (
       icon: Icons.settings_outlined,
       selectedIcon: Icons.settings,
       label: 'Einstellungen',

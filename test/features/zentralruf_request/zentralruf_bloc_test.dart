@@ -1,6 +1,8 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
+import 'package:automation_app/features/settings/domain/usecases/erhoehe_auftragsnummer.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
@@ -39,6 +41,19 @@ class _FakeSaveSettings implements UseCase<KanzleiSettings, KanzleiSettings> {
       Right(params);
 }
 
+/// Für die ErhoeheAuftragsnummer-Abhängigkeit des VorgangCubit; in diesem Test
+/// wird kein Vorgang abgeschlossen, daher genügt ein No-op-Repository.
+class _FakeSettingsRepository implements KanzleiSettingsRepository {
+  @override
+  Future<Either<Failure, KanzleiSettings>> getSettings() async =>
+      Left(LocalFailure(message: 'keine Einstellungen'));
+
+  @override
+  Future<Either<Failure, KanzleiSettings>> saveSettings(
+    KanzleiSettings settings,
+  ) async => Right(settings);
+}
+
 class _FakeVorgaengeDatasource implements LocalVorgaengeDatasource {
   List<Vorgang> vorgaenge = const [];
 
@@ -66,7 +81,10 @@ void main() {
     'legt beim Prefill einen Vorgang mit Mandant-Verknüpfung und Rechtsgebiet an',
     () async {
       final datasource = _FakeVorgaengeDatasource();
-      final vorgaenge = VorgangCubit(datasource);
+      final vorgaenge = VorgangCubit(
+        datasource,
+        ErhoeheAuftragsnummer(_FakeSettingsRepository()),
+      );
       final bloc = ZentralrufBloc(
         _FakePrefill(
           const ZentralrufPrefillResult(
