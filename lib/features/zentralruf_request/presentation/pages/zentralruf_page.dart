@@ -36,51 +36,15 @@ class ZentralrufPage extends StatelessWidget implements AutoRouteWrapper {
           );
         }
         if (state is ZentralrufPrefillSuccess) {
-          final messenger = ScaffoldMessenger.of(context);
-          final basis =
-              'Formular vorausgefüllt (Referenz ${state.result.referenz}). '
-              'Bitte Captcha im Browserfenster lösen und absenden.';
-
-          if (state.auftragsnummerErhoehtAuf != null) {
-            // Automatik-Modus: Nummer wurde bereits hochgezählt.
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(
-                  '$basis\nAuftragsnummer auf '
-                  '${state.auftragsnummerErhoehtAuf} erhöht.',
-                ),
-                duration: const Duration(seconds: 6),
-              ),
-            );
-          } else if (state.auftragsnummerVorschlag != null) {
-            // Halbautomatik: Erhöhung dem Anwalt zur Bestätigung anbieten.
-            final naechste = state.auftragsnummerVorschlag!;
-            // Bloc vor dem async gap auflösen (context nach await unsicher).
-            final bloc = context.read<ZentralrufBloc>();
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(basis),
-                duration: const Duration(seconds: 10),
-                action: SnackBarAction(
-                  label: 'Auftragsnr. → $naechste',
-                  onPressed: () =>
-                      bloc.add(ErhoeheAuftragsnummerEvent(naechste)),
-                ),
-              ),
-            );
-          } else {
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(basis),
-                duration: const Duration(seconds: 6),
-              ),
-            );
-          }
-        }
-        if (state is ZentralrufAuftragsnummerErhoeht) {
+          // Die laufende Auftragsnummer wird erst beim Abschluss des Vorgangs
+          // hochgezählt (Req. 3.2) — hier nur die Bestätigung der Vorbelegung.
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Auftragsnummer auf ${state.neueNummer} erhöht.'),
+              content: Text(
+                'Formular vorausgefüllt (Referenz ${state.result.referenz}). '
+                'Bitte Captcha im Browserfenster lösen und absenden.',
+              ),
+              duration: const Duration(seconds: 6),
             ),
           );
         }

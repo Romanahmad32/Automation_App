@@ -103,12 +103,18 @@ import 'package:automation_app/features/settings/domain/entities/kanzlei_setting
     as _i609;
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart'
     as _i849;
+import 'package:automation_app/features/settings/domain/usecases/erhoehe_auftragsnummer.dart'
+    as _i299;
 import 'package:automation_app/features/settings/domain/usecases/get_kanzlei_settings.dart'
     as _i706;
 import 'package:automation_app/features/settings/domain/usecases/save_kanzlei_settings.dart'
     as _i104;
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart'
     as _i195;
+import 'package:automation_app/features/vorgaenge/domain/services/register_word_exporter.dart'
+    as _i912;
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart'
+    as _i847;
 import 'package:automation_app/features/word_automation/data/datasources/word_automation_datasource.dart'
     as _i287;
 import 'package:automation_app/features/word_automation/data/repositories/api_word_automation_repository.dart'
@@ -147,10 +153,6 @@ import 'package:automation_app/features/zentralruf_reply/domain/repositories/zen
     as _i304;
 import 'package:automation_app/features/zentralruf_reply/domain/usecases/parse_zentralruf_reply.dart'
     as _i772;
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/offene_anfragen_cubit.dart'
-    as _i641;
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/vorgangsdaten_cubit.dart'
-    as _i653;
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart'
     as _i238;
 import 'package:automation_app/features/zentralruf_request/data/datasources/zentralruf_datasource.dart'
@@ -230,6 +232,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i615.ZentralrufDatasource>(
       () => _i615.ApiZentralrufDatasource(gh<_i361.Dio>()),
     );
+    gh.lazySingleton<_i912.RegisterWordExporter>(
+      () => _i912.NichtVerfuegbarerRegisterWordExporter(),
+    );
     gh.factory<_i287.WordAutomationDatasource>(
       () => _i287.ApiWordAutomationDatasource(gh<_i361.Dio>()),
     );
@@ -253,12 +258,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i953.ApiZentralrufReplyRepository(
         gh<_i56.ZentralrufReplyDatasource>(),
       ),
-    );
-    gh.lazySingleton<_i641.OffeneAnfragenCubit>(
-      () => _i641.OffeneAnfragenCubit(gh<_i398.LocalVorgaengeDatasource>()),
-    );
-    gh.lazySingleton<_i653.VorgangsdatenCubit>(
-      () => _i653.VorgangsdatenCubit(gh<_i398.LocalVorgaengeDatasource>()),
     );
     gh.factory<_i223.UseCase<String, _i763.LegeDokumentAbParams>>(
       () => _i698.LegeDokumentAb(gh<_i763.MandantenRepository>()),
@@ -311,6 +310,9 @@ extension GetItInjectableX on _i174.GetIt {
         repository: gh<_i770.WordAutomationRepository>(),
       ),
     );
+    gh.factory<_i299.ErhoeheAuftragsnummer>(
+      () => _i299.ErhoeheAuftragsnummer(gh<_i849.KanzleiSettingsRepository>()),
+    );
     gh.factory<_i202.AblageCubit>(
       () => _i202.AblageCubit(
         gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
@@ -323,6 +325,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1026.RvgCalculationBloc>(
       () => _i1026.RvgCalculationBloc(
         gh<_i223.UseCase<_i279.RvgCalculation, _i430.CalculateRvgFeesParams>>(),
+      ),
+    );
+    gh.lazySingleton<_i847.VorgangCubit>(
+      () => _i847.VorgangCubit(
+        gh<_i398.LocalVorgaengeDatasource>(),
+        gh<_i299.ErhoeheAuftragsnummer>(),
       ),
     );
     gh.factory<_i223.UseCase<_i100.Uint8List, _i324.ConvertDocxToPdfParams>>(
@@ -396,11 +404,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i223.UseCase<void, _i60.DeleteFormTemplateParams>>(
       () => _i60.DeleteFormTemplate(gh<_i211.FormTemplateRepository>()),
     );
-    gh.factory<_i915.WizardCubit>(
-      () => _i915.WizardCubit(
-        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
-      ),
-    );
     gh.factory<_i238.ZentralrufReplyBloc>(
       () => _i238.ZentralrufReplyBloc(
         gh<
@@ -438,8 +441,13 @@ extension GetItInjectableX on _i174.GetIt {
           _i223.UseCase<_i146.ZentralrufPrefillResult, _i208.ZentralrufRequest>
         >(),
         gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i609.KanzleiSettings>>(),
-        gh<_i641.OffeneAnfragenCubit>(),
+        gh<_i847.VorgangCubit>(),
+      ),
+    );
+    gh.factory<_i915.WizardCubit>(
+      () => _i915.WizardCubit(
+        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
       ),
     );
     gh.factory<_i347.FormTemplateDataBloc>(

@@ -5,6 +5,9 @@ import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_b
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/template_selector.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
@@ -13,9 +16,6 @@ import 'package:automation_app/features/word_automation/presentation/utils/formu
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/generation_overlay.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/pdf_preview_view.dart';
-import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:automation_app/features/zentralruf_reply/domain/services/vorgangsdaten_field_matcher.dart';
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/vorgangsdaten_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -126,6 +126,8 @@ class WizardStepFillOut extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const _VorgangSelector(),
+                      const SizedBox(height: 16),
                       TemplateSelector(
                         value: selectedTemplate,
                         onChanged: (value) =>
@@ -148,19 +150,21 @@ class WizardStepFillOut extends StatelessWidget {
                         _WordFileRow(loadedPath: loadedPath),
                         const SizedBox(height: 16),
                         if (loadedPath != null)
-                          // Übernommene Zentralruf-Antwortdaten (falls
-                          // vorhanden) auf die Vorlagenfelder mappen und
-                          // sichtbar vorbelegen (Req. 3.3 → 3.4).
-                          BlocBuilder<VorgangsdatenCubit, ZentralrufReplyData?>(
-                            bloc: getIt<VorgangsdatenCubit>(),
-                            builder: (context, vorgangsdaten) {
-                              final prefill = vorgangsdaten == null
+                          // Daten des gewählten Vorgangs (Mandant + Antwort +
+                          // Rechtsgebiet) auf die Vorlagenfelder mappen und
+                          // sichtbar vorbelegen (Req. 3.3 → 3.4). Ohne gewählten
+                          // Vorgang bleibt die Erfassung frei.
+                          Builder(
+                            builder: (context) {
+                              final vorgang = wizardState.selectedVorgang;
+                              final prefill = vorgang == null
                                   ? const <String, String>{}
-                                  : VorgangsdatenFieldMatcher.matchFields(
+                                  : VorgangPrefillMatcher.matchFields(
                                       selectedTemplate.fields.map(
                                         (field) => field.label,
                                       ),
-                                      vorgangsdaten,
+                                      vorgang,
+                                      mandant: wizardState.selectedMandant,
                                     );
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -301,8 +305,9 @@ class _OptionsCard extends StatelessWidget {
   }
 }
 
-/// Hinweis, dass Felder aus der übernommenen Zentralruf-Antwort vorbelegt
-/// wurden (sichtbar und änderbar — keine stille Befüllung).
+/// Hinweis, dass Felder aus dem gewählten Vorgang vorbelegt wurden (sichtbar
+/// und änderbar — keine stille Befüllung). Zum Leeren/Wechseln dient die
+/// Vorgangsauswahl oben.
 class _VorgangsdatenHinweis extends StatelessWidget {
   final int anzahlFelder;
 
@@ -326,19 +331,140 @@ class _VorgangsdatenHinweis extends StatelessWidget {
             Expanded(
               child: Text(
                 anzahlFelder == 1
-                    ? '1 Feld wurde aus der Zentralruf-Antwort vorbelegt.'
-                    : '$anzahlFelder Felder wurden aus der Zentralruf-Antwort '
-                          'vorbelegt.',
+                    ? '1 Feld wurde aus dem Vorgang vorbelegt.'
+                    : '$anzahlFelder Felder wurden aus dem Vorgang vorbelegt.',
                 style: TextStyle(color: tone.foreground),
               ),
-            ),
-            TextButton(
-              onPressed: () => getIt<VorgangsdatenCubit>().verwerfen(),
-              child: const Text('Verwerfen'),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Auswahl des Vorgangs, aus dem das Schreiben erstellt wird (Phase 4). Liest
+/// die persistierten Vorgänge aus dem app-weiten [VorgangCubit] und liefert sie
+/// als Quelle für die Vorbelegung. Beim ersten Anzeigen wird — sofern der
+/// Anwender noch nichts gewählt hat — der zuletzt beantwortete Vorgang
+/// vorausgewählt (typischer Weg: Antwort übernommen → Tab Word). Über
+/// „(kein Vorgang)" lässt sich die Auswahl wieder aufheben.
+class _VorgangSelector extends StatefulWidget {
+  const _VorgangSelector();
+
+  @override
+  State<_VorgangSelector> createState() => _VorgangSelectorState();
+}
+
+class _VorgangSelectorState extends State<_VorgangSelector> {
+  bool _autoSelectVersucht = false;
+
+  /// Vorauswahl-Vorschlag: der zuletzt aktualisierte Vorgang mit Antwort
+  /// (uebernehmeAntwort hängt ihn ans Listenende), sonst der zuletzt angelegte.
+  Vorgang? _vorschlag(List<Vorgang> vorgaenge) {
+    if (vorgaenge.isEmpty) return null;
+    for (final vorgang in vorgaenge.reversed) {
+      if (vorgang.antwort != null) return vorgang;
+    }
+    return vorgaenge.last;
+  }
+
+  String _label(Vorgang vorgang) {
+    final teile = <String>[
+      vorgang.referenz,
+      if ((vorgang.mandantName ?? '').trim().isNotEmpty) vorgang.mandantName!,
+    ];
+    return '${teile.join(' · ')}  (${vorgang.status.displayName})';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<VorgangCubit, List<Vorgang>>(
+      bloc: getIt<VorgangCubit>(),
+      builder: (context, vorgaenge) {
+        final selected = context.select<WizardCubit, Vorgang?>(
+          (cubit) => cubit.state.selectedVorgang,
+        );
+
+        // Einmalige Vorauswahl, sobald Vorgänge vorliegen und der Anwender noch
+        // nichts gewählt hat. Nach dem Frame, um setState/emit im Build zu
+        // vermeiden.
+        if (!_autoSelectVersucht &&
+            selected == null &&
+            vorgaenge.isNotEmpty) {
+          _autoSelectVersucht = true;
+          final vorschlag = _vorschlag(vorgaenge);
+          if (vorschlag != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              context.read<WizardCubit>().selectVorgang(vorschlag);
+            });
+          }
+        }
+
+        if (vorgaenge.isEmpty) {
+          return const Card(
+            child: ListTile(
+              leading: Icon(Icons.folder_off_outlined),
+              title: Text('Kein Vorgang vorhanden'),
+              subtitle: Text(
+                'Starten Sie eine Zentralruf-Anfrage oder übernehmen Sie eine '
+                'Antwort, um Felder automatisch vorzubelegen.',
+              ),
+            ),
+          );
+        }
+
+        // Der ausgewählte Vorgang kann inzwischen (z. B. neuer Status) ersetzt
+        // worden sein; Auswahl über die stabile Referenz abgleichen.
+        final selektierteReferenz = selected == null
+            ? null
+            : (vorgaenge.any(
+                    (v) => Vorgang.gleicheReferenz(v.referenz, selected.referenz),
+                  )
+                  ? Vorgang.normalizeReferenz(selected.referenz)
+                  : null);
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: DropdownButtonFormField<String?>(
+              initialValue: selektierteReferenz,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Vorgang',
+                helperText: 'Liefert Mandant, Antwort und Rechtsgebiet.',
+                helperMaxLines: 2,
+                border: InputBorder.none,
+              ),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('(kein Vorgang)'),
+                ),
+                for (final vorgang in vorgaenge)
+                  DropdownMenuItem<String?>(
+                    value: Vorgang.normalizeReferenz(vorgang.referenz),
+                    child: Text(_label(vorgang), overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: (referenz) {
+                final cubit = context.read<WizardCubit>();
+                if (referenz == null) {
+                  cubit.selectVorgang(null);
+                  return;
+                }
+                for (final vorgang in vorgaenge) {
+                  if (Vorgang.normalizeReferenz(vorgang.referenz) == referenz) {
+                    cubit.selectVorgang(vorgang);
+                    return;
+                  }
+                }
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

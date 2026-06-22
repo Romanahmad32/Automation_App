@@ -1,8 +1,12 @@
 import 'dart:async';
 
+import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart';
 import 'package:automation_app/features/zentralruf_request/presentation/blocs/zentralruf_bloc.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +93,19 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
   bool _withGeschaedigter = false;
 
   bool _withUnfallhergang = false;
+
+  /// Rechtsgebiet des Vorgangs (Sachgebiete-Spalte des Auftragsregisters).
+  /// Verkehrsrecht ist der Schwerpunkt der Kanzlei und damit vorbelegt.
+  Rechtsgebiet _rechtsgebiet = Rechtsgebiet.verkehrsrecht;
+
+  /// Im Register hinterlegte Mandanten zum Vorbefüllen des Geschädigten
+  /// (Daten wiederverwenden statt neu tippen).
+  List<Mandant> _mandanten = const [];
+
+  /// Aus dem Register gewählter Mandant — Verknüpfung des Vorgangs. Wird beim
+  /// Absenden nur übernommen, solange der Name unverändert geblieben ist.
+  int? _selectedMandantId;
+  String? _selectedMandantName;
 
   /// True, sobald der Anwender die Referenz selbst bearbeitet hat. Danach wird
   /// die Vorschau nicht mehr automatisch aus den Feldern überschrieben.
@@ -181,6 +198,10 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
 
     _syncReferenzVorschau();
 
+    // Mandantenregister laden, damit der Geschädigte daraus vorbefüllt werden
+    // kann (best-effort; ohne Register bleibt nur die manuelle Eingabe).
+    unawaited(_ladeMandanten());
+
     // Falls die Vorbelegung (Auftragsnummer/Abteilung) schon geladen ist, bevor
     // der BlocListener greift, den aktuellen Stand einmalig übernehmen.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -237,6 +258,38 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
   void _resetReferenz() {
     setState(() => _referenzManuallyEdited = false);
     _syncReferenzVorschau();
+  }
+
+  /// Lädt die Mandanten aus dem lokalen Register (für die Vorbefüllung).
+  Future<void> _ladeMandanten() async {
+    final result = await getIt<UseCase<List<Mandant>, NoParams>>().call(
+      const NoParams(),
+    );
+    if (!mounted) return;
+    switch (result) {
+      case Right(value: final mandanten):
+        setState(() => _mandanten = mandanten);
+      case Left():
+        break;
+    }
+  }
+
+  /// Übernimmt die Stammdaten des gewählten Mandanten in die Geschädigten-Felder
+  /// und merkt sich die Verknüpfung. Schaltet den Geschädigten-Abschnitt ein.
+  void _uebernehmeMandant(Mandant mandant) {
+    _form.control('geschaedigterName').updateValue(mandant.anzeigename);
+    _form
+        .control('geschaedigterStrasseHausnummer')
+        .updateValue(mandant.strasseHausnummer);
+    _form
+        .control('geschaedigterPostleitzahl')
+        .updateValue(mandant.postleitzahl);
+    _form.control('geschaedigterOrt').updateValue(mandant.ort);
+    setState(() {
+      _withGeschaedigter = true;
+      _selectedMandantId = mandant.id;
+      _selectedMandantName = mandant.anzeigename;
+    });
   }
 
   @override
@@ -303,6 +356,25 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
                                     const GeneralTextField<String>(
                                       labelText: 'Abteilung (z. B. C03)',
                                       formControlName: 'abteilung',
+                                    ),
+                                    DropdownButtonFormField<Rechtsgebiet>(
+                                      initialValue: _rechtsgebiet,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Rechtsgebiet',
+                                      ),
+                                      items: [
+                                        for (final gebiet
+                                            in Rechtsgebiet.values)
+                                          DropdownMenuItem(
+                                            value: gebiet,
+                                            child: Text(gebiet.displayName),
+                                          ),
+                                      ],
+                                      onChanged: (gebiet) => setState(
+                                        () => _rechtsgebiet =
+                                            gebiet ??
+                                            Rechtsgebiet.verkehrsrecht,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -373,6 +445,32 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
                           ),
                           children: [
                             if (_withGeschaedigter) ...[
+                              if (_mandanten.isNotEmpty)
+                                DropdownButtonFormField<int>(
+                                  initialValue: _selectedMandantId,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Aus Mandanten übernehmen',
+                                    helperText:
+                                        'Füllt die Felder aus dem Register; '
+                                        'Änderungen am Namen lösen die Verknüpfung.',
+                                    helperMaxLines: 2,
+                                  ),
+                                  items: [
+                                    for (final mandant in _mandanten)
+                                      DropdownMenuItem(
+                                        value: mandant.id,
+                                        child: Text(mandant.anzeigename),
+                                      ),
+                                  ],
+                                  onChanged: (id) {
+                                    if (id == null) return;
+                                    final mandant = _mandanten.firstWhere(
+                                      (m) => m.id == id,
+                                    );
+                                    _uebernehmeMandant(mandant);
+                                  },
+                                ),
                               const GeneralTextField<String>(
                                 labelText: 'Name des Geschädigten',
                                 formControlName: 'geschaedigterName',
@@ -533,8 +631,22 @@ class _ZentralrufFormViewState extends State<ZentralrufFormView> {
           : null,
     );
 
+    // Verknüpfung nur halten, solange der Name dem gewählten Mandanten
+    // entspricht (sonst hat der Anwalt den Geschädigten ausgetauscht). Der Name
+    // wird als Schnappschuss auch ohne Registereintrag mitgegeben, damit der
+    // Vorgang „Name ./. Gegner" anzeigen und ins Register schreiben kann.
+    final geschaedigterName = valueOf('geschaedigterName');
+    final verknuepft =
+        _selectedMandantId != null &&
+        geschaedigterName == (_selectedMandantName?.trim() ?? '');
+
     context.read<ZentralrufBloc>().add(
-      PrefillZentralrufFormEvent(request: request),
+      PrefillZentralrufFormEvent(
+        request: request,
+        rechtsgebiet: _rechtsgebiet,
+        mandantId: verknuepft ? _selectedMandantId : null,
+        mandantName: geschaedigterName.isEmpty ? null : geschaedigterName,
+      ),
     );
   }
 }

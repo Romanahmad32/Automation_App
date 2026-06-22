@@ -9,11 +9,11 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:auto_route/auto_route.dart' as _i12;
+import 'package:auto_route/auto_route.dart' as _i13;
 import 'package:automation_app/core/general_widgets/drawer/app_shell_page.dart'
     as _i1;
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart'
-    as _i14;
+    as _i15;
 import 'package:automation_app/features/form_template_setup/presentation/pages/form_template_details_page.dart'
     as _i2;
 import 'package:automation_app/features/form_template_setup/presentation/pages/form_template_management_page.dart'
@@ -23,7 +23,7 @@ import 'package:automation_app/features/form_template_setup/presentation/pages/f
 import 'package:automation_app/features/mailbox/presentation/pages/mailbox_inbox_page.dart'
     as _i5;
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart'
-    as _i15;
+    as _i16;
 import 'package:automation_app/features/mandanten/presentation/pages/mandant_details_page.dart'
     as _i6;
 import 'package:automation_app/features/mandanten/presentation/pages/mandanten_overview_page.dart'
@@ -31,22 +31,24 @@ import 'package:automation_app/features/mandanten/presentation/pages/mandanten_o
 import 'package:automation_app/features/mandanten/presentation/pages/mandanten_stack_page.dart'
     as _i8;
 import 'package:automation_app/features/settings/presentation/pages/settings_page.dart'
+    as _i10;
+import 'package:automation_app/features/vorgaenge/presentation/pages/register_page.dart'
     as _i9;
 import 'package:automation_app/features/word_automation/presentation/pages/word_automation_page.dart'
-    as _i10;
-import 'package:automation_app/features/zentralruf_request/presentation/pages/zentralruf_page.dart'
     as _i11;
-import 'package:flutter/material.dart' as _i13;
+import 'package:automation_app/features/zentralruf_request/presentation/pages/zentralruf_page.dart'
+    as _i12;
+import 'package:flutter/material.dart' as _i14;
 
 /// generated route for
 /// [_i1.AppShellPage]
-class AppShellRoute extends _i12.PageRouteInfo<void> {
-  const AppShellRoute({List<_i12.PageRouteInfo>? children})
+class AppShellRoute extends _i13.PageRouteInfo<void> {
+  const AppShellRoute({List<_i13.PageRouteInfo>? children})
     : super(AppShellRoute.name, initialChildren: children);
 
   static const String name = 'AppShellRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
       return const _i1.AppShellPage();
@@ -57,11 +59,11 @@ class AppShellRoute extends _i12.PageRouteInfo<void> {
 /// generated route for
 /// [_i2.FormTemplateDetailsPage]
 class FormTemplateDetailsRoute
-    extends _i12.PageRouteInfo<FormTemplateDetailsRouteArgs> {
+    extends _i13.PageRouteInfo<FormTemplateDetailsRouteArgs> {
   FormTemplateDetailsRoute({
-    _i13.Key? key,
-    _i14.FormTemplate? formTemplate,
-    List<_i12.PageRouteInfo>? children,
+    _i14.Key? key,
+    _i15.FormTemplate? formTemplate,
+    List<_i13.PageRouteInfo>? children,
   }) : super(
          FormTemplateDetailsRoute.name,
          args: FormTemplateDetailsRouteArgs(
@@ -73,13 +75,13 @@ class FormTemplateDetailsRoute
 
   static const String name = 'FormTemplateDetailsRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<FormTemplateDetailsRouteArgs>(
         orElse: () => const FormTemplateDetailsRouteArgs(),
       );
-      return _i12.WrappedRoute(
+      return _i13.WrappedRoute(
         child: _i2.FormTemplateDetailsPage(
           key: args.key,
           formTemplate: args.formTemplate,
@@ -92,9 +94,9 @@ class FormTemplateDetailsRoute
 class FormTemplateDetailsRouteArgs {
   const FormTemplateDetailsRouteArgs({this.key, this.formTemplate});
 
-  final _i13.Key? key;
+  final _i14.Key? key;
 
-  final _i14.FormTemplate? formTemplate;
+  final _i15.FormTemplate? formTemplate;
 
   @override
   String toString() {
@@ -114,29 +116,29 @@ class FormTemplateDetailsRouteArgs {
 
 /// generated route for
 /// [_i3.FormTemplateManagementPage]
-class FormTemplateManagementRoute extends _i12.PageRouteInfo<void> {
-  const FormTemplateManagementRoute({List<_i12.PageRouteInfo>? children})
+class FormTemplateManagementRoute extends _i13.PageRouteInfo<void> {
+  const FormTemplateManagementRoute({List<_i13.PageRouteInfo>? children})
     : super(FormTemplateManagementRoute.name, initialChildren: children);
 
   static const String name = 'FormTemplateManagementRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
-      return _i12.WrappedRoute(child: const _i3.FormTemplateManagementPage());
+      return _i13.WrappedRoute(child: const _i3.FormTemplateManagementPage());
     },
   );
 }
 
 /// generated route for
 /// [_i4.FormTemplateManagementStackPage]
-class FormTemplateManagementStackRoute extends _i12.PageRouteInfo<void> {
-  const FormTemplateManagementStackRoute({List<_i12.PageRouteInfo>? children})
+class FormTemplateManagementStackRoute extends _i13.PageRouteInfo<void> {
+  const FormTemplateManagementStackRoute({List<_i13.PageRouteInfo>? children})
     : super(FormTemplateManagementStackRoute.name, initialChildren: children);
 
   static const String name = 'FormTemplateManagementStackRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
       return const _i4.FormTemplateManagementStackPage();
@@ -146,30 +148,30 @@ class FormTemplateManagementStackRoute extends _i12.PageRouteInfo<void> {
 
 /// generated route for
 /// [_i5.MailboxInboxPage]
-class MailboxInboxRoute extends _i12.PageRouteInfo<void> {
-  const MailboxInboxRoute({List<_i12.PageRouteInfo>? children})
+class MailboxInboxRoute extends _i13.PageRouteInfo<void> {
+  const MailboxInboxRoute({List<_i13.PageRouteInfo>? children})
     : super(MailboxInboxRoute.name, initialChildren: children);
 
   static const String name = 'MailboxInboxRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
-      return _i12.WrappedRoute(child: const _i5.MailboxInboxPage());
+      return _i13.WrappedRoute(child: const _i5.MailboxInboxPage());
     },
   );
 }
 
 /// generated route for
 /// [_i6.MandantDetailsPage]
-class MandantDetailsRoute extends _i12.PageRouteInfo<MandantDetailsRouteArgs> {
+class MandantDetailsRoute extends _i13.PageRouteInfo<MandantDetailsRouteArgs> {
   MandantDetailsRoute({
-    _i13.Key? key,
-    _i15.Mandant? mandant,
+    _i14.Key? key,
+    _i16.Mandant? mandant,
     String? vorbelegterOrdner,
     String? vorbelegterVorname,
     String? vorbelegterNachname,
-    List<_i12.PageRouteInfo>? children,
+    List<_i13.PageRouteInfo>? children,
   }) : super(
          MandantDetailsRoute.name,
          args: MandantDetailsRouteArgs(
@@ -184,13 +186,13 @@ class MandantDetailsRoute extends _i12.PageRouteInfo<MandantDetailsRouteArgs> {
 
   static const String name = 'MandantDetailsRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<MandantDetailsRouteArgs>(
         orElse: () => const MandantDetailsRouteArgs(),
       );
-      return _i12.WrappedRoute(
+      return _i13.WrappedRoute(
         child: _i6.MandantDetailsPage(
           key: args.key,
           mandant: args.mandant,
@@ -212,9 +214,9 @@ class MandantDetailsRouteArgs {
     this.vorbelegterNachname,
   });
 
-  final _i13.Key? key;
+  final _i14.Key? key;
 
-  final _i15.Mandant? mandant;
+  final _i16.Mandant? mandant;
 
   final String? vorbelegterOrdner;
 
@@ -249,29 +251,29 @@ class MandantDetailsRouteArgs {
 
 /// generated route for
 /// [_i7.MandantenOverviewPage]
-class MandantenOverviewRoute extends _i12.PageRouteInfo<void> {
-  const MandantenOverviewRoute({List<_i12.PageRouteInfo>? children})
+class MandantenOverviewRoute extends _i13.PageRouteInfo<void> {
+  const MandantenOverviewRoute({List<_i13.PageRouteInfo>? children})
     : super(MandantenOverviewRoute.name, initialChildren: children);
 
   static const String name = 'MandantenOverviewRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
-      return _i12.WrappedRoute(child: const _i7.MandantenOverviewPage());
+      return _i13.WrappedRoute(child: const _i7.MandantenOverviewPage());
     },
   );
 }
 
 /// generated route for
 /// [_i8.MandantenStackPage]
-class MandantenStackRoute extends _i12.PageRouteInfo<void> {
-  const MandantenStackRoute({List<_i12.PageRouteInfo>? children})
+class MandantenStackRoute extends _i13.PageRouteInfo<void> {
+  const MandantenStackRoute({List<_i13.PageRouteInfo>? children})
     : super(MandantenStackRoute.name, initialChildren: children);
 
   static const String name = 'MandantenStackRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
       return const _i8.MandantenStackPage();
@@ -280,49 +282,65 @@ class MandantenStackRoute extends _i12.PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [_i9.SettingsPage]
-class SettingsRoute extends _i12.PageRouteInfo<void> {
-  const SettingsRoute({List<_i12.PageRouteInfo>? children})
+/// [_i9.RegisterPage]
+class RegisterRoute extends _i13.PageRouteInfo<void> {
+  const RegisterRoute({List<_i13.PageRouteInfo>? children})
+    : super(RegisterRoute.name, initialChildren: children);
+
+  static const String name = 'RegisterRoute';
+
+  static _i13.PageInfo page = _i13.PageInfo(
+    name,
+    builder: (data) {
+      return const _i9.RegisterPage();
+    },
+  );
+}
+
+/// generated route for
+/// [_i10.SettingsPage]
+class SettingsRoute extends _i13.PageRouteInfo<void> {
+  const SettingsRoute({List<_i13.PageRouteInfo>? children})
     : super(SettingsRoute.name, initialChildren: children);
 
   static const String name = 'SettingsRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
-      return _i12.WrappedRoute(child: const _i9.SettingsPage());
+      return _i13.WrappedRoute(child: const _i10.SettingsPage());
     },
   );
 }
 
 /// generated route for
-/// [_i10.WordAutomationPage]
-class WordAutomationRoute extends _i12.PageRouteInfo<void> {
-  const WordAutomationRoute({List<_i12.PageRouteInfo>? children})
+/// [_i11.WordAutomationPage]
+class WordAutomationRoute extends _i13.PageRouteInfo<void> {
+  const WordAutomationRoute({List<_i13.PageRouteInfo>? children})
     : super(WordAutomationRoute.name, initialChildren: children);
 
   static const String name = 'WordAutomationRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
-      return _i12.WrappedRoute(child: const _i10.WordAutomationPage());
+      return _i13.WrappedRoute(child: const _i11.WordAutomationPage());
     },
   );
 }
 
 /// generated route for
-/// [_i11.ZentralrufPage]
-class ZentralrufRoute extends _i12.PageRouteInfo<void> {
-  const ZentralrufRoute({List<_i12.PageRouteInfo>? children})
+/// [_i12.ZentralrufPage]
+class ZentralrufRoute extends _i13.PageRouteInfo<void> {
+  const ZentralrufRoute({List<_i13.PageRouteInfo>? children})
     : super(ZentralrufRoute.name, initialChildren: children);
 
   static const String name = 'ZentralrufRoute';
 
-  static _i12.PageInfo page = _i12.PageInfo(
+  static _i13.PageInfo page = _i13.PageInfo(
     name,
     builder: (data) {
-      return _i12.WrappedRoute(child: const _i11.ZentralrufPage());
+      return _i13.WrappedRoute(child: const _i12.ZentralrufPage());
     },
   );
 }

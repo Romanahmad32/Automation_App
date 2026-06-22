@@ -1,8 +1,8 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
-import 'package:automation_app/features/zentralruf_reply/domain/entities/offene_anfrage.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/offene_anfragen_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -193,33 +193,34 @@ class ZuordnungHinweis extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocBuilder<OffeneAnfragenCubit, List<OffeneAnfrage>>(
-      bloc: getIt<OffeneAnfragenCubit>(),
-      builder: (context, offeneAnfragen) {
-        final cubit = getIt<OffeneAnfragenCubit>();
-        final anfrage = cubit.findeZuReferenz(referenz);
-        if (anfrage != null) {
-          final datum = anfrage.angefragtAm;
+    return BlocBuilder<VorgangCubit, List<Vorgang>>(
+      bloc: getIt<VorgangCubit>(),
+      builder: (context, vorgaenge) {
+        final vorgang = getIt<VorgangCubit>().findeZuReferenz(referenz);
+        if (vorgang != null) {
+          final datum = vorgang.angefragtAm;
           final datumText =
               '${datum.day.toString().padLeft(2, '0')}.'
               '${datum.month.toString().padLeft(2, '0')}.${datum.year}';
+          final mandant = vorgang.mandantName?.trim();
           return _ToneCard(
             accent: theme.colorScheme.primary,
             icon: Icons.link,
             text:
-                'Zugeordnet zur Zentralruf-Anfrage vom $datumText '
-                '(Referenz ${anfrage.referenz}).',
+                'Zugeordnet zum Vorgang vom $datumText '
+                '(Referenz ${vorgang.referenz})'
+                '${mandant != null && mandant.isNotEmpty ? ' — $mandant' : ''}.',
           );
         }
 
-        if (offeneAnfragen.isEmpty || referenz == null) {
+        if (vorgaenge.isEmpty || referenz == null) {
           return const SizedBox.shrink();
         }
 
         return _ToneCard(
           accent: theme.colorScheme.tertiary,
           text:
-              'Zur Referenz "$referenz" ist keine offene Zentralruf-Anfrage '
+              'Zur Referenz "$referenz" ist kein offener Vorgang '
               'bekannt — bitte prüfen, ob die Antwort zum richtigen Vorgang gehört.',
         );
       },

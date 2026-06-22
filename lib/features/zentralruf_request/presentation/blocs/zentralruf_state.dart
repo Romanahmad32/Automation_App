@@ -12,8 +12,8 @@ final class ZentralrufInitial extends ZentralrufState {}
 final class ZentralrufLoading extends ZentralrufState {}
 
 /// Vorbelegung des Formulars aus den Einstellungen (laufende Auftragsnummer und
-/// Abteilung). Wird beim Öffnen der Seite und nach jeder Erhöhung der
-/// Auftragsnummer emittiert, damit das Formular den aktuellen Wert anzeigt.
+/// Abteilung). Wird beim Öffnen der Seite emittiert, damit das Formular den
+/// aktuellen Wert anzeigt.
 final class ZentralrufDefaultsLoaded extends ZentralrufState {
   final int auftragsnummer;
   final String abteilung;
@@ -30,36 +30,10 @@ final class ZentralrufDefaultsLoaded extends ZentralrufState {
 final class ZentralrufPrefillSuccess extends ZentralrufState {
   final ZentralrufPrefillResult result;
 
-  /// Im Halbautomatik-Modus gesetzt: die vorgeschlagene nächste Auftragsnummer,
-  /// die der Anwalt per Aktion bestätigen kann. Null, wenn kein Vorschlag ansteht.
-  final int? auftragsnummerVorschlag;
-
-  /// Im Automatik-Modus gesetzt: die Auftragsnummer wurde bereits auf diesen
-  /// Wert erhöht und gespeichert. Null, wenn nicht automatisch erhöht wurde.
-  final int? auftragsnummerErhoehtAuf;
-
-  const ZentralrufPrefillSuccess(
-    this.result, {
-    this.auftragsnummerVorschlag,
-    this.auftragsnummerErhoehtAuf,
-  });
+  const ZentralrufPrefillSuccess(this.result);
 
   @override
-  List<Object> get props => [
-    result.referenz,
-    auftragsnummerVorschlag ?? -1,
-    auftragsnummerErhoehtAuf ?? -1,
-  ];
-}
-
-/// Die laufende Auftragsnummer wurde (nach Bestätigung) auf [neueNummer] erhöht.
-final class ZentralrufAuftragsnummerErhoeht extends ZentralrufState {
-  final int neueNummer;
-
-  const ZentralrufAuftragsnummerErhoeht(this.neueNummer);
-
-  @override
-  List<Object> get props => [neueNummer];
+  List<Object> get props => [result.referenz];
 }
 
 final class ZentralrufError extends ZentralrufState {
