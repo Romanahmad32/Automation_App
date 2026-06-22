@@ -149,8 +149,6 @@ import 'package:automation_app/features/zentralruf_reply/domain/repositories/zen
     as _i304;
 import 'package:automation_app/features/zentralruf_reply/domain/usecases/parse_zentralruf_reply.dart'
     as _i772;
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/vorgangsdaten_cubit.dart'
-    as _i653;
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart'
     as _i238;
 import 'package:automation_app/features/zentralruf_request/data/datasources/zentralruf_datasource.dart'
@@ -256,9 +254,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i847.VorgangCubit>(
       () => _i847.VorgangCubit(gh<_i398.LocalVorgaengeDatasource>()),
-    );
-    gh.lazySingleton<_i653.VorgangsdatenCubit>(
-      () => _i653.VorgangsdatenCubit(gh<_i398.LocalVorgaengeDatasource>()),
     );
     gh.factory<_i223.UseCase<String, _i763.LegeDokumentAbParams>>(
       () => _i698.LegeDokumentAb(gh<_i763.MandantenRepository>()),
@@ -396,11 +391,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i223.UseCase<void, _i60.DeleteFormTemplateParams>>(
       () => _i60.DeleteFormTemplate(gh<_i211.FormTemplateRepository>()),
     );
-    gh.factory<_i915.WizardCubit>(
-      () => _i915.WizardCubit(
-        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
-      ),
-    );
     gh.factory<_i238.ZentralrufReplyBloc>(
       () => _i238.ZentralrufReplyBloc(
         gh<
@@ -440,6 +430,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i702.TemplatePlaceholdersBloc>(
       () => _i702.TemplatePlaceholdersBloc(
         gh<_i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>>(),
+      ),
+    );
+    gh.factory<_i915.WizardCubit>(
+      () => _i915.WizardCubit(
+        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
       ),
     );
     gh.factory<_i347.FormTemplateDataBloc>(

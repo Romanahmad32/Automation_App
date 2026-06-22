@@ -1,6 +1,8 @@
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,6 +37,17 @@ class WizardState extends Equatable {
   /// am Ende des Schadensaufstellungs-Schritts läuft.
   final Map<String, String>? formData;
 
+  /// Der Vorgang, aus dem das Schreiben erstellt wird (Phase 4). Liefert die
+  /// Vorbelegung (Mandant + Antwort + Rechtsgebiet) und nimmt nach der
+  /// Erzeugung Dokumentpfad und Status entgegen. Null = freie Erfassung ohne
+  /// Vorgangsbezug.
+  final Vorgang? selectedVorgang;
+
+  /// Der zum [selectedVorgang] aufgelöste Registereintrag (für die
+  /// Mandanten-Vorbelegung). Null, solange nicht aufgelöst oder kein Mandant
+  /// verknüpft ist.
+  final Mandant? selectedMandant;
+
   const WizardState({
     this.currentStep = WizardStep.fillOut,
     this.selectedFormTemplate,
@@ -42,6 +55,8 @@ class WizardState extends Equatable {
     this.mitAuflistung = false,
     this.vorsteuerabzugsberechtigt = true,
     this.formData,
+    this.selectedVorgang,
+    this.selectedMandant,
   });
 
   /// Pfad der aktuell relevanten Word-Datei (je nach [mitAuflistung]).
@@ -62,6 +77,8 @@ class WizardState extends Equatable {
     bool? mitAuflistung,
     bool? vorsteuerabzugsberechtigt,
     Map<String, String>? Function()? formData,
+    Vorgang? Function()? selectedVorgang,
+    Mandant? Function()? selectedMandant,
   }) {
     return WizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -75,6 +92,12 @@ class WizardState extends Equatable {
       vorsteuerabzugsberechtigt:
           vorsteuerabzugsberechtigt ?? this.vorsteuerabzugsberechtigt,
       formData: formData != null ? formData() : this.formData,
+      selectedVorgang: selectedVorgang != null
+          ? selectedVorgang()
+          : this.selectedVorgang,
+      selectedMandant: selectedMandant != null
+          ? selectedMandant()
+          : this.selectedMandant,
     );
   }
 
@@ -86,14 +109,50 @@ class WizardState extends Equatable {
     mitAuflistung,
     vorsteuerabzugsberechtigt,
     formData,
+    selectedVorgang,
+    selectedMandant,
   ];
 }
 
 @injectable
 class WizardCubit extends Cubit<WizardState> {
   final UseCase<FormTemplate, UpdateFormTemplateParams> _updateFormTemplate;
+  final UseCase<List<Mandant>, NoParams> _getMandanten;
 
-  WizardCubit(this._updateFormTemplate) : super(const WizardState());
+  WizardCubit(this._updateFormTemplate, this._getMandanten)
+    : super(const WizardState());
+
+  /// Wählt den Vorgang, aus dem das Schreiben erstellt wird. Die Auswahl wird
+  /// sofort übernommen (die Vorbelegung reagiert), der verknüpfte Mandant aus
+  /// dem Register danach asynchron nachgeladen — die Antwortdaten stecken schon
+  /// im Vorgang, die Mandanten-Stammdaten ergänzen Name und Anschrift.
+  Future<void> selectVorgang(Vorgang? vorgang) async {
+    emit(
+      state.copyWith(
+        selectedVorgang: () => vorgang,
+        selectedMandant: () => null,
+      ),
+    );
+    if (vorgang?.mandantId == null) return;
+
+    final result = await _getMandanten(const NoParams());
+    if (isClosed) return;
+    // Inzwischen umgewählt? Dann das Ergebnis verwerfen.
+    if (state.selectedVorgang?.referenz != vorgang!.referenz) return;
+    switch (result) {
+      case Right(value: final mandanten):
+        Mandant? gefunden;
+        for (final mandant in mandanten) {
+          if (mandant.id == vorgang.mandantId) {
+            gefunden = mandant;
+            break;
+          }
+        }
+        emit(state.copyWith(selectedMandant: () => gefunden));
+      case Left():
+        break;
+    }
+  }
 
   void goToStep(WizardStep step) {
     if (!state.steps.contains(step)) {

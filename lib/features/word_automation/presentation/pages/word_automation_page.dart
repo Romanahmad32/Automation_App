@@ -3,6 +3,8 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
@@ -90,6 +92,23 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                 context.read<ResultPdfPreviewBloc>().add(
                   LoadPdfPreviewEvent(state.path),
                 );
+                // Erzeugtes Schreiben am Vorgang vermerken: Dokumentpfad
+                // hinterlegen und den Status auf „Erstellt" weiterschalten
+                // (nur vorwärts, ein bereits abgelegter/versendeter Vorgang
+                // wird nicht zurückgesetzt).
+                final vorgang = context.read<WizardCubit>().state.selectedVorgang;
+                if (vorgang != null) {
+                  final status =
+                      vorgang.status.index < VorgangStatus.erstellt.index
+                      ? VorgangStatus.erstellt
+                      : vorgang.status;
+                  getIt<VorgangCubit>().aktualisiere(
+                    vorgang.copyWith(
+                      status: status,
+                      dokumentPfad: state.path,
+                    ),
+                  );
+                }
               case EditedDocumentError():
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

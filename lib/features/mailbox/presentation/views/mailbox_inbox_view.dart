@@ -6,7 +6,6 @@ import 'package:automation_app/features/mailbox/domain/entities/received_reply.d
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:automation_app/features/zentralruf_reply/presentation/blocs/vorgangsdaten_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/manual_reply_input.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_form.dart';
@@ -37,12 +36,9 @@ class _MailboxInboxViewState extends State<MailboxInboxView> {
   void _gemeinsamUebernehmen(ZentralrufReplyData daten) {
     // Antwort über die Referenz dem richtigen Vorgang zuordnen und ihn auf
     // „Beantwortet" schalten (Req. 3.3) — so bleiben mehrere offene Vorgänge
-    // sauber unterscheidbar.
+    // sauber unterscheidbar. Der Word-Assistent wählt diesen Vorgang beim
+    // Wechsel auf den Tab automatisch vor und belegt die Felder daraus (Phase 4).
     getIt<VorgangCubit>().uebernehmeAntwort(daten);
-    // Übergangsweise zusätzlich in den globalen „letzten" Blob, aus dem der
-    // Word-Assistent noch vorbelegt; entfällt, sobald er aus dem Vorgang liest
-    // (Phase 4).
-    getIt<VorgangsdatenCubit>().uebernehmen(daten);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
