@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/offene_anfragen_cubit.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart';
@@ -18,12 +20,14 @@ class ZentralrufBloc extends Bloc<ZentralrufEvent, ZentralrufState> {
   final UseCase<KanzleiSettings, NoParams> _getKanzleiSettings;
   final UseCase<KanzleiSettings, KanzleiSettings> _saveKanzleiSettings;
   final OffeneAnfragenCubit _offeneAnfragen;
+  final VorgangCubit _vorgaenge;
 
   ZentralrufBloc(
     this.prefillForm,
     this._getKanzleiSettings,
     this._saveKanzleiSettings,
     this._offeneAnfragen,
+    this._vorgaenge,
   ) : super(ZentralrufInitial()) {
     on<LoadZentralrufDefaultsEvent>(_onLoadDefaults);
     on<PrefillZentralrufFormEvent>(_onPrefillFormEvent);
@@ -66,7 +70,18 @@ class ZentralrufBloc extends Bloc<ZentralrufEvent, ZentralrufState> {
       case Right(value: final prefillResult):
         // Anfrage als "offen" protokollieren, damit die spätere Antwortmail
         // über die Referenz dem Vorgang zugeordnet werden kann (Req. 3.3).
+        // (Übergangsweise zusätzlich zum Vorgang geführt; entfällt in Phase 3.)
         await _offeneAnfragen.registriere(prefillResult.referenz);
+
+        // Den Vorgang als gemeinsame Klammer anlegen/aktualisieren: er hält die
+        // Verknüpfung zum Mandanten, das Rechtsgebiet und später Antwort,
+        // Dokument und Ablage zusammen, damit die Daten wiederverwendet werden.
+        await _vorgaenge.registriereAnfrage(
+          prefillResult.referenz,
+          rechtsgebiet: event.rechtsgebiet,
+          mandantId: event.mandantId,
+          mandantName: event.mandantName,
+        );
 
         // Fortzählung der laufenden Auftragsnummer (Req. 3.2): ohne
         // Einstellungen kein Vorschlag; im Automatik-Modus direkt erhöhen,

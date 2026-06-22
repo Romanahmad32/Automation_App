@@ -445,6 +445,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
         gh<_i223.UseCase<_i609.KanzleiSettings, _i609.KanzleiSettings>>(),
         gh<_i641.OffeneAnfragenCubit>(),
+        gh<_i847.VorgangCubit>(),
       ),
     );
     gh.factory<_i347.FormTemplateDataBloc>(
