@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
@@ -69,32 +70,17 @@ class TemplateFieldItem extends StatelessWidget {
 
           Expanded(
             flex: 3,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<InputType>(
-                  value: fieldData.inputType,
-                  isExpanded: true,
-                  icon: Icon(
-                    Icons.keyboard_arrow_down,
-                    color: theme.colorScheme.onSurfaceVariant,
+            child: SearchableDropdown<InputType>(
+              value: fieldData.inputType,
+              hintText: 'Typ suchen oder auswählen',
+              entries: [
+                for (final type in InputType.values)
+                  SearchableDropdownEntry(
+                    value: type,
+                    label: type.displayName,
                   ),
-                  items: InputType.values.map((e) {
-                    return DropdownMenuItem<InputType>(
-                      value: e,
-                      child: Text(
-                        e.displayName,
-                        style: TextStyle(color: theme.colorScheme.onSurface),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: onTypeChanged,
-                ),
-              ),
+              ],
+              onChanged: onTypeChanged,
             ),
           ),
 
