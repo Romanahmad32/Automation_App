@@ -1,16 +1,19 @@
-# automation_app
+# automation_app — Flutter frontend
 
-Flutter project for automating Office work.
+The desktop frontend of the Office Automation App. It holds no local
+persistence of its own: every store goes through the backend in
+[`../AutomationService`](../AutomationService) over HTTP.
 
-## Getting Started
+Project overview, screenshots and architecture: **[../README.md](../README.md)**
 
-This project is a starting point for a Flutter application.
+```powershell
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter run -d windows
+flutter test
+flutter analyze
+```
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Files ending in `.g.dart`, `.freezed.dart`, `.gr.dart` and
+`injection.config.dart` are generated — never edit them by hand, run
+build_runner instead.
