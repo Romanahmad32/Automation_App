@@ -1,0 +1,55 @@
+name: ci
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+
+env:
+  TEST_PROJECT: AutomationService/AutomationService/AutomationService.Tests/AutomationService.Tests.csproj
+  FRONTEND_DIR: Automation_App_Frontend
+
+jobs:
+  backend:
+    # Windows, nicht ubuntu: Der Dienst nutzt Word-COM-Interop (PdfConversion)
+    # und Playwright gegen installiertes Edge/Chrome — beides gibt es nur hier.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore ${{ env.TEST_PROJECT }}
+
+      - name: Build
+        run: dotnet build ${{ env.TEST_PROJECT }} --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
+
+  frontend:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ${{ env.FRONTEND_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Pub get
+        run: flutter pub get
+
+      # Analyze laeuft vor den Tests: Fehler hier sind billiger zu finden.
+      - name: Analyze
+        run: flutter analyze
+
+      # Enthaelt die Architektur-Tests unter test/architecture/ (Schichtenregeln
+      # und Dateilaengen-Limit aus CLAUDE.md als ausfuehrbare Regeln).
+      - name: Test
+        run: flutter test
