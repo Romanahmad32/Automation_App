@@ -1,16 +1,16 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_action_buttons.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/template_placeholders_view.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/tamplate_fields_table_header.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/template_field_item.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/initial_template_form.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slot_card.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_name_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -59,38 +59,10 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     _wordFilePathOhne = widget.formTemplate?.wordFilePathOhneAuflistung;
     _wordFilePathMit = widget.formTemplate?.wordFilePathMitAuflistung;
 
-    Map<String, AbstractControl<dynamic>> controls = {
-      'templateName': FormControl<String>(
-        value: isEditing ? widget.formTemplate!.templateName : null,
-        validators: [Validators.required],
-      ),
-    };
-
-    // 2. Pre-fill existing fields if in edit mode
-    if (isEditing) {
-      int index = 0;
-      for (var element in widget.formTemplate!.fields) {
-        String fieldKey = 'field_$index';
-
-        fields.add(
-          FieldData(
-            order: index,
-            label: fieldKey,
-            required: element.required,
-            inputType: element.inputType,
-          ),
-        );
-
-        controls[fieldKey] = FormControl<String>(
-          value: element.label,
-          validators: element.required ? [Validators.required] : [],
-        );
-        index++;
-      }
-      _nextFieldIndex = index;
-    }
-
-    formGroup = FormGroup(controls);
+    final initial = InitialTemplateForm.fromTemplate(widget.formTemplate);
+    formGroup = initial.formGroup;
+    fields.addAll(initial.fields);
+    _nextFieldIndex = initial.nextFieldIndex;
 
     // Bei bereits verknüpften Word-Dateien die Platzhalter direkt laden.
     if (_wordFilePathOhne != null) {
@@ -191,6 +163,20 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     );
   }
 
+  void _onTypeChanged(int i, InputType? v) =>
+      setState(() => fields[i] = fields[i].copyWith(inputType: v));
+
+  void _onDatenquelleChanged(int i, FeldDatenquelle? v) =>
+      setState(() => fields[i] = fields[i].copyWith(datenquelle: v));
+
+  void _onRequiredChanged(int i, bool? v) =>
+      setState(() => fields[i] = fields[i].copyWith(required: v ?? false));
+
+  void _onDeleteField(int i) => setState(() {
+    formGroup.removeControl(fields[i].label);
+    fields.removeAt(i);
+  });
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -251,111 +237,41 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
 
                     const TemplateNameCard(),
 
-                    _buildFileSlotCard(
-                      context,
+                    TemplateFileSlotCard(
                       slot: TemplateFileSlot.ohneAuflistung,
                       path: _wordFilePathOhne,
                       title: 'Vorlage ohne Auflistung (HGN)',
                       subtitle:
-                      'Standardbrief mit Haftung dem Grunde nach – ohne '
+                          'Standardbrief mit Haftung dem Grunde nach – ohne '
                           'Schadensaufstellung.',
+                      onPick: () => _pickFile(TemplateFileSlot.ohneAuflistung),
+                      onRemove: () =>
+                          _removeFile(TemplateFileSlot.ohneAuflistung),
+                      onPlaceholderSelected: _addFieldFromPlaceholder,
                     ),
 
-                    _buildFileSlotCard(
-                      context,
+                    TemplateFileSlotCard(
                       slot: TemplateFileSlot.mitAuflistung,
                       path: _wordFilePathMit,
                       title: 'Vorlage mit Auflistung (Schadensaufstellung)',
                       subtitle:
-                      'Enthält {{Schadensaufstellung}}; beim Ausfüllen wird '
+                          'Enthält {{Schadensaufstellung}}; beim Ausfüllen wird '
                           'ein zusätzlicher Schritt für die Schadenspositionen '
                           'und die RVG-Kostenberechnung angezeigt.',
+                      onPick: () => _pickFile(TemplateFileSlot.mitAuflistung),
+                      onRemove: () => _removeFile(TemplateFileSlot.mitAuflistung),
+                      onPlaceholderSelected: _addFieldFromPlaceholder,
                     ),
 
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Row(
-                              spacing: 10,
-                              children: [
-                                Icon(
-                                  Icons.input,
-                                  color: theme.colorScheme.primaryContainer,
-                                ),
-                                Text(
-                                  'Eingabefelder der Vorlage',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const Spacer(),
-                                CustomRectangularButton(
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Neues Feld hinzufügen'),
-                                  onPressed: _addNewField,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-
-                            fields.isEmpty
-                                ? const Center(
-                              child: Text('Keine Felder hinzugefügt'),
-                            )
-                                : const TemplateFieldsTableHeader(),
-
-                            ReorderableListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              buildDefaultDragHandles: false,
-                              onReorder: _reorderFields,
-                              // Das gezogene Element wird in ein Overlay außerhalb
-                              // des ReactiveForm gehoben — hier neu umschließen.
-                              proxyDecorator: (child, index, animation) {
-                                return ReactiveForm(
-                                  formGroup: formGroup,
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              itemCount: fields.length,
-                              itemBuilder: (context, index) {
-                                return TemplateFieldItem(
-                                  key: ValueKey(fields[index].label),
-                                  index: index,
-                                  fieldData: fields[index],
-                                  onTypeChanged: (newValue) {
-                                    setState(() {
-                                      fields[index] = fields[index].copyWith(
-                                        inputType: newValue,
-                                      );
-                                    });
-                                  },
-                                  onRequiredChanged: (value) {
-                                    setState(() {
-                                      fields[index] = fields[index].copyWith(
-                                        required: value,
-                                      );
-                                    });
-                                  },
-                                  onDelete: () {
-                                    setState(() {
-                                      formGroup.removeControl(
-                                        fields[index].label,
-                                      );
-                                      fields.removeAt(index);
-                                    });
-                                  },
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
+                    TemplateFieldsCard(
+                      fields: fields,
+                      formGroup: formGroup,
+                      onAddField: _addNewField,
+                      onReorder: _reorderFields,
+                      onTypeChanged: _onTypeChanged,
+                      onDatenquelleChanged: _onDatenquelleChanged,
+                      onRequiredChanged: _onRequiredChanged,
+                      onDelete: _onDeleteField,
                     ),
 
                     Row(
@@ -375,103 +291,6 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-
-  /// Karte für eine der beiden Word-Dateien (ohne/mit Auflistung): Dateiauswahl,
-  /// erkannte Platzhalter und – beim Mit-Slot – die Warnung, falls
-  /// {{Schadensaufstellung}} fehlt.
-  Widget _buildFileSlotCard(BuildContext context, {
-    required TemplateFileSlot slot,
-    required String? path,
-    required String title,
-    required String subtitle,
-  }) {
-    final theme = Theme.of(context);
-    final isMitSlot = slot == TemplateFileSlot.mitAuflistung;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 16,
-          children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(subtitle, style: theme.textTheme.bodySmall),
-            Row(
-              spacing: 10,
-              children: [
-                Icon(
-                  Icons.description,
-                  color: theme.colorScheme.primaryContainer,
-                ),
-                Expanded(
-                  child: Text(
-                    path ?? 'Keine Word-Datei verknüpft',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (path != null)
-                  IconButton(
-                    tooltip: 'Verknüpfung entfernen',
-                    icon: const Icon(Icons.close),
-                    onPressed: () => _removeFile(slot),
-                  ),
-                CustomRectangularButton(
-                  icon: const Icon(Icons.file_open),
-                  label: Text(
-                    path == null
-                        ? 'Word-Datei verknüpfen'
-                        : 'Andere Datei wählen',
-                  ),
-                  onPressed: () => _pickFile(slot),
-                ),
-              ],
-            ),
-            if (isMitSlot && path != null)
-              BlocBuilder<TemplatePlaceholdersBloc, TemplatePlaceholdersState>(
-                builder: (context, placeholdersState) {
-                  final result = placeholdersState.forSlot(
-                    TemplateFileSlot.mitAuflistung,
-                  );
-                  final missingPlaceholder =
-                      result is SlotPlaceholdersLoaded &&
-                          !result.placeholders.any(
-                                (p) => p.toLowerCase() == 'schadensaufstellung',
-                          );
-                  if (!missingPlaceholder) {
-                    return const SizedBox.shrink();
-                  }
-                  return Row(
-                    spacing: 10,
-                    children: [
-                      const Icon(Icons.warning_amber, color: Colors.amber),
-                      Expanded(
-                        child: Text(
-                          'Die verknüpfte Word-Datei enthält keinen Platzhalter '
-                              '{{Schadensaufstellung}}. Ohne diesen Platzhalter '
-                              'schlägt die Dokumenterstellung mit Auflistung fehl.',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            if (path != null)
-              TemplatePlaceholdersView(
-                slot: slot,
-                onPlaceholderSelected: _addFieldFromPlaceholder,
-              ),
-          ],
         ),
       ),
     );

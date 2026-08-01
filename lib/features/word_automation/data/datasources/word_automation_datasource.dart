@@ -52,20 +52,7 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
             'OutputFileName': outputFileName.trim(),
           if (vorsteuerabzugsberechtigt != null)
             'vorsteuerabzugsberechtigt': vorsteuerabzugsberechtigt,
-          if (damageListing != null)
-            'damageListing': {
-              'items': [
-                for (final item in damageListing.items)
-                  {'description': item.description, 'amount': item.amount},
-              ],
-              'gebuehrensatz': damageListing.gebuehrensatz,
-              'applyVat': damageListing.applyVat,
-              'geschaeftsgebuehrOverride':
-                  damageListing.geschaeftsgebuehrOverride,
-              'auslagenpauschaleOverride':
-                  damageListing.auslagenpauschaleOverride,
-              'headerColorHex': damageListing.headerColorHex,
-            },
+          if (damageListing != null) 'damageListing': damageListing.toJson(),
         },
         options: Options(
           contentType: Headers.jsonContentType,

@@ -13,8 +13,8 @@ class AppRouter extends RootStackRouter {
       page: AppShellRoute.page,
       children: [
         AutoRoute(path: 'word-automation', page: WordAutomationRoute.page),
-        AutoRoute(path: 'zentralruf', page: ZentralrufRoute.page),
-        AutoRoute(path: 'zentralruf-antworten', page: MailboxInboxRoute.page),
+        AutoRoute(path: 'vorgang-starten', page: VorgangStartenRoute.page),
+        AutoRoute(path: 'postfach', page: MailboxInboxRoute.page),
         AutoRoute(
           path: 'vorlagen-verwalten',
           page: FormTemplateManagementStackRoute.page,
@@ -32,6 +32,10 @@ class AppRouter extends RootStackRouter {
           ],
         ),
         AutoRoute(path: 'register', page: RegisterRoute.page),
+        AutoRoute(
+          path: 'vorgaenge-verwalten',
+          page: VorgaengeVerwaltenRoute.page,
+        ),
         AutoRoute(path: 'einstellungen', page: SettingsRoute.page),
       ],
     ),

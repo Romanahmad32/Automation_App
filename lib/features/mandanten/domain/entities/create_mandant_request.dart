@@ -1,8 +1,10 @@
+import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:equatable/equatable.dart';
 
 /// Eingabedaten zum Anlegen eines neuen Mandanten. Die `id` und `erstelltAm`
 /// vergibt das Register beim Speichern (analog zu CreateFormTemplateRequest).
 class CreateMandantRequest extends Equatable {
+  final Anrede anrede;
   final String vorname;
   final String nachname;
   final String strasseHausnummer;
@@ -16,7 +18,11 @@ class CreateMandantRequest extends Equatable {
   /// direkt zugeordnet wird (manuelle Zuordnung beim Anlegen).
   final List<String> aktenOrdnernamen;
 
+  /// Optionale Kfz-Kennzeichen des Mandanten, 0..n (mit Bindestrich).
+  final List<String> kennzeichen;
+
   const CreateMandantRequest({
+    this.anrede = Anrede.keine,
     this.vorname = '',
     this.nachname = '',
     this.strasseHausnummer = '',
@@ -26,10 +32,12 @@ class CreateMandantRequest extends Equatable {
     this.telefonnummer = '',
     this.notiz = '',
     this.aktenOrdnernamen = const [],
+    this.kennzeichen = const [],
   });
 
   @override
   List<Object?> get props => [
+    anrede,
     vorname,
     nachname,
     strasseHausnummer,
@@ -39,5 +47,20 @@ class CreateMandantRequest extends Equatable {
     telefonnummer,
     notiz,
     aktenOrdnernamen,
+    kennzeichen,
   ];
+
+  Map<String, dynamic> toJson() => {
+    'anrede': anrede.value,
+    'vorname': vorname,
+    'nachname': nachname,
+    'strasseHausnummer': strasseHausnummer,
+    'postleitzahl': postleitzahl,
+    'ort': ort,
+    'emailAdresse': emailAdresse,
+    'telefonnummer': telefonnummer,
+    'notiz': notiz,
+    'aktenOrdnernamen': aktenOrdnernamen,
+    'kennzeichen': kennzeichen,
+  };
 }

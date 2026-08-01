@@ -1,5 +1,5 @@
 class ZentralrufPrefillResult {
-  /// Die in das Formular eingetragene Referenz, z. B. "84/26 C03_GG-CK 321".
+  /// Die in das Formular eingetragene Referenz, z. B. "84/26 C03_GG-XY 123".
   final String referenz;
 
   final List<String> filledFields;

@@ -1,3 +1,4 @@
+import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 
 class FieldData {
@@ -6,11 +7,16 @@ class FieldData {
   final bool required;
   final InputType inputType;
 
+  /// Woraus dieses Feld beim Ausfüllen vorbelegt wird. [FeldDatenquelle.keine]
+  /// = keine feste Zuordnung (dann greift die Namens-Heuristik).
+  final FeldDatenquelle datenquelle;
+
   const FieldData({
     required this.order,
     required this.label,
     required this.required,
     required this.inputType,
+    this.datenquelle = FeldDatenquelle.keine,
   });
 
   FieldData copyWith({
@@ -18,12 +24,14 @@ class FieldData {
     String? label,
     bool? required,
     InputType? inputType,
+    FeldDatenquelle? datenquelle,
   }) {
     return FieldData(
       order: order ?? this.order,
       label: label ?? this.label,
       required: required ?? this.required,
       inputType: inputType ?? this.inputType,
+      datenquelle: datenquelle ?? this.datenquelle,
     );
   }
 
@@ -33,14 +41,16 @@ class FieldData {
       label: json['label'],
       required: json['required'],
       inputType: InputType.fromValue(json['inputType']),
+      // Bestandsvorlagen ohne Feld → keine (fällt auf die Heuristik zurück).
+      datenquelle: FeldDatenquelle.fromValue(json['datenquelle'] as String?),
     );
   }
 
-  Map<String, dynamic> toJson() =>
-      {
-        'order': order,
-        'label': label,
-        'required': required,
-        'inputType': inputType.value,
-      };
+  Map<String, dynamic> toJson() => {
+    'order': order,
+    'label': label,
+    'required': required,
+    'inputType': inputType.value,
+    'datenquelle': datenquelle.value,
+  };
 }

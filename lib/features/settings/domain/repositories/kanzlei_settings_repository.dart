@@ -7,4 +7,7 @@ abstract class KanzleiSettingsRepository {
 
   Future<Either<Failure, KanzleiSettings>> saveSettings(
       KanzleiSettings settings,);
+
+  /// Zählt die laufende Auftragsnummer atomar im Backend hoch (Req. 3.2).
+  Future<Either<Failure, KanzleiSettings>> erhoeheAuftragsnummer();
 }

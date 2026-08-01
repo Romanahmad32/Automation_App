@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/features/form_template_setup/data/datasources/local_form_template_datasource.dart';
+import 'package:automation_app/features/form_template_setup/data/datasources/api_form_template_datasource.dart';
 import 'package:automation_app/features/form_template_setup/data/datasources/remote_word_template_datasource.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/create_form_template_request.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
@@ -9,11 +9,11 @@ import 'package:injectable/injectable.dart';
 
 @Injectable(as: FormTemplateRepository)
 class FormTemplateRepositoryImpl implements FormTemplateRepository {
-  final LocalFormTemplateDatasource _localDatasource;
+  final FormTemplateDatasource _datasource;
   final RemoteWordTemplateDatasource _remoteWordTemplateDatasource;
 
   FormTemplateRepositoryImpl(
-    this._localDatasource,
+    this._datasource,
     this._remoteWordTemplateDatasource,
   );
 
@@ -22,7 +22,7 @@ class FormTemplateRepositoryImpl implements FormTemplateRepository {
     CreateFormTemplateRequest template,
   ) async {
     try {
-      await _localDatasource.createFormTemplate(template);
+      await _datasource.createFormTemplate(template);
       return Right(null);
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
@@ -32,7 +32,7 @@ class FormTemplateRepositoryImpl implements FormTemplateRepository {
   @override
   Future<Either<Failure, void>> deleteFormTemplate(int id) async {
     try {
-      await _localDatasource.deleteFormTemplate(id);
+      await _datasource.deleteFormTemplate(id);
       return Right(null);
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
@@ -44,7 +44,7 @@ class FormTemplateRepositoryImpl implements FormTemplateRepository {
     String name,
   ) async {
     try {
-      final template = await _localDatasource.loadFormTemplateByName(name);
+      final template = await _datasource.loadFormTemplateByName(name);
       return Right(template);
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
@@ -54,7 +54,7 @@ class FormTemplateRepositoryImpl implements FormTemplateRepository {
   @override
   Future<Either<Failure, List<FormTemplate>>> getFormTemplates() async {
     try {
-      final templates = await _localDatasource.loadFormTemplates();
+      final templates = await _datasource.loadFormTemplates();
       return Right(templates);
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
@@ -66,7 +66,7 @@ class FormTemplateRepositoryImpl implements FormTemplateRepository {
     FormTemplate template,
   ) async {
     try {
-      final updatedTemplate = await _localDatasource.updateFormTemplate(
+      final updatedTemplate = await _datasource.updateFormTemplate(
         template,
       );
       return Right(updatedTemplate);

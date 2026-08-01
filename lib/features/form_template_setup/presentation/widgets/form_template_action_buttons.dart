@@ -72,6 +72,7 @@ class FormTemplateActionButtons extends StatelessWidget {
                     required: field.required,
                     // 5. Fixed to use actual field state instead of hardcoded 'true'
                     inputType: field.inputType,
+                    datenquelle: field.datenquelle,
                   );
                 }).toList();
 

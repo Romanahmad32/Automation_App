@@ -4,6 +4,7 @@ import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_sc
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/vorgang_rueckfluss.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
@@ -93,21 +94,48 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                   LoadPdfPreviewEvent(state.path),
                 );
                 // Erzeugtes Schreiben am Vorgang vermerken: Dokumentpfad
-                // hinterlegen und den Status auf „Erstellt" weiterschalten
-                // (nur vorwärts, ein bereits abgelegter/versendeter Vorgang
-                // wird nicht zurückgesetzt).
-                final vorgang = context.read<WizardCubit>().state.selectedVorgang;
+                // hinterlegen, den Status auf „Erstellt" weiterschalten (nur
+                // vorwärts, ein bereits abgelegter/versendeter Vorgang wird
+                // nicht zurückgesetzt) und die bestätigten Wizard-Eingaben
+                // (Formularwerte, Schadensaufstellung, explizit zugeordnete
+                // Unfalldaten) in den Vorgang zurückfließen lassen, damit das
+                // nächste Schreiben zum selben Vorgang vorbelegt startet.c
+                final wizardState = context.read<WizardCubit>().state;
+                // Immer den frischesten Stand aus dem VorgangCubit verwenden:
+                // der im Wizard gewählte Vorgang kann inzwischen aktualisiert
+                // worden sein (z. B. Antwort eingetroffen) — eine Kopie des
+                // alten Stands würde diese Daten überschreiben.
+                final gewaehlt = wizardState.selectedVorgang;
+                final vorgang = gewaehlt == null
+                    ? null
+                    : getIt<VorgangCubit>().findeZuReferenz(gewaehlt.referenz) ??
+                          gewaehlt;
                 if (vorgang != null) {
                   final status =
                       vorgang.status.index < VorgangStatus.erstellt.index
                       ? VorgangStatus.erstellt
                       : vorgang.status;
-                  getIt<VorgangCubit>().aktualisiere(
-                    vorgang.copyWith(
-                      status: status,
-                      dokumentPfad: state.path,
-                    ),
+                  var aktualisiert = vorgang.copyWith(
+                    status: status,
+                    dokumentPfad: state.path,
                   );
+                  final formData = wizardState.formData;
+                  if (formData != null) {
+                    aktualisiert = VorgangRueckfluss.uebernehmeWizardErgebnis(
+                      aktualisiert,
+                      fields:
+                          wizardState.selectedFormTemplate?.fields ?? const [],
+                      formData: formData,
+                      schadensaufstellung: wizardState.damageListing,
+                    );
+                  }
+                  getIt<VorgangCubit>().aktualisiere(aktualisiert);
+                  // Auswahl im Wizard auf den neuen Stand heben, damit ein
+                  // weiteres Schreiben im selben Durchlauf die gerade
+                  // bestätigten Werte vorbelegt bekommt.
+                  context
+                      .read<WizardCubit>()
+                      .uebernehmeVorgangsStand(aktualisiert);
                 }
               case EditedDocumentError():
                 ScaffoldMessenger.of(context).showSnackBar(

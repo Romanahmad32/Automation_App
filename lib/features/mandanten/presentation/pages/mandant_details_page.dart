@@ -1,9 +1,14 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
+import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandant_edit_cubit/mandant_edit_cubit.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/anrede_auswahl.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/kennzeichen_editor.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/ordner_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -42,6 +47,12 @@ class MandantDetailsPage extends StatefulWidget implements AutoRouteWrapper {
 class _MandantDetailsPageState extends State<MandantDetailsPage> {
   late final bool _istBearbeitung = widget.mandant != null;
 
+  late List<String> _kennzeichen = List.of(
+    widget.mandant?.kennzeichen ?? const [],
+  );
+
+  late Anrede _anrede = widget.mandant?.anrede ?? Anrede.keine;
+
   late final FormGroup _form = FormGroup({
     'vorname': FormControl<String>(
       value: widget.mandant?.vorname ?? widget.vorbelegterVorname ?? '',
@@ -75,6 +86,7 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
     if (_istBearbeitung) {
       cubit.aktualisiere(
         widget.mandant!.copyWith(
+          anrede: _anrede,
           vorname: read('vorname'),
           nachname: read('nachname'),
           strasseHausnummer: read('strasseHausnummer'),
@@ -83,11 +95,13 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
           emailAdresse: read('emailAdresse'),
           telefonnummer: read('telefonnummer'),
           notiz: read('notiz'),
+          kennzeichen: _kennzeichen,
         ),
       );
     } else {
       cubit.erstelle(
         CreateMandantRequest(
+          anrede: _anrede,
           vorname: read('vorname'),
           nachname: read('nachname'),
           strasseHausnummer: read('strasseHausnummer'),
@@ -96,6 +110,7 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
           emailAdresse: read('emailAdresse'),
           telefonnummer: read('telefonnummer'),
           notiz: read('notiz'),
+          kennzeichen: _kennzeichen,
           aktenOrdnernamen: widget.vorbelegterOrdner == null
               ? const []
               : [widget.vorbelegterOrdner!],
@@ -137,7 +152,7 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
                       spacing: 16,
                       children: [
                         if (widget.vorbelegterOrdner != null)
-                          _OrdnerHinweis(ordnername: widget.vorbelegterOrdner!),
+                          OrdnerHinweis(ordnername: widget.vorbelegterOrdner!),
                         FormSection(
                           icon: Icons.person,
                           title: 'Mandantendaten',
@@ -146,6 +161,17 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
                               'künftigen Vorgängen wiederverwendet werden. '
                               'Pflichtfelder sind mit * markiert.',
                           children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Anrede',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                            ),
+                            AnredeAuswahl(
+                              initialAnrede: _anrede,
+                              onChanged: (wert) => _anrede = wert,
+                            ),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -193,6 +219,18 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
                               keyboardType: TextInputType.phone,
                             ),
                             _field('notiz', 'Notiz', maxLines: 3),
+                            const SizedBox(height: 4),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Kennzeichen (optional)',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                            ),
+                            KennzeichenEditor(
+                              initialKennzeichen: _kennzeichen,
+                              onChanged: (werte) => _kennzeichen = werte,
+                            ),
                           ],
                         ),
                         Align(
@@ -244,46 +282,12 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
     int maxLines = 1,
     Map<String, String Function(Object)>? validationMessages,
   }) {
-    return ReactiveTextField<String>(
+    return GeneralTextField<String>(
       formControlName: controlName,
+      labelText: label,
       keyboardType: keyboardType,
       maxLines: maxLines,
       validationMessages: validationMessages,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-    );
-  }
-}
-
-class _OrdnerHinweis extends StatelessWidget {
-  final String ordnername;
-
-  const _OrdnerHinweis({required this.ordnername});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.link, color: theme.colorScheme.onSecondaryContainer),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Der Ordner „$ordnername" wird diesem Mandanten zugeordnet. '
-              'Der Namensvorschlag stammt aus dem Ordnernamen — bitte prüfen.',
-              style: TextStyle(color: theme.colorScheme.onSecondaryContainer),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

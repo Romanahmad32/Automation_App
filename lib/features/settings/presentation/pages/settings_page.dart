@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/features/backup/presentation/views/data_backup_view.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart';
 import 'package:automation_app/features/mailbox/presentation/views/mailbox_access_view.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
@@ -36,7 +37,7 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Einstellungen'),
@@ -47,6 +48,7 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
               Tab(icon: Icon(Icons.business), text: 'Kanzlei'),
               Tab(icon: Icon(Icons.mark_email_unread), text: 'Postfach-Zugang'),
               Tab(icon: Icon(Icons.palette_outlined), text: 'Darstellung'),
+              Tab(icon: Icon(Icons.backup_outlined), text: 'Datensicherung'),
             ],
           ),
         ),
@@ -55,6 +57,7 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
             AppSettingsView(),
             MailboxAccessView(),
             AppearanceSettingsView(),
+            DataBackupView(),
           ],
         ),
       ),

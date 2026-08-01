@@ -1,3 +1,4 @@
+import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:equatable/equatable.dart';
 
 /// Ein Mandant der Kanzlei mit den wiederverwendbaren Stammdaten (Req. 3.1 /
@@ -9,6 +10,9 @@ import 'package:equatable/equatable.dart';
 /// Verkehrsunfallsache).
 class Mandant extends Equatable {
   final int id;
+
+  /// Anrede/Geschlecht für die korrekte Ansprache in Vorlagen und E-Mails.
+  final Anrede anrede;
   final String vorname;
   final String nachname;
   final String strasseHausnummer;
@@ -21,11 +25,16 @@ class Mandant extends Equatable {
   /// Namen der zugeordneten Akten-Ordner (relativ zum Stammordner), 0..n.
   final List<String> aktenOrdnernamen;
 
+  /// Optionale Kfz-Kennzeichen des Mandanten, 0..n (mit Bindestrich, z. B.
+  /// `HG-E 1427`). Ein Mandant kann mehrere Fahrzeuge halten.
+  final List<String> kennzeichen;
+
   /// Zeitpunkt der Anlage im Register (ISO-8601), für Sortierung/Anzeige.
   final DateTime erstelltAm;
 
   const Mandant({
     required this.id,
+    this.anrede = Anrede.keine,
     this.vorname = '',
     this.nachname = '',
     this.strasseHausnummer = '',
@@ -35,6 +44,7 @@ class Mandant extends Equatable {
     this.telefonnummer = '',
     this.notiz = '',
     this.aktenOrdnernamen = const [],
+    this.kennzeichen = const [],
     required this.erstelltAm,
   });
 
@@ -42,10 +52,16 @@ class Mandant extends Equatable {
   /// eines gesetzt ist.
   String get anzeigename => '$vorname $nachname'.trim();
 
+  /// Vollständige Brief-/E-Mail-Anrede, z. B. „Sehr geehrter Herr Müller".
+  /// Für Vorlagen und künftige E-Mails.
+  String get briefanrede => anrede.briefanrede(nachname);
+
   factory Mandant.fromJson(Map<String, dynamic> json) {
     final ordner = json['aktenOrdnernamen'];
+    final kz = json['kennzeichen'];
     return Mandant(
       id: json['id'] as int,
+      anrede: Anrede.fromValue(json['anrede'] as String?),
       vorname: json['vorname'] as String? ?? '',
       nachname: json['nachname'] as String? ?? '',
       strasseHausnummer: json['strasseHausnummer'] as String? ?? '',
@@ -57,6 +73,7 @@ class Mandant extends Equatable {
       aktenOrdnernamen: ordner is List
           ? ordner.whereType<String>().toList()
           : const [],
+      kennzeichen: kz is List ? kz.whereType<String>().toList() : const [],
       erstelltAm:
           DateTime.tryParse(json['erstelltAm'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
@@ -65,6 +82,7 @@ class Mandant extends Equatable {
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    'anrede': anrede.value,
     'vorname': vorname,
     'nachname': nachname,
     'strasseHausnummer': strasseHausnummer,
@@ -74,10 +92,12 @@ class Mandant extends Equatable {
     'telefonnummer': telefonnummer,
     'notiz': notiz,
     'aktenOrdnernamen': aktenOrdnernamen,
+    'kennzeichen': kennzeichen,
     'erstelltAm': erstelltAm.toIso8601String(),
   };
 
   Mandant copyWith({
+    Anrede? anrede,
     String? vorname,
     String? nachname,
     String? strasseHausnummer,
@@ -87,9 +107,11 @@ class Mandant extends Equatable {
     String? telefonnummer,
     String? notiz,
     List<String>? aktenOrdnernamen,
+    List<String>? kennzeichen,
   }) {
     return Mandant(
       id: id,
+      anrede: anrede ?? this.anrede,
       vorname: vorname ?? this.vorname,
       nachname: nachname ?? this.nachname,
       strasseHausnummer: strasseHausnummer ?? this.strasseHausnummer,
@@ -99,6 +121,7 @@ class Mandant extends Equatable {
       telefonnummer: telefonnummer ?? this.telefonnummer,
       notiz: notiz ?? this.notiz,
       aktenOrdnernamen: aktenOrdnernamen ?? this.aktenOrdnernamen,
+      kennzeichen: kennzeichen ?? this.kennzeichen,
       erstelltAm: erstelltAm,
     );
   }
@@ -106,6 +129,7 @@ class Mandant extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    anrede,
     vorname,
     nachname,
     strasseHausnummer,
@@ -115,6 +139,7 @@ class Mandant extends Equatable {
     telefonnummer,
     notiz,
     aktenOrdnernamen,
+    kennzeichen,
     erstelltAm,
   ];
 }

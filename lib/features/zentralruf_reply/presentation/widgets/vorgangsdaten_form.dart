@@ -1,10 +1,18 @@
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/core/theme/presentation/soft_tone.dart';
+import 'package:automation_app/features/versicherer/domain/entities/versicherer.dart';
+import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/wahrscheinlicher_vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
+import 'package:automation_app/features/zentralruf_reply/presentation/widgets/tone_card.dart';
+import 'package:automation_app/features/zentralruf_reply/presentation/widgets/versicherer_auswahl.dart';
+import 'package:automation_app/features/zentralruf_reply/presentation/widgets/versicherer_ergaenzung.dart';
+import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgang_zuordnung_auswahl.dart';
+import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_feld.dart';
+import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_felder_liste.dart';
+import 'package:automation_app/features/zentralruf_reply/presentation/widgets/zwischennachricht_hinweis_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Editierbares Formular mit den ausgewerteten Vorgangsdaten: der Anwalt kann
 /// fehlende oder falsch erkannte Angaben direkt korrigieren, bevor sie in den
@@ -22,9 +30,12 @@ class VorgangsdatenForm extends StatefulWidget {
   /// Referenz, Negativ-Antwort …).
   final List<String> warnings;
 
-  /// Wird mit den (ggf. korrigierten) Daten aufgerufen, wenn der Anwalt
-  /// übernimmt.
-  final void Function(ZentralrufReplyData bearbeitet) onUebernehmen;
+  /// Wird mit den (ggf. korrigierten) Daten und dem gewählten Zielvorgang
+  /// aufgerufen, wenn der Anwalt übernimmt. [zielReferenz] ist die Referenz des
+  /// Vorgangs, dem die Antwort zugeordnet werden soll, oder null für „Neuen
+  /// Vorgang anlegen".
+  final void Function(ZentralrufReplyData bearbeitet, String? zielReferenz)
+  onUebernehmen;
 
   /// Optionaler Kopfbereich oberhalb der Hinweise (z. B. Betreff der Mail).
   final Widget? kopf;
@@ -50,7 +61,22 @@ class VorgangsdatenForm extends StatefulWidget {
 }
 
 class _VorgangsdatenFormState extends State<VorgangsdatenForm> {
-  late final Map<_Feld, TextEditingController> _controllers;
+  late final Map<VorgangsdatenFeld, TextEditingController> _controllers;
+
+  /// Gewählter Zielvorgang: normalisierte Referenz oder der Sentinel „Neuen
+  /// Vorgang anlegen". Vorbelegt mit dem über die Referenz automatisch
+  /// gefundenen Vorgang, sonst mit dem Fallback-Treffer (Kennzeichen +
+  /// Unfalldatum, als „wahrscheinliche Zuordnung"), sonst „Neuen Vorgang anlegen".
+  late String _zielAuswahl;
+
+  /// Referenz des Fallback-Treffers (für den Bestätigungs-Hinweis).
+  String? _vermuteteReferenz;
+
+  /// Aus der Versicherer-Wissensbasis ergänzte Felder (Lückenfüllung).
+  VersichererErgaenzung _ergaenzung = VersichererErgaenzung.leer;
+
+  /// Bei Negativ-Antworten manuell gewählter Versicherer aus dem Register.
+  int? _gewaehlterVersichererId;
 
   ZentralrufReplyData get _data => widget.data;
 
@@ -58,9 +84,41 @@ class _VorgangsdatenFormState extends State<VorgangsdatenForm> {
   void initState() {
     super.initState();
     _controllers = {
-      for (final feld in _Feld.values)
+      for (final feld in VorgangsdatenFeld.values)
         feld: TextEditingController(text: feld.wert(_data) ?? ''),
     };
+
+    // Lücken der Antwort aus der Versicherer-Wissensbasis füllen (mit
+    // Herkunftshinweis in der Feldliste; der Anwalt kann weiterhin editieren).
+    // Das Register kann während der Sitzung dazugelernt haben — nachladen und
+    // dann noch leere Felder nachträglich füllen.
+    final versichererCubit = getIt<VersichererCubit>();
+    _fuelleAusRegister(versichererCubit);
+    versichererCubit.ladeErneut().then((_) {
+      if (mounted) setState(() => _fuelleAusRegister(versichererCubit));
+    });
+
+    // Zielvorgang: exakter Referenz-Treffer vor dem Fallback über
+    // Kennzeichen + Unfalldatum (Letzterer nur als vorgeschlagene, vom Anwalt
+    // zu bestätigende Auswahl).
+    final vorgangCubit = getIt<VorgangCubit>();
+    final auto = vorgangCubit.findeZuReferenz(_data.referenz);
+    final vermutet = auto == null
+        ? findeWahrscheinlichenVorgang(vorgangCubit.state, _data)
+        : null;
+    _vermuteteReferenz = vermutet?.referenz;
+    final ziel = auto ?? vermutet;
+    _zielAuswahl = ziel != null
+        ? Vorgang.normalizeReferenz(ziel.referenz)
+        : VorgangZuordnungAuswahl.neuerVorgangWert;
+
+    if (_data.keinVersichererErmittelt || _data.zwischennachricht) {
+      // Übernehmen wird erst mit einem Versicherernamen möglich — auf
+      // Eingaben/Registerauswahl reagieren.
+      _controllers[VorgangsdatenFeld.versichererName]!.addListener(
+        () => setState(() {}),
+      );
+    }
   }
 
   @override
@@ -71,13 +129,48 @@ class _VorgangsdatenFormState extends State<VorgangsdatenForm> {
     super.dispose();
   }
 
-  String? _wertVon(_Feld feld) {
+  String? _wertVon(VorgangsdatenFeld feld) {
     final text = _controllers[feld]!.text.trim();
     return text.isEmpty ? null : text;
   }
 
+  /// Füllt noch leere Versicherer-Felder aus dem Register (Lückenfüllung);
+  /// bereits Eingetipptes bleibt unberührt.
+  void _fuelleAusRegister(VersichererCubit versichererCubit) {
+    final bekannt = versichererCubit.findeZuName(_data.versichererName);
+    final ergaenzung = VersichererErgaenzung.ermittle(_data, bekannt);
+    for (final MapEntry(key: feld, value: wert) in ergaenzung.werte.entries) {
+      if (_controllers[feld]!.text.trim().isEmpty) {
+        _controllers[feld]!.text = wert;
+      }
+    }
+    if (ergaenzung.werte.isNotEmpty) _ergaenzung = ergaenzung;
+  }
+
+  /// Übernimmt einen aus dem Register gewählten Versicherer in die Felder
+  /// (nur belegte Registerwerte, bereits Getipptes wird nicht geleert).
+  void _uebernehmeVersicherer(Versicherer gewaehlt) {
+    final werte = <VorgangsdatenFeld, String?>{
+      VorgangsdatenFeld.versichererName: gewaehlt.name,
+      VorgangsdatenFeld.versichererStrasse: gewaehlt.strasse,
+      VorgangsdatenFeld.versichererPlz: gewaehlt.plz,
+      VorgangsdatenFeld.versichererOrt: gewaehlt.ort,
+      VorgangsdatenFeld.versichererTelefon: gewaehlt.telefon,
+      VorgangsdatenFeld.versichererFax: gewaehlt.fax,
+      VorgangsdatenFeld.versichererEmail: gewaehlt.email,
+    };
+    setState(() {
+      _gewaehlterVersichererId = gewaehlt.id;
+      for (final MapEntry(key: feld, value: wert) in werte.entries) {
+        if ((wert ?? '').trim().isNotEmpty) {
+          _controllers[feld]!.text = wert!.trim();
+        }
+      }
+    });
+  }
+
   ZentralrufReplyData _bearbeiteteDaten() {
-    final referenz = _wertVon(_Feld.referenz);
+    final referenz = _wertVon(VorgangsdatenFeld.referenz);
     // Die zerlegten Referenz-Bestandteile stammen aus dem Parser; wurde die
     // Referenz von Hand geändert, passen sie nicht mehr und entfallen.
     final referenzUnveraendert = referenz == _data.referenz;
@@ -91,26 +184,43 @@ class _VorgangsdatenFormState extends State<VorgangsdatenForm> {
       referenzKennzeichen: referenzUnveraendert
           ? _data.referenzKennzeichen
           : null,
-      anfrageDatum: _wertVon(_Feld.anfrageDatum),
-      kennzeichen: _wertVon(_Feld.kennzeichen),
-      unfallDatum: _wertVon(_Feld.unfallDatum),
-      versichererName: _wertVon(_Feld.versichererName),
-      versichererStrasse: _wertVon(_Feld.versichererStrasse),
-      versichererPlz: _wertVon(_Feld.versichererPlz),
-      versichererOrt: _wertVon(_Feld.versichererOrt),
-      versichererTelefon: _wertVon(_Feld.versichererTelefon),
-      versichererFax: _wertVon(_Feld.versichererFax),
-      versichererEmail: _wertVon(_Feld.versichererEmail),
-      versicherungsscheinNr: _wertVon(_Feld.versicherungsscheinNr),
-      versicherungsbeginn: _wertVon(_Feld.versicherungsbeginn),
+      anfrageDatum: _wertVon(VorgangsdatenFeld.anfrageDatum),
+      kennzeichen: _wertVon(VorgangsdatenFeld.kennzeichen),
+      unfallDatum: _wertVon(VorgangsdatenFeld.unfallDatum),
+      versichererName: _wertVon(VorgangsdatenFeld.versichererName),
+      versichererStrasse: _wertVon(VorgangsdatenFeld.versichererStrasse),
+      versichererPlz: _wertVon(VorgangsdatenFeld.versichererPlz),
+      versichererOrt: _wertVon(VorgangsdatenFeld.versichererOrt),
+      versichererTelefon: _wertVon(VorgangsdatenFeld.versichererTelefon),
+      versichererFax: _wertVon(VorgangsdatenFeld.versichererFax),
+      versichererEmail: _wertVon(VorgangsdatenFeld.versichererEmail),
+      versicherungsscheinNr: _wertVon(VorgangsdatenFeld.versicherungsscheinNr),
+      versicherungsbeginn: _wertVon(VorgangsdatenFeld.versicherungsbeginn),
       keinVersichererErmittelt: _data.keinVersichererErmittelt,
+      zwischennachricht: _data.zwischennachricht,
     );
+  }
+
+  /// Bei Negativ-Antworten und Zwischennachrichten wird Übernehmen erst mit
+  /// einem Versicherernamen möglich (aus dem Register gewählt oder von Hand
+  /// eingetragen) — bei der Zwischennachricht ist das Abwarten der Folgemail
+  /// der Normalweg.
+  bool get _uebernehmenMoeglich =>
+      (!_data.keinVersichererErmittelt && !_data.zwischennachricht) ||
+      _wertVon(VorgangsdatenFeld.versichererName) != null;
+
+  void _uebernehmen() {
+    final ziel = _zielAuswahl == VorgangZuordnungAuswahl.neuerVorgangWert
+        ? null
+        : _zielAuswahl;
+    widget.onUebernehmen(_bearbeiteteDaten(), ziel);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final keinVersicherer = _data.keinVersichererErmittelt;
+    final zwischennachricht = _data.zwischennachricht;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -128,50 +238,55 @@ class _VorgangsdatenFormState extends State<VorgangsdatenForm> {
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
-          ZuordnungHinweis(referenz: _data.referenz),
-          if (keinVersicherer)
-            _ToneCard(
+          VorgangZuordnungAuswahl(
+            antwortReferenz: _data.referenz,
+            vermuteteReferenz: _vermuteteReferenz,
+            value: _zielAuswahl,
+            onChanged: (wert) => setState(() => _zielAuswahl = wert),
+          ),
+          const SizedBox(height: 8),
+          if (zwischennachricht) ...[
+            const ZwischennachrichtHinweisCard(),
+            const SizedBox(height: 8),
+          ],
+          if (keinVersicherer) ...[
+            ToneCard(
               accent: theme.colorScheme.error,
               text:
                   'Der Zentralruf konnte zu dieser Anfrage keinen Versicherer '
                   'ermitteln. Bitte Kennzeichen und Unfalldatum prüfen und die '
-                  'Anfrage ggf. wiederholen.',
+                  'Anfrage ggf. wiederholen — oder den Versicherer unten aus '
+                  'der Liste bekannter Versicherer wählen bzw. eintragen.',
             ),
+            const SizedBox(height: 8),
+            VersichererAuswahl(
+              value: _gewaehlterVersichererId,
+              onGewaehlt: _uebernehmeVersicherer,
+            ),
+          ],
+          // Warnungen anzeigen; die vom Backend mitgeschickten Texte zu
+          // Negativ-Antwort/Zwischennachricht entfallen, wenn oben schon die
+          // ausführliche Hinweiskarte steht (sonst doppelt).
           for (final warnung in widget.warnings)
-            if (!keinVersicherer || !warnung.contains('keinen Versicherer'))
-              _ToneCard(
+            if ((!keinVersicherer || !warnung.contains('keinen Versicherer')) &&
+                (!zwischennachricht ||
+                    !warnung.contains('Zwischennachricht')))
+              ToneCard(
                 accent: theme.colorScheme.tertiary,
                 icon: Icons.warning_amber,
                 text: warnung,
               ),
           const SizedBox(height: 8),
-          for (final feld in _Feld.values)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: TextField(
-                controller: _controllers[feld],
-                decoration: InputDecoration(
-                  labelText: feld.label,
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                  // Nicht erkannte Angaben deutlich markieren.
-                  helperText: feld.wert(_data) == null
-                      ? 'nicht gefunden'
-                      : null,
-                  helperStyle: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.error,
-                  ),
-                ),
-              ),
-            ),
+          VorgangsdatenFelderListe(
+            controllers: _controllers,
+            data: _data,
+            ergaenzung: _ergaenzung,
+          ),
           const SizedBox(height: 24),
           FilledButton.icon(
             icon: const Icon(Icons.check),
             label: Text(widget.submitLabel),
-            onPressed: keinVersicherer
-                ? null
-                : () => widget.onUebernehmen(_bearbeiteteDaten()),
+            onPressed: _uebernehmenMoeglich ? _uebernehmen : null,
           ),
           if (widget.fuss case final fuss?) ...[
             const SizedBox(height: 16),
@@ -181,116 +296,4 @@ class _VorgangsdatenFormState extends State<VorgangsdatenForm> {
       ),
     );
   }
-}
-
-/// Zeigt, ob die Antwort über ihre Referenz einer zuvor gestarteten
-/// Zentralruf-Anfrage zugeordnet werden konnte (Req. 3.3).
-class ZuordnungHinweis extends StatelessWidget {
-  final String? referenz;
-
-  const ZuordnungHinweis({super.key, required this.referenz});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return BlocBuilder<VorgangCubit, List<Vorgang>>(
-      bloc: getIt<VorgangCubit>(),
-      builder: (context, vorgaenge) {
-        final vorgang = getIt<VorgangCubit>().findeZuReferenz(referenz);
-        if (vorgang != null) {
-          final datum = vorgang.angefragtAm;
-          final datumText =
-              '${datum.day.toString().padLeft(2, '0')}.'
-              '${datum.month.toString().padLeft(2, '0')}.${datum.year}';
-          final mandant = vorgang.mandantName?.trim();
-          return _ToneCard(
-            accent: theme.colorScheme.primary,
-            icon: Icons.link,
-            text:
-                'Zugeordnet zum Vorgang vom $datumText '
-                '(Referenz ${vorgang.referenz})'
-                '${mandant != null && mandant.isNotEmpty ? ' — $mandant' : ''}.',
-          );
-        }
-
-        if (vorgaenge.isEmpty || referenz == null) {
-          return const SizedBox.shrink();
-        }
-
-        return _ToneCard(
-          accent: theme.colorScheme.tertiary,
-          text:
-              'Zur Referenz "$referenz" ist kein offener Vorgang '
-              'bekannt — bitte prüfen, ob die Antwort zum richtigen Vorgang gehört.',
-        );
-      },
-    );
-  }
-}
-
-class _ToneCard extends StatelessWidget {
-  final Color accent;
-  final IconData? icon;
-  final String text;
-
-  const _ToneCard({required this.accent, required this.text, this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    final tone = SoftTone.fromAccent(accent, Theme.of(context).colorScheme);
-    return Card(
-      color: tone.background,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            if (icon case final icon?) ...[
-              Icon(icon, color: tone.foreground),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Text(text, style: TextStyle(color: tone.foreground)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Die editierbaren Felder in Anzeigereihenfolge.
-enum _Feld {
-  referenz('Referenz (Ihr Zeichen)'),
-  anfrageDatum('Anfrage vom'),
-  kennzeichen('Gegnerisches Kennzeichen'),
-  unfallDatum('Unfalldatum'),
-  versichererName('Versicherer'),
-  versichererStrasse('Straße'),
-  versichererPlz('PLZ'),
-  versichererOrt('Ort'),
-  versichererTelefon('Telefon'),
-  versichererFax('Fax'),
-  versichererEmail('E-Mail'),
-  versicherungsscheinNr('Versicherungsschein-Nr.'),
-  versicherungsbeginn('Versicherungsbeginn');
-
-  final String label;
-
-  const _Feld(this.label);
-
-  String? wert(ZentralrufReplyData data) => switch (this) {
-    _Feld.referenz => data.referenz,
-    _Feld.anfrageDatum => data.anfrageDatum,
-    _Feld.kennzeichen => data.kennzeichen,
-    _Feld.unfallDatum => data.unfallDatum,
-    _Feld.versichererName => data.versichererName,
-    _Feld.versichererStrasse => data.versichererStrasse,
-    _Feld.versichererPlz => data.versichererPlz,
-    _Feld.versichererOrt => data.versichererOrt,
-    _Feld.versichererTelefon => data.versichererTelefon,
-    _Feld.versichererFax => data.versichererFax,
-    _Feld.versichererEmail => data.versichererEmail,
-    _Feld.versicherungsscheinNr => data.versicherungsscheinNr,
-    _Feld.versicherungsbeginn => data.versicherungsbeginn,
-  };
 }

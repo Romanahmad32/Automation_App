@@ -26,6 +26,11 @@ class ReceivedReply extends Equatable {
   /// Diagnose, falls das automatische Mapping unvollständig ist.
   final String? rawText;
 
+  /// True, wenn das Backend den Vorgang nicht über die Referenz, sondern über
+  /// den Fallback (Gegner-Kennzeichen + Unfalldatum) vermutet hat — eine vom
+  /// Anwalt noch zu bestätigende Zuordnung.
+  final bool zuordnungVermutet;
+
   const ReceivedReply({
     required this.id,
     required this.receivedAt,
@@ -35,6 +40,7 @@ class ReceivedReply extends Equatable {
     required this.data,
     required this.warnings,
     this.rawText,
+    this.zuordnungVermutet = false,
   });
 
   factory ReceivedReply.fromJson(Map<String, dynamic> json) {
@@ -49,6 +55,7 @@ class ReceivedReply extends Equatable {
       data: ZentralrufReplyData.fromJson(json['data'] as Map<String, dynamic>),
       warnings: List<String>.from(json['warnings'] as List? ?? const []),
       rawText: json['rawText'] as String?,
+      zuordnungVermutet: json['zuordnungVermutet'] as bool? ?? false,
     );
   }
 
@@ -62,5 +69,6 @@ class ReceivedReply extends Equatable {
     data,
     warnings,
     rawText,
+    zuordnungVermutet,
   ];
 }

@@ -154,6 +154,19 @@ class WizardCubit extends Cubit<WizardState> {
     }
   }
 
+  /// Ersetzt den gewählten Vorgang durch seinen aktualisierten Stand (z. B.
+  /// nach dem Rückfluss der Wizard-Eingaben in den Vorgang), ohne den
+  /// Mandanten neu zu laden. No-op, wenn inzwischen ein anderer Vorgang
+  /// gewählt wurde.
+  void uebernehmeVorgangsStand(Vorgang vorgang) {
+    final aktuell = state.selectedVorgang;
+    if (aktuell == null ||
+        !Vorgang.gleicheReferenz(aktuell.referenz, vorgang.referenz)) {
+      return;
+    }
+    emit(state.copyWith(selectedVorgang: () => vorgang));
+  }
+
   void goToStep(WizardStep step) {
     if (!state.steps.contains(step)) {
       return;

@@ -1,14 +1,21 @@
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_auth_method_selector.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_enabled_switch.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_filter_section.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_gmail_credentials_section.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_gmail_server_section.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_microsoft_signin_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Einstellungsmaske für den Postfach-Zugang (REQUIREMENTS.md §3.3/§4). Mit
 /// diesen Angaben überwacht das Backend das Postfach ereignisbasiert und erfasst
-/// eingehende Zentralruf-Antworten selbsttätig. Für Gmail ist ein App-Passwort
-/// bei aktivierter 2-Faktor-Authentifizierung nötig.
+/// eingehende Zentralruf-Antworten selbsttätig. Zwei Wege: Gmail mit
+/// App-Passwort oder Outlook/Microsoft per Browser-Anmeldung (OAuth — Microsoft
+/// erlaubt für IMAP kein Passwort mehr).
 class MailboxAccessView extends StatefulWidget {
   const MailboxAccessView({super.key});
 
@@ -30,10 +37,16 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   /// bleiben (unverändert), und wir schicken kein null-überschreibendes Passwort.
   bool _appPasswordSet = false;
 
+  /// Zuletzt geladene Konfiguration (für die Microsoft-Konto-Anzeige).
+  MailboxConfig _config = MailboxConfig.empty;
+
   final ScrollController _scrollController = ScrollController();
 
   final FormGroup _form = FormGroup({
     'enabled': FormControl<bool>(value: false),
+    'authMethod': FormControl<MailboxAuthMethod>(
+      value: MailboxAuthMethod.appPassword,
+    ),
     'host': FormControl<String>(
       value: 'imap.gmail.com',
       validators: [Validators.required],
@@ -59,9 +72,11 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   }
 
   void _patch(MailboxConfig config) {
+    _config = config;
     _appPasswordSet = config.appPasswordSet;
     _form.patchValue({
       'enabled': config.enabled,
+      'authMethod': config.authMethod,
       'host': config.host,
       'port': config.port.toString(),
       'useSsl': config.useSsl,
@@ -77,6 +92,11 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
     final value = _form.value;
     String read(String key) => (value[key] as String?)?.trim() ?? '';
 
+    final authMethod =
+        (value['authMethod'] as MailboxAuthMethod?) ??
+        MailboxAuthMethod.appPassword;
+    final microsoft = authMethod == MailboxAuthMethod.microsoftOAuth;
+
     final passwordInput = read('appPassword');
     // Leer + bereits gesetzt = unverändert lassen (null). Sonst neuer Wert.
     final String? appPassword = passwordInput.isEmpty
@@ -87,16 +107,46 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
       SaveMailboxConfigEvent(
         MailboxConfigUpdate(
           enabled: (value['enabled'] as bool?) ?? false,
-          host: read('host'),
-          port: int.tryParse(read('port')) ?? 993,
-          useSsl: (value['useSsl'] as bool?) ?? true,
-          username: read('username'),
-          appPassword: appPassword,
+          authMethod: authMethod,
+          // Beim Outlook-Weg sind Server und Konto durch die Anmeldung
+          // festgelegt — der Nutzer soll nichts davon pflegen müssen.
+          host: microsoft ? 'outlook.office365.com' : read('host'),
+          port: microsoft ? 993 : int.tryParse(read('port')) ?? 993,
+          useSsl: microsoft ? true : (value['useSsl'] as bool?) ?? true,
+          username: microsoft
+              ? (_config.microsoftAccount ?? read('username'))
+              : read('username'),
+          appPassword: microsoft ? null : appPassword,
           folder: read('folder'),
           subjectFilter: read('subjectFilter'),
         ),
       ),
     );
+  }
+
+  void _onLoaded(BuildContext context, MailboxConfigLoaded state) {
+    if (!_initialized || state.justSignedIn) {
+      // Nach der Microsoft-Anmeldung hat das Backend Konto und Server
+      // übernommen — die Maske muss die neuen Werte zeigen.
+      _patch(state.config);
+      setState(() => _initialized = true);
+    } else {
+      _config = state.config;
+      _appPasswordSet = state.config.appPasswordSet;
+    }
+
+    final message = state.justSignedIn
+        ? 'Microsoft-Anmeldung erfolgreich — das Postfach '
+              '${state.config.microsoftAccount ?? ''} wird verwendet.'
+        : state.justSaved
+        ? 'Postfach-Zugang gespeichert. Die Überwachung verbindet sich '
+              'mit den neuen Werten neu.'
+        : null;
+    if (message != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   @override
@@ -105,23 +155,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
     return BlocConsumer<MailboxConfigBloc, MailboxConfigState>(
       listener: (context, state) {
         if (state is MailboxConfigLoaded) {
-          if (!_initialized) {
-            _patch(state.config);
-            setState(() => _initialized = true);
-          } else {
-            // Nach dem Speichern den "Passwort gesetzt"-Status aktualisieren.
-            _appPasswordSet = state.config.appPasswordSet;
-          }
-          if (state.justSaved) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Postfach-Zugang gespeichert. Die Überwachung verbindet sich '
-                      'mit den neuen Werten neu.',
-                ),
-              ),
-            );
-          }
+          _onLoaded(context, state);
         } else if (state is MailboxConfigError) {
           ScaffoldMessenger.of(
             context,
@@ -134,6 +168,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
         }
 
         final isSaving = state is MailboxConfigLoading;
+        final signInPending = state is MailboxMicrosoftSignInPending;
 
         return Scrollbar(
           controller: _scrollController,
@@ -150,88 +185,45 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 16,
                       children: [
-                        FormSection(
+                        const FormSection(
                           icon: Icons.mark_email_unread,
                           title: 'Postfach-Überwachung',
                           subtitle:
-                          'Ist ein Zugang hinterlegt und die Überwachung '
+                              'Ist ein Zugang hinterlegt und die Überwachung '
                               'eingeschaltet, erfasst die App eingehende '
                               'Zentralruf-Antworten automatisch (erkannt über den '
                               'Betreff). Ohne Zugang bleibt sie inaktiv.',
-                          children: const [_EnabledSwitch(), _SslSwitch()],
-                        ),
-                        FormSection(
-                          icon: Icons.alternate_email,
-                          title: 'Zugangsdaten',
-                          subtitle:
-                          'Für Gmail: 2-Faktor-Authentifizierung aktivieren '
-                              'und unter myaccount.google.com/apppasswords ein '
-                              'App-Passwort erzeugen — dieses, nicht das '
-                              'Kontopasswort, gehört unten hinein.',
                           children: [
-                            _field(
-                              'username',
-                              'Postfach-Adresse (E-Mail)',
-                              keyboardType: TextInputType.emailAddress,
-                              validationMessages: {
-                                ValidationMessage.email: (_) =>
-                                'Bitte eine gültige E-Mail-Adresse eingeben',
-                              },
-                            ),
-                            _PasswordField(alreadySet: _appPasswordSet),
+                            MailboxEnabledSwitch(),
+                            MailboxAuthMethodSelector(),
                           ],
                         ),
-                        FormSection(
-                          icon: Icons.dns,
-                          title: 'Server (Standard: Gmail)',
-                          subtitle:
-                          'Für Gmail unverändert lassen. Andere Anbieter: '
-                              'IMAP-Host, Port und Verschlüsselung anpassen.',
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: _field(
-                                    'host',
-                                    'IMAP-Host',
-                                    validationMessages: {
-                                      ValidationMessage.required: (_) =>
-                                      'Pflichtfeld',
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 2,
-                                  child: _field(
-                                    'port',
-                                    'Port',
-                                    keyboardType: TextInputType.number,
-                                    validationMessages: {
-                                      ValidationMessage.required: (_) =>
-                                      'Pflichtfeld',
-                                      ValidationMessage.number: (_) => 'Zahl',
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            _field(
-                              'folder',
-                              'Ordner',
-                              validationMessages: {
-                                ValidationMessage.required: (_) =>
-                                'Pflichtfeld',
-                              },
-                            ),
-                            _field(
-                              'subjectFilter',
-                              'Betreff-Filter (leer = alle Mails prüfen)',
-                            ),
-                          ],
+                        ReactiveValueListenableBuilder<MailboxAuthMethod>(
+                          formControlName: 'authMethod',
+                          builder: (context, control, _) {
+                            final microsoft =
+                                control.value ==
+                                MailboxAuthMethod.microsoftOAuth;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              spacing: 16,
+                              children: microsoft
+                                  ? [
+                                      MailboxMicrosoftSignInSection(
+                                        config: _config,
+                                        signInPending: signInPending,
+                                      ),
+                                    ]
+                                  : [
+                                      MailboxGmailCredentialsSection(
+                                        appPasswordSet: _appPasswordSet,
+                                      ),
+                                      const MailboxGmailServerSection(),
+                                    ],
+                            );
+                          },
                         ),
+                        const MailboxFilterSection(),
                         Align(
                           alignment: Alignment.centerRight,
                           child: ReactiveFormConsumer(
@@ -239,15 +231,16 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
                               return FilledButton.icon(
                                 icon: isSaving
                                     ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
                                     : const Icon(Icons.save),
                                 label: const Text('Speichern'),
-                                onPressed: (form.valid && !isSaving)
+                                onPressed:
+                                    (form.valid && !isSaving && !signInPending)
                                     ? _save
                                     : null,
                               );
@@ -263,111 +256,6 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
           ),
         );
       },
-    );
-  }
-
-  Widget _field(String controlName,
-      String label, {
-        TextInputType? keyboardType,
-        Map<String, String Function(Object)>? validationMessages,
-      }) {
-    return ReactiveTextField<String>(
-      formControlName: controlName,
-      keyboardType: keyboardType,
-      validationMessages: validationMessages,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-    );
-  }
-}
-
-/// Hauptschalter der Überwachung mit erklärendem Untertext.
-class _EnabledSwitch extends StatelessWidget {
-  const _EnabledSwitch();
-
-  @override
-  Widget build(BuildContext context) {
-    return ReactiveValueListenableBuilder<bool>(
-      formControlName: 'enabled',
-      builder: (context, control, _) {
-        final enabled = control.value ?? false;
-        return SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          value: enabled,
-          onChanged: (v) => control.value = v,
-          title: const Text('Postfach automatisch überwachen'),
-          subtitle: Text(
-            enabled
-                ? 'Eingehende Antworten werden automatisch erfasst.'
-                : 'Die Überwachung ist ausgeschaltet.',
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Schalter für SSL/TLS direkt beim Verbindungsaufbau (Port 993) vs. STARTTLS.
-class _SslSwitch extends StatelessWidget {
-  const _SslSwitch();
-
-  @override
-  Widget build(BuildContext context) {
-    return ReactiveValueListenableBuilder<bool>(
-      formControlName: 'useSsl',
-      builder: (context, control, _) {
-        final useSsl = control.value ?? true;
-        return SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          value: useSsl,
-          onChanged: (v) => control.value = v,
-          title: const Text('SSL/TLS direkt beim Verbinden (Port 993)'),
-          subtitle: Text(
-            useSsl
-                ? 'Empfohlen für Gmail.'
-                : 'STARTTLS wird verwendet, sofern der Server es anbietet.',
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// App-Passwort-Feld: obscured; ist bereits eines gespeichert, darf es leer
-/// bleiben (dann wird das gespeicherte beibehalten).
-class _PasswordField extends StatefulWidget {
-  final bool alreadySet;
-
-  const _PasswordField({required this.alreadySet});
-
-  @override
-  State<_PasswordField> createState() => _PasswordFieldState();
-}
-
-class _PasswordFieldState extends State<_PasswordField> {
-  bool _obscured = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return ReactiveTextField<String>(
-      formControlName: 'appPassword',
-      obscureText: _obscured,
-      decoration: InputDecoration(
-        labelText: widget.alreadySet
-            ? 'App-Passwort (gespeichert — leer lassen = unverändert)'
-            : 'App-Passwort',
-        helperText: widget.alreadySet
-            ? 'Es ist bereits ein App-Passwort hinterlegt.'
-            : 'Gmail-App-Passwort, nicht das Kontopasswort.',
-        border: const OutlineInputBorder(),
-        suffixIcon: IconButton(
-          icon: Icon(_obscured ? Icons.visibility : Icons.visibility_off),
-          tooltip: _obscured ? 'Anzeigen' : 'Verbergen',
-          onPressed: () => setState(() => _obscured = !_obscured),
-        ),
-      ),
     );
   }
 }

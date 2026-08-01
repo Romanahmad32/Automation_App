@@ -36,7 +36,7 @@ void main() {
   );
 
   Vorgang vorgang({int? mandantId}) => Vorgang.ausAnfrage(
-    referenz: '84/26 C03_GG-CK 321',
+    referenz: '84/26 C03_GG-XY 123',
     angefragtAm: DateTime(2026, 4, 8),
     mandantId: mandantId,
     mandantName: 'Erika Mustermann',
@@ -48,7 +48,7 @@ void main() {
 
     await cubit.selectVorgang(vorgang(mandantId: 7));
 
-    expect(cubit.state.selectedVorgang?.referenz, '84/26 C03_GG-CK 321');
+    expect(cubit.state.selectedVorgang?.referenz, '84/26 C03_GG-XY 123');
     expect(cubit.state.selectedMandant, mandant);
     await cubit.close();
   });

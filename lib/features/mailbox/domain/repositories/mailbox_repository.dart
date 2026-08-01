@@ -11,6 +11,11 @@ abstract class MailboxRepository {
 
   Future<Either<Failure, MailboxConfig>> saveConfig(MailboxConfigUpdate update);
 
+  /// Microsoft-Anmeldung für Outlook-Postfächer (Browser öffnet sich am Backend).
+  Future<Either<Failure, MailboxConfig>> microsoftSignIn();
+
+  Future<Either<Failure, MailboxConfig>> microsoftSignOut();
+
   Future<Either<Failure, MailboxStatus>> getStatus();
 
   Future<Either<Failure, List<ReceivedReply>>> getReplies({

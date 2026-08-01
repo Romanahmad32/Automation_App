@@ -1,6 +1,7 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
-import 'package:automation_app/features/zentralruf_reply/domain/entities/offene_anfrage.dart';
+import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:equatable/equatable.dart';
 
@@ -39,8 +40,29 @@ class Vorgang extends Equatable {
   final String? gegner;
   final String? unfallDatum;
 
+  /// Kfz-Kennzeichen des Mandanten/Geschädigten (eigenes Fahrzeug, mit
+  /// Bindestrich). Getrennt vom [kennzeichen] (= Kennzeichen des Gegners aus der
+  /// Referenz). Null, solange nicht erfasst.
+  final String? geschaedigtenKennzeichen;
+
+  /// Angaben zum Unfallhergang für die spätere Akten-/Schreibenerstellung.
+  /// Optional; nur bei Verkehrsunfall-Vorgängen befüllt.
+  final String? unfallort;
+  final String? unfalluhrzeit;
+  final String? polizeiVorgangsnummer;
+
   /// Die aus der Zentralruf-Antwort übernommenen Daten, sobald vorhanden.
   final ZentralrufReplyData? antwort;
+
+  /// Die zuletzt im Word-Assistenten ausgefüllten Formularfelder
+  /// (Label → Wert). Beim nächsten Schreiben zum selben Vorgang werden sie
+  /// mit Vorrang vor der Heuristik vorbelegt — der Anwalt hat sie ja bereits
+  /// bestätigt. Null, solange noch kein Dokument erzeugt wurde.
+  final Map<String, String>? feldWerte;
+
+  /// Die zuletzt erfasste Schadensaufstellung (nur Vorlagen „mit Auflistung"),
+  /// für die Wiederverwendung bei Folge-/Korrekturschreiben.
+  final DamageListing? schadensaufstellung;
 
   /// Pfad des erzeugten Anspruchsschreibens bzw. der Ablageort in der Akte.
   final String? dokumentPfad;
@@ -61,7 +83,13 @@ class Vorgang extends Equatable {
     this.mandantName,
     this.gegner,
     this.unfallDatum,
+    this.geschaedigtenKennzeichen,
+    this.unfallort,
+    this.unfalluhrzeit,
+    this.polizeiVorgangsnummer,
     this.antwort,
+    this.feldWerte,
+    this.schadensaufstellung,
     this.dokumentPfad,
     this.aktenOrdner,
     this.abgeschlossenAm,
@@ -75,8 +103,13 @@ class Vorgang extends Equatable {
     Rechtsgebiet rechtsgebiet = Rechtsgebiet.verkehrsrecht,
     int? mandantId,
     String? mandantName,
+    String? unfallDatum,
+    String? geschaedigtenKennzeichen,
+    String? unfallort,
+    String? unfalluhrzeit,
+    String? polizeiVorgangsnummer,
   }) {
-    final teile = _ReferenzTeile.parse(referenz);
+    final teile = ReferenzTeile.parse(referenz);
     return Vorgang(
       referenz: referenz.trim(),
       angefragtAm: angefragtAm,
@@ -87,6 +120,11 @@ class Vorgang extends Equatable {
       kennzeichen: teile?.kennzeichen,
       mandantId: mandantId,
       mandantName: mandantName,
+      unfallDatum: unfallDatum,
+      geschaedigtenKennzeichen: geschaedigtenKennzeichen,
+      unfallort: unfallort,
+      unfalluhrzeit: unfalluhrzeit,
+      polizeiVorgangsnummer: polizeiVorgangsnummer,
     );
   }
 
@@ -108,53 +146,6 @@ class Vorgang extends Equatable {
     return '$links ./. $rechts'.trim();
   }
 
-  factory Vorgang.fromJson(Map<String, dynamic> json) {
-    final antwortJson = json['antwort'];
-    return Vorgang(
-      referenz: json['referenz'] as String? ?? '',
-      angefragtAm:
-          DateTime.tryParse(json['angefragtAm'] as String? ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0),
-      status: VorgangStatus.fromValue(json['status'] as String?),
-      rechtsgebiet: Rechtsgebiet.fromValue(json['rechtsgebiet'] as String?),
-      laufendeNummer: (json['laufendeNummer'] as num?)?.toInt(),
-      jahr: json['jahr'] as String?,
-      abteilung: json['abteilung'] as String?,
-      kennzeichen: json['kennzeichen'] as String?,
-      mandantId: (json['mandantId'] as num?)?.toInt(),
-      mandantName: json['mandantName'] as String?,
-      gegner: json['gegner'] as String?,
-      unfallDatum: json['unfallDatum'] as String?,
-      antwort: antwortJson is Map<String, dynamic>
-          ? ZentralrufReplyData.fromJson(antwortJson)
-          : null,
-      dokumentPfad: json['dokumentPfad'] as String?,
-      aktenOrdner: json['aktenOrdner'] as String?,
-      abgeschlossenAm: DateTime.tryParse(
-        json['abgeschlossenAm'] as String? ?? '',
-      ),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'referenz': referenz,
-    'angefragtAm': angefragtAm.toIso8601String(),
-    'status': status.value,
-    'rechtsgebiet': rechtsgebiet.value,
-    'laufendeNummer': laufendeNummer,
-    'jahr': jahr,
-    'abteilung': abteilung,
-    'kennzeichen': kennzeichen,
-    'mandantId': mandantId,
-    'mandantName': mandantName,
-    'gegner': gegner,
-    'unfallDatum': unfallDatum,
-    'antwort': antwort?.toJson(),
-    'dokumentPfad': dokumentPfad,
-    'aktenOrdner': aktenOrdner,
-    'abgeschlossenAm': abgeschlossenAm?.toIso8601String(),
-  };
-
   Vorgang copyWith({
     VorgangStatus? status,
     Rechtsgebiet? rechtsgebiet,
@@ -162,7 +153,13 @@ class Vorgang extends Equatable {
     String? mandantName,
     String? gegner,
     String? unfallDatum,
+    String? geschaedigtenKennzeichen,
+    String? unfallort,
+    String? unfalluhrzeit,
+    String? polizeiVorgangsnummer,
     ZentralrufReplyData? antwort,
+    Map<String, String>? feldWerte,
+    DamageListing? schadensaufstellung,
     String? dokumentPfad,
     String? aktenOrdner,
     DateTime? abgeschlossenAm,
@@ -180,7 +177,15 @@ class Vorgang extends Equatable {
       mandantName: mandantName ?? this.mandantName,
       gegner: gegner ?? this.gegner,
       unfallDatum: unfallDatum ?? this.unfallDatum,
+      geschaedigtenKennzeichen:
+          geschaedigtenKennzeichen ?? this.geschaedigtenKennzeichen,
+      unfallort: unfallort ?? this.unfallort,
+      unfalluhrzeit: unfalluhrzeit ?? this.unfalluhrzeit,
+      polizeiVorgangsnummer:
+          polizeiVorgangsnummer ?? this.polizeiVorgangsnummer,
       antwort: antwort ?? this.antwort,
+      feldWerte: feldWerte ?? this.feldWerte,
+      schadensaufstellung: schadensaufstellung ?? this.schadensaufstellung,
       dokumentPfad: dokumentPfad ?? this.dokumentPfad,
       aktenOrdner: aktenOrdner ?? this.aktenOrdner,
       abgeschlossenAm: abgeschlossenAm ?? this.abgeschlossenAm,
@@ -194,46 +199,6 @@ class Vorgang extends Equatable {
 
   static String normalizeReferenz(String referenz) =>
       referenz.trim().toUpperCase().replaceAll(RegExp(r'\s+'), ' ');
-
-  /// Überführt den alten Persistenzstand (Liste offener Anfragen + zuletzt
-  /// übernommene Vorgangsdaten) in Vorgänge. Jede offene Anfrage wird zu einem
-  /// Vorgang im Status „angefragt"; die letzten Antwortdaten werden dem Vorgang
-  /// mit passender Referenz zugeordnet (Status „beantwortet") oder, falls keine
-  /// passende Anfrage existiert, als eigener beantworteter Vorgang ergänzt.
-  static List<Vorgang> migriereAusLegacy({
-    required List<OffeneAnfrage> offeneAnfragen,
-    ZentralrufReplyData? letzteAntwort,
-  }) {
-    final vorgaenge = [
-      for (final anfrage in offeneAnfragen)
-        Vorgang.ausAnfrage(
-          referenz: anfrage.referenz,
-          angefragtAm: anfrage.angefragtAm,
-        ),
-    ];
-
-    final antwortReferenz = letzteAntwort?.referenz?.trim();
-    if (letzteAntwort == null ||
-        antwortReferenz == null ||
-        antwortReferenz.isEmpty) {
-      return vorgaenge;
-    }
-
-    final index = vorgaenge.indexWhere(
-      (vorgang) => gleicheReferenz(vorgang.referenz, antwortReferenz),
-    );
-    if (index >= 0) {
-      vorgaenge[index] = vorgaenge[index].mitAntwort(letzteAntwort);
-    } else {
-      vorgaenge.add(
-        Vorgang.ausAnfrage(
-          referenz: antwortReferenz,
-          angefragtAm: DateTime.fromMillisecondsSinceEpoch(0),
-        ).mitAntwort(letzteAntwort),
-      );
-    }
-    return vorgaenge;
-  }
 
   /// Hängt die übernommenen Antwortdaten an und schaltet den Status auf
   /// „beantwortet" weiter. Übernimmt Gegner, Unfalldatum und (falls noch nicht
@@ -254,7 +219,13 @@ class Vorgang extends Equatable {
       mandantName: mandantName,
       gegner: gegner ?? data.versichererName,
       unfallDatum: unfallDatum ?? data.unfallDatum,
+      geschaedigtenKennzeichen: geschaedigtenKennzeichen,
+      unfallort: unfallort,
+      unfalluhrzeit: unfalluhrzeit,
+      polizeiVorgangsnummer: polizeiVorgangsnummer,
       antwort: data,
+      feldWerte: feldWerte,
+      schadensaufstellung: schadensaufstellung,
       dokumentPfad: dokumentPfad,
       aktenOrdner: aktenOrdner,
       abgeschlossenAm: abgeschlossenAm,
@@ -275,37 +246,15 @@ class Vorgang extends Equatable {
     mandantName,
     gegner,
     unfallDatum,
+    geschaedigtenKennzeichen,
+    unfallort,
+    unfalluhrzeit,
+    polizeiVorgangsnummer,
     antwort,
+    feldWerte,
+    schadensaufstellung,
     dokumentPfad,
     aktenOrdner,
     abgeschlossenAm,
   ];
-}
-
-/// Zerlegt eine Referenz „Nr/Jahr Abteilung_Kennzeichen" in ihre Bestandteile.
-class _ReferenzTeile {
-  final int? nummer;
-  final String jahr;
-  final String abteilung;
-  final String kennzeichen;
-
-  const _ReferenzTeile({
-    required this.nummer,
-    required this.jahr,
-    required this.abteilung,
-    required this.kennzeichen,
-  });
-
-  static final RegExp _muster = RegExp(r'^\s*(\d+)\s*/\s*(\d+)\s+(\S+)_(.+)$');
-
-  static _ReferenzTeile? parse(String referenz) {
-    final match = _muster.firstMatch(referenz);
-    if (match == null) return null;
-    return _ReferenzTeile(
-      nummer: int.tryParse(match.group(1)!),
-      jahr: match.group(2)!,
-      abteilung: match.group(3)!,
-      kennzeichen: match.group(4)!.trim(),
-    );
-  }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:automation_app/features/mailbox/domain/repositories/mailbox_push_notifier.dart';
 import 'package:injectable/injectable.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
@@ -13,8 +14,8 @@ import 'package:signalr_netcore/signalr_client.dart';
 ///
 /// Push ist best-effort: Schlägt der Verbindungsaufbau fehl, funktioniert die
 /// Ansicht weiter über manuelles „Aktualisieren".
-@lazySingleton
-class MailboxHub {
+@LazySingleton(as: MailboxPushNotifier)
+class MailboxHub implements MailboxPushNotifier {
   static const _url = 'http://localhost:5143/hubs/mailbox';
 
   HubConnection? _connection;
@@ -24,13 +25,16 @@ class MailboxHub {
   final _statusChanged = StreamController<void>.broadcast();
 
   /// Feuert, sobald das Backend eine neu erfasste Antwort meldet.
+  @override
   Stream<void> get onReplyReceived => _replyReceived.stream;
 
   /// Feuert, sobald sich der Verbindungsstatus der Überwachung ändert.
+  @override
   Stream<void> get onStatusChanged => _statusChanged.stream;
 
   /// Baut die Verbindung einmalig auf (idempotent). Mehrfachaufrufe teilen sich
   /// denselben laufenden Verbindungsaufbau.
+  @override
   Future<void> ensureConnected() {
     if (_connection != null) return Future.value();
     return _starting ??= _connect();
@@ -58,6 +62,7 @@ class MailboxHub {
     }
   }
 
+  @override
   @disposeMethod
   Future<void> dispose() async {
     await _connection?.stop();

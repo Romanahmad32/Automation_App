@@ -39,7 +39,7 @@ class MailboxInboxPage extends StatelessWidget implements AutoRouteWrapper {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Zentralruf-Antworten'),
+          title: const Text('Postfach'),
           centerTitle: true,
           actions: [
             IconButton(

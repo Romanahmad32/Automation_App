@@ -18,6 +18,8 @@ class MailboxConfigBloc extends Bloc<MailboxConfigEvent, MailboxConfigState> {
   MailboxConfigBloc(this._repository) : super(const MailboxConfigLoading()) {
     on<LoadMailboxConfigEvent>(_onLoad);
     on<SaveMailboxConfigEvent>(_onSave);
+    on<MicrosoftSignInEvent>(_onMicrosoftSignIn);
+    on<MicrosoftSignOutEvent>(_onMicrosoftSignOut);
   }
 
   Future<void> _onLoad(LoadMailboxConfigEvent event,
@@ -39,6 +41,31 @@ class MailboxConfigBloc extends Bloc<MailboxConfigEvent, MailboxConfigState> {
     switch (result) {
       case Right(value: final config):
         emit(MailboxConfigLoaded(config, justSaved: true));
+      case Left(value: final failure):
+        emit(MailboxConfigError(failure.message));
+    }
+  }
+
+  Future<void> _onMicrosoftSignIn(MicrosoftSignInEvent event,
+      Emitter<MailboxConfigState> emit,) async {
+    // Eigener Wartezustand: Der Nutzer meldet sich derweil im Browser an.
+    emit(const MailboxMicrosoftSignInPending());
+    final result = await _repository.microsoftSignIn();
+    switch (result) {
+      case Right(value: final config):
+        emit(MailboxConfigLoaded(config, justSignedIn: true));
+      case Left(value: final failure):
+        emit(MailboxConfigError(failure.message));
+    }
+  }
+
+  Future<void> _onMicrosoftSignOut(MicrosoftSignOutEvent event,
+      Emitter<MailboxConfigState> emit,) async {
+    emit(const MailboxConfigLoading());
+    final result = await _repository.microsoftSignOut();
+    switch (result) {
+      case Right(value: final config):
+        emit(MailboxConfigLoaded(config));
       case Left(value: final failure):
         emit(MailboxConfigError(failure.message));
     }

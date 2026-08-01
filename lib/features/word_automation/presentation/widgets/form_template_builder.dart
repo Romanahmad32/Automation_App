@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
@@ -16,12 +17,19 @@ class FormTemplateBuilder extends StatelessWidget {
   /// sichtbar und vom Nutzer änderbar.
   final Map<String, String> initialValues;
 
+  /// Herkunft je vorbelegtem Feldname (z. B. „aus der Zentralruf-Antwort"),
+  /// als Hinweis unter dem Feld angezeigt — der Anwalt sieht so je Feld,
+  /// welchem Datenbestand er vertraut, und erkennt falsche Vorbelegungen
+  /// sofort (Punkt 7 des Verbesserungsplans).
+  final Map<String, String> initialValueQuellen;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
     this.submitButtonLabel,
     this.onSubmitted,
     this.initialValues = const {},
+    this.initialValueQuellen = const {},
   });
 
   @override
@@ -116,43 +124,53 @@ class FormTemplateBuilder extends StatelessWidget {
         return GermanDateField(
           formControlName: field.label,
           labelText: field.label,
-          helperText: field.required ? '* Pflichtfeld' : null,
+          helperText: _helperText(field),
           validationMessages: validationMessages,
         );
       case InputType.integer:
-        return ReactiveTextField<String>(
+        return GeneralTextField<String>(
           formControlName: field.label,
+          labelText: field.label,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           validationMessages: validationMessages,
-          decoration: _decoration(field),
+          inputDecoration: _decoration(field),
         );
       case InputType.decimal:
-        return ReactiveTextField<String>(
+        return GeneralTextField<String>(
           formControlName: field.label,
+          labelText: field.label,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
           ],
           validationMessages: validationMessages,
-          decoration: _decoration(field),
+          inputDecoration: _decoration(field),
         );
       case InputType.text:
-        return ReactiveTextField<String>(
+        return GeneralTextField<String>(
           formControlName: field.label,
+          labelText: field.label,
           keyboardType: TextInputType.text,
           validationMessages: validationMessages,
-          decoration: _decoration(field),
+          inputDecoration: _decoration(field),
         );
     }
   }
 
-  InputDecoration _decoration(FieldData field) =>
-      InputDecoration(
-        labelText: field.label,
-        helperText: field.required ? '* Pflichtfeld' : null,
-        border: const OutlineInputBorder(),
+  InputDecoration _decoration(FieldData field) => InputDecoration(
+        helperText: _helperText(field),
       );
+
+  /// Hinweiszeile unter dem Feld: Pflichtfeld-Markierung und — falls das Feld
+  /// vorbelegt wurde — die Herkunft des Werts.
+  String? _helperText(FieldData field) {
+    final quelle = initialValueQuellen[field.label];
+    final pflicht = field.required ? '* Pflichtfeld' : null;
+    if (quelle == null) return pflicht;
+    final vorbelegt = 'Vorbelegt $quelle';
+    return pflicht == null ? vorbelegt : '$pflicht · $vorbelegt';
+  }
 
   /// Zahlungsfrist-Felder werden mit Generierungsdatum + 5 Wochen vorbelegt,
   /// alle anderen Datumsfelder mit dem heutigen Datum.

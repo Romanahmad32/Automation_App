@@ -1,7 +1,8 @@
+import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/data/datasources/akten_filesystem_datasource.dart';
-import 'package:automation_app/features/mandanten/data/datasources/local_mandant_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/mandant_datasource.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -11,12 +12,12 @@ import 'package:injectable/injectable.dart';
 
 @Injectable(as: MandantenRepository)
 class MandantenRepositoryImpl implements MandantenRepository {
-  final LocalMandantDatasource _localDatasource;
+  final MandantDatasource _datasource;
   final AktenFilesystemDatasource _aktenDatasource;
   final KanzleiSettingsRepository _settingsRepository;
 
   MandantenRepositoryImpl(
-    this._localDatasource,
+    this._datasource,
     this._aktenDatasource,
     this._settingsRepository,
   );
@@ -24,7 +25,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
   @override
   Future<Either<Failure, List<Mandant>>> getMandanten() async {
     try {
-      return Right(await _localDatasource.loadMandanten());
+      return Right(await _datasource.loadMandanten());
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
     }
@@ -35,7 +36,9 @@ class MandantenRepositoryImpl implements MandantenRepository {
     CreateMandantRequest request,
   ) async {
     try {
-      return Right(await _localDatasource.createMandant(request));
+      return Right(await _datasource.createMandant(request));
+    } on MandantException catch (e) {
+      return Left(LocalFailure(message: e.message));
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
     }
@@ -44,7 +47,9 @@ class MandantenRepositoryImpl implements MandantenRepository {
   @override
   Future<Either<Failure, Mandant>> updateMandant(Mandant mandant) async {
     try {
-      return Right(await _localDatasource.updateMandant(mandant));
+      return Right(await _datasource.updateMandant(mandant));
+    } on MandantException catch (e) {
+      return Left(LocalFailure(message: e.message));
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
     }
@@ -53,7 +58,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
   @override
   Future<Either<Failure, void>> deleteMandant(int id) async {
     try {
-      await _localDatasource.deleteMandant(id);
+      await _datasource.deleteMandant(id);
       return Right(null);
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));
@@ -107,7 +112,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
   /// Fügt [ordnername] zu den Akten des Mandanten hinzu (idempotent) und
   /// speichert. Gibt den aktualisierten Mandanten zurück.
   Future<Mandant> _verknuepfe(int mandantId, String ordnername) async {
-    final mandanten = await _localDatasource.loadMandanten();
+    final mandanten = await _datasource.loadMandanten();
     final mandant = mandanten.firstWhere(
       (m) => m.id == mandantId,
       orElse: () =>
@@ -119,7 +124,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
     final aktualisiert = mandant.copyWith(
       aktenOrdnernamen: [...mandant.aktenOrdnernamen, ordnername],
     );
-    return _localDatasource.updateMandant(aktualisiert);
+    return _datasource.updateMandant(aktualisiert);
   }
 
   Future<String> _ladeStammordner() async {

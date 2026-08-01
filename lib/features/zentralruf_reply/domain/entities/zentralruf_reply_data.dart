@@ -14,7 +14,7 @@ class ZentralrufReplyData extends Equatable {
 
   final String? anfrageDatum;
 
-  /// Gegnerisches Kennzeichen, vom Backend normalisiert (z. B. "GG-CK 321").
+  /// Gegnerisches Kennzeichen, vom Backend normalisiert (z. B. "GG-XY 123").
   final String? kennzeichen;
   final String? unfallDatum;
   final String? versichererName;
@@ -30,6 +30,11 @@ class ZentralrufReplyData extends Equatable {
   /// True, wenn der Zentralruf ausdrücklich keinen Versicherer ermitteln
   /// konnte (Negativ-Antwort).
   final bool keinVersichererErmittelt;
+
+  /// True, wenn die Mail nur eine Zwischennachricht ist (Auskunft nicht
+  /// sofort möglich, z. B. manuelle Prüfung / ausländisches Kennzeichen);
+  /// die endgültige Antwort folgt in einer weiteren Mail.
+  final bool zwischennachricht;
 
   const ZentralrufReplyData({
     this.referenz,
@@ -50,6 +55,7 @@ class ZentralrufReplyData extends Equatable {
     this.versicherungsscheinNr,
     this.versicherungsbeginn,
     this.keinVersichererErmittelt = false,
+    this.zwischennachricht = false,
   });
 
   factory ZentralrufReplyData.fromJson(Map<String, dynamic> json) {
@@ -73,6 +79,7 @@ class ZentralrufReplyData extends Equatable {
       versicherungsbeginn: json['versicherungsbeginn'] as String?,
       keinVersichererErmittelt:
           json['keinVersichererErmittelt'] as bool? ?? false,
+      zwischennachricht: json['zwischennachricht'] as bool? ?? false,
     );
   }
 
@@ -97,12 +104,25 @@ class ZentralrufReplyData extends Equatable {
     'versicherungsscheinNr': versicherungsscheinNr,
     'versicherungsbeginn': versicherungsbeginn,
     'keinVersichererErmittelt': keinVersichererErmittelt,
+    'zwischennachricht': zwischennachricht,
   };
 
-  /// Vollständige Anschrift des Versicherers (für Adressfelder in Vorlagen).
+  /// Vollständige Anschrift des Versicherers inkl. Name (für ein einzelnes
+  /// Adressfeld, das den kompletten Empfängerblock aufnimmt).
   String? get versichererAnschrift {
     final parts = [
       versichererName,
+      versichererStrasse,
+      [versichererPlz, versichererOrt].whereType<String>().join(' '),
+    ].where((part) => part != null && part.isNotEmpty).toList();
+    return parts.isEmpty ? null : parts.join(', ');
+  }
+
+  /// Anschrift des Versicherers OHNE Namen (Straße, PLZ Ort) — für ein reines
+  /// „Adresse"-Feld, wenn der Name in einem separaten Feld steht (sonst stünde
+  /// der Versicherername doppelt im Brief).
+  String? get versichererAdresseOhneName {
+    final parts = [
       versichererStrasse,
       [versichererPlz, versichererOrt].whereType<String>().join(' '),
     ].where((part) => part != null && part.isNotEmpty).toList();
@@ -129,6 +149,7 @@ class ZentralrufReplyData extends Equatable {
     versicherungsscheinNr,
     versicherungsbeginn,
     keinVersichererErmittelt,
+    zwischennachricht,
   ];
 }
 

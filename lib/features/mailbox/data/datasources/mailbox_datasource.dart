@@ -9,6 +9,12 @@ abstract class MailboxDatasource {
 
   Future<MailboxConfig> saveConfig(MailboxConfigUpdate update);
 
+  /// Startet die Microsoft-Anmeldung für Outlook-Postfächer: Das Backend öffnet
+  /// den Browser und wartet, bis der Nutzer sich angemeldet hat (bis zu 5 Min.).
+  Future<MailboxConfig> microsoftSignIn();
+
+  Future<MailboxConfig> microsoftSignOut();
+
   Future<MailboxStatus> getStatus();
 
   Future<List<ReceivedReply>> getReplies({bool includeAcknowledged});
@@ -37,6 +43,23 @@ class ApiMailboxDatasource implements MailboxDatasource {
       data: update.toJson(),
       options: Options(contentType: Headers.jsonContentType),
     );
+    return MailboxConfig.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<MailboxConfig> microsoftSignIn() async {
+    final response = await _dio.post(
+      '/api/mailbox/microsoft/signin',
+      // Das Backend wartet auf die Anmeldung im Browser (bis zu 5 Minuten) —
+      // der Standard-Timeout wäre hier viel zu knapp.
+      options: Options(receiveTimeout: const Duration(minutes: 6)),
+    );
+    return MailboxConfig.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<MailboxConfig> microsoftSignOut() async {
+    final response = await _dio.post('/api/mailbox/microsoft/signout');
     return MailboxConfig.fromJson(response.data as Map<String, dynamic>);
   }
 

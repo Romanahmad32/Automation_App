@@ -18,19 +18,9 @@ class ErhoeheAuftragsnummer {
 
   ErhoeheAuftragsnummer(this._repository);
 
-  Future<Either<Failure, KanzleiSettings>> call() async {
-    final aktuell = await _repository.getSettings();
-    switch (aktuell) {
-      case Right(value: final settings):
-        return _repository.saveSettings(
-          settings.copyWith(
-            laufendeAuftragsnummer: settings.laufendeAuftragsnummer + 1,
-          ),
-        );
-      case Left():
-        // Konnten die Einstellungen nicht gelesen werden, wird auch nicht
-        // hochgezählt — der Fehler wird unverändert weitergereicht.
-        return aktuell;
-    }
+  Future<Either<Failure, KanzleiSettings>> call() {
+    // Atomar im Backend (ein Schreiber, eine Transaktion) statt get+save im
+    // Frontend — schließt die frühere Read-Modify-Write-Lücke.
+    return _repository.erhoeheAuftragsnummer();
   }
 }

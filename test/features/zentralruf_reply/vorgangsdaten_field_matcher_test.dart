@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   // Werte aus "Beispiele/Anwortemail von Zentralruf.txt".
   const data = ZentralrufReplyData(
-    referenz: '84/26 C03_GG-CK 321',
+    referenz: '84/26 C03_GG-XY 123',
     anfrageDatum: '08.04.2026',
-    kennzeichen: 'GG CK 321',
+    kennzeichen: 'GG XY 123',
     unfallDatum: '09.03.2026',
     versichererName: 'HUK-COBURG',
     versichererStrasse: 'Lyoner Str. 10',
@@ -16,7 +16,7 @@ void main() {
     versichererTelefon: '0800/248544533',
     versichererFax: '0800-2485329',
     versichererEmail: 'info@huk-coburg.de',
-    versicherungsscheinNr: '514/216582-Q',
+    versicherungsscheinNr: '999/123456-X',
     versicherungsbeginn: '07.10.2015',
   );
 
@@ -30,12 +30,12 @@ void main() {
       'Aktenzeichen',
     ], data);
 
-    expect(result['Versicherungsschein-Nr.'], '514/216582-Q');
+    expect(result['Versicherungsschein-Nr.'], '999/123456-X');
     expect(result['Unfalldatum'], '09.03.2026');
-    expect(result['Kennzeichen des Unfallgegners'], 'GG CK 321');
+    expect(result['Kennzeichen des Unfallgegners'], 'GG XY 123');
     expect(result['Gegnerische Versicherung'], 'HUK-COBURG');
     expect(result['E-Mail der Versicherung'], 'info@huk-coburg.de');
-    expect(result['Aktenzeichen'], '84/26 C03_GG-CK 321');
+    expect(result['Aktenzeichen'], '84/26 C03_GG-XY 123');
   });
 
   test('befüllt Adressteile des Versicherers', () {
@@ -68,13 +68,13 @@ void main() {
   });
 
   test('lässt Felder leer, deren Wert in der Antwort fehlt', () {
-    const unvollstaendig = ZentralrufReplyData(kennzeichen: 'GG CK 321');
+    const unvollstaendig = ZentralrufReplyData(kennzeichen: 'GG XY 123');
 
     final result = VorgangsdatenFieldMatcher.matchFields([
       'Versicherungsschein-Nr.',
       'Kennzeichen',
     ], unvollstaendig);
 
-    expect(result, {'Kennzeichen': 'GG CK 321'});
+    expect(result, {'Kennzeichen': 'GG XY 123'});
   });
 }

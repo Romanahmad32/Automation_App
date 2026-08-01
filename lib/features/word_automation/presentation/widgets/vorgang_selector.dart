@@ -2,6 +2,7 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +22,39 @@ class VorgangSelector extends StatefulWidget {
 
 class _VorgangSelectorState extends State<VorgangSelector> {
   bool _autoSelectVersucht = false;
+
+  final VorgangNavigationSignal _navSignal = getIt<VorgangNavigationSignal>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Gezielte Vorauswahl beim Wechsel aus „Vorgang starten" → Word. Greift auch,
+    // wenn der Tab bereits gebaut ist (AutoTabsRouter hält ihn am Leben).
+    _navSignal.pendingReferenz.addListener(_onNavSignal);
+    _onNavSignal();
+  }
+
+  @override
+  void dispose() {
+    _navSignal.pendingReferenz.removeListener(_onNavSignal);
+    super.dispose();
+  }
+
+  void _onNavSignal() {
+    final referenz = _navSignal.pendingReferenz.value;
+    if (referenz == null) return;
+    final vorgaenge = getIt<VorgangCubit>().state;
+    for (final vorgang in vorgaenge) {
+      if (Vorgang.gleicheReferenz(vorgang.referenz, referenz)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          context.read<WizardCubit>().selectVorgang(vorgang);
+        });
+        break;
+      }
+    }
+    _navSignal.loesche();
+  }
 
   /// Vorauswahl-Vorschlag: der zuletzt aktualisierte Vorgang mit Antwort
   /// (uebernehmeAntwort hängt ihn ans Listenende), sonst der zuletzt angelegte.

@@ -1,5 +1,6 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ class TemplateFieldItem extends StatelessWidget {
   final int index;
   final FieldData fieldData;
   final ValueChanged<InputType?> onTypeChanged;
+  final ValueChanged<FeldDatenquelle?> onDatenquelleChanged;
   final ValueChanged<bool?> onRequiredChanged;
   final VoidCallback onDelete;
 
@@ -17,6 +19,7 @@ class TemplateFieldItem extends StatelessWidget {
     required this.index,
     required this.fieldData,
     required this.onTypeChanged,
+    required this.onDatenquelleChanged,
     required this.onRequiredChanged,
     required this.onDelete,
   });
@@ -69,7 +72,7 @@ class TemplateFieldItem extends StatelessWidget {
           ),
 
           Expanded(
-            flex: 3,
+            flex: 2,
             child: SearchableDropdown<InputType>(
               value: fieldData.inputType,
               hintText: 'Typ suchen oder auswählen',
@@ -81,6 +84,22 @@ class TemplateFieldItem extends StatelessWidget {
                   ),
               ],
               onChanged: onTypeChanged,
+            ),
+          ),
+
+          Expanded(
+            flex: 3,
+            child: SearchableDropdown<FeldDatenquelle>(
+              value: fieldData.datenquelle,
+              hintText: 'Datenquelle suchen oder auswählen',
+              entries: [
+                for (final quelle in FeldDatenquelle.values)
+                  SearchableDropdownEntry(
+                    value: quelle,
+                    label: quelle.displayName,
+                  ),
+              ],
+              onChanged: onDatenquelleChanged,
             ),
           ),
 

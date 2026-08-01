@@ -24,6 +24,14 @@ class MailboxRepositoryImpl implements MailboxRepository {
   ) => _guard(() => _datasource.saveConfig(update));
 
   @override
+  Future<Either<Failure, MailboxConfig>> microsoftSignIn() =>
+      _guard(() => _datasource.microsoftSignIn());
+
+  @override
+  Future<Either<Failure, MailboxConfig>> microsoftSignOut() =>
+      _guard(() => _datasource.microsoftSignOut());
+
+  @override
   Future<Either<Failure, MailboxStatus>> getStatus() =>
       _guard(() => _datasource.getStatus());
 
@@ -43,10 +51,16 @@ class MailboxRepositoryImpl implements MailboxRepository {
       return Right(await action());
     } on DioException catch (e) {
       // Das Backend läuft lokal; ein Verbindungsfehler heißt meist, dass der
-      // Dienst (noch) nicht gestartet ist.
+      // Dienst (noch) nicht gestartet ist. Fehlerantworten des Backends kommen
+      // als ProblemDetails — deren Klartext (z. B. "Microsoft-Anmeldung
+      // fehlgeschlagen") ist für den Nutzer hilfreicher als der Dio-Wortlaut.
+      final problem = e.response?.data;
+      final detail = problem is Map<String, dynamic>
+          ? (problem['detail'] as String? ?? problem['title'] as String?)
+          : null;
       final message = e.type == DioExceptionType.connectionError
           ? 'Keine Verbindung zum lokalen Dienst (localhost:5143).'
-          : 'Der Dienst hat die Anfrage abgelehnt: ${e.message}';
+          : detail ?? 'Der Dienst hat die Anfrage abgelehnt: ${e.message}';
       return Left(ServerFailure(message: message));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));

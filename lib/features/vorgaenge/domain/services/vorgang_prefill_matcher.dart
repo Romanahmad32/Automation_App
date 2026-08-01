@@ -1,5 +1,9 @@
+import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/mandant_feld_heuristik.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/services/vorgangsdaten_field_matcher.dart';
 
 /// Ordnet die in einem [Vorgang] gebündelten Daten den frei benannten Feldern
@@ -14,13 +18,203 @@ import 'package:automation_app/features/zentralruf_reply/domain/services/vorgang
 ///   übernommenen Zentralruf-Antwort über die bewährte Antwort-Heuristik.
 ///
 /// Felder ohne eindeutige Zuordnung bleiben leer — lieber unbefüllt als falsch
-/// vorbelegt (Req. 3.4). So zieht der Word-Assistent Mandant + Antwort +
-/// Rechtsgebiet direkt aus dem gewählten Vorgang, statt sie erneut zu erfassen.
+/// vorbelegt (Req. 3.4). Jeder Wert trägt seine Herkunft ([PrefillWert]) für
+/// die Anzeige am Feld, damit der Anwalt falsche Vorbelegungen sofort erkennt.
 class VorgangPrefillMatcher {
   const VorgangPrefillMatcher._();
 
-  /// Liefert je Feldname (Label) den vorzubelegenden Wert.
+  /// Liefert je Feld den vorzubelegenden Wert (ohne Herkunft) — bequemer
+  /// Zugriff auf [matchTemplateFieldsMitHerkunft] für Aufrufer, die nur die
+  /// Werte brauchen.
+  static Map<String, String> matchTemplateFields(
+    List<FieldData> fields,
+    Vorgang vorgang, {
+    Mandant? mandant,
+  }) {
+    return matchTemplateFieldsMitHerkunft(
+      fields,
+      vorgang,
+      mandant: mandant,
+    ).map((label, wert) => MapEntry(label, wert.wert));
+  }
+
+  /// Liefert je Feld den vorzubelegenden Wert samt Herkunft. Felder mit
+  /// explizit gewählter [FeldDatenquelle] werden direkt aufgelöst; Felder ohne
+  /// feste Quelle ([FeldDatenquelle.keine]) laufen über die Namens-Heuristik
+  /// ([matchFieldsMitHerkunft]), damit bestehende Vorlagen unverändert
+  /// weiterlaufen.
+  ///
+  /// Wurde zum Vorgang schon einmal ein Dokument erzeugt, gewinnen die dabei
+  /// bestätigten Werte ([Vorgang.feldWerte]) über beide Wege — der Anwalt hat
+  /// sie bereits gesehen und abgesegnet (Rückfluss, siehe VorgangRueckfluss).
+  static Map<String, PrefillWert> matchTemplateFieldsMitHerkunft(
+    List<FieldData> fields,
+    Vorgang vorgang, {
+    Mandant? mandant,
+  }) {
+    final result = <String, PrefillWert>{};
+    final heuristikLabels = <String>[];
+
+    for (final field in fields) {
+      if (!field.datenquelle.istGesetzt) {
+        heuristikLabels.add(field.label);
+        continue;
+      }
+      final wert = _ausDatenquelle(field.datenquelle, vorgang, mandant);
+      if (wert != null && wert.isNotEmpty) {
+        result[field.label] = PrefillWert(
+          wert,
+          _quelleFuerDatenquelle(field.datenquelle, vorgang, mandant),
+        );
+      }
+    }
+
+    // Ungebundene Felder über die bewährte Heuristik nachziehen. Explizit
+    // gesetzte Felder gewinnen, falls ein Label zufällig beide Wege träfe.
+    final ausHeuristik = matchFieldsMitHerkunft(
+      heuristikLabels,
+      vorgang,
+      mandant: mandant,
+    );
+    for (final eintrag in ausHeuristik.entries) {
+      result.putIfAbsent(eintrag.key, () => eintrag.value);
+    }
+
+    // Zuletzt bestätigte Werte des Vorgangs haben höchste Priorität (nur für
+    // Felder der aktuellen Vorlage; leere Werte überschreiben nichts).
+    final gespeichert = vorgang.feldWerte;
+    if (gespeichert != null) {
+      for (final field in fields) {
+        final wert = gespeichert[field.label]?.trim();
+        if (wert != null && wert.isNotEmpty) {
+          result[field.label] = PrefillWert(wert, PrefillQuelle.gespeichert);
+        }
+      }
+    }
+    return result;
+  }
+
+  /// Löst eine explizit gewählte [FeldDatenquelle] gegen die Daten des Vorgangs
+  /// (Mandant + Zentralruf-Antwort + Vorgangsfelder) auf.
+  static String? _ausDatenquelle(
+    FeldDatenquelle quelle,
+    Vorgang vorgang,
+    Mandant? mandant,
+  ) {
+    final antwort = vorgang.antwort;
+    switch (quelle) {
+      case FeldDatenquelle.keine:
+        return null;
+
+      case FeldDatenquelle.mandantName:
+        return mandant?.anzeigename ?? vorgang.mandantName;
+      case FeldDatenquelle.mandantStrasse:
+        return mandant?.strasseHausnummer;
+      case FeldDatenquelle.mandantPlz:
+        return mandant?.postleitzahl;
+      case FeldDatenquelle.mandantOrt:
+        return mandant?.ort;
+      case FeldDatenquelle.mandantAnschrift:
+        return MandantFeldHeuristik.anschrift(mandant);
+      case FeldDatenquelle.mandantEmail:
+        return mandant?.emailAdresse;
+      case FeldDatenquelle.mandantTelefon:
+        return mandant?.telefonnummer;
+
+      case FeldDatenquelle.versichererName:
+        return antwort?.versichererName;
+      case FeldDatenquelle.versichererStrasse:
+        return antwort?.versichererStrasse;
+      case FeldDatenquelle.versichererPlz:
+        return antwort?.versichererPlz;
+      case FeldDatenquelle.versichererOrt:
+        return antwort?.versichererOrt;
+      case FeldDatenquelle.versichererAdresse:
+        return antwort?.versichererAdresseOhneName;
+      case FeldDatenquelle.versichererAnschrift:
+        return antwort?.versichererAnschrift;
+      case FeldDatenquelle.versichererEmail:
+        return antwort?.versichererEmail;
+      case FeldDatenquelle.versichererTelefon:
+        return antwort?.versichererTelefon;
+      case FeldDatenquelle.versichererFax:
+        return antwort?.versichererFax;
+      case FeldDatenquelle.versicherungsscheinNr:
+        return antwort?.versicherungsscheinNr;
+      case FeldDatenquelle.versicherungsbeginn:
+        return antwort?.versicherungsbeginn;
+
+      case FeldDatenquelle.kennzeichenGegner:
+        return vorgang.kennzeichen ?? antwort?.kennzeichen;
+      case FeldDatenquelle.kennzeichenMandant:
+        return vorgang.geschaedigtenKennzeichen;
+      case FeldDatenquelle.unfalldatum:
+        return vorgang.unfallDatum ?? antwort?.unfallDatum;
+      case FeldDatenquelle.unfallort:
+        return vorgang.unfallort;
+      case FeldDatenquelle.unfalluhrzeit:
+        return vorgang.unfalluhrzeit;
+      case FeldDatenquelle.polizeiVorgangsnummer:
+        return vorgang.polizeiVorgangsnummer;
+      case FeldDatenquelle.referenz:
+        return vorgang.referenz.isNotEmpty
+            ? vorgang.referenz
+            : antwort?.referenz;
+      case FeldDatenquelle.aktenzeichen:
+        return vorgang.aktenzeichen;
+      case FeldDatenquelle.rechtsgebiet:
+        return vorgang.rechtsgebiet.displayName;
+    }
+  }
+
+  /// Herkunft eines über die [FeldDatenquelle] aufgelösten Werts. Bei Quellen
+  /// mit Fallback (Name-Schnappschuss, Kennzeichen/Unfalldatum aus der
+  /// Antwort) entscheidet der tatsächlich verwendete Datenbestand.
+  static PrefillQuelle _quelleFuerDatenquelle(
+    FeldDatenquelle quelle,
+    Vorgang vorgang,
+    Mandant? mandant,
+  ) {
+    switch (quelle) {
+      case FeldDatenquelle.mandantName:
+        return mandant != null ? PrefillQuelle.mandant : PrefillQuelle.vorgang;
+      case FeldDatenquelle.kennzeichenGegner:
+        return vorgang.kennzeichen != null
+            ? PrefillQuelle.vorgang
+            : PrefillQuelle.antwort;
+      case FeldDatenquelle.unfalldatum:
+        return vorgang.unfallDatum != null
+            ? PrefillQuelle.vorgang
+            : PrefillQuelle.antwort;
+      default:
+        // Die übrigen Quellen sind eindeutig gruppiert (siehe FeldDatenquelle):
+        // mandant* → Register, versicher* → Antwort, Rest → Vorgangsfelder.
+        // Geprüft wird der stabile Persistenz-Schlüssel [FeldDatenquelle.value]
+        // ([FeldDatenquelle.name] ist der Anzeigename).
+        final schluessel = quelle.value;
+        if (schluessel.startsWith('mandant')) return PrefillQuelle.mandant;
+        if (schluessel.startsWith('versicher')) return PrefillQuelle.antwort;
+        return PrefillQuelle.vorgang;
+    }
+  }
+
+  /// Liefert je Feldname (Label) den vorzubelegenden Wert (ohne Herkunft).
   static Map<String, String> matchFields(
+    Iterable<String> fieldLabels,
+    Vorgang vorgang, {
+    Mandant? mandant,
+  }) {
+    return matchFieldsMitHerkunft(
+      fieldLabels,
+      vorgang,
+      mandant: mandant,
+    ).map((label, wert) => MapEntry(label, wert.wert));
+  }
+
+  /// Namens-Heuristik mit Herkunft: Mandantenfelder aus dem Register
+  /// ([MandantFeldHeuristik]), Rechtsgebiet aus dem Vorgang, alle übrigen
+  /// Felder aus der Zentralruf-Antwort.
+  static Map<String, PrefillWert> matchFieldsMitHerkunft(
     Iterable<String> fieldLabels,
     Vorgang vorgang, {
     Mandant? mandant,
@@ -35,93 +229,34 @@ class VorgangPrefillMatcher {
         ? const <String, String>{}
         : VorgangsdatenFieldMatcher.matchFields(labels, antwort);
 
-    final result = <String, String>{};
+    final result = <String, PrefillWert>{};
     for (final label in labels) {
-      final normalized = _normalize(label);
+      final normalized = MandantFeldHeuristik.normalize(label);
 
-      final mandantWert = _mandantValue(normalized, mandant, vorgang);
-      if (mandantWert != null && mandantWert.isNotEmpty) {
+      final mandantWert = MandantFeldHeuristik.wertFuer(
+        normalized,
+        mandant,
+        vorgang,
+      );
+      if (mandantWert != null && mandantWert.wert.isNotEmpty) {
         result[label] = mandantWert;
         continue;
       }
 
-      final rechtsgebietWert = _rechtsgebietValue(normalized, vorgang);
-      if (rechtsgebietWert != null && rechtsgebietWert.isNotEmpty) {
-        result[label] = rechtsgebietWert;
+      if (normalized.contains('rechtsgebiet') ||
+          normalized.contains('sachgebiet')) {
+        result[label] = PrefillWert(
+          vorgang.rechtsgebiet.displayName,
+          PrefillQuelle.vorgang,
+        );
         continue;
       }
 
       final antwortWert = ausAntwort[label];
       if (antwortWert != null && antwortWert.isNotEmpty) {
-        result[label] = antwortWert;
+        result[label] = PrefillWert(antwortWert, PrefillQuelle.antwort);
       }
     }
     return result;
-  }
-
-  // Gleiche Normalisierung wie im VorgangsdatenFieldMatcher, damit Labels nach
-  // denselben Regeln (Umlaute, Sonderzeichen) verglichen werden.
-  static String _normalize(String label) => label
-      .toLowerCase()
-      .replaceAll('ä', 'ae')
-      .replaceAll('ö', 'oe')
-      .replaceAll('ü', 'ue')
-      .replaceAll('ß', 'ss')
-      .replaceAll(RegExp(r'[^a-z0-9]'), '');
-
-  static String? _mandantValue(
-    String label,
-    Mandant? mandant,
-    Vorgang vorgang,
-  ) {
-    final betrifftMandant =
-        label.contains('mandant') ||
-        label.contains('geschaedigt') ||
-        label.contains('kunde');
-    if (!betrifftMandant) return null;
-
-    // Die Stammdaten kennen kein Kennzeichen des Mandanten — nicht raten (sonst
-    // landete fälschlich das gegnerische Kennzeichen der Antwort im Feld).
-    if (label.contains('kennzeichen')) return '';
-
-    if (label.contains('strasse') || label.contains('hausnummer')) {
-      return mandant?.strasseHausnummer;
-    }
-    if (label.contains('plz') || label.contains('postleitzahl')) {
-      return mandant?.postleitzahl;
-    }
-    if (label.contains('ort') && !label.contains('vorort')) {
-      return mandant?.ort;
-    }
-    if (label.contains('mail')) return mandant?.emailAdresse;
-    if (label.contains('telefon') || label.contains('tel')) {
-      return mandant?.telefonnummer;
-    }
-    if (label.contains('anschrift') || label.contains('adresse')) {
-      return _anschrift(mandant);
-    }
-    // Reines Namensfeld → Anzeigename des Registereintrags oder, falls keiner
-    // verknüpft ist, der beim Anlegen gemerkte Namens-Schnappschuss.
-    return mandant?.anzeigename ?? vorgang.mandantName;
-  }
-
-  static String? _anschrift(Mandant? mandant) {
-    if (mandant == null) return null;
-    final parts = [
-      mandant.anzeigename,
-      mandant.strasseHausnummer,
-      [
-        mandant.postleitzahl,
-        mandant.ort,
-      ].where((part) => part.trim().isNotEmpty).join(' '),
-    ].where((part) => part.trim().isNotEmpty).toList();
-    return parts.isEmpty ? null : parts.join(', ');
-  }
-
-  static String? _rechtsgebietValue(String label, Vorgang vorgang) {
-    if (label.contains('rechtsgebiet') || label.contains('sachgebiet')) {
-      return vorgang.rechtsgebiet.displayName;
-    }
-    return null;
   }
 }

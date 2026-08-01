@@ -24,14 +24,14 @@ class AppSidebar extends StatelessWidget {
 
   static const _destinations = [
     (
-      icon: Icons.directions_car_outlined,
-      selectedIcon: Icons.directions_car,
-      label: 'Zentralruf-Anfrage',
+      icon: Icons.note_add_outlined,
+      selectedIcon: Icons.note_add,
+      label: 'Vorgang starten',
     ),
     (
       icon: Icons.mark_email_read_outlined,
       selectedIcon: Icons.mark_email_read,
-      label: 'Zentralruf-Antworten',
+      label: 'Postfach',
     ),
     (
       icon: Icons.document_scanner_outlined,
@@ -52,6 +52,11 @@ class AppSidebar extends StatelessWidget {
       icon: Icons.table_chart_outlined,
       selectedIcon: Icons.table_chart,
       label: 'Register',
+    ),
+    (
+      icon: Icons.folder_copy_outlined,
+      selectedIcon: Icons.folder_copy,
+      label: 'Vorgänge',
     ),
     (
       icon: Icons.settings_outlined,
@@ -77,8 +82,7 @@ class AppSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Markenkopf: Toggle (immer sichtbar) und – aufgeklappt – ein
-          // Brand-Icon mit App-Name, damit die Leiste nicht nackt beginnt.
+          // Markenkopf: nur der Toggle (immer sichtbar).
           SizedBox(
             height: 64,
             child: Row(
@@ -92,30 +96,6 @@ class AppSidebar extends StatelessWidget {
                       onPressed: onToggle,
                       icon: const Icon(Icons.menu),
                       tooltip: isExtended ? 'Zuklappen' : 'Aufklappen',
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ClipRect(
-                    child: AnimatedAlign(
-                      duration: animationDuration,
-                      curve: Curves.easeInOut,
-                      alignment: Alignment.centerLeft,
-                      widthFactor: isExtended ? 1 : 0,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.asset(
-                              'assets/icon/app_icon.png',
-                              width: 24,
-                              height: 24,
-                              filterQuality: FilterQuality.medium,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                 ),

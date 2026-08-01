@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/features/mailbox/data/datasources/mailbox_hub.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
+import 'package:automation_app/features/mailbox/domain/repositories/mailbox_push_notifier.dart';
 import 'package:automation_app/features/mailbox/domain/repositories/mailbox_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,13 +13,13 @@ part 'mailbox_inbox_state.dart';
 
 /// Versorgt die Inbox-Ansicht: lädt Status und erfasste Antworten und quittiert
 /// einzelne Treffer. Der Monitor läuft im Backend (ereignisbasiert per IDLE) und
-/// meldet neue Treffer/Statuswechsel per SignalR ([MailboxHub]) — darauf hin lädt
+/// meldet neue Treffer/Statuswechsel per SignalR ([MailboxPushNotifier]) — darauf hin lädt
 /// die Ansicht den Stand live nach, ohne dass der Anwalt „Aktualisieren" drücken
 /// muss. Manuelles Aktualisieren bleibt als Rückfallebene erhalten.
 @injectable
 class MailboxInboxCubit extends Cubit<MailboxInboxState> {
   final MailboxRepository _repository;
-  final MailboxHub _hub;
+  final MailboxPushNotifier _hub;
   StreamSubscription<void>? _replySub;
   StreamSubscription<void>? _statusSub;
 

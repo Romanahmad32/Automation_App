@@ -12,4 +12,11 @@ class CreateFormTemplateRequest {
     this.wordFilePathOhneAuflistung,
     this.wordFilePathMitAuflistung,
   });
+
+  Map<String, dynamic> toJson() => {
+    'templateName': templateName,
+    'fields': fields.map((e) => e.toJson()).toList(),
+    'wordFilePathOhneAuflistung': wordFilePathOhneAuflistung,
+    'wordFilePathMitAuflistung': wordFilePathMitAuflistung,
+  };
 }

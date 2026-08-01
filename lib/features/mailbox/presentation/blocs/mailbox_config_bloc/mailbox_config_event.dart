@@ -19,3 +19,14 @@ final class SaveMailboxConfigEvent extends MailboxConfigEvent {
   @override
   List<Object?> get props => [update];
 }
+
+/// Startet die Microsoft-Anmeldung (Outlook): Das Backend öffnet den Browser
+/// und übernimmt bei Erfolg Konto und Server automatisch.
+final class MicrosoftSignInEvent extends MailboxConfigEvent {
+  const MicrosoftSignInEvent();
+}
+
+/// Meldet das Microsoft-Konto ab (entfernt die gespeicherten Tokens).
+final class MicrosoftSignOutEvent extends MailboxConfigEvent {
+  const MicrosoftSignOutEvent();
+}

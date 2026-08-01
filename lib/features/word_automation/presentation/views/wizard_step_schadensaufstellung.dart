@@ -109,21 +109,41 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
     final canGenerate =
         hasValidItems && wizardState.formData != null && loadedPath != null;
 
-    // Wird die Vorsteuerabzugsberechtigung geändert — egal ob hier oder im
-    // Schritt "Vorlage wählen & ausfüllen" (beide Schritte bleiben im
-    // IndexedStack gemountet) — dann applyVat und die RVG-Kosten der bereits
-    // erfassten Aufstellung neu berechnen. Ohne das bliebe die Berechnung auf
-    // dem alten Umsatzsteuer-Stand stehen.
-    return BlocListener<WizardCubit, WizardState>(
-      listenWhen: (previous, current) =>
-          previous.vorsteuerabzugsberechtigt !=
-          current.vorsteuerabzugsberechtigt,
-      listener: (context, state) {
-        final listing = state.damageListing;
-        if (listing != null) {
-          _onDamageListingChanged(context, listing);
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        // Wird die Vorsteuerabzugsberechtigung geändert — egal ob hier oder im
+        // Schritt "Vorlage wählen & ausfüllen" (beide Schritte bleiben im
+        // IndexedStack gemountet) — dann applyVat und die RVG-Kosten der
+        // bereits erfassten Aufstellung neu berechnen. Ohne das bliebe die
+        // Berechnung auf dem alten Umsatzsteuer-Stand stehen.
+        BlocListener<WizardCubit, WizardState>(
+          listenWhen: (previous, current) =>
+              previous.vorsteuerabzugsberechtigt !=
+              current.vorsteuerabzugsberechtigt,
+          listener: (context, state) {
+            final listing = state.damageListing;
+            if (listing != null) {
+              _onDamageListingChanged(context, listing);
+            }
+          },
+        ),
+        // Beim Betreten des Schritts: Wurde zu diesem Vorgang schon einmal
+        // eine Schadensaufstellung erfasst und ist hier noch keine erfasst,
+        // die gespeicherte übernehmen (sichtbar und änderbar). Der Umweg über
+        // _onDamageListingChanged normalisiert applyVat auf die aktuelle
+        // Vorsteuer-Checkbox und stößt die RVG-Berechnung an.
+        BlocListener<WizardCubit, WizardState>(
+          listenWhen: (previous, current) =>
+              previous.currentStep != current.currentStep &&
+              current.currentStep == WizardStep.schadensaufstellung,
+          listener: (context, state) {
+            final gespeichert = state.selectedVorgang?.schadensaufstellung;
+            if (state.damageListing == null && gespeichert != null) {
+              _onDamageListingChanged(context, gespeichert);
+            }
+          },
+        ),
+      ],
       child: Stack(
         children: [
           Column(
@@ -168,8 +188,20 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 12),
+                            // Key auf die Vorgangs-Referenz: Beim Wechsel des
+                            // Vorgangs wird die Eingabe neu aufgebaut und mit
+                            // dessen gespeicherter Aufstellung vorbelegt;
+                            // während der Bearbeitung bleibt der State stehen.
                             DamageListingForm(
-                              initialValue: damageListing,
+                              key: ValueKey(
+                                'schadensaufstellung#'
+                                '${wizardState.selectedVorgang?.referenz}',
+                              ),
+                              initialValue:
+                                  damageListing ??
+                                  wizardState
+                                      .selectedVorgang
+                                      ?.schadensaufstellung,
                               onChanged: (listing) =>
                                   _onDamageListingChanged(context, listing),
                             ),
