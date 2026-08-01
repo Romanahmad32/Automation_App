@@ -65,8 +65,3 @@ Textdokument*.txt
 # ---------------------------------------------------------------------------
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
-
-# ---------------------------------------------------------------------------
-# Uebrig aus der Repo-Zusammenlegung, kann nach Verifikation geloescht werden
-# ---------------------------------------------------------------------------
-.git_docs_old/

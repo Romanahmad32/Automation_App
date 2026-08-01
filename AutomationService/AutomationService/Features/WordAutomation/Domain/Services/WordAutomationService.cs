@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using AutomationService.Features.WordAutomation.Domain.Exceptions;
 using AutomationService.Features.WordAutomation.Presentation.Dtos;
 using Microsoft.Extensions.Options;
@@ -494,10 +493,12 @@ public sealed partial class WordAutomationService : IWordAutomationService
         foreach (var key in values.Keys)
         {
             if (!AllowedPlaceholderKeyPattern().IsMatch(key))
+            {
                 throw new ArgumentException(
                     $"Platzhalter-Schlüssel '{key}' ist ungültig. Erlaubt sind Buchstaben (inkl. Umlaute), " +
                     "Ziffern, Leerzeichen, '_' und '-' – aber keine geschweiften Klammern oder Zeilenumbrüche.",
                     nameof(replacePatterns));
+            }
         }
 
         return values;

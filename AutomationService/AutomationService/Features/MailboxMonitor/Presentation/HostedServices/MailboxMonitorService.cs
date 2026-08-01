@@ -1,7 +1,6 @@
 using AutomationService.Features.MailboxMonitor.Domain.Services;
 using AutomationService.Features.MailboxMonitor.Presentation.Hubs;
 using AutomationService.Features.ZentralrufAutomation.Domain.Services;
-using Microsoft.Extensions.DependencyInjection;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;

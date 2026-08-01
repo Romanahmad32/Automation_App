@@ -19,7 +19,7 @@ namespace AutomationService.Features.MailboxMonitor.Domain.Services;
 /// </summary>
 public sealed class MicrosoftMailOAuthService(
     MailboxConfigStore configStore,
-    ILogger<MicrosoftMailOAuthService> logger)
+    ILogger<MicrosoftMailOAuthService> logger) : IDisposable
 {
     /// <summary>IMAP-Zugriff auf das eigene Postfach; offline_access (Refresh-Token) ergänzt MSAL selbst.</summary>
     private static readonly string[] Scopes = ["https://outlook.office365.com/IMAP.AccessAsUser.All"];
@@ -152,4 +152,11 @@ public sealed class MicrosoftMailOAuthService(
             _gate.Release();
         }
     }
+
+    /// <summary>
+    /// Gibt die Sperre frei, die den Aufbau der MSAL-Anwendung serialisiert.
+    /// Der Dienst ist ein Singleton und lebt bis zum Herunterfahren; entsorgt
+    /// wird er vom DI-Container.
+    /// </summary>
+    public void Dispose() => _gate.Dispose();
 }

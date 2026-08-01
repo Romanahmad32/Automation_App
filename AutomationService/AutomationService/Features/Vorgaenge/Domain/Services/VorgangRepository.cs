@@ -103,9 +103,19 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
 
         // Konfliktprüfung wie der Frontend-Vergleich tolerant gegenüber
         // Groß-/Kleinschreibung (die Referenz ist der fachliche Schlüssel).
+        var neueReferenzGross = neueReferenz.ToUpperInvariant();
+
+        // v.Referenz.ToUpper() steht in einem Ausdrucksbaum und wird von EF Core
+        // zu SQL UPPER() übersetzt — der Aufruf läuft nie in .NET, die von
+        // CA1304/CA1862 gemeinte Kulturabhängigkeit gibt es hier also nicht.
+        // string.Equals(…, StringComparison) wäre der empfohlene Ersatz, kann
+        // vom SQLite-Provider aber nicht übersetzt werden und würde zur
+        // Laufzeit fehlschlagen.
+#pragma warning disable CA1304, CA1311, CA1862
         var vergeben = await db.Vorgaenge.AnyAsync(
-            v => v.Id != vorgang.Id && v.Referenz.ToUpper() == neueReferenz.ToUpper(),
+            v => v.Id != vorgang.Id && v.Referenz.ToUpper() == neueReferenzGross,
             cancellationToken);
+#pragma warning restore CA1304, CA1311, CA1862
         if (vergeben) return new ReferenzAenderung(ReferenzAenderungStatus.Vergeben);
 
         vorgang.Referenz = neueReferenz;

@@ -1,0 +1,64 @@
+<Project>
+
+    <!--
+      Gemeinsame Compiler- und Analyse-Einstellungen fuer alle Projekte unter
+      AutomationService/. Sie stehen bewusst hier und nicht in den einzelnen
+      .csproj: eine Regel, die man je Projekt wiederholen muss, wird beim
+      naechsten neuen Projekt vergessen.
+    -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>latest</LangVersion>
+        <InvariantGlobalization>false</InvariantGlobalization>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!--
+          Warnungen sind Fehler. Das ist die zentrale Fitnessfunktion dieses
+          Projekts: der Ist-Zustand hat null Compiler-Warnungen, und diese Null
+          bleibt nur erhalten, wenn eine neue Warnung den Build bricht. Sonst
+          waechst der Stapel unbemerkt, bis niemand mehr hinsieht.
+
+          Ausnahmen gehoeren NICHT hierher als globales NoWarn, sondern an die
+          Fundstelle: #pragma warning disable mit Begruendung, oder eine
+          gezielte Regel in der .editorconfig.
+        -->
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+        <!-- Auch NuGet-Restore-Probleme (fehlende Version, Downgrade) sind Fehler. -->
+        <WarningsNotAsErrors></WarningsNotAsErrors>
+
+        <!-- Die .NET-Analyzer laufen mit; die Schaerfe steuert die .editorconfig. -->
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <AnalysisMode>Recommended</AnalysisMode>
+
+        <!--
+          Code-Style-Regeln (IDExxxx) greifen im Build, nicht nur in der IDE.
+          Ohne das bleiben sie folgenlose Vorschlaege in Rider/VS und gelten
+          faktisch nicht fuer die CI.
+        -->
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+        <!--
+          Wird gebraucht, damit IDE0005 (unbenutzte usings) im Build ueberhaupt
+          laeuft - ohne die XML-Doku-Datei meldet der Compiler die Regel als
+          nicht aktivierbar. CS1591 bleibt aus: fehlende XML-Kommentare an
+          oeffentlichen Membern sind fuer eine Anwendung ohne veroeffentlichte
+          API kein Mangel; kommentiert wird, wo es etwas zu erklaeren gibt.
+        -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+        <!--
+          Bekannte Sicherheitsluecken in Paketen (auch transitiven) brechen den
+          Build. Genau so ist die Microsoft.OpenApi-Luecke aufgefallen.
+        -->
+        <NuGetAudit>true</NuGetAudit>
+        <NuGetAuditMode>all</NuGetAuditMode>
+        <NuGetAuditLevel>low</NuGetAuditLevel>
+    </PropertyGroup>
+
+</Project>

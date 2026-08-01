@@ -18,7 +18,7 @@ namespace AutomationService.Features.MailboxMonitor.Domain.Services;
 /// ausgelöst, damit der laufende Monitor seine Verbindung sofort mit den neuen
 /// Werten neu aufbaut (Muster wie ein Konfigurations-Reload-Token).
 /// </summary>
-public sealed class MailboxConfigStore
+public sealed class MailboxConfigStore : IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -106,6 +106,19 @@ public sealed class MailboxConfigStore
                 // Bereits entsorgt — unkritisch.
             }
             previous.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Gibt die zuletzt ausgegebene Änderungsquelle frei. <see cref="NotifyChanged"/>
+    /// entsorgt jeweils die abgelöste Quelle; die aktuelle bleibt bis zum
+    /// Herunterfahren bestehen und wird hier vom DI-Container mit entsorgt.
+    /// </summary>
+    public void Dispose()
+    {
+        lock (_gate)
+        {
+            _changeSource.Dispose();
         }
     }
 

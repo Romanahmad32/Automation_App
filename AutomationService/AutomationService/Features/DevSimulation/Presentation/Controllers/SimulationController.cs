@@ -1,3 +1,4 @@
+using System.Globalization;
 using AutomationService.Features.DevSimulation.Domain.Services;
 using AutomationService.Features.DevSimulation.Presentation.Dtos;
 using AutomationService.Features.MailboxMonitor.Domain.Services;
@@ -45,8 +46,8 @@ public class SimulationController(
         var text = ZentralrufAntwortMailBuilder.Build(
             referenz,
             kennzeichen: Fallback(dto.Kennzeichen, KennzeichenAusReferenz(referenz)),
-            unfallDatum: Fallback(dto.UnfallDatum, DateTime.Today.AddDays(-14).ToString("dd.MM.yyyy")),
-            anfrageDatum: DateTime.Today.ToString("dd.MM.yyyy"),
+            unfallDatum: Fallback(dto.UnfallDatum, DateTime.Today.AddDays(-14).ToString("dd.MM.yyyy", CultureInfo.InvariantCulture)),
+            anfrageDatum: DateTime.Today.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
             versichererName: Fallback(dto.VersichererName, "HUK-COBURG (Simulation)"),
             typ: dto.AntwortTyp);
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using AutomationService.Core.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -90,7 +91,9 @@ public sealed class DatabaseBackupService(
             await using var command = connection.CreateCommand();
             command.CommandText =
                 "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory';";
-            var treffer = Convert.ToInt64(await command.ExecuteScalarAsync(ct));
+            var treffer = Convert.ToInt64(
+                await command.ExecuteScalarAsync(ct),
+                CultureInfo.InvariantCulture);
             if (treffer == 0)
             {
                 throw new InvalidBackupException(

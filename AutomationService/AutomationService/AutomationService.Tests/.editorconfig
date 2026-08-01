@@ -1,0 +1,11 @@
+# Ergaenzt die .editorconfig des Backends um die Besonderheiten des
+# Testprojekts. Nur was fuer Tests wirklich anders ist -- alles Uebrige gilt
+# unveraendert weiter.
+
+[*.cs]
+
+# CA1707 verbietet Unterstriche in Membernamen. Fuer Testmethoden ist das
+# Gegenteil richtig: Was_geprueft_wird_und_unter_welcher_Bedingung ist die
+# Konvention dieses Projekts und der Grund, warum ein fehlgeschlagener Test
+# schon im Namen erklaert, was kaputt ist.
+dotnet_diagnostic.CA1707.severity = none

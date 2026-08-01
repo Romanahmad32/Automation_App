@@ -24,11 +24,23 @@ jobs:
       - name: Restore
         run: dotnet restore ${{ env.TEST_PROJECT }}
 
+      # Directory.Build.props setzt TreatWarningsAsErrors: eine neue Compiler-
+      # oder Analyzer-Warnung bricht hier ab, statt sich unbemerkt anzusammeln.
+      # NuGetAudit meldet ausserdem bekannte Luecken in (auch transitiven)
+      # Paketen als Fehler.
       - name: Build
         run: dotnet build ${{ env.TEST_PROJECT }} --configuration Release --no-restore
 
+      # Enthaelt die Architektur-Tests unter AutomationService.Tests/Architecture/
+      # (Slice-Isolation, Namespace-Konvention, Dateilaengen-Limit).
       - name: Test
         run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
+
+      # Prueft, ob der Code der Formatierung aus der .editorconfig entspricht.
+      # Laeuft nach den Tests: ein Formatierungsfehler soll den Blick nicht von
+      # einem echten Testfehler ablenken.
+      - name: Format
+        run: dotnet format AutomationService/AutomationService.slnx --verify-no-changes --verbosity diagnostic
 
   frontend:
     runs-on: windows-latest
