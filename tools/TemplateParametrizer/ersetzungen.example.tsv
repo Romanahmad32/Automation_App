@@ -1,0 +1,29 @@
+# Ersetzungstabelle fuer den TemplateParametrizer.
+# Eine Zeile je Ersetzung: Suchtext <TAB> Platzhalter.
+# Zeilen mit # und Leerzeilen werden uebersprungen.
+#
+# WICHTIG: Die Reihenfolge wird uebernommen. Laengere und speziellere
+# Zeichenketten muessen VOR ihren Teilzeichenketten stehen, sonst ersetzt
+# die kuerzere zuerst und die laengere findet nichts mehr.
+#
+# Diese Datei enthaelt nur Platzhalterwerte. Die echte Tabelle bildet die
+# Mandantendaten des Ausgangsschreibens ab und gehoert nach
+# ersetzungen.local.tsv — die ist per .gitignore ausgeschlossen.
+Musterversicherung AG auf Gegenseitigkeit	{{VersicherungName}}
+Musterstrasse 1	{{VersicherungStrasse}}
+12345 Musterstadt	{{VersicherungPlzOrt}}
+schaden@musterversicherung.de	{{VersicherungEmail}}
+1234567890	{{VersicherungsscheinNr}}
+Erika Mustermann	{{MandantName}}
+Musterweg 2, 12345 Musterstadt	{{MandantAdresse}}
+Musterstadt an der Muster	{{Unfallort}}
+01.01.2025	{{Unfalldatum}}
+12:00	{{Unfallzeit}}
+M-AB 1234	{{KennzeichenMandant}}
+M-CD 5678	{{KennzeichenGegner}}
+Hauptstrasse	{{Vorfahrtstrasse}}
+Nebenstrasse	{{Nebenstrasse}}
+31.12.2025	{{Frist}}
+001/25 A01	{{Referenz}}
+123,45	{{RvgNetto}}
+1,3 Geschäftsgebühr	{{Gebuehrensatz}} Geschäftsgebühr
