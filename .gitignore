@@ -19,6 +19,10 @@
 # laedt, liegen unter AutomationService/AutomationService/Templates/ und
 # enthalten ausschliesslich {{Platzhalter}} — die sind versioniert.
 Beispiele/*.docx
+# Die Ersetzungstabelle des TemplateParametrizer bildet die Mandantendaten des
+# Ausgangsschreibens auf Platzhalter ab und ist damit selbst eine Sammlung
+# echter Personendaten. Muster ohne Echtdaten: ersetzungen.example.tsv
+*.local.tsv
 # Generierte Anspruchsschreiben und PDF-Cache
 Generated/
 # Eingebettete SQLite-DB
