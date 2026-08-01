@@ -12,6 +12,13 @@
 # ---------------------------------------------------------------------------
 # Echte Aktenordner
 /VUnvallsache*/
+# Die Ausgangs-Vorlagen unter Beispiele/ sind KEINE Vorlagen im technischen
+# Sinn, sondern fertig ausgefuellte echte Mandantenschreiben (Name, Anschrift,
+# Kennzeichen, Versicherungsschein-Nr. des Mandanten und der Gegenseite).
+# Sie bleiben lokal. Die parametrisierten Fassungen, die die App tatsaechlich
+# laedt, liegen unter AutomationService/AutomationService/Templates/ und
+# enthalten ausschliesslich {{Platzhalter}} — die sind versioniert.
+Beispiele/*.docx
 # Generierte Anspruchsschreiben und PDF-Cache
 Generated/
 # Eingebettete SQLite-DB
