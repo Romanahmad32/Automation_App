@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using AutomationService.Features.WordAutomation.Domain.Exceptions;
-using AutomationService.Features.WordAutomation.Presentation.Dtos;
 using Microsoft.Extensions.Options;
 using Xceed.Document.NET;
 using Xceed.Words.NET;
@@ -26,22 +25,22 @@ public sealed partial class WordAutomationService : IWordAutomationService
         Directory.CreateDirectory(_outputDirectory);
     }
 
-    public DocumentGenerationResult GenerateReplacedDocument(WordReplacementDto replacementDto)
+    public DocumentGenerationResult GenerateReplacedDocument(WordReplacementRequest request)
     {
-        ArgumentNullException.ThrowIfNull(replacementDto);
+        ArgumentNullException.ThrowIfNull(request);
 
-        if (replacementDto.OutputDirectory != "")
+        if (request.OutputDirectory != "")
         {
-            _outputDirectory = Path.GetFullPath(replacementDto.OutputDirectory);
+            _outputDirectory = Path.GetFullPath(request.OutputDirectory);
             Directory.CreateDirectory(_outputDirectory);
         }
 
-        var templatePath = replacementDto.TemplateFilePath;
+        var templatePath = request.TemplateFilePath;
         if (!File.Exists(templatePath))
             throw new FileNotFoundException($"Vorlage nicht gefunden: {templatePath}", templatePath);
 
         var rawFileName = Path.GetFileNameWithoutExtension(templatePath);
-        var replacementValues = BuildReplacementValues(replacementDto.ReplacePatterns);
+        var replacementValues = BuildReplacementValues(request.ReplacePatterns);
         var unresolvedPlaceholders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var totalStopwatch = Stopwatch.StartNew();
@@ -50,7 +49,7 @@ public sealed partial class WordAutomationService : IWordAutomationService
         using var document = DocX.Load(templatePath);
         _logger.LogInformation("[PERF] DocX.Load: {Ms} ms", stepStopwatch.ElapsedMilliseconds);
 
-        if (replacementDto.DamageListing is { Items.Count: > 0 } damageListing)
+        if (request.DamageListing is { Items.Count: > 0 } damageListing)
         {
             stepStopwatch.Restart();
             InsertDamageListing(document, damageListing, replacementValues);
@@ -82,7 +81,7 @@ public sealed partial class WordAutomationService : IWordAutomationService
 
         var warnings = new List<string>(unresolvedPlaceholders);
 
-        if (replacementDto.Vorsteuerabzugsberechtigt is { } vorsteuerabzugsberechtigt)
+        if (request.Vorsteuerabzugsberechtigt is { } vorsteuerabzugsberechtigt)
         {
             var applied = ApplyVorsteuerCheckbox(document, vorsteuerabzugsberechtigt);
             if (!applied)
@@ -96,7 +95,7 @@ public sealed partial class WordAutomationService : IWordAutomationService
             }
         }
 
-        var outputFileName = BuildOutputFileName(replacementDto.OutputFileName, rawFileName);
+        var outputFileName = BuildOutputFileName(request.OutputFileName, rawFileName);
         var outputPath = EnsureUniquePath(Path.Combine(_outputDirectory, outputFileName));
         stepStopwatch.Restart();
         document.SaveAs(outputPath);
@@ -196,7 +195,7 @@ public sealed partial class WordAutomationService : IWordAutomationService
     /// Fügt am Platzhalter {{Schadensaufstellung}} eine Tabelle mit den Schadenspositionen ein
     /// und stellt die RVG-Kostenkalkulation als zusätzliche Platzhalterwerte bereit.
     /// </summary>
-    private static void InsertDamageListing(DocX document, DamageListingDto damageListing, Dictionary<string, string> replacementValues)
+    private static void InsertDamageListing(DocX document, DamageListing damageListing, Dictionary<string, string> replacementValues)
     {
         var culture = CultureInfo.GetCultureInfo("de-DE");
         var gegenstandswert = damageListing.Items.Sum(item => item.Amount);
@@ -271,7 +270,7 @@ public sealed partial class WordAutomationService : IWordAutomationService
     /// </summary>
     private static Table BuildDamageListingTable(
         DocX document,
-        DamageListingDto damageListing,
+        DamageListing damageListing,
         RvgCalculation calculation,
         Formatting? markerFormatting,
         CultureInfo culture)
@@ -481,7 +480,7 @@ public sealed partial class WordAutomationService : IWordAutomationService
         });
     }
 
-    private static Dictionary<string, string> BuildReplacementValues(Dictionary<string, string> replacePatterns)
+    private static Dictionary<string, string> BuildReplacementValues(IReadOnlyDictionary<string, string> replacePatterns)
     {
         if (replacePatterns is null)
             throw new ArgumentException("ReplacePatterns is required.", nameof(replacePatterns));

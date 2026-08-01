@@ -31,10 +31,10 @@ public class DateilaengeTests
     /// </summary>
     static readonly Dictionary<string, int> Altlasten = new(StringComparer.Ordinal)
     {
-        ["/Features/WordAutomation/Domain/Services/WordAutomationService.cs"] = 558,
-        ["/AutomationService.Tests/Unit/WordAutomationServiceTests.cs"] = 536,
+        ["/Features/WordAutomation/Domain/Services/WordAutomationService.cs"] = 557,
+        ["/AutomationService.Tests/Unit/WordAutomationServiceTests.cs"] = 535,
         ["/Features/MailboxMonitor/Presentation/HostedServices/MailboxMonitorService.cs"] = 415,
-        ["/Features/ZentralrufAutomation/Domain/Services/ZentralrufAutomationService.cs"] = 404,
+        ["/Features/ZentralrufAutomation/Domain/Services/ZentralrufAutomationService.cs"] = 403,
     };
 
     [Fact]

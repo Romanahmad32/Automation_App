@@ -1,5 +1,4 @@
 using System.Globalization;
-using AutomationService.Features.ZentralrufAutomation.Presentation.Dtos;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
@@ -14,11 +13,11 @@ public sealed class ZentralrufAutomationService(
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
-    public async Task<ZentralrufPrefillResult> PrefillAsync(ZentralrufPrefillDto prefillDto)
+    public async Task<ZentralrufPrefillResult> PrefillAsync(ZentralrufPrefillRequest request)
     {
-        ArgumentNullException.ThrowIfNull(prefillDto);
+        ArgumentNullException.ThrowIfNull(request);
 
-        var referenz = BuildReferenz(prefillDto);
+        var referenz = BuildReferenz(request);
         var page = await OpenFormPageAsync();
         var filled = new List<string>();
         var skipped = new List<string>();
@@ -27,12 +26,12 @@ public sealed class ZentralrufAutomationService(
 
         // Zuerst "Sind Sie der Geschädigte?" auf "Nein" stellen (Standard ist "Ja"),
         // sonst existiert die Geschädigten-Sektion nicht und die Anfrager-Felder werden zurückgesetzt.
-        if (prefillDto.Geschaedigter is not null)
+        if (request.Geschaedigter is not null)
         {
             await TrySelectRadioAsync(page, "anfrageformular-geschaedigter-JN", "nein", filled, skipped);
         }
 
-        var anfrager = ResolveAnfrager(prefillDto);
+        var anfrager = ResolveAnfrager(request);
         await TrySelectAsync(page, "anfrageformular-anfrager-personentypId", anfrager.Personentyp, filled, skipped);
         await TryFillAsync(page, "anfrageformular-anfrager-name", anfrager.Name, filled, skipped);
         await TryFillAsync(page, "anfrageformular-anfrager-strasseHausnummer", anfrager.StrasseHausnummer, filled, skipped);
@@ -48,13 +47,13 @@ public sealed class ZentralrufAutomationService(
         await TryFillAsync(
             page,
             "anfrageformular-schadenfall-kennzeichenSchaediger",
-            prefillDto.KennzeichenSchaediger,
+            request.KennzeichenSchaediger,
             filled,
             skipped);
         await TryFillAsync(
             page,
             "anfrageformular-schadenfall-schadenTag",
-            prefillDto.Schadentag.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+            request.Schadentag.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
             filled,
             skipped);
 
@@ -62,7 +61,7 @@ public sealed class ZentralrufAutomationService(
         await TryCheckAsync(page, "anfrageformular-bestaetigungAbrufDerDaten", filled, skipped);
         await TryCheckAsync(page, "anfrageformular-datenweitergabeErlaubt", filled, skipped);
 
-        if (prefillDto.Geschaedigter is { } geschaedigter)
+        if (request.Geschaedigter is { } geschaedigter)
         {
             await TryFillAsync(page, "anfrageformular-geschaedigter-name", geschaedigter.Name, filled, skipped);
             await TryFillAsync(page, "anfrageformular-geschaedigter-strasseHausnummer", geschaedigter.StrasseHausnummer, filled, skipped);
@@ -106,10 +105,10 @@ public sealed class ZentralrufAutomationService(
     /// Liefert die effektiven Anfragerdaten: bevorzugt die vom Client gesendeten (App-Einstellungen),
     /// ersatzweise die aus appsettings.json. Einzelne Leerwerte fallen feldweise auf appsettings zurück.
     /// </summary>
-    private ZentralrufAnfragerOptions ResolveAnfrager(ZentralrufPrefillDto prefillDto)
+    private ZentralrufAnfragerOptions ResolveAnfrager(ZentralrufPrefillRequest request)
     {
         var fallback = _options.Anfrager;
-        if (prefillDto.Anfrager is not { } supplied)
+        if (request.Anfrager is not { } supplied)
             return fallback;
 
         static string Pick(string value, string fallbackValue) =>
@@ -127,17 +126,17 @@ public sealed class ZentralrufAutomationService(
         };
     }
 
-    internal static string BuildReferenz(ZentralrufPrefillDto prefillDto)
+    internal static string BuildReferenz(ZentralrufPrefillRequest request)
     {
         // Eine vom Anwender überschriebene Referenz hat Vorrang vor der automatisch
         // zusammengebauten (Vorschau/Bearbeitung auf der Zentralruf-Anfrage-Seite).
-        if (!string.IsNullOrWhiteSpace(prefillDto.Referenz))
+        if (!string.IsNullOrWhiteSpace(request.Referenz))
         {
-            return prefillDto.Referenz.Trim();
+            return request.Referenz.Trim();
         }
 
-        var jahr = prefillDto.Auftragsjahr == 0 ? DateTime.Now.Year % 100 : prefillDto.Auftragsjahr;
-        return $"{prefillDto.Auftragsnummer}/{jahr:D2} {prefillDto.Abteilung.Trim()}_{prefillDto.KennzeichenSchaediger.Trim()}";
+        var jahr = request.Auftragsjahr == 0 ? DateTime.Now.Year % 100 : request.Auftragsjahr;
+        return $"{request.Auftragsnummer}/{jahr:D2} {request.Abteilung.Trim()}_{request.KennzeichenSchaediger.Trim()}";
     }
 
     private async Task<IPage> OpenFormPageAsync()

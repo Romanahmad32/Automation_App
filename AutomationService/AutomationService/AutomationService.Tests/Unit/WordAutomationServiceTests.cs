@@ -1,7 +1,6 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Xml.Linq;
 using AutomationService.Features.WordAutomation.Domain.Services;
-using AutomationService.Features.WordAutomation.Presentation.Dtos;
 using AutomationService.Tests.Support;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -28,7 +27,7 @@ public sealed class WordAutomationServiceTests : IDisposable
         var templatePath = CreateTemplate("Letter", "Hello {{FirstName}}, date={{Datum}}");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string>
@@ -50,7 +49,7 @@ public sealed class WordAutomationServiceTests : IDisposable
         var templatePath = CreateTemplate("German", "{{Vorname Mandant}} aus {{Straße}}");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string>
@@ -71,7 +70,7 @@ public sealed class WordAutomationServiceTests : IDisposable
         var templatePath = CreateTemplate("Invalid", "{{ok}}");
 
         var service = CreateService();
-        var action = () => service.GenerateReplacedDocument(new WordReplacementDto
+        var action = () => service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Bad{Key"] = "x" }
@@ -85,7 +84,7 @@ public sealed class WordAutomationServiceTests : IDisposable
     {
         var service = CreateService();
 
-        var action = () => service.GenerateReplacedDocument(new WordReplacementDto
+        var action = () => service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = Path.Combine(_contentRoot, "Templates", "DoesNotExist.docx"),
             ReplacePatterns = new Dictionary<string, string> { ["Name"] = "Roman" }
@@ -100,7 +99,7 @@ public sealed class WordAutomationServiceTests : IDisposable
         var templatePath = CreateTemplate("Contract", "Value={{Known}} Missing={{Unknown}}");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Known"] = "ok" }
@@ -118,13 +117,13 @@ public sealed class WordAutomationServiceTests : IDisposable
 
         var service = CreateService();
 
-        var first = service.GenerateReplacedDocument(new WordReplacementDto
+        var first = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             OutputFileName = "Ergebnis",
             ReplacePatterns = new Dictionary<string, string> { ["Name"] = "A" }
         });
-        var second = service.GenerateReplacedDocument(new WordReplacementDto
+        var second = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             OutputFileName = "Ergebnis",
@@ -144,16 +143,16 @@ public sealed class WordAutomationServiceTests : IDisposable
             "Schaden: {{Schadensaufstellung}} Netto: {{RvgNetto}}");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
-            DamageListing = new DamageListingDto
+            DamageListing = new DamageListing
             {
                 Items =
                 [
-                    new DamageItemDto { Description = "Reparaturkosten netto nach Gutachten", Amount = 2560.87m },
-                    new DamageItemDto { Description = "Wertminderung nach Gutachten", Amount = 250m }
+                    new DamageItem { Description = "Reparaturkosten netto nach Gutachten", Amount = 2560.87m },
+                    new DamageItem { Description = "Wertminderung nach Gutachten", Amount = 250m }
                 ],
                 Gebuehrensatz = 1.3m,
                 ApplyVat = false
@@ -187,17 +186,17 @@ public sealed class WordAutomationServiceTests : IDisposable
         var templatePath = CreateTemplate("AuflistungStyling", "{{Schadensaufstellung}}");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
-            DamageListing = new DamageListingDto
+            DamageListing = new DamageListing
             {
                 Items =
                 [
-                    new DamageItemDto { Description = "Reparaturkosten", Amount = 1000m },
-                    new DamageItemDto { Description = "Wertminderung", Amount = 200m },
-                    new DamageItemDto { Description = "Unkostenpauschale", Amount = 30m }
+                    new DamageItem { Description = "Reparaturkosten", Amount = 1000m },
+                    new DamageItem { Description = "Wertminderung", Amount = 200m },
+                    new DamageItem { Description = "Unkostenpauschale", Amount = 30m }
                 ]
             }
         });
@@ -226,16 +225,16 @@ public sealed class WordAutomationServiceTests : IDisposable
         var templatePath = CreateTemplate("AuflistungFarbe", "{{Schadensaufstellung}}");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
-            DamageListing = new DamageListingDto
+            DamageListing = new DamageListing
             {
                 Items =
                 [
-                    new DamageItemDto { Description = "Reparaturkosten", Amount = 1000m },
-                    new DamageItemDto { Description = "Wertminderung", Amount = 200m }
+                    new DamageItem { Description = "Reparaturkosten", Amount = 1000m },
+                    new DamageItem { Description = "Wertminderung", Amount = 200m }
                 ],
                 HeaderColorHex = "#B4C6E7"
             }
@@ -262,13 +261,13 @@ public sealed class WordAutomationServiceTests : IDisposable
             "Gebühr: {{Geschaeftsgebuehr}} Auslagen: {{Auslagenpauschale}}");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
-            DamageListing = new DamageListingDto
+            DamageListing = new DamageListing
             {
-                Items = [new DamageItemDto { Description = "Reparaturkosten", Amount = 1000m }],
+                Items = [new DamageItem { Description = "Reparaturkosten", Amount = 1000m }],
                 GeschaeftsgebuehrOverride = 150.00m,
                 AuslagenpauschaleOverride = 25.00m
             }
@@ -324,7 +323,7 @@ public sealed class WordAutomationServiceTests : IDisposable
             "☒ ist nicht vorsteuerabzugsberechtigt.");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
@@ -352,7 +351,7 @@ public sealed class WordAutomationServiceTests : IDisposable
             "☐ ist nicht vorsteuerabzugsberechtigt.");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
@@ -379,7 +378,7 @@ public sealed class WordAutomationServiceTests : IDisposable
             "☐ ist nicht vorsteuerabzugsberechtigt.");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" }
@@ -398,7 +397,7 @@ public sealed class WordAutomationServiceTests : IDisposable
         var templatePath = CreateTemplate("OhneVorsteuer", "Ein Brief ohne den Abschnitt {{Name}}.");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Name"] = "Roman" },
@@ -421,7 +420,7 @@ public sealed class WordAutomationServiceTests : IDisposable
             "vorsteuerabzugsberechtigt.");
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
@@ -448,7 +447,7 @@ public sealed class WordAutomationServiceTests : IDisposable
         }
 
         var service = CreateService();
-        var result = service.GenerateReplacedDocument(new WordReplacementDto
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = samplePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
