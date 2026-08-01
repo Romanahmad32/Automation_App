@@ -1,0 +1,11 @@
+ Versicherungsschein-Nr.:{{............}}
+▫  {{Parteienbezeichnung}}
+▫ Verkehrsunfall vom {{...}}
+▫  Amtliches Kennzeichen des bei Ihnen haftpflichtversicherten Kraftfahrzeugs: {{....}}
+
+
+Beispiel (anonymisiert — keine echten Mandantendaten):
+▫ Versicherungsschein-Nr.: AS-1234567890
+▫ Erika Mustermann ./.  Max Beispiel und Musterversicherung AG  u.a.
+▫ Verkehrsunfall vom 29.11.2025
+▫  Amtliches Kennzeichen des bei Ihnen haftpflichtversicherten Kraftfahrzeugs: F-XY 680
