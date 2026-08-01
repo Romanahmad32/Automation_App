@@ -1,45 +1,52 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
+# ===========================================================================
+# Monorepo der Automation-App
+#
+# Frontend (Automation_App_Frontend/) und Backend (AutomationService/) liegen
+# als Unterverzeichnisse in DIESEM Repo. Ihre jeweils eigenen .gitignore-
+# Dateien gelten weiterhin fuer ihren Unterbaum; hier stehen nur die Regeln,
+# die das gesamte Repo betreffen.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Mandantendaten — duerfen NIE versioniert werden (DSGVO, § 203 StGB)
+# ---------------------------------------------------------------------------
+# Echte Aktenordner
+/VUnvallsache*/
+# Generierte Anspruchsschreiben und PDF-Cache
+Generated/
+# Eingebettete SQLite-DB
+*.db
+*.db-shm
+*.db-wal
+# MSAL-Token-Cache
+msal_token_cache.bin
+
+# ---------------------------------------------------------------------------
+# Build-Ausgaben der Hilfsprogramme unter tools/
+# ---------------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+
+# ---------------------------------------------------------------------------
+# IDE / OS / Kram
+# ---------------------------------------------------------------------------
+.vs/
+.idea/
+*.user
 *.swp
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+Thumbs.db
+Textdokument*.txt
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
+# ---------------------------------------------------------------------------
+# Agent-Konfiguration
+# .claude/ selbst wird versioniert (gemeinsame Hooks/Commands/Settings),
+# nur Laufzeit- und maschinenlokale Dateien bleiben draussen.
+# ---------------------------------------------------------------------------
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# ---------------------------------------------------------------------------
+# Uebrig aus der Repo-Zusammenlegung, kann nach Verifikation geloescht werden
+# ---------------------------------------------------------------------------
+.git_docs_old/
