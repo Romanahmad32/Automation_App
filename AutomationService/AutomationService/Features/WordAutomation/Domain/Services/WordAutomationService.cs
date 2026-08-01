@@ -30,12 +30,12 @@ public sealed partial class WordAutomationService : IWordAutomationService
     {
         ArgumentNullException.ThrowIfNull(replacementDto);
 
-        if(replacementDto.OutputDirectory != "")
+        if (replacementDto.OutputDirectory != "")
         {
             _outputDirectory = Path.GetFullPath(replacementDto.OutputDirectory);
             Directory.CreateDirectory(_outputDirectory);
         }
-        
+
         var templatePath = replacementDto.TemplateFilePath;
         if (!File.Exists(templatePath))
             throw new FileNotFoundException($"Vorlage nicht gefunden: {templatePath}", templatePath);

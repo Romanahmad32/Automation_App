@@ -1,4 +1,4 @@
-﻿namespace AutomationService.Features.PdfConversion.Domain.Services;
+namespace AutomationService.Features.PdfConversion.Domain.Services;
 
 public interface IPdfConversionService
 {

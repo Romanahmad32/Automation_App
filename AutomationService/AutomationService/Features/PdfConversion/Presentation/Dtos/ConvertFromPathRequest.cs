@@ -1,4 +1,4 @@
-﻿namespace AutomationService.Features.PdfConversion.Presentation.Dtos;
+namespace AutomationService.Features.PdfConversion.Presentation.Dtos;
 
 public class ConvertFromPathRequest
 {
