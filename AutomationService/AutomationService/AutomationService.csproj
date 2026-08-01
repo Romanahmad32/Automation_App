@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <!-- TargetFramework, Nullable, ImplicitUsings und die Analyse-Einstellungen
+         stehen in ../Directory.Build.props und gelten fuer alle Projekte. -->
+
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>AutomationService</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,6 +12,11 @@
         <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
         <PackageReference Include="MailKit" Version="4.17.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+        <!-- Explizit gepinnt: Microsoft.AspNetCore.OpenApi 10.0.3 zieht transitiv
+             Microsoft.OpenApi 2.4.1, das die Luecke GHSA-v5pm-xwqc-g5wc (hoch)
+             enthaelt. Gepatcht ab 2.7.5. Entfernen, sobald die transitive
+             Referenz von sich aus >= 2.7.5 liegt. -->
+        <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>

@@ -162,7 +162,7 @@ public sealed class DbReceivedReplyStore(
         }
     }
 
-    private static IReadOnlyList<string> DeserializeWarnings(string? json)
+    private static List<string> DeserializeWarnings(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {

@@ -11,7 +11,7 @@ using Xunit;
 
 namespace AutomationService.Tests.Unit;
 
-public class WordAutomationServiceTests : IDisposable
+public sealed class WordAutomationServiceTests : IDisposable
 {
     private readonly string _contentRoot;
 

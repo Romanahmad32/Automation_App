@@ -25,6 +25,16 @@ public static class RvgFeeCalculator
         (decimal.MaxValue, 50_000m, 175.00m)
     ];
 
+    /// <param name="gegenstandswert">
+    /// Gegenstandswert in € — Grundlage der Wertgebühr nach § 13 RVG.
+    /// </param>
+    /// <param name="gebuehrensatz">
+    /// Gebührensatz der Geschäftsgebühr (Regelsatz 1,3 nach Nr. 2300 VV RVG).
+    /// </param>
+    /// <param name="applyVat">
+    /// Ob Umsatzsteuer nach Nr. 7008 VV RVG aufzuschlagen ist (entfällt bei
+    /// vorsteuerabzugsberechtigten Mandanten).
+    /// </param>
     /// <param name="geschaeftsgebuehrOverride">
     /// Manuell korrigierte Geschäftsgebühr in €. Ersetzt den berechneten Wert
     /// (Wertgebühr × Gebührensatz); Auslagenpauschale und USt rechnen darauf auf.

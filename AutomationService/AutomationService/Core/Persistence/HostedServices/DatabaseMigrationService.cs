@@ -1,4 +1,3 @@
-using AutomationService.Core.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomationService.Core.Persistence.HostedServices;

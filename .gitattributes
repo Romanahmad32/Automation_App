@@ -1,0 +1,54 @@
+# Zeilenenden werden im Repository als LF gespeichert und beim Auschecken auf
+# die Konvention der Plattform gebracht. Ohne diese Datei meldet Git auf Windows
+# bei praktisch jedem `git add` "LF will be replaced by CRLF" und Diffs zeigen
+# je nach Rechner ganze Dateien als geaendert.
+* text=auto
+
+# Quellen, die immer LF brauchen, weil sie auf Unix-Seite gelesen werden
+# (Shell-Skripte in Containern, CI-Schritte, Playwright-Installationsskripte).
+*.sh            text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+
+# Windows-Skripte brauchen umgekehrt CRLF, sonst stolpert cmd.exe.
+*.ps1           text eol=crlf
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# Binaerdateien: nie anfassen, nie als Text diffen. Besonders wichtig fuer die
+# Word-Vorlagen und die Demo-Medien - eine Zeilenende-Konvertierung wuerde sie
+# unbrauchbar machen.
+*.docx          binary
+*.doc           binary
+*.pdf           binary
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.ttf           binary
+*.otf           binary
+*.woff          binary
+*.woff2         binary
+*.zip           binary
+*.exe           binary
+*.dll           binary
+*.db            binary
+*.bin           binary
+
+# Generierte Dateien: im Diff einklappen, aber weiter versioniert.
+*.g.dart              linguist-generated=true
+*.freezed.dart        linguist-generated=true
+*.gr.dart             linguist-generated=true
+injection.config.dart linguist-generated=true
+
+# Die Sprachstatistik soll das Projekt zeigen, nicht die Plattform-Ordner und
+# den generierten EF-Core-Migrationscode.
+Automation_App_Frontend/windows/**  linguist-vendored=true
+Automation_App_Frontend/linux/**    linguist-vendored=true
+Automation_App_Frontend/macos/**    linguist-vendored=true
+Automation_App_Frontend/web/**      linguist-vendored=true
+Automation_App_Frontend/android/**  linguist-vendored=true
+Automation_App_Frontend/ios/**      linguist-vendored=true
+**/Migrations/**                    linguist-generated=true
+docs/media/**                       linguist-documentation=true
