@@ -1,4 +1,5 @@
 using AutomationService.Features.WordAutomation.Domain.Services;
+using AutomationService.Features.WordAutomation.Presentation.HostedServices;
 
 namespace AutomationService.Features.WordAutomation.Presentation.DependencyInjection;
 
@@ -22,6 +23,7 @@ public static class WordAutomationInjection
             .ValidateOnStart();
 
         services.AddScoped<IWordAutomationService, WordAutomationService>();
+        services.AddHostedService<WordAutomationWarmupService>();
 
         return services;
     }
