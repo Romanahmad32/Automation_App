@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# Build-Ausgaben
+# ---------------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+build.diag.log
+
+# Lokal entpacktes .NET SDK
+.dotnet/
+
+# ---------------------------------------------------------------------------
+# Laufzeitdaten — enthalten Mandantendaten und gehoeren NIE ins Repo
+# ---------------------------------------------------------------------------
+# Generierte Anspruchsschreiben + PDF-Cache
+AutomationService/Generated/
+# Eingebettete SQLite-DB (liegt normalerweise unter %APPDATA%)
+*.db
+*.db-shm
+*.db-wal
+# MSAL-Token-Cache
+msal_token_cache.bin
+
+# ---------------------------------------------------------------------------
+# Secrets
+# ---------------------------------------------------------------------------
+# Zugangsdaten gehoeren in User Secrets, nicht in appsettings.
+# (appsettings.json selbst wird versioniert, aber nur mit leeren Feldern.)
+appsettings.*.local.json
+secrets.json
+
+# ---------------------------------------------------------------------------
+# IDE / OS
+# ---------------------------------------------------------------------------
+.vs/
+.idea/
+*.user
+*.suo
+*.swp
+.DS_Store
+Thumbs.db
