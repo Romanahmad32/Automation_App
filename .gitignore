@@ -50,6 +50,15 @@ Thumbs.db
 Textdokument*.txt
 
 # ---------------------------------------------------------------------------
+# Interne Kanzleidokumente
+# Kein Mandantenbezug, aber Geschaeftsinterna: Aktenzeichen-Schema, Vergabe der
+# Auftragsnummern, RVG-Abrechnung, Registerfuehrung. Gehoert nicht in ein
+# oeffentliches Repo, bleibt aber lokal im Arbeitsverzeichnis liegen.
+# ---------------------------------------------------------------------------
+/REQUIREMENTS.md
+/CLAUDE.md
+
+# ---------------------------------------------------------------------------
 # Agent-Konfiguration
 # .claude/ selbst wird versioniert (gemeinsame Hooks/Commands/Settings),
 # nur Laufzeit- und maschinenlokale Dateien bleiben draussen.

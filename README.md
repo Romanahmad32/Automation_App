@@ -4,9 +4,10 @@ Windows-Desktop-App für die Verkehrsunfall-Mandate einer Einzelkanzlei:
 Zentralruf-Anfrage → Antwort auswerten → Anspruchsschreiben (inkl.
 RVG-Berechnung) erzeugen → prüfen, ablegen, versenden.
 
-Verbindliches Anforderungsdokument: **[REQUIREMENTS.md](REQUIREMENTS.md)** —
-vor jeder Änderung am Workflow-Verhalten lesen.
-Arbeitsanweisungen für AI-Agents: **[CLAUDE.md](CLAUDE.md)**.
+Das verbindliche Anforderungsdokument (`REQUIREMENTS.md`) und die
+Arbeitsanweisungen für AI-Agents (`CLAUDE.md`) beschreiben interne
+Kanzleiabläufe und sind deshalb nicht Teil dieses öffentlichen Repos;
+sie liegen nur lokal im Arbeitsverzeichnis.
 
 ## Struktur
 
