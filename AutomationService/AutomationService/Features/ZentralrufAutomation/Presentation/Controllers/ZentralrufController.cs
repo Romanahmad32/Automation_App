@@ -104,7 +104,7 @@ public class ZentralrufController(
 
         try
         {
-            var result = await zentralrufAutomationService.PrefillAsync(prefillDto);
+            var result = await zentralrufAutomationService.PrefillAsync(prefillDto.ToDomain());
             return Ok(new ZentralrufPrefillResponseDto(true, result.Referenz, result.FilledFields, result.SkippedFields, null, null));
         }
         catch (Exception exception)

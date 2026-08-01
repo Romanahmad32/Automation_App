@@ -30,7 +30,7 @@ public class ZentralrufPrefillDto
     /// <summary>
     /// Optionale, vom Anwender überschriebene Referenz. Ist sie leer, baut das Backend die
     /// Referenz aus Auftragsnummer/-jahr, Abteilung und Kennzeichen zusammen
-    /// (<see cref="ZentralrufAutomation.Domain.Services.ZentralrufAutomationService.BuildReferenz"/>).
+    /// (<c>ZentralrufAutomationService.BuildReferenz</c>).
     /// </summary>
     [MaxLength(60)]
     public string? Referenz { get; set; }

@@ -33,33 +33,19 @@ public class SliceIsolationTests
     ];
 
     /// <summary>
-    /// Bestandsverstoesse, die bei Einfuehrung dieser Regel schon da waren.
-    /// Sie stehen hier namentlich, damit die Regel fuer allen neuen Code scharf
-    /// bleibt, ohne dass die Altlast als stille Ausnahme verschwindet.
-    ///
-    /// Beide Faelle sind derselbe: die Domain-Schnittstelle nimmt ein
-    /// Presentation-DTO als Parameter (WordReplacementDto bzw. das
-    /// Zentralruf-Anfrage-DTO). Damit diktiert der HTTP-Vertrag die Signatur
-    /// der Fachlogik, und ein neues Feld im DTO aendert die
-    /// Domain-Schnittstelle mit. Aufloesen laesst sich das ueber einen eigenen
-    /// Eingabetyp in der Domain, auf den der Controller abbildet -- das
-    /// beruehrt den Dokumentenerzeuger, die Browsersteuerung und deren Tests
-    /// und ist deshalb ein eigener Arbeitsschritt, kein Nebenbei-Umbau.
+    /// Ohne Ausnahmen: Bei Einfuehrung dieser Regel nahmen
+    /// IWordAutomationService und IZentralrufAutomationService noch ein
+    /// Presentation-DTO als Parameter -- damit diktierte der HTTP-Vertrag die
+    /// Signatur der Fachlogik. Seit dem Umbau auf eigene Eingabetypen der
+    /// Domain (WordReplacementRequest, ZentralrufPrefillRequest), auf die die
+    /// Controller abbilden, ist der Bestand sauber und die Regel gilt
+    /// ausnahmslos.
     /// </summary>
-    static readonly string[] AltlastenDomainNutztPresentation =
-    [
-        "/Features/WordAutomation/Domain/Services/IWordAutomationService.cs",
-        "/Features/WordAutomation/Domain/Services/WordAutomationService.cs",
-        "/Features/ZentralrufAutomation/Domain/Services/IZentralrufAutomationService.cs",
-        "/Features/ZentralrufAutomation/Domain/Services/ZentralrufAutomationService.cs",
-    ];
-
     [Fact]
     public void Domain_haengt_nicht_von_der_eigenen_Presentation_ab()
     {
         var verstoesse = CsQuelldateien.InFeatures()
             .Where(datei => datei.Schicht == "Domain")
-            .Where(datei => !AltlastenDomainNutztPresentation.Contains(datei.RelativerPfad))
             .Where(datei => datei.Usings.Any(u =>
                 u.StartsWith($"AutomationService.Features.{datei.Feature}.Presentation", StringComparison.Ordinal)))
             .Select(datei => datei.RelativerPfad)
@@ -68,36 +54,6 @@ public class SliceIsolationTests
         verstoesse.Should().BeEmpty(
             "die Domain-Schicht muss ohne ihre Presentation uebersetzbar und testbar bleiben; " +
             "wird dort etwas aus Presentation gebraucht, gehoert es in die Domain verschoben");
-    }
-
-    [Fact]
-    public void Die_Altlastenliste_enthaelt_nichts_Erledigtes()
-    {
-        var dateien = CsQuelldateien.InFeatures();
-        var erledigt = new List<string>();
-
-        foreach (var pfad in AltlastenDomainNutztPresentation)
-        {
-            var datei = dateien.SingleOrDefault(d => d.RelativerPfad == pfad);
-
-            if (datei is null)
-            {
-                erledigt.Add($"{pfad}: existiert nicht mehr");
-                continue;
-            }
-
-            var haengtNochAnPresentation = datei.Usings.Any(u =>
-                u.StartsWith($"AutomationService.Features.{datei.Feature}.Presentation", StringComparison.Ordinal));
-
-            if (!haengtNochAnPresentation)
-            {
-                erledigt.Add($"{pfad}: haengt nicht mehr an der Presentation");
-            }
-        }
-
-        erledigt.Should().BeEmpty(
-            "aufgeraeumte Dateien gehoeren aus der Altlastenliste entfernt, sonst " +
-            "erlaubt sie stillschweigend, den Verstoss wieder einzufuehren");
     }
 
     [Fact]

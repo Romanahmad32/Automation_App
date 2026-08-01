@@ -1,5 +1,3 @@
-using AutomationService.Features.ZentralrufAutomation.Presentation.Dtos;
-
 namespace AutomationService.Features.ZentralrufAutomation.Domain.Services;
 
 public interface IZentralrufAutomationService
@@ -8,7 +6,7 @@ public interface IZentralrufAutomationService
     /// Öffnet ein sichtbares Browserfenster mit dem Zentralruf-Anfrageformular und füllt es voraus.
     /// Captcha und Absenden verbleiben beim Benutzer.
     /// </summary>
-    Task<ZentralrufPrefillResult> PrefillAsync(ZentralrufPrefillDto prefillDto);
+    Task<ZentralrufPrefillResult> PrefillAsync(ZentralrufPrefillRequest request);
 
     /// <summary>
     /// Wärmt die Playwright-Pipeline (Treiberprozess + Chromium) vor, damit der erste

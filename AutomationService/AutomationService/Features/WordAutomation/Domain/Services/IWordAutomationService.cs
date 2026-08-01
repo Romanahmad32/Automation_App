@@ -1,10 +1,13 @@
-using AutomationService.Features.WordAutomation.Presentation.Dtos;
-
 namespace AutomationService.Features.WordAutomation.Domain.Services;
 
 public interface IWordAutomationService
 {
-    public DocumentGenerationResult GenerateReplacedDocument(WordReplacementDto replacementDto);
+    /// <summary>
+    /// Füllt eine Word-Vorlage mit den Werten des Auftrags und schreibt das
+    /// Ergebnis als neue Datei. Platzhalter ohne Wert bleiben stehen und werden
+    /// als Warnung zurückgemeldet.
+    /// </summary>
+    public DocumentGenerationResult GenerateReplacedDocument(WordReplacementRequest request);
 
     /// <summary>
     /// Liest alle {{Platzhalter}} aus einer Word-Vorlage aus, ohne das Dokument zu verändern.

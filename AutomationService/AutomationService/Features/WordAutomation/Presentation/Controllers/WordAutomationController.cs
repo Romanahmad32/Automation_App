@@ -38,7 +38,7 @@ public class WordAutomationController(
 
         try
         {
-            var result = wordAutomationService.GenerateReplacedDocument(wordReplacementDto);
+            var result = wordAutomationService.GenerateReplacedDocument(wordReplacementDto.ToDomain());
             return Ok(new ReplacedDocumentResponseDto(true, result.OutputFilePath, result.Warnings, null, null));
         }
         catch (FileNotFoundException exception)
