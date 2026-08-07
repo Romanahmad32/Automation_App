@@ -8,6 +8,13 @@ on:
 env:
   TEST_PROJECT: AutomationService/AutomationService/AutomationService.Tests/AutomationService.Tests.csproj
   FRONTEND_DIR: Automation_App_Frontend
+  # Feste Flutter-Version statt "channel: stable". Mit einem gleitenden Kanal
+  # baut jeder Lauf gegen eine andere Toolchain, und eine neue Lint-Regel macht
+  # die CI rot, ohne dass jemand Code angefasst hat — genau so ist sie am
+  # 01.08.2026 rot geworden (der Entwicklerrechner stand auf 3.41.2, der Runner
+  # zog 3.44.9). Ein Versionssprung gehoert in einen eigenen Commit, zusammen
+  # mit den Anpassungen, die er ausloest. Das .NET-SDK steuert global.json.
+  FLUTTER_VERSION: "3.41.2"
 
 jobs:
   backend:
@@ -19,7 +26,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore ${{ env.TEST_PROJECT }}
@@ -52,6 +59,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
 
       - name: Pub get
@@ -84,10 +92,11 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
 
       # Platzhalter-Version: die echte vergibt erst der Release-Workflow aus dem

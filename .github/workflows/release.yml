@@ -31,6 +31,12 @@ on:
 permissions:
   contents: write
 
+env:
+  # Muss mit ci.yml uebereinstimmen: ein Release soll mit derselben Toolchain
+  # gebaut werden, mit der die CI es geprueft hat. Das .NET-SDK steuert
+  # global.json.
+  FLUTTER_VERSION: "3.41.2"
+
 jobs:
   release:
     runs-on: windows-latest
@@ -39,10 +45,11 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
 
       - name: Version aus dem Tag ableiten

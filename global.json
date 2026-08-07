@@ -1,0 +1,7 @@
+{
+  "_comment": "Legt das .NET-SDK fest, mit dem gebaut wird. Ohne diese Datei zieht setup-dotnet in der CI bei jedem Lauf das neueste 10.0-SDK. Zusammen mit TreatWarningsAsErrors und AnalysisLevel=latest (Directory.Build.props) genuegt dann eine einzige neue Analyzer-Regel, um den Build zu brechen - ohne dass jemand Code geaendert hat. Genau so ist die CI am 01.08.2026 rot geworden. rollForward=latestPatch laesst Sicherheitspatches zu, bleibt aber im Feature-Band 1xx, in dem die Analyzer-Generation stabil ist. Ein Wechsel des Bands (10.0.3xx) ist damit eine bewusste Entscheidung mit eigenem Commit, kein Zufall.",
+  "sdk": {
+    "version": "10.0.103",
+    "rollForward": "latestPatch"
+  }
+}
