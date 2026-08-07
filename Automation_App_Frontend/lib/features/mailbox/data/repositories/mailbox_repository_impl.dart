@@ -1,3 +1,4 @@
+import 'package:automation_app/core/backend/backend_endpoint.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mailbox/data/datasources/mailbox_datasource.dart';
@@ -59,7 +60,7 @@ class MailboxRepositoryImpl implements MailboxRepository {
           ? (problem['detail'] as String? ?? problem['title'] as String?)
           : null;
       final message = e.type == DioExceptionType.connectionError
-          ? 'Keine Verbindung zum lokalen Dienst (localhost:5143).'
+          ? 'Keine Verbindung zum lokalen Dienst (${BackendEndpoint.adresse}).'
           : detail ?? 'Der Dienst hat die Anfrage abgelehnt: ${e.message}';
       return Left(ServerFailure(message: message));
     } catch (e) {

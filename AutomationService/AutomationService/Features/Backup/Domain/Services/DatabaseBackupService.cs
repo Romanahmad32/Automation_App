@@ -32,7 +32,7 @@ public sealed class DatabaseBackupService(
         await Gate.WaitAsync(cancellationToken);
         try
         {
-            await VacuumInToAsync(databaseFilePath, zielPfad, cancellationToken);
+            await SqliteSicherung.VacuumIntoAsync(databaseFilePath, zielPfad, cancellationToken);
         }
         finally
         {
@@ -67,18 +67,6 @@ public sealed class DatabaseBackupService(
             Gate.Release();
             TryDelete(importPfad);
         }
-    }
-
-    /// <summary>Schreibt eine konsistente Kopie der Quelldatenbank nach <paramref name="zielPfad"/>.</summary>
-    static async Task VacuumInToAsync(string quellPfad, string zielPfad, CancellationToken ct)
-    {
-        await using var connection = new SqliteConnection($"Data Source={quellPfad}");
-        await connection.OpenAsync(ct);
-        await using var command = connection.CreateCommand();
-        // VACUUM INTO akzeptiert keinen gebundenen Parameter für den Dateinamen —
-        // der selbst erzeugte Pfad enthält kein Hochkomma und wird sicher inline gesetzt.
-        command.CommandText = $"VACUUM main INTO '{zielPfad.Replace("'", "''")}';";
-        await command.ExecuteNonQueryAsync(ct);
     }
 
     /// <summary>Stellt sicher, dass die Datei eine lesbare SQLite-DB dieser App ist.</summary>
@@ -117,7 +105,7 @@ public sealed class DatabaseBackupService(
         var bakPfad = Path.Combine(
             Path.GetDirectoryName(databaseFilePath)!,
             $"automation-vor-import-{DateTime.Now:yyyyMMdd-HHmmss}.db.bak");
-        await VacuumInToAsync(databaseFilePath, bakPfad, ct);
+        await SqliteSicherung.VacuumIntoAsync(databaseFilePath, bakPfad, ct);
         logger.LogInformation("Vor-Import-Sicherung abgelegt: {Pfad}", bakPfad);
     }
 

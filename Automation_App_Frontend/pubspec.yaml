@@ -54,6 +54,11 @@ dependencies:
   google_fonts: ^8.0.2
   pdfrx: ^2.2.24
   bloc_concurrency: ^0.3.0
+  # Direkt importiert von den reinen Logik-Blocs (z. B. document_bloc.dart), die
+  # ohne Flutter auskommen. Kam bisher nur transitiv ueber flutter_bloc herein —
+  # was der Analyzer zu Recht bemaengelt: eine Abhaengigkeit, die man importiert,
+  # gehoert in die pubspec.
+  bloc: ^9.2.0
   signalr_netcore: ^1.3.7
 
 dev_dependencies:

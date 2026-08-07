@@ -212,7 +212,7 @@ class ArchitecturalTheme {
           ).copyWith(
             backgroundColor: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.hovered)) {
-                return hoverSurface.withOpacity(0.5);
+                return hoverSurface.withValues(alpha: 0.5);
               }
               return Colors.transparent;
             }),

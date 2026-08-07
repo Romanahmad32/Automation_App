@@ -65,3 +65,37 @@ jobs:
       # und Dateilaengen-Limit aus CLAUDE.md als ausfuehrbare Regeln).
       - name: Test
         run: flutter test
+
+  # Baut das auslieferbare Paket und startet den veroeffentlichten Dienst.
+  #
+  # Warum zusaetzlich zu den Jobs oben: die pruefen den Quellcode. Ob daraus ein
+  # startfaehiges Produkt wird, ist eine andere Frage — ein fehlender Eintrag in
+  # appsettings.json, eine nicht mitkopierte Vorlage oder ein DI-Eintrag, der
+  # sich erst zur Laufzeit nicht aufloesen laesst, sind in "dotnet test" und
+  # "flutter test" unsichtbar. Genau diese Fehlerklasse faengt dieser Job, und
+  # zwar in jedem PR statt erst beim Tag.
+  #
+  # Er benutzt dieselben Skripte wie der Release-Workflow: was hier gruen ist,
+  # ist auch das, was ausgeliefert wird.
+  paket:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # Platzhalter-Version: die echte vergibt erst der Release-Workflow aus dem
+      # Git-Tag. Hier zaehlt nur, dass der Weg dorthin funktioniert.
+      - name: Paket bauen
+        shell: pwsh
+        run: ./scripts/build-package.ps1 -Version 0.0.0 -BuildNumber ${{ github.run_number }}
+
+      - name: Rauchtest
+        shell: pwsh
+        run: ./scripts/smoke-test.ps1 -PackageDirectory dist/Automation_App -ExpectedVersion 0.0.0

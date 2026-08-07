@@ -12,6 +12,7 @@ class AppSidebar extends StatelessWidget {
     required this.activeIndex,
     required this.onDestinationSelected,
     required this.onToggle,
+    super.key,
   });
 
   final bool isExtended;

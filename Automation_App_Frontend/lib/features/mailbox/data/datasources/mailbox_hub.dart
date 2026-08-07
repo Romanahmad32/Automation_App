@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:automation_app/core/backend/backend_endpoint.dart';
 import 'package:automation_app/features/mailbox/domain/repositories/mailbox_push_notifier.dart';
 import 'package:injectable/injectable.dart';
 import 'package:signalr_netcore/signalr_client.dart';
@@ -16,7 +17,7 @@ import 'package:signalr_netcore/signalr_client.dart';
 /// Ansicht weiter über manuelles „Aktualisieren".
 @LazySingleton(as: MailboxPushNotifier)
 class MailboxHub implements MailboxPushNotifier {
-  static const _url = 'http://localhost:5143/hubs/mailbox';
+  static const _url = BackendEndpoint.mailboxHubUrl;
 
   HubConnection? _connection;
   Future<void>? _starting;
