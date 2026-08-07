@@ -146,6 +146,19 @@ class Vorgang extends Equatable {
     return '$links ./. $rechts'.trim();
   }
 
+  /// Vollständiger Inhalt der Registerspalte 3: „Mandant ./. Gegner" mit dem
+  /// Sachverhaltsdatum in der zweiten Zeile. Genutzt vom Sachgebiete-Register
+  /// und vom Registerausschnitt der Startseite, damit beide Ansichten dieselbe
+  /// Zeile zeigen.
+  String get registerSachverhalt {
+    final datum = (unfallDatum ?? '').trim();
+    if (datum.isEmpty) return parteienBezeichnung;
+    final sachbestand = 'Sachverhalt v. $datum';
+    return parteienBezeichnung.isEmpty
+        ? sachbestand
+        : '$parteienBezeichnung\n$sachbestand';
+  }
+
   Vorgang copyWith({
     VorgangStatus? status,
     Rechtsgebiet? rechtsgebiet,

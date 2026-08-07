@@ -69,6 +69,8 @@ import 'package:automation_app/features/mailbox/domain/repositories/mailbox_push
     as _i579;
 import 'package:automation_app/features/mailbox/domain/repositories/mailbox_repository.dart'
     as _i469;
+import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_auswahl_signal.dart'
+    as _i277;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart'
     as _i865;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart'
@@ -216,6 +218,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i115.DocumentBloc>(() => _i115.DocumentBloc());
     gh.singleton<_i361.Dio>(() => networkModule.dio);
     gh.singleton<_i842.AppRouter>(() => _i842.AppRouter());
+    gh.lazySingleton<_i277.MailboxAuswahlSignal>(
+      () => _i277.MailboxAuswahlSignal(),
+    );
     gh.lazySingleton<_i416.VorgangNavigationSignal>(
       () => _i416.VorgangNavigationSignal(),
     );

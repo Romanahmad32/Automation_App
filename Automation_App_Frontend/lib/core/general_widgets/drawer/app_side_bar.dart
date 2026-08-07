@@ -24,6 +24,11 @@ class AppSidebar extends StatelessWidget {
 
   static const _destinations = [
     (
+      icon: Icons.dashboard_outlined,
+      selectedIcon: Icons.dashboard,
+      label: 'Übersicht',
+    ),
+    (
       icon: Icons.note_add_outlined,
       selectedIcon: Icons.note_add,
       label: 'Vorgang starten',
