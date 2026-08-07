@@ -153,6 +153,8 @@ import 'package:automation_app/features/word_automation/domain/entities/generate
     as _i312;
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart'
     as _i279;
+import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart'
+    as _i382;
 import 'package:automation_app/features/word_automation/domain/repositories/word_automation_repository.dart'
     as _i770;
 import 'package:automation_app/features/word_automation/domain/usecases/calculate_rvg_fees.dart'
@@ -161,6 +163,8 @@ import 'package:automation_app/features/word_automation/domain/usecases/convert_
     as _i324;
 import 'package:automation_app/features/word_automation/domain/usecases/fill_out_template.dart'
     as _i649;
+import 'package:automation_app/features/word_automation/domain/usecases/get_vorlagen_uebersicht.dart'
+    as _i250;
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart'
     as _i115;
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart'
@@ -215,7 +219,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i819.AktenFilesystemDatasource>(
       () => const _i819.AktenFilesystemDatasource(),
     );
-    gh.factory<_i115.DocumentBloc>(() => _i115.DocumentBloc());
     gh.singleton<_i361.Dio>(() => networkModule.dio);
     gh.singleton<_i842.AppRouter>(() => _i842.AppRouter());
     gh.lazySingleton<_i277.MailboxAuswahlSignal>(
@@ -342,6 +345,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i279.RvgCalculation, _i430.CalculateRvgFeesParams>>(),
       ),
     );
+    gh.factory<_i223.UseCase<_i382.VorlagenUebersicht, _i223.NoParams>>(
+      () => _i250.GetVorlagenUebersicht(
+        repository: gh<_i770.WordAutomationRepository>(),
+      ),
+    );
     gh.factory<_i223.UseCase<_i100.Uint8List, _i324.ConvertDocxToPdfParams>>(
       () => _i324.ConvertDocxToPdf(
         repository: gh<_i770.WordAutomationRepository>(),
@@ -410,6 +418,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i223.UseCase<void, _i63.DeleteMandantParams>>(
       () => _i63.DeleteMandant(gh<_i763.MandantenRepository>()),
+    );
+    gh.factory<_i115.DocumentBloc>(
+      () => _i115.DocumentBloc(
+        gh<_i223.UseCase<_i382.VorlagenUebersicht, _i223.NoParams>>(),
+      ),
     );
     gh.factory<_i1040.EditedDocumentBloc>(
       () => _i1040.EditedDocumentBloc(

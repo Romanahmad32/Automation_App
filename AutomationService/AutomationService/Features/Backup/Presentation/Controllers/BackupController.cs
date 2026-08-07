@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace AutomationService.Features.Backup.Presentation.Controllers;
 
 /// <summary>
-/// Sicherung/Wiederherstellung der gesamten Datenbank als <em>eine</em> Datei:
-/// ein Download (Export) bzw. ein Upload (Import). Gedacht für manuelle Backups
-/// und den Datenumzug über App-Updates hinweg. Das Multipart-Feld beim Import
-/// heißt <c>datei</c>.
+/// Sicherung/Wiederherstellung des gesamten Bestands als <em>eine</em> Datei: ein
+/// Download (Export) bzw. ein Upload (Import). Die Datei ist ein ZIP mit der
+/// Datenbank und den Word-Vorlagen. Gedacht für manuelle Backups und den
+/// Datenumzug über App-Updates hinweg. Das Multipart-Feld beim Import heißt
+/// <c>datei</c>; ältere Sicherungen (blanke .db) werden weiterhin angenommen.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -18,13 +19,13 @@ public class BackupController(IDatabaseBackupService backupService) : Controller
     public async Task<IActionResult> Export(CancellationToken cancellationToken)
     {
         var pfad = await backupService.CreateBackupFileAsync(cancellationToken);
-        var dateiname = $"automation-backup-{DateTime.Now:yyyyMMdd-HHmmss}.db";
+        var dateiname = $"automation-backup-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
         // DeleteOnClose: die temporäre Sicherungsdatei verschwindet automatisch,
         // sobald der Download fertig gestreamt (und der Stream geschlossen) ist.
         var stream = new FileStream(
             pfad, FileMode.Open, FileAccess.Read, FileShare.Read,
             bufferSize: 81920, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
-        return File(stream, "application/octet-stream", dateiname);
+        return File(stream, "application/zip", dateiname);
     }
 
     [HttpPost("import")]
