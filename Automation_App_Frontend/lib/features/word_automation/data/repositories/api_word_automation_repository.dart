@@ -6,6 +6,7 @@ import 'package:automation_app/features/word_automation/data/datasources/word_au
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart';
+import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart';
 import 'package:automation_app/features/word_automation/domain/repositories/word_automation_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -14,6 +15,15 @@ class ApiWordAutomationRepository implements WordAutomationRepository {
   final WordAutomationDatasource datasource;
 
   ApiWordAutomationRepository(this.datasource);
+
+  @override
+  Future<Either<Failure, VorlagenUebersicht>> getVorlagenUebersicht() async {
+    try {
+      return Right(await datasource.getVorlagenUebersicht());
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
 
   @override
   Future<Either<Failure, GeneratedDocument>> fillOutTemplate(

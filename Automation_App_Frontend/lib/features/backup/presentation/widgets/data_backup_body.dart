@@ -26,9 +26,12 @@ class _DataBackupBodyState extends State<DataBackupBody> {
   Future<void> _sichern() async {
     final zielPfad = await FilePicker.platform.saveFile(
       dialogTitle: 'Datensicherung speichern',
-      fileName: 'automation-backup-${_datumsstempel()}.db',
+      // ZIP, weil die Sicherung seit der Verlagerung der Vorlagen nach %APPDATA%
+      // nicht mehr nur die Datenbank enthält, sondern auch die .docx-Vorlagen,
+      // auf die sie verweist.
+      fileName: 'automation-backup-${_datumsstempel()}.zip',
       type: FileType.custom,
-      allowedExtensions: ['db'],
+      allowedExtensions: ['zip'],
     );
     if (zielPfad == null || !mounted) return;
     await context.read<BackupCubit>().exportiere(zielPfad);
@@ -38,7 +41,9 @@ class _DataBackupBodyState extends State<DataBackupBody> {
     final auswahl = await FilePicker.platform.pickFiles(
       dialogTitle: 'Datensicherung einspielen',
       type: FileType.custom,
-      allowedExtensions: ['db', 'bak'],
+      // db/bak bleiben zugelassen: ältere Sicherungen aus der Zeit vor dem
+      // Vorlagenordner spielt der Dienst weiterhin ein.
+      allowedExtensions: ['zip', 'db', 'bak'],
     );
     final pfad = auswahl?.files.single.path;
     if (pfad == null || !mounted) return;

@@ -9,8 +9,25 @@ namespace AutomationService.Features.WordAutomation.Presentation.Controllers;
 [Route("api/[controller]")]
 public class WordAutomationController(
     IWordAutomationService wordAutomationService,
+    VorlagenVerzeichnis vorlagenVerzeichnis,
     ILogger<WordAutomationController> logger) : ControllerBase
 {
+    /// <summary>
+    /// Der Vorlagenordner des Anwenders samt Inhalt. Das Frontend oeffnet den
+    /// Datei-Dialog in diesem Verzeichnis, statt den Anwalt nach %APPDATA%
+    /// navigieren zu lassen.
+    /// </summary>
+    [HttpGet("vorlagen")]
+    [ProducesResponseType(typeof(VorlagenUebersichtDto), StatusCodes.Status200OK)]
+    public ActionResult<VorlagenUebersichtDto> GetVorlagen()
+    {
+        var vorlagen = vorlagenVerzeichnis.Auflisten()
+            .Select(v => new VorlageDto(v.Name, v.Pfad, v.GeaendertAm))
+            .ToList();
+
+        return Ok(new VorlagenUebersichtDto(vorlagenVerzeichnis.Pfad, vorlagen));
+    }
+
     // Typischer Fall: die Vorlage ist gerade in Word geöffnet (Sharing Violation).
     private const string FileInUseMessage =
         "Die Word-Datei kann nicht gelesen werden, weil sie gerade in einem anderen Programm " +

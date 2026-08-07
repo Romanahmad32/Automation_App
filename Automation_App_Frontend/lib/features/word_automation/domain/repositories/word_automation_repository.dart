@@ -5,6 +5,7 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart';
+import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart';
 
 abstract class WordAutomationRepository {
   Future<Either<Failure, GeneratedDocument>> fillOutTemplate(
@@ -16,6 +17,9 @@ abstract class WordAutomationRepository {
   });
 
   Future<Either<Failure, Uint8List>> convertDocxToPdf(String docxFilePath);
+
+  /// Vorlagenordner des Anwenders samt Inhalt.
+  Future<Either<Failure, VorlagenUebersicht>> getVorlagenUebersicht();
 
   Future<Either<Failure, RvgCalculation>> calculateRvgFees(
     double gegenstandswert,

@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Domain.Services;
 using AutomationService.Features.Mandanten.Domain.Persistence;
@@ -26,7 +27,9 @@ public sealed class DatabaseBackupServiceTests : IDisposable
         _dir = Path.Combine(Path.GetTempPath(), "autobackup-test-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_dir);
         _dbPath = Path.Combine(_dir, "automation.db");
-        _service = new DatabaseBackupService(_dbPath, NullLogger<DatabaseBackupService>.Instance);
+        var vorlagen = Path.Combine(_dir, "Vorlagen");
+        Directory.CreateDirectory(vorlagen);
+        _service = new DatabaseBackupService(_dbPath, vorlagen, NullLogger<DatabaseBackupService>.Instance);
     }
 
     private AutomationDbContext OeffneKontext()
@@ -71,7 +74,14 @@ public sealed class DatabaseBackupServiceTests : IDisposable
         try
         {
             File.Exists(sicherung).Should().BeTrue();
-            await using var connection = new SqliteConnection($"Data Source={sicherung};Mode=ReadOnly");
+
+            // Die Sicherung ist ein Archiv; die Datenbank liegt darin.
+            var entpackt = Path.Combine(_dir, "pruefung");
+            ZipFile.ExtractToDirectory(sicherung, entpackt);
+            var db = Path.Combine(entpackt, SicherungsArchiv.DatenbankEintrag);
+            File.Exists(db).Should().BeTrue();
+
+            await using var connection = new SqliteConnection($"Data Source={db};Mode=ReadOnly");
             await connection.OpenAsync();
             await using var command = connection.CreateCommand();
             command.CommandText = "SELECT Nachname FROM Mandanten;";
@@ -115,7 +125,7 @@ public sealed class DatabaseBackupServiceTests : IDisposable
         }
 
         File.Delete(sicherung);
-        Directory.GetFiles(_dir, "automation-vor-import-*.db.bak").Should().NotBeEmpty();
+        Directory.GetFiles(_dir, "automation-vor-import-*.zip").Should().NotBeEmpty();
     }
 
     [Fact]

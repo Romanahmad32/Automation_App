@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart';
+import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
@@ -17,6 +18,8 @@ abstract class WordAutomationDatasource {
   });
 
   Future<Uint8List> convertDocxToPdf(String docxFilePath);
+
+  Future<VorlagenUebersicht> getVorlagenUebersicht();
 
   Future<RvgCalculation> calculateRvgFees(
     double gegenstandswert,
@@ -32,6 +35,23 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
   final Dio _dio;
 
   ApiWordAutomationDatasource(this._dio);
+
+  @override
+  Future<VorlagenUebersicht> getVorlagenUebersicht() async {
+    final response = await _dio.get('/api/WordAutomation/vorlagen');
+    final data = response.data as Map<String, dynamic>;
+    return VorlagenUebersicht(
+      verzeichnis: data['verzeichnis'] as String,
+      vorlagen: [
+        for (final eintrag in (data['vorlagen'] as List? ?? const []))
+          Vorlage(
+            name: (eintrag as Map<String, dynamic>)['name'] as String,
+            pfad: eintrag['pfad'] as String,
+            geaendertAm: DateTime.parse(eintrag['geaendertAm'] as String),
+          ),
+      ],
+    );
+  }
 
   @override
   Future<GeneratedDocument> fillOutTemplate(
