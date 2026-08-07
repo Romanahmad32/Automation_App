@@ -109,6 +109,20 @@ Files ending in `.g.dart`, `.freezed.dart`, `.gr.dart` and
 `injection.config.dart` are generated — never edit them by hand, run
 build_runner instead.
 
+Start the backend **before** the frontend: a debug build has no bundled service
+next to it, so the app shows a start-error screen (with a retry button) instead
+of the UI.
+
+## Releasing
+
+```powershell
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+Builds a per-user Windows installer and attaches it to a GitHub release. The tag
+is the single source of the version number. See [docs/RELEASE.md](docs/RELEASE.md)
+for the shipped layout, where user data lives, and how updates behave.
+
 ## Tests
 
 ```powershell
