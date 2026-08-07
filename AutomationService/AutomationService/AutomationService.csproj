@@ -52,4 +52,18 @@
       <None Remove="AGENTS.md" />
     </ItemGroup>
 
+    <ItemGroup>
+      <!--
+        Die Word-Vorlagen muessen in die Ausgabe. Ohne diesen Eintrag liegen sie
+        nur im Projektordner: "dotnet run" arbeitet dort und findet sie, die
+        veroeffentlichte Exe (ContentRoot = Exe-Verzeichnis) dagegen nicht — die
+        Vorlagenliste waere im ausgelieferten Produkt schlicht leer.
+        TestTemplate.docx ist ein Ueberbleibsel ohne Verwendung und hat in der
+        Vorlagenliste des Anwalts nichts zu suchen.
+      -->
+      <Content Include="Templates\**\*.docx"
+               Exclude="Templates\TestTemplate.docx"
+               CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
 </Project>

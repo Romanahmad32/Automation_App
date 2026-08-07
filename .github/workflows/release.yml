@@ -1,0 +1,129 @@
+# Release der Automation-App.
+#
+# Ausgeloest durch einen Versions-Tag, nicht durch einen eigenen Branch:
+#
+#     git tag v1.2.0 && git push origin v1.2.0
+#
+# Ein dauerhafter Release-Branch traegt hier nichts bei. Sein Zweck waere,
+# eine alte Version zu pflegen, waehrend master weiterlaeuft — bei einem
+# einzigen Anwender, der immer die neueste Fassung bekommt, tritt dieser Fall
+# nicht ein. Wird doch einmal ein Hotfix auf einer alten Version noetig,
+# schneidet man release/1.2 in diesem Moment vom Tag; vorher waere es nur
+# Merge-Arbeit ohne Gegenwert.
+#
+# Der Tag ist zugleich die einzige Quelle der Versionsnummer: sie wandert von
+# hier in die Flutter-Anwendung, in die Assembly des Dienstes und in den
+# Installer. Nichts wird von Hand hochgezaehlt.
+name: release
+
+on:
+  push:
+    tags: [ "v*" ]
+  # Erlaubt einen Probelauf ohne Tag: baut und prueft alles, veroeffentlicht
+  # aber nichts.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version fuer den Probelauf (z. B. 1.2.0)"
+        required: true
+        default: "0.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Version aus dem Tag ableiten
+        id: version
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref_name }}"
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ inputs.version }}"
+          } else {
+            $version = $ref -replace '^v', ''
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Der Tag '$ref' ergibt keine Version der Form x.y.z. Erwartet wird z. B. v1.2.0."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $version"
+
+      # Dieselben Tests wie in der CI. Ein Tag kann auf jedem Commit sitzen,
+      # auch auf einem, der nie durch einen PR gelaufen ist — hier wird nichts
+      # als "schon geprueft" vorausgesetzt.
+      - name: Backend-Tests
+        run: dotnet test AutomationService/AutomationService/AutomationService.Tests/AutomationService.Tests.csproj --configuration Release
+
+      - name: Frontend-Tests
+        working-directory: Automation_App_Frontend
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - name: Paket bauen
+        shell: pwsh
+        run: ./scripts/build-package.ps1 -Version ${{ steps.version.outputs.version }} -BuildNumber ${{ github.run_number }}
+
+      # Prueft nebenbei, dass die Versionsnummer wirklich in der Assembly
+      # angekommen ist — der Health-Endpunkt meldet sie zurueck.
+      - name: Rauchtest
+        shell: pwsh
+        run: ./scripts/smoke-test.ps1 -PackageDirectory dist/Automation_App -ExpectedVersion ${{ steps.version.outputs.version }}
+
+      - name: Inno Setup bereitstellen
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            Write-Host "Inno Setup nicht im Runner-Image, wird nachinstalliert."
+            choco install innosetup --no-progress -y
+          }
+          if (-not (Test-Path $iscc)) { throw "Inno Setup steht nicht zur Verfuegung: $iscc" }
+          "ISCC=$iscc" >> $env:GITHUB_ENV
+
+      - name: Installer bauen
+        shell: pwsh
+        run: |
+          & $env:ISCC /DMyAppVersion=${{ steps.version.outputs.version }} `
+                      /DSourceDir=..\dist\Automation_App `
+                      /DOutputDir=..\dist `
+                      installer\setup.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup ist fehlgeschlagen." }
+
+      - name: Installer als Artefakt sichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: Automation_App_Setup_${{ steps.version.outputs.version }}
+          path: dist/Automation_App_Setup_*.exe
+          if-no-files-found: error
+
+      # Nur beim echten Tag. Der Probelauf per workflow_dispatch endet mit dem
+      # Artefakt oben.
+      - name: GitHub-Release veroeffentlichen
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          # Text aus installer/RELEASE_NOTES.md, damit er ohne YAML-Bearbeitung
+          # pflegbar bleibt.
+          $hinweis = (Get-Content installer/RELEASE_NOTES.md -Raw).Replace('{VERSION}', $version)
+          $notizDatei = 'dist/release-notes.md'
+          Set-Content $notizDatei $hinweis -Encoding utf8
+          $installer = (Get-Item dist/Automation_App_Setup_*.exe).FullName
+          gh release create "v$version" $installer --title "Automation App $version" --notes-file $notizDatei

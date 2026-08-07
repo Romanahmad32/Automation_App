@@ -1,3 +1,4 @@
+import 'package:automation_app/core/backend/app_bootstrap.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/router/app_router.dart';
 import 'package:automation_app/core/theme/domain/theme_preferences.dart';
@@ -9,11 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await configureDependencies();
-  await getIt.allReady();
-  runApp(MyApp());
+  // Der lokale Dienst gehört zur Anwendung: [AppBootstrap] startet ihn, wartet
+  // auf seine Bereitschaft und baut erst dann [MyApp] — inklusive der
+  // Dependency Injection, die ohne den Dienst nichts zu tun hätte.
+  runApp(AppBootstrap(anwendungBauen: MyApp.new));
 }
 
 class MyApp extends StatelessWidget {

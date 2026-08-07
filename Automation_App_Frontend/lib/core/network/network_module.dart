@@ -1,3 +1,4 @@
+import 'package:automation_app/core/backend/backend_endpoint.dart';
 import 'package:automation_app/core/network/textual_log_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
@@ -8,7 +9,7 @@ abstract class NetworkModule {
   Dio get dio =>
       Dio(
           BaseOptions(
-            baseUrl: 'http://localhost:5143',
+            baseUrl: BackendEndpoint.basisUrl,
             connectTimeout: const Duration(seconds: 3),
             receiveTimeout: const Duration(seconds: 3),
           ),

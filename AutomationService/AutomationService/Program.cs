@@ -1,3 +1,4 @@
+using AutomationService.Core.Lifetime;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Presentation.DependencyInjection;
 using AutomationService.Features.DevSimulation.Presentation.DependencyInjection;
@@ -38,6 +39,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddLifetimeServices(builder.Configuration);
 builder.Services.AddPersistenceServices();
 builder.Services.AddWordServices(builder.Configuration);
 builder.Services.AddPdfConversionServices(builder.Configuration);
@@ -64,6 +66,7 @@ if (app.Environment.IsDevelopment())
 // ohne konfigurierten HTTPS-Endpunkt erzeugte die Middleware nur die Warnung
 // "Failed to determine the https port for redirect".
 app.UseCors(CorsPolicyName);
+app.MapHealthEndpoint();
 app.MapControllers();
 app.MapHub<MailboxHub>("/hubs/mailbox");
 
