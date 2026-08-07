@@ -23,6 +23,7 @@ class _AppShellPageState extends State<AppShellPage> {
   Widget build(BuildContext context) {
     return AutoTabsRouter(
       routes: [
+        const DashboardRoute(),
         const VorgangStartenRoute(),
         const MailboxInboxRoute(),
         const WordAutomationRoute(),

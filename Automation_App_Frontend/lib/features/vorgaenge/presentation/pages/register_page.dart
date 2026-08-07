@@ -36,14 +36,6 @@ class RegisterPage extends StatelessWidget {
     return zeilen;
   }
 
-  String _sachverhalt(Vorgang vorgang) {
-    final parteien = vorgang.parteienBezeichnung;
-    final datum = (vorgang.unfallDatum ?? '').trim();
-    if (datum.isEmpty) return parteien;
-    final sachbestand = 'Sachverhalt v. $datum';
-    return parteien.isEmpty ? sachbestand : '$parteien\n$sachbestand';
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -122,7 +114,7 @@ class RegisterPage extends StatelessWidget {
                                   constraints: const BoxConstraints(
                                     maxWidth: 420,
                                   ),
-                                  child: Text(_sachverhalt(vorgang)),
+                                  child: Text(vorgang.registerSachverhalt),
                                 ),
                               ),
                               DataCell(Text(vorgang.rechtsgebiet.displayName)),

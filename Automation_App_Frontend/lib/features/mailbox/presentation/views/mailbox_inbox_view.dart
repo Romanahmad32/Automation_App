@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
+import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_auswahl_signal.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_detail_pane.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_reply_list.dart';
@@ -29,6 +30,38 @@ class MailboxInboxView extends StatefulWidget {
 class _MailboxInboxViewState extends State<MailboxInboxView> {
   String? _selectedId;
   bool _manualMode = false;
+
+  final MailboxAuswahlSignal _auswahlSignal = getIt<MailboxAuswahlSignal>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Vom Dashboard angetippter Treffer: auch dann öffnen, wenn dieser Tab
+    // bereits gebaut ist (AutoTabsRouter hält ihn am Leben).
+    _auswahlSignal.pendingReplyId.addListener(_onAuswahlSignal);
+    // Beim ersten Aufbau ohne setState übernehmen — der Build steht ja noch aus.
+    final offen = _auswahlSignal.pendingReplyId.value;
+    if (offen != null) {
+      _auswahlSignal.loesche();
+      _selectedId = offen;
+    }
+  }
+
+  @override
+  void dispose() {
+    _auswahlSignal.pendingReplyId.removeListener(_onAuswahlSignal);
+    super.dispose();
+  }
+
+  void _onAuswahlSignal() {
+    final replyId = _auswahlSignal.pendingReplyId.value;
+    if (replyId == null) return;
+    _auswahlSignal.loesche();
+    setState(() {
+      _selectedId = replyId;
+      _manualMode = false;
+    });
+  }
 
   /// Übernimmt die Antwort in den Zielvorgang. Liefert false, wenn der Anwalt
   /// die Übernahme im Konfliktdialog abgebrochen hat.

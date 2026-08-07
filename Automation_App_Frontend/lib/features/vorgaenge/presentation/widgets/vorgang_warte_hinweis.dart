@@ -1,10 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/vorgang_wartezeit.dart';
 import 'package:flutter/material.dart';
-
-/// Ab so vielen Tagen ohne Antwort gilt eine Zentralruf-Anfrage als auffällig
-/// lange offen (der Zentralruf antwortet üblicherweise binnen weniger Tage).
-const int warteHinweisAbTagen = 7;
 
 /// Hebt Vorgänge hervor, die ungewöhnlich lange auf die Zentralruf-Antwort
 /// warten: sichtbar nur im Status „Angefragt" ab [warteHinweisAbTagen] Tagen
@@ -17,11 +13,10 @@ class VorgangWarteHinweis extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (vorgang.status != VorgangStatus.angefragt) {
+    if (!VorgangWartezeit.wartetLange(vorgang)) {
       return const SizedBox.shrink();
     }
-    final tage = DateTime.now().difference(vorgang.angefragtAm).inDays;
-    if (tage < warteHinweisAbTagen) return const SizedBox.shrink();
+    final tage = VorgangWartezeit.tageSeitAnfrage(vorgang);
 
     final theme = Theme.of(context);
     return Padding(

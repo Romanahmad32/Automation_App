@@ -12,6 +12,8 @@ class AppRouter extends RootStackRouter {
       path: '/',
       page: AppShellRoute.page,
       children: [
+        // Erster Eintrag = Start-Tab: die Übersicht empfängt den Anwalt.
+        AutoRoute(path: 'uebersicht', page: DashboardRoute.page),
         AutoRoute(path: 'word-automation', page: WordAutomationRoute.page),
         AutoRoute(path: 'vorgang-starten', page: VorgangStartenRoute.page),
         AutoRoute(path: 'postfach', page: MailboxInboxRoute.page),
