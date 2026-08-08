@@ -24,7 +24,7 @@ class _DataBackupBodyState extends State<DataBackupBody> {
   }
 
   Future<void> _sichern() async {
-    final zielPfad = await FilePicker.platform.saveFile(
+    final zielPfad = await FilePicker.saveFile(
       dialogTitle: 'Datensicherung speichern',
       // ZIP, weil die Sicherung seit der Verlagerung der Vorlagen nach %APPDATA%
       // nicht mehr nur die Datenbank enthält, sondern auch die .docx-Vorlagen,
@@ -38,7 +38,7 @@ class _DataBackupBodyState extends State<DataBackupBody> {
   }
 
   Future<void> _einspielen() async {
-    final auswahl = await FilePicker.platform.pickFiles(
+    final auswahl = await FilePicker.pickFiles(
       dialogTitle: 'Datensicherung einspielen',
       type: FileType.custom,
       // db/bak bleiben zugelassen: ältere Sicherungen aus der Zeit vor dem

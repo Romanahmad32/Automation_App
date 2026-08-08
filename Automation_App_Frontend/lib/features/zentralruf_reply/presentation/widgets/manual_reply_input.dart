@@ -35,7 +35,7 @@ class _ManualReplyInputState extends State<ManualReplyInput> {
   }
 
   Future<void> _loadFromFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       dialogTitle: 'Zentralruf-Antwort laden',
       type: FileType.custom,
       allowedExtensions: ['txt', 'eml'],

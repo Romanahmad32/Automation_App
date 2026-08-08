@@ -43,10 +43,9 @@ class StammordnerField extends StatelessWidget {
                 const SizedBox(width: 12),
                 OutlinedButton.icon(
                   onPressed: () async {
-                    final selected = await FilePicker.platform
-                        .getDirectoryPath(
-                          dialogTitle: 'Stammordner des Aktensystems wählen',
-                        );
+                    final selected = await FilePicker.getDirectoryPath(
+                      dialogTitle: 'Stammordner des Aktensystems wählen',
+                    );
                     if (selected != null) control.value = selected;
                   },
                   icon: const Icon(Icons.folder_open),

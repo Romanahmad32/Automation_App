@@ -70,8 +70,7 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
           'replacePatterns': values,
           if (outputFileName != null && outputFileName.trim().isNotEmpty)
             'OutputFileName': outputFileName.trim(),
-          if (vorsteuerabzugsberechtigt != null)
-            'vorsteuerabzugsberechtigt': vorsteuerabzugsberechtigt,
+          'vorsteuerabzugsberechtigt': ?vorsteuerabzugsberechtigt,
           if (damageListing != null) 'damageListing': damageListing.toJson(),
         },
         options: Options(

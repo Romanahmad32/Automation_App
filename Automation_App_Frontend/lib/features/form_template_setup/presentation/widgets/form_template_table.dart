@@ -68,7 +68,7 @@ class _FormTemplateTableState extends State<FormTemplateTable> {
         Expanded(
           child: ListView.separated(
             itemCount: sorted.length,
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (_, _) =>
                 Divider(height: 1, color: theme.colorScheme.outlineVariant),
             itemBuilder: (context, index) =>
                 FormTemplateRow(template: sorted[index]),
