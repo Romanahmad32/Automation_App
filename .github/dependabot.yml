@@ -15,6 +15,15 @@
 # Repository-Einstellungen dafuer ebenfalls eingeschaltet.
 version: 2
 
+# Gebuendelt wird nur, was zusammen gruen bleibt: die Gruppen nehmen
+# ausdruecklich nur "minor" und "patch". Major-Spruenge kommen einzeln.
+#
+# Das ist Erfahrung, nicht Vorsicht: im ersten Durchlauf steckte Dependabot alles
+# in je einen PR, und darin lag jeweils ein unvertraeglicher Major-Sprung
+# (Microsoft.OpenApi 3.x, file_picker 11). Ein einziges kaputtes Paket hat so
+# vierzehn harmlose Aktualisierungen mit blockiert, darunter Sicherheitspatches.
+# Einzeln ist ein roter Major-PR das, was er ist: eine Entscheidung, keine
+# Routine.
 updates:
   # Ein Sammel-PR je Woche und Oekosystem statt eines PR je Paket: bei rund
   # zwanzig Abhaengigkeiten waere die Alternative ein Posteingang voller
@@ -37,6 +46,20 @@ updates:
     groups:
       nuget:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Microsoft.OpenApi 3.x ist mit .NET 10 nicht baubar: dort ist
+      # IOpenApiMediaType.Example schreibgeschuetzt, waehrend der
+      # Source-Generator von Microsoft.AspNetCore.OpenApi weiterhin dorthin
+      # zuweist (CS0200 in OpenApiXmlCommentSupport.generated.cs). Der Fehler
+      # steht in generiertem Code — nicht reparierbar, das SDK erzeugt die Datei
+      # bei jedem Build neu.
+      #
+      # Die 2er-Linie wird weiter gepflegt (aktuell 2.11.0) und ist seit 2.7.5
+      # gegen GHSA-v5pm-xwqc-g5wc gepatcht; der Pin im csproj bleibt also
+      # wirksam. Aufheben, wenn das Projekt auf .NET 11 geht.
+      - dependency-name: "Microsoft.OpenApi"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "NuGet"
 
@@ -51,6 +74,7 @@ updates:
     groups:
       pub:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: "Flutter"
 
