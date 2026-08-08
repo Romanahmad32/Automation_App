@@ -21,7 +21,7 @@ class _DokumentManuellSpeichernState extends State<DokumentManuellSpeichern> {
 
   Future<void> _saveDocument() async {
     final fileName = widget.outputPath.split(RegExp(r'[\\/]')).last;
-    final targetPath = await FilePicker.platform.saveFile(
+    final targetPath = await FilePicker.saveFile(
       dialogTitle: 'Dokument speichern',
       fileName: fileName,
       type: FileType.custom,

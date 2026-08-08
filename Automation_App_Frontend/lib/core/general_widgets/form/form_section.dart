@@ -53,7 +53,7 @@ class FormSection extends StatelessWidget {
                 Expanded(
                   child: Text(title, style: theme.textTheme.titleMedium),
                 ),
-                if (trailing != null) trailing!,
+                ?trailing,
               ],
             ),
             if (subtitle != null)

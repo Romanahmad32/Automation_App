@@ -26,7 +26,7 @@ class DocumentBloc extends Bloc<DocumentEvent, DocumentState> {
     SelectDocumentEvent event,
     Emitter<DocumentState> emit,
   ) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
+    FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['docx'],
       // Der Dialog öffnet im Vorlagenordner. Ohne das beginnt „Durchsuchen"
