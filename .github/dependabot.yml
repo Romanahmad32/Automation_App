@@ -1,0 +1,70 @@
+# Aktualisierungen kommen als Pull Request herein, bevor sie als Buildfehler
+# hereinkommen.
+#
+# Der Grund steht in Directory.Build.props: NuGetAudit laeuft mit
+# NuGetAuditMode=all und NuGetAuditLevel=low, und TreatWarningsAsErrors macht
+# jeden Fund zum Fehler. Das ist gewollt — so ist die Microsoft.OpenApi-Luecke
+# aufgefallen. Es hat aber eine unangenehme Kehrseite: eine neu veroeffentlichte
+# Meldung gegen irgendein transitives Paket bricht den Build, ohne dass jemand
+# Code angefasst haette. Und weil release.yml denselben Build faehrt, blockiert
+# sie dann auch eine Auslieferung — im schlechtesten Moment, naemlich genau
+# dann, wenn man etwas ausliefern wollte.
+#
+# Dagegen hilft nicht, die Pruefung abzuschalten, sondern frueher Bescheid zu
+# wissen. Dependabot-Alerts und die automatischen Sicherheits-PRs sind in den
+# Repository-Einstellungen dafuer ebenfalls eingeschaltet.
+version: 2
+
+updates:
+  # Ein Sammel-PR je Woche und Oekosystem statt eines PR je Paket: bei rund
+  # zwanzig Abhaengigkeiten waere die Alternative ein Posteingang voller
+  # Einzelmeldungen, den man nach zwei Wochen ignoriert. Sicherheitsupdates
+  # umgehen den Wochentakt und kommen sofort und einzeln.
+  - package-ecosystem: "nuget"
+    # Explizit statt "/": es gibt vier Projekte in drei Ebenen, und ein
+    # uebersehenes bliebe stillschweigend ungepflegt.
+    directories:
+      - "/AutomationService/AutomationService"
+      - "/AutomationService/AutomationService/AutomationService.Tests"
+      - "/tools/TemplateParametrizer"
+      - "/tools/ZentralrufDomDump"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    groups:
+      nuget:
+        patterns: ["*"]
+    commit-message:
+      prefix: "NuGet"
+
+  - package-ecosystem: "pub"
+    directory: "/Automation_App_Frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    groups:
+      pub:
+        patterns: ["*"]
+    commit-message:
+      prefix: "Flutter"
+
+  # Die Actions selbst. Sie haengen an Major-Tags (@v4), die von sich aus nicht
+  # springen — hier geht es darum, den Sprung ueberhaupt mitzubekommen, statt
+  # drei Jahre auf einer abgekuendigten Version zu stehen.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "Actions"

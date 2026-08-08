@@ -28,6 +28,13 @@ on:
         required: true
         default: "0.0.0"
 
+# Anders als in der CI wird hier NICHT abgebrochen: ein laufendes Release darf
+# nicht auf halbem Weg sterben — zwischen "Installer gebaut" und "Release
+# veroeffentlicht" liegt ein Zustand, den niemand aufraeumt.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -40,6 +47,8 @@ env:
 jobs:
   release:
     runs-on: windows-latest
+    # Tests, Paket, Rauchtest und Installer brauchen zusammen rund zehn Minuten.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
