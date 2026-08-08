@@ -50,9 +50,9 @@ jobs:
     # Tests, Paket, Rauchtest und Installer brauchen zusammen rund zehn Minuten.
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
@@ -121,7 +121,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup ist fehlgeschlagen." }
 
       - name: Installer als Artefakt sichern
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Automation_App_Setup_${{ steps.version.outputs.version }}
           path: dist/Automation_App_Setup_*.exe
