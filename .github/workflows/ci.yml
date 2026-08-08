@@ -5,6 +5,12 @@ on:
     branches: [ "main", "master" ]
   pull_request:
 
+# Zwei Pushes kurz hintereinander: der erste Lauf prueft einen Stand, den es
+# schon nicht mehr gibt. Er wird abgebrochen statt zu Ende gefahren.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   TEST_PROJECT: AutomationService/AutomationService/AutomationService.Tests/AutomationService.Tests.csproj
   FRONTEND_DIR: Automation_App_Frontend
@@ -21,6 +27,9 @@ jobs:
     # Windows, nicht ubuntu: Der Dienst nutzt Word-COM-Interop (PdfConversion)
     # und Playwright gegen installiertes Edge/Chrome — beides gibt es nur hier.
     runs-on: windows-latest
+    # Die Jobs brauchen 6 bis 8 Minuten. Ohne Grenze laeuft ein haengender
+    # Prozess — etwa eine nicht beendete Word-Instanz — sechs Stunden weiter.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -51,6 +60,7 @@ jobs:
 
   frontend:
     runs-on: windows-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: ${{ env.FRONTEND_DIR }}
@@ -87,6 +97,7 @@ jobs:
   # ist auch das, was ausgeliefert wird.
   paket:
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
