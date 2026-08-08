@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:automation_app/core/backend/app_version.dart';
 import 'package:automation_app/core/backend/backend_launcher.dart';
 import 'package:automation_app/core/backend/backend_start_fehler_screen.dart';
 import 'package:automation_app/core/backend/backend_start_screen.dart';
@@ -48,6 +49,11 @@ class _AppBootstrapState extends State<AppBootstrap> {
 
     if (!_diFertig) {
       await configureDependencies();
+      // Von Hand statt per @injectable: die Version steht erst fest, wenn der
+      // Dienst geantwortet hat — sie kann nicht aus einer Annotation kommen.
+      getIt.registerSingleton<AppVersion>(
+        ergebnis.version ?? const AppVersion(AppVersion.unbekannt),
+      );
       await getIt.allReady();
       _diFertig = true;
     }
