@@ -8,33 +8,33 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DocX" Version="5.0.0" />
+        <PackageReference Include="DocX" Version="5.2.0" />
         <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
         <PackageReference Include="MailKit" Version="4.17.0" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
         <!-- Explizit gepinnt: Microsoft.AspNetCore.OpenApi 10.0.3 zieht transitiv
              Microsoft.OpenApi 2.4.1, das die Luecke GHSA-v5pm-xwqc-g5wc (hoch)
              enthaelt. Gepatcht ab 2.7.5. Entfernen, sobald die transitive
              Referenz von sich aus >= 2.7.5 liegt. -->
-        <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+        <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
-        <PackageReference Include="Microsoft.Identity.Client" Version="4.85.2" />
-        <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.85.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.87.0" />
+        <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.87.0" />
         <PackageReference Include="Microsoft.Office.Interop.Excel" Version="16.0.18925.20022" />
         <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
-        <PackageReference Include="Microsoft.Playwright" Version="1.49.0" />
+        <PackageReference Include="Microsoft.Playwright" Version="1.61.0" />
         <PackageReference Include="MimeKit" Version="4.17.0" />
-        <PackageReference Include="Scalar.AspNetCore" Version="2.12.46" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.16.18" />
         <!-- Explizit gepinnt, um die von Microsoft.Data.Sqlite transitiv gezogene
              SQLitePCLRaw 2.1.11 zu übersteuern (Sicherheitslücke GHSA-2m69-gcr7-jv3q
              in der gebündelten e_sqlite3-Native). Nicht entfernen, bis EF Core eine
              gepatchte Version transitiv mitbringt. Mit echter Migration verifiziert. -->
-        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     </ItemGroup>
 
     <ItemGroup>
