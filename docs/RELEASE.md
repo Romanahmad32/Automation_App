@@ -103,6 +103,21 @@ Fehlerbehebungen. Wichtig ist nur, dass sie steigt — sie steht in „Apps &
 Features" und im Health-Endpunkt und ist die Antwort auf „welchen Stand hat er
 eigentlich?".
 
+**In der Anwendung steht sie unten in der Seitenleiste** (`VersionBadge`) und im
+Einstellungen-Reiter „Über" (`UeberSettingsView`) — die Seitenleiste startet
+eingeklappt, und ein Anwender sucht so etwas in den Einstellungen.
+
+Beide zeigen `Version 1.0.0`, ausgeschrieben und ohne Entwicklerkürzel; ein
+Klick öffnet „Über diese Anwendung" mit dem ganzen Satz dazu („Sie verwenden die
+neueste Version."). Der Commit aus der `InformationalVersion` steht dort klein
+als *Baustand für Rückfragen* — damit lässt sich eine Rückmeldung eindeutig
+einem Build zuordnen, ohne die Nummer darüber zu verwässern.
+
+Die Quelle ist `GET /health`, nicht die pubspec des Frontends. Beide Hälften
+bekommen ihre Version aus demselben Tag, aber nur die des Dienstes prüft der
+Rauchtest nach; und läuft ausnahmsweise ein fremder Dienst auf dem Port, fällt
+das so auf, statt still zu bleiben.
+
 ### Tags sind unveränderlich
 
 Ein Ruleset („Ausgelieferte Versionen", Ziel `refs/tags/v*`) verbietet Löschen
@@ -156,14 +171,63 @@ Edge oder Chrome (Zentralruf). Einmalig die Postfach-Einrichtung in den
 Einstellungen; die Azure-App-Registrierung für Outlook-Postfächer bleibt
 Entwickleraufgabe (`docs/OUTLOOK_SETUP.md`).
 
-**Updates:** identisch — neuer Tag, neuer Link. Der Installer installiert sich
-über die vorhandene Version (gleiche `AppId`), erkennt eine laufende Instanz und
-bittet, sie zu schließen.
+## So läuft ein Update
 
-> Er erfährt von sich aus **nichts** von einem Update; du musst ihm den Link
-> schicken. Wenn das lästig wird: kleine Lösung ein Hinweis in der App gegen die
-> GitHub-Releases-API, große Lösung [Velopack](https://velopack.io) mit echtem
-> Auto-Update. Beides lohnt erst, wenn der manuelle Weg ein paarmal gelaufen ist.
+Für ihn ist es derselbe Vorgang wie die Erstinstallation — es gibt keinen
+Update-Modus, keinen Deinstallieren-Schritt davor:
+
+1. Du setzt einen neuen Tag, die CI baut, das Release erscheint.
+2. Die Anwendung bemerkt es beim nächsten Start und zeigt „Update verfügbar".
+3. Er klickt darauf, lädt die Setup-Datei und führt sie aus.
+4. Fertig. Danach steht unten in der Seitenleiste die neue Nummer.
+
+Dass das trägt, liegt an drei Entscheidungen weiter oben: die `AppId` bleibt über
+alle Versionen gleich, also **ersetzt** der Installer die vorhandene Fassung,
+statt eine zweite danebenzustellen. Läuft die Anwendung noch, erkennt Inno Setup
+das und bittet, sie zu schließen. Und seine Daten liegen ohnehin nicht im
+Programmordner, sondern unter `%APPDATA%\AutomationService` — Datenbank,
+Vorlagen, Postfach-Zugang und Token-Cache überstehen das Update unberührt, weil
+sie gar nicht erst angefasst werden.
+
+Sein Vorlagenordner wird dabei **ergänzt, nicht überschrieben**: der
+`VorlagenSeedService` legt nur an, was fehlt (siehe [Vorlagen](#vorlagen)). Neue
+mitgelieferte Vorlagen kommen also hinzu, seine angepassten bleiben, wie sie
+sind.
+
+Steht mit dem Update eine Schemaänderung an, sichert der Dienst die Datenbank
+vor der Migration von selbst nach `Sicherungen\` und bricht den Start ab, falls
+das nicht gelingt. Ein Update kann seinen Datenbestand also nicht stillschweigend
+beschädigen.
+
+### Der Update-Hinweis
+
+`AktualisierungsPruefer` (`lib/core/aktualisierung/`) fragt einmal je Sitzung
+`api.github.com/repos/…/releases/latest` und vergleicht `tag_name` mit der
+laufenden Version. Ist er höher, erscheint der Hinweis in der Seitenleiste und
+im Reiter „Über"; der Knopf öffnet die Release-Seite im Browser.
+
+Vier Entscheidungen dahinter:
+
+- **Verglichen wird zahlenweise, nicht als Zeichenkette.** Sonst gälte `1.10.0`
+  als älter als `1.9.0`, und die zehnte Auslieferung würde nie gemeldet.
+- **Unlesbares gilt nie als Update.** Ein Tag, der nicht dem Schema entspricht,
+  schickt den Anwalt sonst zu einem Download, den er längst hat.
+- **Jeder Fehler bleibt stumm.** Ohne Netz, hinter einer Kanzlei-Firewall oder
+  bei einem Ausfall von GitHub passiert schlicht nichts — kein Dialog, keine
+  Verzögerung des Starts. Im Reiter „Über" steht dann allerdings ausdrücklich,
+  dass *nicht geprüft werden konnte*, und nicht etwa „Sie sind aktuell": eine
+  Prüfung, die nie stattgefunden hat, darf sich nicht als Entwarnung ausgeben.
+- **Heruntergeladen und installiert wird nicht automatisch.** Nur der Installer
+  schließt eine laufende Instanz sauber und lässt `%APPDATA%` unberührt.
+
+Das setzt voraus, dass das Repository **öffentlich** bleibt. Wird es privat,
+antwortet die API mit 404 und der Hinweis entfällt ersatzlos — die Anwendung
+funktioniert weiter, du musst dann wieder selbst Bescheid geben.
+
+> Die große Lösung wäre [Velopack](https://velopack.io) mit echtem Auto-Update,
+> das im Hintergrund lädt und beim nächsten Start einspielt. Das ersetzt Inno
+> Setup und ist eine eigene Umstellung; sie lohnt erst, wenn mehrere Rechner zu
+> versorgen sind.
 
 ## Toolchain ist festgenagelt
 
@@ -189,4 +253,9 @@ CI zerlegt.
 
 - **Code-Signing.** Ohne Zertifikat warnt SmartScreen bei jeder Installation.
   Für einen einzelnen bekannten Anwender verschmerzbar (~200–400 €/Jahr).
-- **Update-Benachrichtigung.** Siehe oben.
+  Ohne Signatur hängt die SmartScreen-Reputation am Datei-Hash, jede Version
+  fängt also wieder bei null an; mit Signatur hinge sie am Herausgeber und
+  wüchse über Versionen hinweg.
+- **Update über eine bestehende Installation** ist noch nie gelaufen. Erst das
+  zeigt, ob `AppId`-Zuordnung, Instanzerkennung und Datenerhalt in der Praxis
+  greifen.

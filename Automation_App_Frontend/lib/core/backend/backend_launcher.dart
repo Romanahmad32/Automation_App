@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:automation_app/core/backend/app_version.dart';
 import 'package:automation_app/core/backend/backend_endpoint.dart';
 import 'package:automation_app/core/backend/backend_health_probe.dart';
 import 'package:automation_app/core/backend/backend_start_ergebnis.dart';
@@ -46,8 +47,9 @@ class BackendLauncher {
   final List<String> _letzteAusgaben = [];
 
   Future<BackendStartErgebnis> starten() async {
-    if (await probe.istBereit()) {
-      return const BackendStartErgebnis.bereitsGestartet();
+    final laufende = await probe.versionWennBereit();
+    if (laufende != null) {
+      return BackendStartErgebnis.bereitsGestartet(AppVersion(laufende));
     }
 
     final exe = backendExe();
@@ -76,8 +78,9 @@ class BackendLauncher {
 
     final frist = DateTime.now().add(startFrist);
     while (DateTime.now().isBefore(frist)) {
-      if (await probe.istBereit()) {
-        return const BackendStartErgebnis.selbstGestartet();
+      final version = await probe.versionWennBereit();
+      if (version != null) {
+        return BackendStartErgebnis.selbstGestartet(AppVersion(version));
       }
       final code = beendetMit;
       if (code != null) {
