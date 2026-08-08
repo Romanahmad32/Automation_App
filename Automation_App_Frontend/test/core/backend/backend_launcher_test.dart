@@ -8,14 +8,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Antwortet fest, ohne den Dienst wirklich zu befragen.
 class FesteBackendHealthProbe extends BackendHealthProbe {
-  const FesteBackendHealthProbe({required this.bereit});
+  const FesteBackendHealthProbe({required this.bereit, this.version = '1.2.3'});
 
   final bool bereit;
+  final String version;
 
   @override
-  Future<bool> istBereit({
+  Future<String?> versionWennBereit({
     Duration zeitlimit = const Duration(seconds: 2),
-  }) async => bereit;
+  }) async => bereit ? version : null;
 }
 
 void main() {
@@ -32,6 +33,22 @@ void main() {
       // SQLite-Datei — und die zweite scheitert am belegten Port.
       expect(ergebnis.status, BackendStartStatus.bereitsGestartet);
       expect(ergebnis.erfolgreich, isTrue);
+    });
+
+    test('reicht die gemeldete Version durch', () async {
+      final launcher = BackendLauncher(
+        probe: const FesteBackendHealthProbe(
+          bereit: true,
+          version: '1.2.3+abc1234',
+        ),
+      );
+
+      final ergebnis = await launcher.starten();
+
+      // Die Seitenleiste zeigt daraus "v1.2.3". Kommt hier nichts an, steht
+      // dort "unbekannt" — und die Frage "welchen Stand hat er?" bleibt offen.
+      expect(ergebnis.version?.anzeige, '1.2.3');
+      expect(ergebnis.version?.roh, '1.2.3+abc1234');
     });
 
     test('meldet einen verwertbaren Fehler, wenn der Dienst fehlt', () async {

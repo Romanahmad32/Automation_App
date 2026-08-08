@@ -1,7 +1,6 @@
+import 'package:automation_app/core/general_widgets/drawer/sidebar_footer.dart';
 import 'package:automation_app/core/general_widgets/drawer/side_bar_item.dart';
-import 'package:automation_app/core/theme/presentation/bloc/theme_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({
@@ -127,30 +126,10 @@ class AppSidebar extends StatelessWidget {
           const Spacer(),
           const Divider(height: 1),
 
-          SizedBox(
-            height: 64,
-            width: collapsedWidth,
-            child: Center(
-              child: BlocBuilder<ThemeBloc, ThemeState>(
-                builder: (context, themeState) {
-                  // Anhand der tatsächlich aktiven Helligkeit umschalten, damit
-                  // der Schnellschalter auch im Systemmodus das Erwartete tut.
-                  final isDark =
-                      Theme.of(context).brightness == Brightness.dark;
-                  return IconButton(
-                    onPressed: () {
-                      context.read<ThemeBloc>().add(
-                        ChangeThemeModeEvent(
-                          isDark ? ThemeMode.light : ThemeMode.dark,
-                        ),
-                      );
-                    },
-                    icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-                    tooltip: isDark ? 'Hell' : 'Dunkel',
-                  );
-                },
-              ),
-            ),
+          SidebarFooter(
+            isExtended: isExtended,
+            collapsedWidth: collapsedWidth,
+            animationDuration: animationDuration,
           ),
         ],
       ),
