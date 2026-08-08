@@ -12,10 +12,20 @@
         <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
         <PackageReference Include="MailKit" Version="4.17.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
-        <!-- Explizit gepinnt: Microsoft.AspNetCore.OpenApi 10.0.3 zieht transitiv
-             Microsoft.OpenApi 2.4.1, das die Luecke GHSA-v5pm-xwqc-g5wc (hoch)
-             enthaelt. Gepatcht ab 2.7.5. Entfernen, sobald die transitive
-             Referenz von sich aus >= 2.7.5 liegt. -->
+        <!-- Explizit gepinnt, und zwar dauerhaft: Microsoft.AspNetCore.OpenApi
+             fordert nur Microsoft.OpenApi ab 2.0.0 (offen nach oben), und von
+             einem solchen Bereich nimmt NuGet die NIEDRIGSTE Fassung. Ohne
+             diese Zeile landet also 2.0.0 im Paket, und darin steckt die
+             Luecke GHSA-v5pm-xwqc-g5wc (hoch); gepatcht ist sie ab 2.7.5.
+
+             Die Zeile darf nur innerhalb der 2er-Linie steigen. Version 3.x
+             ist mit .NET 10 nicht baubar: dort ist IOpenApiMediaType.Example
+             schreibgeschuetzt, waehrend der Source-Generator von
+             Microsoft.AspNetCore.OpenApi weiterhin dorthin zuweist (CS0200 in
+             OpenApiXmlCommentSupport.generated.cs). Der Fehler steht in
+             generiertem Code, ist also nicht zu beheben. Deshalb ignoriert
+             .github/dependabot.yml Major-Spruenge dieses Pakets. Beides
+             aufheben, wenn das Projekt auf .NET 11 geht. -->
         <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
