@@ -103,6 +103,19 @@ Fehlerbehebungen. Wichtig ist nur, dass sie steigt — sie steht in „Apps &
 Features" und im Health-Endpunkt und ist die Antwort auf „welchen Stand hat er
 eigentlich?".
 
+### Tags sind unveränderlich
+
+Ein Ruleset („Ausgelieferte Versionen", Ziel `refs/tags/v*`) verbietet Löschen
+und Verschieben. Ohne das wäre die Versionsnummer keine Antwort mehr: ließe sich
+`v1.0.0` nachträglich auf einen anderen Commit setzen, sagt „er hat 1.0.0"
+nichts darüber aus, welchen Code er tatsächlich hat.
+
+Neue Tags sind nicht betroffen — es gibt keine `creation`-Regel, ein Release
+funktioniert wie beschrieben. Es gibt auch **keine Bypass-Actors**: bei Rulesets
+sind Administratoren nicht automatisch ausgenommen, die Regel gilt also für
+alle. Sitzt ein Tag doch einmal falsch, wird das Ruleset unter Settings → Rules
+kurz auf `Disabled` gestellt.
+
 ### Probelauf ohne Veröffentlichung
 
 `release.yml` lässt sich über `workflow_dispatch` mit einer Versionsnummer
