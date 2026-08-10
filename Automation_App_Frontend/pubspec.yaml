@@ -38,16 +38,16 @@ dependencies:
   cupertino_icons: ^1.0.9
   get_it: ^9.2.1
   auto_route: ^11.1.0
-  injectable: ^2.7.1+4
+  injectable: ^3.0.0
   flutter_bloc: ^9.1.1
   reactive_forms: ^18.2.2
   json_serializable: ^6.14.1
   dio: ^5.11.0
   build_runner: ^2.15.1
   equatable: ^2.1.0
-  injectable_generator: ^2.12.0
-  auto_route_generator: ^10.5.0
-  freezed: ^3.2.5
+  injectable_generator: ^3.1.1
+  auto_route_generator: ^10.6.0
+  freezed: ^4.0.0-dev.3
   file_picker: ^11.0.3
   path_provider: ^2.1.6
   path_provider_windows: ^2.3.0
