@@ -142,6 +142,13 @@ gh workflow run release.yml -f version=0.0.1
 gh run download <run-id>          # Installer holen
 ```
 
+Ein Artefakt ist ein Prüfergebnis, **kein Auslieferungsweg**. Es hängt unter
+*Actions* statt unter *Releases*, lässt sich auch bei einem öffentlichen
+Repository nur angemeldet herunterladen, kommt zusätzlich in ein ZIP verpackt
+und verfällt nach 90 Tagen. Wer den Weg testen will, den der Anwalt geht, setzt
+einen echten Tag — auch eine `0.1.0` zur Probe, das Release lässt sich hinterher
+löschen.
+
 ### Lokal bauen
 
 ```powershell

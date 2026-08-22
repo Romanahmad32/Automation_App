@@ -45,7 +45,15 @@ msal_token_cache.bin
 /dist/
 
 # ---------------------------------------------------------------------------
-# IDE / OS / Kram
+# IDE / OS / Werkzeugkram — maschinenlokal, nie versionieren
+#
+# Diese Regeln greifen nur fuer noch nicht erfasste Dateien. Ein Teil davon lag
+# trotzdem im Index (.idea/, *.DotSettings.user, .dotnet-Sentinels): sie waren
+# schon erfasst, bevor es die Regel gab, und eine .gitignore holt so etwas nicht
+# nachtraeglich heraus. Herausgenommen wurden sie mit `git rm --cached`.
+# Sie kosten nicht nur Platz — jede davon ist fuer einen Agenten ein Fundstueck,
+# das nach Projektbestandteil aussieht und erst gelesen werden muss, um als
+# Rechnerspur erkannt zu werden.
 # ---------------------------------------------------------------------------
 .vs/
 .idea/
@@ -54,6 +62,9 @@ msal_token_cache.bin
 .DS_Store
 Thumbs.db
 Textdokument*.txt
+# Sentinel-Dateien des .NET-SDK (Erstnutzung, Zertifikat, Toolpath). Entstehen
+# beim ersten `dotnet`-Aufruf im Projektordner und gehoeren dem Rechner.
+.dotnet/
 
 # ---------------------------------------------------------------------------
 # Interne Kanzleidokumente
