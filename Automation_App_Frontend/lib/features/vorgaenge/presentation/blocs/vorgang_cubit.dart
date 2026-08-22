@@ -7,6 +7,7 @@ import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_re
 import 'package:automation_app/features/vorgaenge/domain/services/fallback_referenz.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_meldung.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -38,14 +39,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
       // Nur setzen, wenn nicht inzwischen schon etwas eingetragen wurde.
       if (state.isEmpty && gespeichert.isNotEmpty) emit(gespeichert);
     } catch (_) {
-      _fehler.melde(
-        VorgangPersistenzFehler(
-          aktion: VorgangPersistenzAktion.laden,
-          meldung:
-              'Die gespeicherten Vorgänge konnten nicht geladen werden. '
-              'Läuft der Hintergrunddienst?',
-        ),
-      );
+      _fehler.melde(VorgangPersistenzMeldung.laden());
     }
   }
 
@@ -267,15 +261,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     } catch (_) {
       // Der In-Memory-Stand bleibt gültig, aber der Nutzer muss erfahren, dass
       // er nach einem Neustart verloren wäre (Req. 8).
-      _fehler.melde(
-        VorgangPersistenzFehler(
-          aktion: VorgangPersistenzAktion.speichern,
-          meldung:
-              'Der Vorgang „${vorgang.referenz}" konnte nicht gespeichert '
-              'werden. Ohne Speichern geht die Änderung beim Beenden verloren.',
-          vorgang: vorgang,
-        ),
-      );
+      _fehler.melde(VorgangPersistenzMeldung.speichern(vorgang));
     }
   }
 
@@ -283,15 +269,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     try {
       await _datasource.deleteVorgang(referenz);
     } catch (_) {
-      _fehler.melde(
-        VorgangPersistenzFehler(
-          aktion: VorgangPersistenzAktion.loeschen,
-          meldung:
-              'Der Vorgang „$referenz" konnte nicht gelöscht werden und '
-              'taucht nach einem Neustart wieder auf.',
-          referenz: referenz,
-        ),
-      );
+      _fehler.melde(VorgangPersistenzMeldung.loeschen(referenz));
     }
   }
 
