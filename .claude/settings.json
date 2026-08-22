@@ -8,7 +8,9 @@
       "PowerShell(flutter *)",
       "PowerShell(dart *)",
       "PowerShell(dotnet *)",
-      "PowerShell(git *)"
+      "PowerShell(git *)",
+      "PowerShell(./scripts/check.ps1*)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1*)"
     ],
     "ask": [
       "Bash(git push *)",

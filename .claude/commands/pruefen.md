@@ -2,38 +2,30 @@
 description: Komplette Pruefkette laufen lassen — dieselben Schritte wie die CI
 ---
 
-Fuehre die Pruefkette dieses Repos aus, in dieser Reihenfolge. Es sind dieselben
-Schritte, die `.github/workflows/ci.yml` faehrt — was hier gruen ist, ist auch
-in der CI gruen.
+Fuehre die Pruefkette dieses Repos aus:
 
-**Frontend** (aus `Automation_App_Frontend/`):
+```
+./scripts/check.ps1
+```
 
-1. `flutter pub get`
-2. `dart run build_runner build --delete-conflicting-outputs`
-   — danach `git status` pruefen: aendert sich `injection.config.dart` oder
-   `app_router.gr.dart`, war der generierte Stand veraltet. Die Aenderung
-   gehoert mit in den Commit.
-3. `dart format --output=none --set-exit-if-changed lib test`
-4. `flutter analyze`
-5. `flutter test` — enthaelt die Architektur-Tests unter `test/architecture/`
-   (Schichtenregeln, Dateilaengen-Limit).
-
-**Backend** (aus `AutomationService/AutomationService/`):
-
-6. `dotnet build AutomationService.Tests --configuration Release`
-   — `TreatWarningsAsErrors` ist an: jede neue Warnung bricht hier ab.
-7. `dotnet test AutomationService.Tests --configuration Release --no-build`
-   — enthaelt die Architektur-Tests unter `AutomationService.Tests/Architecture/`
-   (Slice-Isolation, Namespace-Konvention, Dateilaenge).
-8. `dotnet format ../AutomationService.slnx --verify-no-changes`
+Das Skript faehrt dieselben Schritte wie `.github/workflows/ci.yml` — Pub get,
+Codegenerierung, Abgleich des generierten Stands, Formatierung, Analyse und
+Tests im Frontend, Build, Tests und Formatierung im Backend. Es bricht nicht
+beim ersten Fehler ab, sondern fasst am Ende alles zusammen. Fuer einen
+Teillauf: `-NurFrontend` bzw. `-NurBackend`.
 
 Regeln fuer die Auswertung:
 
 - Melde jeden Fehlschlag mit der echten Ausgabe, nicht zusammengefasst.
-- Ein fehlschlagender Architektur- oder Laengen-Test wird **nicht** dadurch
-  geloest, dass die Regel gelockert oder eine Ausnahme eingetragen wird. Er
-  sagt, dass der Code aufzuteilen ist. Ausnahmen kommen namentlich und mit
-  Begruendung in den Test, nie als hochgesetztes Limit.
+- Ein fehlschlagender Architektur-, Laengen- oder Vertragstest wird **nicht**
+  dadurch geloest, dass die Regel gelockert oder eine Ausnahme eingetragen
+  wird. Er sagt, dass der Code aufzuteilen bzw. der Vertrag nachzuziehen ist.
+  Begruendete Ausnahmen kommen namentlich in den Test, nie als hochgesetztes
+  Limit.
+- Faellt `OpenApiVertragTests`, hat sich der HTTP-Vertrag geaendert: den Diff
+  von `docs/openapi.json` ansehen. Ist die Aenderung gewollt, mitcommitten und
+  pruefen, ob die Dart-Seite nachzieht; ist sie es nicht, ist sie soeben
+  versehentlich im Backend entstanden.
 - Laeuft ein Schritt nicht durch, weil eine Voraussetzung fehlt (Toolchain,
-  Backend nicht gestartet), sag das ausdruecklich, statt den Schritt zu
-  ueberspringen und die Kette als gruen zu melden.
+  fehlendes SDK), sag das ausdruecklich, statt den Schritt zu ueberspringen
+  und die Kette als gruen zu melden.

@@ -47,6 +47,16 @@ validation, and generated documents.
 
 ## Commands
 
+### Die ganze Prüfkette auf einmal
+
+```powershell
+./scripts/check.ps1            # alles; -NurFrontend / -NurBackend für Teilläufe
+```
+
+Fährt genau die Schritte aus `.github/workflows/ci.yml`, bricht nicht beim ersten Fehler ab und
+fasst am Ende zusammen. **Vor dem Abschließen einer Änderung laufen lassen** — die Einzelbefehle
+unten sind für die Arbeit dazwischen.
+
 ### Backend (run from `AutomationService/AutomationService/`)
 
 ```powershell
@@ -107,6 +117,12 @@ The frontend talks to the backend over HTTP (Dio; host and port come from `Backe
 `lib/core/backend/backend_endpoint.dart` — the single source for both, never hardcode them again).
 The backend does the heavy lifting that Flutter can't: Word document manipulation and browser
 automation.
+
+**Der vollständige HTTP-Vertrag steht in [`docs/openapi.json`](docs/openapi.json)** — Pfade, DTOs,
+Feldnamen. Dort nachsehen statt sich durch die Controller zu greppen. Die Datei wird nicht von Hand
+gepflegt: `OpenApiVertragTests` holt sie aus dem laufenden Dienst und schlägt an, wenn der Bestand
+abweicht. Beide Seiten sind nur über Zeichenketten verbunden (Pfade, camelCase-Feldnamen), deshalb
+prüft `test/architecture/http_vertrag_test.dart` die Dart-Seite gegen dieselbe Datei.
 
 ### Backend: vertical slices
 
@@ -203,6 +219,22 @@ jedem AI-Agent** einzuhalten, der Code in diesem Repo ändert:
   `lib/features/<feature>/presentation/widgets/` (je Widget eine Datei).
 - **Vorhandene Widgets bevorzugen.** Vor dem Erstellen eines neuen Widgets immer prüfen, ob ein
   passendes bereits existiert, und dieses verwenden bzw. erweitern statt zu duplizieren.
+
+Diese Regeln stehen nicht nur hier, sie sind **ausführbar**. Wer eine davon verletzt, bekommt einen
+roten Test statt eines übersehenen Hinweises:
+
+| Regel | Erzwungen von |
+|---|---|
+| Dateilänge ≤ 300 Zeilen | `test/architecture/file_length_test.dart`, `Architecture/DateilaengeTests.cs` |
+| Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
+| Schichten (Clean Architecture / Vertical Slices) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
+| Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
+| HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs` + `test/architecture/http_vertrag_test.dart` |
+| Formatierung | `dart format --set-exit-if-changed`, `dotnet format --verify-no-changes` (CI) |
+| Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
+
+Schlägt eine davon fehl, ist die Antwort **nie**, die Regel zu lockern oder das Limit hochzusetzen.
+Begründete Ausnahmen gehören namentlich in den jeweiligen Test.
 
 Bestehende, wiederverwendbare Bausteine (vor Neubau zuerst hier suchen):
 `GeneralTextField`, `GermanDateField`, `FormSection` (form), `CustomRectangularButton`,
