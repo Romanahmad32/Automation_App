@@ -171,6 +171,7 @@ Nur nötig, wenn eine neue Tabelle dazukommt.
 3. Migration erzeugen — der Ausgabepfad ist nicht der Standard:
 
 ```powershell
+dotnet tool install --global dotnet-ef   # einmalig, ist nicht Teil des SDK
 cd AutomationService/AutomationService
 dotnet ef migrations add <Name> -o Core/Persistence/Migrations
 ```
