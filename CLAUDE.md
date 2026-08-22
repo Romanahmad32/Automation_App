@@ -124,6 +124,11 @@ gepflegt: `OpenApiVertragTests` holt sie aus dem laufenden Dienst und schlägt a
 abweicht. Beide Seiten sind nur über Zeichenketten verbunden (Pfade, camelCase-Feldnamen), deshalb
 prüft `test/architecture/http_vertrag_test.dart` die Dart-Seite gegen dieselbe Datei.
 
+**Wer einen Endpunkt hinzufügt, liest [`docs/NEUER_ENDPUNKT.md`](docs/NEUER_ENDPUNKT.md)** —
+dort steht, welche rund ein Dutzend Dateien in welcher Reihenfolge zu berühren sind, welche der
+beiden erlaubten Repository-Muster wann gilt, wie `docs/openapi.json` erneuert wird (nicht von
+Hand) und welche Prüfung anschlägt, wenn ein Schritt fehlt.
+
 ### Backend: vertical slices
 
 Each feature lives under `Features/<Name>/` split into `Domain/Services` (logic) and `Presentation`
