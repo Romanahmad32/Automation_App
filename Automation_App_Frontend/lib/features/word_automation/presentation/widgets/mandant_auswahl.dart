@@ -32,7 +32,9 @@ class MandantAuswahl extends StatelessWidget {
         child: ListTile(
           leading: Icon(Icons.person, color: theme.colorScheme.primary),
           title: Text(
-            gewaehlt.anzeigename.isEmpty ? '(ohne Namen)' : gewaehlt.anzeigename,
+            gewaehlt.anzeigename.isEmpty
+                ? '(ohne Namen)'
+                : gewaehlt.anzeigename,
           ),
           subtitle: const Text('Mandant'),
           trailing: TextButton(

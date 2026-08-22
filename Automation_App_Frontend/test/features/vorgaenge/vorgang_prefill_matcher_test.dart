@@ -59,15 +59,19 @@ void main() {
   }
 
   test('füllt Mandantenfelder aus dem Registereintrag', () {
-    final result = VorgangPrefillMatcher.matchFields([
-      'Name des Mandanten',
-      'Straße des Mandanten',
-      'PLZ Mandant',
-      'Ort des Mandanten',
-      'E-Mail des Mandanten',
-      'Telefon Mandant',
-      'Anschrift des Geschädigten',
-    ], vorgang(), mandant: mandant);
+    final result = VorgangPrefillMatcher.matchFields(
+      [
+        'Name des Mandanten',
+        'Straße des Mandanten',
+        'PLZ Mandant',
+        'Ort des Mandanten',
+        'E-Mail des Mandanten',
+        'Telefon Mandant',
+        'Anschrift des Geschädigten',
+      ],
+      vorgang(),
+      mandant: mandant,
+    );
 
     expect(result['Name des Mandanten'], 'Erika Mustermann');
     expect(result['Straße des Mandanten'], 'Hauptstr. 1');
@@ -82,14 +86,18 @@ void main() {
   });
 
   test('füllt Antwort- und Rechtsgebietsfelder aus dem Vorgang', () {
-    final result = VorgangPrefillMatcher.matchFields([
-      'Gegnerische Versicherung',
-      'Versicherungsschein-Nr.',
-      'Unfalldatum',
-      'Kennzeichen des Unfallgegners',
-      'Aktenzeichen',
-      'Rechtsgebiet',
-    ], vorgang(rechtsgebiet: Rechtsgebiet.verkehrsrecht), mandant: mandant);
+    final result = VorgangPrefillMatcher.matchFields(
+      [
+        'Gegnerische Versicherung',
+        'Versicherungsschein-Nr.',
+        'Unfalldatum',
+        'Kennzeichen des Unfallgegners',
+        'Aktenzeichen',
+        'Rechtsgebiet',
+      ],
+      vorgang(rechtsgebiet: Rechtsgebiet.verkehrsrecht),
+      mandant: mandant,
+    );
 
     expect(result['Gegnerische Versicherung'], 'HUK-COBURG');
     expect(result['Versicherungsschein-Nr.'], '999/123456-X');
@@ -100,10 +108,11 @@ void main() {
   });
 
   test('rät kein Kennzeichen des Mandanten/Geschädigten', () {
-    final result = VorgangPrefillMatcher.matchFields([
-      'Kennzeichen des Geschädigten',
-      'Kennzeichen Mandant',
-    ], vorgang(), mandant: mandant);
+    final result = VorgangPrefillMatcher.matchFields(
+      ['Kennzeichen des Geschädigten', 'Kennzeichen Mandant'],
+      vorgang(),
+      mandant: mandant,
+    );
 
     expect(result.containsKey('Kennzeichen des Geschädigten'), isFalse);
     expect(result.containsKey('Kennzeichen Mandant'), isFalse);
@@ -121,10 +130,11 @@ void main() {
   });
 
   test('ohne Antwort bleiben Versichererfelder leer', () {
-    final result = VorgangPrefillMatcher.matchFields([
-      'Gegnerische Versicherung',
-      'Name des Mandanten',
-    ], vorgang(mitAntwort: null), mandant: mandant);
+    final result = VorgangPrefillMatcher.matchFields(
+      ['Gegnerische Versicherung', 'Name des Mandanten'],
+      vorgang(mitAntwort: null),
+      mandant: mandant,
+    );
 
     expect(result.containsKey('Gegnerische Versicherung'), isFalse);
     expect(result['Name des Mandanten'], 'Erika Mustermann');
@@ -132,13 +142,17 @@ void main() {
 
   group('matchTemplateFields (explizite Datenquelle)', () {
     test('füllt frei benannte Felder über die gewählte Quelle', () {
-      final result = VorgangPrefillMatcher.matchTemplateFields([
-        // Genau das gemeldete Szenario: ein „Adresse"-Feld soll die Anschrift
-        // OHNE Name liefern, „Versicherungsschein" die Nummer (nicht den Namen).
-        feld('Versicherer Adresse', FeldDatenquelle.versichererAdresse),
-        feld('Versicherungsschein', FeldDatenquelle.versicherungsscheinNr),
-        feld('Versicherer', FeldDatenquelle.versichererName),
-      ], vorgang(), mandant: mandant);
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        [
+          // Genau das gemeldete Szenario: ein „Adresse"-Feld soll die Anschrift
+          // OHNE Name liefern, „Versicherungsschein" die Nummer (nicht den Namen).
+          feld('Versicherer Adresse', FeldDatenquelle.versichererAdresse),
+          feld('Versicherungsschein', FeldDatenquelle.versicherungsscheinNr),
+          feld('Versicherer', FeldDatenquelle.versichererName),
+        ],
+        vorgang(),
+        mandant: mandant,
+      );
 
       expect(result['Versicherer Adresse'], 'Lyoner Str. 10, 60524 Frankfurt');
       expect(result['Versicherungsschein'], '999/123456-X');
@@ -148,17 +162,21 @@ void main() {
     test('explizite Quelle gewinnt gegen die Namens-Heuristik', () {
       // Label klingt nach Mandant, ist aber bewusst auf den Versicherernamen
       // gebunden — die explizite Wahl muss greifen.
-      final result = VorgangPrefillMatcher.matchTemplateFields([
-        feld('Name des Mandanten', FeldDatenquelle.versichererName),
-      ], vorgang(), mandant: mandant);
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        [feld('Name des Mandanten', FeldDatenquelle.versichererName)],
+        vorgang(),
+        mandant: mandant,
+      );
 
       expect(result['Name des Mandanten'], 'HUK-COBURG');
     });
 
     test('ungebundene Felder nutzen weiterhin die Heuristik', () {
-      final result = VorgangPrefillMatcher.matchTemplateFields([
-        feld('Unfalldatum', FeldDatenquelle.keine),
-      ], vorgang(), mandant: mandant);
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        [feld('Unfalldatum', FeldDatenquelle.keine)],
+        vorgang(),
+        mandant: mandant,
+      );
 
       expect(result['Unfalldatum'], '09.03.2026');
     });
@@ -174,11 +192,15 @@ void main() {
         },
       );
 
-      final result = VorgangPrefillMatcher.matchTemplateFields([
-        feld('Unfalldatum', FeldDatenquelle.unfalldatum),
-        feld('Versicherer', FeldDatenquelle.keine),
-        feld('Ort des Mandanten', FeldDatenquelle.mandantOrt),
-      ], mitWerten, mandant: mandant);
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        [
+          feld('Unfalldatum', FeldDatenquelle.unfalldatum),
+          feld('Versicherer', FeldDatenquelle.keine),
+          feld('Ort des Mandanten', FeldDatenquelle.mandantOrt),
+        ],
+        mitWerten,
+        mandant: mandant,
+      );
 
       // Gespeichert schlägt Datenquelle und Heuristik …
       expect(result['Unfalldatum'], '10.03.2026');
@@ -189,11 +211,15 @@ void main() {
       expect(result.containsKey('Fremdes Feld'), isFalse);
 
       // Die Herkunft weist genau die zwei gespeicherten Werte aus.
-      final herkunft = VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft([
-        feld('Unfalldatum', FeldDatenquelle.unfalldatum),
-        feld('Versicherer', FeldDatenquelle.keine),
-        feld('Ort des Mandanten', FeldDatenquelle.mandantOrt),
-      ], mitWerten, mandant: mandant);
+      final herkunft = VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
+        [
+          feld('Unfalldatum', FeldDatenquelle.unfalldatum),
+          feld('Versicherer', FeldDatenquelle.keine),
+          feld('Ort des Mandanten', FeldDatenquelle.mandantOrt),
+        ],
+        mitWerten,
+        mandant: mandant,
+      );
       expect(
         herkunft.values
             .where((wert) => wert.quelle == PrefillQuelle.gespeichert)
@@ -207,9 +233,11 @@ void main() {
         feldWerte: const {'Unfalldatum': '  '},
       );
 
-      final result = VorgangPrefillMatcher.matchTemplateFields([
-        feld('Unfalldatum', FeldDatenquelle.unfalldatum),
-      ], mitWerten, mandant: mandant);
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        [feld('Unfalldatum', FeldDatenquelle.unfalldatum)],
+        mitWerten,
+        mandant: mandant,
+      );
 
       expect(result['Unfalldatum'], '09.03.2026');
     });

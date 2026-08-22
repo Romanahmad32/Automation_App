@@ -73,7 +73,8 @@ class VorgangAbschliessenSection extends StatelessWidget {
       bloc: getIt<VorgangCubit>(),
       builder: (context, vorgaenge) {
         final aktuell =
-            getIt<VorgangCubit>().findeZuReferenz(selected.referenz) ?? selected;
+            getIt<VorgangCubit>().findeZuReferenz(selected.referenz) ??
+            selected;
         final abgeschlossen = aktuell.status == VorgangStatus.versendet;
 
         return Column(

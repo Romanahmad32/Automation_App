@@ -74,8 +74,7 @@ class VorgangZuordnungAuswahl extends StatelessWidget {
                     label: _label(vorgang),
                   ),
               ],
-              onChanged: (gewaehlt) =>
-                  onChanged(gewaehlt ?? neuerVorgangWert),
+              onChanged: (gewaehlt) => onChanged(gewaehlt ?? neuerVorgangWert),
             ),
             const SizedBox(height: 8),
             _hinweis(theme, ziel),
@@ -99,15 +98,18 @@ class VorgangZuordnungAuswahl extends StatelessWidget {
       );
     }
 
-    final automatisch = antwortReferenz != null &&
+    final automatisch =
+        antwortReferenz != null &&
         Vorgang.gleicheReferenz(ziel.referenz, antwortReferenz!);
     final mandant = ziel.mandantName?.trim();
-    final mandantTeil =
-        mandant != null && mandant.isNotEmpty ? ' — $mandant' : '';
+    final mandantTeil = mandant != null && mandant.isNotEmpty
+        ? ' — $mandant'
+        : '';
 
     // Fallback-Treffer über Kennzeichen + Unfalldatum: nur eine wahrscheinliche
     // Zuordnung — deutlich als zu bestätigender Vorschlag kennzeichnen.
-    final vermutet = !automatisch &&
+    final vermutet =
+        !automatisch &&
         vermuteteReferenz != null &&
         Vorgang.gleicheReferenz(ziel.referenz, vermuteteReferenz!);
     if (vermutet) {

@@ -52,10 +52,10 @@ class DamageListing extends Equatable {
           : const [],
       gebuehrensatz: (json['gebuehrensatz'] as num?)?.toDouble() ?? 1.3,
       applyVat: json['applyVat'] as bool? ?? false,
-      geschaeftsgebuehrOverride:
-          (json['geschaeftsgebuehrOverride'] as num?)?.toDouble(),
-      auslagenpauschaleOverride:
-          (json['auslagenpauschaleOverride'] as num?)?.toDouble(),
+      geschaeftsgebuehrOverride: (json['geschaeftsgebuehrOverride'] as num?)
+          ?.toDouble(),
+      auslagenpauschaleOverride: (json['auslagenpauschaleOverride'] as num?)
+          ?.toDouble(),
       headerColorHex: json['headerColorHex'] as String?,
     );
   }

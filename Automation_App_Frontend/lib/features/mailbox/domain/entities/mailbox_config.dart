@@ -87,20 +87,19 @@ class MailboxConfig extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [
-        enabled,
-        authMethod,
-        microsoftAuthAvailable,
-        microsoftAccount,
-        host,
-        port,
-        useSsl,
-        username,
-        appPasswordSet,
-        folder,
-        subjectFilter,
-      ];
+  List<Object?> get props => [
+    enabled,
+    authMethod,
+    microsoftAuthAvailable,
+    microsoftAccount,
+    host,
+    port,
+    useSsl,
+    username,
+    appPasswordSet,
+    folder,
+    subjectFilter,
+  ];
 }
 
 /// Eine Änderung des Postfach-Zugangs, wie sie an das Backend geschickt wird.
@@ -128,30 +127,28 @@ class MailboxConfigUpdate extends Equatable {
     required this.subjectFilter,
   });
 
-  Map<String, dynamic> toJson() =>
-      {
-        'enabled': enabled,
-        'authMethod': authMethod.apiValue,
-        'host': host,
-        'port': port,
-        'useSsl': useSsl,
-        'username': username,
-        'appPassword': appPassword,
-        'folder': folder,
-        'subjectFilter': subjectFilter,
-      };
+  Map<String, dynamic> toJson() => {
+    'enabled': enabled,
+    'authMethod': authMethod.apiValue,
+    'host': host,
+    'port': port,
+    'useSsl': useSsl,
+    'username': username,
+    'appPassword': appPassword,
+    'folder': folder,
+    'subjectFilter': subjectFilter,
+  };
 
   @override
-  List<Object?> get props =>
-      [
-        enabled,
-        authMethod,
-        host,
-        port,
-        useSsl,
-        username,
-        appPassword,
-        folder,
-        subjectFilter,
-      ];
+  List<Object?> get props => [
+    enabled,
+    authMethod,
+    host,
+    port,
+    useSsl,
+    username,
+    appPassword,
+    folder,
+    subjectFilter,
+  ];
 }

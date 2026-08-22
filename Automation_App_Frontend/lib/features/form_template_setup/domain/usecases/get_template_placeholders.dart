@@ -18,7 +18,8 @@ class GetTemplatePlaceholders
 
   @override
   Future<Either<Failure, List<String>>> call(
-      GetTemplatePlaceholdersParams params,) {
+    GetTemplatePlaceholdersParams params,
+  ) {
     return _templateRepository.getTemplatePlaceholders(params.wordFilePath);
   }
 }

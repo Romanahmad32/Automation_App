@@ -54,7 +54,10 @@ void main() {
       mandant: mandant,
     );
 
-    expect(result['Name'], const PrefillWert('Erika Mustermann', PrefillQuelle.mandant));
+    expect(
+      result['Name'],
+      const PrefillWert('Erika Mustermann', PrefillQuelle.mandant),
+    );
     expect(
       result['Versicherung'],
       const PrefillWert('HUK-COBURG', PrefillQuelle.antwort),
@@ -71,10 +74,9 @@ void main() {
   });
 
   test('Namens-Schnappschuss ohne Registereintrag zählt als Vorgangsdatum', () {
-    final result = VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
-      [feld('Name', FeldDatenquelle.mandantName)],
-      vorgang,
-    );
+    final result = VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft([
+      feld('Name', FeldDatenquelle.mandantName),
+    ], vorgang);
 
     expect(
       result['Name'],

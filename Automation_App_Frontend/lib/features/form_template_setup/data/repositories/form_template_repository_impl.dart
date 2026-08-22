@@ -66,9 +66,7 @@ class FormTemplateRepositoryImpl implements FormTemplateRepository {
     FormTemplate template,
   ) async {
     try {
-      final updatedTemplate = await _datasource.updateFormTemplate(
-        template,
-      );
+      final updatedTemplate = await _datasource.updateFormTemplate(template);
       return Right(updatedTemplate);
     } catch (e) {
       return Left(LocalFailure(message: e.toString()));

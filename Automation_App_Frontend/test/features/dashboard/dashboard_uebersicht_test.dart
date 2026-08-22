@@ -27,16 +27,13 @@ void main() {
 
   group('offene Vorgänge', () {
     test('sortiert nach Handlungsbedarf, innerhalb dessen ältester zuerst', () {
-      final uebersicht = DashboardUebersicht.aus(
-        [
-          vorgang('frisch', status: VorgangStatus.angefragt, tageAlt: 1),
-          vorgang('abgelegt', status: VorgangStatus.abgelegt, tageAlt: 3),
-          vorgang('wartet-lange', status: VorgangStatus.angefragt, tageAlt: 20),
-          vorgang('beantwortet', status: VorgangStatus.beantwortet, tageAlt: 2),
-          vorgang('erstellt-alt', status: VorgangStatus.erstellt, tageAlt: 9),
-        ],
-        jetzt: jetzt,
-      );
+      final uebersicht = DashboardUebersicht.aus([
+        vorgang('frisch', status: VorgangStatus.angefragt, tageAlt: 1),
+        vorgang('abgelegt', status: VorgangStatus.abgelegt, tageAlt: 3),
+        vorgang('wartet-lange', status: VorgangStatus.angefragt, tageAlt: 20),
+        vorgang('beantwortet', status: VorgangStatus.beantwortet, tageAlt: 2),
+        vorgang('erstellt-alt', status: VorgangStatus.erstellt, tageAlt: 9),
+      ], jetzt: jetzt);
 
       expect(referenzen(uebersicht.offeneVorgaenge), [
         'beantwortet',
@@ -48,13 +45,10 @@ void main() {
     });
 
     test('versendete Vorgänge zählen nicht als offen', () {
-      final uebersicht = DashboardUebersicht.aus(
-        [
-          vorgang('offen', status: VorgangStatus.beantwortet),
-          vorgang('fertig', status: VorgangStatus.versendet, laufendeNummer: 1),
-        ],
-        jetzt: jetzt,
-      );
+      final uebersicht = DashboardUebersicht.aus([
+        vorgang('offen', status: VorgangStatus.beantwortet),
+        vorgang('fertig', status: VorgangStatus.versendet, laufendeNummer: 1),
+      ], jetzt: jetzt);
 
       expect(referenzen(uebersicht.offeneVorgaenge), ['offen']);
       expect(uebersicht.anzahlOffen, 1);
@@ -92,10 +86,13 @@ void main() {
       );
 
       expect(uebersicht.registerGesamt, 12);
-      expect(
-        uebersicht.registerZeilen.map((v) => v.laufendeNummer).toList(),
-        [8, 9, 10, 11, 12],
-      );
+      expect(uebersicht.registerZeilen.map((v) => v.laufendeNummer).toList(), [
+        8,
+        9,
+        10,
+        11,
+        12,
+      ]);
     });
 
     test('Vorgänge ohne laufende Nummer verdrängen den Ausschnitt nicht', () {
@@ -113,23 +110,20 @@ void main() {
     });
 
     test('gleiche Nummer: der zuletzt abgeschlossene Vorgang steht hinten', () {
-      final uebersicht = DashboardUebersicht.aus(
-        [
-          vorgang(
-            'spaeter',
-            status: VorgangStatus.versendet,
-            laufendeNummer: 3,
-            abgeschlossenAm: DateTime(2026, 7, 30),
-          ),
-          vorgang(
-            'frueher',
-            status: VorgangStatus.versendet,
-            laufendeNummer: 3,
-            abgeschlossenAm: DateTime(2026, 7, 1),
-          ),
-        ],
-        jetzt: jetzt,
-      );
+      final uebersicht = DashboardUebersicht.aus([
+        vorgang(
+          'spaeter',
+          status: VorgangStatus.versendet,
+          laufendeNummer: 3,
+          abgeschlossenAm: DateTime(2026, 7, 30),
+        ),
+        vorgang(
+          'frueher',
+          status: VorgangStatus.versendet,
+          laufendeNummer: 3,
+          abgeschlossenAm: DateTime(2026, 7, 1),
+        ),
+      ], jetzt: jetzt);
 
       expect(referenzen(uebersicht.registerZeilen), ['frueher', 'spaeter']);
     });

@@ -124,9 +124,7 @@ class MandantVorschlagZeile extends StatelessWidget {
                 ),
                 Text(
                   vorschlag.begruendung,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: foreground,
-                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(color: foreground),
                 ),
               ],
             ),

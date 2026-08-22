@@ -173,7 +173,10 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
       );
     }
     try {
-      final umbenannt = await _datasource.aendereReferenz(vorgang.referenz, neu);
+      final umbenannt = await _datasource.aendereReferenz(
+        vorgang.referenz,
+        neu,
+      );
       if (umbenannt == null) {
         return (
           vorgang: null,
@@ -209,7 +212,9 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
   /// Fehlerfassung oder Test-Vorgang). No-op, wenn keiner passt.
   Future<void> loesche(String referenz) async {
     final neu = state
-        .where((vorhanden) => !Vorgang.gleicheReferenz(vorhanden.referenz, referenz))
+        .where(
+          (vorhanden) => !Vorgang.gleicheReferenz(vorhanden.referenz, referenz),
+        )
         .toList();
     if (neu.length == state.length) return;
     emit(neu);
@@ -224,8 +229,9 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
   Future<bool> abschliessen(Vorgang vorgang) async {
     if (vorgang.status == VorgangStatus.versendet) return true;
     try {
-      final abgeschlossen =
-          await _datasource.abschliessenVorgang(vorgang.referenz);
+      final abgeschlossen = await _datasource.abschliessenVorgang(
+        vorgang.referenz,
+      );
       if (abgeschlossen == null) return false;
       _ersetzeImState(abgeschlossen);
       return true;
@@ -236,7 +242,8 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
 
   /// Wiederholt die fehlgeschlagene Operation aus einem gemeldeten
   /// Persistenzfehler („Erneut versuchen" in der Snackbar).
-  Future<void> wiederhole(VorgangPersistenzFehler fehler) => switch (fehler.aktion) {
+  Future<void> wiederhole(VorgangPersistenzFehler fehler) =>
+      switch (fehler.aktion) {
         VorgangPersistenzAktion.laden => ladeErneut(),
         VorgangPersistenzAktion.speichern => _upsert(fehler.vorgang!),
         VorgangPersistenzAktion.loeschen => _loescheImBackend(fehler.referenz!),

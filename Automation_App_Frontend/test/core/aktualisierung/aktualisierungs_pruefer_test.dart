@@ -51,7 +51,10 @@ void main() {
         AktualisierungsPruefer.auswerten('{"message":"Not Found"}', '1.0.0'),
         isNull,
       );
-      expect(AktualisierungsPruefer.auswerten('{"tag_name":7}', '1.0.0'), isNull);
+      expect(
+        AktualisierungsPruefer.auswerten('{"tag_name":7}', '1.0.0'),
+        isNull,
+      );
     });
   });
 }

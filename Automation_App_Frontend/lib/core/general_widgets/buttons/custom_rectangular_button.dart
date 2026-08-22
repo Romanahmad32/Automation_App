@@ -20,21 +20,15 @@ class CustomRectangularButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final buttonStyle =
         this.buttonStyle ??
-            ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4.0),
-              ),
-              backgroundColor: Theme
-                  .of(context)
-                  .colorScheme
-                  .primaryContainer,
-              foregroundColor: Theme
-                  .of(context)
-                  .colorScheme
-                  .onPrimaryContainer,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              elevation: 2,
-            );
+        ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4.0),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          elevation: 2,
+        );
     if (icon == null) {
       return ElevatedButton(
         onPressed: onPressed,

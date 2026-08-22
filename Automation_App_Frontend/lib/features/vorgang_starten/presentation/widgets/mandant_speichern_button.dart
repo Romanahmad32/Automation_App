@@ -58,7 +58,8 @@ class MandantSpeichernButton extends StatelessWidget {
           builder: (context, form, child) {
             final daten = leseVorgangDaten(form, rechtsgebiet);
             final art = mandantAenderungsart(daten, gewaehlterMandant);
-            final aktiv = !isLoading &&
+            final aktiv =
+                !isLoading &&
                 art != MandantAenderungsart.keine &&
                 _mandantFelderGueltig(form);
             final neu = art == MandantAenderungsart.neu;
@@ -66,15 +67,18 @@ class MandantSpeichernButton extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
                 icon: Icon(
-                  neu ? Icons.person_add_alt_1_outlined : Icons.edit_note_outlined,
+                  neu
+                      ? Icons.person_add_alt_1_outlined
+                      : Icons.edit_note_outlined,
                 ),
                 label: Text(
                   neu
                       ? 'Neuen Mandanten speichern'
                       : 'Mandantendaten aktualisieren',
                 ),
-                onPressed:
-                    aktiv ? () => _bestaetige(context, art, daten) : null,
+                onPressed: aktiv
+                    ? () => _bestaetige(context, art, daten)
+                    : null,
               ),
             );
           },

@@ -14,7 +14,8 @@ class FillOutTemplate
 
   @override
   Future<Either<Failure, GeneratedDocument>> call(
-      FillOutTemplateParams params,) async {
+    FillOutTemplateParams params,
+  ) async {
     return repository.fillOutTemplate(
       params.path,
       params.data,

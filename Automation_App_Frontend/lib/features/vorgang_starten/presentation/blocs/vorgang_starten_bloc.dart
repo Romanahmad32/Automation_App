@@ -89,8 +89,7 @@ class VorgangStartenBloc
 
     // 1. Mandant auflösen (anlegen / aktualisieren / nur verknüpfen).
     int? mandantId = event.verknuepfteMandantId;
-    String? mandantName =
-        daten.mandantName.isEmpty ? null : daten.mandantName;
+    String? mandantName = daten.mandantName.isEmpty ? null : daten.mandantName;
 
     if (event.neuerMandant != null) {
       final result = await _createMandant(event.neuerMandant!);
@@ -137,8 +136,9 @@ class VorgangStartenBloc
       mandantId: mandantId,
       mandantName: mandantName,
       unfallDatum: daten.istVerkehrsunfall ? daten.unfallDatumText : null,
-      geschaedigtenKennzeichen:
-          VorgangStartenDaten.leerZuNull(daten.mandantKennzeichen),
+      geschaedigtenKennzeichen: VorgangStartenDaten.leerZuNull(
+        daten.mandantKennzeichen,
+      ),
       unfallort: daten.istVerkehrsunfall
           ? VorgangStartenDaten.leerZuNull(daten.unfallort)
           : null,

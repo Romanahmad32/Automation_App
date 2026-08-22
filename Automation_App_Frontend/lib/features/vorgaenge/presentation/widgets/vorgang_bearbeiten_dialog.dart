@@ -59,8 +59,9 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
     _referenz = TextEditingController(text: v.referenz);
     _mandantName = TextEditingController(text: v.mandantName ?? '');
     _gegner = TextEditingController(text: v.gegner ?? '');
-    _geschaedigtenKennzeichen =
-        TextEditingController(text: v.geschaedigtenKennzeichen ?? '');
+    _geschaedigtenKennzeichen = TextEditingController(
+      text: v.geschaedigtenKennzeichen ?? '',
+    );
     _unfallDatum = TextEditingController(text: v.unfallDatum ?? '');
     _unfallort = TextEditingController(text: v.unfallort ?? '');
     _unfalluhrzeit = TextEditingController(text: v.unfalluhrzeit ?? '');

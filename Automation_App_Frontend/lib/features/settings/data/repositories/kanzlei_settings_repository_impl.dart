@@ -23,7 +23,8 @@ class KanzleiSettingsRepositoryImpl implements KanzleiSettingsRepository {
 
   @override
   Future<Either<Failure, KanzleiSettings>> saveSettings(
-      KanzleiSettings settings,) async {
+    KanzleiSettings settings,
+  ) async {
     try {
       final saved = await _datasource.saveSettings(settings);
       return Right(saved);

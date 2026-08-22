@@ -20,12 +20,11 @@ final class SubmitFormTemplateDataEvent extends FormTemplateDataEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [
-        existingItemId,
-        templateName,
-        formData,
-        wordFilePathOhneAuflistung,
-        wordFilePathMitAuflistung,
-      ];
+  List<Object?> get props => [
+    existingItemId,
+    templateName,
+    formData,
+    wordFilePathOhneAuflistung,
+    wordFilePathMitAuflistung,
+  ];
 }

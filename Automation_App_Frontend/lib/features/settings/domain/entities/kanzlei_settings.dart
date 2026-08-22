@@ -96,7 +96,7 @@ class KanzleiSettings extends Equatable {
       emailAdresse: emailAdresse ?? this.emailAdresse,
       telefonnummer: telefonnummer ?? this.telefonnummer,
       laufendeAuftragsnummer:
-      laufendeAuftragsnummer ?? this.laufendeAuftragsnummer,
+          laufendeAuftragsnummer ?? this.laufendeAuftragsnummer,
       abteilung: abteilung ?? this.abteilung,
       tabellenkopfFarbeHex: tabellenkopfFarbeHex ?? this.tabellenkopfFarbeHex,
       aktenStammordner: aktenStammordner ?? this.aktenStammordner,
@@ -118,44 +118,42 @@ class KanzleiSettings extends Equatable {
       emailAdresse: json['emailAdresse'] as String? ?? '',
       telefonnummer: json['telefonnummer'] as String? ?? '',
       laufendeAuftragsnummer:
-      (json['laufendeAuftragsnummer'] as num?)?.toInt() ??
+          (json['laufendeAuftragsnummer'] as num?)?.toInt() ??
           defaultLaufendeAuftragsnummer,
       abteilung: json['abteilung'] as String? ?? defaultAbteilung,
       tabellenkopfFarbeHex:
-      json['tabellenkopfFarbeHex'] as String? ??
+          json['tabellenkopfFarbeHex'] as String? ??
           defaultTabellenkopfFarbeHex,
       aktenStammordner: json['aktenStammordner'] as String? ?? '',
     );
   }
 
-  Map<String, dynamic> toJson() =>
-      {
-        'personentyp': personentyp,
-        'name': name,
-        'strasseHausnummer': strasseHausnummer,
-        'postleitzahl': postleitzahl,
-        'ort': ort,
-        'emailAdresse': emailAdresse,
-        'telefonnummer': telefonnummer,
-        'laufendeAuftragsnummer': laufendeAuftragsnummer,
-        'abteilung': abteilung,
-        'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
-        'aktenStammordner': aktenStammordner,
-      };
+  Map<String, dynamic> toJson() => {
+    'personentyp': personentyp,
+    'name': name,
+    'strasseHausnummer': strasseHausnummer,
+    'postleitzahl': postleitzahl,
+    'ort': ort,
+    'emailAdresse': emailAdresse,
+    'telefonnummer': telefonnummer,
+    'laufendeAuftragsnummer': laufendeAuftragsnummer,
+    'abteilung': abteilung,
+    'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
+    'aktenStammordner': aktenStammordner,
+  };
 
   @override
-  List<Object?> get props =>
-      [
-        personentyp,
-        name,
-        strasseHausnummer,
-        postleitzahl,
-        ort,
-        emailAdresse,
-        telefonnummer,
-        laufendeAuftragsnummer,
-        abteilung,
-        tabellenkopfFarbeHex,
-        aktenStammordner,
-      ];
+  List<Object?> get props => [
+    personentyp,
+    name,
+    strasseHausnummer,
+    postleitzahl,
+    ort,
+    emailAdresse,
+    telefonnummer,
+    laufendeAuftragsnummer,
+    abteilung,
+    tabellenkopfFarbeHex,
+    aktenStammordner,
+  ];
 }

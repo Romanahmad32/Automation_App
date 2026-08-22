@@ -20,7 +20,10 @@ class MailboxAuthMethodSelector extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 8,
             children: [
-              Text('E-Mail-Anbieter', style: Theme.of(context).textTheme.labelLarge),
+              Text(
+                'E-Mail-Anbieter',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               SegmentedButton<MailboxAuthMethod>(
                 segments: const [
                   ButtonSegment(
@@ -35,7 +38,8 @@ class MailboxAuthMethodSelector extends StatelessWidget {
                   ),
                 ],
                 selected: {value},
-                onSelectionChanged: (selection) => control.value = selection.first,
+                onSelectionChanged: (selection) =>
+                    control.value = selection.first,
               ),
             ],
           ),

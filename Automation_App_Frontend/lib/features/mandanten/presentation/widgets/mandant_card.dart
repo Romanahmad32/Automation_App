@@ -36,10 +36,7 @@ class MandantCard extends StatelessWidget {
             style: TextStyle(color: scheme.onPrimaryContainer),
           ),
         ),
-        title: Text(
-          _titel(mandant),
-          style: theme.textTheme.titleMedium,
-        ),
+        title: Text(_titel(mandant), style: theme.textTheme.titleMedium),
         subtitle: Text(
           adresse.isEmpty ? 'Keine Adresse hinterlegt' : adresse,
           maxLines: 1,

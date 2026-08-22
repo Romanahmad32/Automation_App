@@ -15,7 +15,8 @@ class TemplateFieldsCard extends StatelessWidget {
   final VoidCallback onAddField;
   final void Function(int oldIndex, int newIndex) onReorder;
   final void Function(int index, InputType? newValue) onTypeChanged;
-  final void Function(int index, FeldDatenquelle? newValue) onDatenquelleChanged;
+  final void Function(int index, FeldDatenquelle? newValue)
+  onDatenquelleChanged;
   final void Function(int index, bool? value) onRequiredChanged;
   final void Function(int index) onDelete;
 

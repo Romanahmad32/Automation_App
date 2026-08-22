@@ -57,7 +57,8 @@ class SimulationMenu extends StatelessWidget {
     await getIt<VorgangCubit>().aktualisiere(
       vorgang.copyWith(
         status: VorgangStatus.erstellt,
-        dokumentPfad: vorgang.dokumentPfad ??
+        dokumentPfad:
+            vorgang.dokumentPfad ??
             r'C:\Demo\Anspruchsschreiben (simuliert).docx',
       ),
     );
@@ -83,7 +84,7 @@ class SimulationMenu extends StatelessWidget {
       context,
       erfolgreich
           ? 'Vorgang abgeschlossen — Auftragsnummer wurde hochgezählt '
-              '(echte Backend-Transaktion).'
+                '(echte Backend-Transaktion).'
           : 'Abschließen fehlgeschlagen. Läuft der Hintergrunddienst?',
     );
   }
@@ -96,16 +97,21 @@ class SimulationMenu extends StatelessWidget {
 
   Future<void> _ausfuehren(BuildContext context, SimulationAktion aktion) {
     return switch (aktion) {
-      SimulationAktion.antwort =>
-        _antwortSimulieren(context, typ: ZentralrufAntwortTyp.versicherer),
-      SimulationAktion.antwortNegativ =>
-        _antwortSimulieren(context, typ: ZentralrufAntwortTyp.keinVersicherer),
+      SimulationAktion.antwort => _antwortSimulieren(
+        context,
+        typ: ZentralrufAntwortTyp.versicherer,
+      ),
+      SimulationAktion.antwortNegativ => _antwortSimulieren(
+        context,
+        typ: ZentralrufAntwortTyp.keinVersicherer,
+      ),
       SimulationAktion.antwortZwischennachricht => _antwortSimulieren(
         context,
         typ: ZentralrufAntwortTyp.zwischennachricht,
       ),
-      SimulationAktion.schreibenErstellt =>
-        _schreibenErstelltSimulieren(context),
+      SimulationAktion.schreibenErstellt => _schreibenErstelltSimulieren(
+        context,
+      ),
       SimulationAktion.abgelegt => _abgelegtSimulieren(context),
       SimulationAktion.abschliessen => _abschliessen(context),
     };
