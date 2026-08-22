@@ -17,8 +17,8 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart'
     as _i223;
 import 'package:automation_app/core/network/network_module.dart' as _i194;
 import 'package:automation_app/core/router/app_router.dart' as _i842;
-import 'package:automation_app/core/theme/data/local_theme_preferences_datasource.dart'
-    as _i441;
+import 'package:automation_app/core/theme/data/theme_preferences_datasource.dart'
+    as _i1039;
 import 'package:automation_app/core/theme/presentation/bloc/theme_bloc.dart'
     as _i1049;
 import 'package:automation_app/features/backup/data/datasources/backup_datasource.dart'
@@ -27,14 +27,14 @@ import 'package:automation_app/features/backup/domain/repositories/backup_reposi
     as _i285;
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart'
     as _i198;
-import 'package:automation_app/features/dev_simulation/data/datasources/api_simulation_datasource.dart'
-    as _i151;
+import 'package:automation_app/features/dev_simulation/data/datasources/simulation_datasource.dart'
+    as _i383;
 import 'package:automation_app/features/dev_simulation/domain/repositories/simulation_repository.dart'
     as _i602;
-import 'package:automation_app/features/form_template_setup/data/datasources/api_form_template_datasource.dart'
-    as _i104;
-import 'package:automation_app/features/form_template_setup/data/datasources/remote_word_template_datasource.dart'
-    as _i766;
+import 'package:automation_app/features/form_template_setup/data/datasources/form_template_datasource.dart'
+    as _i308;
+import 'package:automation_app/features/form_template_setup/data/datasources/word_template_datasource.dart'
+    as _i651;
 import 'package:automation_app/features/form_template_setup/data/repositories/form_template_repository_impl.dart'
     as _i963;
 import 'package:automation_app/features/form_template_setup/domain/entities/create_form_template_request.dart'
@@ -75,8 +75,8 @@ import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_confi
     as _i865;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart'
     as _i431;
-import 'package:automation_app/features/mandanten/data/datasources/akten_filesystem_datasource.dart'
-    as _i819;
+import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart'
+    as _i431;
 import 'package:automation_app/features/mandanten/data/datasources/mandant_datasource.dart'
     as _i395;
 import 'package:automation_app/features/mandanten/data/repositories/mandanten_repository_impl.dart'
@@ -125,14 +125,14 @@ import 'package:automation_app/features/settings/domain/usecases/save_kanzlei_se
     as _i104;
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart'
     as _i195;
-import 'package:automation_app/features/versicherer/data/datasources/api_versicherer_datasource.dart'
-    as _i19;
+import 'package:automation_app/features/versicherer/data/datasources/versicherer_datasource.dart'
+    as _i315;
 import 'package:automation_app/features/versicherer/domain/repositories/versicherer_repository.dart'
     as _i9;
 import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart'
     as _i782;
-import 'package:automation_app/features/vorgaenge/data/datasources/api_vorgaenge_datasource.dart'
-    as _i170;
+import 'package:automation_app/features/vorgaenge/data/datasources/vorgaenge_datasource.dart'
+    as _i933;
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart'
     as _i487;
 import 'package:automation_app/features/vorgaenge/domain/services/register_word_exporter.dart'
@@ -212,12 +212,12 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final datasourceModule = _$DatasourceModule();
     final networkModule = _$NetworkModule();
-    await gh.factoryAsync<_i441.LocalThemePreferencesDatasource>(
+    await gh.factoryAsync<_i1039.ThemePreferencesDatasource>(
       () => datasourceModule.localThemePreferencesDatasource,
       preResolve: true,
     );
-    gh.factory<_i819.AktenFilesystemDatasource>(
-      () => const _i819.AktenFilesystemDatasource(),
+    gh.factory<_i431.FilesystemAktenDatasource>(
+      () => const _i431.FilesystemAktenDatasource(),
     );
     gh.singleton<_i361.Dio>(() => networkModule.dio);
     gh.singleton<_i842.AppRouter>(() => _i842.AppRouter());
@@ -233,23 +233,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i829.MailboxDatasource>(
       () => _i829.ApiMailboxDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i487.VorgangRepository>(
+      () => _i933.ApiVorgaengeDatasource(gh<_i361.Dio>()),
+    );
+    gh.factory<_i9.VersichererRepository>(
+      () => _i315.ApiVersichererDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i469.MailboxRepository>(
       () => _i943.MailboxRepositoryImpl(gh<_i829.MailboxDatasource>()),
-    );
-    gh.factory<_i602.SimulationRepository>(
-      () => _i151.ApiSimulationDatasource(gh<_i361.Dio>()),
-    );
-    gh.factory<_i766.RemoteWordTemplateDatasource>(
-      () => _i766.ApiRemoteWordTemplateDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i56.ZentralrufReplyDatasource>(
       () => _i56.ApiZentralrufReplyDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i395.MandantDatasource>(
       () => _i395.ApiMandantDatasource(gh<_i361.Dio>()),
-    );
-    gh.factory<_i487.VorgangRepository>(
-      () => _i170.ApiVorgaengeDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i501.KanzleiSettingsDatasource>(
       () => _i501.ApiKanzleiSettingsDatasource(gh<_i361.Dio>()),
@@ -266,15 +263,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i287.WordAutomationDatasource>(
       () => _i287.ApiWordAutomationDatasource(gh<_i361.Dio>()),
     );
-    gh.factory<_i9.VersichererRepository>(
-      () => _i19.ApiVersichererDatasource(gh<_i361.Dio>()),
+    gh.factory<_i651.WordTemplateDatasource>(
+      () => _i651.ApiWordTemplateDatasource(gh<_i361.Dio>()),
+    );
+    gh.factory<_i602.SimulationRepository>(
+      () => _i383.ApiSimulationDatasource(gh<_i361.Dio>()),
+    );
+    gh.factory<_i308.FormTemplateDatasource>(
+      () => _i308.ApiFormTemplateDatasource(gh<_i361.Dio>()),
     );
     gh.lazySingleton<_i579.MailboxPushNotifier>(
       () => _i1015.MailboxHub(),
       dispose: (i) => i.dispose(),
-    );
-    gh.factory<_i104.FormTemplateDatasource>(
-      () => _i104.ApiFormTemplateDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i304.ZentralrufReplyRepository>(
       () => _i953.ApiZentralrufReplyRepository(
@@ -304,13 +304,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i709.ApiZentralrufRepository(gh<_i615.ZentralrufDatasource>()),
     );
     gh.singleton<_i1049.ThemeBloc>(
-      () => _i1049.ThemeBloc(gh<_i441.LocalThemePreferencesDatasource>()),
-    );
-    gh.factory<_i211.FormTemplateRepository>(
-      () => _i963.FormTemplateRepositoryImpl(
-        gh<_i104.FormTemplateDatasource>(),
-        gh<_i766.RemoteWordTemplateDatasource>(),
-      ),
+      () => _i1049.ThemeBloc(gh<_i1039.ThemePreferencesDatasource>()),
     );
     gh.factory<_i865.MailboxConfigBloc>(
       () => _i865.MailboxConfigBloc(gh<_i469.MailboxRepository>()),
@@ -345,6 +339,19 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i279.RvgCalculation, _i430.CalculateRvgFeesParams>>(),
       ),
     );
+    gh.factory<_i211.FormTemplateRepository>(
+      () => _i963.FormTemplateRepositoryImpl(
+        gh<_i308.FormTemplateDatasource>(),
+        gh<_i651.WordTemplateDatasource>(),
+      ),
+    );
+    gh.factory<_i763.MandantenRepository>(
+      () => _i683.MandantenRepositoryImpl(
+        gh<_i395.MandantDatasource>(),
+        gh<_i431.FilesystemAktenDatasource>(),
+        gh<_i849.KanzleiSettingsRepository>(),
+      ),
+    );
     gh.factory<_i223.UseCase<_i382.VorlagenUebersicht, _i223.NoParams>>(
       () => _i250.GetVorlagenUebersicht(
         repository: gh<_i770.WordAutomationRepository>(),
@@ -372,17 +379,13 @@ extension GetItInjectableX on _i174.GetIt {
         repository: gh<_i304.ZentralrufReplyRepository>(),
       ),
     );
+    gh.factory<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(
+      () => _i2.CreateMandant(gh<_i763.MandantenRepository>()),
+    );
     gh.factory<_i195.KanzleiSettingsBloc>(
       () => _i195.KanzleiSettingsBloc(
         gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
         gh<_i223.UseCase<_i609.KanzleiSettings, _i609.KanzleiSettings>>(),
-      ),
-    );
-    gh.factory<_i763.MandantenRepository>(
-      () => _i683.MandantenRepositoryImpl(
-        gh<_i395.MandantDatasource>(),
-        gh<_i819.AktenFilesystemDatasource>(),
-        gh<_i849.KanzleiSettingsRepository>(),
       ),
     );
     gh.factory<_i223.UseCase<void, _i22.CreateFormTemplateRequest>>(
@@ -437,6 +440,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i223.UseCase<void, _i60.DeleteFormTemplateParams>>(
       () => _i60.DeleteFormTemplate(gh<_i211.FormTemplateRepository>()),
     );
+    gh.factory<_i851.VorgangStartenBloc>(
+      () => _i851.VorgangStartenBloc(
+        gh<
+          _i223.UseCase<_i146.ZentralrufPrefillResult, _i208.ZentralrufRequest>
+        >(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
+        gh<_i847.VorgangCubit>(),
+      ),
+    );
     gh.factory<_i238.ZentralrufReplyBloc>(
       () => _i238.ZentralrufReplyBloc(
         gh<
@@ -463,9 +477,24 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<void, _i60.DeleteFormTemplateParams>>(),
       ),
     );
+    gh.factory<_i202.AblageCubit>(
+      () => _i202.AblageCubit(
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
+        gh<_i223.UseCase<String, _i763.LegeDokumentAbParams>>(),
+        gh<_i849.KanzleiSettingsRepository>(),
+      ),
+    );
     gh.factory<_i702.TemplatePlaceholdersBloc>(
       () => _i702.TemplatePlaceholdersBloc(
         gh<_i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>>(),
+      ),
+    );
+    gh.factory<_i993.MandantEditCubit>(
+      () => _i993.MandantEditCubit(
+        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
       ),
     );
     gh.factory<_i915.WizardCubit>(
@@ -473,9 +502,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
         gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
       ),
-    );
-    gh.factory<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(
-      () => _i2.CreateMandant(gh<_i763.MandantenRepository>()),
     );
     gh.factory<_i347.FormTemplateDataBloc>(
       () => _i347.FormTemplateDataBloc(
@@ -489,32 +515,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
         gh<_i223.UseCase<void, _i63.DeleteMandantParams>>(),
         gh<_i223.UseCase<_i258.Mandant, _i443.VerknuepfeOrdnerParams>>(),
-      ),
-    );
-    gh.factory<_i851.VorgangStartenBloc>(
-      () => _i851.VorgangStartenBloc(
-        gh<
-          _i223.UseCase<_i146.ZentralrufPrefillResult, _i208.ZentralrufRequest>
-        >(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
-        gh<_i847.VorgangCubit>(),
-      ),
-    );
-    gh.factory<_i202.AblageCubit>(
-      () => _i202.AblageCubit(
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
-        gh<_i223.UseCase<String, _i763.LegeDokumentAbParams>>(),
-        gh<_i849.KanzleiSettingsRepository>(),
-      ),
-    );
-    gh.factory<_i993.MandantEditCubit>(
-      () => _i993.MandantEditCubit(
-        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
       ),
     );
     return this;

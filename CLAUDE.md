@@ -219,6 +219,12 @@ jedem AI-Agent** einzuhalten, der Code in diesem Repo ändert:
   `lib/features/<feature>/presentation/widgets/` (je Widget eine Datei).
 - **Vorhandene Widgets bevorzugen.** Vor dem Erstellen eines neuen Widgets immer prüfen, ob ein
   passendes bereits existiert, und dieses verwenden bzw. erweitern statt zu duplizieren.
+- **Datasources: Sache im Dateinamen, Technik im Klassennamen.** Die Datei heißt
+  `<sache>_datasource.dart` — kein `api_`, `remote_`, `local_`. Die Schnittstelle heißt
+  `<Sache>Datasource`, die Umsetzung nennt ihre Herkunft als Präfix: `Api…` für den HTTP-Zugriff
+  auf das Backend, `Filesystem…`/`Local…` für alles andere. Kein `Impl`-Suffix. So ist der Pfad aus
+  dem Fachbegriff ableitbar, und eine Suche nach `Api` findet jede Stelle, die den Dienst
+  anspricht.
 
 Diese Regeln stehen nicht nur hier, sie sind **ausführbar**. Wer eine davon verletzt, bekommt einen
 roten Test statt eines übersehenen Hinweises:
@@ -227,6 +233,7 @@ roten Test statt eines übersehenen Hinweises:
 |---|---|
 | Dateilänge ≤ 300 Zeilen | `test/architecture/file_length_test.dart`, `Architecture/DateilaengeTests.cs` |
 | Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
+| Datasource-Benennung | `test/architecture/datasource_namen_test.dart` |
 | Schichten (Clean Architecture / Vertical Slices) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
 | Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs` + `test/architecture/http_vertrag_test.dart` |

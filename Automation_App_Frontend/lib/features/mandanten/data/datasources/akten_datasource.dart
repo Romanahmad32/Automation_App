@@ -10,8 +10,8 @@ import 'package:injectable/injectable.dart';
 /// übergeben, damit die Klasse zustandslos bleibt (das Repository liest ihn aus
 /// den Einstellungen).
 @injectable
-class AktenFilesystemDatasource {
-  const AktenFilesystemDatasource();
+class FilesystemAktenDatasource {
+  const FilesystemAktenDatasource();
 
   /// Scannt den Stammordner: jeder direkte Unterordner ist eine Akte, dessen
   /// Unterordner sind die Fälle. Leere Liste, wenn [stammordner] leer ist oder

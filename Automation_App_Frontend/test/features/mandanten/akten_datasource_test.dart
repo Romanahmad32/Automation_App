@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
-import 'package:automation_app/features/mandanten/data/datasources/akten_filesystem_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late Directory tempDir;
-  const datasource = AktenFilesystemDatasource();
+  const datasource = FilesystemAktenDatasource();
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('akten_test_');
