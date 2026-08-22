@@ -221,6 +221,10 @@ class WizardStepFillOut extends StatelessWidget {
                                               loadedPath,
                                               datum,
                                             ),
+                                            vorgangSchluessel: cubit
+                                                .state
+                                                .selectedVorgang
+                                                ?.referenz,
                                           ),
                                         );
                                       }

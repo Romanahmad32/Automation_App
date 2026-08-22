@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:typed_data';
 
+import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart';
@@ -15,7 +16,12 @@ abstract class WordAutomationDatasource {
     DamageListing? damageListing,
     bool? vorsteuerabzugsberechtigt,
     String? outputFileName,
+    String? vorgangSchluessel,
   });
+
+  Future<ArbeitsordnerAufraeumung> arbeitsordnerAufraeumen(
+    String vorgangSchluessel,
+  );
 
   Future<Uint8List> convertDocxToPdf(String docxFilePath);
 
@@ -60,6 +66,7 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
     DamageListing? damageListing,
     bool? vorsteuerabzugsberechtigt,
     String? outputFileName,
+    String? vorgangSchluessel,
   }) async {
     final stopwatch = Stopwatch()..start();
     try {
@@ -70,6 +77,10 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
           'replacePatterns': values,
           if (outputFileName != null && outputFileName.trim().isNotEmpty)
             'OutputFileName': outputFileName.trim(),
+          // Bestimmt den Arbeitsordner: je Vorgang einer, damit eine Neuerzeugung
+          // die vorige Fassung ersetzt, ohne einem anderen Vorgang dazwischenzugehen.
+          if (vorgangSchluessel != null && vorgangSchluessel.trim().isNotEmpty)
+            'VorgangSchluessel': vorgangSchluessel.trim(),
           'vorsteuerabzugsberechtigt': ?vorsteuerabzugsberechtigt,
           if (damageListing != null) 'damageListing': damageListing.toJson(),
         },
@@ -100,6 +111,26 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
       throw Exception(
         _serverMessage(e) ??
             'Beim bearbeiten des Word-Dokuments ist ein Fehler aufgetreten',
+      );
+    }
+  }
+
+  @override
+  Future<ArbeitsordnerAufraeumung> arbeitsordnerAufraeumen(
+    String vorgangSchluessel,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/api/WordAutomation/arbeitsordner/aufraeumen',
+        data: {'vorgangSchluessel': vorgangSchluessel},
+        options: Options(contentType: Headers.jsonContentType),
+      );
+      return ArbeitsordnerAufraeumung.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMessage(e) ?? 'Die Arbeitskopie konnte nicht gelöscht werden',
       );
     }
   }

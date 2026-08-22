@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/word_automation/data/datasources/word_automation_datasource.dart';
+import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart';
@@ -32,6 +33,7 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
     DamageListing? damageListing,
     bool? vorsteuerabzugsberechtigt,
     String? outputFileName,
+    String? vorgangSchluessel,
   }) async {
     try {
       final result = await datasource.fillOutTemplate(
@@ -40,8 +42,20 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
         damageListing: damageListing,
         vorsteuerabzugsberechtigt: vorsteuerabzugsberechtigt,
         outputFileName: outputFileName,
+        vorgangSchluessel: vorgangSchluessel,
       );
       return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ArbeitsordnerAufraeumung>> arbeitsordnerAufraeumen(
+    String vorgangSchluessel,
+  ) async {
+    try {
+      return Right(await datasource.arbeitsordnerAufraeumen(vorgangSchluessel));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

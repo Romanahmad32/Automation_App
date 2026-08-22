@@ -65,6 +65,20 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task ArbeitsordnerAufraeumen_OhneVorhandenenOrdner_MeldetErfolg()
+    {
+        var client = _factory.CreateClient();
+        var payload = new ArbeitsordnerDto { VorgangSchluessel = $"99/26 C03_XX-YY {Guid.NewGuid():N}" };
+
+        var response = await client.PostAsJsonAsync("/api/WordAutomation/arbeitsordner/aufraeumen", payload);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ArbeitsordnerAufgeraeumtDto>();
+        body.Should().NotBeNull();
+        body!.Success.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task CalculateRvgFees_WithValidRequest_ReturnsCalculation()
     {
         var client = _factory.CreateClient();

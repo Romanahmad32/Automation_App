@@ -10,6 +10,7 @@ namespace AutomationService.Features.WordAutomation.Presentation.Controllers;
 public class WordAutomationController(
     IWordAutomationService wordAutomationService,
     VorlagenVerzeichnis vorlagenVerzeichnis,
+    ArbeitsVerzeichnis arbeitsVerzeichnis,
     ILogger<WordAutomationController> logger) : ControllerBase
 {
     /// <summary>
@@ -62,6 +63,11 @@ public class WordAutomationController(
         {
             return NotFound(new ReplacedDocumentResponseDto(false, null, [], "template_not_found", exception.Message));
         }
+        catch (ZieldateiGesperrtException exception)
+        {
+            logger.LogWarning(exception, "Output file is locked while generating document.");
+            return Conflict(new ReplacedDocumentResponseDto(false, null, [], "output_file_in_use", exception.Message));
+        }
         catch (IOException exception)
         {
             logger.LogWarning(exception, "Template file is locked while generating document.");
@@ -83,6 +89,25 @@ public class WordAutomationController(
                 StatusCodes.Status500InternalServerError,
                 new ReplacedDocumentResponseDto(false, null, [], "internal_error", "Unexpected error while generating document."));
         }
+    }
+
+    /// <summary>
+    /// Löscht den Arbeitsordner eines Vorgangs. Das Frontend ruft das auf,
+    /// sobald das Schreiben in der Mandantenakte liegt (§4.6) — ab da ist die
+    /// Kopie in der Akte die gültige Fassung, und Zwischenstände früherer
+    /// Anläufe haben keinen Grund mehr, aufbewahrt zu werden.
+    /// </summary>
+    [HttpPost("arbeitsordner/aufraeumen")]
+    [ProducesResponseType(typeof(ArbeitsordnerAufgeraeumtDto), StatusCodes.Status200OK)]
+    public ActionResult<ArbeitsordnerAufgeraeumtDto> ArbeitsordnerAufraeumen([FromBody] ArbeitsordnerDto dto)
+    {
+        var aufgeraeumt = arbeitsVerzeichnis.Aufraeumen(dto.VorgangSchluessel);
+        return Ok(new ArbeitsordnerAufgeraeumtDto(
+            aufgeraeumt,
+            aufgeraeumt
+                ? null
+                : "Die Arbeitskopie konnte nicht gelöscht werden, weil sie noch geöffnet ist. " +
+                  "Das abgelegte Dokument in der Akte ist davon nicht betroffen."));
     }
 
     /// <summary>

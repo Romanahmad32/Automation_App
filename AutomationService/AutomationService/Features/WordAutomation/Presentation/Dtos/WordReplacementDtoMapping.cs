@@ -24,7 +24,7 @@ public static class WordReplacementDtoMapping
                 dto.ReplacePatterns ?? [],
                 StringComparer.OrdinalIgnoreCase),
             OutputFileName = dto.OutputFileName,
-            OutputDirectory = dto.OutputDirectory,
+            VorgangSchluessel = dto.VorgangSchluessel,
             DamageListing = dto.DamageListing?.ToDomain(),
             Vorsteuerabzugsberechtigt = dto.Vorsteuerabzugsberechtigt,
         };

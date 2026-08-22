@@ -4,9 +4,9 @@ import 'package:automation_app/features/mandanten/domain/entities/create_mandant
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/ablage_abschluss.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/mandant_vorauswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ablage_constants.dart';
@@ -19,7 +19,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Primärer Weg im Speicherschritt: das bestätigte Dokument in die Akte des
 /// Mandanten ablegen (§6.1). Wählt/legt Mandant, Akten-Ordner und Unterordner
-/// (Fall) und übergibt die Ablage an den [AblageCubit].
+/// (Fall) und übergibt die Ablage an den [AblageCubit]. Was danach passiert —
+/// Vorgang fortschalten, Arbeitsordner aufräumen — steht in
+/// [schliesseAblageAb].
 class AktenAblageSection extends StatefulWidget {
   final String outputPath;
 
@@ -228,19 +230,12 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
           } else if (state.status == AblageStatus.ready) {
             _mandantVorbelegen(state.mandanten);
           } else if (state.status == AblageStatus.erfolg) {
-            // Ablage geglückt: den gewählten Vorgang auf „abgelegt" weiter-
-            // schalten und Ablageort vermerken (nur vorwärts).
-            final vorgang = _aktuellerVorgang();
-            if (vorgang != null &&
-                vorgang.status.index < VorgangStatus.abgelegt.index) {
-              getIt<VorgangCubit>().aktualisiere(
-                vorgang.copyWith(
-                  status: VorgangStatus.abgelegt,
-                  dokumentPfad: state.zielpfad,
-                  aktenOrdner: _aktenOrdner(),
-                ),
-              );
-            }
+            schliesseAblageAb(
+              context,
+              vorgang: _aktuellerVorgang(),
+              zielpfad: state.zielpfad,
+              aktenOrdner: _aktenOrdner(),
+            );
           }
         },
         builder: (context, state) {

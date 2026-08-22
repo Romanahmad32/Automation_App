@@ -4,7 +4,9 @@ namespace AutomationService.Features.WordAutomation.Presentation.HostedServices;
 
 /// <summary>
 /// Wärmt die DocX-Pipeline beim Anwendungsstart auf, damit der erste echte
-/// Dokument-Request des Anwalts nicht den vollen JIT-Aufwand (~500 ms) zahlt.
+/// Dokument-Request des Anwalts nicht den vollen JIT-Aufwand (~500 ms) zahlt,
+/// und räumt bei der Gelegenheit verwaiste Arbeitsordner ab (abgebrochene
+/// Anläufe, die nie in einer Akte gelandet sind).
 /// Läuft im Hintergrund, blockiert also den Host-Start nicht.
 /// </summary>
 public sealed class WordAutomationWarmupService(
@@ -19,6 +21,7 @@ public sealed class WordAutomationWarmupService(
             try
             {
                 using var scope = scopeFactory.CreateScope();
+                scope.ServiceProvider.GetRequiredService<ArbeitsVerzeichnis>().AlteOrdnerLoeschen();
                 var service = scope.ServiceProvider.GetRequiredService<IWordAutomationService>();
                 service.Warmup();
             }

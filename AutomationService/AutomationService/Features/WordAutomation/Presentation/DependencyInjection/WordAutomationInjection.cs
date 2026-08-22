@@ -1,6 +1,7 @@
 using AutomationService.Core.Persistence;
 using AutomationService.Features.WordAutomation.Domain.Services;
 using AutomationService.Features.WordAutomation.Presentation.HostedServices;
+using Microsoft.Extensions.Options;
 
 namespace AutomationService.Features.WordAutomation.Presentation.DependencyInjection;
 
@@ -28,6 +29,17 @@ public static class WordAutomationInjection
             .ValidateOnStart();
 
         services.AddScoped<IWordAutomationService, WordAutomationService>();
+
+        // Arbeitsordner der Dokumenterzeugung: <ContentRoot>/<OutputDirectory>/Arbeit.
+        // Eine Ebene unter dem Ausgabeordner, damit die Ordner je Vorgang nicht
+        // mit dem PdfCache daneben zu verwechseln sind — die Startaufraeumung
+        // loescht in dieser Wurzel ganze Verzeichnisse.
+        services.AddSingleton(sp => new ArbeitsVerzeichnis(
+            Path.Combine(
+                sp.GetRequiredService<IHostEnvironment>().ContentRootPath,
+                sp.GetRequiredService<IOptions<WordAutomationOptions>>().Value.OutputDirectory,
+                "Arbeit"),
+            sp.GetRequiredService<ILogger<ArbeitsVerzeichnis>>()));
 
         // Zustandslos und an den festen Ordner in %APPDATA% gebunden — Singleton.
         services.AddSingleton(sp => new VorlagenVerzeichnis(
