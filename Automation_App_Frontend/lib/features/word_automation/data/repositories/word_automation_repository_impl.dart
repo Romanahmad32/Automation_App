@@ -11,10 +11,10 @@ import 'package:automation_app/features/word_automation/domain/repositories/word
 import 'package:injectable/injectable.dart';
 
 @Injectable(as: WordAutomationRepository)
-class ApiWordAutomationRepository implements WordAutomationRepository {
+class WordAutomationRepositoryImpl implements WordAutomationRepository {
   final WordAutomationDatasource datasource;
 
-  ApiWordAutomationRepository(this.datasource);
+  WordAutomationRepositoryImpl(this.datasource);
 
   @override
   Future<Either<Failure, VorlagenUebersicht>> getVorlagenUebersicht() async {

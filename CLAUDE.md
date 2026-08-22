@@ -225,6 +225,11 @@ jedem AI-Agent** einzuhalten, der Code in diesem Repo ändert:
   auf das Backend, `Filesystem…`/`Local…` für alles andere. Kein `Impl`-Suffix. So ist der Pfad aus
   dem Fachbegriff ableitbar, und eine Suche nach `Api` findet jede Stelle, die den Dienst
   anspricht.
+- **Repository-Umsetzungen heißen `<Sache>RepositoryImpl`** (Datei `<sache>_repository_impl.dart`)
+  — hier kein `Api…`: diese Schicht spricht kein HTTP, sie ruft die Datasource und übersetzt in
+  Domain-Typen und `Failure`s. Braucht ein Feature diese Übersetzung nicht, entfällt die Schicht
+  ganz und die Datasource setzt das Repository direkt um (`@Injectable(as: VorgangRepository)`).
+  Beides ist erlaubt — nur nicht dieselbe Rolle unter zwei Namen.
 
 Diese Regeln stehen nicht nur hier, sie sind **ausführbar**. Wer eine davon verletzt, bekommt einen
 roten Test statt eines übersehenen Hinweises:
@@ -233,7 +238,7 @@ roten Test statt eines übersehenen Hinweises:
 |---|---|
 | Dateilänge ≤ 300 Zeilen | `test/architecture/file_length_test.dart`, `Architecture/DateilaengeTests.cs` |
 | Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
-| Datasource-Benennung | `test/architecture/datasource_namen_test.dart` |
+| Benennung von Datasources/Repositories | `test/architecture/benennung_test.dart` |
 | Schichten (Clean Architecture / Vertical Slices) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
 | Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs` + `test/architecture/http_vertrag_test.dart` |

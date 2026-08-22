@@ -6,10 +6,10 @@ import 'package:automation_app/features/zentralruf_reply/domain/repositories/zen
 import 'package:injectable/injectable.dart';
 
 @Injectable(as: ZentralrufReplyRepository)
-class ApiZentralrufReplyRepository implements ZentralrufReplyRepository {
+class ZentralrufReplyRepositoryImpl implements ZentralrufReplyRepository {
   final ZentralrufReplyDatasource datasource;
 
-  ApiZentralrufReplyRepository(this.datasource);
+  ZentralrufReplyRepositoryImpl(this.datasource);
 
   @override
   Future<Either<Failure, ZentralrufReplyParseResult>> parseReply(

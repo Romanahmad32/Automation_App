@@ -147,8 +147,8 @@ import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorga
     as _i851;
 import 'package:automation_app/features/word_automation/data/datasources/word_automation_datasource.dart'
     as _i287;
-import 'package:automation_app/features/word_automation/data/repositories/api_word_automation_repository.dart'
-    as _i530;
+import 'package:automation_app/features/word_automation/data/repositories/word_automation_repository_impl.dart'
+    as _i405;
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart'
     as _i312;
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart'
@@ -177,8 +177,8 @@ import 'package:automation_app/features/word_automation/presentation/blocs/wizar
     as _i915;
 import 'package:automation_app/features/zentralruf_reply/data/datasources/zentralruf_reply_datasource.dart'
     as _i56;
-import 'package:automation_app/features/zentralruf_reply/data/repositories/api_zentralruf_reply_repository.dart'
-    as _i953;
+import 'package:automation_app/features/zentralruf_reply/data/repositories/zentralruf_reply_repository_impl.dart'
+    as _i853;
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart'
     as _i311;
 import 'package:automation_app/features/zentralruf_reply/domain/repositories/zentralruf_reply_repository.dart'
@@ -189,8 +189,8 @@ import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zent
     as _i238;
 import 'package:automation_app/features/zentralruf_request/data/datasources/zentralruf_datasource.dart'
     as _i615;
-import 'package:automation_app/features/zentralruf_request/data/repositories/api_zentralruf_repository.dart'
-    as _i709;
+import 'package:automation_app/features/zentralruf_request/data/repositories/zentralruf_repository_impl.dart'
+    as _i248;
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart'
     as _i146;
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart'
@@ -276,13 +276,13 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i1015.MailboxHub(),
       dispose: (i) => i.dispose(),
     );
-    gh.factory<_i304.ZentralrufReplyRepository>(
-      () => _i953.ApiZentralrufReplyRepository(
-        gh<_i56.ZentralrufReplyDatasource>(),
-      ),
-    );
     gh.lazySingleton<_i782.VersichererCubit>(
       () => _i782.VersichererCubit(gh<_i9.VersichererRepository>()),
+    );
+    gh.factory<_i770.WordAutomationRepository>(
+      () => _i405.WordAutomationRepositoryImpl(
+        gh<_i287.WordAutomationDatasource>(),
+      ),
     );
     gh.lazySingleton<_i847.VorgangCubit>(
       () => _i847.VorgangCubit(
@@ -295,16 +295,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i501.KanzleiSettingsDatasource>(),
       ),
     );
-    gh.factory<_i770.WordAutomationRepository>(
-      () => _i530.ApiWordAutomationRepository(
-        gh<_i287.WordAutomationDatasource>(),
+    gh.factory<_i304.ZentralrufReplyRepository>(
+      () => _i853.ZentralrufReplyRepositoryImpl(
+        gh<_i56.ZentralrufReplyDatasource>(),
       ),
-    );
-    gh.factory<_i777.ZentralrufRepository>(
-      () => _i709.ApiZentralrufRepository(gh<_i615.ZentralrufDatasource>()),
     );
     gh.singleton<_i1049.ThemeBloc>(
       () => _i1049.ThemeBloc(gh<_i1039.ThemePreferencesDatasource>()),
+    );
+    gh.factory<_i777.ZentralrufRepository>(
+      () => _i248.ZentralrufRepositoryImpl(gh<_i615.ZentralrufDatasource>()),
     );
     gh.factory<_i865.MailboxConfigBloc>(
       () => _i865.MailboxConfigBloc(gh<_i469.MailboxRepository>()),
