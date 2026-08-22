@@ -72,6 +72,15 @@ if (-not $NurBackend) {
     Invoke-Schritt -Name 'Frontend: Abhaengigkeiten' -Verzeichnis $frontend `
         -Datei 'flutter' -Argumente @('pub', 'get')
 
+    # Die Sperrdatei ist versioniert und muss zu der gepinnten Flutter-Fassung
+    # passen. Aendert `pub get` sie, war der committete Stand mit dieser
+    # Toolchain gar nicht erfuellbar (das Framework pinnt meta, matcher und
+    # test_api exakt) — dann lief bisher immer etwas anderes, als dort stand.
+    Invoke-Schritt -Name 'Frontend: Sperrdatei passt zur Toolchain' -Verzeichnis $wurzel `
+        -Datei 'git' -Argumente @('diff', '--exit-code', '--',
+            'Automation_App_Frontend/pubspec.lock') `
+        -Hilfe 'pub get hat pubspec.lock geaendert: die aufgeloeste Fassung mitcommitten, nicht zurueckwerfen.'
+
     Invoke-Schritt -Name 'Frontend: Codegenerierung' -Verzeichnis $frontend `
         -Datei 'dart' -Argumente @('run', 'build_runner', 'build', '--delete-conflicting-outputs') `
         -Hilfe 'Fehler in einer Annotation oder in build.yaml — nicht in den generierten Dateien selbst.'
