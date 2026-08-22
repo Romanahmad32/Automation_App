@@ -154,7 +154,7 @@ Beides ist zulässig. Was nicht zulässig ist: dieselbe Rolle unter zwei Namen.
 
 ```powershell
 cd Automation_App_Frontend
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 `injection.config.dart` ist generiert; Änderungen darin von Hand werden beim

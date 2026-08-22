@@ -8,7 +8,7 @@ Project overview, screenshots and architecture: **[../README.md](../README.md)**
 
 ```powershell
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter run -d windows
 flutter test
 flutter analyze
