@@ -8,19 +8,18 @@ import 'package:path_provider_windows/path_provider_windows.dart';
 /// Lädt und speichert die Darstellungs-Einstellungen (Theme-Familie + Modus)
 /// lokal als JSON im Anwendungsordner — analog zu den Kanzlei-Einstellungen,
 /// inklusive atomarem Schreiben mit `.bak`-Rücksicherung.
-abstract class LocalThemePreferencesDatasource {
+abstract class ThemePreferencesDatasource {
   Future<ThemePreferences> load();
 
   Future<ThemePreferences> save(ThemePreferences preferences);
 }
 
-class LocalThemePreferencesDatasourceImpl
-    implements LocalThemePreferencesDatasource {
+class LocalThemePreferencesDatasource implements ThemePreferencesDatasource {
   final File _file;
 
-  LocalThemePreferencesDatasourceImpl._({required File file}) : _file = file;
+  LocalThemePreferencesDatasource._({required File file}) : _file = file;
 
-  static Future<LocalThemePreferencesDatasourceImpl> create(
+  static Future<LocalThemePreferencesDatasource> create(
     PathProviderWindows pathProviderWindows,
   ) async {
     final String? supportPath = await pathProviderWindows
@@ -29,7 +28,7 @@ class LocalThemePreferencesDatasourceImpl
       throw const SettingsException('Kein Anwendungsordner gefunden');
     }
     final file = File('$supportPath/theme_preferences.json');
-    return LocalThemePreferencesDatasourceImpl._(file: file);
+    return LocalThemePreferencesDatasource._(file: file);
   }
 
   @override

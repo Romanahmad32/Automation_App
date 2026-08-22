@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/features/form_template_setup/data/datasources/api_form_template_datasource.dart';
-import 'package:automation_app/features/form_template_setup/data/datasources/remote_word_template_datasource.dart';
+import 'package:automation_app/features/form_template_setup/data/datasources/form_template_datasource.dart';
+import 'package:automation_app/features/form_template_setup/data/datasources/word_template_datasource.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/create_form_template_request.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/repositories/form_template_repository.dart';
@@ -10,7 +10,7 @@ import 'package:injectable/injectable.dart';
 @Injectable(as: FormTemplateRepository)
 class FormTemplateRepositoryImpl implements FormTemplateRepository {
   final FormTemplateDatasource _datasource;
-  final RemoteWordTemplateDatasource _remoteWordTemplateDatasource;
+  final WordTemplateDatasource _remoteWordTemplateDatasource;
 
   FormTemplateRepositoryImpl(
     this._datasource,

@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/features/mandanten/data/datasources/akten_filesystem_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
 import 'package:automation_app/features/mandanten/data/datasources/mandant_datasource.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
@@ -13,7 +13,7 @@ import 'package:injectable/injectable.dart';
 @Injectable(as: MandantenRepository)
 class MandantenRepositoryImpl implements MandantenRepository {
   final MandantDatasource _datasource;
-  final AktenFilesystemDatasource _aktenDatasource;
+  final FilesystemAktenDatasource _aktenDatasource;
   final KanzleiSettingsRepository _settingsRepository;
 
   MandantenRepositoryImpl(

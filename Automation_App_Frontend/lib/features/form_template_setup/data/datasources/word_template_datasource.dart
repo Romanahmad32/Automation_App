@@ -3,15 +3,15 @@ import 'package:injectable/injectable.dart';
 
 /// Liest Metadaten einer Word-Vorlage über das Backend aus
 /// (Platzhalter-Erkennung für die Formularvorlagen-Verwaltung).
-abstract class RemoteWordTemplateDatasource {
+abstract class WordTemplateDatasource {
   Future<List<String>> getTemplatePlaceholders(String wordFilePath);
 }
 
-@Injectable(as: RemoteWordTemplateDatasource)
-class ApiRemoteWordTemplateDatasource implements RemoteWordTemplateDatasource {
+@Injectable(as: WordTemplateDatasource)
+class ApiWordTemplateDatasource implements WordTemplateDatasource {
   final Dio _dio;
 
-  ApiRemoteWordTemplateDatasource(this._dio);
+  ApiWordTemplateDatasource(this._dio);
 
   @override
   Future<List<String>> getTemplatePlaceholders(String wordFilePath) async {
