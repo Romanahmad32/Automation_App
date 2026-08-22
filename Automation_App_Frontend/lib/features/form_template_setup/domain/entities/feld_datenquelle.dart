@@ -53,10 +53,7 @@ enum FeldDatenquelle {
   ),
 
   // Vorgang / Unfall.
-  kennzeichenGegner(
-    name: 'Kennzeichen · Gegner',
-    value: 'kennzeichenGegner',
-  ),
+  kennzeichenGegner(name: 'Kennzeichen · Gegner', value: 'kennzeichenGegner'),
   kennzeichenMandant(
     name: 'Kennzeichen · Mandant/Geschädigter',
     value: 'kennzeichenMandant',

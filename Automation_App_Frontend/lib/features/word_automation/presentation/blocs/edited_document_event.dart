@@ -20,12 +20,11 @@ final class EditDocumentEvent extends EditedDocumentEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [
-        path,
-        data,
-        damageListing,
-        vorsteuerabzugsberechtigt,
-        outputFileName,
-      ];
+  List<Object?> get props => [
+    path,
+    data,
+    damageListing,
+    vorsteuerabzugsberechtigt,
+    outputFileName,
+  ];
 }

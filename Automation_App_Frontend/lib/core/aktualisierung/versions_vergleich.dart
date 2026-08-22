@@ -18,7 +18,8 @@ class VersionsVergleich {
     if (links == null || rechts == null) return false;
 
     for (var stelle = 0; stelle < links.length; stelle++) {
-      if (links[stelle] != rechts[stelle]) return links[stelle] > rechts[stelle];
+      if (links[stelle] != rechts[stelle])
+        return links[stelle] > rechts[stelle];
     }
     return false;
   }

@@ -23,19 +23,19 @@ void main() {
 
   // Trifft einen internen Import in eine bestimmte Schicht – egal welches
   // Feature (z. B. import '.../features/mailbox/data/...').
-  RegExp importInSchicht(String schicht) => RegExp(
-        "import\\s+'package:automation_app/features/[a-z0-9_]+/$schicht/",
-      );
+  RegExp importInSchicht(String schicht) =>
+      RegExp("import\\s+'package:automation_app/features/[a-z0-9_]+/$schicht/");
 
   final importsData = importInSchicht('data');
   final importsPresentation = importInSchicht('presentation');
-  final importsFlutterUi =
-      RegExp("import\\s+'package:flutter/(material|widgets|cupertino)\\.dart'");
+  final importsFlutterUi = RegExp(
+    "import\\s+'package:flutter/(material|widgets|cupertino)\\.dart'",
+  );
 
   Iterable<File> dateienInSchicht(String schicht) => dateien.where((f) {
-        final p = relPfad(f);
-        return p.contains('/features/') && p.contains('/$schicht/');
-      });
+    final p = relPfad(f);
+    return p.contains('/features/') && p.contains('/$schicht/');
+  });
 
   void erwarteKeineTreffer(
     String beschreibung,
@@ -50,7 +50,8 @@ void main() {
     expect(
       verstoesse,
       isEmpty,
-      reason: '$beschreibung\nVerletzende Dateien:\n  '
+      reason:
+          '$beschreibung\nVerletzende Dateien:\n  '
           '${verstoesse.join('\n  ')}',
     );
   }

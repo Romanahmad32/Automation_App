@@ -16,18 +16,17 @@ class FormTemplateManagementPage extends StatelessWidget
   @override
   Widget wrappedRoute(BuildContext context) {
     return PageRefreshScope(
-      builder: (context) =>
-          MultiBlocProvider(
-            providers: [
-              // Singleton-Bloc: per .value einbinden, damit er beim Dispose der
-              // Seite nicht geschlossen wird.
-              BlocProvider.value(
-                value: getIt<FormTemplateOverviewBloc>()
-                  ..add(LoadFormTemplatesEvent()),
-              ),
-            ],
-            child: this,
+      builder: (context) => MultiBlocProvider(
+        providers: [
+          // Singleton-Bloc: per .value einbinden, damit er beim Dispose der
+          // Seite nicht geschlossen wird.
+          BlocProvider.value(
+            value: getIt<FormTemplateOverviewBloc>()
+              ..add(LoadFormTemplatesEvent()),
           ),
+        ],
+        child: this,
+      ),
     );
   }
 
@@ -51,7 +50,7 @@ class FormTemplateManagementPage extends StatelessWidget
                 Expanded(
                   child: Text(
                     'Eine Vorlage beschreibt die Felder einer Word-Vorlage und '
-                        'bestimmt damit das Formular beim Ausfüllen.',
+                    'bestimmt damit das Formular beim Ausfüllen.',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -79,22 +78,19 @@ class FormTemplateManagementPage extends StatelessWidget
             ),
             Expanded(
               child:
-              BlocBuilder<
-                  FormTemplateOverviewBloc,
-                  FormTemplateOverviewState
-              >(
-                builder: (context, state) {
-                  return switch (state) {
-                    FormTemplateOverviewLoading() =>
-                    const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    FormTemplateOverviewLoaded() =>
-                        FormTemplateOverview(
+                  BlocBuilder<
+                    FormTemplateOverviewBloc,
+                    FormTemplateOverviewState
+                  >(
+                    builder: (context, state) {
+                      return switch (state) {
+                        FormTemplateOverviewLoading() => const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                        FormTemplateOverviewLoaded() => FormTemplateOverview(
                           state: state,
                         ),
-                    FormTemplateOverviewError() =>
-                        Center(
+                        FormTemplateOverviewError() => Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             spacing: 12,
@@ -106,19 +102,18 @@ class FormTemplateManagementPage extends StatelessWidget
                               ),
                               Text(state.message, textAlign: TextAlign.center),
                               OutlinedButton.icon(
-                                onPressed: () =>
-                                    context
-                                        .read<FormTemplateOverviewBloc>()
-                                        .add(LoadFormTemplatesEvent()),
+                                onPressed: () => context
+                                    .read<FormTemplateOverviewBloc>()
+                                    .add(LoadFormTemplatesEvent()),
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Erneut versuchen'),
                               ),
                             ],
                           ),
                         ),
-                  };
-                },
-              ),
+                      };
+                    },
+                  ),
             ),
           ],
         ),

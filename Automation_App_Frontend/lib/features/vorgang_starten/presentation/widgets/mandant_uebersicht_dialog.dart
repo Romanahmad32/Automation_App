@@ -22,8 +22,7 @@ class MandantUebersichtDialog extends StatelessWidget {
   }) {
     return showDialog<bool>(
       context: context,
-      builder: (_) =>
-          MandantUebersichtDialog(istNeu: istNeu, zeilen: zeilen),
+      builder: (_) => MandantUebersichtDialog(istNeu: istNeu, zeilen: zeilen),
     );
   }
 
@@ -102,7 +101,10 @@ class MandantUebersichtZeile extends StatelessWidget {
               ),
             ),
             const TextSpan(text: '  →  '),
-            TextSpan(text: zeile.neu.isEmpty ? '(leer)' : zeile.neu, style: fett),
+            TextSpan(
+              text: zeile.neu.isEmpty ? '(leer)' : zeile.neu,
+              style: fett,
+            ),
           ],
         ],
       ),

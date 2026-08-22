@@ -55,7 +55,9 @@ class DashboardUebersicht {
       // Der Schwanz der Liste = die zuletzt vergebenen laufenden Nummern; die
       // Reihenfolge bleibt aufsteigend wie im Register selbst.
       registerZeilen: register
-          .skip(register.length > maxRegister ? register.length - maxRegister : 0)
+          .skip(
+            register.length > maxRegister ? register.length - maxRegister : 0,
+          )
           .toList(),
       registerGesamt: register.length,
     );

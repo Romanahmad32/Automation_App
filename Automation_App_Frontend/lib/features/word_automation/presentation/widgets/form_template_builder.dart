@@ -42,33 +42,30 @@ class FormTemplateBuilder extends StatelessWidget {
     // it resets when the template changes (or when new prefill values arrive).
     return ReactiveFormBuilder(
       key: ValueKey('${formTemplate!.id}#$_initialValuesSignature'),
-      form: () =>
-          FormGroup(
-            Map.fromEntries(
-              formTemplate!.fields.map(
-                    (e) =>
-                    MapEntry(
-                      e.label,
-                      FormControl<String>(
-                        // Vorgangsdaten (Zentralruf-Antwort) haben Vorrang; sonst
-                        // Datumsfelder mit heutigem Datum vorbelegen – sichtbar und
-                        // änderbar, statt es beim Erzeugen unsichtbar einzusetzen.
-                        value:
-                        initialValues[e.label] ??
-                            (e.inputType == InputType.date
-                                ? GermanDateField.formatDate(
-                                _defaultDateFor(e.label))
-                                : null),
-                        validators: [
-                          if (e.required) Validators.required,
-                          if (e.inputType == InputType.date)
-                            GermanDateField.validator(),
-                        ],
-                      ),
-                    ),
+      form: () => FormGroup(
+        Map.fromEntries(
+          formTemplate!.fields.map(
+            (e) => MapEntry(
+              e.label,
+              FormControl<String>(
+                // Vorgangsdaten (Zentralruf-Antwort) haben Vorrang; sonst
+                // Datumsfelder mit heutigem Datum vorbelegen – sichtbar und
+                // änderbar, statt es beim Erzeugen unsichtbar einzusetzen.
+                value:
+                    initialValues[e.label] ??
+                    (e.inputType == InputType.date
+                        ? GermanDateField.formatDate(_defaultDateFor(e.label))
+                        : null),
+                validators: [
+                  if (e.required) Validators.required,
+                  if (e.inputType == InputType.date)
+                    GermanDateField.validator(),
+                ],
               ),
             ),
           ),
+        ),
+      ),
       builder: (context, formGroup, child) {
         return Padding(
           padding: const EdgeInsets.all(8.0),
@@ -85,12 +82,12 @@ class FormTemplateBuilder extends StatelessWidget {
                     label: submitButtonLabel ?? const Text('Formular absenden'),
                     onPressed: formGroup.valid
                         ? () {
-                      final data = formGroup.value.map(
-                            (key, value) =>
-                            MapEntry(key, value?.toString() ?? ''),
-                      );
-                      onSubmitted?.call(data);
-                    }
+                            final data = formGroup.value.map(
+                              (key, value) =>
+                                  MapEntry(key, value?.toString() ?? ''),
+                            );
+                            onSubmitted?.call(data);
+                          }
                         : null,
                   );
                 },
@@ -105,22 +102,21 @@ class FormTemplateBuilder extends StatelessWidget {
   /// Stabile Signatur der Vorbelegung: gleiche Werte → gleicher Key, sonst
   /// würde jedes Rebuild das Formular (und damit Nutzereingaben) zurücksetzen.
   String get _initialValuesSignature =>
-      (initialValues.entries.map((e) => '${e.key}=${e.value}').toList()
-        ..sort())
+      (initialValues.entries.map((e) => '${e.key}=${e.value}').toList()..sort())
           .join('|');
 
   Widget _buildField(BuildContext context, FieldData field) {
     final validationMessages = field.required
         ? {
-      ValidationMessage.required: (Object _) =>
-      '${field.label} ist ein Pflichtfeld',
-    }
+            ValidationMessage.required: (Object _) =>
+                '${field.label} ist ein Pflichtfeld',
+          }
         : <String, String Function(Object)>{};
 
     switch (field.inputType) {
       case InputType.date:
-      // Direkt tippbar (Format prüft GermanDateField.validator);
-      // das Kalender-Icon öffnet zusätzlich den Auswahl-Dialog.
+        // Direkt tippbar (Format prüft GermanDateField.validator);
+        // das Kalender-Icon öffnet zusätzlich den Auswahl-Dialog.
         return GermanDateField(
           formControlName: field.label,
           labelText: field.label,
@@ -158,9 +154,8 @@ class FormTemplateBuilder extends StatelessWidget {
     }
   }
 
-  InputDecoration _decoration(FieldData field) => InputDecoration(
-        helperText: _helperText(field),
-      );
+  InputDecoration _decoration(FieldData field) =>
+      InputDecoration(helperText: _helperText(field));
 
   /// Hinweiszeile unter dem Feld: Pflichtfeld-Markierung und — falls das Feld
   /// vorbelegt wurde — die Herkunft des Werts.
@@ -176,6 +171,6 @@ class FormTemplateBuilder extends StatelessWidget {
   /// alle anderen Datumsfelder mit dem heutigen Datum.
   static DateTime _defaultDateFor(String label) =>
       label.toLowerCase().contains('zahlungsfrist')
-          ? DateTime.now().add(const Duration(days: 35))
-          : DateTime.now();
+      ? DateTime.now().add(const Duration(days: 35))
+      : DateTime.now();
 }

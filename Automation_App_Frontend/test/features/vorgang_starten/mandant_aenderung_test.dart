@@ -35,10 +35,7 @@ Mandant _mandant() => Mandant(
 void main() {
   group('mandantAenderungsart', () {
     test('ohne Auswahl und ohne Namen: keine', () {
-      expect(
-        mandantAenderungsart(_daten(), null),
-        MandantAenderungsart.keine,
-      );
+      expect(mandantAenderungsart(_daten(), null), MandantAenderungsart.keine);
     });
 
     test('ohne Auswahl, aber mit Namen: neu', () {

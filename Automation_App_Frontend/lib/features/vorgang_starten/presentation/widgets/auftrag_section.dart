@@ -62,10 +62,7 @@ class AuftragSection extends StatelessWidget {
           helperMaxLines: 2,
           entries: [
             for (final gebiet in Rechtsgebiet.values)
-              SearchableDropdownEntry(
-                value: gebiet,
-                label: gebiet.displayName,
-              ),
+              SearchableDropdownEntry(value: gebiet, label: gebiet.displayName),
           ],
           onChanged: (gebiet) =>
               onRechtsgebietChanged(gebiet ?? Rechtsgebiet.verkehrsrecht),

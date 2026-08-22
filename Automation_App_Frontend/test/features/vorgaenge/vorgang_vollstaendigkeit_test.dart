@@ -92,10 +92,9 @@ void main() {
       ),
     );
 
-    expect(
-      VorgangVollstaendigkeit.fehlendeDatenFuerSchreiben(vorgang),
-      ['Anschrift des Versicherers'],
-    );
+    expect(VorgangVollstaendigkeit.fehlendeDatenFuerSchreiben(vorgang), [
+      'Anschrift des Versicherers',
+    ]);
   });
 
   test('bei anderen Rechtsgebieten zählen nur die Mandantendaten', () {
@@ -105,10 +104,9 @@ void main() {
       rechtsgebiet: Rechtsgebiet.strafrecht,
     );
 
-    expect(
-      VorgangVollstaendigkeit.fehlendeDatenFuerSchreiben(vorgang),
-      ['Mandant'],
-    );
+    expect(VorgangVollstaendigkeit.fehlendeDatenFuerSchreiben(vorgang), [
+      'Mandant',
+    ]);
   });
 
   test('versendete Vorgänge melden nichts mehr', () {

@@ -102,10 +102,7 @@ class AntwortKonfliktAuswahl extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              konflikt.feld.displayName,
-              style: theme.textTheme.titleSmall,
-            ),
+            Text(konflikt.feld.displayName, style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             SegmentedButton<bool>(
               segments: [

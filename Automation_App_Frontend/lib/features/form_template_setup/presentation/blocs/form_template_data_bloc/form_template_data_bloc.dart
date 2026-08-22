@@ -22,12 +22,14 @@ class FormTemplateDataBloc
   final UseCase<FormTemplate, UpdateFormTemplateParams> _updateFormTemplate;
 
   FormTemplateDataBloc(this._createFormTemplate, this._updateFormTemplate)
-      : super(FormTemplateDataIdle()) {
+    : super(FormTemplateDataIdle()) {
     on<SubmitFormTemplateDataEvent>(_onSubmitFormTemplateDataEvent);
   }
 
-  Future<void> _onSubmitFormTemplateDataEvent(SubmitFormTemplateDataEvent event,
-      Emitter<FormTemplateDataState> emit,) async {
+  Future<void> _onSubmitFormTemplateDataEvent(
+    SubmitFormTemplateDataEvent event,
+    Emitter<FormTemplateDataState> emit,
+  ) async {
     emit(SubmittingFormTemplateData());
     Either<Failure, void> result;
     if (event.existingItemId == null) {

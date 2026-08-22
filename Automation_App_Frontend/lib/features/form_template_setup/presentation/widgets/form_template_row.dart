@@ -69,10 +69,7 @@ class FormTemplateRow extends StatelessWidget {
                       accent: scheme.primary,
                     ),
                   if (!template.hasOhneAuflistung && !template.hasMitAuflistung)
-                    AuflistungBadge(
-                      label: 'keine Datei',
-                      accent: scheme.error,
-                    ),
+                    AuflistungBadge(label: 'keine Datei', accent: scheme.error),
                 ],
               ),
             ),

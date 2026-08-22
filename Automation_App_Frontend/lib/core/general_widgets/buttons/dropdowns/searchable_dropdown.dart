@@ -64,7 +64,8 @@ class _SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
   @override
   void didUpdateWidget(SearchableDropdown<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value || oldWidget.entries != widget.entries) {
+    if (oldWidget.value != widget.value ||
+        oldWidget.entries != widget.entries) {
       _syncControllerToValue();
     }
   }

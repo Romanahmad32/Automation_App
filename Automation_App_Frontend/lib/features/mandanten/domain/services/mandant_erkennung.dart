@@ -107,9 +107,8 @@ class MandantErkennung {
 
   /// Kennzeichen auf die reinen Zeichen reduzieren (Bindestrich/Leerzeichen
   /// egal): „HG-E 1427" und „hge1427" gelten als gleich.
-  static String _normalisiereKennzeichen(String kennzeichen) => kennzeichen
-      .toUpperCase()
-      .replaceAll(RegExp(r'[^A-ZÄÖÜ0-9]'), '');
+  static String _normalisiereKennzeichen(String kennzeichen) =>
+      kennzeichen.toUpperCase().replaceAll(RegExp(r'[^A-ZÄÖÜ0-9]'), '');
 
   static String _normalisiereName(String name) => name
       .trim()
@@ -126,7 +125,10 @@ class MandantErkennung {
   static int _levenshtein(String a, String b) {
     final d = List.generate(
       a.length + 1,
-      (i) => List<int>.generate(b.length + 1, (j) => i == 0 ? j : (j == 0 ? i : 0)),
+      (i) => List<int>.generate(
+        b.length + 1,
+        (j) => i == 0 ? j : (j == 0 ? i : 0),
+      ),
     );
     for (var i = 1; i <= a.length; i++) {
       for (var j = 1; j <= b.length; j++) {

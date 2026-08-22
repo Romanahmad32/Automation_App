@@ -159,12 +159,11 @@ class WizardStepFillOut extends StatelessWidget {
                               final vorgang = wizardState.selectedVorgang;
                               final herkunft = vorgang == null
                                   ? const <String, PrefillWert>{}
-                                  : VorgangPrefillMatcher
-                                        .matchTemplateFieldsMitHerkunft(
-                                          selectedTemplate.fields,
-                                          vorgang,
-                                          mandant: wizardState.selectedMandant,
-                                        );
+                                  : VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
+                                      selectedTemplate.fields,
+                                      vorgang,
+                                      mandant: wizardState.selectedMandant,
+                                    );
                               final prefill = herkunft.map(
                                 (label, wert) => MapEntry(label, wert.wert),
                               );

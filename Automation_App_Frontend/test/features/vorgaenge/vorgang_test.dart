@@ -23,42 +23,48 @@ void main() {
       expect(vorgang.aktenzeichen, '84/26 C03');
     });
 
-    test('lässt Bestandteile leer, wenn die Referenz dem Schema nicht folgt',
-        () {
-      final vorgang = Vorgang.ausAnfrage(
-        referenz: 'freitext-referenz',
-        angefragtAm: DateTime(2026, 6, 20),
-      );
+    test(
+      'lässt Bestandteile leer, wenn die Referenz dem Schema nicht folgt',
+      () {
+        final vorgang = Vorgang.ausAnfrage(
+          referenz: 'freitext-referenz',
+          angefragtAm: DateTime(2026, 6, 20),
+        );
 
-      expect(vorgang.laufendeNummer, isNull);
-      expect(vorgang.aktenzeichen, 'freitext-referenz');
-    });
+        expect(vorgang.laufendeNummer, isNull);
+        expect(vorgang.aktenzeichen, 'freitext-referenz');
+      },
+    );
   });
 
   test('toJson/fromJson ist verlustfrei (inkl. Antwort- und Wizard-Daten)', () {
-    final original = Vorgang.ausAnfrage(
-      referenz: '12/26 C03_HG-E 1427',
-      angefragtAm: DateTime(2026, 6, 1),
-      mandantId: 7,
-      mandantName: 'Max Müller',
-    )
-        .mitAntwort(
-          const ZentralrufReplyData(
-            referenz: '12/26 C03_HG-E 1427',
-            versichererName: 'HUK',
-            unfallDatum: '20.06.2026',
-            kennzeichen: 'HG-E 1427',
-          ),
-        )
-        .copyWith(
-          feldWerte: const {'Unfallort': 'Bad Homburg', 'Mandant': 'Max Müller'},
-          schadensaufstellung: const DamageListing(
-            items: [DamageItem(description: 'Reparatur', amount: 1250.50)],
-            gebuehrensatz: 1.3,
-            applyVat: true,
-            auslagenpauschaleOverride: 20,
-          ),
-        );
+    final original =
+        Vorgang.ausAnfrage(
+              referenz: '12/26 C03_HG-E 1427',
+              angefragtAm: DateTime(2026, 6, 1),
+              mandantId: 7,
+              mandantName: 'Max Müller',
+            )
+            .mitAntwort(
+              const ZentralrufReplyData(
+                referenz: '12/26 C03_HG-E 1427',
+                versichererName: 'HUK',
+                unfallDatum: '20.06.2026',
+                kennzeichen: 'HG-E 1427',
+              ),
+            )
+            .copyWith(
+              feldWerte: const {
+                'Unfallort': 'Bad Homburg',
+                'Mandant': 'Max Müller',
+              },
+              schadensaufstellung: const DamageListing(
+                items: [DamageItem(description: 'Reparatur', amount: 1250.50)],
+                gebuehrensatz: 1.3,
+                applyVat: true,
+                auslagenpauschaleOverride: 20,
+              ),
+            );
 
     final kopie = vorgangAusJson(original.toJson());
 
@@ -70,15 +76,18 @@ void main() {
     expect(kopie.schadensaufstellung?.items.single.amount, 1250.50);
   });
 
-  test('fromJson fällt bei unbekanntem Rechtsgebiet/Status tolerant zurück', () {
-    final vorgang = vorgangAusJson({
-      'referenz': '1/26 C03_HG-E 1',
-      'angefragtAm': DateTime(2026, 1, 1).toIso8601String(),
-      'rechtsgebiet': 'voelkerrecht',
-      'status': 'archiviert',
-    });
+  test(
+    'fromJson fällt bei unbekanntem Rechtsgebiet/Status tolerant zurück',
+    () {
+      final vorgang = vorgangAusJson({
+        'referenz': '1/26 C03_HG-E 1',
+        'angefragtAm': DateTime(2026, 1, 1).toIso8601String(),
+        'rechtsgebiet': 'voelkerrecht',
+        'status': 'archiviert',
+      });
 
-    expect(vorgang.rechtsgebiet, Rechtsgebiet.verkehrsrecht);
-    expect(vorgang.status, VorgangStatus.angefragt);
-  });
+      expect(vorgang.rechtsgebiet, Rechtsgebiet.verkehrsrecht);
+      expect(vorgang.status, VorgangStatus.angefragt);
+    },
+  );
 }

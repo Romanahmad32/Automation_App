@@ -108,7 +108,9 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                 final gewaehlt = wizardState.selectedVorgang;
                 final vorgang = gewaehlt == null
                     ? null
-                    : getIt<VorgangCubit>().findeZuReferenz(gewaehlt.referenz) ??
+                    : getIt<VorgangCubit>().findeZuReferenz(
+                            gewaehlt.referenz,
+                          ) ??
                           gewaehlt;
                 if (vorgang != null) {
                   final status =
@@ -133,9 +135,9 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                   // Auswahl im Wizard auf den neuen Stand heben, damit ein
                   // weiteres Schreiben im selben Durchlauf die gerade
                   // bestätigten Werte vorbelegt bekommt.
-                  context
-                      .read<WizardCubit>()
-                      .uebernehmeVorgangsStand(aktualisiert);
+                  context.read<WizardCubit>().uebernehmeVorgangsStand(
+                    aktualisiert,
+                  );
                 }
               case EditedDocumentError():
                 ScaffoldMessenger.of(context).showSnackBar(

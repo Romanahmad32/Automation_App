@@ -14,7 +14,8 @@ class ApiZentralrufRepository implements ZentralrufRepository {
 
   @override
   Future<Either<Failure, ZentralrufPrefillResult>> prefillForm(
-      ZentralrufRequest request,) async {
+    ZentralrufRequest request,
+  ) async {
     try {
       final result = await datasource.prefillForm(request);
       return Right(result);

@@ -13,7 +13,8 @@ class ApiZentralrufReplyRepository implements ZentralrufReplyRepository {
 
   @override
   Future<Either<Failure, ZentralrufReplyParseResult>> parseReply(
-      ZentralrufReplyInput input,) async {
+    ZentralrufReplyInput input,
+  ) async {
     try {
       final result = await datasource.parseReply(input);
       return Right(result);

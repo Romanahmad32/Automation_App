@@ -269,8 +269,7 @@ class _VorgangsdatenFormState extends State<VorgangsdatenForm> {
           // ausführliche Hinweiskarte steht (sonst doppelt).
           for (final warnung in widget.warnings)
             if ((!keinVersicherer || !warnung.contains('keinen Versicherer')) &&
-                (!zwischennachricht ||
-                    !warnung.contains('Zwischennachricht')))
+                (!zwischennachricht || !warnung.contains('Zwischennachricht')))
               ToneCard(
                 accent: theme.colorScheme.tertiary,
                 icon: Icons.warning_amber,
