@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Der in den Einstellungen hinterlegte Postfach-Zugang für die automatische
-/// Überwachung der Zentralruf-Antworten (REQUIREMENTS.md §3.3/§4). Spiegelt das
+/// Überwachung der Zentralruf-Antworten (REQUIREMENTS.md §4.3/§7.1). Spiegelt das
 /// Backend-DTO `MailboxConfigDto`: Das App-Passwort selbst wird nie ausgeliefert,
 /// nur ob bereits eines gesetzt ist ([appPasswordSet]).
 /// Anmeldeverfahren des Postfach-Zugangs (spiegelt das Backend-Enum

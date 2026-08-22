@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace AutomationService.Features.Settings.Presentation.Controllers;
 
 /// <summary>
-/// Liest und speichert den einen Kanzlei-Einstellungssatz (Req. 3.1) und zählt
-/// die laufende Auftragsnummer hoch (Req. 3.2). Ersetzt den früheren lokalen
+/// Liest und speichert den einen Kanzlei-Einstellungssatz (§7.1) und zählt
+/// die laufende Auftragsnummer hoch (§7.1). Ersetzt den früheren lokalen
 /// JSON-Speicher des Frontends (kanzlei_settings.json).
 /// </summary>
 [ApiController]

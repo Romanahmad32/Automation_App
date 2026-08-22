@@ -15,7 +15,7 @@ public class ZentralrufController(
 {
     /// <summary>
     /// Felder, die für die Vorlagenausfüllung gebraucht werden; fehlen sie in
-    /// der geparsten Antwort, werden sie als "missing" zurückgemeldet (Req. 3.3).
+    /// der geparsten Antwort, werden sie als "missing" zurückgemeldet (§4.3).
     /// </summary>
     private static readonly (string Name, Func<Domain.Services.ZentralrufReplyData, string?> Value)[] RelevantFields =
     [

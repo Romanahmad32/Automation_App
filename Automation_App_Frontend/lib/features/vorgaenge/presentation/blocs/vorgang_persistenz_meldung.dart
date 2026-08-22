@@ -2,7 +2,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler.dart';
 
 /// Baut die Meldungen, die der Anwalt bei fehlgeschlagener Persistenz zu sehen
-/// bekommt (Req. 8: erfasste Daten duerfen nicht stillschweigend verloren
+/// bekommt (§7.2: erfasste Daten duerfen nicht stillschweigend verloren
 /// gehen).
 ///
 /// Eigene Klasse, damit im [VorgangCubit] die Ablauflogik steht und nicht der

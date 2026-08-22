@@ -36,7 +36,7 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
           BlocProvider(create: (context) => getIt<TemplatePdfPreviewBloc>()),
           BlocProvider(create: (context) => getIt<ResultPdfPreviewBloc>()),
           BlocProvider(create: (context) => getIt<RvgCalculationBloc>()),
-          // Steuert die Akten-Ablage im Speicherschritt (§3.6).
+          // Steuert die Akten-Ablage im Speicherschritt (§6.1).
           BlocProvider(create: (context) => getIt<AblageCubit>()),
           // Liefert die Titelzeilen-Farbe der Schadensaufstellung aus den
           // Einstellungen für Vorschau und Dokumenterzeugung.

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AutomationService.Features.Vorgaenge.Presentation.Controllers;
 
 /// <summary>
-/// Liest und pflegt die Vorgänge (Req. 3.3). Ersetzt den früheren lokalen
+/// Liest und pflegt die Vorgänge (§3). Ersetzt den früheren lokalen
 /// JSON-Speicher (zentralruf_vorgaenge.json). Upsert/Delete laufen pro Referenz,
 /// damit auch bei tausenden Vorgängen jede Änderung nur eine Zeile schreibt.
 /// Die Referenz enthält Schrägstriche/Leerzeichen und wird deshalb als
@@ -50,8 +50,8 @@ public class VorgaengeController(
     }
 
     /// <summary>
-    /// Schließt den Vorgang ab (Req. 3.7): Status „versendet" und Hochzählen der
-    /// laufenden Auftragsnummer (Req. 3.2) in einer Transaktion. Idempotent —
+    /// Schließt den Vorgang ab (§4.8): Status „versendet" und Hochzählen der
+    /// laufenden Auftragsnummer (§7.1) in einer Transaktion. Idempotent —
     /// ein bereits abgeschlossener Vorgang zählt nicht erneut hoch.
     /// </summary>
     [HttpPost("abschliessen")]

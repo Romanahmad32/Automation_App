@@ -762,7 +762,7 @@
         "tags": [
           "Vorgaenge"
         ],
-        "summary": "Schlie\u00DFt den Vorgang ab (Req. 3.7): Status \u201Eversendet\u0022 und Hochz\u00E4hlen der\r\nlaufenden Auftragsnummer (Req. 3.2) in einer Transaktion. Idempotent \u2014\r\nein bereits abgeschlossener Vorgang z\u00E4hlt nicht erneut hoch.",
+        "summary": "Schlie\u00DFt den Vorgang ab (\u00A74.8): Status \u201Eversendet\u0022 und Hochz\u00E4hlen der\r\nlaufenden Auftragsnummer (\u00A77.1) in einer Transaktion. Idempotent \u2014\r\nein bereits abgeschlossener Vorgang z\u00E4hlt nicht erneut hoch.",
         "parameters": [
           {
             "name": "referenz",

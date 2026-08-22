@@ -5,7 +5,7 @@ import 'package:automation_app/features/word_automation/presentation/widgets/vor
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Schritt 4: Das bestätigte Dokument in die Akte des Mandanten ablegen (§3.6).
+/// Schritt 4: Das bestätigte Dokument in die Akte des Mandanten ablegen (§6.1).
 /// Ein Mandant kann mehrere Akten-Ordner haben (verschiedene Rubriken); der
 /// Zielordner und der Unterordner (Fall) sind daher wählbar oder neu anlegbar.
 /// Existiert der Mandant noch nicht, wird er hier — mit den Formulardaten

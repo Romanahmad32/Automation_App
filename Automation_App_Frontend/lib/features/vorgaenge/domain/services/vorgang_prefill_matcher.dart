@@ -18,7 +18,7 @@ import 'package:automation_app/features/zentralruf_reply/domain/services/vorgang
 ///   übernommenen Zentralruf-Antwort über die bewährte Antwort-Heuristik.
 ///
 /// Felder ohne eindeutige Zuordnung bleiben leer — lieber unbefüllt als falsch
-/// vorbelegt (Req. 3.4). Jeder Wert trägt seine Herkunft ([PrefillWert]) für
+/// vorbelegt (§1.3). Jeder Wert trägt seine Herkunft ([PrefillWert]) für
 /// die Anzeige am Feld, damit der Anwalt falsche Vorbelegungen sofort erkennt.
 class VorgangPrefillMatcher {
   const VorgangPrefillMatcher._();

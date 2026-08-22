@@ -6,7 +6,7 @@ namespace AutomationService.Features.Versicherer.Domain.Persistence;
 /// geparsten Antwort befüllt/aktualisiert und dient der Oberfläche als
 /// Nachschlagewerk: Lücken in neuen Antworten füllen und bei Negativ-Antworten
 /// den Versicherer aus der bekannten Liste wählen. Zugleich Vorarbeit für die
-/// Empfängerlogik beim E-Mail-Versand (Req. §9).
+/// Empfängerlogik beim E-Mail-Versand (§4.7).
 /// </summary>
 public class VersichererEntity
 {

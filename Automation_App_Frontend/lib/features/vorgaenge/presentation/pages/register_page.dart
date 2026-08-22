@@ -7,7 +7,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cub
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Das interne Sachgebiete-Register (Req. 3.7): die abgeschlossenen Vorgänge im
+/// Das interne Sachgebiete-Register (§6.2): die abgeschlossenen Vorgänge im
 /// exakten Spaltenschema der mehrseitigen Word-Tabelle der Kanzlei —
 /// laufende Nr | Aktenzeichen (Abteilung) | Name ./. Gegner + Sachverhalt v.
 /// Datum | Rechtsgebiet.

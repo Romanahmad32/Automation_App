@@ -83,7 +83,7 @@ class ZentralrufReplyData extends Equatable {
     );
   }
 
-  /// Für die lokale Persistenz der übernommenen Vorgangsdaten (Req. 3.3:
+  /// Für die lokale Persistenz der übernommenen Vorgangsdaten (§3:
   /// "speichern" — die Antwort kommt oft erst Tage nach der Anfrage).
   Map<String, dynamic> toJson() => {
     'referenz': referenz,
@@ -170,7 +170,7 @@ class ZentralrufReplyInput extends Equatable {
 }
 
 /// Parse-Ergebnis inkl. der vom Backend gemeldeten fehlenden Felder
-/// (Anforderung 3.3: kein stilles Auslassen von Werten) und Warnungen
+/// (§4.3: kein stilles Auslassen von Werten) und Warnungen
 /// (z. B. Kennzeichen passt nicht zur Referenz, Negativ-Antwort).
 class ZentralrufReplyParseResult extends Equatable {
   final ZentralrufReplyData data;

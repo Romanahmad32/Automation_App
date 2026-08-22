@@ -169,7 +169,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
 
   /// Gemeinsamer Absende-Pfad für „Speichern" und „Zentralruf ausfüllen":
   /// zeigt — wenn am Mandanten etwas neu oder geändert ist — die Übersicht zur
-  /// Bestätigung (Req. 3) und schickt das Speicher-Event. Abgebrochene Übersicht
+  /// Bestätigung (§1.3) und schickt das Speicher-Event. Abgebrochene Übersicht
   /// bricht das Speichern ab.
   Future<void> _absenden({required bool zentralruf}) async {
     final daten = leseVorgangDaten(_form, _rechtsgebiet);

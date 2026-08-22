@@ -2,7 +2,7 @@ import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:equatable/equatable.dart';
 
 /// Eine Akte = ein Mandanten-Ordner direkt unter dem Stammordner des
-/// Aktensystems (§3.6). Reine Laufzeit-Sicht des Dateisystems (gescannt, nicht
+/// Aktensystems (§6.1). Reine Laufzeit-Sicht des Dateisystems (gescannt, nicht
 /// persistiert); die strukturierten Mandantendaten liegen separat im
 /// Mandantenregister und werden über den Ordnernamen verknüpft.
 class Akte extends Equatable {

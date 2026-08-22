@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 
-/// Was beim Speichern mit dem Mandanten geschehen würde (Req. 3): nichts, einen
+/// Was beim Speichern mit dem Mandanten geschehen würde (§1.3): nichts, einen
 /// neuen Mandanten anlegen oder den gewählten aktualisieren.
 enum MandantAenderungsart { keine, neu, aktualisierung }
 

@@ -19,7 +19,7 @@ import 'package:injectable/injectable.dart';
 /// Antwort des Zentralrufs kommt oft erst Tage nach der Anfrage, ein Neustart
 /// darf den Vorgang nicht verlieren.
 ///
-/// Fehlgeschlagene Persistenz wird nicht still geschluckt (Req. 8), sondern an
+/// Fehlgeschlagene Persistenz wird nicht still geschluckt (§7.2), sondern an
 /// den [VorgangPersistenzFehlerCubit] gemeldet; die Shell bietet dem Nutzer
 /// „Erneut versuchen" an (→ [wiederhole]).
 @lazySingleton
@@ -90,7 +90,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     await _upsert(vorgang);
   }
 
-  /// Ordnet eine eingegangene Zentralruf-Antwort einem Vorgang zu (Req. 3.3) und
+  /// Ordnet eine eingegangene Zentralruf-Antwort einem Vorgang zu (§4.3) und
   /// schaltet ihn auf „beantwortet".
   ///
   /// [zielReferenz] ist der vom Anwalt im Antwort-/Postfach-Formular gewählte
@@ -217,7 +217,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
 
   /// Schließt den Vorgang ab (Versand erledigt). Statuswechsel auf „versendet"
   /// und das Hochzählen der laufenden Auftragsnummer passieren atomar in einer
-  /// Backend-Transaktion (Req. 3.2) — schlägt sie fehl, bleibt beides
+  /// Backend-Transaktion (§4.8) — schlägt sie fehl, bleibt beides
   /// unverändert und der Aufrufer bekommt `false` zur Anzeige zurück.
   /// Bereits abgeschlossene Vorgänge zählen nicht erneut hoch.
   Future<bool> abschliessen(Vorgang vorgang) async {
@@ -260,7 +260,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
       await _datasource.upsertVorgang(vorgang);
     } catch (_) {
       // Der In-Memory-Stand bleibt gültig, aber der Nutzer muss erfahren, dass
-      // er nach einem Neustart verloren wäre (Req. 8).
+      // er nach einem Neustart verloren wäre (§7.2).
       _fehler.melde(VorgangPersistenzMeldung.speichern(vorgang));
     }
   }
