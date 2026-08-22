@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/backup/presentation/views/data_backup_view.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart';
 import 'package:automation_app/features/mailbox/presentation/views/mailbox_access_view.dart';
@@ -40,11 +41,12 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
     return DefaultTabController(
       length: 5,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Einstellungen'),
-          centerTitle: true,
-          actions: const [PageRefreshButton()],
-          bottom: const TabBar(
+        appBar: const SeitenAppBar(
+          titel: 'Einstellungen',
+          icon: Icons.settings_outlined,
+          untertitel: 'Kanzleidaten, Postfach-Zugang und Darstellung',
+          aktionen: [PageRefreshButton()],
+          bottom: TabBar(
             tabs: [
               Tab(icon: Icon(Icons.business), text: 'Kanzlei'),
               Tab(icon: Icon(Icons.mark_email_unread), text: 'Postfach-Zugang'),

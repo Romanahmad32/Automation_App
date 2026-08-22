@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
@@ -153,13 +154,11 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
         ),
       ],
       child: Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          title: Text(
-            'Word Vorlagen ausfüllen',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          actions: const [PageRefreshButton()],
+        appBar: const SeitenAppBar(
+          titel: 'Word Vorlagen ausfüllen',
+          icon: Icons.document_scanner_outlined,
+          untertitel: 'Anspruchsschreiben aus einer Vorlage erzeugen',
+          aktionen: [PageRefreshButton()],
         ),
         body: Column(
           children: [
