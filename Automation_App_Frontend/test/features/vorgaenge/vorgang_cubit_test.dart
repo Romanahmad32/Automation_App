@@ -45,8 +45,9 @@ class _FakeVorgaengeDatasource implements VorgangRepository {
 
   @override
   Future<Vorgang?> aendereReferenz(String von, String nach) async {
-    if (aendereReferenzSchlaegtFehl)
+    if (aendereReferenzSchlaegtFehl) {
       throw Exception('Backend nicht erreichbar');
+    }
     Vorgang? ziel;
     for (final v in vorgaenge) {
       if (Vorgang.gleicheReferenz(v.referenz, von)) {
