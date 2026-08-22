@@ -47,7 +47,7 @@ function Invoke-Schritt {
     )
 
     Write-Host ''
-    Write-Host "──── $Name" -ForegroundColor Cyan
+    Write-Host "---- $Name" -ForegroundColor Cyan
     Push-Location $Verzeichnis
     try {
         & $Datei @Argumente
@@ -112,7 +112,7 @@ if (-not $NurFrontend) {
 }
 
 Write-Host ''
-Write-Host '════ Zusammenfassung ════' -ForegroundColor Cyan
+Write-Host '==== Zusammenfassung ====' -ForegroundColor Cyan
 foreach ($e in $ergebnisse) {
     if ($e.Ok) {
         Write-Host ('  [ok]     ' + $e.Name) -ForegroundColor Green
