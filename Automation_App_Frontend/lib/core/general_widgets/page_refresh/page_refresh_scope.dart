@@ -1,4 +1,11 @@
+import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_controller.dart';
+import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_inherited.dart';
 import 'package:flutter/material.dart';
+
+// Der Controller lag frueher in dieser Datei. Er wird weiter von hier
+// mitgegeben, damit die Seiten, die nur page_refresh_scope.dart importieren,
+// den Typ unveraendert benennen koennen.
+export 'package:automation_app/core/general_widgets/page_refresh/page_refresh_controller.dart';
 
 /// Stellt einen "Seite neu laden"-Mechanismus bereit.
 ///
@@ -30,19 +37,12 @@ class PageRefreshScope extends StatefulWidget {
   /// [PageRefreshScope] in der Vorfahrenkette liegt.
   static PageRefreshController? maybeOf(BuildContext context) {
     return context
-        .dependOnInheritedWidgetOfExactType<_PageRefreshInherited>()
+        .dependOnInheritedWidgetOfExactType<PageRefreshInherited>()
         ?.controller;
   }
 
   @override
   State<PageRefreshScope> createState() => _PageRefreshScopeState();
-}
-
-/// Auslöser zum Zurücksetzen der umgebenden Seite.
-class PageRefreshController {
-  const PageRefreshController(this.refresh);
-
-  final VoidCallback refresh;
 }
 
 class _PageRefreshScopeState extends State<PageRefreshScope> {
@@ -56,7 +56,7 @@ class _PageRefreshScopeState extends State<PageRefreshScope> {
 
   @override
   Widget build(BuildContext context) {
-    return _PageRefreshInherited(
+    return PageRefreshInherited(
       controller: _controller,
       generation: _generation,
       child: KeyedSubtree(
@@ -65,21 +65,6 @@ class _PageRefreshScopeState extends State<PageRefreshScope> {
       ),
     );
   }
-}
-
-class _PageRefreshInherited extends InheritedWidget {
-  const _PageRefreshInherited({
-    required this.controller,
-    required this.generation,
-    required super.child,
-  });
-
-  final PageRefreshController controller;
-  final int generation;
-
-  @override
-  bool updateShouldNotify(_PageRefreshInherited oldWidget) =>
-      generation != oldWidget.generation;
 }
 
 /// AppBar-Aktion, die die umgebende Seite über den [PageRefreshScope] in ihren
