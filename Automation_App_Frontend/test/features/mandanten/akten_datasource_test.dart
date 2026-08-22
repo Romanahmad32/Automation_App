@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -73,12 +75,12 @@ void main() {
     });
 
     test('legt in neuer Akte an und kopiert die Datei', () async {
-      final ziel = await datasource.legeDokumentAb(
+      final ziel = (await datasource.legeDokumentAb(
         stammordner: tempDir.path,
         ordnername: 'Neumandant Müller',
         unterordnerName: 'Unfall v. 01.01.2026',
         quelldateiPfad: quelle.path,
-      );
+      )).zielpfad;
 
       expect(File(ziel).existsSync(), isTrue);
       expect(ziel, endsWith('quelle.docx'));
@@ -94,12 +96,12 @@ void main() {
     test('nutzt vorhandene Akte und legt nur Unterordner an', () async {
       Directory('${tempDir.path}/Bestandsakte').createSync();
 
-      final ziel = await datasource.legeDokumentAb(
+      final ziel = (await datasource.legeDokumentAb(
         stammordner: tempDir.path,
         ordnername: 'Bestandsakte',
         unterordnerName: 'Fall 2',
         quelldateiPfad: quelle.path,
-      );
+      )).zielpfad;
 
       expect(File(ziel).existsSync(), isTrue);
       // Es darf keine zweite Akte „Bestandsakte" entstehen.
@@ -117,6 +119,91 @@ void main() {
         ),
         throwsA(isA<MandantException>()),
       );
+    });
+
+    /// Der Kern: in der Akte steht die verbindliche Fassung. Ein stilles
+    /// copy() daraufhin hiesse, ein abgelegtes Schreiben zu verlieren, ohne
+    /// dass es jemand merkt.
+    test(
+      'meldet einen Konflikt, statt vorhandene Dateien zu ersetzen',
+      () async {
+        Future<AblageErgebnis> ablegen([AblageStrategie? strategie]) =>
+            datasource.legeDokumentAb(
+              stammordner: tempDir.path,
+              ordnername: 'Akte',
+              unterordnerName: 'Fall',
+              quelldateiPfad: quelle.path,
+              strategie: strategie ?? AblageStrategie.fragen,
+            );
+
+        final erste = await ablegen();
+        quelle.writeAsStringSync('neuer inhalt');
+        final zweite = await ablegen();
+
+        expect(zweite.konflikt, isTrue);
+        expect(zweite.zielpfad, erste.zielpfad);
+        expect(File(erste.zielpfad).readAsStringSync(), 'inhalt');
+      },
+    );
+
+    test('ersetzt auf ausdrueckliche Ansage', () async {
+      Future<AblageErgebnis> ablegen(AblageStrategie strategie) =>
+          datasource.legeDokumentAb(
+            stammordner: tempDir.path,
+            ordnername: 'Akte',
+            unterordnerName: 'Fall',
+            quelldateiPfad: quelle.path,
+            strategie: strategie,
+          );
+
+      final erste = await ablegen(AblageStrategie.fragen);
+      quelle.writeAsStringSync('neuer inhalt');
+      final zweite = await ablegen(AblageStrategie.ersetzen);
+
+      expect(zweite.konflikt, isFalse);
+      expect(zweite.zielpfad, erste.zielpfad);
+      expect(File(zweite.zielpfad).readAsStringSync(), 'neuer inhalt');
+    });
+
+    test('behaelt auf Wunsch beide Fassungen nebeneinander', () async {
+      Future<AblageErgebnis> ablegen(AblageStrategie strategie) =>
+          datasource.legeDokumentAb(
+            stammordner: tempDir.path,
+            ordnername: 'Akte',
+            unterordnerName: 'Fall',
+            quelldateiPfad: quelle.path,
+            strategie: strategie,
+          );
+
+      final erste = await ablegen(AblageStrategie.fragen);
+      quelle.writeAsStringSync('neuer inhalt');
+      final zweite = await ablegen(AblageStrategie.beideBehalten);
+
+      expect(zweite.zielpfad, endsWith('quelle (2).docx'));
+      expect(File(erste.zielpfad).readAsStringSync(), 'inhalt');
+      expect(File(zweite.zielpfad).readAsStringSync(), 'neuer inhalt');
+    });
+
+    test('legt eine bereits abgelegte Datei nicht auf sich selbst', () async {
+      final erste = await datasource.legeDokumentAb(
+        stammordner: tempDir.path,
+        ordnername: 'Akte',
+        unterordnerName: 'Fall',
+        quelldateiPfad: quelle.path,
+      );
+
+      // Nach der Ablage arbeitet der Wizard mit der Kopie in der Akte weiter —
+      // „Erneut ablegen" zeigt dann auf denselben Pfad.
+      final zweite = await datasource.legeDokumentAb(
+        stammordner: tempDir.path,
+        ordnername: 'Akte',
+        unterordnerName: 'Fall',
+        quelldateiPfad: erste.zielpfad,
+      );
+
+      expect(zweite.konflikt, isFalse);
+      expect(zweite.zielpfad, erste.zielpfad);
+      expect(File(zweite.zielpfad).readAsStringSync(), 'inhalt');
     });
 
     test('wirft bei fehlender Quelldatei', () async {

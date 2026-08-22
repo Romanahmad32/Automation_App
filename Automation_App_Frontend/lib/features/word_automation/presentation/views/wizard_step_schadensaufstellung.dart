@@ -6,6 +6,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/edite
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_listing_form.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/generation_overlay.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/schadensaufstellung_preview.dart';
@@ -233,13 +234,19 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                     const Spacer(),
                     CustomRectangularButton(
                       onPressed: canGenerate
-                          ? () {
+                          ? () async {
+                              final bloc = context.read<EditedDocumentBloc>();
+                              // Erzeugen ueberschreibt die vorige Fassung — bei
+                              // Handarbeit in Word vorher fragen.
+                              if (!await darfNeuErzeugen(context, bloc.state)) {
+                                return;
+                              }
                               final datum = ursachendatumAusFormular(
                                 wizardState.selectedFormTemplate?.fields ??
                                     const [],
                                 wizardState.formData!,
                               );
-                              context.read<EditedDocumentBloc>().add(
+                              bloc.add(
                                 EditDocumentEvent(
                                   data: wizardState.formData!,
                                   damageListing: damageListing,
