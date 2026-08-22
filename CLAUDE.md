@@ -74,7 +74,7 @@ a fallback when neither is installed.
 
 ```powershell
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs   # regenerate after editing DI/routes/freezed/json classes
+dart run build_runner build   # regenerate after editing DI/routes/freezed/json classes
 flutter run -d windows
 flutter test
 flutter analyze

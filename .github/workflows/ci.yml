@@ -97,7 +97,7 @@ jobs:
       # Navigieren auf. Deshalb hier neu erzeugen und mit dem committeten
       # Stand vergleichen.
       - name: Codegenerierung
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build
 
       - name: Generierter Stand aktuell
         run: >

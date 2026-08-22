@@ -7,7 +7,7 @@ Lass die Codegenerierung des Frontends neu laufen und pruefe das Ergebnis.
 Aus `Automation_App_Frontend/`:
 
 ```
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 Danach:

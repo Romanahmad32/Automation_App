@@ -82,7 +82,7 @@ if (-not $NurBackend) {
         -Hilfe 'pub get hat pubspec.lock geaendert: die aufgeloeste Fassung mitcommitten, nicht zurueckwerfen.'
 
     Invoke-Schritt -Name 'Frontend: Codegenerierung' -Verzeichnis $frontend `
-        -Datei 'dart' -Argumente @('run', 'build_runner', 'build', '--delete-conflicting-outputs') `
+        -Datei 'dart' -Argumente @('run', 'build_runner', 'build') `
         -Hilfe 'Fehler in einer Annotation oder in build.yaml — nicht in den generierten Dateien selbst.'
 
     # Die generierten Dateien sind versioniert. Weichen sie nach dem Lauf ab,
