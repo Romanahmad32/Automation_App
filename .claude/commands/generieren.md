@@ -17,7 +17,7 @@ Danach:
   die Aenderung in denselben Commit wie die Annotation, die sie ausgeloest hat.
 - Generierte Dateien (`.g.dart`, `.freezed.dart`, `.gr.dart`,
   `injection.config.dart`) **nie** von Hand nachbearbeiten. Stimmt etwas nicht,
-  liegt der Fehler in der Annotation oder in `build.yaml`.
+  liegt der Fehler in der Annotation, nicht im Ergebnis.
 
 Wann das noetig ist: nach jeder Aenderung an `@injectable`/`@Injectable`,
 an den Routen in `lib/core/router/app_router.dart`, an freezed- oder

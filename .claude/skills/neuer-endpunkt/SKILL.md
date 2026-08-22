@@ -1,3 +1,13 @@
+---
+name: neuer-endpunkt
+description: >-
+  Rezept fuer einen neuen oder geaenderten HTTP-Endpunkt dieser App: welche Dateien im Backend
+  (senkrechter Schnitt), im Vertrag (docs/openapi.json) und im Flutter-Frontend (Clean
+  Architecture) anzulegen sind, in welcher Reihenfolge, und welche Pruefungen dabei anschlagen.
+  Verwenden, sobald eine Aufgabe eine neue Route, ein neues DTO oder Feld, eine neue Datasource
+  oder eine neue Tabelle beruehrt.
+---
+
 # Ein neuer Endpunkt: was wo hingehört
 
 Ein einziger neuer Endpunkt berührt rund ein Dutzend Dateien in zwei Sprachen und
@@ -31,7 +41,7 @@ die es noch nicht gibt.
 | 13 | `lib/core/di/injection.config.dart` | **generiert** — `build_runner`, nie von Hand |
 
 Neue Tabelle nötig? Dann kommen `Domain/Persistence/<Name>Entity.cs`,
-`…EntityConfiguration.cs`, ein `DbSet` in `Core/Persistence/AutomationDbContext.cs`
+`<Name>EntityConfiguration.cs`, ein `DbSet` in `Core/Persistence/AutomationDbContext.cs`
 und eine Migration dazu (siehe [Persistenz](#persistenz)).
 
 ## Backend
@@ -179,7 +189,7 @@ dotnet ef migrations add <Name> -o Core/Persistence/Migrations
 wird keine Verbindung geöffnet, nur das Modell gelesen. Angewendet wird die
 Migration beim Start durch `DatabaseMigrationService` — der Anwender bekommt davon
 nichts mit außer der Sicherung, die vorher automatisch angelegt wird
-(siehe [RELEASE.md](RELEASE.md)).
+(siehe `docs/RELEASE.md`).
 
 ## Zum Schluss
 
@@ -205,4 +215,4 @@ Schlägt eine dieser Prüfungen fehl, ist die Antwort nie, die Regel zu lockern.
 > **`pubspec.lock`**: Ändert ein `pub get` die Datei, passt der committete Stand
 > nicht zur gepinnten Flutter-Fassung. Dann ist die neu aufgelöste Fassung die
 > richtige und gehört in den Commit — nicht zurückwerfen. Hintergrund:
-> [RELEASE.md](RELEASE.md#die-sperrdatei-gehört-zum-pin).
+> `docs/RELEASE.md`, Abschnitt „Die Sperrdatei gehört zum Pin“.
