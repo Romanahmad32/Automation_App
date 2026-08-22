@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
@@ -31,7 +32,24 @@ class EditedDocumentBloc
   ) {
     final aktuell = state;
     if (aktuell is! EditedDocumentLoaded) return;
-    emit(EditedDocumentLoaded(event.zielpfad, warnings: aktuell.warnings));
+    emit(
+      EditedDocumentLoaded(
+        event.zielpfad,
+        warnings: aktuell.warnings,
+        erzeugtAm: _aenderungszeit(event.zielpfad),
+      ),
+    );
+  }
+
+  /// Änderungszeit der Datei, oder null, wenn sie nicht zu lesen ist (im Test
+  /// zeigt der Pfad ins Nichts). Null heisst nur: kein Vergleich möglich.
+  DateTime? _aenderungszeit(String pfad) {
+    try {
+      final datei = File(pfad);
+      return datei.existsSync() ? datei.lastModifiedSync() : null;
+    } on FileSystemException {
+      return null;
+    }
   }
 
   Future<void> _onEditDocumentEvent(
@@ -71,6 +89,7 @@ class EditedDocumentBloc
           EditedDocumentLoaded(
             document.outputFilePath,
             warnings: document.warnings,
+            erzeugtAm: _aenderungszeit(document.outputFilePath),
           ),
         );
     }

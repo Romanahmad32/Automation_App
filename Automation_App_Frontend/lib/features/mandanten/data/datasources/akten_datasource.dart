@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:injectable/injectable.dart';
@@ -64,13 +66,17 @@ class FilesystemAktenDatasource {
   }
 
   /// Legt [quelldateiPfad] in `<stammordner>/<ordnername>/<unterordnerName>/`
-  /// ab. Akten- und Unterordner werden bei Bedarf angelegt. Gibt den Zielpfad
-  /// der Kopie zurück.
-  Future<String> legeDokumentAb({
+  /// ab. Akten- und Unterordner werden bei Bedarf angelegt.
+  ///
+  /// Liegt dort bereits eine gleichnamige Datei, entscheidet [strategie]. Der
+  /// Standard schreibt **nicht** und meldet den Konflikt zurück: in der Akte
+  /// steht die verbindliche Fassung, und `File.copy` ersetzt sie kommentarlos.
+  Future<AblageErgebnis> legeDokumentAb({
     required String stammordner,
     required String ordnername,
     required String unterordnerName,
     required String quelldateiPfad,
+    AblageStrategie strategie = AblageStrategie.fragen,
   }) async {
     final basis = stammordner.trim();
     if (basis.isEmpty) {
@@ -91,14 +97,44 @@ class FilesystemAktenDatasource {
     );
     await unterordner.create(recursive: true);
 
-    final ziel = _join(unterordner.path, _basename(quelldateiPfad));
+    var ziel = _join(unterordner.path, _basename(quelldateiPfad));
     // Erneut abgelegt, ohne den Ordner zu wechseln: die Datei liegt bereits
     // dort, wo sie hinsoll. Ein copy() auf sich selbst wäre ein Fehler, kein
     // Fortschritt — möglich, seit der Wizard nach der Ablage mit der Kopie in
     // der Akte weiterarbeitet.
-    if (_gleicherPfad(quelldateiPfad, ziel)) return ziel;
+    if (_gleicherPfad(quelldateiPfad, ziel)) {
+      return AblageErgebnis.abgelegt(ziel);
+    }
+
+    if (await File(ziel).exists()) {
+      switch (strategie) {
+        case AblageStrategie.fragen:
+          return AblageErgebnis.konfliktMit(ziel);
+        case AblageStrategie.beideBehalten:
+          ziel = await _naechsterFreierPfad(ziel);
+        case AblageStrategie.ersetzen:
+          break;
+      }
+    }
+
     await quelle.copy(ziel);
-    return ziel;
+    return AblageErgebnis.abgelegt(ziel);
+  }
+
+  /// „Brief.docx" → „Brief (2).docx", „Brief (3).docx" … — der erste Name, unter
+  /// dem noch nichts liegt. Nur für [AblageStrategie.beideBehalten]: hier ist
+  /// die Zweitfassung ausdrücklich gewollt.
+  Future<String> _naechsterFreierPfad(String pfad) async {
+    final name = _basename(pfad);
+    final ordner = pfad.substring(0, pfad.length - name.length);
+    final punkt = name.lastIndexOf('.');
+    final stamm = punkt <= 0 ? name : name.substring(0, punkt);
+    final endung = punkt <= 0 ? '' : name.substring(punkt);
+
+    for (var nummer = 2; ; nummer++) {
+      final kandidat = '$ordner$stamm ($nummer)$endung';
+      if (!await File(kandidat).exists()) return kandidat;
+    }
   }
 
   String _join(String a, String b) {

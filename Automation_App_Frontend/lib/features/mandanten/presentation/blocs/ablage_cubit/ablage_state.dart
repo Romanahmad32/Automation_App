@@ -1,6 +1,8 @@
 part of 'ablage_cubit.dart';
 
-enum AblageStatus { initial, loading, ready, filing, erfolg, fehler }
+/// [konflikt]: im Fall-Ordner liegt bereits eine gleichnamige Datei; die
+/// Ablage wartet auf die Entscheidung des Anwalts (siehe [AblageStrategie]).
+enum AblageStatus { initial, loading, ready, filing, konflikt, erfolg, fehler }
 
 class AblageState extends Equatable {
   final AblageStatus status;
@@ -11,7 +13,8 @@ class AblageState extends Equatable {
   final List<Mandant> mandanten;
   final List<Akte> akten;
 
-  /// Zielpfad der abgelegten Kopie nach Erfolg.
+  /// Zielpfad in der Akte: nach Erfolg der der abgelegten Kopie, bei
+  /// [AblageStatus.konflikt] der der bereits vorhandenen Datei.
   final String? zielpfad;
 
   /// Fehlermeldung.

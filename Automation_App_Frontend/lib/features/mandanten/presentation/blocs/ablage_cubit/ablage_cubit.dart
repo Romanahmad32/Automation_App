@@ -1,4 +1,6 @@
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -18,8 +20,13 @@ class AblageCubit extends Cubit<AblageState> {
   final UseCase<List<Mandant>, NoParams> _getMandanten;
   final UseCase<List<Akte>, NoParams> _getAkten;
   final UseCase<Mandant, CreateMandantRequest> _createMandant;
-  final UseCase<String, LegeDokumentAbParams> _legeDokumentAb;
+  final UseCase<AblageErgebnis, LegeDokumentAbParams> _legeDokumentAb;
   final KanzleiSettingsRepository _settingsRepository;
+
+  /// Die Anfrage, die zur Rückfrage geführt hat. Gemerkt, damit der zweite
+  /// Anlauf genau dieselbe ist: Die Eingaben im Formular können sich inzwischen
+  /// geändert haben, entschieden hat der Anwalt aber über *diese* Ablage.
+  LegeDokumentAbParams? _offeneAblage;
 
   AblageCubit(
     this._getMandanten,
@@ -60,20 +67,42 @@ class AblageCubit extends Cubit<AblageState> {
     );
   }
 
-  /// Ablage für einen bestehenden Mandanten.
+  /// Ablage für einen bestehenden Mandanten. Liegt im Fall-Ordner schon eine
+  /// gleichnamige Datei, endet der Aufruf in [AblageStatus.konflikt]; die
+  /// Oberfläche fragt dann nach und ruft mit einer [strategie] erneut.
   Future<void> ablegenFuerMandant({
     required int mandantId,
     required String aktenOrdnername,
     required String unterordnerName,
     required String quelldateiPfad,
+    AblageStrategie strategie = AblageStrategie.fragen,
   }) async {
     emit(state.copyWith(status: AblageStatus.filing, message: () => null));
     await _ablegen(
-      mandantId: mandantId,
-      aktenOrdnername: aktenOrdnername,
-      unterordnerName: unterordnerName,
-      quelldateiPfad: quelldateiPfad,
+      LegeDokumentAbParams(
+        mandantId: mandantId,
+        aktenOrdnername: aktenOrdnername,
+        unterordnerName: unterordnerName,
+        quelldateiPfad: quelldateiPfad,
+        strategie: strategie,
+      ),
     );
+  }
+
+  /// Zweiter Anlauf nach der Rückfrage, mit der Entscheidung des Anwalts.
+  Future<void> konfliktLoesen(AblageStrategie strategie) async {
+    final offen = _offeneAblage;
+    if (offen == null) return;
+    emit(state.copyWith(status: AblageStatus.filing, message: () => null));
+    await _ablegen(offen.mitStrategie(strategie));
+  }
+
+  /// Der Anwalt hat die Rückfrage abgebrochen: zurück zur Auswahl, ohne dass
+  /// etwas geschrieben wurde.
+  void konfliktAbbrechen() {
+    if (state.status != AblageStatus.konflikt) return;
+    _offeneAblage = null;
+    emit(state.copyWith(status: AblageStatus.ready, zielpfad: () => null));
   }
 
   /// Legt einen neuen Mandanten an und nimmt ihn in die Auswahl auf. Gibt den
@@ -96,24 +125,24 @@ class AblageCubit extends Cubit<AblageState> {
     }
   }
 
-  Future<void> _ablegen({
-    required int mandantId,
-    required String aktenOrdnername,
-    required String unterordnerName,
-    required String quelldateiPfad,
-  }) async {
-    final result = await _legeDokumentAb(
-      LegeDokumentAbParams(
-        mandantId: mandantId,
-        aktenOrdnername: aktenOrdnername,
-        unterordnerName: unterordnerName,
-        quelldateiPfad: quelldateiPfad,
-      ),
-    );
+  Future<void> _ablegen(LegeDokumentAbParams params) async {
+    final result = await _legeDokumentAb(params);
     switch (result) {
-      case Right(value: final zielpfad):
+      case Right(value: final ergebnis) when ergebnis.konflikt:
+        _offeneAblage = params;
         emit(
-          state.copyWith(status: AblageStatus.erfolg, zielpfad: () => zielpfad),
+          state.copyWith(
+            status: AblageStatus.konflikt,
+            zielpfad: () => ergebnis.zielpfad,
+          ),
+        );
+      case Right(value: final ergebnis):
+        _offeneAblage = null;
+        emit(
+          state.copyWith(
+            status: AblageStatus.erfolg,
+            zielpfad: () => ergebnis.zielpfad,
+          ),
         );
       case Left(value: final failure):
         emit(

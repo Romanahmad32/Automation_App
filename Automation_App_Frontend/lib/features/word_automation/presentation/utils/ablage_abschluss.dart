@@ -1,11 +1,13 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
 import 'package:automation_app/features/word_automation/domain/usecases/arbeitsordner_aufraeumen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/ablage_konflikt_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -58,3 +60,13 @@ Future<void> schliesseAblageAb(
       break;
   }
 }
+
+/// Rückfrage, wenn im Fall-Ordner bereits eine gleichnamige Datei liegt (§6.1).
+/// Null = abgebrochen; dann bleibt die Akte unverändert.
+Future<AblageStrategie?> frageAblageKonflikt(
+  BuildContext context,
+  String vorhandenerPfad,
+) => showDialog<AblageStrategie>(
+  context: context,
+  builder: (_) => AblageKonfliktDialog(vorhandenerPfad: vorhandenerPfad),
+);

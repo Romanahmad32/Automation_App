@@ -13,8 +13,7 @@ UseCases `FillOutTemplate`, `ConvertDocxToPdf`, `CalculateRvgFees`, `GetVorlagen
 **Backend:** `Features/WordAutomation/`, `Features/PdfConversion/` · `GET /api/WordAutomation/vorlagen`, `POST /api/WordAutomation/replaced-document`,
 `POST /api/WordAutomation/rvg-calculation`, `POST /api/WordAutomation/arbeitsordner/aufraeumen`, `POST /api/PdfConversion/convert-from-path`;
 über `VorgangCubit` zusätzlich `PUT /api/Vorgaenge` und `POST /api/Vorgaenge/abschliessen`
-**Tests:** in `test/features/word_automation/`: `formular_extraktion_test.dart`,
-`wizard_cubit_select_vorgang_test.dart`, `edited_document_bloc_test.dart`
+**Tests:** `test/features/word_automation/` (Formularextraktion, `WizardCubit`, `EditedDocumentBloc`)
 
 **Fallstricke**
 

@@ -1,5 +1,7 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -32,7 +34,9 @@ abstract class MandantenRepository {
   /// Legt ein fertiges Dokument in der Akte ab (§6.1): Akten-Ordner bei Bedarf
   /// anlegen, Unterordner anlegen, Datei hineinkopieren. Verknüpft den
   /// Ordner mit dem Mandanten und gibt den Zielpfad der Kopie zurück.
-  Future<Either<Failure, String>> legeDokumentAb(LegeDokumentAbParams params);
+  Future<Either<Failure, AblageErgebnis>> legeDokumentAb(
+    LegeDokumentAbParams params,
+  );
 }
 
 /// Parameter für [MandantenRepository.legeDokumentAb].
@@ -47,13 +51,29 @@ class LegeDokumentAbParams {
   /// Name des Unterordners (Fall), z. B. „Unfall v. 12.05.2019".
   final String unterordnerName;
 
-  /// Pfad der Quelldatei (das generierte Dokument im Backend-Generated-Ordner).
+  /// Pfad der Quelldatei (die Arbeitskopie im Arbeitsordner des Vorgangs).
   final String quelldateiPfad;
+
+  /// Was geschehen soll, wenn im Fall-Ordner bereits eine gleichnamige Datei
+  /// liegt. Standard: nicht überschreiben, sondern zurückfragen.
+  final AblageStrategie strategie;
 
   const LegeDokumentAbParams({
     required this.mandantId,
     required this.aktenOrdnername,
     required this.unterordnerName,
     required this.quelldateiPfad,
+    this.strategie = AblageStrategie.fragen,
   });
+
+  /// Dieselbe Anfrage mit der Entscheidung des Anwalts — für den zweiten
+  /// Anlauf nach einer Rückfrage.
+  LegeDokumentAbParams mitStrategie(AblageStrategie strategie) =>
+      LegeDokumentAbParams(
+        mandantId: mandantId,
+        aktenOrdnername: aktenOrdnername,
+        unterordnerName: unterordnerName,
+        quelldateiPfad: quelldateiPfad,
+        strategie: strategie,
+      );
 }

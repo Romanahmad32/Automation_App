@@ -22,7 +22,7 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
     try {
       return Right(await datasource.getVorlagenUebersicht());
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -46,7 +46,7 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
       );
       return Right(result);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -57,7 +57,7 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
     try {
       return Right(await datasource.arbeitsordnerAufraeumen(vorgangSchluessel));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -69,7 +69,7 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
       final result = await datasource.convertDocxToPdf(docxFilePath);
       return Right(result);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -91,7 +91,7 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
       );
       return Right(result);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(message: ausnahmeText(e)));
     }
   }
 }

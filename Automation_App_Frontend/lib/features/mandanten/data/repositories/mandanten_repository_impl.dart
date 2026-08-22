@@ -3,6 +3,7 @@ import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
 import 'package:automation_app/features/mandanten/data/datasources/mandant_datasource.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -27,7 +28,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
     try {
       return Right(await _datasource.loadMandanten());
     } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
+      return Left(LocalFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -40,7 +41,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
     } on MandantException catch (e) {
       return Left(LocalFailure(message: e.message));
     } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
+      return Left(LocalFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -51,7 +52,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
     } on MandantException catch (e) {
       return Left(LocalFailure(message: e.message));
     } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
+      return Left(LocalFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -61,7 +62,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
       await _datasource.deleteMandant(id);
       return Right(null);
     } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
+      return Left(LocalFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -71,7 +72,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
       final stammordner = await _ladeStammordner();
       return Right(await _aktenDatasource.scanAkten(stammordner));
     } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
+      return Left(LocalFailure(message: ausnahmeText(e)));
     }
   }
 
@@ -84,28 +85,32 @@ class MandantenRepositoryImpl implements MandantenRepository {
       final aktualisiert = await _verknuepfe(mandantId, ordnername);
       return Right(aktualisiert);
     } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
+      return Left(LocalFailure(message: ausnahmeText(e)));
     }
   }
 
   @override
-  Future<Either<Failure, String>> legeDokumentAb(
+  Future<Either<Failure, AblageErgebnis>> legeDokumentAb(
     LegeDokumentAbParams params,
   ) async {
     try {
       final stammordner = await _ladeStammordner();
-      final zielpfad = await _aktenDatasource.legeDokumentAb(
+      final ergebnis = await _aktenDatasource.legeDokumentAb(
         stammordner: stammordner,
         ordnername: params.aktenOrdnername,
         unterordnerName: params.unterordnerName,
         quelldateiPfad: params.quelldateiPfad,
+        strategie: params.strategie,
       );
       // Register und Dateisystem in Einklang halten: den (ggf. neu angelegten)
-      // Akten-Ordner dem Mandanten zuordnen.
-      await _verknuepfe(params.mandantId, params.aktenOrdnername);
-      return Right(zielpfad);
+      // Akten-Ordner dem Mandanten zuordnen. Bei einer offenen Rückfrage liegt
+      // noch nichts in der Akte — dann auch nichts zu verknüpfen.
+      if (!ergebnis.konflikt) {
+        await _verknuepfe(params.mandantId, params.aktenOrdnername);
+      }
+      return Right(ergebnis);
     } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
+      return Left(LocalFailure(message: ausnahmeText(e)));
     }
   }
 
