@@ -48,7 +48,11 @@ jobs:
         run: dotnet build ${{ env.TEST_PROJECT }} --configuration Release --no-restore
 
       # Enthaelt die Architektur-Tests unter AutomationService.Tests/Architecture/
-      # (Slice-Isolation, Namespace-Konvention, Dateilaengen-Limit).
+      # (Slice-Isolation, Namespace-Konvention, Dateilaengen-Limit) und den
+      # Abgleich des HTTP-Vertrags: OpenApiVertragTests holt das OpenAPI-Dokument
+      # aus dem laufenden Dienst und faellt, wenn es von docs/openapi.json
+      # abweicht. Eine Vertragsaenderung muss im Diff auftauchen, sonst bricht
+      # sie das Frontend erst zur Laufzeit.
       - name: Test
         run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
 
@@ -75,12 +79,36 @@ jobs:
       - name: Pub get
         run: flutter pub get
 
+      # Die generierten Dateien sind versioniert (injection.config.dart,
+      # app_router.gr.dart). Wer eine @injectable-Klasse oder eine Route
+      # hinzufuegt und build_runner vergisst, bricht die Anwendung zur Laufzeit:
+      # analyze und test bleiben gruen, weil der alte generierte Stand weiter
+      # uebersetzt, und das Fehlen faellt erst beim DI-Aufloesen oder beim
+      # Navigieren auf. Deshalb hier neu erzeugen und mit dem committeten
+      # Stand vergleichen.
+      - name: Codegenerierung
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generierter Stand aktuell
+        run: >
+          git diff --exit-code --
+          lib/core/di/injection.config.dart
+          lib/core/router/app_router.gr.dart
+
+      # Gegenstueck zu "dotnet format --verify-no-changes" im Backend-Job. Ohne
+      # diese Pruefung sammelt sich Formatierungsrauschen in den Dart-Diffs und
+      # verdeckt die eigentliche Aenderung — teuer in jedem Review.
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test
+
       # Analyze laeuft vor den Tests: Fehler hier sind billiger zu finden.
       - name: Analyze
         run: flutter analyze
 
-      # Enthaelt die Architektur-Tests unter test/architecture/ (Schichtenregeln
-      # und Dateilaengen-Limit aus CLAUDE.md als ausfuehrbare Regeln).
+      # Enthaelt die Architektur-Tests unter test/architecture/ (Schichtenregeln,
+      # Dateilaengen-Limit und das Verbot privater Typen aus CLAUDE.md als
+      # ausfuehrbare Regeln) sowie den Abgleich der Dart-Seite gegen den
+      # versionierten HTTP-Vertrag docs/openapi.json.
       - name: Test
         run: flutter test
 
