@@ -13,7 +13,8 @@ des Vorgangsbestands: Dringlichkeitsrang der offenen Vorgänge, Ausschnitt der l
 Registerzeilen. Keine Entities, keine UseCases, kein Repository, keine Datasource.
 **Backend:** — (kein eigener Slice; über die fremden Cubits `GET /api/Vorgaenge` sowie
 `GET /api/mailbox/status` und `GET /api/mailbox/replies?includeAcknowledged=false`)
-**Tests:** `test/features/dashboard/dashboard_uebersicht_test.dart`
+**Tests:** `test/features/dashboard/dashboard_uebersicht_test.dart`,
+`test/features/dashboard/dashboard_karte_test.dart`
 
 **Fallstricke**
 

@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -134,9 +135,10 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_istBearbeitung ? 'Mandant bearbeiten' : 'Neuer Mandant'),
-          centerTitle: true,
+        appBar: SeitenAppBar(
+          titel: _istBearbeitung ? 'Mandant bearbeiten' : 'Neuer Mandant',
+          icon: _istBearbeitung ? Icons.edit_outlined : Icons.person_add_alt,
+          untertitel: 'Stammdaten des Mandanten',
         ),
         body: Scrollbar(
           child: SingleChildScrollView(

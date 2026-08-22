@@ -37,34 +37,55 @@ class DashboardKarte extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+            padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
             child: Row(
               children: [
                 Icon(icon, size: 20, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    titel,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                // Titel und Umfang teilen sich den gesamten freien Platz, damit
+                // der Absprung rechts bündig an der Kartenkante klebt und beim
+                // Verbreitern/Verschmälern der Karte mitwandert.
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          titel,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (umfang case final text?) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          text,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (umfang case final text?) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    text,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                TextButton(
+                const SizedBox(width: 12),
+                // Bewusst als gefüllte Tonal-Schaltfläche mit großzügiger
+                // Trefferfläche (44 px hoch): der Absprung ist auf der
+                // Startseite die eigentliche Handlung jeder Karte.
+                FilledButton.tonalIcon(
                   onPressed: () =>
                       AutoTabsRouter.of(context).setActiveIndex(zielTab),
-                  child: Text(aktionLabel),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    textStyle: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  iconAlignment: IconAlignment.end,
+                  icon: const Icon(Icons.arrow_forward, size: 18),
+                  label: Text(aktionLabel),
                 ),
               ],
             ),

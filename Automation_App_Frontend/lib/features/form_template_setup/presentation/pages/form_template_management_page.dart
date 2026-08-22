@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/views/form_template_overview.dart';
@@ -34,10 +35,11 @@ class FormTemplateManagementPage extends StatelessWidget
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Formularvorlagen verwalten'),
-        centerTitle: true,
-        actions: const [PageRefreshButton()],
+      appBar: const SeitenAppBar(
+        titel: 'Formularvorlagen verwalten',
+        icon: Icons.drive_file_rename_outline_outlined,
+        untertitel: 'Beschreiben, welche Felder eine Word-Vorlage hat',
+        aktionen: [PageRefreshButton()],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

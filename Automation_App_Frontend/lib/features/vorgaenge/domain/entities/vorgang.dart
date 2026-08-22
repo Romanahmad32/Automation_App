@@ -146,14 +146,22 @@ class Vorgang extends Equatable {
     return '$links ./. $rechts'.trim();
   }
 
+  /// Der Sachbestand-Teil der Registerspalte 3 („Sachverhalt v. 20.06.2026").
+  /// Getrennt von [parteienBezeichnung] abrufbar, damit die Registertabelle
+  /// beide Teile auf breiten Fenstern nebeneinander setzen kann. Null, solange
+  /// kein Unfalldatum erfasst ist.
+  String? get registerSachbestand {
+    final datum = (unfallDatum ?? '').trim();
+    return datum.isEmpty ? null : 'Sachverhalt v. $datum';
+  }
+
   /// Vollständiger Inhalt der Registerspalte 3: „Mandant ./. Gegner" mit dem
   /// Sachverhaltsdatum in der zweiten Zeile. Genutzt vom Sachgebiete-Register
   /// und vom Registerausschnitt der Startseite, damit beide Ansichten dieselbe
   /// Zeile zeigen.
   String get registerSachverhalt {
-    final datum = (unfallDatum ?? '').trim();
-    if (datum.isEmpty) return parteienBezeichnung;
-    final sachbestand = 'Sachverhalt v. $datum';
+    final sachbestand = registerSachbestand;
+    if (sachbestand == null) return parteienBezeichnung;
     return parteienBezeichnung.isEmpty
         ? sachbestand
         : '$parteienBezeichnung\n$sachbestand';

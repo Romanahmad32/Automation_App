@@ -14,7 +14,7 @@ app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashb
 **Backend:** `Features/Vorgaenge/` · `GET|PUT /api/Vorgaenge`, `DELETE /api/Vorgaenge?referenz=`,
 `POST /api/Vorgaenge/abschliessen?referenz=`, `POST /api/Vorgaenge/referenz?von=&nach=`
 **Tests:** `test/features/vorgaenge/` — u. a. `vorgang_cubit_test.dart`, `vorgang_test.dart`,
-`antwort_konflikte_test.dart`
+`antwort_konflikte_test.dart`, `register_tabelle_test.dart`
 
 **Fallstricke**
 
