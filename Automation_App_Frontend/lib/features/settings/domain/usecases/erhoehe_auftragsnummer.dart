@@ -5,7 +5,7 @@ import 'package:automation_app/features/settings/domain/repositories/kanzlei_set
 import 'package:injectable/injectable.dart';
 
 /// Zählt die laufende Auftragsnummer der Kanzlei um eins hoch und speichert sie
-/// (Req. 3.2). Wird beim Abschließen eines Vorgangs aufgerufen, damit der
+/// (§7.1). Wird beim Abschließen eines Vorgangs aufgerufen, damit der
 /// nächste Auftrag automatisch die folgende Nummer erhält. Gibt die neuen
 /// Einstellungen zurück.
 ///

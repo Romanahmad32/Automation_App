@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 
-/// Was beim Speichern mit dem Mandanten geschehen würde (Req. 3): nichts, einen
+/// Was beim Speichern mit dem Mandanten geschehen würde (§1.3): nichts, einen
 /// neuen Mandanten anlegen oder den gewählten aktualisieren.
 enum MandantAenderungsart { keine, neu, aktualisierung }
 
@@ -12,7 +12,11 @@ class MandantFeldDiff {
   final String alt;
   final String neu;
 
-  const MandantFeldDiff({required this.label, this.alt = '', required this.neu});
+  const MandantFeldDiff({
+    required this.label,
+    this.alt = '',
+    required this.neu,
+  });
 }
 
 /// Bestimmt, ob aus den Eingaben ein neuer Mandant entstünde, ein bestehender
@@ -56,12 +60,18 @@ List<MandantFeldDiff> mandantDiff(VorgangStartenDaten daten, Mandant m) {
   final diffs = <MandantFeldDiff>[];
   void vergleiche(String label, String alt, String neu) {
     if (alt.trim() != neu.trim()) {
-      diffs.add(MandantFeldDiff(label: label, alt: alt.trim(), neu: neu.trim()));
+      diffs.add(
+        MandantFeldDiff(label: label, alt: alt.trim(), neu: neu.trim()),
+      );
     }
   }
 
   vergleiche('Name', m.anzeigename, daten.mandantName);
-  vergleiche('Straße und Hausnummer', m.strasseHausnummer, daten.strasseHausnummer);
+  vergleiche(
+    'Straße und Hausnummer',
+    m.strasseHausnummer,
+    daten.strasseHausnummer,
+  );
   vergleiche('PLZ', m.postleitzahl, daten.postleitzahl);
   vergleiche('Ort', m.ort, daten.ort);
   vergleiche('E-Mail', m.emailAdresse, daten.emailAdresse);
@@ -72,7 +82,9 @@ List<MandantFeldDiff> mandantDiff(VorgangStartenDaten daten, Mandant m) {
     (k) => k.trim().toUpperCase() == neuesKennzeichen.toUpperCase(),
   );
   if (neuesKennzeichen.isNotEmpty && !schonHinterlegt) {
-    diffs.add(MandantFeldDiff(label: 'Kfz-Kennzeichen (neu)', neu: neuesKennzeichen));
+    diffs.add(
+      MandantFeldDiff(label: 'Kfz-Kennzeichen (neu)', neu: neuesKennzeichen),
+    );
   }
   return diffs;
 }

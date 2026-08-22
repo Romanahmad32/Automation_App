@@ -62,10 +62,7 @@ void main() {
   });
 
   test('schlägt bei zu kurzer oder fremder Eingabe nichts vor', () {
-    expect(
-      MandantErkennung.finde(mandanten: alle, nachname: 'M'),
-      isEmpty,
-    );
+    expect(MandantErkennung.finde(mandanten: alle, nachname: 'M'), isEmpty);
     expect(
       MandantErkennung.finde(mandanten: alle, nachname: 'Wagner'),
       isEmpty,

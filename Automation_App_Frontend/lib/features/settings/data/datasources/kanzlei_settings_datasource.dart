@@ -10,7 +10,7 @@ abstract class KanzleiSettingsDatasource {
 
   Future<KanzleiSettings> saveSettings(KanzleiSettings settings);
 
-  /// Zählt die laufende Auftragsnummer atomar im Backend hoch (Req. 3.2) und
+  /// Zählt die laufende Auftragsnummer atomar im Backend hoch (§7.1) und
   /// gibt den gespeicherten Stand zurück.
   Future<KanzleiSettings> erhoeheAuftragsnummer();
 }

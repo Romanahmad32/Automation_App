@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/dashboard/presentation/views/dashboard_view.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
@@ -27,12 +28,12 @@ class DashboardPage extends StatelessWidget implements AutoRouteWrapper {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text('Übersicht', style: theme.textTheme.titleLarge),
-        actions: [
+      appBar: SeitenAppBar(
+        titel: 'Übersicht',
+        icon: Icons.dashboard_outlined,
+        untertitel: 'Was gerade auf eine Handlung wartet',
+        aktionen: [
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Aktualisieren',

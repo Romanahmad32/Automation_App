@@ -78,10 +78,7 @@ class TemplateFieldItem extends StatelessWidget {
               hintText: 'Typ suchen oder auswählen',
               entries: [
                 for (final type in InputType.values)
-                  SearchableDropdownEntry(
-                    value: type,
-                    label: type.displayName,
-                  ),
+                  SearchableDropdownEntry(value: type, label: type.displayName),
               ],
               onChanged: onTypeChanged,
             ),

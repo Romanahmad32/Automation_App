@@ -63,6 +63,19 @@ updates:
     commit-message:
       prefix: "NuGet"
 
+  # Bei "pub" ist die vorgeschlagene pubspec.lock nur ein Vorschlag, kein
+  # Ergebnis. Dependabot hat kein Flutter zur Hand und loest mit dem reinen
+  # Dart-SDK auf; die exakten Pins des Frameworks (meta, matcher, test_api in
+  # packages/flutter{,_test}/pubspec.yaml) sieht es deshalb nicht und traegt
+  # Fassungen ein, die es mit FLUTTER_VERSION nicht geben kann. Genau so ist
+  # 5e80b05 hereingekommen: ein Stand, den jeder `pub get` still zurueckstufte.
+  #
+  # Ein "ignore"-Eintrag hilft dagegen nicht — die betroffenen Pakete sind
+  # transitiv, sie werden nicht aktualisiert, sondern beim Aufloesen mitgewaehlt.
+  # Was hilft, ist der Schritt "Sperrdatei passt zur Toolchain" in ci.yml: er
+  # macht so einen PR rot statt still. Die Behebung ist immer dieselbe —
+  # `flutter pub get` mit der gepinnten Fassung laufen lassen und die dabei
+  # entstandene pubspec.lock in den PR nachtragen.
   - package-ecosystem: "pub"
     directory: "/Automation_App_Frontend"
     schedule:

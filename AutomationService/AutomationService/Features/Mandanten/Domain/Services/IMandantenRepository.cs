@@ -3,7 +3,7 @@ using AutomationService.Features.Mandanten.Domain.Persistence;
 namespace AutomationService.Features.Mandanten.Domain.Services;
 
 /// <summary>
-/// Zugriff auf das Mandantenregister (Req. 3.1). Vergibt IDs und prüft auf
+/// Zugriff auf das Mandantenregister (§5.1). Vergibt IDs und prüft auf
 /// Namens-Dubletten — Fachregeln, die mit dem Umstieg vom lokalen JSON-Register
 /// ins Backend gewandert sind.
 /// </summary>

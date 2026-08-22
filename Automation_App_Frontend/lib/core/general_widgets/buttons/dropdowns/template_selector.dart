@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -124,7 +125,10 @@ class _TemplateSelectorState extends State<TemplateSelector> {
 
         if (templates == null) {
           if (state is FormTemplateOverviewError) {
-            return _ErrorHint(message: state.message);
+            return FehlerHinweis(
+              nachricht:
+                  'Vorlagen konnten nicht geladen werden: ${state.message}',
+            );
           }
           return const Center(
             child: Padding(
@@ -173,29 +177,6 @@ class _TemplateSelectorState extends State<TemplateSelector> {
           },
         );
       },
-    );
-  }
-}
-
-class _ErrorHint extends StatelessWidget {
-  final String message;
-
-  const _ErrorHint({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(Icons.error_outline, color: colorScheme.error),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            'Vorlagen konnten nicht geladen werden: $message',
-            style: TextStyle(color: colorScheme.error),
-          ),
-        ),
-      ],
     );
   }
 }

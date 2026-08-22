@@ -7,6 +7,7 @@ import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_re
 import 'package:automation_app/features/vorgaenge/domain/services/fallback_referenz.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_meldung.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -18,7 +19,7 @@ import 'package:injectable/injectable.dart';
 /// Antwort des Zentralrufs kommt oft erst Tage nach der Anfrage, ein Neustart
 /// darf den Vorgang nicht verlieren.
 ///
-/// Fehlgeschlagene Persistenz wird nicht still geschluckt (Req. 8), sondern an
+/// Fehlgeschlagene Persistenz wird nicht still geschluckt (§7.2), sondern an
 /// den [VorgangPersistenzFehlerCubit] gemeldet; die Shell bietet dem Nutzer
 /// „Erneut versuchen" an (→ [wiederhole]).
 @lazySingleton
@@ -38,14 +39,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
       // Nur setzen, wenn nicht inzwischen schon etwas eingetragen wurde.
       if (state.isEmpty && gespeichert.isNotEmpty) emit(gespeichert);
     } catch (_) {
-      _fehler.melde(
-        VorgangPersistenzFehler(
-          aktion: VorgangPersistenzAktion.laden,
-          meldung:
-              'Die gespeicherten Vorgänge konnten nicht geladen werden. '
-              'Läuft der Hintergrunddienst?',
-        ),
-      );
+      _fehler.melde(VorgangPersistenzMeldung.laden());
     }
   }
 
@@ -96,7 +90,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     await _upsert(vorgang);
   }
 
-  /// Ordnet eine eingegangene Zentralruf-Antwort einem Vorgang zu (Req. 3.3) und
+  /// Ordnet eine eingegangene Zentralruf-Antwort einem Vorgang zu (§4.3) und
   /// schaltet ihn auf „beantwortet".
   ///
   /// [zielReferenz] ist der vom Anwalt im Antwort-/Postfach-Formular gewählte
@@ -173,7 +167,10 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
       );
     }
     try {
-      final umbenannt = await _datasource.aendereReferenz(vorgang.referenz, neu);
+      final umbenannt = await _datasource.aendereReferenz(
+        vorgang.referenz,
+        neu,
+      );
       if (umbenannt == null) {
         return (
           vorgang: null,
@@ -209,7 +206,9 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
   /// Fehlerfassung oder Test-Vorgang). No-op, wenn keiner passt.
   Future<void> loesche(String referenz) async {
     final neu = state
-        .where((vorhanden) => !Vorgang.gleicheReferenz(vorhanden.referenz, referenz))
+        .where(
+          (vorhanden) => !Vorgang.gleicheReferenz(vorhanden.referenz, referenz),
+        )
         .toList();
     if (neu.length == state.length) return;
     emit(neu);
@@ -218,14 +217,15 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
 
   /// Schließt den Vorgang ab (Versand erledigt). Statuswechsel auf „versendet"
   /// und das Hochzählen der laufenden Auftragsnummer passieren atomar in einer
-  /// Backend-Transaktion (Req. 3.2) — schlägt sie fehl, bleibt beides
+  /// Backend-Transaktion (§4.8) — schlägt sie fehl, bleibt beides
   /// unverändert und der Aufrufer bekommt `false` zur Anzeige zurück.
   /// Bereits abgeschlossene Vorgänge zählen nicht erneut hoch.
   Future<bool> abschliessen(Vorgang vorgang) async {
     if (vorgang.status == VorgangStatus.versendet) return true;
     try {
-      final abgeschlossen =
-          await _datasource.abschliessenVorgang(vorgang.referenz);
+      final abgeschlossen = await _datasource.abschliessenVorgang(
+        vorgang.referenz,
+      );
       if (abgeschlossen == null) return false;
       _ersetzeImState(abgeschlossen);
       return true;
@@ -236,7 +236,8 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
 
   /// Wiederholt die fehlgeschlagene Operation aus einem gemeldeten
   /// Persistenzfehler („Erneut versuchen" in der Snackbar).
-  Future<void> wiederhole(VorgangPersistenzFehler fehler) => switch (fehler.aktion) {
+  Future<void> wiederhole(VorgangPersistenzFehler fehler) =>
+      switch (fehler.aktion) {
         VorgangPersistenzAktion.laden => ladeErneut(),
         VorgangPersistenzAktion.speichern => _upsert(fehler.vorgang!),
         VorgangPersistenzAktion.loeschen => _loescheImBackend(fehler.referenz!),
@@ -259,16 +260,8 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
       await _datasource.upsertVorgang(vorgang);
     } catch (_) {
       // Der In-Memory-Stand bleibt gültig, aber der Nutzer muss erfahren, dass
-      // er nach einem Neustart verloren wäre (Req. 8).
-      _fehler.melde(
-        VorgangPersistenzFehler(
-          aktion: VorgangPersistenzAktion.speichern,
-          meldung:
-              'Der Vorgang „${vorgang.referenz}" konnte nicht gespeichert '
-              'werden. Ohne Speichern geht die Änderung beim Beenden verloren.',
-          vorgang: vorgang,
-        ),
-      );
+      // er nach einem Neustart verloren wäre (§7.2).
+      _fehler.melde(VorgangPersistenzMeldung.speichern(vorgang));
     }
   }
 
@@ -276,15 +269,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     try {
       await _datasource.deleteVorgang(referenz);
     } catch (_) {
-      _fehler.melde(
-        VorgangPersistenzFehler(
-          aktion: VorgangPersistenzAktion.loeschen,
-          meldung:
-              'Der Vorgang „$referenz" konnte nicht gelöscht werden und '
-              'taucht nach einem Neustart wieder auf.',
-          referenz: referenz,
-        ),
-      );
+      _fehler.melde(VorgangPersistenzMeldung.loeschen(referenz));
     }
   }
 

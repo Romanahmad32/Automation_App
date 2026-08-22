@@ -86,9 +86,7 @@ class _VorgangSelectorState extends State<VorgangSelector> {
         // Einmalige Vorauswahl, sobald Vorgänge vorliegen und der Anwender noch
         // nichts gewählt hat. Nach dem Frame, um setState/emit im Build zu
         // vermeiden.
-        if (!_autoSelectVersucht &&
-            selected == null &&
-            vorgaenge.isNotEmpty) {
+        if (!_autoSelectVersucht && selected == null && vorgaenge.isNotEmpty) {
           _autoSelectVersucht = true;
           final vorschlag = _vorschlag(vorgaenge);
           if (vorschlag != null) {
@@ -117,7 +115,8 @@ class _VorgangSelectorState extends State<VorgangSelector> {
         final selektierteReferenz = selected == null
             ? null
             : (vorgaenge.any(
-                    (v) => Vorgang.gleicheReferenz(v.referenz, selected.referenz),
+                    (v) =>
+                        Vorgang.gleicheReferenz(v.referenz, selected.referenz),
                   )
                   ? Vorgang.normalizeReferenz(selected.referenz)
                   : null);

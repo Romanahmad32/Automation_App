@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter *)",
+      "Bash(dart *)",
+      "Bash(dotnet *)",
+      "Bash(git *)",
+      "PowerShell(flutter *)",
+      "PowerShell(dart *)",
+      "PowerShell(dotnet *)",
+      "PowerShell(git *)",
+      "PowerShell(./scripts/check.ps1*)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1*)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(git rebase *)",
+      "Bash(git checkout -- *)",
+      "PowerShell(git push *)",
+      "PowerShell(git reset --hard *)",
+      "PowerShell(git clean *)",
+      "PowerShell(git rebase *)",
+      "PowerShell(git checkout -- *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell",
+            "args": [
+              "-NoProfile",
+              "-ExecutionPolicy",
+              "Bypass",
+              "-File",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/dart-format.ps1"
+            ],
+            "timeout": 30,
+            "statusMessage": "dart format"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -12,8 +12,8 @@ String freieOhneReferenz(List<Vorgang> vorgaenge) {
       nummer == 1 ? '(ohne Referenz)' : '(ohne Referenz $nummer)';
 
   bool vergeben(String referenz) => vorgaenge.any(
-        (vorgang) => Vorgang.gleicheReferenz(vorgang.referenz, referenz),
-      );
+    (vorgang) => Vorgang.gleicheReferenz(vorgang.referenz, referenz),
+  );
 
   var nummer = 1;
   while (vergeben(kandidat(nummer))) {

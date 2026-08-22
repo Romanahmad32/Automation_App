@@ -13,7 +13,8 @@ class CalculateRvgFees
 
   @override
   Future<Either<Failure, RvgCalculation>> call(
-      CalculateRvgFeesParams params,) async {
+    CalculateRvgFeesParams params,
+  ) async {
     return repository.calculateRvgFees(
       params.gegenstandswert,
       params.gebuehrensatz,

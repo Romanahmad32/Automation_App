@@ -42,7 +42,7 @@ class KanzleiSettings extends Equatable {
 
   /// Laufende Auftragsnummer für das Referenzformat (z. B. 84). Wird in jedes
   /// "Auftragsnummer"-Feld vorausgefüllt und nach Abschluss eines Auftrags
-  /// hochgezählt (Req. 3.2).
+  /// hochgezählt (§7.1).
   final int laufendeAuftragsnummer;
 
   /// Abteilungskürzel für das Referenzformat (z. B. "C03").
@@ -52,7 +52,7 @@ class KanzleiSettings extends Equatable {
   /// als Hex-Wert "RRGGBB" (ohne '#').
   final String tabellenkopfFarbeHex;
 
-  /// Stammordner des Aktensystems im Dateisystem (Req. 3.6 / 4). Unter diesem
+  /// Stammordner des Aktensystems im Dateisystem (§6.1, §7.1). Unter diesem
   /// Ordner liegt pro Mandant eine Akte (Unterordner). Leer = noch nicht
   /// festgelegt; ohne Stammordner ist die automatische Ablage nicht möglich.
   /// Bewusst kein Default-Pfad: Die App läuft auf einem fremden Rechner.
@@ -96,7 +96,7 @@ class KanzleiSettings extends Equatable {
       emailAdresse: emailAdresse ?? this.emailAdresse,
       telefonnummer: telefonnummer ?? this.telefonnummer,
       laufendeAuftragsnummer:
-      laufendeAuftragsnummer ?? this.laufendeAuftragsnummer,
+          laufendeAuftragsnummer ?? this.laufendeAuftragsnummer,
       abteilung: abteilung ?? this.abteilung,
       tabellenkopfFarbeHex: tabellenkopfFarbeHex ?? this.tabellenkopfFarbeHex,
       aktenStammordner: aktenStammordner ?? this.aktenStammordner,
@@ -118,44 +118,42 @@ class KanzleiSettings extends Equatable {
       emailAdresse: json['emailAdresse'] as String? ?? '',
       telefonnummer: json['telefonnummer'] as String? ?? '',
       laufendeAuftragsnummer:
-      (json['laufendeAuftragsnummer'] as num?)?.toInt() ??
+          (json['laufendeAuftragsnummer'] as num?)?.toInt() ??
           defaultLaufendeAuftragsnummer,
       abteilung: json['abteilung'] as String? ?? defaultAbteilung,
       tabellenkopfFarbeHex:
-      json['tabellenkopfFarbeHex'] as String? ??
+          json['tabellenkopfFarbeHex'] as String? ??
           defaultTabellenkopfFarbeHex,
       aktenStammordner: json['aktenStammordner'] as String? ?? '',
     );
   }
 
-  Map<String, dynamic> toJson() =>
-      {
-        'personentyp': personentyp,
-        'name': name,
-        'strasseHausnummer': strasseHausnummer,
-        'postleitzahl': postleitzahl,
-        'ort': ort,
-        'emailAdresse': emailAdresse,
-        'telefonnummer': telefonnummer,
-        'laufendeAuftragsnummer': laufendeAuftragsnummer,
-        'abteilung': abteilung,
-        'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
-        'aktenStammordner': aktenStammordner,
-      };
+  Map<String, dynamic> toJson() => {
+    'personentyp': personentyp,
+    'name': name,
+    'strasseHausnummer': strasseHausnummer,
+    'postleitzahl': postleitzahl,
+    'ort': ort,
+    'emailAdresse': emailAdresse,
+    'telefonnummer': telefonnummer,
+    'laufendeAuftragsnummer': laufendeAuftragsnummer,
+    'abteilung': abteilung,
+    'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
+    'aktenStammordner': aktenStammordner,
+  };
 
   @override
-  List<Object?> get props =>
-      [
-        personentyp,
-        name,
-        strasseHausnummer,
-        postleitzahl,
-        ort,
-        emailAdresse,
-        telefonnummer,
-        laufendeAuftragsnummer,
-        abteilung,
-        tabellenkopfFarbeHex,
-        aktenStammordner,
-      ];
+  List<Object?> get props => [
+    personentyp,
+    name,
+    strasseHausnummer,
+    postleitzahl,
+    ort,
+    emailAdresse,
+    telefonnummer,
+    laufendeAuftragsnummer,
+    abteilung,
+    tabellenkopfFarbeHex,
+    aktenStammordner,
+  ];
 }

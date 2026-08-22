@@ -105,7 +105,8 @@ class VorgangStartenDaten {
   /// den „Daten aktualisieren?"-Dialog).
   bool weichtAbVon(Mandant m) {
     final neuesKennzeichen = mandantKennzeichen.trim();
-    final kennzeichenNeu = neuesKennzeichen.isNotEmpty &&
+    final kennzeichenNeu =
+        neuesKennzeichen.isNotEmpty &&
         !m.kennzeichen.any(
           (k) => k.trim().toUpperCase() == neuesKennzeichen.toUpperCase(),
         );

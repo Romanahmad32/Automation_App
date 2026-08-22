@@ -115,9 +115,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
   /// bereits ein Feld mit demselben Namen.
   void _addFieldFromPlaceholder(String placeholder) {
     final alreadyExists = fields.any((field) {
-      final label = formGroup
-          .control(field.label)
-          .value as String?;
+      final label = formGroup.control(field.label).value as String?;
       return label?.trim().toLowerCase() == placeholder.toLowerCase();
     });
     if (alreadyExists) {
@@ -259,7 +257,8 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                           'ein zusätzlicher Schritt für die Schadenspositionen '
                           'und die RVG-Kostenberechnung angezeigt.',
                       onPick: () => _pickFile(TemplateFileSlot.mitAuflistung),
-                      onRemove: () => _removeFile(TemplateFileSlot.mitAuflistung),
+                      onRemove: () =>
+                          _removeFile(TemplateFileSlot.mitAuflistung),
                       onPlaceholderSelected: _addFieldFromPlaceholder,
                     ),
 

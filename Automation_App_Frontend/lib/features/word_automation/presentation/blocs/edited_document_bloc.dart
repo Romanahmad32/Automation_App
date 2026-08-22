@@ -22,8 +22,10 @@ class EditedDocumentBloc
     on<EditDocumentEvent>(_onEditDocumentEvent);
   }
 
-  Future<void> _onEditDocumentEvent(EditDocumentEvent event,
-      Emitter<EditedDocumentState> emit,) async {
+  Future<void> _onEditDocumentEvent(
+    EditDocumentEvent event,
+    Emitter<EditedDocumentState> emit,
+  ) async {
     emit(EditedDocumentLoading());
 
     if (event.path.isEmpty) {
@@ -31,8 +33,7 @@ class EditedDocumentBloc
       return;
     }
 
-    final stopwatch = Stopwatch()
-      ..start();
+    final stopwatch = Stopwatch()..start();
     final result = await fillOutTemplate(
       FillOutTemplateParams(
         path: event.path,
@@ -45,7 +46,7 @@ class EditedDocumentBloc
     stopwatch.stop();
     developer.log(
       'Gesamte Anfrage (Absenden → Antwort, = Spinner-Dauer): '
-          '${stopwatch.elapsedMilliseconds} ms',
+      '${stopwatch.elapsedMilliseconds} ms',
       name: 'PERF',
     );
 

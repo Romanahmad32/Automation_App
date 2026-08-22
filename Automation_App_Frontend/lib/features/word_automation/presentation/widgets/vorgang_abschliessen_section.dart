@@ -7,7 +7,7 @@ import 'package:automation_app/features/word_automation/presentation/widgets/vor
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Abschluss des Vorgangs (Req. 3.2 / 3.7): markiert den Auftrag als erledigt
+/// Abschluss des Vorgangs (§4.8): markiert den Auftrag als erledigt
 /// (Status „versendet"), zählt die laufende Auftragsnummer in den Einstellungen
 /// hoch und nimmt den Vorgang damit ins Sachgebiete-Register auf. Greift den
 /// gewählten Vorgang live aus dem [VorgangCubit] ab, damit der Status nach dem
@@ -73,7 +73,8 @@ class VorgangAbschliessenSection extends StatelessWidget {
       bloc: getIt<VorgangCubit>(),
       builder: (context, vorgaenge) {
         final aktuell =
-            getIt<VorgangCubit>().findeZuReferenz(selected.referenz) ?? selected;
+            getIt<VorgangCubit>().findeZuReferenz(selected.referenz) ??
+            selected;
         final abgeschlossen = aktuell.status == VorgangStatus.versendet;
 
         return Column(

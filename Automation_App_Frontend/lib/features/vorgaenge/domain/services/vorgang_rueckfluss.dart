@@ -14,7 +14,7 @@ import 'package:automation_app/features/word_automation/domain/entities/damage_l
 ///   in die entsprechenden Vorgangsfelder zurück (Unfallort, Uhrzeit,
 ///   Polizei-Nr., Unfalldatum, Mandanten-Kennzeichen) — der zuletzt vom Anwalt
 ///   bestätigte Wert gewinnt. Heuristisch gemappte Felder werden bewusst nicht
-///   zurückgeschrieben (lieber gar nicht als falsch, Req. 3.4); das aus der
+///   zurückgeschrieben (lieber gar nicht als falsch, §1.3); das aus der
 ///   Referenz abgeleitete Gegner-Kennzeichen bleibt ebenfalls unberührt.
 class VorgangRueckfluss {
   const VorgangRueckfluss._();

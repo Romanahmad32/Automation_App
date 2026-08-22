@@ -56,7 +56,9 @@ final _vorgangsnummerRegExp = RegExp(
 const vorgangsnummerHinweis = 'Format: VU/1234567/2026';
 
 /// Prüft die Vorgangsnummer, lässt leere Werte aber zu (Feld ist optional).
-Map<String, dynamic>? vorgangsnummerValidator(AbstractControl<dynamic> control) {
+Map<String, dynamic>? vorgangsnummerValidator(
+  AbstractControl<dynamic> control,
+) {
   final value = (control.value as String?)?.trim() ?? '';
   if (value.isEmpty || _vorgangsnummerRegExp.hasMatch(value)) {
     return null;

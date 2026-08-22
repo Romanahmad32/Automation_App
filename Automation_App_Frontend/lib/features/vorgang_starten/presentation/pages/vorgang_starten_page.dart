@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/views/vorgang_starten_form_view.dart';
 import 'package:flutter/material.dart';
@@ -62,13 +63,11 @@ class VorgangStartenPage extends StatelessWidget implements AutoRouteWrapper {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          title: Text(
-            'Vorgang starten',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          actions: const [PageRefreshButton()],
+        appBar: const SeitenAppBar(
+          titel: 'Vorgang starten',
+          icon: Icons.note_add_outlined,
+          untertitel: 'Mandat erfassen und beim Zentralruf anfragen',
+          aktionen: [PageRefreshButton()],
         ),
         body: const VorgangStartenFormView(),
       ),

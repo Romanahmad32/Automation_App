@@ -5,7 +5,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cub
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Macht fehlgeschlagene Vorgangs-Persistenz app-weit sichtbar (Req. 8): zeigt
+/// Macht fehlgeschlagene Vorgangs-Persistenz app-weit sichtbar (§7.2): zeigt
 /// gemeldete Fehler aus dem [VorgangPersistenzFehlerCubit] als Snackbar mit
 /// „Erneut versuchen" an. Sitzt in der Shell um den Seiteninhalt, damit die
 /// Meldung unabhängig von der gerade offenen Seite erscheint.

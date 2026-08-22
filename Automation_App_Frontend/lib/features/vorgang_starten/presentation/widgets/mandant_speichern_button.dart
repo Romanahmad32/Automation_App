@@ -12,7 +12,7 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Button am Ende der Mandanten-Karte: erst aktiv, wenn ein bestehender Mandant
 /// geänderte Daten hat („Mandantendaten aktualisieren") oder ohne Auswahl das
 /// Mindeste für einen neuen Mandanten erfasst ist („Neuen Mandanten speichern").
-/// Öffnet vor dem Speichern die Übersicht zur Bestätigung (Req. 3) und meldet die
+/// Öffnet vor dem Speichern die Übersicht zur Bestätigung (§1.3) und meldet die
 /// bestätigte Aktion über [onBestaetigt]; speichert nur den Mandanten, nicht den
 /// Vorgang.
 class MandantSpeichernButton extends StatelessWidget {
@@ -58,7 +58,8 @@ class MandantSpeichernButton extends StatelessWidget {
           builder: (context, form, child) {
             final daten = leseVorgangDaten(form, rechtsgebiet);
             final art = mandantAenderungsart(daten, gewaehlterMandant);
-            final aktiv = !isLoading &&
+            final aktiv =
+                !isLoading &&
                 art != MandantAenderungsart.keine &&
                 _mandantFelderGueltig(form);
             final neu = art == MandantAenderungsart.neu;
@@ -66,15 +67,18 @@ class MandantSpeichernButton extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
                 icon: Icon(
-                  neu ? Icons.person_add_alt_1_outlined : Icons.edit_note_outlined,
+                  neu
+                      ? Icons.person_add_alt_1_outlined
+                      : Icons.edit_note_outlined,
                 ),
                 label: Text(
                   neu
                       ? 'Neuen Mandanten speichern'
                       : 'Mandantendaten aktualisieren',
                 ),
-                onPressed:
-                    aktiv ? () => _bestaetige(context, art, daten) : null,
+                onPressed: aktiv
+                    ? () => _bestaetige(context, art, daten)
+                    : null,
               ),
             );
           },

@@ -1,12 +1,13 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/views/mailbox_inbox_view.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Vereinter Schritt der Antwort-Bearbeitung (REQUIREMENTS.md §3.3): automatisch
+/// Vereinter Schritt der Antwort-Bearbeitung (REQUIREMENTS.md §4.3): automatisch
 /// per Postfach erfasste Zentralruf-Antworten und der manuelle Weg (Mail
 /// einfügen/laden) in einer Ansicht. Stellt beide zugehörigen Blocs bereit.
 @RoutePage()
@@ -38,10 +39,11 @@ class MailboxInboxPage extends StatelessWidget implements AutoRouteWrapper {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Postfach'),
-          centerTitle: true,
-          actions: [
+        appBar: SeitenAppBar(
+          titel: 'Postfach',
+          icon: Icons.mark_email_read_outlined,
+          untertitel: 'Eingegangene Zentralruf-Antworten übernehmen',
+          aktionen: [
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Aktualisieren',

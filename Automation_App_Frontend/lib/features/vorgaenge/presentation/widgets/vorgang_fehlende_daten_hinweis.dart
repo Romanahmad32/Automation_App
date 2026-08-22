@@ -23,7 +23,11 @@ class VorgangFehlendeDatenHinweis extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.playlist_add_check_circle_outlined, size: 16, color: farbe),
+          Icon(
+            Icons.playlist_add_check_circle_outlined,
+            size: 16,
+            color: farbe,
+          ),
           const SizedBox(width: 4),
           Flexible(
             child: Text(

@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Primärer Weg im Speicherschritt: das bestätigte Dokument in die Akte des
-/// Mandanten ablegen (§3.6). Wählt/legt Mandant, Akten-Ordner und Unterordner
+/// Mandanten ablegen (§6.1). Wählt/legt Mandant, Akten-Ordner und Unterordner
 /// (Fall) und übergibt die Ablage an den [AblageCubit].
 class AktenAblageSection extends StatefulWidget {
   final String outputPath;

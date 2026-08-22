@@ -14,7 +14,7 @@ part 'vorgang_starten_event.dart';
 part 'vorgang_starten_state.dart';
 
 /// Orchestriert das Starten eines Vorgangs: regelt die Mandanten-Anlage bzw.
-/// -Aktualisierung (Req. 3), legt/aktualisiert den Vorgang als gemeinsame
+/// -Aktualisierung (§5.1), legt/aktualisiert den Vorgang als gemeinsame
 /// Klammer (`VorgangCubit`) und füllt optional das Zentralruf-Onlineformular
 /// vor. Die Dialog-Entscheidung trifft die View; hier läuft nur die Ausführung.
 @injectable
@@ -77,7 +77,7 @@ class VorgangStartenBloc
       );
     }
     // Bei Fehler bleibt es bei den Formular-Standardwerten. Hochgezählt wird die
-    // Auftragsnummer erst beim Abschluss des Vorgangs (Req. 3.2).
+    // Auftragsnummer erst beim Abschluss des Vorgangs (§4.8).
   }
 
   Future<void> _onSpeichereVorgang(
@@ -89,8 +89,7 @@ class VorgangStartenBloc
 
     // 1. Mandant auflösen (anlegen / aktualisieren / nur verknüpfen).
     int? mandantId = event.verknuepfteMandantId;
-    String? mandantName =
-        daten.mandantName.isEmpty ? null : daten.mandantName;
+    String? mandantName = daten.mandantName.isEmpty ? null : daten.mandantName;
 
     if (event.neuerMandant != null) {
       final result = await _createMandant(event.neuerMandant!);
@@ -137,8 +136,9 @@ class VorgangStartenBloc
       mandantId: mandantId,
       mandantName: mandantName,
       unfallDatum: daten.istVerkehrsunfall ? daten.unfallDatumText : null,
-      geschaedigtenKennzeichen:
-          VorgangStartenDaten.leerZuNull(daten.mandantKennzeichen),
+      geschaedigtenKennzeichen: VorgangStartenDaten.leerZuNull(
+        daten.mandantKennzeichen,
+      ),
       unfallort: daten.istVerkehrsunfall
           ? VorgangStartenDaten.leerZuNull(daten.unfallort)
           : null,

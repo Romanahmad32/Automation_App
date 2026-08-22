@@ -22,8 +22,10 @@ class MailboxConfigBloc extends Bloc<MailboxConfigEvent, MailboxConfigState> {
     on<MicrosoftSignOutEvent>(_onMicrosoftSignOut);
   }
 
-  Future<void> _onLoad(LoadMailboxConfigEvent event,
-      Emitter<MailboxConfigState> emit,) async {
+  Future<void> _onLoad(
+    LoadMailboxConfigEvent event,
+    Emitter<MailboxConfigState> emit,
+  ) async {
     emit(const MailboxConfigLoading());
     final result = await _repository.getConfig();
     switch (result) {
@@ -34,8 +36,10 @@ class MailboxConfigBloc extends Bloc<MailboxConfigEvent, MailboxConfigState> {
     }
   }
 
-  Future<void> _onSave(SaveMailboxConfigEvent event,
-      Emitter<MailboxConfigState> emit,) async {
+  Future<void> _onSave(
+    SaveMailboxConfigEvent event,
+    Emitter<MailboxConfigState> emit,
+  ) async {
     emit(const MailboxConfigLoading());
     final result = await _repository.saveConfig(event.update);
     switch (result) {
@@ -46,8 +50,10 @@ class MailboxConfigBloc extends Bloc<MailboxConfigEvent, MailboxConfigState> {
     }
   }
 
-  Future<void> _onMicrosoftSignIn(MicrosoftSignInEvent event,
-      Emitter<MailboxConfigState> emit,) async {
+  Future<void> _onMicrosoftSignIn(
+    MicrosoftSignInEvent event,
+    Emitter<MailboxConfigState> emit,
+  ) async {
     // Eigener Wartezustand: Der Nutzer meldet sich derweil im Browser an.
     emit(const MailboxMicrosoftSignInPending());
     final result = await _repository.microsoftSignIn();
@@ -59,8 +65,10 @@ class MailboxConfigBloc extends Bloc<MailboxConfigEvent, MailboxConfigState> {
     }
   }
 
-  Future<void> _onMicrosoftSignOut(MicrosoftSignOutEvent event,
-      Emitter<MailboxConfigState> emit,) async {
+  Future<void> _onMicrosoftSignOut(
+    MicrosoftSignOutEvent event,
+    Emitter<MailboxConfigState> emit,
+  ) async {
     emit(const MailboxConfigLoading());
     final result = await _repository.microsoftSignOut();
     switch (result) {

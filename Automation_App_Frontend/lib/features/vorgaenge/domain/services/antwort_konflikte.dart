@@ -43,7 +43,10 @@ class AntwortKonflikte {
   /// Abweichungen, die eine Übernahme von [data] in [vorgang] still verlieren
   /// würde: beide Seiten haben einen Wert und er unterscheidet sich (tolerant
   /// gegenüber Groß-/Kleinschreibung und Rand-Leerzeichen).
-  static List<AntwortKonflikt> finde(Vorgang vorgang, ZentralrufReplyData data) {
+  static List<AntwortKonflikt> finde(
+    Vorgang vorgang,
+    ZentralrufReplyData data,
+  ) {
     final konflikte = <AntwortKonflikt>[];
 
     void pruefe(AntwortKonfliktFeld feld, String? erfasst, String? antwort) {

@@ -17,13 +17,15 @@ class KanzleiSettingsBloc
   final UseCase<KanzleiSettings, KanzleiSettings> _saveSettings;
 
   KanzleiSettingsBloc(this._getSettings, this._saveSettings)
-      : super(const KanzleiSettingsLoading()) {
+    : super(const KanzleiSettingsLoading()) {
     on<LoadKanzleiSettingsEvent>(_onLoad);
     on<SaveKanzleiSettingsEvent>(_onSave);
   }
 
-  Future<void> _onLoad(LoadKanzleiSettingsEvent event,
-      Emitter<KanzleiSettingsState> emit,) async {
+  Future<void> _onLoad(
+    LoadKanzleiSettingsEvent event,
+    Emitter<KanzleiSettingsState> emit,
+  ) async {
     emit(const KanzleiSettingsLoading());
     final result = await _getSettings(const NoParams());
     switch (result) {
@@ -34,8 +36,10 @@ class KanzleiSettingsBloc
     }
   }
 
-  Future<void> _onSave(SaveKanzleiSettingsEvent event,
-      Emitter<KanzleiSettingsState> emit,) async {
+  Future<void> _onSave(
+    SaveKanzleiSettingsEvent event,
+    Emitter<KanzleiSettingsState> emit,
+  ) async {
     emit(const KanzleiSettingsLoading());
     final result = await _saveSettings(event.settings);
     switch (result) {

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:flutter/material.dart';
 
-/// Bestätigungsdialog für den Vorgangsabschluss (Req. 3.7). Solange der
+/// Bestätigungsdialog für den Vorgangsabschluss (§4.8). Solange der
 /// E-Mail-Versand nicht in der App umgesetzt ist, schließt er die Lücke zwischen
 /// „abschließen" und tatsächlichem Versand: Er öffnet auf Wunsch einen
 /// E-Mail-Entwurf im Standard-Mailprogramm bzw. den Ablageordner des Dokuments
@@ -74,7 +74,7 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Das Versenden der E-Mail (§3.7) erfolgt noch manuell:',
+              'Das Versenden der E-Mail (§4.7) erfolgt noch manuell:',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),

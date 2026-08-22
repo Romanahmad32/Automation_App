@@ -1,7 +1,7 @@
 /// Lebenszyklus eines Vorgangs — von der Zentralruf-Anfrage bis zum Versand.
 /// Die Reihenfolge der Werte entspricht dem Fortschritt; [istAbgeschlossen]
 /// markiert den Punkt, ab dem die laufende Auftragsnummer hochgezählt und die
-/// Zeile ins Sachgebiete-Register geschrieben wird (Req. 3.2 / 3.7).
+/// Zeile ins Sachgebiete-Register geschrieben wird (§4.8, §6.2).
 enum VorgangStatus {
   angefragt(name: 'Angefragt', value: 'angefragt'),
   beantwortet(name: 'Beantwortet', value: 'beantwortet'),

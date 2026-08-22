@@ -3,8 +3,8 @@ using AutomationService.Features.Vorgaenge.Domain.Persistence;
 namespace AutomationService.Features.Vorgaenge.Domain.Services;
 
 /// <summary>
-/// Schließt einen Vorgang ab (Req. 3.7): Status „versendet", Abschlusszeitpunkt
-/// und das Hochzählen der laufenden Auftragsnummer (Req. 3.2) passieren in
+/// Schließt einen Vorgang ab (§4.8): Status „versendet", Abschlusszeitpunkt
+/// und das Hochzählen der laufenden Auftragsnummer (§7.1) passieren in
 /// **einer** Transaktion — entweder beides oder nichts. Ersetzt die frühere
 /// zweischrittige Variante im Frontend (Vorgang upserten, dann Nummer erhöhen),
 /// bei der ein Teilfehler die Nummernvergabe aus dem Tritt brachte.
