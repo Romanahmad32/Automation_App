@@ -1,7 +1,7 @@
 namespace AutomationService.Features.ZentralrufAutomation.Domain.Services;
 
 /// <summary>
-/// Plausibilitätsprüfungen für die Zuordnung einer Antwort zum Vorgang (Req. 3.3).
+/// Plausibilitätsprüfungen für die Zuordnung einer Antwort zum Vorgang (§4.3).
 /// Gemeinsam genutzt vom manuellen Parse-Endpunkt und vom Postfach-Monitor,
 /// damit beide Wege dieselben Hinweise erzeugen.
 /// </summary>

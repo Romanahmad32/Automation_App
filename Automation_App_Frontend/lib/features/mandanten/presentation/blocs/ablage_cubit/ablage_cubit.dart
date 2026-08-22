@@ -10,7 +10,7 @@ import 'package:injectable/injectable.dart';
 
 part 'ablage_state.dart';
 
-/// Steuert die Akten-Ablage im Speicherschritt des Wizards (§3.6): lädt
+/// Steuert die Akten-Ablage im Speicherschritt des Wizards (§6.1): lädt
 /// Mandanten/Akten zur Auswahl, legt das fertige Dokument in der passenden Akte
 /// ab und legt bei Bedarf zuvor einen neuen Mandanten an.
 @injectable

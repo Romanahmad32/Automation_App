@@ -1,7 +1,7 @@
 namespace AutomationService.Features.Mandanten.Domain.Persistence;
 
 /// <summary>
-/// Persistenz-Abbild eines Mandanten (Stammdaten, Req. 3.1). Die 0..n-Listen
+/// Persistenz-Abbild eines Mandanten (Stammdaten, §5.1). Die 0..n-Listen
 /// (Akten-Ordnernamen, Kfz-Kennzeichen) werden als Ganzes gelesen/geschrieben
 /// und nie einzeln abgefragt — daher als JSON-Spalte statt eigener Kindtabelle.
 /// </summary>

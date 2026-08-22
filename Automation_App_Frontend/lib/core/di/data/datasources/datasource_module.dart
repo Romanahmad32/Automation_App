@@ -1,4 +1,4 @@
-import 'package:automation_app/core/theme/data/local_theme_preferences_datasource.dart';
+import 'package:automation_app/core/theme/data/theme_preferences_datasource.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider_windows/path_provider_windows.dart';
 
@@ -8,6 +8,6 @@ abstract class DatasourceModule {
   // fachlichen Daten liegen jetzt im Backend (SQLite) und werden über die
   // jeweiligen HTTP-Datasources gelesen/geschrieben.
   @preResolve
-  Future<LocalThemePreferencesDatasource> get localThemePreferencesDatasource =>
-      LocalThemePreferencesDatasourceImpl.create(PathProviderWindows());
+  Future<ThemePreferencesDatasource> get localThemePreferencesDatasource =>
+      LocalThemePreferencesDatasource.create(PathProviderWindows());
 }

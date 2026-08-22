@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 /// was „Erneut versuchen" wiederholt.
 enum VorgangPersistenzAktion { laden, speichern, loeschen }
 
-/// Ein fehlgeschlagener Schreib-/Ladevorgang der Vorgangs-Persistenz (Req. 8:
+/// Ein fehlgeschlagener Schreib-/Ladevorgang der Vorgangs-Persistenz (§7.2:
 /// erfasste Daten dürfen nicht stillschweigend verloren gehen). Trägt neben der
 /// Meldung die Daten, die für eine Wiederholung nötig sind.
 class VorgangPersistenzFehler extends Equatable {

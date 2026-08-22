@@ -70,7 +70,7 @@ class _MailboxInboxViewState extends State<MailboxInboxView> {
     String? zielReferenz,
   ) async {
     // Antwort dem im Formular gewählten Vorgang zuordnen (Vorauswahl: der über
-    // die Referenz gefundene Vorgang, Req. 3.3) und ihn auf „Beantwortet"
+    // die Referenz gefundene Vorgang, §4.3) und ihn auf „Beantwortet"
     // schalten — so bleiben mehrere offene Vorgänge sauber unterscheidbar, und
     // eine fehlgeschlagene Auto-Zuordnung lässt sich von Hand korrigieren.
     // [zielReferenz] == null bedeutet „Neuen Vorgang anlegen". Der Word-Assistent

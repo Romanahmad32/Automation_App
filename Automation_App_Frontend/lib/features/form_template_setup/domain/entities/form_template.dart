@@ -31,8 +31,8 @@ class FormTemplate extends Equatable {
 
   factory FormTemplate.fromJson(Map<String, dynamic> json) {
     final fields =
-    (json['fields'] as List).map((e) => FieldData.fromJson(e)).toList()
-      ..sort((a, b) => a.order.compareTo(b.order));
+        (json['fields'] as List).map((e) => FieldData.fromJson(e)).toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
 
     var ohne = json['wordFilePathOhneAuflistung'] as String?;
     var mit = json['wordFilePathMitAuflistung'] as String?;
@@ -92,12 +92,11 @@ class FormTemplate extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [
-        id,
-        templateName,
-        fields,
-        wordFilePathOhneAuflistung,
-        wordFilePathMitAuflistung,
-      ];
+  List<Object?> get props => [
+    id,
+    templateName,
+    fields,
+    wordFilePathOhneAuflistung,
+    wordFilePathMitAuflistung,
+  ];
 }

@@ -1,4 +1,4 @@
-import 'package:automation_app/core/theme/data/local_theme_preferences_datasource.dart';
+import 'package:automation_app/core/theme/data/theme_preferences_datasource.dart';
 import 'package:automation_app/core/theme/domain/theme_preferences.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +13,7 @@ part 'theme_state.dart';
 /// App-Starts hinweg erhalten bleibt.
 @singleton
 class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
-  final LocalThemePreferencesDatasource _datasource;
+  final ThemePreferencesDatasource _datasource;
 
   ThemeBloc(this._datasource)
     : super(const ThemeState(ThemePreferences.defaults)) {

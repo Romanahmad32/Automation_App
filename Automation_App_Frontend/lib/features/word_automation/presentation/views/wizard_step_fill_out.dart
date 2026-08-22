@@ -152,19 +152,18 @@ class WizardStepFillOut extends StatelessWidget {
                         if (loadedPath != null)
                           // Daten des gewählten Vorgangs (Mandant + Antwort +
                           // Rechtsgebiet) auf die Vorlagenfelder mappen und
-                          // sichtbar vorbelegen (Req. 3.3 → 3.4). Ohne gewählten
+                          // sichtbar vorbelegen (§3 → §4.4). Ohne gewählten
                           // Vorgang bleibt die Erfassung frei.
                           Builder(
                             builder: (context) {
                               final vorgang = wizardState.selectedVorgang;
                               final herkunft = vorgang == null
                                   ? const <String, PrefillWert>{}
-                                  : VorgangPrefillMatcher
-                                        .matchTemplateFieldsMitHerkunft(
-                                          selectedTemplate.fields,
-                                          vorgang,
-                                          mandant: wizardState.selectedMandant,
-                                        );
+                                  : VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
+                                      selectedTemplate.fields,
+                                      vorgang,
+                                      mandant: wizardState.selectedMandant,
+                                    );
                               final prefill = herkunft.map(
                                 (label, wert) => MapEntry(label, wert.wert),
                               );

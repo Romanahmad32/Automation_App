@@ -9,24 +9,23 @@ import 'package:automation_app/features/form_template_setup/domain/entities/inpu
 /// Ursachendatum (Unfalldatum) aus den Formulardaten: bevorzugt ein Datumsfeld,
 /// dessen Label nach Unfall/Ursache/Schaden/Datum aussieht; sonst das erste
 /// Datumsfeld mit Wert.
-String? ursachendatumAusFormular(List<FieldData> fields,
-    Map<String, String> data,) {
+String? ursachendatumAusFormular(
+  List<FieldData> fields,
+  Map<String, String> data,
+) {
   final datumsfelder = fields
       .where((f) => f.inputType == InputType.date)
       .toList();
 
-  bool hatWert(FieldData f) =>
-      (data[f.label]
-          ?.trim()
-          .isNotEmpty ?? false);
+  bool hatWert(FieldData f) => (data[f.label]?.trim().isNotEmpty ?? false);
 
   // 1. Stark sprechende Labels (Unfall/Ursache/Schaden) zuerst — sie schlagen
   //    ein bloßes „Geburtsdatum", das ebenfalls „datum" enthält.
   for (final f in datumsfelder) {
     final l = f.label.toLowerCase();
     if ((l.contains('unfall') ||
-        l.contains('ursache') ||
-        l.contains('schaden')) &&
+            l.contains('ursache') ||
+            l.contains('schaden')) &&
         hatWert(f)) {
       return data[f.label]!.trim();
     }
@@ -48,9 +47,7 @@ String? ursachendatumAusFormular(List<FieldData> fields,
 String? kennzeichenAusFormular(Map<String, String> data) {
   for (final entry in data.entries) {
     if (entry.key.toLowerCase().contains('kennzeichen') &&
-        entry.value
-            .trim()
-            .isNotEmpty) {
+        entry.value.trim().isNotEmpty) {
       return entry.value.trim();
     }
   }
@@ -60,13 +57,13 @@ String? kennzeichenAusFormular(Map<String, String> data) {
 /// Best-Effort-Stammdaten des Mandanten aus den Formularfeldern — als
 /// Vorbelegung beim Anlegen eines neuen Mandanten im Speicherschritt.
 typedef FormularMandantDaten = ({
-String vorname,
-String nachname,
-String strasseHausnummer,
-String postleitzahl,
-String ort,
-String emailAdresse,
-String telefonnummer,
+  String vorname,
+  String nachname,
+  String strasseHausnummer,
+  String postleitzahl,
+  String ort,
+  String emailAdresse,
+  String telefonnummer,
 });
 
 FormularMandantDaten mandantDatenAusFormular(Map<String, String> data) {
@@ -74,9 +71,7 @@ FormularMandantDaten mandantDatenAusFormular(Map<String, String> data) {
     for (final entry in data.entries) {
       final key = entry.key.toLowerCase();
       if (ausschluss.any(key.contains)) continue;
-      if (stichworte.any(key.contains) && entry.value
-          .trim()
-          .isNotEmpty) {
+      if (stichworte.any(key.contains) && entry.value.trim().isNotEmpty) {
         return entry.value.trim();
       }
     }
@@ -106,18 +101,18 @@ FormularMandantDaten mandantDatenAusFormular(Map<String, String> data) {
   }
 
   return (
-  vorname: vorname,
-  nachname: nachname,
-  strasseHausnummer: suche([
-    'straße',
-    'strasse',
-    'anschrift',
-    'adresse',
-  ], ausschluss: fremd),
-  postleitzahl: suche(['plz', 'postleitzahl'], ausschluss: fremd),
-  ort: suche(['ort', 'wohnort', 'stadt'], ausschluss: fremd),
-  emailAdresse: suche(['mail'], ausschluss: fremd),
-  telefonnummer: suche(['telefon', 'tel.'], ausschluss: fremd),
+    vorname: vorname,
+    nachname: nachname,
+    strasseHausnummer: suche([
+      'straße',
+      'strasse',
+      'anschrift',
+      'adresse',
+    ], ausschluss: fremd),
+    postleitzahl: suche(['plz', 'postleitzahl'], ausschluss: fremd),
+    ort: suche(['ort', 'wohnort', 'stadt'], ausschluss: fremd),
+    emailAdresse: suche(['mail'], ausschluss: fremd),
+    telefonnummer: suche(['telefon', 'tel.'], ausschluss: fremd),
   );
 }
 
@@ -125,9 +120,7 @@ FormularMandantDaten mandantDatenAusFormular(Map<String, String> data) {
 /// Ursachendatum nach dem Schema `Vorlagename Datum` (ohne Datum nur der
 /// Vorlagename).
 String baueDateiname(String wordVorlagePfad, String? ursachendatum) {
-  final dateiMitEndung = wordVorlagePfad
-      .split(RegExp(r'[\\/]'))
-      .last;
+  final dateiMitEndung = wordVorlagePfad.split(RegExp(r'[\\/]')).last;
   final basis = dateiMitEndung.replaceAll(
     RegExp(r'\.docx?$', caseSensitive: false),
     '',

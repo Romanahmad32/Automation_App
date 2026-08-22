@@ -73,8 +73,9 @@ class MailboxMicrosoftSignInSection extends StatelessWidget {
         trailing: TextButton.icon(
           icon: const Icon(Icons.logout),
           label: const Text('Abmelden'),
-          onPressed: () =>
-              context.read<MailboxConfigBloc>().add(const MicrosoftSignOutEvent()),
+          onPressed: () => context.read<MailboxConfigBloc>().add(
+            const MicrosoftSignOutEvent(),
+          ),
         ),
       );
     }

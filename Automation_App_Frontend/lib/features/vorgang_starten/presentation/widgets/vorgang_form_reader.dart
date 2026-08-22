@@ -20,7 +20,10 @@ String baueReferenz(FormGroup form, Rechtsgebiet rechtsgebiet) {
 
 /// Liest die typisierten Eingaben aus der FormGroup (entkoppelt die View von den
 /// Control-Namen).
-VorgangStartenDaten leseVorgangDaten(FormGroup form, Rechtsgebiet rechtsgebiet) {
+VorgangStartenDaten leseVorgangDaten(
+  FormGroup form,
+  Rechtsgebiet rechtsgebiet,
+) {
   String v(String c) => (form.control(c).value as String?)?.trim() ?? '';
   return VorgangStartenDaten(
     auftragsnummer: int.tryParse(v('auftragsnummer')) ?? 0,

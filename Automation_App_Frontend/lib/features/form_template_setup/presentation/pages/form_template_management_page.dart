@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/views/form_template_overview.dart';
@@ -16,18 +17,17 @@ class FormTemplateManagementPage extends StatelessWidget
   @override
   Widget wrappedRoute(BuildContext context) {
     return PageRefreshScope(
-      builder: (context) =>
-          MultiBlocProvider(
-            providers: [
-              // Singleton-Bloc: per .value einbinden, damit er beim Dispose der
-              // Seite nicht geschlossen wird.
-              BlocProvider.value(
-                value: getIt<FormTemplateOverviewBloc>()
-                  ..add(LoadFormTemplatesEvent()),
-              ),
-            ],
-            child: this,
+      builder: (context) => MultiBlocProvider(
+        providers: [
+          // Singleton-Bloc: per .value einbinden, damit er beim Dispose der
+          // Seite nicht geschlossen wird.
+          BlocProvider.value(
+            value: getIt<FormTemplateOverviewBloc>()
+              ..add(LoadFormTemplatesEvent()),
           ),
+        ],
+        child: this,
+      ),
     );
   }
 
@@ -35,10 +35,11 @@ class FormTemplateManagementPage extends StatelessWidget
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Formularvorlagen verwalten'),
-        centerTitle: true,
-        actions: const [PageRefreshButton()],
+      appBar: const SeitenAppBar(
+        titel: 'Formularvorlagen verwalten',
+        icon: Icons.drive_file_rename_outline_outlined,
+        untertitel: 'Beschreiben, welche Felder eine Word-Vorlage hat',
+        aktionen: [PageRefreshButton()],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -51,7 +52,7 @@ class FormTemplateManagementPage extends StatelessWidget
                 Expanded(
                   child: Text(
                     'Eine Vorlage beschreibt die Felder einer Word-Vorlage und '
-                        'bestimmt damit das Formular beim Ausfüllen.',
+                    'bestimmt damit das Formular beim Ausfüllen.',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -79,22 +80,19 @@ class FormTemplateManagementPage extends StatelessWidget
             ),
             Expanded(
               child:
-              BlocBuilder<
-                  FormTemplateOverviewBloc,
-                  FormTemplateOverviewState
-              >(
-                builder: (context, state) {
-                  return switch (state) {
-                    FormTemplateOverviewLoading() =>
-                    const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    FormTemplateOverviewLoaded() =>
-                        FormTemplateOverview(
+                  BlocBuilder<
+                    FormTemplateOverviewBloc,
+                    FormTemplateOverviewState
+                  >(
+                    builder: (context, state) {
+                      return switch (state) {
+                        FormTemplateOverviewLoading() => const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                        FormTemplateOverviewLoaded() => FormTemplateOverview(
                           state: state,
                         ),
-                    FormTemplateOverviewError() =>
-                        Center(
+                        FormTemplateOverviewError() => Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             spacing: 12,
@@ -106,19 +104,18 @@ class FormTemplateManagementPage extends StatelessWidget
                               ),
                               Text(state.message, textAlign: TextAlign.center),
                               OutlinedButton.icon(
-                                onPressed: () =>
-                                    context
-                                        .read<FormTemplateOverviewBloc>()
-                                        .add(LoadFormTemplatesEvent()),
+                                onPressed: () => context
+                                    .read<FormTemplateOverviewBloc>()
+                                    .add(LoadFormTemplatesEvent()),
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Erneut versuchen'),
                               ),
                             ],
                           ),
                         ),
-                  };
-                },
-              ),
+                      };
+                    },
+                  ),
             ),
           ],
         ),

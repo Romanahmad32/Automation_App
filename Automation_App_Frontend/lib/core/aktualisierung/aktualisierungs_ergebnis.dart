@@ -7,9 +7,7 @@ import 'package:automation_app/core/aktualisierung/neue_version.dart';
 /// Falschaussage — der Anwalt würde sich auf eine Prüfung verlassen, die nie
 /// stattgefunden hat.
 class AktualisierungsErgebnis {
-  const AktualisierungsErgebnis.aktuell()
-    : neueVersion = null,
-      geprueft = true;
+  const AktualisierungsErgebnis.aktuell() : neueVersion = null, geprueft = true;
 
   const AktualisierungsErgebnis.verfuegbar(NeueVersion this.neueVersion)
     : geprueft = true;

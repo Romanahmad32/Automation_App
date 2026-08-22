@@ -50,46 +50,44 @@ class FormTemplateActionButtons extends StatelessWidget {
               ),
               onPressed: formGroup.valid
                   ? () {
-                if (wordFilePathOhneAuflistung == null &&
-                    wordFilePathMitAuflistung == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Bitte mindestens eine Word-Datei verknüpfen '
-                            '(ohne und/oder mit Auflistung).',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                final List<FieldData> formData = fields.map((field) {
-                  final String labelValue = formGroup
-                      .control(field.label)
-                      .value;
-                  return FieldData(
-                    order: fields.indexOf(field),
-                    label: labelValue,
-                    required: field.required,
-                    // 5. Fixed to use actual field state instead of hardcoded 'true'
-                    inputType: field.inputType,
-                    datenquelle: field.datenquelle,
-                  );
-                }).toList();
+                      if (wordFilePathOhneAuflistung == null &&
+                          wordFilePathMitAuflistung == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Bitte mindestens eine Word-Datei verknüpfen '
+                              '(ohne und/oder mit Auflistung).',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      final List<FieldData> formData = fields.map((field) {
+                        final String labelValue = formGroup
+                            .control(field.label)
+                            .value;
+                        return FieldData(
+                          order: fields.indexOf(field),
+                          label: labelValue,
+                          required: field.required,
+                          // 5. Fixed to use actual field state instead of hardcoded 'true'
+                          inputType: field.inputType,
+                          datenquelle: field.datenquelle,
+                        );
+                      }).toList();
 
-                context.read<FormTemplateDataBloc>().add(
-                  SubmitFormTemplateDataEvent(
-                    existingItemId: existingItemId,
-                    // 6. Pass the ID to the BLoC event
-                    templateName: formGroup
-                        .control('templateName')
-                        .value,
-                    formData: formData,
-                    wordFilePathOhneAuflistung:
-                    wordFilePathOhneAuflistung,
-                    wordFilePathMitAuflistung: wordFilePathMitAuflistung,
-                  ),
-                );
-              }
+                      context.read<FormTemplateDataBloc>().add(
+                        SubmitFormTemplateDataEvent(
+                          existingItemId: existingItemId,
+                          // 6. Pass the ID to the BLoC event
+                          templateName: formGroup.control('templateName').value,
+                          formData: formData,
+                          wordFilePathOhneAuflistung:
+                              wordFilePathOhneAuflistung,
+                          wordFilePathMitAuflistung: wordFilePathMitAuflistung,
+                        ),
+                      );
+                    }
                   : null,
             );
           },

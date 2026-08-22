@@ -137,8 +137,9 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
   }
 
   Future<void> _ladeMandanten() async {
-    final result =
-        await getIt<UseCase<List<Mandant>, NoParams>>().call(const NoParams());
+    final result = await getIt<UseCase<List<Mandant>, NoParams>>().call(
+      const NoParams(),
+    );
     if (!mounted) return;
     switch (result) {
       case Right(value: final mandanten):
@@ -168,12 +169,13 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
 
   /// Gemeinsamer Absende-Pfad für „Speichern" und „Zentralruf ausfüllen":
   /// zeigt — wenn am Mandanten etwas neu oder geändert ist — die Übersicht zur
-  /// Bestätigung (Req. 3) und schickt das Speicher-Event. Abgebrochene Übersicht
+  /// Bestätigung (§1.3) und schickt das Speicher-Event. Abgebrochene Übersicht
   /// bricht das Speichern ab.
   Future<void> _absenden({required bool zentralruf}) async {
     final daten = leseVorgangDaten(_form, _rechtsgebiet);
-    final gewaehlt =
-        _selectedMandantId == null ? null : _findeMandant(_selectedMandantId!);
+    final gewaehlt = _selectedMandantId == null
+        ? null
+        : _findeMandant(_selectedMandantId!);
     final art = mandantAenderungsart(daten, gewaehlt);
 
     CreateMandantRequest? neuerMandant;
@@ -184,7 +186,9 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
       final bestaetigt = await MandantUebersichtDialog.zeige(
         context,
         istNeu: istNeu,
-        zeilen: istNeu ? mandantNeuFelder(daten) : mandantDiff(daten, gewaehlt!),
+        zeilen: istNeu
+            ? mandantNeuFelder(daten)
+            : mandantDiff(daten, gewaehlt!),
       );
       if (bestaetigt != true) return;
       if (istNeu) {
@@ -208,13 +212,18 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
 
   /// Eigenständiges Speichern des Mandanten über den Karten-Button (Übersicht
   /// wurde dort schon bestätigt). Legt an oder aktualisiert, ohne den Vorgang.
-  void _onMandantBestaetigt(MandantAenderungsart art, VorgangStartenDaten daten) {
-    final gewaehlt =
-        _selectedMandantId == null ? null : _findeMandant(_selectedMandantId!);
+  void _onMandantBestaetigt(
+    MandantAenderungsart art,
+    VorgangStartenDaten daten,
+  ) {
+    final gewaehlt = _selectedMandantId == null
+        ? null
+        : _findeMandant(_selectedMandantId!);
     context.read<VorgangStartenBloc>().add(
       SpeichereMandantEvent(
-        neuerMandant:
-            art == MandantAenderungsart.neu ? daten.toCreateRequest() : null,
+        neuerMandant: art == MandantAenderungsart.neu
+            ? daten.toCreateRequest()
+            : null,
         aktualisierterMandant: art == MandantAenderungsart.aktualisierung
             ? daten.applyTo(gewaehlt!)
             : null,

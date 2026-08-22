@@ -1,4 +1,4 @@
-/// Port der Datensicherung (Req. 8): exportiert die gesamte Datenbank des
+/// Port der Datensicherung (§7.2): exportiert die gesamte Datenbank des
 /// Backends als eine Datei und spielt eine solche Sicherung wieder ein.
 /// Einzige Quelle der Wahrheit bleibt die Datenbank im Backend; die
 /// HTTP-Umsetzung liegt in der data-Schicht (`ApiBackupDatasource`).

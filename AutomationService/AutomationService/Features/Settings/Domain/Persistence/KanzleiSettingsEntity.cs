@@ -3,7 +3,7 @@ namespace AutomationService.Features.Settings.Domain.Persistence;
 /// <summary>
 /// Persistenz-Abbild der Kanzlei-/App-Einstellungen. Bewusst eine Single-Row-
 /// Tabelle mit festem <see cref="SingletonId"/> = 1: es gibt genau einen
-/// Einstellungssatz. Enthält u. a. die laufende Auftragsnummer (Req. 3.2), die
+/// Einstellungssatz. Enthält u. a. die laufende Auftragsnummer (§7.1), die
 /// nach Abschluss eines Vorgangs hochgezählt wird.
 /// </summary>
 public class KanzleiSettingsEntity

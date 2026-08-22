@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Der in den Einstellungen hinterlegte Postfach-Zugang für die automatische
-/// Überwachung der Zentralruf-Antworten (REQUIREMENTS.md §3.3/§4). Spiegelt das
+/// Überwachung der Zentralruf-Antworten (REQUIREMENTS.md §4.3/§7.1). Spiegelt das
 /// Backend-DTO `MailboxConfigDto`: Das App-Passwort selbst wird nie ausgeliefert,
 /// nur ob bereits eines gesetzt ist ([appPasswordSet]).
 /// Anmeldeverfahren des Postfach-Zugangs (spiegelt das Backend-Enum
@@ -87,20 +87,19 @@ class MailboxConfig extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [
-        enabled,
-        authMethod,
-        microsoftAuthAvailable,
-        microsoftAccount,
-        host,
-        port,
-        useSsl,
-        username,
-        appPasswordSet,
-        folder,
-        subjectFilter,
-      ];
+  List<Object?> get props => [
+    enabled,
+    authMethod,
+    microsoftAuthAvailable,
+    microsoftAccount,
+    host,
+    port,
+    useSsl,
+    username,
+    appPasswordSet,
+    folder,
+    subjectFilter,
+  ];
 }
 
 /// Eine Änderung des Postfach-Zugangs, wie sie an das Backend geschickt wird.
@@ -128,30 +127,28 @@ class MailboxConfigUpdate extends Equatable {
     required this.subjectFilter,
   });
 
-  Map<String, dynamic> toJson() =>
-      {
-        'enabled': enabled,
-        'authMethod': authMethod.apiValue,
-        'host': host,
-        'port': port,
-        'useSsl': useSsl,
-        'username': username,
-        'appPassword': appPassword,
-        'folder': folder,
-        'subjectFilter': subjectFilter,
-      };
+  Map<String, dynamic> toJson() => {
+    'enabled': enabled,
+    'authMethod': authMethod.apiValue,
+    'host': host,
+    'port': port,
+    'useSsl': useSsl,
+    'username': username,
+    'appPassword': appPassword,
+    'folder': folder,
+    'subjectFilter': subjectFilter,
+  };
 
   @override
-  List<Object?> get props =>
-      [
-        enabled,
-        authMethod,
-        host,
-        port,
-        useSsl,
-        username,
-        appPassword,
-        folder,
-        subjectFilter,
-      ];
+  List<Object?> get props => [
+    enabled,
+    authMethod,
+    host,
+    port,
+    useSsl,
+    username,
+    appPassword,
+    folder,
+    subjectFilter,
+  ];
 }

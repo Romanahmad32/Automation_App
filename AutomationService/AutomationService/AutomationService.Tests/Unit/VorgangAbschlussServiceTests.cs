@@ -10,7 +10,7 @@ using Xunit;
 namespace AutomationService.Tests.Unit;
 
 /// <summary>
-/// Prüft den atomaren Vorgangsabschluss (Req. 3.7 / 3.2) gegen eine echte
+/// Prüft den atomaren Vorgangsabschluss (§4.8, §7.1) gegen eine echte
 /// In-Memory-SQLite: Statuswechsel und Auftragsnummer hängen zusammen, doppeltes
 /// Abschließen zählt nicht doppelt, unbekannte Referenzen ändern nichts.
 /// </summary>

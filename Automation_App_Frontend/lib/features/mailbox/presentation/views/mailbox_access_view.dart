@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
-/// Einstellungsmaske für den Postfach-Zugang (REQUIREMENTS.md §3.3/§4). Mit
+/// Einstellungsmaske für den Postfach-Zugang (REQUIREMENTS.md §4.3/§7.1). Mit
 /// diesen Angaben überwacht das Backend das Postfach ereignisbasiert und erfasst
 /// eingehende Zentralruf-Antworten selbsttätig. Zwei Wege: Gmail mit
 /// App-Passwort oder Outlook/Microsoft per Browser-Anmeldung (OAuth — Microsoft

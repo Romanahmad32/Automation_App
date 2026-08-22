@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 /// Zeigt vor dem Speichern eine kurze Übersicht, was am Mandanten angelegt
 /// ([istNeu] = true) oder geändert würde, und lässt den Nutzer bestätigen oder
-/// abbrechen (Req. 3). Liefert `true` (bestätigt) oder `null`/`false`
+/// abbrechen (§1.3). Liefert `true` (bestätigt) oder `null`/`false`
 /// (abgebrochen → nichts speichern).
 class MandantUebersichtDialog extends StatelessWidget {
   final bool istNeu;
@@ -22,8 +22,7 @@ class MandantUebersichtDialog extends StatelessWidget {
   }) {
     return showDialog<bool>(
       context: context,
-      builder: (_) =>
-          MandantUebersichtDialog(istNeu: istNeu, zeilen: zeilen),
+      builder: (_) => MandantUebersichtDialog(istNeu: istNeu, zeilen: zeilen),
     );
   }
 
@@ -102,7 +101,10 @@ class MandantUebersichtZeile extends StatelessWidget {
               ),
             ),
             const TextSpan(text: '  →  '),
-            TextSpan(text: zeile.neu.isEmpty ? '(leer)' : zeile.neu, style: fett),
+            TextSpan(
+              text: zeile.neu.isEmpty ? '(leer)' : zeile.neu,
+              style: fett,
+            ),
           ],
         ],
       ),

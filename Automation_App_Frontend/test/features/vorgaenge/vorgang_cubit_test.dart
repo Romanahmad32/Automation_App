@@ -45,7 +45,9 @@ class _FakeVorgaengeDatasource implements VorgangRepository {
 
   @override
   Future<Vorgang?> aendereReferenz(String von, String nach) async {
-    if (aendereReferenzSchlaegtFehl) throw Exception('Backend nicht erreichbar');
+    if (aendereReferenzSchlaegtFehl) {
+      throw Exception('Backend nicht erreichbar');
+    }
     Vorgang? ziel;
     for (final v in vorgaenge) {
       if (Vorgang.gleicheReferenz(v.referenz, von)) {
@@ -114,37 +116,41 @@ void main() {
     expect(cubit.state, hasLength(1));
   });
 
-  test('uebernehmeAntwort ordnet über die Referenz zu und schaltet weiter',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
-    await cubit.uebernehmeAntwort(
-      const ZentralrufReplyData(
-        referenz: '84/26  c03_gg-xy 123',
-        versichererName: 'HUK',
-      ),
-    );
+  test(
+    'uebernehmeAntwort ordnet über die Referenz zu und schaltet weiter',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      await cubit.uebernehmeAntwort(
+        const ZentralrufReplyData(
+          referenz: '84/26  c03_gg-xy 123',
+          versichererName: 'HUK',
+        ),
+      );
 
-    expect(cubit.state, hasLength(1));
-    expect(cubit.state.single.status, VorgangStatus.beantwortet);
-    expect(cubit.state.single.gegner, 'HUK');
-  });
+      expect(cubit.state, hasLength(1));
+      expect(cubit.state.single.status, VorgangStatus.beantwortet);
+      expect(cubit.state.single.gegner, 'HUK');
+    },
+  );
 
-  test('uebernehmeAntwort ohne passende Anfrage legt eigenen Vorgang an',
-      () async {
-    await cubit.uebernehmeAntwort(
-      const ZentralrufReplyData(
-        referenz: '99/26 C03_HG-X 9',
-        versichererName: 'Allianz',
-      ),
-    );
+  test(
+    'uebernehmeAntwort ohne passende Anfrage legt eigenen Vorgang an',
+    () async {
+      await cubit.uebernehmeAntwort(
+        const ZentralrufReplyData(
+          referenz: '99/26 C03_HG-X 9',
+          versichererName: 'Allianz',
+        ),
+      );
 
-    expect(cubit.state, hasLength(1));
-    final vorgang = cubit.state.single;
-    expect(vorgang.referenz, '99/26 C03_HG-X 9');
-    expect(vorgang.status, VorgangStatus.beantwortet);
-    expect(vorgang.gegner, 'Allianz');
-    expect(datasource.vorgaenge, hasLength(1));
-  });
+      expect(cubit.state, hasLength(1));
+      final vorgang = cubit.state.single;
+      expect(vorgang.referenz, '99/26 C03_HG-X 9');
+      expect(vorgang.status, VorgangStatus.beantwortet);
+      expect(vorgang.gegner, 'Allianz');
+      expect(datasource.vorgaenge, hasLength(1));
+    },
+  );
 
   test('uebernehmeAntwort ordnet bei abweichender Zielreferenz dem gewählten '
       'Vorgang zu', () async {
@@ -185,10 +191,7 @@ void main() {
     expect(cubit.state, hasLength(2));
     final referenzen = cubit.state.map((v) => v.referenz).toSet();
     expect(referenzen, hasLength(2));
-    expect(
-      cubit.state.map((v) => v.gegner).toSet(),
-      {'HUK', 'Allianz'},
-    );
+    expect(cubit.state.map((v) => v.gegner).toSet(), {'HUK', 'Allianz'});
   });
 
   test('uebernehmeAntwort legt unter unbekannter Zielreferenz einen neuen '
@@ -206,30 +209,34 @@ void main() {
     expect(cubit.state.single.gegner, 'HUK');
   });
 
-  test('uebernehmeAntwort mit leerer Zielreferenz nutzt die Antwort-Referenz',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+  test(
+    'uebernehmeAntwort mit leerer Zielreferenz nutzt die Antwort-Referenz',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
 
-    await cubit.uebernehmeAntwort(
-      const ZentralrufReplyData(
-        referenz: '84/26 C03_GG-XY 123',
-        versichererName: 'HUK',
-      ),
-      zielReferenz: '',
-    );
+      await cubit.uebernehmeAntwort(
+        const ZentralrufReplyData(
+          referenz: '84/26 C03_GG-XY 123',
+          versichererName: 'HUK',
+        ),
+        zielReferenz: '',
+      );
 
-    expect(cubit.state, hasLength(1));
-    expect(cubit.state.single.status, VorgangStatus.beantwortet);
-  });
+      expect(cubit.state, hasLength(1));
+      expect(cubit.state.single.status, VorgangStatus.beantwortet);
+    },
+  );
 
-  test('findeZuReferenz ist tolerant bei Schreibweise und Whitespace',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+  test(
+    'findeZuReferenz ist tolerant bei Schreibweise und Whitespace',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
 
-    expect(cubit.findeZuReferenz('84/26  c03_gg-xy 123 '), isNotNull);
-    expect(cubit.findeZuReferenz('85/26 C03_GG-XY 123'), isNull);
-    expect(cubit.findeZuReferenz(null), isNull);
-  });
+      expect(cubit.findeZuReferenz('84/26  c03_gg-xy 123 '), isNotNull);
+      expect(cubit.findeZuReferenz('85/26 C03_GG-XY 123'), isNull);
+      expect(cubit.findeZuReferenz(null), isNull);
+    },
+  );
 
   test('findeWahrscheinlichenVorgang findet den angefragten Vorgang über '
       'Kennzeichen und Unfalldatum (verstümmelte Referenz)', () async {
@@ -238,7 +245,8 @@ void main() {
       unfallDatum: '01.06.2026',
     );
 
-    final vermutet = findeWahrscheinlichenVorgang(cubit.state, 
+    final vermutet = findeWahrscheinlichenVorgang(
+      cubit.state,
       const ZentralrufReplyData(
         referenz: '84/2 C03_GG-XY 12', // in der Mail verstümmelt
         kennzeichen: 'gg-xy123', // Schreibvariante
@@ -257,7 +265,8 @@ void main() {
       unfallDatum: '01.06.2026',
     );
 
-    final vermutet = findeWahrscheinlichenVorgang(cubit.state, 
+    final vermutet = findeWahrscheinlichenVorgang(
+      cubit.state,
       const ZentralrufReplyData(
         referenz: '84/26 C03_GG-XY 123',
         kennzeichen: 'GG-XY 123',
@@ -268,70 +277,80 @@ void main() {
     expect(vermutet, isNull);
   });
 
-  test('findeWahrscheinlichenVorgang liefert bei mehrdeutigen Treffern nichts',
-      () async {
-    await cubit.registriereAnfrage(
-      '84/26 C03_GG-XY 123',
-      unfallDatum: '01.06.2026',
-    );
-    await cubit.registriereAnfrage(
-      '85/26 C03_GG-XY 123',
-      unfallDatum: '01.06.2026',
-    );
-
-    final vermutet = findeWahrscheinlichenVorgang(cubit.state, 
-      const ZentralrufReplyData(
-        kennzeichen: 'GG-XY 123',
+  test(
+    'findeWahrscheinlichenVorgang liefert bei mehrdeutigen Treffern nichts',
+    () async {
+      await cubit.registriereAnfrage(
+        '84/26 C03_GG-XY 123',
         unfallDatum: '01.06.2026',
-      ),
-    );
-
-    expect(vermutet, isNull);
-  });
-
-  test('findeWahrscheinlichenVorgang ignoriert bereits beantwortete Vorgänge',
-      () async {
-    await cubit.registriereAnfrage(
-      '84/26 C03_GG-XY 123',
-      unfallDatum: '01.06.2026',
-    );
-    await cubit.uebernehmeAntwort(
-      const ZentralrufReplyData(
-        referenz: '84/26 C03_GG-XY 123',
-        versichererName: 'HUK',
-      ),
-    );
-
-    final vermutet = findeWahrscheinlichenVorgang(cubit.state, 
-      const ZentralrufReplyData(
-        kennzeichen: 'GG-XY 123',
+      );
+      await cubit.registriereAnfrage(
+        '85/26 C03_GG-XY 123',
         unfallDatum: '01.06.2026',
-      ),
-    );
+      );
 
-    expect(vermutet, isNull);
-  });
+      final vermutet = findeWahrscheinlichenVorgang(
+        cubit.state,
+        const ZentralrufReplyData(
+          kennzeichen: 'GG-XY 123',
+          unfallDatum: '01.06.2026',
+        ),
+      );
 
-  test('findeWahrscheinlichenVorgang braucht Kennzeichen und Unfalldatum',
-      () async {
-    await cubit.registriereAnfrage(
-      '84/26 C03_GG-XY 123',
-      unfallDatum: '01.06.2026',
-    );
+      expect(vermutet, isNull);
+    },
+  );
 
-    expect(
-      findeWahrscheinlichenVorgang(cubit.state, 
-        const ZentralrufReplyData(kennzeichen: 'GG-XY 123'),
-      ),
-      isNull,
-    );
-    expect(
-      findeWahrscheinlichenVorgang(cubit.state, 
-        const ZentralrufReplyData(unfallDatum: '01.06.2026'),
-      ),
-      isNull,
-    );
-  });
+  test(
+    'findeWahrscheinlichenVorgang ignoriert bereits beantwortete Vorgänge',
+    () async {
+      await cubit.registriereAnfrage(
+        '84/26 C03_GG-XY 123',
+        unfallDatum: '01.06.2026',
+      );
+      await cubit.uebernehmeAntwort(
+        const ZentralrufReplyData(
+          referenz: '84/26 C03_GG-XY 123',
+          versichererName: 'HUK',
+        ),
+      );
+
+      final vermutet = findeWahrscheinlichenVorgang(
+        cubit.state,
+        const ZentralrufReplyData(
+          kennzeichen: 'GG-XY 123',
+          unfallDatum: '01.06.2026',
+        ),
+      );
+
+      expect(vermutet, isNull);
+    },
+  );
+
+  test(
+    'findeWahrscheinlichenVorgang braucht Kennzeichen und Unfalldatum',
+    () async {
+      await cubit.registriereAnfrage(
+        '84/26 C03_GG-XY 123',
+        unfallDatum: '01.06.2026',
+      );
+
+      expect(
+        findeWahrscheinlichenVorgang(
+          cubit.state,
+          const ZentralrufReplyData(kennzeichen: 'GG-XY 123'),
+        ),
+        isNull,
+      );
+      expect(
+        findeWahrscheinlichenVorgang(
+          cubit.state,
+          const ZentralrufReplyData(unfallDatum: '01.06.2026'),
+        ),
+        isNull,
+      );
+    },
+  );
 
   test('stellt persistierte Vorgänge beim Erzeugen wieder her', () async {
     datasource.vorgaenge = [
@@ -350,111 +369,125 @@ void main() {
     await restored.close();
   });
 
-  test('abschliessen schaltet auf versendet und zählt die Nummer hoch',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+  test(
+    'abschliessen schaltet auf versendet und zählt die Nummer hoch',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
 
-    final erfolgreich = await cubit.abschliessen(cubit.state.single);
+      final erfolgreich = await cubit.abschliessen(cubit.state.single);
 
-    expect(erfolgreich, isTrue);
-    final abgeschlossen = cubit.findeZuReferenz('84/26 C03_GG-XY 123')!;
-    expect(abgeschlossen.status, VorgangStatus.versendet);
-    expect(abgeschlossen.abgeschlossenAm, isNotNull);
-    expect(datasource.laufendeAuftragsnummer, 85);
-  });
+      expect(erfolgreich, isTrue);
+      final abgeschlossen = cubit.findeZuReferenz('84/26 C03_GG-XY 123')!;
+      expect(abgeschlossen.status, VorgangStatus.versendet);
+      expect(abgeschlossen.abgeschlossenAm, isNotNull);
+      expect(datasource.laufendeAuftragsnummer, 85);
+    },
+  );
 
-  test('abschliessen zählt einen bereits versendeten Vorgang nicht erneut hoch',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
-    await cubit.abschliessen(cubit.state.single);
-    expect(datasource.laufendeAuftragsnummer, 85);
+  test(
+    'abschliessen zählt einen bereits versendeten Vorgang nicht erneut hoch',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      await cubit.abschliessen(cubit.state.single);
+      expect(datasource.laufendeAuftragsnummer, 85);
 
-    // Erneuter Aufruf darf die Nummer nicht weiter erhöhen.
-    await cubit.abschliessen(cubit.state.single);
-    expect(datasource.laufendeAuftragsnummer, 85);
-  });
+      // Erneuter Aufruf darf die Nummer nicht weiter erhöhen.
+      await cubit.abschliessen(cubit.state.single);
+      expect(datasource.laufendeAuftragsnummer, 85);
+    },
+  );
 
-  test('abschliessen lässt bei Backend-Fehler Status und Nummer unverändert',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
-    datasource.abschliessenSchlaegtFehl = true;
+  test(
+    'abschliessen lässt bei Backend-Fehler Status und Nummer unverändert',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      datasource.abschliessenSchlaegtFehl = true;
 
-    final erfolgreich = await cubit.abschliessen(cubit.state.single);
+      final erfolgreich = await cubit.abschliessen(cubit.state.single);
 
-    expect(erfolgreich, isFalse);
-    expect(cubit.state.single.status, VorgangStatus.angefragt);
-    expect(datasource.laufendeAuftragsnummer, 84);
-  });
+      expect(erfolgreich, isFalse);
+      expect(cubit.state.single.status, VorgangStatus.angefragt);
+      expect(datasource.laufendeAuftragsnummer, 84);
+    },
+  );
 
-  test('aendereReferenz benennt den Vorgang um und behält seine Daten',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
-    await cubit.uebernehmeAntwort(
-      const ZentralrufReplyData(
-        referenz: '84/26 C03_GG-XY 123',
-        versichererName: 'HUK',
-      ),
-    );
+  test(
+    'aendereReferenz benennt den Vorgang um und behält seine Daten',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      await cubit.uebernehmeAntwort(
+        const ZentralrufReplyData(
+          referenz: '84/26 C03_GG-XY 123',
+          versichererName: 'HUK',
+        ),
+      );
 
-    final ergebnis = await cubit.aendereReferenz(
-      cubit.state.single,
-      '85/26 C03_GG-XY 312',
-    );
+      final ergebnis = await cubit.aendereReferenz(
+        cubit.state.single,
+        '85/26 C03_GG-XY 312',
+      );
 
-    expect(ergebnis.fehler, isNull);
-    expect(ergebnis.vorgang!.referenz, '85/26 C03_GG-XY 312');
-    expect(cubit.state, hasLength(1));
-    expect(cubit.findeZuReferenz('84/26 C03_GG-XY 123'), isNull);
-    final umbenannt = cubit.findeZuReferenz('85/26 C03_GG-XY 312')!;
-    expect(umbenannt.gegner, 'HUK');
-    expect(umbenannt.status, VorgangStatus.beantwortet);
-    expect(datasource.vorgaenge.single.referenz, '85/26 C03_GG-XY 312');
-  });
+      expect(ergebnis.fehler, isNull);
+      expect(ergebnis.vorgang!.referenz, '85/26 C03_GG-XY 312');
+      expect(cubit.state, hasLength(1));
+      expect(cubit.findeZuReferenz('84/26 C03_GG-XY 123'), isNull);
+      final umbenannt = cubit.findeZuReferenz('85/26 C03_GG-XY 312')!;
+      expect(umbenannt.gegner, 'HUK');
+      expect(umbenannt.status, VorgangStatus.beantwortet);
+      expect(datasource.vorgaenge.single.referenz, '85/26 C03_GG-XY 312');
+    },
+  );
 
-  test('aendereReferenz weist eine bereits vergebene Zielreferenz ab',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
-    await cubit.registriereAnfrage('85/26 C03_HG-E 1427');
+  test(
+    'aendereReferenz weist eine bereits vergebene Zielreferenz ab',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      await cubit.registriereAnfrage('85/26 C03_HG-E 1427');
 
-    final ergebnis = await cubit.aendereReferenz(
-      cubit.findeZuReferenz('84/26 C03_GG-XY 123')!,
-      '85/26 c03_hg-e 1427',
-    );
+      final ergebnis = await cubit.aendereReferenz(
+        cubit.findeZuReferenz('84/26 C03_GG-XY 123')!,
+        '85/26 c03_hg-e 1427',
+      );
 
-    expect(ergebnis.vorgang, isNull);
-    expect(ergebnis.fehler, contains('bereits einem anderen Vorgang'));
-    // Beide Vorgänge bleiben unverändert bestehen.
-    expect(cubit.state, hasLength(2));
-    expect(cubit.findeZuReferenz('84/26 C03_GG-XY 123'), isNotNull);
-  });
+      expect(ergebnis.vorgang, isNull);
+      expect(ergebnis.fehler, contains('bereits einem anderen Vorgang'));
+      // Beide Vorgänge bleiben unverändert bestehen.
+      expect(cubit.state, hasLength(2));
+      expect(cubit.findeZuReferenz('84/26 C03_GG-XY 123'), isNotNull);
+    },
+  );
 
-  test('aendereReferenz meldet Backend-Fehler statt den State zu ändern',
-      () async {
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
-    datasource.aendereReferenzSchlaegtFehl = true;
+  test(
+    'aendereReferenz meldet Backend-Fehler statt den State zu ändern',
+    () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      datasource.aendereReferenzSchlaegtFehl = true;
 
-    final ergebnis = await cubit.aendereReferenz(
-      cubit.state.single,
-      '85/26 C03_GG-XY 123',
-    );
+      final ergebnis = await cubit.aendereReferenz(
+        cubit.state.single,
+        '85/26 C03_GG-XY 123',
+      );
 
-    expect(ergebnis.vorgang, isNull);
-    expect(ergebnis.fehler, isNotNull);
-    expect(cubit.state.single.referenz, '84/26 C03_GG-XY 123');
-  });
+      expect(ergebnis.vorgang, isNull);
+      expect(ergebnis.fehler, isNotNull);
+      expect(cubit.state.single.referenz, '84/26 C03_GG-XY 123');
+    },
+  );
 
-  test('fehlgeschlagenes Speichern wird gemeldet statt still geschluckt',
-      () async {
-    datasource.upsertSchlaegtFehl = true;
+  test(
+    'fehlgeschlagenes Speichern wird gemeldet statt still geschluckt',
+    () async {
+      datasource.upsertSchlaegtFehl = true;
 
-    await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
 
-    // In-Memory bleibt der Vorgang erhalten, der Fehler ist gemeldet.
-    expect(cubit.state, hasLength(1));
-    expect(fehler.state, isNotNull);
-    expect(fehler.state!.aktion, VorgangPersistenzAktion.speichern);
-    expect(fehler.state!.vorgang?.referenz, '84/26 C03_GG-XY 123');
-  });
+      // In-Memory bleibt der Vorgang erhalten, der Fehler ist gemeldet.
+      expect(cubit.state, hasLength(1));
+      expect(fehler.state, isNotNull);
+      expect(fehler.state!.aktion, VorgangPersistenzAktion.speichern);
+      expect(fehler.state!.vorgang?.referenz, '84/26 C03_GG-XY 123');
+    },
+  );
 
   test('wiederhole speichert einen gemeldeten Vorgang nachträglich', () async {
     datasource.upsertSchlaegtFehl = true;

@@ -12,24 +12,27 @@ void main() {
   const richtwert = 250;
   const hartesLimit = 300;
 
-  test('keine handgeschriebene Dart-Datei überschreitet $hartesLimit Zeilen',
-      () {
-    final verstoesse = <String>[];
-    for (final datei in dartQuelldateien('lib')) {
-      final zeilen = datei.readAsLinesSync().length;
-      if (zeilen > hartesLimit) {
-        verstoesse.add('${relPfad(datei)} ($zeilen Zeilen)');
+  test(
+    'keine handgeschriebene Dart-Datei überschreitet $hartesLimit Zeilen',
+    () {
+      final verstoesse = <String>[];
+      for (final datei in dartQuelldateien('lib')) {
+        final zeilen = datei.readAsLinesSync().length;
+        if (zeilen > hartesLimit) {
+          verstoesse.add('${relPfad(datei)} ($zeilen Zeilen)');
+        }
       }
-    }
-    verstoesse.sort();
+      verstoesse.sort();
 
-    expect(
-      verstoesse,
-      isEmpty,
-      reason: 'Folgende Dateien überschreiten das harte Limit von '
-          '$hartesLimit Zeilen (Richtwert: $richtwert) und müssen in '
-          'kleinere, eigenständige Widgets/Klassen aufgeteilt werden:\n  '
-          '${verstoesse.join('\n  ')}',
-    );
-  });
+      expect(
+        verstoesse,
+        isEmpty,
+        reason:
+            'Folgende Dateien überschreiten das harte Limit von '
+            '$hartesLimit Zeilen (Richtwert: $richtwert) und müssen in '
+            'kleinere, eigenständige Widgets/Klassen aufgeteilt werden:\n  '
+            '${verstoesse.join('\n  ')}',
+      );
+    },
+  );
 }

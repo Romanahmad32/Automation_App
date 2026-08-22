@@ -7,7 +7,12 @@ class PreviewTableCell extends StatelessWidget {
   final TextStyle? style;
   final bool alignRight;
 
-  const PreviewTableCell(this.text, {super.key, this.style, this.alignRight = false});
+  const PreviewTableCell(
+    this.text, {
+    super.key,
+    this.style,
+    this.alignRight = false,
+  });
 
   @override
   Widget build(BuildContext context) {

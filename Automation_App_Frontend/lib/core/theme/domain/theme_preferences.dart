@@ -21,7 +21,7 @@ enum AppThemeVariant {
 
 /// Persistierte Darstellungs-Einstellungen: gewählte Theme-Familie und der
 /// Hell-/Dunkel-/System-Modus. Wird lokal als JSON abgelegt (siehe
-/// `LocalThemePreferencesDatasource`).
+/// `ThemePreferencesDatasource`).
 @immutable
 class ThemePreferences extends Equatable {
   final AppThemeVariant variant;

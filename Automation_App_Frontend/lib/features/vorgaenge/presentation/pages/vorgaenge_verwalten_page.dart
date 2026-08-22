@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/dev_simulation/presentation/widgets/demo_vorgang_button.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
@@ -65,11 +66,12 @@ class VorgaengeVerwaltenPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text('Vorgänge verwalten', style: theme.textTheme.titleLarge),
+      appBar: const SeitenAppBar(
+        titel: 'Vorgänge verwalten',
+        icon: Icons.folder_copy_outlined,
+        untertitel: 'Alle Vorgänge mit ihrem Stand im Ablauf',
         // Nur im Debug-Build sichtbar (Entwickler-Simulation).
-        actions: const [DemoVorgangButton(), SizedBox(width: 8)],
+        aktionen: [DemoVorgangButton()],
       ),
       body: BlocBuilder<VorgangCubit, List<Vorgang>>(
         bloc: getIt<VorgangCubit>(),

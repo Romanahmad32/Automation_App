@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/views/mandanten_overview.dart';
@@ -28,10 +29,11 @@ class MandantenOverviewPage extends StatelessWidget
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mandanten'),
-        centerTitle: true,
-        actions: const [PageRefreshButton()],
+      appBar: const SeitenAppBar(
+        titel: 'Mandanten',
+        icon: Icons.groups_outlined,
+        untertitel: 'Mandantenregister mit Akten und Fällen',
+        aktionen: [PageRefreshButton()],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

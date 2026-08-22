@@ -10,7 +10,10 @@ class MailboxGmailCredentialsSection extends StatelessWidget {
   /// Ob bereits ein App-Passwort gespeichert ist (Feld darf dann leer bleiben).
   final bool appPasswordSet;
 
-  const MailboxGmailCredentialsSection({super.key, required this.appPasswordSet});
+  const MailboxGmailCredentialsSection({
+    super.key,
+    required this.appPasswordSet,
+  });
 
   @override
   Widget build(BuildContext context) {

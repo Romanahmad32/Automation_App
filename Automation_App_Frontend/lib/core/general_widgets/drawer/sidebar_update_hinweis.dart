@@ -42,9 +42,7 @@ class SidebarUpdateHinweis extends StatelessWidget {
             children: [
               SizedBox(
                 width: collapsedWidth - 1,
-                child: Center(
-                  child: Icon(Icons.system_update, color: farbe),
-                ),
+                child: Center(child: Icon(Icons.system_update, color: farbe)),
               ),
               ClipRect(
                 child: AnimatedAlign(
@@ -56,9 +54,9 @@ class SidebarUpdateHinweis extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 12),
                     child: Text(
                       'Update verfügbar',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: farbe,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelLarge?.copyWith(color: farbe),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

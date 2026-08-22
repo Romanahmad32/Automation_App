@@ -87,8 +87,8 @@ class GermanDateField extends StatelessWidget {
 
   static String formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}.'
-          '${date.month.toString().padLeft(2, '0')}.'
-          '${date.year.toString().padLeft(4, '0')}';
+      '${date.month.toString().padLeft(2, '0')}.'
+      '${date.year.toString().padLeft(4, '0')}';
 
   /// Liest ein Datum im Format T(T).M(M).JJJJ; null bei leerem,
   /// formal ungültigem oder nicht existierendem Wert (z. B. 31.02.).
