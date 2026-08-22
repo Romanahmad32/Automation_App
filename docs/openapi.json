@@ -1,0 +1,3728 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "AutomationService | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost/"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "AutomationService"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Zentralruf/antwort/parse": {
+      "post": {
+        "tags": [
+          "Zentralruf"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZentralrufReplyParseRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZentralrufReplyParseRequestDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ZentralrufReplyParseRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufReplyParseResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufReplyParseResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufReplyParseResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufReplyParseResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufReplyParseResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufReplyParseResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Zentralruf/prefill": {
+      "post": {
+        "tags": [
+          "Zentralruf"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZentralrufPrefillDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZentralrufPrefillDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ZentralrufPrefillDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/WordAutomation/vorlagen": {
+      "get": {
+        "tags": [
+          "WordAutomation"
+        ],
+        "summary": "Der Vorlagenordner des Anwenders samt Inhalt. Das Frontend oeffnet den\r\nDatei-Dialog in diesem Verzeichnis, statt den Anwalt nach %APPDATA%\r\nnavigieren zu lassen.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorlagenUebersichtDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorlagenUebersichtDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorlagenUebersichtDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/WordAutomation/replaced-document": {
+      "post": {
+        "tags": [
+          "WordAutomation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WordReplacementDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WordReplacementDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/WordReplacementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplacedDocumentResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/WordAutomation/rvg-calculation": {
+      "post": {
+        "tags": [
+          "WordAutomation"
+        ],
+        "summary": "Berechnet die RVG-Anwaltskosten f\u00FCr die Live-Vorschau der Schadensaufstellung.\r\nZustandslos und schnell \u2013 das Frontend ruft den Endpoint debounced bei jeder\r\nEingabe\u00E4nderung auf, damit Vorschau und erzeugtes Dokument identisch rechnen.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RvgCalculationRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RvgCalculationRequestDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RvgCalculationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/WordAutomation/template-placeholders": {
+      "post": {
+        "tags": [
+          "WordAutomation"
+        ],
+        "summary": "Liest die {{Platzhalter}} einer Word-Vorlage aus, damit das Frontend sie beim\r\nAnlegen/Bearbeiten einer Formularvorlage anzeigen kann. POST mit JSON-Body,\r\nweil Windows-Pfade als Query-Parameter unhandlich sind (analog PdfConversion).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplatePlaceholdersRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplatePlaceholdersRequestDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplatePlaceholdersRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePlaceholdersResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vorgaenge": {
+      "get": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jahr",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VorgangDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VorgangDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VorgangDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VorgangDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VorgangDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/VorgangDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vorgaenge/einzeln": {
+      "get": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vorgaenge/abschliessen": {
+      "post": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "summary": "Schlie\u00DFt den Vorgang ab (Req. 3.7): Status \u201Eversendet\u0022 und Hochz\u00E4hlen der\r\nlaufenden Auftragsnummer (Req. 3.2) in einer Transaktion. Idempotent \u2014\r\nein bereits abgeschlossener Vorgang z\u00E4hlt nicht erneut hoch.",
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vorgaenge/referenz": {
+      "post": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "summary": "Benennt einen Vorgang um (Referenz korrigieren, z. B. Tippfehler im\r\nKennzeichen). Die Referenz ist der fachliche Schl\u00FCssel \u2014 ein einfaches\r\nUpsert unter der neuen Referenz w\u00FCrde ein Duplikat anlegen; deshalb\r\ndieser eigene, konfliktgepr\u00FCfte Weg. 409, wenn die Zielreferenz schon\r\neinem anderen Vorgang geh\u00F6rt.",
+        "parameters": [
+          {
+            "name": "von",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nach",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Versicherer": {
+      "get": {
+        "tags": [
+          "Versicherer"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersichererDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersichererDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersichererDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KanzleiSettingsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KanzleiSettingsDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/KanzleiSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Settings/auftragsnummer/erhoehe": {
+      "post": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Erh\u00F6ht die laufende Auftragsnummer um eins (nach Vorgangsabschluss).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanzleiSettingsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/PdfConversion/convert": {
+      "post": {
+        "tags": [
+          "PdfConversion"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "docxFile": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PdfConversion/convert-from-path": {
+      "post": {
+        "tags": [
+          "PdfConversion"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertFromPathRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertFromPathRequest"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertFromPathRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Mandanten": {
+      "get": {
+        "tags": [
+          "Mandanten"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MandantDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MandantDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MandantDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Mandanten"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMandantDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMandantDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMandantDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mandanten/{id}": {
+      "put": {
+        "tags": [
+          "Mandanten"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MandantDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MandantDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MandantDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Mandanten"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mailbox/config": {
+      "get": {
+        "tags": [
+          "Mailbox"
+        ],
+        "summary": "Liefert den hinterlegten Postfach-Zugang (ohne das App-Passwort).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Mailbox"
+        ],
+        "summary": "Speichert den Postfach-Zugang und l\u00E4sst den Monitor sofort mit den neuen\r\nWerten neu verbinden. Ein leeres App-Passwort l\u00E4sst das gespeicherte unber\u00FChrt.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailboxConfigUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailboxConfigUpdateDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MailboxConfigUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mailbox/microsoft/signin": {
+      "post": {
+        "tags": [
+          "Mailbox"
+        ],
+        "summary": "Startet die Microsoft-Anmeldung f\u00FCr Outlook-Postf\u00E4cher: \u00F6ffnet den\r\nStandardbrowser auf der Anmeldeseite und wartet, bis der Nutzer sich\r\nangemeldet hat. Bei Erfolg werden Konto-Adresse und Outlook-Server\r\nautomatisch als Postfach-Zugang \u00FCbernommen \u2014 der Monitor verbindet sofort neu.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mailbox/microsoft/signout": {
+      "post": {
+        "tags": [
+          "Mailbox"
+        ],
+        "summary": "Meldet das Microsoft-Konto ab und entfernt die gespeicherten Tokens.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxConfigDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mailbox/status": {
+      "get": {
+        "tags": [
+          "Mailbox"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxStatusDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mailbox/replies": {
+      "get": {
+        "tags": [
+          "Mailbox"
+        ],
+        "parameters": [
+          {
+            "name": "includeAcknowledged",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceivedReplyDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceivedReplyDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceivedReplyDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mailbox/replies/{id}/acknowledge": {
+      "post": {
+        "tags": [
+          "Mailbox"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormTemplates": {
+      "get": {
+        "tags": [
+          "FormTemplates"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormTemplateDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormTemplateDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormTemplateDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormTemplates"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFormTemplateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFormTemplateDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFormTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/FormTemplates/{id}": {
+      "put": {
+        "tags": [
+          "FormTemplates"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormTemplateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormTemplateDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/FormTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormTemplates"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Simulation/zentralruf-antwort": {
+      "post": {
+        "tags": [
+          "Simulation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationAntwortRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationAntwortRequestDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationAntwortRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedReplyDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedReplyDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedReplyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Backup/export": {
+      "get": {
+        "tags": [
+          "Backup"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Backup/import": {
+      "post": {
+        "tags": [
+          "Backup"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "datei": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConvertFromPathRequest": {
+        "type": "object",
+        "properties": {
+          "docxFilePath": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateFormTemplateDto": {
+        "required": [
+          "templateName",
+          "fields",
+          "wordFilePathOhneAuflistung",
+          "wordFilePathMitAuflistung"
+        ],
+        "type": "object",
+        "properties": {
+          "templateName": {
+            "type": "string"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "wordFilePathOhneAuflistung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wordFilePathMitAuflistung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Eingabe zum Anlegen einer Formularvorlage. Die Id vergibt das Backend."
+      },
+      "CreateMandantDto": {
+        "required": [
+          "anrede",
+          "vorname",
+          "nachname",
+          "strasseHausnummer",
+          "postleitzahl",
+          "ort",
+          "emailAdresse",
+          "telefonnummer",
+          "notiz",
+          "aktenOrdnernamen",
+          "kennzeichen"
+        ],
+        "type": "object",
+        "properties": {
+          "anrede": {
+            "type": "string"
+          },
+          "vorname": {
+            "type": "string"
+          },
+          "nachname": {
+            "type": "string"
+          },
+          "strasseHausnummer": {
+            "type": "string"
+          },
+          "postleitzahl": {
+            "type": "string"
+          },
+          "ort": {
+            "type": "string"
+          },
+          "emailAdresse": {
+            "type": "string"
+          },
+          "telefonnummer": {
+            "type": "string"
+          },
+          "notiz": {
+            "type": "string"
+          },
+          "aktenOrdnernamen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kennzeichen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Eingabe zum Anlegen eines Mandanten. Id und ErstelltAm vergibt das Register\r\nbeim Speichern (spiegelt die Flutter-Entit\u00E4t \u0060CreateMandantRequest\u0060)."
+      },
+      "DamageItemDto": {
+        "required": [
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "description": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "amount": {
+            "maximum": 10000000,
+            "minimum": 0.01,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "DamageListingDto": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DamageItemDto"
+            }
+          },
+          "gebuehrensatz": {
+            "maximum": 10,
+            "minimum": 0.1,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Geb\u00FChrensatz der Gesch\u00E4ftsgeb\u00FChr, \u00FCblicherweise 1,3.",
+            "format": "double"
+          },
+          "applyVat": {
+            "type": "boolean",
+            "description": "True, wenn der Mandant nicht vorsteuerabzugsberechtigt ist (Umsatzsteuer ausweisen)."
+          },
+          "geschaeftsgebuehrOverride": {
+            "maximum": 10000000,
+            "minimum": 0,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Manuell korrigierte Gesch\u00E4ftsgeb\u00FChr in \u20AC; null = automatisch nach \u00A7 13 RVG berechnen.",
+            "format": "double"
+          },
+          "auslagenpauschaleOverride": {
+            "maximum": 10000000,
+            "minimum": 0,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Manuell korrigierte Auslagenpauschale in \u20AC; null = 20 % der Gesch\u00E4ftsgeb\u00FChr, max. 20 \u20AC (Nr. 7002 VV RVG).",
+            "format": "double"
+          },
+          "headerColorHex": {
+            "pattern": "^#?[0-9a-fA-F]{6}$",
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Hintergrundfarbe der Titelzeile der Tabelle als Hex-Wert (z. B. \u0022D9D9D9\u0022); null = Standardgrau."
+          }
+        },
+        "description": "Schadensaufstellung f\u00FCr Vorlagen \u0022mit Auflistung\u0022: Positionen werden als Tabelle am\r\nPlatzhalter {{Schadensaufstellung}} eingef\u00FCgt, die RVG-Kosten als zus\u00E4tzliche Platzhalter."
+      },
+      "FormTemplateDto": {
+        "required": [
+          "id",
+          "templateName",
+          "fields",
+          "wordFilePathOhneAuflistung",
+          "wordFilePathMitAuflistung"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "wordFilePathOhneAuflistung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wordFilePathMitAuflistung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "\u00DCbertragungsformat einer Formularvorlage. Die Feldliste wird als opakes JSON\r\n(JsonElement FormTemplateDto.Fields) verlustfrei durchgereicht \u2014 das Backend muss das\r\nFieldData-Schema nicht doppelt pflegen."
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
+      "JsonElement": {},
+      "KanzleiSettingsDto": {
+        "required": [
+          "personentyp",
+          "name",
+          "strasseHausnummer",
+          "postleitzahl",
+          "ort",
+          "emailAdresse",
+          "telefonnummer",
+          "laufendeAuftragsnummer",
+          "abteilung",
+          "tabellenkopfFarbeHex",
+          "aktenStammordner"
+        ],
+        "type": "object",
+        "properties": {
+          "personentyp": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "strasseHausnummer": {
+            "type": "string"
+          },
+          "postleitzahl": {
+            "type": "string"
+          },
+          "ort": {
+            "type": "string"
+          },
+          "emailAdresse": {
+            "type": "string"
+          },
+          "telefonnummer": {
+            "type": "string"
+          },
+          "laufendeAuftragsnummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "abteilung": {
+            "type": "string"
+          },
+          "tabellenkopfFarbeHex": {
+            "type": "string"
+          },
+          "aktenStammordner": {
+            "type": "string"
+          }
+        },
+        "description": "\u00DCbertragungsformat der Kanzlei-Einstellungen. Die PascalCase-Properties werden\r\nvon ASP.NET Core als camelCase serialisiert und passen damit 1:1 zum JSON der\r\nFlutter-Entit\u00E4t \u0060KanzleiSettings\u0060 (personentyp, strasseHausnummer, \u2026)."
+      },
+      "MailboxConfigDto": {
+        "required": [
+          "enabled",
+          "authMethod",
+          "host",
+          "port",
+          "useSsl",
+          "username",
+          "appPasswordSet",
+          "microsoftAuthAvailable",
+          "microsoftAccount",
+          "folder",
+          "subjectFilter"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "authMethod": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "useSsl": {
+            "type": "boolean"
+          },
+          "username": {
+            "type": "string"
+          },
+          "appPasswordSet": {
+            "type": "boolean"
+          },
+          "microsoftAuthAvailable": {
+            "type": "boolean"
+          },
+          "microsoftAccount": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "folder": {
+            "type": "string"
+          },
+          "subjectFilter": {
+            "type": "string"
+          }
+        },
+        "description": "Der Postfach-Zugang, wie ihn die Einstellungsmaske anzeigt. Das App-Passwort\r\nwird bewusst nicht zur\u00FCckgegeben (Geheimnis) \u2014 stattdessen meldet\r\nbool MailboxConfigDto.AppPasswordSet, ob bereits eines hinterlegt ist. F\u00FCr die\r\nMicrosoft-Anmeldung meldet string? MailboxConfigDto.MicrosoftAccount das angemeldete\r\nKonto (null = nicht angemeldet) und bool MailboxConfigDto.MicrosoftAuthAvailable, ob\r\ndie Anmeldung \u00FCberhaupt m\u00F6glich ist (Azure-Client-ID hinterlegt)."
+      },
+      "MailboxConfigUpdateDto": {
+        "required": [
+          "enabled",
+          "authMethod",
+          "host",
+          "port",
+          "useSsl",
+          "username",
+          "appPassword",
+          "folder",
+          "subjectFilter"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "authMethod": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "port": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "useSsl": {
+            "type": "boolean"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "appPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "folder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subjectFilter": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Eingabe der Einstellungsmaske f\u00FCr den Postfach-Zugang. Ein null- oder\r\nfehlendes string? MailboxConfigUpdateDto.AppPassword bedeutet \u0022unver\u00E4ndert lassen\u0022 \u2014 die Maske\r\nkennt das gespeicherte Passwort nicht und schickt es nur beim Neusetzen mit."
+      },
+      "MailboxStatusDto": {
+        "required": [
+          "enabled",
+          "configured",
+          "connected",
+          "idleSupported",
+          "lastConnectedAt",
+          "lastReplyAt",
+          "lastError",
+          "receivedCount",
+          "pendingCount"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "idleSupported": {
+            "type": "boolean"
+          },
+          "lastConnectedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastReplyAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "receivedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pendingCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Statusanzeige der Postfach-\u00DCberwachung f\u00FCr die Oberfl\u00E4che."
+      },
+      "MandantDto": {
+        "required": [
+          "id",
+          "anrede",
+          "vorname",
+          "nachname",
+          "strasseHausnummer",
+          "postleitzahl",
+          "ort",
+          "emailAdresse",
+          "telefonnummer",
+          "notiz",
+          "aktenOrdnernamen",
+          "kennzeichen",
+          "erstelltAm"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "anrede": {
+            "type": "string"
+          },
+          "vorname": {
+            "type": "string"
+          },
+          "nachname": {
+            "type": "string"
+          },
+          "strasseHausnummer": {
+            "type": "string"
+          },
+          "postleitzahl": {
+            "type": "string"
+          },
+          "ort": {
+            "type": "string"
+          },
+          "emailAdresse": {
+            "type": "string"
+          },
+          "telefonnummer": {
+            "type": "string"
+          },
+          "notiz": {
+            "type": "string"
+          },
+          "aktenOrdnernamen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kennzeichen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "erstelltAm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "\u00DCbertragungsformat eines Mandanten. PascalCase-Properties werden als camelCase\r\nserialisiert und passen damit 1:1 zum JSON der Flutter-Entit\u00E4t \u0060Mandant\u0060.\r\nDie in der DB als JSON-Spalte abgelegten Listen werden hier in echte Arrays\r\n\u00FCbersetzt."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ReceivedReplyDto": {
+        "required": [
+          "id",
+          "receivedAt",
+          "subject",
+          "from",
+          "acknowledged",
+          "data",
+          "warnings",
+          "rawText",
+          "zuordnungVermutet"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "acknowledged": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ZentralrufReplyData"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rawText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "zuordnungVermutet": {
+            "type": "boolean"
+          }
+        },
+        "description": "Ein vom Monitor erfasster Antwort-Treffer, wie ihn die Oberfl\u00E4che abruft."
+      },
+      "ReplacedDocumentResponseDto": {
+        "required": [
+          "success",
+          "outputFilePath",
+          "warnings",
+          "errorCode",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "outputFilePath": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RvgCalculationRequestDto": {
+        "type": "object",
+        "properties": {
+          "gegenstandswert": {
+            "maximum": 100000000,
+            "minimum": 0.01,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "gebuehrensatz": {
+            "maximum": 10,
+            "minimum": 0.1,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Geb\u00FChrensatz der Gesch\u00E4ftsgeb\u00FChr, \u00FCblicherweise 1,3.",
+            "format": "double"
+          },
+          "applyVat": {
+            "type": "boolean",
+            "description": "True, wenn der Mandant nicht vorsteuerabzugsberechtigt ist (Umsatzsteuer ausweisen)."
+          },
+          "geschaeftsgebuehrOverride": {
+            "maximum": 10000000,
+            "minimum": 0,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Manuell korrigierte Gesch\u00E4ftsgeb\u00FChr in \u20AC; null = automatisch nach \u00A7 13 RVG berechnen.",
+            "format": "double"
+          },
+          "auslagenpauschaleOverride": {
+            "maximum": 10000000,
+            "minimum": 0,
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Manuell korrigierte Auslagenpauschale in \u20AC; null = 20 % der Gesch\u00E4ftsgeb\u00FChr, max. 20 \u20AC (Nr. 7002 VV RVG).",
+            "format": "double"
+          }
+        },
+        "description": "Anfrage f\u00FCr die RVG-Kostenvorschau (Live-Berechnung im Schadensaufstellungs-Schritt).\r\nBewusst nur der Gegenstandswert statt der Einzelpositionen \u2013 die Beschreibungen\r\nsind f\u00FCr die Geb\u00FChrenberechnung irrelevant."
+      },
+      "RvgCalculationResponseDto": {
+        "required": [
+          "success",
+          "gegenstandswert",
+          "gebuehrensatz",
+          "wertgebuehr",
+          "geschaeftsgebuehr",
+          "auslagenpauschale",
+          "netto",
+          "umsatzsteuer",
+          "brutto",
+          "errorCode",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "gegenstandswert": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "gebuehrensatz": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "wertgebuehr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "geschaeftsgebuehr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "auslagenpauschale": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netto": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "umsatzsteuer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "brutto": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SimulationAntwortRequestDto": {
+        "required": [
+          "referenz"
+        ],
+        "type": "object",
+        "properties": {
+          "referenz": {
+            "type": "string"
+          },
+          "kennzeichen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unfallDatum": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versichererName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "antwortTyp": {
+            "$ref": "#/components/schemas/SimulationAntwortTyp"
+          }
+        },
+        "description": "Eingabe der Antwort-Simulation. Nur die Referenz ist Pflicht \u2014 sie steuert\r\ndie Zuordnung zum Vorgang; alles \u00DCbrige wird mit plausiblen Werten belegt.\r\nSimulationAntwortTyp SimulationAntwortRequestDto.AntwortTyp w\u00E4hlt die Antwortart (Standard: Versicherer ermittelt)."
+      },
+      "SimulationAntwortTyp": {
+        "enum": [
+          "Versicherer",
+          "KeinVersicherer",
+          "Zwischennachricht"
+        ],
+        "description": "Welche der generischen Zentralruf-Antworten die Simulation erzeugen soll.\r\nAls String serialisiert (z. B. \u0022zwischennachricht\u0022), damit das Frontend\r\nkeine Zahlenwerte kennen muss.",
+        "default": "Versicherer"
+      },
+      "TemplatePlaceholdersRequestDto": {
+        "required": [
+          "templateFilePath"
+        ],
+        "type": "object",
+        "properties": {
+          "templateFilePath": {
+            "maxLength": 260,
+            "type": "string"
+          }
+        }
+      },
+      "TemplatePlaceholdersResponseDto": {
+        "required": [
+          "success",
+          "placeholders",
+          "errorCode",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "placeholders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "VersichererDto": {
+        "required": [
+          "id",
+          "name",
+          "strasse",
+          "plz",
+          "ort",
+          "telefon",
+          "fax",
+          "email",
+          "zuletztAktualisiertAm",
+          "quelle"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "strasse": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "plz": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ort": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefon": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fax": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "zuletztAktualisiertAm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quelle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Ein gelernter Versicherer, wie ihn die Oberfl\u00E4che abruft."
+      },
+      "VorgangDto": {
+        "required": [
+          "referenz",
+          "angefragtAm",
+          "status",
+          "rechtsgebiet",
+          "laufendeNummer",
+          "jahr",
+          "abteilung",
+          "kennzeichen",
+          "mandantId",
+          "mandantName",
+          "gegner",
+          "unfallDatum",
+          "geschaedigtenKennzeichen",
+          "unfallort",
+          "unfalluhrzeit",
+          "polizeiVorgangsnummer",
+          "antwort",
+          "feldWerte",
+          "schadensaufstellung",
+          "dokumentPfad",
+          "aktenOrdner",
+          "abgeschlossenAm"
+        ],
+        "type": "object",
+        "properties": {
+          "referenz": {
+            "type": "string"
+          },
+          "angefragtAm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "rechtsgebiet": {
+            "type": "string"
+          },
+          "laufendeNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "jahr": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "abteilung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kennzeichen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mandantId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "mandantName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gegner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unfallDatum": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "geschaedigtenKennzeichen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unfallort": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unfalluhrzeit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "polizeiVorgangsnummer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "antwort": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "feldWerte": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "schadensaufstellung": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "dokumentPfad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "aktenOrdner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "abgeschlossenAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "\u00DCbertragungsformat eines Vorgangs. PascalCase wird als camelCase serialisiert\r\nund passt 1:1 zur Flutter-Entit\u00E4t \u0060Vorgang\u0060. Die Antwortdaten werden als\r\nopakes JSON (JsonElement? VorgangDto.Antwort) verlustfrei durchgereicht \u2014 so muss das\r\nBackend das ZentralrufReplyData-Schema nicht doppelt pflegen."
+      },
+      "VorlageDto": {
+        "required": [
+          "name",
+          "pfad",
+          "geaendertAm"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "pfad": {
+            "type": "string"
+          },
+          "geaendertAm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Eine Word-Vorlage aus dem Vorlagenordner des Anwenders."
+      },
+      "VorlagenUebersichtDto": {
+        "required": [
+          "verzeichnis",
+          "vorlagen"
+        ],
+        "type": "object",
+        "properties": {
+          "verzeichnis": {
+            "type": "string",
+            "description": "Der Vorlagenordner. Das Frontend oeffnet den Datei-Dialog darin \u2014 sonst\r\nbeginnt \u201EDurchsuchen\u0022 irgendwo im Dateisystem, und der Anwalt muesste den\r\nPfad nach %APPDATA% kennen."
+          },
+          "vorlagen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VorlageDto"
+            },
+            "description": "Die dort liegenden .docx-Dateien, neueste zuerst."
+          }
+        },
+        "description": "Antwort von \u0060GET api/WordAutomation/vorlagen\u0060."
+      },
+      "WordReplacementDto": {
+        "required": [
+          "templateFilePath",
+          "replacePatterns"
+        ],
+        "type": "object",
+        "properties": {
+          "templateFilePath": {
+            "maxLength": 260,
+            "type": "string"
+          },
+          "outputFileName": {
+            "type": "string"
+          },
+          "outputDirectory": {
+            "type": "string"
+          },
+          "replacePatterns": {
+            "minLength": 1,
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "damageListing": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Nur f\u00FCr Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGN).",
+                "$ref": "#/components/schemas/DamageListingDto"
+              }
+            ]
+          },
+          "vorsteuerabzugsberechtigt": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Steuert den Ankreuz-Block \u0022Mein Mandant \u2610 ist / \u2610 ist nicht\r\nvorsteuerabzugsberechtigt\u0022: true kreuzt \u0022ist\u0022 an, false \u0022ist nicht\u0022.\r\nnull = den Block unangetastet lassen (z. B. Vorlagen ohne diesen Abschnitt)."
+          }
+        }
+      },
+      "ZentralrufAnfragerDto": {
+        "type": "object",
+        "properties": {
+          "personentyp": {
+            "maxLength": 40,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "strasseHausnummer": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "postleitzahl": {
+            "maxLength": 10,
+            "type": "string"
+          },
+          "ort": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "emailAdresse": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "telefonnummer": {
+            "maxLength": 40,
+            "type": "string"
+          }
+        },
+        "description": "Kanzlei-/Anfragerdaten, mit denen der Abschnitt \u0022Anfrager\u0022 des Zentralruf-Formulars gef\u00FCllt wird.\r\nWird optional vom Client mitgeschickt; fehlt der Block, gelten die Werte aus appsettings.json\r\n(\u0060Zentralruf:Anfrager\u0060)."
+      },
+      "ZentralrufGeschaedigterDto": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "strasseHausnummer": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "postleitzahl": {
+            "maxLength": 10,
+            "type": "string"
+          },
+          "ort": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "kennzeichen": {
+            "maxLength": 12,
+            "type": "string",
+            "description": "Kennzeichen des Fahrzeugs des Gesch\u00E4digten."
+          }
+        }
+      },
+      "ZentralrufPrefillDto": {
+        "required": [
+          "auftragsnummer",
+          "abteilung",
+          "kennzeichenSchaediger",
+          "schadentag"
+        ],
+        "type": "object",
+        "properties": {
+          "auftragsnummer": {
+            "maximum": 99999,
+            "minimum": 1,
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Laufende Auftragsnummer, z. B. 84.",
+            "format": "int32"
+          },
+          "auftragsjahr": {
+            "maximum": 99,
+            "minimum": 0,
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Zweistelliges Auftragsjahr, z. B. 26. 0 = aktuelles Jahr.",
+            "format": "int32"
+          },
+          "abteilung": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "Abteilung, z. B. \u0022C03\u0022."
+          },
+          "kennzeichenSchaediger": {
+            "maxLength": 12,
+            "type": "string",
+            "description": "Amtliches Kennzeichen des Unfallgegners, z. B. \u0022GG-XY 123\u0022."
+          },
+          "schadentag": {
+            "type": "string",
+            "description": "Unfalldatum.",
+            "format": "date"
+          },
+          "referenz": {
+            "maxLength": 60,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optionale, vom Anwender \u00FCberschriebene Referenz. Ist sie leer, baut das Backend die\r\nReferenz aus Auftragsnummer/-jahr, Abteilung und Kennzeichen zusammen\r\n(\u0060ZentralrufAutomationService.BuildReferenz\u0060)."
+          },
+          "geschaedigter": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ZentralrufGeschaedigterDto"
+              }
+            ]
+          },
+          "anfrager": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Kanzlei-/Anfragerdaten aus den App-Einstellungen. Wenn null, gelten die Werte aus\r\nappsettings.json (\u0060Zentralruf:Anfrager\u0060).",
+                "$ref": "#/components/schemas/ZentralrufAnfragerDto"
+              }
+            ]
+          }
+        }
+      },
+      "ZentralrufPrefillResponseDto": {
+        "required": [
+          "success",
+          "referenz",
+          "filledFields",
+          "skippedFields",
+          "errorCode",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "referenz": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "filledFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skippedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ZentralrufReplyData": {
+        "type": "object",
+        "properties": {
+          "referenz": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Eigenes Aktenzeichen aus \u0022Ihr Zeichen:\u0022 (Referenz der Anfrage)."
+          },
+          "referenzAuftragsnummer": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Laufende Auftragsnummer aus der Referenz (Schema \u0022Nr/Jahr Abteilung_Kennzeichen\u0022)."
+          },
+          "referenzJahr": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Zweistelliges Jahr aus der Referenz."
+          },
+          "referenzAbteilung": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Abteilungsk\u00FCrzel aus der Referenz."
+          },
+          "referenzKennzeichen": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Kennzeichen aus der Referenz, normalisiert (z. B. \u0022GG-XY 123\u0022)."
+          },
+          "keinVersichererErmittelt": {
+            "type": "boolean",
+            "description": "True, wenn der Zentralruf ausdr\u00FCcklich mitteilt, dass zu der Anfrage\r\nkein Versicherer ermittelt werden konnte (Negativ-Antwort)."
+          },
+          "zwischennachricht": {
+            "type": "boolean",
+            "description": "True, wenn die Mail eine Zwischennachricht ist: die Auskunft war nicht\r\nsofort m\u00F6glich (z. B. manuelle Pr\u00FCfung durch die Fachabteilung oder\r\nausl\u00E4ndisches Kennzeichen / Gr\u00FCne Karte); die endg\u00FCltige Antwort folgt\r\nin einer weiteren Mail."
+          },
+          "anfrageDatum": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Datum der urspr\u00FCnglichen Anfrage (\u0022Ihre Anfrage vom ...\u0022)."
+          },
+          "kennzeichen": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Kennzeichen des gegnerischen (angefragten) Fahrzeugs, normalisiert in\r\ndie Dom\u00E4nen-Konvention mit Bindestrich (z. B. \u0022GG-XY 123\u0022)."
+          },
+          "unfallDatum": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Unfalldatum, zu dem der Versicherer ermittelt wurde."
+          },
+          "versichererName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name des gegnerischen Haftpflichtversicherers (ggf. mehrzeilig, mit Leerzeichen verbunden)."
+          },
+          "versichererStrasse": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Stra\u00DFe und Hausnummer des Versicherers."
+          },
+          "versichererPlz": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Postleitzahl des Versicherers."
+          },
+          "versichererOrt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Ort des Versicherers."
+          },
+          "versichererTelefon": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versichererFax": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versichererEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versicherungsscheinNr": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Versicherungsschein-Nr. des gegnerischen Fahrzeugs."
+          },
+          "versicherungsbeginn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Aus einer Zentralruf-Antwortmail extrahierte, f\u00FCr das Anspruchsschreiben\r\nrelevante Daten. Nicht ermittelbare Werte sind \u0060null\u0060."
+      },
+      "ZentralrufReplyParseRequestDto": {
+        "required": [
+          "emailText"
+        ],
+        "type": "object",
+        "properties": {
+          "emailText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "emailFileBase64": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Eingabe f\u00FCr die Antwortmail-Extraktion. Entweder string? ZentralrufReplyParseRequestDto.EmailText\r\n(eingef\u00FCgter Rohtext bzw. Inhalt einer .txt-Datei) oder\r\nstring? ZentralrufReplyParseRequestDto.EmailFileBase64 (komplette .eml-Datei, Base64-kodiert; wird\r\nserverseitig MIME-dekodiert \u2014 Quoted-Printable, Base64-Bodies, HTML)."
+      },
+      "ZentralrufReplyParseResponseDto": {
+        "required": [
+          "success",
+          "data",
+          "missingFields",
+          "warnings",
+          "errorCode",
+          "errorMessage"
+        ],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ZentralrufReplyData"
+              }
+            ]
+          },
+          "missingFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Ergebnis der Antwortmail-Extraktion. IReadOnlyList\u0026lt;string\u0026gt; ZentralrufReplyParseResponseDto.MissingFields benennt\r\nWerte, die im Text nicht gefunden wurden, damit die Oberfl\u00E4che darauf\r\nhinweisen kann (kein fehlertr\u00E4chtiges stilles Auslassen).\r\nIReadOnlyList\u0026lt;string\u0026gt; ZentralrufReplyParseResponseDto.Warnings enth\u00E4lt Hinweise auf m\u00F6gliche Falschzuordnungen\r\n(z. B. Kennzeichen passt nicht zur Referenz), die der Anwalt pr\u00FCfen muss."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "AutomationService"
+    },
+    {
+      "name": "Zentralruf"
+    },
+    {
+      "name": "WordAutomation"
+    },
+    {
+      "name": "Vorgaenge"
+    },
+    {
+      "name": "Versicherer"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "PdfConversion"
+    },
+    {
+      "name": "Mandanten"
+    },
+    {
+      "name": "Mailbox"
+    },
+    {
+      "name": "FormTemplates"
+    },
+    {
+      "name": "Simulation"
+    },
+    {
+      "name": "Backup"
+    }
+  ]
+}
