@@ -359,6 +359,56 @@
         }
       }
     },
+    "/api/WordAutomation/arbeitsordner/aufraeumen": {
+      "post": {
+        "tags": [
+          "WordAutomation"
+        ],
+        "summary": "L\u00F6scht den Arbeitsordner eines Vorgangs. Das Frontend ruft das auf,\r\nsobald das Schreiben in der Mandantenakte liegt (\u00A74.6) \u2014 ab da ist die\r\nKopie in der Akte die g\u00FCltige Fassung, und Zwischenst\u00E4nde fr\u00FCherer\r\nAnl\u00E4ufe haben keinen Grund mehr, aufbewahrt zu werden.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArbeitsordnerDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArbeitsordnerDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ArbeitsordnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArbeitsordnerAufgeraeumtDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArbeitsordnerAufgeraeumtDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArbeitsordnerAufgeraeumtDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/WordAutomation/rvg-calculation": {
       "post": {
         "tags": [
@@ -2049,6 +2099,37 @@
   },
   "components": {
     "schemas": {
+      "ArbeitsordnerAufgeraeumtDto": {
+        "required": [
+          "success",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "False, wenn der Ordner nicht restlos gel\u00F6scht werden konnte (etwas darin ist\r\nnoch ge\u00F6ffnet). Kein Fehlerfall f\u00FCr den Anwalt: sein Dokument liegt zu dem\r\nZeitpunkt bereits in der Akte, hier bleibt nur eine Arbeitskopie liegen."
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Erkl\u00E4rung, wenn etwas liegen blieb; sonst null."
+          }
+        }
+      },
+      "ArbeitsordnerDto": {
+        "type": "object",
+        "properties": {
+          "vorgangSchluessel": {
+            "maxLength": 260,
+            "type": "string",
+            "description": "Referenz des Vorgangs \u2014 derselbe Schl\u00FCssel, unter dem das Dokument\r\nerzeugt wurde; leer = der Ordner der freien Erfassung."
+          }
+        },
+        "description": "Anfrage an \u0060POST api/WordAutomation/arbeitsordner/aufraeumen\u0060: welcher\r\nArbeitsordner nach der Ablage in der Akte verschwinden soll."
+      },
       "ConvertFromPathRequest": {
         "type": "object",
         "properties": {
@@ -3268,8 +3349,10 @@
           "outputFileName": {
             "type": "string"
           },
-          "outputDirectory": {
-            "type": "string"
+          "vorgangSchluessel": {
+            "maxLength": 260,
+            "type": "string",
+            "description": "Referenz des Vorgangs (z. B. \u002284/26 C03_GG-XY 123\u0022). Sie trennt die\r\nArbeitsordner der Vorg\u00E4nge voneinander und ist der Schl\u00FCssel zum\r\nAufr\u00E4umen nach der Ablage; leer = freie Erfassung ohne Vorgangsbezug."
           },
           "replacePatterns": {
             "minLength": 1,

@@ -22,6 +22,7 @@ class FillOutTemplate
       damageListing: params.damageListing,
       vorsteuerabzugsberechtigt: params.vorsteuerabzugsberechtigt,
       outputFileName: params.outputFileName,
+      vorgangSchluessel: params.vorgangSchluessel,
     );
   }
 }
@@ -36,11 +37,16 @@ class FillOutTemplateParams {
   /// das Backend bildet einen Fallback-Namen.
   final String? outputFileName;
 
+  /// Referenz des Vorgangs. Bestimmt den Arbeitsordner im Backend; leer/null =
+  /// freie Erfassung ohne Vorgangsbezug.
+  final String? vorgangSchluessel;
+
   const FillOutTemplateParams({
     required this.path,
     required this.data,
     this.damageListing,
     this.vorsteuerabzugsberechtigt,
     this.outputFileName,
+    this.vorgangSchluessel,
   });
 }

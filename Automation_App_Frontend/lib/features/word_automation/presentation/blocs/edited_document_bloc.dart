@@ -20,6 +20,18 @@ class EditedDocumentBloc
 
   EditedDocumentBloc(this.fillOutTemplate) : super(EditedDocumentInitial()) {
     on<EditDocumentEvent>(_onEditDocumentEvent);
+    on<DokumentAbgelegtEvent>(_onDokumentAbgelegtEvent);
+  }
+
+  /// Übernimmt den Ablageort in der Akte als neuen Arbeitspfad. Die Warnungen
+  /// der Erzeugung bleiben stehen — dasselbe Dokument, nur an seinem Platz.
+  void _onDokumentAbgelegtEvent(
+    DokumentAbgelegtEvent event,
+    Emitter<EditedDocumentState> emit,
+  ) {
+    final aktuell = state;
+    if (aktuell is! EditedDocumentLoaded) return;
+    emit(EditedDocumentLoaded(event.zielpfad, warnings: aktuell.warnings));
   }
 
   Future<void> _onEditDocumentEvent(
@@ -41,6 +53,7 @@ class EditedDocumentBloc
         damageListing: event.damageListing,
         vorsteuerabzugsberechtigt: event.vorsteuerabzugsberechtigt,
         outputFileName: event.outputFileName,
+        vorgangSchluessel: event.vorgangSchluessel,
       ),
     );
     stopwatch.stop();

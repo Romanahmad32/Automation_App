@@ -39,8 +39,11 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
 
 - **WordAutomation** — lädt eine `.docx`-Vorlage, ersetzt `{{Platzhalter}}` (DocX/Xceed), füllt die
   Schadensaufstellung und rechnet die RVG-Gebühren (`RvgFeeCalculator`, Geschäftsgebühr § 13 RVG).
-  Meldet unaufgelöste Platzhalter zurück — dieser Vertrag zählt (§4.4). Ausgabe nach
-  `Generated/`; `WordAutomationWarmupService` lädt den Word-Stack beim Start vor. Vorlagen des
+  Meldet unaufgelöste Platzhalter zurück — dieser Vertrag zählt (§4.4). Ausgabe in den Arbeitsordner
+  des Vorgangs (`Generated/Arbeit/<Referenz>/`, `ArbeitsVerzeichnis`): immer derselbe Dateiname, eine
+  Korrektur ersetzt also die vorige Fassung; nach der Ablage in der Akte löscht das Frontend den
+  Ordner (`POST arbeitsordner/aufraeumen`). `WordAutomationWarmupService` lädt den Word-Stack beim
+  Start vor und räumt dabei verwaiste Arbeitsordner ab. Vorlagen des
   Anwenders: `%APPDATA%\AutomationService\Vorlagen`; `Templates/` im Projekt ist nur Saatgut
   (`VorlagenSeedService`) und landet komplett in seiner Auswahl — dort keine Testdateien ablegen.
 - **ZentralrufAutomation** — (a) Playwright-Vorbefüllung des Online-Formulars, bewusst **headed**,

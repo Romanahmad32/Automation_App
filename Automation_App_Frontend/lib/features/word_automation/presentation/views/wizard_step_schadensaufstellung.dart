@@ -250,6 +250,8 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                                     loadedPath,
                                     datum,
                                   ),
+                                  vorgangSchluessel:
+                                      wizardState.selectedVorgang?.referenz,
                                 ),
                               );
                             }

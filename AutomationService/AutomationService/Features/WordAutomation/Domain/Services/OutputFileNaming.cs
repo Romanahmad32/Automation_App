@@ -1,9 +1,14 @@
 namespace AutomationService.Features.WordAutomation.Domain.Services;
 
 /// <summary>
-/// Bestimmt Name und Pfad der erzeugten Datei. Beides ist bewusst defensiv:
-/// der Wunschname kommt aus einem Formularfeld und darf weder das
-/// Zielverzeichnis wechseln noch eine vorhandene Akte überschreiben.
+/// Bestimmt den Namen der erzeugten Datei. Bewusst defensiv: der Wunschname
+/// kommt aus einem Formularfeld und darf kein Verzeichnis wechseln.
+///
+/// Der Name ist absichtlich <em>deterministisch</em> — dieselbe Vorlage zum
+/// selben Unfalldatum ergibt denselben Namen, sodass eine Korrektur die
+/// vorige Fassung ersetzt, statt eine "(2)" danebenzulegen. Dass sich zwei
+/// Vorgänge damit nicht ins Gehege kommen, sichert der getrennte
+/// Arbeitsordner je Vorgang (<see cref="ArbeitsVerzeichnis"/>).
 /// </summary>
 public static class OutputFileNaming
 {
@@ -34,23 +39,5 @@ public static class OutputFileNaming
         }
 
         return $"{templateName}_{DateTime.Now:yyyy-MM-dd}.docx";
-    }
-
-    /// <summary>Hängt " (2)", " (3)" … an, falls die Zieldatei bereits existiert, statt sie zu überschreiben.</summary>
-    public static string EnsureUniquePath(string path)
-    {
-        if (!File.Exists(path))
-            return path;
-
-        var directory = Path.GetDirectoryName(path)!;
-        var name = Path.GetFileNameWithoutExtension(path);
-        var extension = Path.GetExtension(path);
-
-        for (var counter = 2; ; counter++)
-        {
-            var candidate = Path.Combine(directory, $"{name} ({counter}){extension}");
-            if (!File.Exists(candidate))
-                return candidate;
-        }
     }
 }

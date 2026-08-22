@@ -44,6 +44,11 @@ Installationsverzeichnisses. Deshalb installiert das Setup **je Benutzer**
 (`PrivilegesRequired=lowest`) — kein UAC, keine Adminrechte, und der Ordner
 bleibt schreibbar, was der Dienst für `backend\Generated` braucht.
 
+Dort liegen ausschließlich **Arbeitskopien** der Dokumenterzeugung — je Vorgang
+ein Ordner unter `Generated\Arbeit\`, gelöscht, sobald das Schreiben in der Akte
+abgelegt ist. Ein Update oder eine Deinstallation nimmt also nichts mit, was der
+Anwalt noch braucht: die fertigen Schreiben liegen in seinem Aktenstammordner.
+
 ### Vorlagen
 
 Die Vorlagen gehören dem Anwender und liegen in

@@ -92,6 +92,11 @@ class FilesystemAktenDatasource {
     await unterordner.create(recursive: true);
 
     final ziel = _join(unterordner.path, _basename(quelldateiPfad));
+    // Erneut abgelegt, ohne den Ordner zu wechseln: die Datei liegt bereits
+    // dort, wo sie hinsoll. Ein copy() auf sich selbst wäre ein Fehler, kein
+    // Fortschritt — möglich, seit der Wizard nach der Ablage mit der Kopie in
+    // der Akte weiterarbeitet.
+    if (_gleicherPfad(quelldateiPfad, ziel)) return ziel;
     await quelle.copy(ziel);
     return ziel;
   }
@@ -105,4 +110,10 @@ class FilesystemAktenDatasource {
   }
 
   String _basename(String path) => path.split(RegExp(r'[\\/]')).last;
+
+  /// Windows-Pfade vergleichen: weder Groß-/Kleinschreibung noch die Wahl des
+  /// Trennzeichens unterscheiden zwei Dateien voneinander.
+  bool _gleicherPfad(String a, String b) =>
+      a.replaceAll('/', r'\').toLowerCase() ==
+      b.replaceAll('/', r'\').toLowerCase();
 }

@@ -1,12 +1,11 @@
 using AutomationService.Features.WordAutomation.Domain.Services;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Xceed.Words.NET;
 
 namespace AutomationService.Tests.Support;
 
 /// <summary>
-/// Wegwerf-Arbeitsverzeichnis mit Templates/ und Generated/ für die Tests des
+/// Wegwerf-Arbeitsverzeichnis mit Templates/ und Generated/Arbeit/ für die Tests des
 /// Dokumentenerzeugers: legt Vorlagen an, baut den Dienst darauf und räumt am
 /// Ende alles weg. Jede Testklasse bekommt ihr eigenes Verzeichnis, damit die
 /// Klassen parallel laufen können, ohne sich Dateien wegzuschreiben.
@@ -19,7 +18,9 @@ public sealed class WordVorlagenUmgebung : IDisposable
     {
         _contentRoot = Path.Combine(Path.GetTempPath(), $"AutomationServiceTests_{Guid.NewGuid():N}");
         Directory.CreateDirectory(Path.Combine(_contentRoot, "Templates"));
-        Directory.CreateDirectory(Path.Combine(_contentRoot, "Generated"));
+        ArbeitsVerzeichnis = new ArbeitsVerzeichnis(
+            Path.Combine(_contentRoot, "Generated", "Arbeit"),
+            NullLogger<ArbeitsVerzeichnis>.Instance);
     }
 
     /// <summary>Legt eine .docx mit je einem Absatz pro übergebenem Text an.</summary>
@@ -36,19 +37,11 @@ public sealed class WordVorlagenUmgebung : IDisposable
     /// <summary>Pfad im Arbeitsverzeichnis — für Tests, die eine fehlende Datei brauchen.</summary>
     public string TemplatePath(string fileName) => Path.Combine(_contentRoot, "Templates", fileName);
 
-    public WordAutomationService CreateService()
-    {
-        var options = Options.Create(new WordAutomationOptions
-        {
-            TemplatesDirectory = "Templates",
-            OutputDirectory = "Generated"
-        });
+    /// <summary>Die Wurzel der Arbeitsordner (Generated/Arbeit) dieser Umgebung.</summary>
+    public ArbeitsVerzeichnis ArbeitsVerzeichnis { get; }
 
-        return new WordAutomationService(
-            NullLogger<WordAutomationService>.Instance,
-            options,
-            new FakeHostEnvironment(_contentRoot));
-    }
+    public WordAutomationService CreateService() =>
+        new(NullLogger<WordAutomationService>.Instance, ArbeitsVerzeichnis);
 
     public void Dispose()
     {

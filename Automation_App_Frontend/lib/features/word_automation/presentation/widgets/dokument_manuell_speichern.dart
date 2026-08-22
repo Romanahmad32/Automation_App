@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-/// Sekundärer Weg: das Dokument an einen frei wählbaren Ort kopieren. Das
-/// Original bleibt als Sicherung im Generated-Ordner erhalten.
+/// Sekundärer Weg: das Dokument an einen frei wählbaren Ort kopieren.
+///
+/// Quelle ist das, woran der Wizard gerade arbeitet: vor der Ablage die
+/// Arbeitskopie, danach die Datei in der Akte. Eine dauerhafte Zweitfassung
+/// im Arbeitsordner gibt es nicht — der wird nach der Ablage gelöscht.
 class DokumentManuellSpeichern extends StatefulWidget {
   final String outputPath;
 
