@@ -10,7 +10,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Zielordner und der Unterordner (Fall) sind daher wählbar oder neu anlegbar.
 /// Existiert der Mandant noch nicht, wird er hier — mit den Formulardaten
 /// vorbelegt — angelegt. Alternativ kann das Dokument an einen frei wählbaren
-/// Ort kopiert werden (das Original bleibt als Sicherung im Generated-Ordner).
+/// Ort kopiert werden.
+///
+/// Ab der geglückten Ablage zeigt [EditedDocumentBloc] auf die Datei **in der
+/// Akte**: der Arbeitsordner des Vorgangs wird dann gelöscht, damit nur die
+/// bestätigte Fassung übrig bleibt (§4.6).
 class WizardStepSave extends StatelessWidget {
   const WizardStepSave({super.key});
 

@@ -25,8 +25,12 @@ public sealed record WordReplacementRequest
     /// <summary>Gewünschter Dateiname ohne Endung; leer = "{Vorlage}_{Datum}".</summary>
     public string OutputFileName { get; init; } = string.Empty;
 
-    /// <summary>Zielverzeichnis; leer = das konfigurierte Ausgabeverzeichnis.</summary>
-    public string OutputDirectory { get; init; } = string.Empty;
+    /// <summary>
+    /// Referenz des Vorgangs, zu dem das Schreiben gehört. Bestimmt den
+    /// Arbeitsordner (<see cref="ArbeitsVerzeichnis"/>), in dem das Ergebnis
+    /// landet; leer = der Ordner der freien Erfassung ohne Vorgangsbezug.
+    /// </summary>
+    public string VorgangSchluessel { get; init; } = string.Empty;
 
     /// <summary>Nur für Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGN).</summary>
     public DamageListing? DamageListing { get; init; }

@@ -144,7 +144,12 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
-                    duration: const Duration(seconds: 3),
+                    // Laenger als die uebrigen Hinweise: hier stehen die
+                    // Meldungen des Dienstes, die sagen, was zu tun ist
+                    // ("Bitte schliessen Sie das Dokument ..."). In drei
+                    // Sekunden liest die niemand zu Ende.
+                    duration: const Duration(seconds: 10),
+                    showCloseIcon: true,
                   ),
                 );
               default:

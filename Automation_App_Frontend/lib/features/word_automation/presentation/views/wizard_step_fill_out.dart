@@ -9,6 +9,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/edite
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/generation_overlay.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/pdf_preview_view.dart';
@@ -195,8 +196,10 @@ class WizardStepFillOut extends StatelessWidget {
                                           ? 'Weiter zur Schadensaufstellung'
                                           : 'Dokument erstellen',
                                     ),
-                                    onSubmitted: (formData) {
+                                    onSubmitted: (formData) async {
                                       final cubit = context.read<WizardCubit>();
+                                      final bloc = context
+                                          .read<EditedDocumentBloc>();
                                       cubit.setFormData(formData);
                                       if (cubit.state.mitAuflistung) {
                                         // Generierung erst am Ende des
@@ -205,11 +208,20 @@ class WizardStepFillOut extends StatelessWidget {
                                           WizardStep.schadensaufstellung,
                                         );
                                       } else {
+                                        // Erzeugen ueberschreibt die vorige
+                                        // Fassung — bei Handarbeit in Word
+                                        // vorher fragen.
+                                        if (!await darfNeuErzeugen(
+                                          context,
+                                          bloc.state,
+                                        )) {
+                                          return;
+                                        }
                                         final datum = ursachendatumAusFormular(
                                           selectedTemplate.fields,
                                           formData,
                                         );
-                                        context.read<EditedDocumentBloc>().add(
+                                        bloc.add(
                                           EditDocumentEvent(
                                             data: formData,
                                             damageListing: null,
@@ -221,6 +233,10 @@ class WizardStepFillOut extends StatelessWidget {
                                               loadedPath,
                                               datum,
                                             ),
+                                            vorgangSchluessel: cubit
+                                                .state
+                                                .selectedVorgang
+                                                ?.referenz,
                                           ),
                                         );
                                       }
