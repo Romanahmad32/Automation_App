@@ -1,9 +1,9 @@
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:equatable/equatable.dart';
 
-/// Ein Mandant der Kanzlei mit den wiederverwendbaren Stammdaten (Req. 3.1 /
-/// „Daten des Kunden speichern"). Persistiert im lokalen Mandantenregister
-/// (`mandanten.json`). Die Verknüpfung zur Akte im Dateisystem (§3.6) läuft
+/// Ein Mandant der Kanzlei mit den wiederverwendbaren Stammdaten (§5.1).
+/// Persistiert im Mandantenregister des Backends (SQLite); das Frontend hält
+/// keine eigene Kopie. Die Verknüpfung zur Akte im Dateisystem (§6.1) läuft
 /// über [aktenOrdnernamen]: die Namen der zugeordneten Ordner unter dem
 /// Stammordner. Bewusst eine Liste, weil derselbe Mandant in der echten
 /// Kanzlei mehrere Sachen/Ordner haben kann (z. B. eine Straf- und eine

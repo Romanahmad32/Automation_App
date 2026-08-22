@@ -9,6 +9,6 @@ abstract class KanzleiSettingsRepository {
     KanzleiSettings settings,
   );
 
-  /// Zählt die laufende Auftragsnummer atomar im Backend hoch (Req. 3.2).
+  /// Zählt die laufende Auftragsnummer atomar im Backend hoch (§7.1).
   Future<Either<Failure, KanzleiSettings>> erhoeheAuftragsnummer();
 }

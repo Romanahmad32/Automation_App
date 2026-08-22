@@ -5,7 +5,7 @@ import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:injectable/injectable.dart';
 
-/// Dateibasierter Zugriff auf das Aktensystem (§3.6) — reines `dart:io`, analog
+/// Dateibasierter Zugriff auf das Aktensystem (§6.1) — reines `dart:io`, analog
 /// zum bisherigen Speicherschritt. Der Stammordner wird als Parameter
 /// übergeben, damit die Klasse zustandslos bleibt (das Repository liest ihn aus
 /// den Einstellungen).

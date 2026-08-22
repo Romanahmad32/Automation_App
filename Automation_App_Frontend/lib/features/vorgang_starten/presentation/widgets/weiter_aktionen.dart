@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Panel, das nach dem Speichern eines Vorgangs erscheint (Req. 4): bietet an,
+/// Panel, das nach dem Speichern eines Vorgangs erscheint (§3): bietet an,
 /// mit den gespeicherten Daten direkt weiterzuarbeiten — entweder eine Vorlage
 /// auszufüllen oder zum Postfach zu wechseln. Auswahl meldet das Widget über die
 /// Callbacks; die Tab-Navigation übernimmt die View.

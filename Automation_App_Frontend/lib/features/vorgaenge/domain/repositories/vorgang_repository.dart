@@ -17,7 +17,7 @@ abstract class VorgangRepository {
   /// Löscht den Vorgang zur Referenz (No-op, wenn keiner passt).
   Future<void> deleteVorgang(String referenz);
 
-  /// Schließt den Vorgang zur Referenz atomar im Backend ab (Req. 3.7):
+  /// Schließt den Vorgang zur Referenz atomar im Backend ab (§4.8):
   /// Status „versendet" und Hochzählen der laufenden Auftragsnummer passieren
   /// dort in einer Transaktion. Liefert den abgeschlossenen Stand zurück,
   /// null, wenn kein Vorgang zur Referenz existiert.

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AutomationService.Features.Mandanten.Presentation.Controllers;
 
 /// <summary>
-/// CRUD über das Mandantenregister (Req. 3.1). Ersetzt den früheren lokalen
+/// CRUD über das Mandantenregister (§5.1). Ersetzt den früheren lokalen
 /// JSON-Speicher des Frontends (mandanten.json). Namens-Dubletten ergeben 409,
 /// unbekannte IDs 404.
 /// </summary>

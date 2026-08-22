@@ -13,7 +13,7 @@ import 'package:equatable/equatable.dart';
 ///
 /// Identität ist die [referenz] (`Nr/Jahr Abteilung_Kennzeichen`); über sie
 /// wird eine eingehende Zentralruf-Antwort dem richtigen Vorgang zugeordnet
-/// (Req. 3.3). Die meisten Felder sind optional, weil sie erst im Laufe des
+/// (§3). Die meisten Felder sind optional, weil sie erst im Laufe des
 /// Vorgangs entstehen (z. B. [antwort] kommt oft Tage nach der Anfrage).
 class Vorgang extends Equatable {
   final String referenz;

@@ -7,9 +7,8 @@ namespace AutomationService.Features.MailboxMonitor.Presentation.Controllers;
 
 /// <summary>
 /// Liest den Status der Postfach-Überwachung und die vom Monitor erfassten
-/// Zentralruf-Antworten. Solange das Vorgangs-/Aktensystem (REQUIREMENTS.md
-/// §3.3/§3.6) noch nicht existiert, holt die Oberfläche die Treffer hierüber ab
-/// und quittiert sie.
+/// Zentralruf-Antworten (REQUIREMENTS.md §4.3). Die Oberfläche holt die Treffer
+/// hierüber ab und quittiert sie.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]

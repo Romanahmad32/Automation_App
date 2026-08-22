@@ -12,7 +12,7 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Button am Ende der Mandanten-Karte: erst aktiv, wenn ein bestehender Mandant
 /// geänderte Daten hat („Mandantendaten aktualisieren") oder ohne Auswahl das
 /// Mindeste für einen neuen Mandanten erfasst ist („Neuen Mandanten speichern").
-/// Öffnet vor dem Speichern die Übersicht zur Bestätigung (Req. 3) und meldet die
+/// Öffnet vor dem Speichern die Übersicht zur Bestätigung (§1.3) und meldet die
 /// bestätigte Aktion über [onBestaetigt]; speichert nur den Mandanten, nicht den
 /// Vorgang.
 class MandantSpeichernButton extends StatelessWidget {

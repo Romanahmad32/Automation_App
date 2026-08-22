@@ -6,7 +6,7 @@ import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zent
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Vereinter Schritt der Antwort-Bearbeitung (REQUIREMENTS.md §3.3): automatisch
+/// Vereinter Schritt der Antwort-Bearbeitung (REQUIREMENTS.md §4.3): automatisch
 /// per Postfach erfasste Zentralruf-Antworten und der manuelle Weg (Mail
 /// einfügen/laden) in einer Ansicht. Stellt beide zugehörigen Blocs bereit.
 @RoutePage()

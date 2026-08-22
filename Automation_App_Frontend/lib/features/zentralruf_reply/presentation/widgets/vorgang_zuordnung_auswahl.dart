@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Auswahl, welchem Vorgang die ausgewertete Zentralruf-Antwort zugeordnet wird
-/// (Req. 3.3). Passt die Referenz der Antwort zu einem bekannten Vorgang, ist er
+/// (§4.3). Passt die Referenz der Antwort zu einem bekannten Vorgang, ist er
 /// vorausgewählt; andernfalls kann der Anwalt den richtigen Vorgang von Hand
 /// wählen oder „Neuen Vorgang anlegen" lassen — so landet die Antwort nicht in
 /// einem falschen oder unnötig neu angelegten Vorgang.

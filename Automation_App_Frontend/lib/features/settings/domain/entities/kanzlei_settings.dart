@@ -42,7 +42,7 @@ class KanzleiSettings extends Equatable {
 
   /// Laufende Auftragsnummer für das Referenzformat (z. B. 84). Wird in jedes
   /// "Auftragsnummer"-Feld vorausgefüllt und nach Abschluss eines Auftrags
-  /// hochgezählt (Req. 3.2).
+  /// hochgezählt (§7.1).
   final int laufendeAuftragsnummer;
 
   /// Abteilungskürzel für das Referenzformat (z. B. "C03").
@@ -52,7 +52,7 @@ class KanzleiSettings extends Equatable {
   /// als Hex-Wert "RRGGBB" (ohne '#').
   final String tabellenkopfFarbeHex;
 
-  /// Stammordner des Aktensystems im Dateisystem (Req. 3.6 / 4). Unter diesem
+  /// Stammordner des Aktensystems im Dateisystem (§6.1, §7.1). Unter diesem
   /// Ordner liegt pro Mandant eine Akte (Unterordner). Leer = noch nicht
   /// festgelegt; ohne Stammordner ist die automatische Ablage nicht möglich.
   /// Bewusst kein Default-Pfad: Die App läuft auf einem fremden Rechner.

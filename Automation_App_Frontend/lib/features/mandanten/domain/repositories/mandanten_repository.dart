@@ -5,7 +5,7 @@ import 'package:automation_app/features/mandanten/domain/entities/create_mandant
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 
 /// Schnittstelle des Kundensystems: das lokale Mandantenregister (strukturierte
-/// Daten) plus das dateibasierte Aktensystem (§3.6). Implementierung verknüpft
+/// Daten) plus das dateibasierte Aktensystem (§6.1). Implementierung verknüpft
 /// beide über den Akten-Ordnernamen.
 abstract class MandantenRepository {
   /// Alle Mandanten aus dem Register.
@@ -29,7 +29,7 @@ abstract class MandantenRepository {
     required String ordnername,
   });
 
-  /// Legt ein fertiges Dokument in der Akte ab (§3.6): Akten-Ordner bei Bedarf
+  /// Legt ein fertiges Dokument in der Akte ab (§6.1): Akten-Ordner bei Bedarf
   /// anlegen, Unterordner anlegen, Datei hineinkopieren. Verknüpft den
   /// Ordner mit dem Mandanten und gibt den Zielpfad der Kopie zurück.
   Future<Either<Failure, String>> legeDokumentAb(LegeDokumentAbParams params);
