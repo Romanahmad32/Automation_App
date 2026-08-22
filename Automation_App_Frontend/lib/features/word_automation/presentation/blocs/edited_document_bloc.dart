@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
@@ -20,6 +21,35 @@ class EditedDocumentBloc
 
   EditedDocumentBloc(this.fillOutTemplate) : super(EditedDocumentInitial()) {
     on<EditDocumentEvent>(_onEditDocumentEvent);
+    on<DokumentAbgelegtEvent>(_onDokumentAbgelegtEvent);
+  }
+
+  /// Übernimmt den Ablageort in der Akte als neuen Arbeitspfad. Die Warnungen
+  /// der Erzeugung bleiben stehen — dasselbe Dokument, nur an seinem Platz.
+  void _onDokumentAbgelegtEvent(
+    DokumentAbgelegtEvent event,
+    Emitter<EditedDocumentState> emit,
+  ) {
+    final aktuell = state;
+    if (aktuell is! EditedDocumentLoaded) return;
+    emit(
+      EditedDocumentLoaded(
+        event.zielpfad,
+        warnings: aktuell.warnings,
+        erzeugtAm: _aenderungszeit(event.zielpfad),
+      ),
+    );
+  }
+
+  /// Änderungszeit der Datei, oder null, wenn sie nicht zu lesen ist (im Test
+  /// zeigt der Pfad ins Nichts). Null heisst nur: kein Vergleich möglich.
+  DateTime? _aenderungszeit(String pfad) {
+    try {
+      final datei = File(pfad);
+      return datei.existsSync() ? datei.lastModifiedSync() : null;
+    } on FileSystemException {
+      return null;
+    }
   }
 
   Future<void> _onEditDocumentEvent(
@@ -41,6 +71,7 @@ class EditedDocumentBloc
         damageListing: event.damageListing,
         vorsteuerabzugsberechtigt: event.vorsteuerabzugsberechtigt,
         outputFileName: event.outputFileName,
+        vorgangSchluessel: event.vorgangSchluessel,
       ),
     );
     stopwatch.stop();
@@ -58,6 +89,7 @@ class EditedDocumentBloc
           EditedDocumentLoaded(
             document.outputFilePath,
             warnings: document.warnings,
+            erzeugtAm: _aenderungszeit(document.outputFilePath),
           ),
         );
     }

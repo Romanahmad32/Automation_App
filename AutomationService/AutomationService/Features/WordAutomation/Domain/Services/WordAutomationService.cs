@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Options;
+using AutomationService.Features.WordAutomation.Domain.Exceptions;
 using Xceed.Document.NET;
 using Xceed.Words.NET;
 
@@ -8,38 +8,30 @@ namespace AutomationService.Features.WordAutomation.Domain.Services;
 
 /// <summary>
 /// Füllt Word-Vorlagen: lädt die .docx, ersetzt die {{Platzhalter}} und
-/// schreibt eine neue Datei. Die beiden Sonderfälle der Kanzlei-Vorlagen —
-/// die Schadensaufstellung als Tabelle und der Vorsteuer-Ankreuzblock —
-/// liegen in <see cref="DamageListingTable"/> und
+/// schreibt das Ergebnis in den Arbeitsordner des Vorgangs. Die beiden
+/// Sonderfälle der Kanzlei-Vorlagen — die Schadensaufstellung als Tabelle und
+/// der Vorsteuer-Ankreuzblock — liegen in <see cref="DamageListingTable"/> und
 /// <see cref="VorsteuerCheckbox"/>; die Namensvergabe in
-/// <see cref="OutputFileNaming"/>.
+/// <see cref="OutputFileNaming"/>, der Ablageort in
+/// <see cref="ArbeitsVerzeichnis"/>.
 /// </summary>
 public sealed partial class WordAutomationService : IWordAutomationService
 {
     private const string PlaceholderPattern = @"\{\{(.*?)\}\}";
     private readonly ILogger<WordAutomationService> _logger;
-    private string _outputDirectory;
+    private readonly ArbeitsVerzeichnis _arbeitsVerzeichnis;
 
     public WordAutomationService(
         ILogger<WordAutomationService> logger,
-        IOptions<WordAutomationOptions> options,
-        IHostEnvironment hostEnvironment)
+        ArbeitsVerzeichnis arbeitsVerzeichnis)
     {
         _logger = logger;
-        var settings = options.Value;
-        _outputDirectory = Path.GetFullPath(Path.Combine(hostEnvironment.ContentRootPath, settings.OutputDirectory));
-        Directory.CreateDirectory(_outputDirectory);
+        _arbeitsVerzeichnis = arbeitsVerzeichnis;
     }
 
     public DocumentGenerationResult GenerateReplacedDocument(WordReplacementRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-
-        if (request.OutputDirectory != "")
-        {
-            _outputDirectory = Path.GetFullPath(request.OutputDirectory);
-            Directory.CreateDirectory(_outputDirectory);
-        }
 
         var templatePath = request.TemplateFilePath;
         if (!File.Exists(templatePath))
@@ -102,9 +94,11 @@ public sealed partial class WordAutomationService : IWordAutomationService
         }
 
         var outputFileName = OutputFileNaming.BuildFileName(request.OutputFileName, rawFileName);
-        var outputPath = OutputFileNaming.EnsureUniquePath(Path.Combine(_outputDirectory, outputFileName));
+        var outputPath = Path.Combine(
+            _arbeitsVerzeichnis.OrdnerFuer(request.VorgangSchluessel),
+            outputFileName);
         stepStopwatch.Restart();
-        document.SaveAs(outputPath);
+        SpeichereUeberschreibend(document, outputPath);
         _logger.LogInformation("[PERF] SaveAs: {Ms} ms", stepStopwatch.ElapsedMilliseconds);
         _logger.LogInformation("[PERF] GenerateReplacedDocument GESAMT: {Ms} ms", totalStopwatch.ElapsedMilliseconds);
 
@@ -177,6 +171,28 @@ public sealed partial class WordAutomationService : IWordAutomationService
         {
             TryDeleteFile(createPath);
             TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// Schreibt das Ergebnis an denselben Pfad wie der vorige Lauf — eine
+    /// Korrektur ersetzt die vorherige Fassung, statt eine "(2)" danebenzulegen.
+    /// Bleibend ist erst die Kopie in der Mandantenakte (§4.6).
+    ///
+    /// Ist die Zieldatei gesperrt (der Anwalt hat sie aus der Prüfung heraus in
+    /// Word offen), bricht das bewusst mit einer verständlichen Meldung ab. Die
+    /// Alternative — still danebenschreiben — hinterließe zwei Fassungen, von
+    /// denen niemand mehr weiß, welche die geprüfte ist.
+    /// </summary>
+    private static void SpeichereUeberschreibend(DocX document, string outputPath)
+    {
+        try
+        {
+            document.SaveAs(outputPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            throw new ZieldateiGesperrtException(Path.GetFileName(outputPath), exception);
         }
     }
 

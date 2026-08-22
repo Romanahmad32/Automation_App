@@ -81,6 +81,8 @@ import 'package:automation_app/features/mandanten/data/datasources/mandant_datas
     as _i395;
 import 'package:automation_app/features/mandanten/data/repositories/mandanten_repository_impl.dart'
     as _i683;
+import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart'
+    as _i10;
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart'
     as _i119;
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart'
@@ -149,6 +151,8 @@ import 'package:automation_app/features/word_automation/data/datasources/word_au
     as _i287;
 import 'package:automation_app/features/word_automation/data/repositories/word_automation_repository_impl.dart'
     as _i405;
+import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart'
+    as _i416;
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart'
     as _i312;
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart'
@@ -157,6 +161,8 @@ import 'package:automation_app/features/word_automation/domain/entities/vorlagen
     as _i382;
 import 'package:automation_app/features/word_automation/domain/repositories/word_automation_repository.dart'
     as _i770;
+import 'package:automation_app/features/word_automation/domain/usecases/arbeitsordner_aufraeumen.dart'
+    as _i932;
 import 'package:automation_app/features/word_automation/domain/usecases/calculate_rvg_fees.dart'
     as _i430;
 import 'package:automation_app/features/word_automation/domain/usecases/convert_docx_to_pdf.dart'
@@ -352,6 +358,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i849.KanzleiSettingsRepository>(),
       ),
     );
+    gh.factory<
+      _i223.UseCase<
+        _i416.ArbeitsordnerAufraeumung,
+        _i932.ArbeitsordnerAufraeumenParams
+      >
+    >(
+      () => _i932.ArbeitsordnerAufraeumen(
+        repository: gh<_i770.WordAutomationRepository>(),
+      ),
+    );
     gh.factory<_i223.UseCase<_i382.VorlagenUebersicht, _i223.NoParams>>(
       () => _i250.GetVorlagenUebersicht(
         repository: gh<_i770.WordAutomationRepository>(),
@@ -401,7 +417,7 @@ extension GetItInjectableX on _i174.GetIt {
         repository: gh<_i777.ZentralrufRepository>(),
       ),
     );
-    gh.factory<_i223.UseCase<String, _i763.LegeDokumentAbParams>>(
+    gh.factory<_i223.UseCase<_i10.AblageErgebnis, _i763.LegeDokumentAbParams>>(
       () => _i698.LegeDokumentAb(gh<_i763.MandantenRepository>()),
     );
     gh.factory<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(
@@ -461,6 +477,15 @@ extension GetItInjectableX on _i174.GetIt {
         >(),
       ),
     );
+    gh.factory<_i202.AblageCubit>(
+      () => _i202.AblageCubit(
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
+        gh<_i223.UseCase<_i10.AblageErgebnis, _i763.LegeDokumentAbParams>>(),
+        gh<_i849.KanzleiSettingsRepository>(),
+      ),
+    );
     gh.factory<_i263.TemplatePdfPreviewBloc>(
       () => _i263.TemplatePdfPreviewBloc(
         gh<_i223.UseCase<_i100.Uint8List, _i324.ConvertDocxToPdfParams>>(),
@@ -475,15 +500,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i244.FormTemplateOverviewBloc(
         gh<_i223.UseCase<List<_i851.FormTemplate>, _i223.NoParams>>(),
         gh<_i223.UseCase<void, _i60.DeleteFormTemplateParams>>(),
-      ),
-    );
-    gh.factory<_i202.AblageCubit>(
-      () => _i202.AblageCubit(
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
-        gh<_i223.UseCase<String, _i763.LegeDokumentAbParams>>(),
-        gh<_i849.KanzleiSettingsRepository>(),
       ),
     );
     gh.factory<_i702.TemplatePlaceholdersBloc>(
