@@ -158,8 +158,7 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 `injection.config.dart` ist generiert; Änderungen darin von Hand werden beim
-nächsten Lauf überschrieben. Nach dem Lauf `git status` prüfen und `pubspec.lock`
-zurücksetzen, falls er sie umgeschrieben hat — dazu unten mehr.
+nächsten Lauf überschrieben.
 
 ## Persistenz
 
@@ -203,7 +202,7 @@ fertig. Die Prüfungen, die typischerweise bei genau dieser Arbeit anschlagen:
 
 Schlägt eine dieser Prüfungen fehl, ist die Antwort nie, die Regel zu lockern.
 
-> **`pubspec.lock`**: Ein lokales `pub get`/`build_runner` schreibt die Datei um und
-> stuft dabei ab (analyzer 10.2.0 → 10.0.1). Das ist keine gewollte Änderung —
-> `git checkout -- Automation_App_Frontend/pubspec.lock`, solange die Abhängigkeiten
-> nicht bewusst geändert werden.
+> **`pubspec.lock`**: Ändert ein `pub get` die Datei, passt der committete Stand
+> nicht zur gepinnten Flutter-Fassung. Dann ist die neu aufgelöste Fassung die
+> richtige und gehört in den Commit — nicht zurückwerfen. Hintergrund:
+> [RELEASE.md](RELEASE.md#die-sperrdatei-gehört-zum-pin).

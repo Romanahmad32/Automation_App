@@ -256,6 +256,20 @@ derselbe Commit könnte an zwei Tagen zwei verschiedene Pakete ergeben.
 zusammen mit den Anpassungen, die er auslöst. Nicht etwas, das einem morgens die
 CI zerlegt.
 
+### Die Sperrdatei gehört zum Pin
+
+`pubspec.lock` ist Teil dieser Festlegung, und sie kann dem Pin widersprechen:
+Flutter pinnt `meta`, `matcher` und `test_api` **exakt** (nicht mit Caret), und
+Dependabot sieht diese Pins nicht — es löst mit dem reinen Dart-SDK auf und trägt
+Fassungen ein, die es mit `FLUTTER_VERSION` nicht geben kann. `pub get` stuft sie
+dann bei jedem Lauf still zurück, und die Sperrdatei beschreibt einen Stand, der
+nie gelaufen ist.
+
+Der Schritt **„Sperrdatei passt zur Toolchain"** in `ci.yml` und `check.ps1` macht
+das sichtbar: nach `flutter pub get` darf sich die Datei nicht ändern. Tut sie es,
+ist die aufgelöste Fassung die richtige und gehört in den Commit — nicht
+zurückgeworfen.
+
 ## Offen
 
 - **Code-Signing.** Ohne Zertifikat warnt SmartScreen bei jeder Installation.

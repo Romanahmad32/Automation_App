@@ -79,6 +79,16 @@ jobs:
       - name: Pub get
         run: flutter pub get
 
+      # pubspec.lock ist versioniert und muss zu FLUTTER_VERSION passen. Das
+      # Framework pinnt meta, matcher und test_api exakt (nicht mit Caret), und
+      # Dependabot sieht diese Pins nicht: es loest mit dem reinen Dart-SDK auf
+      # und traegt Fassungen ein, die es mit dem gepinnten Flutter nicht gibt.
+      # `pub get` stuft sie dann still zurueck — die Sperrdatei beschreibt danach
+      # einen Stand, der nie gelaufen ist, und wer sie mitcommittet, traegt eine
+      # Herabstufung ein, die niemand beschlossen hat. Hier faellt das auf.
+      - name: Sperrdatei passt zur Toolchain
+        run: git diff --exit-code -- pubspec.lock
+
       # Die generierten Dateien sind versioniert (injection.config.dart,
       # app_router.gr.dart). Wer eine @injectable-Klasse oder eine Route
       # hinzufuegt und build_runner vergisst, bricht die Anwendung zur Laufzeit:

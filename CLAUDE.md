@@ -249,6 +249,7 @@ roten Test statt eines übersehenen Hinweises:
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs` + `test/architecture/http_vertrag_test.dart` |
 | Formatierung | `dart format --set-exit-if-changed`, `dotnet format --verify-no-changes` (CI) |
 | Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
+| `pubspec.lock` passt zur gepinnten Flutter-Fassung | `pub get` + `git diff --exit-code` (CI, `check.ps1`) |
 
 Schlägt eine davon fehl, ist die Antwort **nie**, die Regel zu lockern oder das Limit hochzusetzen.
 Begründete Ausnahmen gehören namentlich in den jeweiligen Test.
