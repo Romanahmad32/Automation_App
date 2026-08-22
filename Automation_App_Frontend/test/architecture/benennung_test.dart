@@ -2,7 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'dart_source_files.dart';
 
-/// Erzwingt eine einheitliche Benennung der Datasources.
+/// Erzwingt eine einheitliche Benennung der beiden Bausteine, die es in jedem
+/// Feature genau einmal gibt: der Datasource und der Repository-Umsetzung.
 ///
 /// Hintergrund: derselbe Baustein hiess in diesem Projekt einmal
 /// `api_vorgaenge_datasource.dart`, einmal `mandant_datasource.dart`, einmal
@@ -25,6 +26,19 @@ import 'dart_source_files.dart';
 ///
 /// Kein `Impl`-Suffix: es benennt keine Eigenschaft, sondern nur die Tatsache,
 /// dass es sich um eine Umsetzung handelt — die sieht man am `implements`.
+///
+/// Bei der **Repository-Umsetzung** unter `data/repositories/` ist es genau
+/// umgekehrt: sie heisst `<Sache>RepositoryImpl`. Kein `Api…`, denn sie spricht
+/// kein HTTP — sie ruft die Datasource und uebersetzt deren Ergebnis in
+/// Domain-Typen und `Failure`s. Ein `Api`-Praefix dort behauptet eine Technik,
+/// die eine Schicht tiefer liegt, und laesst die Frage offen, was die Datasource
+/// dann noch tut. Hier gibt es keine zweite Umsetzung, von der zu unterscheiden
+/// waere, also bleibt das neutrale `Impl`.
+///
+/// Braucht ein Feature gar keine Uebersetzung, entfaellt die Schicht ganz: dann
+/// setzt die Datasource das Repository direkt um
+/// (`@Injectable(as: VorgangRepository)`) und es gibt kein `…RepositoryImpl`.
+/// Beides ist erlaubt — nur nicht dieselbe Rolle unter zwei Namen.
 void main() {
   // Technik-Begriffe, die im Dateinamen nichts zu suchen haben. Geprueft wird
   // je Unterstrich-Abschnitt, damit ein fachliches Wort, das eine Marke
@@ -123,6 +137,35 @@ void main() {
       reason:
           'Eine konkrete Datasource sagt im Namen, woher die Daten kommen; '
           'die Schnittstelle sagt nur, was zu holen ist.\n'
+          '${verstoesse.join('\n')}',
+    );
+  });
+
+  test('Repository-Umsetzungen heissen <Sache>RepositoryImpl', () {
+    final verstoesse = <String>[];
+
+    for (final datei in dartQuelldateien('lib')) {
+      final pfad = relPfad(datei);
+      if (!pfad.contains('/data/repositories/')) continue;
+
+      if (!pfad.endsWith('_repository_impl.dart')) {
+        verstoesse.add('$pfad — Datei nicht auf _repository_impl.dart');
+      }
+      for (final treffer in klassenkopf.allMatches(datei.readAsStringSync())) {
+        final name = treffer.group(2)!;
+        if (name.endsWith('Repository')) {
+          verstoesse.add('$pfad: $name — Klasse nicht auf RepositoryImpl');
+        }
+      }
+    }
+
+    expect(
+      verstoesse,
+      isEmpty,
+      reason:
+          'Diese Schicht spricht kein HTTP, sie uebersetzt nur — das Api-Praefix '
+          'gehoert an die Datasource. Aus api_zentralruf_repository.dart wird '
+          'zentralruf_repository_impl.dart mit ZentralrufRepositoryImpl.\n'
           '${verstoesse.join('\n')}',
     );
   });

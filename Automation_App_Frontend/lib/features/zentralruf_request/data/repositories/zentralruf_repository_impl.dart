@@ -7,10 +7,10 @@ import 'package:automation_app/features/zentralruf_request/domain/repositories/z
 import 'package:injectable/injectable.dart';
 
 @Injectable(as: ZentralrufRepository)
-class ApiZentralrufRepository implements ZentralrufRepository {
+class ZentralrufRepositoryImpl implements ZentralrufRepository {
   final ZentralrufDatasource datasource;
 
-  ApiZentralrufRepository(this.datasource);
+  ZentralrufRepositoryImpl(this.datasource);
 
   @override
   Future<Either<Failure, ZentralrufPrefillResult>> prefillForm(
