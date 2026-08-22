@@ -1,4 +1,5 @@
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
 import 'package:flutter/material.dart';
 
 /// Eingabe der Schadensaufstellung im Schadensaufstellungs-Schritt des Wizards:
@@ -23,7 +24,7 @@ class DamageListingForm extends StatefulWidget {
 }
 
 class _DamageListingFormState extends State<DamageListingForm> {
-  late final List<_DamageItemControllers> _items;
+  late final List<DamageItemControllers> _items;
   late final TextEditingController _gebuehrensatzController;
   late final TextEditingController _geschaeftsgebuehrOverrideController;
   late final TextEditingController _auslagenpauschaleOverrideController;
@@ -46,10 +47,10 @@ class _DamageListingFormState extends State<DamageListingForm> {
           : '',
     );
     _items = initial == null || initial.items.isEmpty
-        ? [_DamageItemControllers()]
+        ? [DamageItemControllers()]
         : [
             for (final item in initial.items)
-              _DamageItemControllers(
+              DamageItemControllers(
                 description: item.description,
                 amount: _formatNumber(item.amount),
               ),
@@ -121,7 +122,7 @@ class _DamageListingFormState extends State<DamageListingForm> {
             icon: const Icon(Icons.add),
             label: const Text('Position hinzufügen'),
             onPressed: () {
-              setState(() => _items.add(_DamageItemControllers()));
+              setState(() => _items.add(DamageItemControllers()));
             },
           ),
         ),
@@ -218,19 +219,5 @@ class _DamageListingFormState extends State<DamageListingForm> {
       text = text.substring(0, text.length - 1);
     }
     return text;
-  }
-}
-
-class _DamageItemControllers {
-  final TextEditingController description;
-  final TextEditingController amount;
-
-  _DamageItemControllers({String? description, String? amount})
-    : description = TextEditingController(text: description),
-      amount = TextEditingController(text: amount);
-
-  void dispose() {
-    description.dispose();
-    amount.dispose();
   }
 }
