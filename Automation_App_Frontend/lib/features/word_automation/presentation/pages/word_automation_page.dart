@@ -89,6 +89,12 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
         BlocListener<EditedDocumentBloc, EditedDocumentState>(
           listener: (context, state) {
             switch (state) {
+              // Die Ablage schwenkt nur den Pfad auf die Kopie in der Akte um
+              // — erzeugt wurde nichts. Weder zurück ins Begutachten springen
+              // noch ein zweites Mal in den Vorgang zurückfließen: der Anwalt
+              // bleibt im Speicherschritt, wo er gerade abgelegt hat (§4.6).
+              case EditedDocumentLoaded(inAkteAbgelegt: true):
+                break;
               case EditedDocumentLoaded():
                 context.read<WizardCubit>().goToStep(WizardStep.review);
                 context.read<ResultPdfPreviewBloc>().add(
