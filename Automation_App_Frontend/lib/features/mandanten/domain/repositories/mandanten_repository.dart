@@ -32,8 +32,8 @@ abstract class MandantenRepository {
   });
 
   /// Legt ein fertiges Dokument in der Akte ab (§6.1): Akten-Ordner bei Bedarf
-  /// anlegen, Unterordner anlegen, Datei hineinkopieren. Verknüpft den
-  /// Ordner mit dem Mandanten und gibt den Zielpfad der Kopie zurück.
+  /// anlegen, Unterordner anlegen, Dateien hineinkopieren. Verknüpft den
+  /// Ordner mit dem Mandanten und gibt die Zielpfade der Kopien zurück.
   Future<Either<Failure, AblageErgebnis>> legeDokumentAb(
     LegeDokumentAbParams params,
   );
@@ -51,8 +51,10 @@ class LegeDokumentAbParams {
   /// Name des Unterordners (Fall), z. B. „Unfall v. 12.05.2019".
   final String unterordnerName;
 
-  /// Pfad der Quelldatei (die Arbeitskopie im Arbeitsordner des Vorgangs).
-  final String quelldateiPfad;
+  /// Pfade der Quelldateien: alle Fassungen desselben Schreibens (Word, PDF
+  /// oder beide), üblicherweise die Arbeitskopien im Arbeitsordner des
+  /// Vorgangs. Sie werden als ein Vorgang abgelegt — siehe [AblageErgebnis].
+  final List<String> quelldateiPfade;
 
   /// Was geschehen soll, wenn im Fall-Ordner bereits eine gleichnamige Datei
   /// liegt. Standard: nicht überschreiben, sondern zurückfragen.
@@ -62,7 +64,7 @@ class LegeDokumentAbParams {
     required this.mandantId,
     required this.aktenOrdnername,
     required this.unterordnerName,
-    required this.quelldateiPfad,
+    required this.quelldateiPfade,
     this.strategie = AblageStrategie.fragen,
   });
 
@@ -73,7 +75,7 @@ class LegeDokumentAbParams {
         mandantId: mandantId,
         aktenOrdnername: aktenOrdnername,
         unterordnerName: unterordnerName,
-        quelldateiPfad: quelldateiPfad,
+        quelldateiPfade: quelldateiPfade,
         strategie: strategie,
       );
 }

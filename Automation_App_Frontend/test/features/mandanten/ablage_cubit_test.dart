@@ -15,8 +15,8 @@ const String _fallOrdner = r'C:\Akten\Mustermann\Unfall';
 const String _wordQuelle = r'C:\App\Generated\Arbeit\84-26 C03\Brief.docx';
 const String _pdfQuelle = r'C:\App\Generated\Arbeit\84-26 C03\Brief.pdf';
 
-/// Legt ab, was ihm gereicht wird — und meldet für jeden Pfad in
-/// [vorhandene] eine Rückfrage, solange keine Strategie mitkommt.
+/// Legt ab, was ihm gereicht wird — und meldet eine Rückfrage, sobald eine der
+/// Zieldateien in [vorhandene] steht und keine Strategie mitkommt.
 class _FakeLegeDokumentAb
     implements UseCase<AblageErgebnis, LegeDokumentAbParams> {
   final Set<String> vorhandene;
@@ -29,31 +29,18 @@ class _FakeLegeDokumentAb
     LegeDokumentAbParams params,
   ) async {
     aufrufe.add(params);
-    final name = params.quelldateiPfad.split(RegExp(r'[\\/]')).last;
-    final ziel = '$_fallOrdner\\$name';
-    if (vorhandene.contains(ziel) &&
-        params.strategie == AblageStrategie.fragen) {
-      return Right(AblageErgebnis.konfliktMit(ziel));
+    final ziele = [
+      for (final quelle in params.quelldateiPfade)
+        '$_fallOrdner\\${quelle.split(RegExp(r'[\\/]')).last}',
+    ];
+    final belegt = [
+      for (final ziel in ziele)
+        if (vorhandene.contains(ziel)) ziel,
+    ];
+    if (belegt.isNotEmpty && params.strategie == AblageStrategie.fragen) {
+      return Right(AblageErgebnis.konfliktMit(belegt));
     }
-    return Right(AblageErgebnis.abgelegt(ziel));
-  }
-}
-
-class _FehlschlagendeAblage
-    implements UseCase<AblageErgebnis, LegeDokumentAbParams> {
-  final String scheitertAn;
-
-  _FehlschlagendeAblage(this.scheitertAn);
-
-  @override
-  Future<Either<Failure, AblageErgebnis>> call(
-    LegeDokumentAbParams params,
-  ) async {
-    if (params.quelldateiPfad.endsWith(scheitertAn)) {
-      return Left(LocalFailure(message: 'Quelldatei nicht gefunden'));
-    }
-    final name = params.quelldateiPfad.split(RegExp(r'[\\/]')).last;
-    return Right(AblageErgebnis.abgelegt('$_fallOrdner\\$name'));
+    return Right(AblageErgebnis.abgelegt(ziele));
   }
 }
 
@@ -99,7 +86,7 @@ Future<void> ablegen(AblageCubit cubit, List<String> quellen) =>
 
 void main() {
   test(
-    'legt beide Fassungen nacheinander ab und meldet beide Zielpfade',
+    'legt beide Fassungen in einem Zug ab und meldet beide Zielpfade',
     () async {
       final ablage = _FakeLegeDokumentAb();
       final cubit = cubitMit(ablage);
@@ -111,40 +98,40 @@ void main() {
         '$_fallOrdner\\Brief.docx',
         '$_fallOrdner\\Brief.pdf',
       ]);
-      // Reihenfolge zählt: die Word-Fassung zuerst, damit bei einer Rückfrage
-      // zur zweiten Datei die bearbeitbare schon in der Akte liegt.
-      expect(ablage.aufrufe.first.quelldateiPfad, _wordQuelle);
+      // Eine Anfrage fuer das ganze Schreiben, nicht eine je Datei: nur so kann
+      // der Anwalt einmal entscheiden und beide Fassungen behalten den Namen.
+      expect(ablage.aufrufe, hasLength(1));
     },
   );
 
-  test('hält bei der Datei an, die schon in der Akte liegt', () async {
-    final ablage = _FakeLegeDokumentAb(vorhandene: {'$_fallOrdner\\Brief.pdf'});
-    final cubit = cubitMit(ablage);
+  test('meldet den Konflikt fuer das ganze Schreiben', () async {
+    final cubit = cubitMit(
+      _FakeLegeDokumentAb(vorhandene: {'$_fallOrdner\\Brief.pdf'}),
+    );
 
     await ablegen(cubit, [_wordQuelle, _pdfQuelle]);
 
     expect(cubit.state.status, AblageStatus.konflikt);
-    expect(cubit.state.konfliktPfad, '$_fallOrdner\\Brief.pdf');
+    expect(cubit.state.konfliktPfade, ['$_fallOrdner\\Brief.pdf']);
+    // Vor der Entscheidung ist nichts geschrieben — auch die Word-Fassung
+    // nicht, die fuer sich genommen gepasst haette.
+    expect(cubit.state.zielpfade, isEmpty);
   });
 
-  test(
-    'nach dem Abbruch der Rückfrage bleibt die erste Fassung abgelegt',
-    () async {
-      final cubit = cubitMit(
-        _FakeLegeDokumentAb(vorhandene: {'$_fallOrdner\\Brief.pdf'}),
-      );
-      await ablegen(cubit, [_wordQuelle, _pdfQuelle]);
+  test('nach dem Abbruch bleibt die Akte unveraendert', () async {
+    final cubit = cubitMit(
+      _FakeLegeDokumentAb(vorhandene: {'$_fallOrdner\\Brief.pdf'}),
+    );
+    await ablegen(cubit, [_wordQuelle, _pdfQuelle]);
 
-      cubit.konfliktAbbrechen();
+    cubit.konfliktAbbrechen();
 
-      // Die Word-Fassung liegt in der Akte — das darf der Wizard nicht
-      // uebersehen, sonst bleibt der Vorgang auf „erstellt" stehen.
-      expect(cubit.state.status, AblageStatus.erfolg);
-      expect(cubit.state.zielpfade, ['$_fallOrdner\\Brief.docx']);
-    },
-  );
+    expect(cubit.state.status, AblageStatus.ready);
+    expect(cubit.state.zielpfade, isEmpty);
+    expect(cubit.state.konfliktPfade, isEmpty);
+  });
 
-  test('konfliktLoesen legt die zurückgestellte Fassung doch ab', () async {
+  test('konfliktLoesen legt beide Fassungen doch ab', () async {
     final cubit = cubitMit(
       _FakeLegeDokumentAb(vorhandene: {'$_fallOrdner\\Brief.pdf'}),
     );
@@ -157,14 +144,5 @@ void main() {
       '$_fallOrdner\\Brief.docx',
       '$_fallOrdner\\Brief.pdf',
     ]);
-  });
-
-  test('scheitert die zweite Fassung, nennt die Meldung die erste', () async {
-    final cubit = cubitMit(_FehlschlagendeAblage('.pdf'));
-
-    await ablegen(cubit, [_wordQuelle, _pdfQuelle]);
-
-    expect(cubit.state.status, AblageStatus.fehler);
-    expect(cubit.state.message, contains('Brief.docx'));
   });
 }

@@ -30,11 +30,11 @@ Endpunkt, sie kommen direkt aus dem Dateisystem.
   der Ablage arbeitet, muss beide Seiten zusammenhalten.
 - Die Ablage-Oberfläche liegt nicht hier, sondern in `word_automation` (`akten_ablage_section.dart`) —
   hier liegen nur `AblageCubit` und UseCase; auch Formatwahl und Fall-Ordnername entstehen dort.
-- `ablegenFuerMandant` nimmt **mehrere** Quelldateien (Word- und PDF-Fassung desselben Schreibens) und
-  legt sie nacheinander ab; `zielpfade` sammelt, was wirklich in der Akte gelandet ist.
-- Liegt im Fall-Ordner schon eine gleichnamige Datei, **schreibt die Ablage nicht**, sondern hält bei
-  dieser Datei an: `AblageErgebnis.konfliktMit` → `AblageStatus.konflikt`, der Cubit merkt sich die offene
-  Anfrage, die Oberfläche fragt und ruft `konfliktLoesen`/`konfliktAbbrechen`. Ein Abbruch lässt die schon
-  abgelegten Dateien stehen und meldet sie als Erfolg. Sonst ersetzt `File.copy` die Akte still.
+- Eine Ablage umfasst **alle Fassungen eines Schreibens** (Word, PDF oder beide) und gelingt oder scheitert
+  als Ganzes: `quelldateiPfade` hinein, `zielpfade` heraus. Einzeln entschieden liefen die Namen auseinander.
+- Liegt im Fall-Ordner schon eine gleichnamige Datei, **schreibt die Ablage nichts**, sondern meldet die
+  vorhandenen zurück: `AblageErgebnis.konfliktMit` → `AblageStatus.konflikt`; der Cubit merkt sich die
+  offene Anfrage, die Oberfläche fragt **einmal** und ruft `konfliktLoesen`/`konfliktAbbrechen`. „Beide
+  behalten" nummeriert alle Fassungen gemeinsam. Sonst ersetzt `File.copy` die Akte still.
 - Gleicher Vor- und Nachname ergibt beim Anlegen/Ändern ein 409 des Backends, das als `MandantException`
   ankommt. `MandantErkennung` bleibt davon unabhängig reiner Vorschlag — die Übernahme ist ein Klick.

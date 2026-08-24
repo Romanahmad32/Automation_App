@@ -219,7 +219,7 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
           } else if (state.status == AblageStatus.ready) {
             _mandantVorbelegen(state.mandanten);
           } else if (state.status == AblageStatus.konflikt) {
-            klaereAblageKonflikt(context, state.konfliktPfad!);
+            klaereAblageKonflikt(context, state.konfliktPfade);
           } else if (state.status == AblageStatus.erfolg) {
             schliesseAblageAb(
               context,

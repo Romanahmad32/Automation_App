@@ -99,7 +99,7 @@ class MandantenRepositoryImpl implements MandantenRepository {
         stammordner: stammordner,
         ordnername: params.aktenOrdnername,
         unterordnerName: params.unterordnerName,
-        quelldateiPfad: params.quelldateiPfad,
+        quelldateiPfade: params.quelldateiPfade,
         strategie: params.strategie,
       );
       // Register und Dateisystem in Einklang halten: den (ggf. neu angelegten)
