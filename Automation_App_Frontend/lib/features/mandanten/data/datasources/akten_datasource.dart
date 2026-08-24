@@ -65,17 +65,20 @@ class FilesystemAktenDatasource {
     return faelle;
   }
 
-  /// Legt [quelldateiPfad] in `<stammordner>/<ordnername>/<unterordnerName>/`
-  /// ab. Akten- und Unterordner werden bei Bedarf angelegt.
+  /// Legt [quelldateiPfade] — alle Fassungen **eines** Schreibens — in
+  /// `<stammordner>/<ordnername>/<unterordnerName>/` ab. Akten- und
+  /// Unterordner werden bei Bedarf angelegt.
   ///
-  /// Liegt dort bereits eine gleichnamige Datei, entscheidet [strategie]. Der
-  /// Standard schreibt **nicht** und meldet den Konflikt zurück: in der Akte
-  /// steht die verbindliche Fassung, und `File.copy` ersetzt sie kommentarlos.
+  /// Liegt dort schon eine gleichnamige Datei, entscheidet [strategie], und
+  /// zwar für den ganzen Satz auf einmal: Der Standard schreibt **nichts** und
+  /// meldet die vorhandenen Dateien zurück (in der Akte steht die verbindliche
+  /// Fassung, und `File.copy` ersetzt sie kommentarlos), `beideBehalten`
+  /// nummeriert alle Fassungen gemeinsam.
   Future<AblageErgebnis> legeDokumentAb({
     required String stammordner,
     required String ordnername,
     required String unterordnerName,
-    required String quelldateiPfad,
+    required List<String> quelldateiPfade,
     AblageStrategie strategie = AblageStrategie.fragen,
   }) async {
     final basis = stammordner.trim();
@@ -87,9 +90,10 @@ class FilesystemAktenDatasource {
     if (!await Directory(basis).exists()) {
       throw MandantException('Stammordner existiert nicht: $basis');
     }
-    final quelle = File(quelldateiPfad);
-    if (!await quelle.exists()) {
-      throw MandantException('Quelldatei nicht gefunden: $quelldateiPfad');
+    for (final pfad in quelldateiPfade) {
+      if (!await File(pfad).exists()) {
+        throw MandantException('Quelldatei nicht gefunden: $pfad');
+      }
     }
 
     final unterordner = Directory(
@@ -97,44 +101,73 @@ class FilesystemAktenDatasource {
     );
     await unterordner.create(recursive: true);
 
-    var ziel = _join(unterordner.path, _basename(quelldateiPfad));
     // Erneut abgelegt, ohne den Ordner zu wechseln: die Datei liegt bereits
     // dort, wo sie hinsoll. Ein copy() auf sich selbst wäre ein Fehler, kein
     // Fortschritt — möglich, seit der Wizard nach der Ablage mit der Kopie in
-    // der Akte weiterarbeitet.
-    if (_gleicherPfad(quelldateiPfad, ziel)) {
-      return AblageErgebnis.abgelegt(ziel);
+    // der Akte weiterarbeitet. Solche Dateien sind fertig und bleiben aus der
+    // Konflikt- und Nummernrechnung heraus.
+    final schonAmPlatz = <String>[];
+    final zuKopieren = <String>[];
+    for (final quelle in quelldateiPfade) {
+      final ziel = _join(unterordner.path, _basename(quelle));
+      (_gleicherPfad(quelle, ziel) ? schonAmPlatz : zuKopieren).add(quelle);
     }
 
-    if (await File(ziel).exists()) {
+    var ziele = [
+      for (final quelle in zuKopieren)
+        _join(unterordner.path, _basename(quelle)),
+    ];
+    final vorhanden = [
+      for (final ziel in ziele)
+        if (await File(ziel).exists()) ziel,
+    ];
+
+    if (vorhanden.isNotEmpty) {
       switch (strategie) {
         case AblageStrategie.fragen:
-          return AblageErgebnis.konfliktMit(ziel);
+          return AblageErgebnis.konfliktMit(vorhanden);
         case AblageStrategie.beideBehalten:
-          ziel = await _naechsterFreierPfad(ziel);
+          ziele = await _naechsterFreierSatz(ziele);
         case AblageStrategie.ersetzen:
           break;
       }
     }
 
-    await quelle.copy(ziel);
-    return AblageErgebnis.abgelegt(ziel);
+    for (var i = 0; i < zuKopieren.length; i++) {
+      await File(zuKopieren[i]).copy(ziele[i]);
+    }
+    return AblageErgebnis.abgelegt([...schonAmPlatz, ...ziele]);
   }
 
-  /// „Brief.docx" → „Brief (2).docx", „Brief (3).docx" … — der erste Name, unter
-  /// dem noch nichts liegt. Nur für [AblageStrategie.beideBehalten]: hier ist
-  /// die Zweitfassung ausdrücklich gewollt.
-  Future<String> _naechsterFreierPfad(String pfad) async {
+  /// „Brief.docx" + „Brief.pdf" → „Brief (2).docx" + „Brief (2).pdf" — die
+  /// erste Nummer, unter der **keines** der Ziele belegt ist. Nur für
+  /// [AblageStrategie.beideBehalten]: hier ist die Zweitfassung ausdrücklich
+  /// gewollt.
+  ///
+  /// Eine gemeinsame Nummer, weil die Fassungen zusammengehören: getrennt
+  /// gezählt hieße die Word-Datei „(2)" und das PDF gar nichts, und niemand
+  /// sähe ihnen noch an, dass sie dasselbe Schreiben sind.
+  Future<List<String>> _naechsterFreierSatz(List<String> ziele) async {
+    for (var nummer = 2; ; nummer++) {
+      final kandidaten = [for (final ziel in ziele) _mitNummer(ziel, nummer)];
+      var frei = true;
+      for (final kandidat in kandidaten) {
+        if (await File(kandidat).exists()) {
+          frei = false;
+          break;
+        }
+      }
+      if (frei) return kandidaten;
+    }
+  }
+
+  String _mitNummer(String pfad, int nummer) {
     final name = _basename(pfad);
     final ordner = pfad.substring(0, pfad.length - name.length);
     final punkt = name.lastIndexOf('.');
     final stamm = punkt <= 0 ? name : name.substring(0, punkt);
     final endung = punkt <= 0 ? '' : name.substring(punkt);
-
-    for (var nummer = 2; ; nummer++) {
-      final kandidat = '$ordner$stamm ($nummer)$endung';
-      if (!await File(kandidat).exists()) return kandidat;
-    }
+    return '$ordner$stamm ($nummer)$endung';
   }
 
   String _join(String a, String b) {

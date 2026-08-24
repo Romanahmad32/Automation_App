@@ -28,14 +28,6 @@ class AblageCubit extends Cubit<AblageState> {
   /// geändert haben, entschieden hat der Anwalt aber über *diese* Ablage.
   LegeDokumentAbParams? _offeneAblage;
 
-  /// Was von der laufenden Ablage noch aussteht. Eine Ablage kann mehrere
-  /// Dateien umfassen (Word und PDF derselben Fassung); sie laufen
-  /// nacheinander, damit jede ihre eigene Rückfrage bekommen kann.
-  final List<LegeDokumentAbParams> _warteschlange = [];
-
-  /// Was von der laufenden Ablage bereits in der Akte liegt.
-  final List<String> _abgelegt = [];
-
   AblageCubit(
     this._getMandanten,
     this._getAkten,
@@ -47,15 +39,13 @@ class AblageCubit extends Cubit<AblageState> {
   Future<void> laden() async {
     // Auch der Weg zurück aus einer fertigen Ablage („Erneut ablegen"): das
     // Ergebnis der vorigen gehört dann nicht mehr in den Zustand.
-    _warteschlange.clear();
-    _abgelegt.clear();
     _offeneAblage = null;
     emit(
       state.copyWith(
         status: AblageStatus.loading,
         message: () => null,
         zielpfade: const [],
-        konfliktPfad: () => null,
+        konfliktPfade: const [],
       ),
     );
 
@@ -88,12 +78,12 @@ class AblageCubit extends Cubit<AblageState> {
   }
 
   /// Ablage für einen bestehenden Mandanten. [quelldateiPfade] sind die
-  /// Fassungen, die in denselben Fall-Ordner sollen (Word, PDF oder beide) —
-  /// sie werden der Reihe nach abgelegt, deshalb die bearbeitbare zuerst.
+  /// Fassungen desselben Schreibens (Word, PDF oder beide); sie gehen als ein
+  /// Vorgang in denselben Fall-Ordner.
   ///
-  /// Liegt im Fall-Ordner schon eine gleichnamige Datei, hält die Ablage bei
-  /// dieser Datei in [AblageStatus.konflikt] an; die Oberfläche fragt nach und
-  /// ruft [konfliktLoesen] bzw. [konfliktAbbrechen].
+  /// Liegt dort schon eine gleichnamige Datei, endet der Aufruf in
+  /// [AblageStatus.konflikt] — geschrieben ist dann **nichts**; die Oberfläche
+  /// fragt nach und ruft [konfliktLoesen] bzw. [konfliktAbbrechen].
   Future<void> ablegenFuerMandant({
     required int mandantId,
     required String aktenOrdnername,
@@ -102,19 +92,6 @@ class AblageCubit extends Cubit<AblageState> {
     AblageStrategie strategie = AblageStrategie.fragen,
   }) async {
     if (quelldateiPfade.isEmpty) return;
-    _abgelegt.clear();
-    _warteschlange
-      ..clear()
-      ..addAll([
-        for (final pfad in quelldateiPfade)
-          LegeDokumentAbParams(
-            mandantId: mandantId,
-            aktenOrdnername: aktenOrdnername,
-            unterordnerName: unterordnerName,
-            quelldateiPfad: pfad,
-            strategie: strategie,
-          ),
-      ]);
     emit(
       state.copyWith(
         status: AblageStatus.filing,
@@ -122,7 +99,15 @@ class AblageCubit extends Cubit<AblageState> {
         zielpfade: const [],
       ),
     );
-    await _naechsteQuelle();
+    await _ablegen(
+      LegeDokumentAbParams(
+        mandantId: mandantId,
+        aktenOrdnername: aktenOrdnername,
+        unterordnerName: unterordnerName,
+        quelldateiPfade: quelldateiPfade,
+        strategie: strategie,
+      ),
+    );
   }
 
   /// Zweiter Anlauf nach der Rückfrage, mit der Entscheidung des Anwalts.
@@ -133,21 +118,12 @@ class AblageCubit extends Cubit<AblageState> {
     await _ablegen(offen.mitStrategie(strategie));
   }
 
-  /// Der Anwalt hat die Rückfrage abgebrochen: für *diese* Datei wurde nichts
-  /// geschrieben, und die noch ausstehenden entfallen. Was vorher schon in der
-  /// Akte gelandet ist, bleibt dort — und wird als Erfolg gemeldet, damit der
-  /// Wizard es nicht übersieht.
+  /// Der Anwalt hat die Rückfrage abgebrochen: zurück zur Auswahl, ohne dass
+  /// etwas geschrieben wurde — auch keine der weiteren Fassungen.
   void konfliktAbbrechen() {
     if (state.status != AblageStatus.konflikt) return;
     _offeneAblage = null;
-    _warteschlange.clear();
-    emit(
-      state.copyWith(
-        status: _abgelegt.isEmpty ? AblageStatus.ready : AblageStatus.erfolg,
-        zielpfade: List.of(_abgelegt),
-        konfliktPfad: () => null,
-      ),
-    );
+    emit(state.copyWith(status: AblageStatus.ready, konfliktPfade: const []));
   }
 
   /// Legt einen neuen Mandanten an und nimmt ihn in die Auswahl auf. Gibt den
@@ -170,22 +146,6 @@ class AblageCubit extends Cubit<AblageState> {
     }
   }
 
-  /// Nimmt sich die nächste ausstehende Quelldatei vor — oder meldet Erfolg,
-  /// wenn alle in der Akte liegen.
-  Future<void> _naechsteQuelle() async {
-    if (_warteschlange.isEmpty) {
-      emit(
-        state.copyWith(
-          status: AblageStatus.erfolg,
-          zielpfade: List.of(_abgelegt),
-          konfliktPfad: () => null,
-        ),
-      );
-      return;
-    }
-    await _ablegen(_warteschlange.removeAt(0));
-  }
-
   Future<void> _ablegen(LegeDokumentAbParams params) async {
     final result = await _legeDokumentAb(params);
     switch (result) {
@@ -194,24 +154,23 @@ class AblageCubit extends Cubit<AblageState> {
         emit(
           state.copyWith(
             status: AblageStatus.konflikt,
-            konfliktPfad: () => ergebnis.zielpfad,
+            konfliktPfade: ergebnis.konfliktPfade,
           ),
         );
       case Right(value: final ergebnis):
         _offeneAblage = null;
-        _abgelegt.add(ergebnis.zielpfad);
-        await _naechsteQuelle();
+        emit(
+          state.copyWith(
+            status: AblageStatus.erfolg,
+            zielpfade: ergebnis.zielpfade,
+            konfliktPfade: const [],
+          ),
+        );
       case Left(value: final failure):
-        // Was schon in der Akte liegt, bleibt dort — das gehört in die
-        // Meldung, sonst legt der Anwalt es ein zweites Mal ab.
-        _warteschlange.clear();
-        final bereits = _abgelegt.isEmpty
-            ? ''
-            : ' Bereits abgelegt: ${_abgelegt.join(', ')}.';
         emit(
           state.copyWith(
             status: AblageStatus.fehler,
-            message: () => '${failure.message}$bereits',
+            message: () => failure.message,
           ),
         );
     }

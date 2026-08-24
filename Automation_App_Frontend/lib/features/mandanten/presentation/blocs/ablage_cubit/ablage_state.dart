@@ -18,9 +18,9 @@ class AblageState extends Equatable {
   /// dem Erfolg leer.
   final List<String> zielpfade;
 
-  /// Bei [AblageStatus.konflikt] der Pfad der bereits vorhandenen Datei, über
-  /// die der Anwalt gerade entscheidet; sonst null.
-  final String? konfliktPfad;
+  /// Bei [AblageStatus.konflikt] die bereits vorhandenen Dateien, über die der
+  /// Anwalt gerade entscheidet; sonst leer. Geschrieben ist dann nichts.
+  final List<String> konfliktPfade;
 
   /// Fehlermeldung.
   final String? message;
@@ -31,7 +31,7 @@ class AblageState extends Equatable {
     this.mandanten = const [],
     this.akten = const [],
     this.zielpfade = const [],
-    this.konfliktPfad,
+    this.konfliktPfade = const [],
     this.message,
   });
 
@@ -43,7 +43,7 @@ class AblageState extends Equatable {
     List<Mandant>? mandanten,
     List<Akte>? akten,
     List<String>? zielpfade,
-    String? Function()? konfliktPfad,
+    List<String>? konfliktPfade,
     String? Function()? message,
   }) {
     return AblageState(
@@ -52,7 +52,7 @@ class AblageState extends Equatable {
       mandanten: mandanten ?? this.mandanten,
       akten: akten ?? this.akten,
       zielpfade: zielpfade ?? this.zielpfade,
-      konfliktPfad: konfliktPfad != null ? konfliktPfad() : this.konfliktPfad,
+      konfliktPfade: konfliktPfade ?? this.konfliktPfade,
       message: message != null ? message() : this.message,
     );
   }
@@ -64,7 +64,7 @@ class AblageState extends Equatable {
     mandanten,
     akten,
     zielpfade,
-    konfliktPfad,
+    konfliktPfade,
     message,
   ];
 }

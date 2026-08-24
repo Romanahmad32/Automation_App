@@ -60,16 +60,15 @@ Future<void> starteAblage(
   );
 }
 
-/// Im Fall-Ordner liegt schon eine gleichnamige Datei: entscheiden lassen und
+/// Im Fall-Ordner liegen schon gleichnamige Dateien: entscheiden lassen und
 /// die Antwort an den [AblageCubit] zurückgeben. Ein Abbruch lässt die Akte
-/// unverändert; bei einer Ablage aus mehreren Fassungen entfallen damit auch
-/// die noch ausstehenden.
+/// unverändert — geschrieben wurde zu diesem Zeitpunkt noch nichts.
 Future<void> klaereAblageKonflikt(
   BuildContext context,
-  String vorhandenerPfad,
+  List<String> vorhandenePfade,
 ) async {
   final cubit = context.read<AblageCubit>();
-  final strategie = await frageAblageKonflikt(context, vorhandenerPfad);
+  final strategie = await frageAblageKonflikt(context, vorhandenePfade);
   if (strategie == null) {
     cubit.konfliktAbbrechen();
     return;
@@ -77,12 +76,12 @@ Future<void> klaereAblageKonflikt(
   await cubit.konfliktLoesen(strategie);
 }
 
-/// Rückfrage, wenn im Fall-Ordner bereits eine gleichnamige Datei liegt (§6.1).
+/// Rückfrage, wenn im Fall-Ordner bereits gleichnamige Dateien liegen (§6.1).
 /// Null = abgebrochen; dann bleibt die Akte unverändert.
 Future<AblageStrategie?> frageAblageKonflikt(
   BuildContext context,
-  String vorhandenerPfad,
+  List<String> vorhandenePfade,
 ) => showDialog<AblageStrategie>(
   context: context,
-  builder: (_) => AblageKonfliktDialog(vorhandenerPfad: vorhandenerPfad),
+  builder: (_) => AblageKonfliktDialog(vorhandenePfade: vorhandenePfade),
 );
