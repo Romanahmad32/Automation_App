@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:automation_app/core/general_classes/failures/failure.dart';
@@ -71,6 +72,29 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
     } catch (e) {
       return Left(ServerFailure(message: ausnahmeText(e)));
     }
+  }
+
+  @override
+  Future<Either<Failure, String>> erzeugePdfFassung(String docxFilePath) async {
+    try {
+      final bytes = await datasource.convertDocxToPdf(docxFilePath);
+      final ziel = _pdfPfadNeben(docxFilePath);
+      await File(ziel).writeAsBytes(bytes, flush: true);
+      return Right(ziel);
+    } catch (e) {
+      return Left(ServerFailure(message: ausnahmeText(e)));
+    }
+  }
+
+  /// Derselbe Pfad mit `.pdf` statt der bisherigen Endung — gleicher Ordner,
+  /// gleicher Name. So gehören Word- und PDF-Fassung in der Akte sichtbar
+  /// zusammen.
+  String _pdfPfadNeben(String docxFilePath) {
+    final punkt = docxFilePath.lastIndexOf('.');
+    final trenner = docxFilePath.lastIndexOf(RegExp(r'[\\/]'));
+    // Ein Punkt im Ordnernamen ist keine Dateiendung.
+    if (punkt <= trenner) return '$docxFilePath.pdf';
+    return '${docxFilePath.substring(0, punkt)}.pdf';
   }
 
   @override

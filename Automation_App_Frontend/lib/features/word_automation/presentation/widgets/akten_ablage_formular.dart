@@ -1,4 +1,6 @@
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/word_automation/domain/entities/ablage_format.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/ablage_format_auswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/akte_auswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/mandant_auswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/unterordner_auswahl.dart';
@@ -20,6 +22,10 @@ class AktenAblageFormular extends StatelessWidget {
   final TextEditingController datumController;
   final TextEditingController kennzeichenController;
   final String vorschau;
+
+  /// Welche Fassungen in die Akte gehen (Word, PDF oder beide).
+  final AblageFormat format;
+
   final bool isFiling;
   final ValueChanged<Mandant> onWaehleMandant;
   final VoidCallback onNeuerMandant;
@@ -28,6 +34,7 @@ class AktenAblageFormular extends StatelessWidget {
   final VoidCallback onNeueAkteTextChanged;
   final ValueChanged<String?> onFallDropdownChanged;
   final VoidCallback onUnterordnerTextChanged;
+  final ValueChanged<AblageFormat> onFormatChanged;
   final VoidCallback onAblegen;
 
   const AktenAblageFormular({
@@ -44,6 +51,7 @@ class AktenAblageFormular extends StatelessWidget {
     required this.datumController,
     required this.kennzeichenController,
     required this.vorschau,
+    required this.format,
     required this.isFiling,
     required this.onWaehleMandant,
     required this.onNeuerMandant,
@@ -52,6 +60,7 @@ class AktenAblageFormular extends StatelessWidget {
     required this.onNeueAkteTextChanged,
     required this.onFallDropdownChanged,
     required this.onUnterordnerTextChanged,
+    required this.onFormatChanged,
     required this.onAblegen,
   });
 
@@ -112,6 +121,8 @@ class AktenAblageFormular extends StatelessWidget {
             onDropdownChanged: onFallDropdownChanged,
             onTextChanged: onUnterordnerTextChanged,
           ),
+          const SizedBox(height: 16),
+          AblageFormatAuswahl(format: format, onChanged: onFormatChanged),
           const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: isFiling ? null : onAblegen,

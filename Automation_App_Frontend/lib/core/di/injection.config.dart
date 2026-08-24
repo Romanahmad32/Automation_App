@@ -167,6 +167,8 @@ import 'package:automation_app/features/word_automation/domain/usecases/calculat
     as _i430;
 import 'package:automation_app/features/word_automation/domain/usecases/convert_docx_to_pdf.dart'
     as _i324;
+import 'package:automation_app/features/word_automation/domain/usecases/erzeuge_pdf_fassung.dart'
+    as _i445;
 import 'package:automation_app/features/word_automation/domain/usecases/fill_out_template.dart'
     as _i649;
 import 'package:automation_app/features/word_automation/domain/usecases/get_vorlagen_uebersicht.dart'
@@ -339,6 +341,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i299.ErhoeheAuftragsnummer>(
       () => _i299.ErhoeheAuftragsnummer(gh<_i849.KanzleiSettingsRepository>()),
+    );
+    gh.factory<_i223.UseCase<String, _i445.ErzeugePdfFassungParams>>(
+      () => _i445.ErzeugePdfFassung(
+        repository: gh<_i770.WordAutomationRepository>(),
+      ),
     );
     gh.factory<_i1026.RvgCalculationBloc>(
       () => _i1026.RvgCalculationBloc(
