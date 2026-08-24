@@ -21,14 +21,21 @@ final class EditedDocumentLoaded extends EditedDocumentState {
   /// Null, wenn sie sich nicht lesen liess.
   final DateTime? erzeugtAm;
 
+  /// True, wenn dieser Zustand aus der Ablage stammt: dieselbe Fassung, nur an
+  /// ihrem Platz in der Akte. **Kein** neu erzeugtes Dokument — der Wizard
+  /// bleibt deshalb im Speicherschritt stehen, statt zum Begutachten zu
+  /// springen (§4.6).
+  final bool inAkteAbgelegt;
+
   const EditedDocumentLoaded(
     this.path, {
     this.warnings = const [],
     this.erzeugtAm,
+    this.inAkteAbgelegt = false,
   });
 
   @override
-  List<Object?> get props => [path, warnings, erzeugtAm];
+  List<Object?> get props => [path, warnings, erzeugtAm, inAkteAbgelegt];
 }
 
 final class EditedDocumentError extends EditedDocumentState {

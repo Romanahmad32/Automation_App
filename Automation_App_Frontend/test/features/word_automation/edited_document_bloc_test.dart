@@ -72,6 +72,25 @@ void main() {
     // liefe ins Leere. Die Warnungen der Erzeugung gelten weiter.
     expect(abgelegt.path, r'C:\Akten\Mustermann\Unfall\Brief.docx');
     expect(abgelegt.warnings, ['Unbekannt']);
+    // Daran erkennt die Seite, dass hier nichts erzeugt wurde: sonst schickt
+    // ihr Listener den Anwalt aus dem Speicherschritt zurück ins Begutachten.
+    expect(abgelegt.inAkteAbgelegt, isTrue);
+  });
+
+  test('ein frisch erzeugtes Dokument gilt nicht als abgelegt', () async {
+    final bloc = EditedDocumentBloc(_FakeFillOutTemplate());
+
+    bloc.add(
+      const EditDocumentEvent(
+        data: {'Name': 'Mustermann'},
+        path: r'C:\Vorlagen\VORLAGE HGN.docx',
+      ),
+    );
+    final erzeugt =
+        await bloc.stream.firstWhere((state) => state is EditedDocumentLoaded)
+            as EditedDocumentLoaded;
+
+    expect(erzeugt.inAkteAbgelegt, isFalse);
   });
 
   test('DokumentAbgelegtEvent ohne erzeugtes Dokument ändert nichts', () async {

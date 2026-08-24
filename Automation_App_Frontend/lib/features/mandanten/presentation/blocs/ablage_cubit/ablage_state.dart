@@ -13,9 +13,14 @@ class AblageState extends Equatable {
   final List<Mandant> mandanten;
   final List<Akte> akten;
 
-  /// Zielpfad in der Akte: nach Erfolg der der abgelegten Kopie, bei
-  /// [AblageStatus.konflikt] der der bereits vorhandenen Datei.
-  final String? zielpfad;
+  /// Die in der Akte abgelegten Dateien, in der Reihenfolge der Ablage — je
+  /// nach gewähltem Format die Word-Fassung, die PDF-Fassung oder beide. Vor
+  /// dem Erfolg leer.
+  final List<String> zielpfade;
+
+  /// Bei [AblageStatus.konflikt] die bereits vorhandenen Dateien, über die der
+  /// Anwalt gerade entscheidet; sonst leer. Geschrieben ist dann nichts.
+  final List<String> konfliktPfade;
 
   /// Fehlermeldung.
   final String? message;
@@ -25,7 +30,8 @@ class AblageState extends Equatable {
     this.stammordner = '',
     this.mandanten = const [],
     this.akten = const [],
-    this.zielpfad,
+    this.zielpfade = const [],
+    this.konfliktPfade = const [],
     this.message,
   });
 
@@ -36,7 +42,8 @@ class AblageState extends Equatable {
     String? stammordner,
     List<Mandant>? mandanten,
     List<Akte>? akten,
-    String? Function()? zielpfad,
+    List<String>? zielpfade,
+    List<String>? konfliktPfade,
     String? Function()? message,
   }) {
     return AblageState(
@@ -44,7 +51,8 @@ class AblageState extends Equatable {
       stammordner: stammordner ?? this.stammordner,
       mandanten: mandanten ?? this.mandanten,
       akten: akten ?? this.akten,
-      zielpfad: zielpfad != null ? zielpfad() : this.zielpfad,
+      zielpfade: zielpfade ?? this.zielpfade,
+      konfliktPfade: konfliktPfade ?? this.konfliktPfade,
       message: message != null ? message() : this.message,
     );
   }
@@ -55,7 +63,8 @@ class AblageState extends Equatable {
     stammordner,
     mandanten,
     akten,
-    zielpfad,
+    zielpfade,
+    konfliktPfade,
     message,
   ];
 }

@@ -79,8 +79,8 @@ void main() {
         stammordner: tempDir.path,
         ordnername: 'Neumandant Müller',
         unterordnerName: 'Unfall v. 01.01.2026',
-        quelldateiPfad: quelle.path,
-      )).zielpfad;
+        quelldateiPfade: [quelle.path],
+      )).zielpfade.single;
 
       expect(File(ziel).existsSync(), isTrue);
       expect(ziel, endsWith('quelle.docx'));
@@ -100,8 +100,8 @@ void main() {
         stammordner: tempDir.path,
         ordnername: 'Bestandsakte',
         unterordnerName: 'Fall 2',
-        quelldateiPfad: quelle.path,
-      )).zielpfad;
+        quelldateiPfade: [quelle.path],
+      )).zielpfade.single;
 
       expect(File(ziel).existsSync(), isTrue);
       // Es darf keine zweite Akte „Bestandsakte" entstehen.
@@ -115,7 +115,7 @@ void main() {
           stammordner: '',
           ordnername: 'X',
           unterordnerName: 'Y',
-          quelldateiPfad: quelle.path,
+          quelldateiPfade: [quelle.path],
         ),
         throwsA(isA<MandantException>()),
       );
@@ -132,7 +132,7 @@ void main() {
               stammordner: tempDir.path,
               ordnername: 'Akte',
               unterordnerName: 'Fall',
-              quelldateiPfad: quelle.path,
+              quelldateiPfade: [quelle.path],
               strategie: strategie ?? AblageStrategie.fragen,
             );
 
@@ -141,8 +141,9 @@ void main() {
         final zweite = await ablegen();
 
         expect(zweite.konflikt, isTrue);
-        expect(zweite.zielpfad, erste.zielpfad);
-        expect(File(erste.zielpfad).readAsStringSync(), 'inhalt');
+        expect(zweite.konfliktPfade, erste.zielpfade);
+        expect(zweite.zielpfade, isEmpty);
+        expect(File(erste.zielpfade.single).readAsStringSync(), 'inhalt');
       },
     );
 
@@ -152,7 +153,7 @@ void main() {
             stammordner: tempDir.path,
             ordnername: 'Akte',
             unterordnerName: 'Fall',
-            quelldateiPfad: quelle.path,
+            quelldateiPfade: [quelle.path],
             strategie: strategie,
           );
 
@@ -161,8 +162,8 @@ void main() {
       final zweite = await ablegen(AblageStrategie.ersetzen);
 
       expect(zweite.konflikt, isFalse);
-      expect(zweite.zielpfad, erste.zielpfad);
-      expect(File(zweite.zielpfad).readAsStringSync(), 'neuer inhalt');
+      expect(zweite.zielpfade, erste.zielpfade);
+      expect(File(zweite.zielpfade.single).readAsStringSync(), 'neuer inhalt');
     });
 
     test('behaelt auf Wunsch beide Fassungen nebeneinander', () async {
@@ -171,7 +172,7 @@ void main() {
             stammordner: tempDir.path,
             ordnername: 'Akte',
             unterordnerName: 'Fall',
-            quelldateiPfad: quelle.path,
+            quelldateiPfade: [quelle.path],
             strategie: strategie,
           );
 
@@ -179,9 +180,71 @@ void main() {
       quelle.writeAsStringSync('neuer inhalt');
       final zweite = await ablegen(AblageStrategie.beideBehalten);
 
-      expect(zweite.zielpfad, endsWith('quelle (2).docx'));
-      expect(File(erste.zielpfad).readAsStringSync(), 'inhalt');
-      expect(File(zweite.zielpfad).readAsStringSync(), 'neuer inhalt');
+      expect(zweite.zielpfade.single, endsWith('quelle (2).docx'));
+      expect(File(erste.zielpfade.single).readAsStringSync(), 'inhalt');
+      expect(File(zweite.zielpfade.single).readAsStringSync(), 'neuer inhalt');
+    });
+
+    /// Word-Fassung und PDF sind ein Schreiben. Einzeln entschieden hiesse die
+    /// eine „Brief (2).docx" und das andere „Brief.pdf" — niemand saehe ihnen
+    /// noch an, dass sie zusammengehoeren.
+    test('nummeriert beide Fassungen gemeinsam', () async {
+      final pdf = File('${tempDir.path}/quelle.pdf')
+        ..writeAsStringSync('pdf-inhalt');
+      Future<AblageErgebnis> ablegen(AblageStrategie strategie) =>
+          datasource.legeDokumentAb(
+            stammordner: tempDir.path,
+            ordnername: 'Akte',
+            unterordnerName: 'Fall',
+            quelldateiPfade: [quelle.path, pdf.path],
+            strategie: strategie,
+          );
+
+      await ablegen(AblageStrategie.fragen);
+      final zweite = await ablegen(AblageStrategie.beideBehalten);
+
+      expect(zweite.zielpfade, hasLength(2));
+      expect(zweite.zielpfade[0], endsWith('quelle (2).docx'));
+      expect(zweite.zielpfade[1], endsWith('quelle (2).pdf'));
+    });
+
+    /// Auch wenn nur eine der beiden Fassungen schon dort liegt, wird einmal
+    /// gefragt — und die Nummer gilt danach fuer beide.
+    test('fragt einmal, wenn nur eine Fassung vorhanden ist', () async {
+      final pdf = File('${tempDir.path}/quelle.pdf')
+        ..writeAsStringSync('pdf-inhalt');
+      await datasource.legeDokumentAb(
+        stammordner: tempDir.path,
+        ordnername: 'Akte',
+        unterordnerName: 'Fall',
+        quelldateiPfade: [quelle.path],
+      );
+
+      final beide = await datasource.legeDokumentAb(
+        stammordner: tempDir.path,
+        ordnername: 'Akte',
+        unterordnerName: 'Fall',
+        quelldateiPfade: [quelle.path, pdf.path],
+      );
+
+      expect(beide.konfliktPfade, hasLength(1));
+      expect(beide.konfliktPfade.single, endsWith('quelle.docx'));
+      // Nichts geschrieben: auch das PDF wartet auf die Entscheidung.
+      expect(
+        File('${tempDir.path}/Akte/Fall/quelle.pdf').existsSync(),
+        isFalse,
+      );
+
+      final geloest = await datasource.legeDokumentAb(
+        stammordner: tempDir.path,
+        ordnername: 'Akte',
+        unterordnerName: 'Fall',
+        quelldateiPfade: [quelle.path, pdf.path],
+        strategie: AblageStrategie.beideBehalten,
+      );
+
+      expect(geloest.zielpfade[0], endsWith('quelle (2).docx'));
+      expect(geloest.zielpfade[1], endsWith('quelle (2).pdf'));
     });
 
     test('legt eine bereits abgelegte Datei nicht auf sich selbst', () async {
@@ -189,7 +252,7 @@ void main() {
         stammordner: tempDir.path,
         ordnername: 'Akte',
         unterordnerName: 'Fall',
-        quelldateiPfad: quelle.path,
+        quelldateiPfade: [quelle.path],
       );
 
       // Nach der Ablage arbeitet der Wizard mit der Kopie in der Akte weiter —
@@ -198,12 +261,12 @@ void main() {
         stammordner: tempDir.path,
         ordnername: 'Akte',
         unterordnerName: 'Fall',
-        quelldateiPfad: erste.zielpfad,
+        quelldateiPfade: [erste.zielpfade.single],
       );
 
       expect(zweite.konflikt, isFalse);
-      expect(zweite.zielpfad, erste.zielpfad);
-      expect(File(zweite.zielpfad).readAsStringSync(), 'inhalt');
+      expect(zweite.zielpfade, erste.zielpfade);
+      expect(File(zweite.zielpfade.single).readAsStringSync(), 'inhalt');
     });
 
     test('wirft bei fehlender Quelldatei', () async {
@@ -212,7 +275,7 @@ void main() {
           stammordner: tempDir.path,
           ordnername: 'X',
           unterordnerName: 'Y',
-          quelldateiPfad: '${tempDir.path}/nicht_da.docx',
+          quelldateiPfade: ['${tempDir.path}/nicht_da.docx'],
         ),
         throwsA(isA<MandantException>()),
       );

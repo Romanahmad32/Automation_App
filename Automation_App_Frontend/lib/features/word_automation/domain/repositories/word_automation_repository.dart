@@ -26,6 +26,14 @@ abstract class WordAutomationRepository {
 
   Future<Either<Failure, Uint8List>> convertDocxToPdf(String docxFilePath);
 
+  /// Schreibt die PDF-Fassung von [docxFilePath] als Datei **neben** die
+  /// Word-Datei und liefert deren Pfad. Für die Ablage in der Akte (§6.1) —
+  /// die Vorschau kommt ohne Datei aus und nimmt [convertDocxToPdf].
+  ///
+  /// Im Arbeitsordner heißt das: die Aufräumung nach der Ablage nimmt das PDF
+  /// mit, es bleibt keine zweite Fassung liegen (§4.6).
+  Future<Either<Failure, String>> erzeugePdfFassung(String docxFilePath);
+
   /// Vorlagenordner des Anwenders samt Inhalt.
   Future<Either<Failure, VorlagenUebersicht>> getVorlagenUebersicht();
 
