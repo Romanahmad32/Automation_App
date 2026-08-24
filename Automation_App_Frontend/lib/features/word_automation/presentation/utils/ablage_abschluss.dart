@@ -1,43 +1,49 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
 import 'package:automation_app/features/word_automation/domain/usecases/arbeitsordner_aufraeumen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
-import 'package:automation_app/features/word_automation/presentation/widgets/ablage_konflikt_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Was nach der geglückten Ablage in der Akte zu tun ist (§4.6):
+/// Was nach der geglückten Ablage in der Akte zu tun ist (§4.6). [zielpfade]
+/// sind die abgelegten Fassungen — je nach Wahl des Anwalts die Word-Datei,
+/// das PDF oder beide.
 ///
 /// 1. Der Vorgang steht auf „abgelegt" und zeigt auf die abgelegte Datei
 ///    (nur vorwärts — ein bereits versendeter Vorgang fällt nicht zurück).
-/// 2. Der Wizard arbeitet ab hier mit der Datei **in der Akte** weiter.
+/// 2. Der Wizard arbeitet ab hier mit der Word-Datei **in der Akte** weiter.
 /// 3. Der Arbeitsordner des Vorgangs verschwindet. Ab jetzt ist die Kopie in
 ///    der Akte die gültige Fassung; die Zwischenstände der Korrekturschleife
 ///    haben ausgedient — genau darum darf Schritt 2 nicht fehlen.
+///
+/// Ohne Word-Fassung in der Akte (Ablage „nur PDF") entfallen 2. und 3.: die
+/// einzige bearbeitbare Fassung ist dann die Arbeitskopie, und die zu löschen
+/// hieße, sie ersatzlos wegzuwerfen.
 Future<void> schliesseAblageAb(
   BuildContext context, {
   required Vorgang? vorgang,
-  required String? zielpfad,
+  required List<String> zielpfade,
   required String aktenOrdner,
 }) async {
+  final wordPfad = pfadMitEndung(zielpfade, '.docx');
+  final abgelegterPfad = wordPfad ?? pfadMitEndung(zielpfade, '.pdf');
+
   if (vorgang != null && vorgang.status.index < VorgangStatus.abgelegt.index) {
     getIt<VorgangCubit>().aktualisiere(
       vorgang.copyWith(
         status: VorgangStatus.abgelegt,
-        dokumentPfad: zielpfad,
+        dokumentPfad: abgelegterPfad,
         aktenOrdner: aktenOrdner,
       ),
     );
   }
 
-  if (zielpfad != null) {
-    context.read<EditedDocumentBloc>().add(DokumentAbgelegtEvent(zielpfad));
-  }
+  if (wordPfad == null) return;
+  context.read<EditedDocumentBloc>().add(DokumentAbgelegtEvent(wordPfad));
 
   // Vor dem await greifen: danach kann der BuildContext weg sein.
   final messenger = ScaffoldMessenger.of(context);
@@ -61,12 +67,12 @@ Future<void> schliesseAblageAb(
   }
 }
 
-/// Rückfrage, wenn im Fall-Ordner bereits eine gleichnamige Datei liegt (§6.1).
-/// Null = abgebrochen; dann bleibt die Akte unverändert.
-Future<AblageStrategie?> frageAblageKonflikt(
-  BuildContext context,
-  String vorhandenerPfad,
-) => showDialog<AblageStrategie>(
-  context: context,
-  builder: (_) => AblageKonfliktDialog(vorhandenerPfad: vorhandenerPfad),
-);
+/// Der erste Pfad aus [pfade] mit der Endung [endung] (klein geschrieben
+/// verglichen), oder null. Damit unterscheidet der Wizard die abgelegten
+/// Fassungen, ohne sich merken zu müssen, in welcher Reihenfolge sie kamen.
+String? pfadMitEndung(List<String> pfade, String endung) {
+  for (final pfad in pfade) {
+    if (pfad.toLowerCase().endsWith(endung)) return pfad;
+  }
+  return null;
+}

@@ -2,15 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-/// Erfolgsanzeige nach erfolgter Akten-Ablage: zeigt den Zielpfad und erlaubt,
-/// die Datei im Explorer zu zeigen oder erneut abzulegen.
+/// Erfolgsanzeige nach erfolgter Akten-Ablage: zeigt die abgelegten Dateien
+/// (je nach gewähltem Format die Word-Fassung, das PDF oder beide) und erlaubt,
+/// sie im Explorer zu zeigen oder erneut abzulegen.
 class AblageErfolgAnzeige extends StatelessWidget {
-  final String zielpfad;
+  final List<String> zielpfade;
   final VoidCallback onErneut;
 
   const AblageErfolgAnzeige({
     super.key,
-    required this.zielpfad,
+    required this.zielpfade,
     required this.onErneut,
   });
 
@@ -23,23 +24,31 @@ class AblageErfolgAnzeige extends StatelessWidget {
         const Icon(Icons.check_circle, size: 64, color: Colors.green),
         const SizedBox(height: 16),
         Text(
-          'In der Akte abgelegt:',
+          zielpfade.length > 1
+              ? 'In der Akte abgelegt (${zielpfade.length} Dateien):'
+              : 'In der Akte abgelegt:',
           textAlign: TextAlign.center,
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
-        SelectableText(
-          zielpfad,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall,
-        ),
+        for (final pfad in zielpfade)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: SelectableText(
+              pfad,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
         const SizedBox(height: 16),
         Wrap(
           alignment: WrapAlignment.center,
           spacing: 12,
           children: [
             OutlinedButton.icon(
-              onPressed: () => _imExplorerZeigen(zielpfad),
+              onPressed: zielpfade.isEmpty
+                  ? null
+                  : () => _imExplorerZeigen(zielpfade.first),
               icon: const Icon(Icons.open_in_new),
               label: const Text('Im Explorer zeigen'),
             ),

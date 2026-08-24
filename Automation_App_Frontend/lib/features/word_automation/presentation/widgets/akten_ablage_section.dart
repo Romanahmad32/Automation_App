@@ -4,9 +4,12 @@ import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/word_automation/domain/entities/ablage_format.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/ablage_abschluss.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/ablage_durchfuehrung.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/akten_auswahl.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/fall_ordner_felder.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/mandant_vorauswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ablage_constants.dart';
@@ -19,7 +22,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Primärer Weg im Speicherschritt: das bestätigte Dokument in die Akte des
 /// Mandanten ablegen (§6.1). Wählt/legt Mandant, Akten-Ordner und Unterordner
-/// (Fall) und übergibt die Ablage an den [AblageCubit]. Was danach passiert —
+/// (Fall), lässt wählen, welche Fassungen dorthin sollen (Word, PDF oder
+/// beide), und übergibt die Ablage an [starteAblage]. Was danach passiert —
 /// Vorgang fortschalten, Arbeitsordner aufräumen — steht in
 /// [schliesseAblageAb].
 class AktenAblageSection extends StatefulWidget {
@@ -48,11 +52,16 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
   bool _neuerFall = true;
 
   final _neueAkteController = TextEditingController();
-  final _stichwortController = TextEditingController(text: 'Unfall');
-  final _datumController = TextEditingController();
-  final _kennzeichenController = TextEditingController();
+  final _fallFelder = FallOrdnerFelder();
 
-  bool _prefilled = false;
+  /// Welche Fassungen in die Akte gehen. Voreinstellung ist die Word-Datei:
+  /// die bearbeitbare Fassung, mit der der Assistent weiterarbeitet.
+  AblageFormat _format = AblageFormat.word;
+
+  /// Läuft gerade die PDF-Erzeugung? Sie geht der Ablage voraus, dauert
+  /// Sekunden und ist am Cubit noch nicht zu sehen — ohne diesen Riegel
+  /// klickt der Anwalt ein zweites Mal.
+  bool _pdfLaeuft = false;
 
   /// Automatische Mandanten-Vorauswahl aus dem Vorgang nur einmal versuchen,
   /// damit ein bewusstes „Ändern" des Nutzers nicht wieder überschrieben wird.
@@ -67,22 +76,18 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
   @override
   void dispose() {
     _neueAkteController.dispose();
-    _stichwortController.dispose();
-    _datumController.dispose();
-    _kennzeichenController.dispose();
+    _fallFelder.dispose();
     super.dispose();
   }
 
-  /// Belegt Datum/Kennzeichen einmalig aus den Formulardaten vor, sobald der
+  /// Belegt Datum/Kennzeichen aus den Formulardaten vor, sobald der
   /// Speicherschritt erreicht ist (dann liegen die Eingaben aus Schritt 1 vor).
   void _prefill() {
-    if (_prefilled) return;
-    _prefilled = true;
     final wizard = context.read<WizardCubit>().state;
-    final fields = wizard.selectedFormTemplate?.fields ?? const [];
-    final data = wizard.formData ?? const {};
-    _datumController.text = ursachendatumAusFormular(fields, data) ?? '';
-    _kennzeichenController.text = kennzeichenAusFormular(data) ?? '';
+    _fallFelder.vorbelegen(
+      wizard.selectedFormTemplate?.fields ?? const [],
+      wizard.formData ?? const {},
+    );
   }
 
   /// Frischester Stand des im Wizard gewählten Vorgangs — die Auswahl im
@@ -168,22 +173,11 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
     return _gewaehlteAkte ?? '';
   }
 
-  String _baueUnterordner() {
-    final stichwort = _stichwortController.text.trim().isEmpty
-        ? 'Unfall'
-        : _stichwortController.text.trim();
-    final datum = _datumController.text.trim();
-    final kennzeichen = _kennzeichenController.text.trim();
-    var name = stichwort;
-    if (datum.isNotEmpty) name += ' v. $datum';
-    if (kennzeichen.isNotEmpty) name += ' $kennzeichen';
-    return name;
-  }
+  String _unterordnerName() => _neuerFall
+      ? _fallFelder.ordnername
+      : (_gewaehlterFall ?? _fallFelder.ordnername);
 
-  String _unterordnerName() =>
-      _neuerFall ? _baueUnterordner() : (_gewaehlterFall ?? _baueUnterordner());
-
-  void _ablegen() {
+  Future<void> _ablegen() async {
     final mandant = _mandant;
     if (mandant == null) return;
     final ordner = _aktenOrdner();
@@ -196,25 +190,17 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
       _hinweis('Bitte einen Unterordner wählen oder anlegen.');
       return;
     }
-    context.read<AblageCubit>().ablegenFuerMandant(
+
+    setState(() => _pdfLaeuft = _format.mitPdf);
+    await starteAblage(
+      context,
       mandantId: mandant.id,
       aktenOrdnername: ordner,
       unterordnerName: unter,
-      quelldateiPfad: widget.outputPath,
+      wordPfad: widget.outputPath,
+      format: _format,
     );
-  }
-
-  /// In der Akte liegt schon eine gleichnamige Datei: entscheiden lassen und
-  /// mit der Antwort erneut ablegen. Die Anfrage selbst hat sich der Cubit
-  /// gemerkt.
-  Future<void> _konfliktKlaeren(String vorhandenerPfad) async {
-    final cubit = context.read<AblageCubit>();
-    final strategie = await frageAblageKonflikt(context, vorhandenerPfad);
-    if (strategie == null) {
-      cubit.konfliktAbbrechen();
-      return;
-    }
-    await cubit.konfliktLoesen(strategie);
+    if (mounted) setState(() => _pdfLaeuft = false);
   }
 
   void _hinweis(String text) {
@@ -233,12 +219,12 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
           } else if (state.status == AblageStatus.ready) {
             _mandantVorbelegen(state.mandanten);
           } else if (state.status == AblageStatus.konflikt) {
-            _konfliktKlaeren(state.zielpfad!);
+            klaereAblageKonflikt(context, state.konfliktPfad!);
           } else if (state.status == AblageStatus.erfolg) {
             schliesseAblageAb(
               context,
               vorgang: _aktuellerVorgang(),
-              zielpfad: state.zielpfad,
+              zielpfade: state.zielpfade,
               aktenOrdner: _aktenOrdner(),
             );
           }
@@ -260,7 +246,7 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
 
           if (state.status == AblageStatus.erfolg) {
             return AblageErfolgAnzeige(
-              zielpfad: state.zielpfad ?? '',
+              zielpfade: state.zielpfade,
               onErneut: () => context.read<AblageCubit>().laden(),
             );
           }
@@ -274,11 +260,12 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
             gewaehlterFall: _gewaehlterFall,
             faelle: faelleZuOrdner(state.akten, _aktenOrdner()),
             neueAkteController: _neueAkteController,
-            stichwortController: _stichwortController,
-            datumController: _datumController,
-            kennzeichenController: _kennzeichenController,
-            vorschau: _baueUnterordner(),
-            isFiling: state.status == AblageStatus.filing,
+            stichwortController: _fallFelder.stichwort,
+            datumController: _fallFelder.datum,
+            kennzeichenController: _fallFelder.kennzeichen,
+            vorschau: _fallFelder.ordnername,
+            format: _format,
+            isFiling: state.status == AblageStatus.filing || _pdfLaeuft,
             onWaehleMandant: _waehleMandant,
             onNeuerMandant: _neuerMandant,
             onAendernMandant: () => setState(() => _mandant = null),
@@ -286,6 +273,7 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
             onNeueAkteTextChanged: () => setState(() {}),
             onFallDropdownChanged: _onFallDropdownChanged,
             onUnterordnerTextChanged: () => setState(() {}),
+            onFormatChanged: (format) => setState(() => _format = format),
             onAblegen: _ablegen,
           );
         },
