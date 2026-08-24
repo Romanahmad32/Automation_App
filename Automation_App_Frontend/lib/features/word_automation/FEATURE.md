@@ -11,7 +11,7 @@ UseCases `FillOutTemplate`, `ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateR
 **Backend:** `Features/WordAutomation/`, `Features/PdfConversion/` · `GET /api/WordAutomation/vorlagen`, `POST /api/WordAutomation/replaced-document`,
 `POST /api/WordAutomation/rvg-calculation`, `POST /api/WordAutomation/arbeitsordner/aufraeumen`, `POST /api/PdfConversion/convert-from-path`;
 über `VorgangCubit` zusätzlich `PUT /api/Vorgaenge` und `POST /api/Vorgaenge/abschliessen`
-**Tests:** `test/features/word_automation/` (Formularextraktion, `WizardCubit`, `EditedDocumentBloc`)
+**Tests:** `test/features/word_automation/` (Formularextraktion, `WizardCubit`, `EditedDocumentBloc`, Dokument-Export)
 
 **Fallstricke**
 
@@ -22,9 +22,10 @@ UseCases `FillOutTemplate`, `ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateR
 - Erzeugt wird in `Generated/Arbeit/<Vorgangsreferenz>/` unter stets demselben Namen — eine Korrektur ersetzt
   die vorige Fassung, statt eine „(2)" danebenzulegen; ohne Vorgang gilt „Ohne Vorgang". `schliesseAblageAb`
   (`utils/ablage_abschluss.dart`) löscht den Ordner danach und schwenkt den `EditedDocumentBloc` auf die Akte um.
-- Der Anwalt wählt im Speicherschritt das `AblageFormat` (Word, PDF, beide); das PDF entsteht dabei in
-  `starteAblage` (`utils/ablage_durchfuehrung.dart`) neben der Word-Datei. **Ohne Word-Fassung in der Akte
-  entfallen Umschwenken und Aufräumen** — sonst wäre die einzige bearbeitbare Fassung weg.
+- Der Anwalt wählt im Speicherschritt das `AblageFormat` (Word, PDF, beide) — für die Akte und für das
+  Speichern anderswo getrennt. Für die Akte entsteht das PDF neben der Word-Datei (`starteAblage` in
+  `utils/ablage_durchfuehrung.dart`), beim freien Speichern direkt am Ziel (`utils/dokument_export.dart`).
+  **Ohne Word-Fassung in der Akte entfallen Umschwenken und Aufräumen** — sonst wäre die bearbeitbare weg.
 - `EditedDocumentLoaded.inAkteAbgelegt` trennt „abgelegt" von „erzeugt": nur ohne die Marke springt der
   Listener der Page ins Begutachten. Wer sie vergisst, wirft den Anwalt nach jeder Ablage aus Schritt 3.
 - Die Vorsteuer-Checkbox steht in zwei gleichzeitig gemounteten Schritten auf demselben Cubit-Feld (`applyVat
