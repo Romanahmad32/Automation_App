@@ -37,6 +37,7 @@ class EditedDocumentBloc
         event.zielpfad,
         warnings: aktuell.warnings,
         erzeugtAm: _aenderungszeit(event.zielpfad),
+        inAkteAbgelegt: true,
       ),
     );
   }
