@@ -1,7 +1,10 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
+import 'package:automation_app/features/word_automation/domain/usecases/arbeitsordner_aufraeumen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgang_abschliessen_dialog.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +15,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// hoch und nimmt den Vorgang damit ins Sachgebiete-Register auf. Greift den
 /// gewählten Vorgang live aus dem [VorgangCubit] ab, damit der Status nach dem
 /// Abschluss sofort umschlägt.
+///
+/// Zugleich der letzte Halt für den Arbeitsordner: Ist der Auftrag erledigt,
+/// kann darin nichts mehr gebraucht werden. Die Ablage räumt ihn nur auf, wenn
+/// die Word-Fassung in der Akte landet (§4.6) — bei „nur PDF" bleibt er sonst
+/// bis zur Altersgrenze des Dienstes stehen.
 class VorgangAbschliessenSection extends StatelessWidget {
   const VorgangAbschliessenSection({super.key});
 
@@ -24,6 +32,7 @@ class VorgangAbschliessenSection extends StatelessWidget {
     // Statuswechsel und Auftragsnummer laufen atomar im Backend; bei false ist
     // nichts passiert und der Anwalt kann es erneut versuchen.
     final erfolgreich = await getIt<VorgangCubit>().abschliessen(vorgang);
+    if (erfolgreich) await _arbeitsordnerRaeumen(vorgang);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -40,6 +49,16 @@ class VorgangAbschliessenSection extends StatelessWidget {
         duration: const Duration(seconds: 4),
       ),
     );
+  }
+
+  /// Löscht die Arbeitskopien des abgeschlossenen Vorgangs. Bewusst
+  /// stillschweigend: Der Abschluss ist gelungen, und ob nebenbei eine
+  /// Arbeitsdatei liegen blieb (weil sie noch in Word offen ist), geht den
+  /// Anwalt nichts an — die Altersgrenze des Dienstes holt sie später.
+  Future<void> _arbeitsordnerRaeumen(Vorgang vorgang) async {
+    await getIt<
+      UseCase<ArbeitsordnerAufraeumung, ArbeitsordnerAufraeumenParams>
+    >()(ArbeitsordnerAufraeumenParams(vorgang.referenz));
   }
 
   @override
