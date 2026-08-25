@@ -61,7 +61,24 @@ Formulierungen — lautlos, auffallen würde es erst an einem verschickten
 Schreiben.
 
 > Alles, was in `AutomationService/Templates/` liegt, sieht der Anwalt später in
-> seiner Vorlagenauswahl. Dort gehören keine Testdateien hin.
+> seiner Vorlagenauswahl. Dort gehören keine Testdateien hin — und **keine echten
+> Kanzleivorlagen**.
+
+Das Saatgut sind deshalb die neutralen `Muster_*.docx` ohne Kanzleibezug; die
+`.gitignore` lässt nur diese durch. Bis August 2026 lagen hier stattdessen die
+parametrisierten Fassungen der echten Anspruchsschreiben, und damit lagen
+Briefkopf, Steuernummer und Bankverbindung der Kanzlei in einem öffentlichen
+Repository und in jedem veröffentlichten Setup.
+
+Der Fehlschluss dahinter ist lehrreich: parametrisiert wurde der **Fließtext**,
+also die Mandantendaten. Kopf- und Fußzeile hat das Werkzeug nie angefasst, und
+der Schriftsatz selbst — die eigentliche Arbeit der Kanzlei — blieb ohnehin
+Wort für Wort erhalten. „Enthält nur noch `{{Platzhalter}}“ stimmte für den
+Briefinhalt und war für die Datei trotzdem falsch.
+
+Seine echten Vorlagen kommen deshalb auf anderem Weg auf den Rechner: einmal in
+`%APPDATA%\AutomationService\Vorlagen` legen (dorthin schreibt auch der
+`TemplateParametrizer`), und die Sicherung nimmt sie von da an mit.
 
 ### Sicherung
 
