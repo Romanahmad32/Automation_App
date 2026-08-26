@@ -5,8 +5,10 @@ import 'package:equatable/equatable.dart';
 /// Backend-DTO `MailboxConfigDto`: Das App-Passwort selbst wird nie ausgeliefert,
 /// nur ob bereits eines gesetzt ist ([appPasswordSet]).
 /// Anmeldeverfahren des Postfach-Zugangs (spiegelt das Backend-Enum
-/// `MailboxAuthMethod`): App-Passwort (Gmail) oder Microsoft-Anmeldung
-/// (Outlook — dort ist OAuth seit September 2024 der einzige Weg).
+/// `MailboxAuthMethod`): gewöhnliche IMAP-Anmeldung mit Passwort (1&1/IONOS,
+/// Gmail) oder Microsoft-Anmeldung (Outlook.com/M365 — dort ist OAuth seit
+/// September 2024 der einzige Weg). Der Enum-Name `appPassword` bleibt, weil er
+/// im HTTP-Vertrag steht.
 enum MailboxAuthMethod {
   appPassword('AppPassword'),
   microsoftOAuth('MicrosoftOAuth');

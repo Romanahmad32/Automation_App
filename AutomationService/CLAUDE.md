@@ -55,7 +55,9 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Negativantworten/Abweichungen als `warnings` (`ZentralrufReplyWarnings`), Lücken als
   `missingFields`.
 - **MailboxMonitor** — ereignisbasierte Postfachüberwachung (MailKit, IMAP IDLE), Filter über den
-  Betreff, dieselbe Antwort-Pipeline. Zwei Auth-Wege (`MailboxAuthMethod`): Gmail-App-Passwort oder
+  Betreff, dieselbe Antwort-Pipeline. Zwei Auth-Wege (`MailboxAuthMethod`) — welcher gilt, hängt
+  allein daran, wo das Postfach liegt (`docs/POSTFACH_SETUP.md`): gewöhnliche IMAP-Anmeldung mit
+  Passwort (1&1/IONOS, Gmail; auf Platte DPAPI-verschlüsselt, `PasswortSchutz`) oder
   **Microsoft OAuth** für Outlook.com/M365 (`MicrosoftMailOAuthService`, MSAL: interaktive Anmeldung
   über `POST api/Mailbox/microsoft/signin`, verschlüsselter Tokencache
   `%APPDATA%\AutomationService\msal_token_cache.bin`, stilles Erneuern, XOAUTH2 über
