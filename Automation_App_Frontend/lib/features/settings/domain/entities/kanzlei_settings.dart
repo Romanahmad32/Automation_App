@@ -58,6 +58,11 @@ class KanzleiSettings extends Equatable {
   /// Bewusst kein Default-Pfad: Die App läuft auf einem fremden Rechner.
   final String aktenStammordner;
 
+  /// Signaturblock unter dem Mailtext beim Direktversand (§4.7). Einmal aus
+  /// dem Mailprogramm übernommen, danach hier gepflegt. Beim Entwurf in
+  /// Outlook ungenutzt — dort setzt Outlook seine eigene ein.
+  final String mailSignatur;
+
   const KanzleiSettings({
     this.personentyp = 'Rechtsanwalt',
     this.name = '',
@@ -70,6 +75,7 @@ class KanzleiSettings extends Equatable {
     this.abteilung = defaultAbteilung,
     this.tabellenkopfFarbeHex = defaultTabellenkopfFarbeHex,
     this.aktenStammordner = '',
+    this.mailSignatur = '',
   });
 
   static const KanzleiSettings empty = KanzleiSettings();
@@ -86,6 +92,7 @@ class KanzleiSettings extends Equatable {
     String? abteilung,
     String? tabellenkopfFarbeHex,
     String? aktenStammordner,
+    String? mailSignatur,
   }) {
     return KanzleiSettings(
       personentyp: personentyp ?? this.personentyp,
@@ -100,6 +107,7 @@ class KanzleiSettings extends Equatable {
       abteilung: abteilung ?? this.abteilung,
       tabellenkopfFarbeHex: tabellenkopfFarbeHex ?? this.tabellenkopfFarbeHex,
       aktenStammordner: aktenStammordner ?? this.aktenStammordner,
+      mailSignatur: mailSignatur ?? this.mailSignatur,
     );
   }
 
@@ -125,6 +133,7 @@ class KanzleiSettings extends Equatable {
           json['tabellenkopfFarbeHex'] as String? ??
           defaultTabellenkopfFarbeHex,
       aktenStammordner: json['aktenStammordner'] as String? ?? '',
+      mailSignatur: json['mailSignatur'] as String? ?? '',
     );
   }
 
@@ -140,6 +149,7 @@ class KanzleiSettings extends Equatable {
     'abteilung': abteilung,
     'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
     'aktenStammordner': aktenStammordner,
+    'mailSignatur': mailSignatur,
   };
 
   @override
@@ -155,5 +165,6 @@ class KanzleiSettings extends Equatable {
     abteilung,
     tabellenkopfFarbeHex,
     aktenStammordner,
+    mailSignatur,
   ];
 }

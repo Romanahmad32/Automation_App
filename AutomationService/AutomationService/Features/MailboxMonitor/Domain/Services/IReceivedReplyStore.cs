@@ -27,6 +27,7 @@ public interface IReceivedReplyStore
         string? from,
         IReadOnlyList<string> warnings,
         string? rawText = null,
+        IReadOnlyList<string>? anhangPfade = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ReceivedReply>> GetAllAsync(bool includeAcknowledged, CancellationToken cancellationToken = default);

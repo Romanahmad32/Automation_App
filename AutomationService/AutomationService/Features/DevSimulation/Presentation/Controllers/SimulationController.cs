@@ -61,7 +61,7 @@ public class SimulationController(
             from: "Entwickler-Simulation <simulation@lokal>",
             warnings,
             rawText: text,
-            cancellationToken);
+            cancellationToken: cancellationToken);
         if (reply is null)
         {
             return Problem("Der simulierte Treffer konnte nicht gespeichert werden.");

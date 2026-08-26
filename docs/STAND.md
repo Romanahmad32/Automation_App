@@ -20,6 +20,22 @@ Paragraphenangaben verweisen auf `REQUIREMENTS.md` (nicht versioniert, siehe `CL
 - **Persistenz vollständig im Backend** — eingebettetes SQLite (`AutomationDbContext`,
   `%APPDATA%\AutomationService\automation.db`). Die früheren JSON-Ablagen je Feature sind weg,
   das Frontend erreicht alles über HTTP.
+- **E-Mail-Versand (§4.7)** — Mail zum Vorgang in der App verfassen und über das Kanzlei-Postfach
+  senden (Frontend `email_versand`, Backend-Slice `EmailVersand`, SMTP über denselben Zugang wie
+  die Überwachung). Empfänger aus Mandantenregister, Zentralruf-Antwort und Versicherer-Wissensbasis
+  sind anklickbar, Anrede und Betreff aus den Vorgangsdaten vorbelegt, das Anspruchsschreiben als
+  PDF vorausgewählt. Geprüft wird **vor** dem Verbindungsaufbau: Fehlt ein Anhang, geht nichts
+  hinaus. Erreichbar an zwei Stellen: im Speicherschritt/Abschlussdialog der Word-Automation und
+  im Postfach (`MailboxVersandLeiste`, dort ohne Anhang und ohne Vorgang auch als leeres
+  Anschreiben). Der Abschluss (§4.8) bleibt der eigene Schritt — das Häkchen ist nach dem Versand nur
+  vorbelegt und begründet. Zweiter Weg statt Direktversand: **Entwurf in Outlook öffnen** — mit
+  Empfängern, Betreff, Text und Anhängen; dort gelten Signatur und Vorlage der Kanzlei, und was
+  die App nicht kennt, zieht der Anwalt in gewohnter Weise hinein. Fehlt Outlook, öffnet eine
+  `.eml`. Die **Signatur** für den Direktversand wird einmal aus Outlook übernommen
+  (Einstellungen → E-Mail-Signatur). Hängen an einer erfassten Postfach-Antwort Dateien, stehen
+  sie beim Verfassen zum Anklicken bereit (§4.3). **Noch offen:** die pflegbaren
+  Mail-Textvorlagen je Empfängertyp
+  (§4.7/§5.3); dafür ist `EmailEntwurfErzeuger` die vorgesehene Stelle.
 - **Sicherung** — das `backup`-Feature schreibt Datenbank und Vorlagen als ZIP
   (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`).
 - **Postfachantworten** liegen in derselben Datenbank (`DbReceivedReplyStore`, Tabelle
@@ -46,8 +62,6 @@ Paragraphenangaben verweisen auf `REQUIREMENTS.md` (nicht versioniert, siehe `CL
 
 ## Noch nicht gebaut
 
-- **E-Mail-Versand (§4.7)** — „Vorgang abschließen" markiert nur als erledigt und zählt hoch.
-  Der Versand bleibt Handarbeit, die Empfängerlogik aus §4.7 ist nicht verdrahtet.
 - **Bestätigung vor dem Hochzählen (§7.1)** — die Auftragsnummer wird nach dem Abschluss immer
   automatisch erhöht. Die geforderte Einstellung „automatisch oder erst nach Bestätigung" gibt es
   weder in `KanzleiSettings` noch im Backend.

@@ -24,4 +24,12 @@ public class KanzleiSettingsEntity
     public string Abteilung { get; set; } = string.Empty;
     public string TabellenkopfFarbeHex { get; set; } = string.Empty;
     public string AktenStammordner { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Signaturblock unter dem Mailtext beim Direktversand (§4.7). Kommt aus
+    /// der bereits eingerichteten Signatur des Mailprogramms ("Aus Outlook
+    /// übernehmen"), nicht aus Abtippen. Beim Entwurf im Mailprogramm bleibt
+    /// er ungenutzt — dort setzt Outlook seine eigene ein.
+    /// </summary>
+    public string MailSignatur { get; set; } = string.Empty;
 }

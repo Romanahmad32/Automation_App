@@ -21,8 +21,20 @@ public sealed class MicrosoftMailOAuthService(
     MailboxConfigStore configStore,
     ILogger<MicrosoftMailOAuthService> logger) : IDisposable
 {
-    /// <summary>IMAP-Zugriff auf das eigene Postfach; offline_access (Refresh-Token) ergänzt MSAL selbst.</summary>
-    private static readonly string[] Scopes = ["https://outlook.office365.com/IMAP.AccessAsUser.All"];
+    /// <summary>
+    /// Zugriff auf das eigene Postfach: IMAP zum Empfangen (§4.3), SMTP zum
+    /// Senden (§4.7). offline_access (Refresh-Token) ergänzt MSAL selbst.
+    ///
+    /// Wird hier ein Scope ergänzt, muss der Anwalt sich einmalig neu anmelden —
+    /// MSAL holt für einen bisher nicht zugestimmten Scope kein stilles Token.
+    /// Der Postfach-Status meldet das von selbst ("Microsoft-Anmeldung
+    /// erforderlich"); siehe docs/OUTLOOK_SETUP.md.
+    /// </summary>
+    private static readonly string[] Scopes =
+    [
+        "https://outlook.office365.com/IMAP.AccessAsUser.All",
+        "https://outlook.office365.com/SMTP.Send",
+    ];
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private IPublicClientApplication? _app;
