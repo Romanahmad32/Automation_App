@@ -11,10 +11,15 @@ class EmailVersandBereitschaft extends Equatable {
   /// Grund im Klartext, wenn nicht bereit; sonst null.
   final String? hinweis;
 
+  /// Der Signaturblock aus den Einstellungen, den der Direktversand anfügt.
+  /// Nur zum Anzeigen in der Vorschau — geändert wird er in den Einstellungen.
+  final String signatur;
+
   const EmailVersandBereitschaft({
     required this.bereit,
     this.absender = '',
     this.hinweis,
+    this.signatur = '',
   });
 
   factory EmailVersandBereitschaft.fromJson(Map<String, dynamic> json) {
@@ -22,9 +27,10 @@ class EmailVersandBereitschaft extends Equatable {
       bereit: json['bereit'] as bool? ?? false,
       absender: json['absender'] as String? ?? '',
       hinweis: json['hinweis'] as String?,
+      signatur: json['signatur'] as String? ?? '',
     );
   }
 
   @override
-  List<Object?> get props => [bereit, absender, hinweis];
+  List<Object?> get props => [bereit, absender, hinweis, signatur];
 }

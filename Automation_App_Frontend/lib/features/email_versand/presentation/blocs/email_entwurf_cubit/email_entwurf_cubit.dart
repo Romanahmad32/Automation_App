@@ -137,12 +137,28 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     );
   }
 
+  /// Benennt den Anhang **fuer die Mail** um; die Datei in der Akte behaelt
+  /// ihren Namen. Ein leerer Name stellt den Dateinamen wieder her.
+  void anhangUmbenennen(String pfad, String name) {
+    final sauber = name.trim();
+    final namen = Map<String, String>.from(state.entwurf.anhangNamen);
+    if (sauber.isEmpty) {
+      namen.remove(pfad);
+    } else {
+      namen[pfad] = sauber;
+    }
+    emit(state.copyWith(entwurf: state.entwurf.copyWith(anhangNamen: namen)));
+  }
+
   void anhangEntfernen(String pfad) {
+    final namen = Map<String, String>.from(state.entwurf.anhangNamen)
+      ..remove(pfad);
     _setzeEntwurf(
       state.entwurf.copyWith(
         anhangPfade: state.entwurf.anhangPfade
             .where((vorhanden) => vorhanden != pfad)
             .toList(),
+        anhangNamen: namen,
       ),
     );
   }
@@ -193,7 +209,12 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
         absenderName: _kanzlei.name,
       );
       if (isClosed) return ergebnis;
-      emit(state.copyWith(phase: EmailVersandPhase.verfassen));
+      emit(
+        state.copyWith(
+          phase: EmailVersandPhase.verfassen,
+          entwurfErgebnis: ergebnis,
+        ),
+      );
       return ergebnis;
     } catch (e) {
       if (isClosed) return null;

@@ -2564,7 +2564,8 @@
         "required": [
           "bereit",
           "absender",
-          "hinweis"
+          "hinweis",
+          "signatur"
         ],
         "type": "object",
         "properties": {
@@ -2579,6 +2580,9 @@
               "null",
               "string"
             ]
+          },
+          "signatur": {
+            "type": "string"
           }
         },
         "description": "Ob die App senden kann und von welcher Adresse aus (REQUIREMENTS.md \u00A74.7)."
@@ -2590,7 +2594,8 @@
           "betreff",
           "text",
           "anhangPfade",
-          "absenderName"
+          "absenderName",
+          "anhangNamen"
         ],
         "type": "object",
         "properties": {
@@ -2629,6 +2634,15 @@
               "null",
               "string"
             ]
+          },
+          "anhangNamen": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         },
         "description": "Die zu versendende Mail, wie die Oberfl\u00E4che sie schickt (REQUIREMENTS.md \u00A74.7).\r\nDie Absenderadresse steht bewusst nicht darin \u2014 sie ergibt sich aus dem\r\nhinterlegten Postfach-Zugang und ist nichts, was der Aufrufer bestimmen darf."

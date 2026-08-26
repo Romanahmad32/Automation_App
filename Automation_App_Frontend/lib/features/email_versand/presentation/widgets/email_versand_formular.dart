@@ -1,8 +1,12 @@
+import 'package:automation_app/features/email_versand/domain/services/versand_voraussetzungen.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_anhang_liste.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_bereitschaft_hinweis.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_empfaenger_feld.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_fehlt_noch_hinweis.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_vorschau.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -21,6 +25,16 @@ class EmailVersandFormular extends StatefulWidget {
 class _EmailVersandFormularState extends State<EmailVersandFormular> {
   final TextEditingController _betreff = TextEditingController();
   final TextEditingController _text = TextEditingController();
+
+  /// Eingetippt, aber noch nicht übernommen — je Empfängerzeile.
+  String _offenAn = '';
+  String _offenKopie = '';
+
+  List<String> _fehltNoch(EmailEntwurfState state) =>
+      VersandVoraussetzungen.fehlend(
+        entwurf: state.entwurf,
+        offeneEingaben: [_offenAn, _offenKopie],
+      );
 
   @override
   void initState() {
@@ -57,6 +71,7 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
         }
       },
       builder: (context, state) {
+        final theme = Theme.of(context);
         final aktiv = !state.beschaeftigt;
 
         return Column(
@@ -66,6 +81,21 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               bereitschaft: state.bereitschaft,
               fehler: state.fehler,
             ),
+            if (state.fehler == null)
+              EmailFehltNochHinweis(punkte: _fehltNoch(state)),
+            if (state.entwurfErgebnis case final uebergeben?) ...[
+              const SizedBox(height: 8),
+              EmailHinweisKasten(
+                farbe: theme.colorScheme.secondaryContainer,
+                vordergrund: theme.colorScheme.onSecondaryContainer,
+                symbol: Icons.mark_email_read_outlined,
+                text:
+                    uebergeben.hinweis ??
+                    'Der Entwurf liegt in Outlook — dort gesendet, gilt er als '
+                        'ausserhalb der App versendet. Das Haekchen beim '
+                        'Abschluss setzen Sie von Hand.',
+              ),
+            ],
             const SizedBox(height: 16),
             EmailEmpfaengerFeld(
               titel: 'An',
@@ -74,6 +104,7 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               bereitsVergeben: state.entwurf.alleEmpfaenger,
               onHinzufuegen: cubit.empfaengerHinzufuegen,
               onEntfernen: cubit.empfaengerEntfernen,
+              onOffeneEingabe: (text) => setState(() => _offenAn = text),
               aktiv: aktiv,
             ),
             const SizedBox(height: 16),
@@ -84,6 +115,7 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               bereitsVergeben: state.entwurf.alleEmpfaenger,
               onHinzufuegen: cubit.kopieHinzufuegen,
               onEntfernen: cubit.empfaengerEntfernen,
+              onOffeneEingabe: (text) => setState(() => _offenKopie = text),
               aktiv: aktiv,
             ),
             const SizedBox(height: 16),
@@ -111,12 +143,15 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               ),
               onChanged: cubit.setzeText,
             ),
+            EmailSignaturVorschau(signatur: state.bereitschaft?.signatur ?? ''),
             const SizedBox(height: 16),
             EmailAnhangListe(
               anhangPfade: state.entwurf.anhangPfade,
+              namen: state.entwurf.anhangNamen,
               ausDerAkte: widget.ausDerAkte,
               onHinzufuegen: cubit.anhangHinzufuegen,
               onEntfernen: cubit.anhangEntfernen,
+              onUmbenennen: cubit.anhangUmbenennen,
               aktiv: aktiv,
             ),
           ],

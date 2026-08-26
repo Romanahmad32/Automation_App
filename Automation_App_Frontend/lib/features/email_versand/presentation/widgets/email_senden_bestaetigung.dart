@@ -1,5 +1,4 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
-import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_zusammenfassung_zeile.dart';
 import 'package:flutter/material.dart';
 
@@ -12,23 +11,39 @@ class EmailSendenBestaetigung extends StatelessWidget {
   final EmailEntwurf entwurf;
   final String absender;
 
+  /// Der Signaturblock, den der Versand anfügt. Er steht mit im Text, damit
+  /// hier wirklich die Mail steht, die hinausgeht — und nicht fast.
+  final String signatur;
+
   const EmailSendenBestaetigung({
     super.key,
     required this.entwurf,
     required this.absender,
+    this.signatur = '',
   });
 
   static Future<bool> zeigen(
     BuildContext context, {
     required EmailEntwurf entwurf,
     required String absender,
+    String signatur = '',
   }) async {
     final bestaetigt = await showDialog<bool>(
       context: context,
-      builder: (_) =>
-          EmailSendenBestaetigung(entwurf: entwurf, absender: absender),
+      builder: (_) => EmailSendenBestaetigung(
+        entwurf: entwurf,
+        absender: absender,
+        signatur: signatur,
+      ),
     );
     return bestaetigt ?? false;
+  }
+
+  /// Der vollständige Text, wie ihn der Empfänger sieht.
+  String get _volltext {
+    final block = signatur.trim();
+    if (block.isEmpty) return entwurf.text;
+    return '${entwurf.text.trimRight()}\n\n$block';
   }
 
   @override
@@ -37,8 +52,8 @@ class EmailSendenBestaetigung extends StatelessWidget {
 
     return AlertDialog(
       title: const Text('E-Mail jetzt senden?'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+      content: SizedBox(
+        width: 560,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +73,26 @@ class EmailSendenBestaetigung extends StatelessWidget {
               beschriftung: 'Anhänge',
               werte: entwurf.anhangPfade.isEmpty
                   ? const ['— keine —']
-                  : entwurf.anhangPfade.map(AnhangDarstellung.name).toList(),
+                  : entwurf.anhangPfade.map(entwurf.nameVon).toList(),
+            ),
+            const Divider(height: 20),
+            Text(
+              'Nachricht',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 6),
+            // Scrollbar begrenzt: Ein langes Anschreiben darf die Schaltflächen
+            // nicht aus dem Fenster schieben.
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 240),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  _volltext,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             Text(

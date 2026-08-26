@@ -41,7 +41,11 @@ public sealed class SmtpEmailVersender(
                 + "\"Postfach-Zugang\" erneut mit Microsoft anmelden.");
         }
 
-        return new EmailVersandBereitschaft(true, zugang.Absender, null);
+        return new EmailVersandBereitschaft(
+            true,
+            zugang.Absender,
+            null,
+            await signatur.TextAsync(cancellationToken));
     }
 
     public async Task<EmailVersandErgebnis> SendeAsync(
@@ -55,7 +59,10 @@ public sealed class SmtpEmailVersender(
                 "Es ist kein Postfach-Zugang hinterlegt. Bitte in den Einstellungen unter "
                 + "\"Postfach-Zugang\" die Kanzlei-Adresse einrichten.");
 
-        var anhaenge = AnhangPruefung.Lade(nachricht.AnhangPfade, einstellungen.MaxAnhangGesamtMb);
+        var anhaenge = AnhangPruefung.Lade(
+            nachricht.AnhangPfade,
+            einstellungen.MaxAnhangGesamtMb,
+            nachricht.AnhangNamen);
 
         // Die Signatur kommt erst hier dazu, nicht im Formular: Sie gehört den
         // Einstellungen, nicht dem einzelnen Entwurf (§4.7).

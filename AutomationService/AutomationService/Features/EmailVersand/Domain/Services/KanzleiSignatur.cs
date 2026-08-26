@@ -20,7 +20,7 @@ public sealed class KanzleiSignatur(AutomationDbContext db)
 {
     public async Task<string> UnterAsync(string text, CancellationToken cancellationToken)
     {
-        var signatur = await LiesAsync(cancellationToken);
+        var signatur = await TextAsync(cancellationToken);
         if (signatur.Length == 0)
         {
             return text;
@@ -31,7 +31,8 @@ public sealed class KanzleiSignatur(AutomationDbContext db)
         return $"{text.TrimEnd()}\n\n{signatur}";
     }
 
-    private async Task<string> LiesAsync(CancellationToken cancellationToken)
+    /// <summary>Der Signaturblock allein — fuer die Vorschau vor dem Senden.</summary>
+    public async Task<string> TextAsync(CancellationToken cancellationToken)
     {
         var settings = await db.KanzleiSettings
             .AsNoTracking()

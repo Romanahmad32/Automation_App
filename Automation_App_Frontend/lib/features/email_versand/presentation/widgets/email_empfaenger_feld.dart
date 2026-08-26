@@ -23,6 +23,13 @@ class EmailEmpfaengerFeld extends StatefulWidget {
 
   final ValueChanged<String> onHinzufuegen;
   final ValueChanged<String> onEntfernen;
+
+  /// Meldet, was gerade im Eingabefeld steht und noch **nicht** übernommen ist.
+  /// Der Dialog kann daraufhin sagen, warum „Senden" grau bleibt — eine
+  /// eingetippte, aber nicht übernommene Adresse ist der Fall, in dem das Feld
+  /// ausgefüllt aussieht und der Entwurf trotzdem keinen Empfänger hat.
+  final ValueChanged<String>? onOffeneEingabe;
+
   final bool aktiv;
 
   const EmailEmpfaengerFeld({
@@ -33,6 +40,7 @@ class EmailEmpfaengerFeld extends StatefulWidget {
     required this.onEntfernen,
     this.vorschlaege = const [],
     this.bereitsVergeben = const [],
+    this.onOffeneEingabe,
     this.aktiv = true,
   });
 
@@ -42,9 +50,21 @@ class EmailEmpfaengerFeld extends StatefulWidget {
 
 class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
   final TextEditingController _eingabe = TextEditingController();
+  final FocusNode _fokus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Wer weiterklickt, ohne Eingabe zu druecken, hat die Adresse gemeint.
+    // Sie hier verfallen zu lassen, waere die unfreundlichste Auslegung.
+    _fokus.addListener(() {
+      if (!_fokus.hasFocus) _uebernehmen();
+    });
+  }
 
   @override
   void dispose() {
+    _fokus.dispose();
     _eingabe.dispose();
     super.dispose();
   }
@@ -54,6 +74,19 @@ class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
     if (adresse.isEmpty) return;
     widget.onHinzufuegen(adresse);
     _eingabe.clear();
+    widget.onOffeneEingabe?.call('');
+  }
+
+  /// Komma und Semikolon trennen Adressen — in jedem Mailprogramm. Wer sie
+  /// tippt, hat die vorige fertig geschrieben.
+  void _getippt(String text) {
+    if (text.endsWith(',') || text.endsWith(';')) {
+      _eingabe.text = text.substring(0, text.length - 1);
+      _uebernehmen();
+      return;
+    }
+
+    widget.onOffeneEingabe?.call(text);
   }
 
   @override
@@ -91,6 +124,7 @@ class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
         if (widget.adressen.isNotEmpty) const SizedBox(height: 6),
         TextField(
           controller: _eingabe,
+          focusNode: _fokus,
           enabled: widget.aktiv,
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
@@ -103,6 +137,7 @@ class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
               icon: const Icon(Icons.add),
             ),
           ),
+          onChanged: _getippt,
           onSubmitted: (_) => _uebernehmen(),
         ),
         if (offen.isNotEmpty) ...[
