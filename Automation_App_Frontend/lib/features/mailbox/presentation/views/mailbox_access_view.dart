@@ -4,8 +4,8 @@ import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_confi
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_auth_method_selector.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_enabled_switch.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_filter_section.dart';
-import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_gmail_credentials_section.dart';
-import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_gmail_server_section.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_credentials_section.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_server_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_microsoft_signin_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,9 +13,10 @@ import 'package:reactive_forms/reactive_forms.dart';
 
 /// Einstellungsmaske für den Postfach-Zugang (REQUIREMENTS.md §4.3/§7.1). Mit
 /// diesen Angaben überwacht das Backend das Postfach ereignisbasiert und erfasst
-/// eingehende Zentralruf-Antworten selbsttätig. Zwei Wege: Gmail mit
-/// App-Passwort oder Outlook/Microsoft per Browser-Anmeldung (OAuth — Microsoft
-/// erlaubt für IMAP kein Passwort mehr).
+/// eingehende Zentralruf-Antworten selbsttätig. Zwei Wege, und es entscheidet
+/// allein, wo das Postfach liegt: IMAP mit Passwort (1&1/IONOS, Gmail) oder
+/// Outlook/Microsoft per Browser-Anmeldung (OAuth — Microsoft erlaubt für IMAP
+/// kein Passwort mehr). Über denselben Zugang wird auch versendet (§4.7).
 class MailboxAccessView extends StatefulWidget {
   const MailboxAccessView({super.key});
 
@@ -48,7 +49,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
       value: MailboxAuthMethod.appPassword,
     ),
     'host': FormControl<String>(
-      value: 'imap.gmail.com',
+      value: 'imap.ionos.de',
       validators: [Validators.required],
     ),
     'port': FormControl<String>(
@@ -215,10 +216,10 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
                                       ),
                                     ]
                                   : [
-                                      MailboxGmailCredentialsSection(
+                                      MailboxImapCredentialsSection(
                                         appPasswordSet: _appPasswordSet,
                                       ),
-                                      const MailboxGmailServerSection(),
+                                      const MailboxImapServerSection(),
                                     ],
                             );
                           },

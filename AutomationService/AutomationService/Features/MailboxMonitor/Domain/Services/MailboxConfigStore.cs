@@ -132,7 +132,27 @@ public sealed class MailboxConfigStore : IDisposable
                 var persisted = JsonSerializer.Deserialize<PersistedMailboxConfig>(json);
                 if (persisted is not null)
                 {
-                    return persisted.ApplyTo(_seed);
+                    var geladen = persisted.ApplyTo(_seed);
+
+                    if (!string.IsNullOrEmpty(persisted.AppPasswordProtected)
+                        && geladen.AppPassword.Length == 0)
+                    {
+                        _logger.LogWarning(
+                            "Das gespeicherte Postfach-Passwort ist nicht lesbar (andere Windows-Anmeldung "
+                            + "oder beschädigte Datei). Es muss in den Einstellungen neu eingegeben werden.");
+                    }
+
+                    if (persisted.BrauchtUmzug)
+                    {
+                        // Einmalig: das früher im Klartext abgelegte Passwort
+                        // verschlüsselt neu schreiben. Ab hier steht in der
+                        // Datei kein lesbares Passwort mehr.
+                        Persist(geladen);
+                        _logger.LogInformation(
+                            "Der gespeicherte Postfach-Zugang wurde auf die verschlüsselte Ablage umgestellt.");
+                    }
+
+                    return geladen;
                 }
             }
         }
@@ -176,10 +196,23 @@ public sealed class MailboxConfigStore : IDisposable
         int Port,
         bool UseSsl,
         string Username,
-        string AppPassword,
+        // Altlast: bis August 2026 lag das Passwort hier im Klartext. Wird nur
+        // noch gelesen (und beim ersten Laden nach AppPasswordProtected
+        // umgezogen), nie mehr geschrieben.
+        string? AppPassword,
         string Folder,
-        string SubjectFilter)
+        string SubjectFilter,
+        // DPAPI-verschlüsselt, an das Windows-Benutzerkonto gebunden.
+        string? AppPasswordProtected = null)
     {
+        /// <summary>
+        /// True, wenn die geladene Datei noch ein Klartext-Passwort enthält —
+        /// dann schreibt der Store sie einmalig neu, damit der Klartext
+        /// verschwindet.
+        /// </summary>
+        public bool BrauchtUmzug =>
+            string.IsNullOrEmpty(AppPasswordProtected) && !string.IsNullOrEmpty(AppPassword);
+
         public static PersistedMailboxConfig From(MailboxOptions options) => new(
             options.Enabled,
             options.AuthMethod.ToString(),
@@ -187,9 +220,11 @@ public sealed class MailboxConfigStore : IDisposable
             options.Port,
             options.UseSsl,
             options.Username,
-            options.AppPassword,
+            // Das Klartextfeld bleibt ab jetzt leer.
+            null,
             options.Folder,
-            options.SubjectFilter);
+            options.SubjectFilter,
+            PasswortSchutz.Schuetze(options.AppPassword));
 
         public MailboxOptions ApplyTo(MailboxOptions seed) => new()
         {
@@ -201,7 +236,7 @@ public sealed class MailboxConfigStore : IDisposable
             Port = Port,
             UseSsl = UseSsl,
             Username = Username,
-            AppPassword = AppPassword,
+            AppPassword = Passwort(),
             Folder = Folder,
             SubjectFilter = SubjectFilter,
             MicrosoftClientId = seed.MicrosoftClientId,
@@ -210,5 +245,17 @@ public sealed class MailboxConfigStore : IDisposable
             ReconnectMaxSeconds = seed.ReconnectMaxSeconds,
             InitialScanCount = seed.InitialScanCount,
         };
+
+        /// <summary>
+        /// Das Passwort im Klartext: bevorzugt aus dem geschützten Feld, sonst
+        /// aus der alten Klartext-Ablage. Ist der geschützte Wert unlesbar (die
+        /// Datei stammt aus einer anderen Windows-Anmeldung oder ist beschädigt),
+        /// bleibt es leer — die Überwachung meldet dann einen fehlenden Zugang,
+        /// und der Anwalt gibt das Passwort einmal neu ein.
+        /// </summary>
+        private string Passwort() =>
+            string.IsNullOrEmpty(AppPasswordProtected)
+                ? AppPassword ?? string.Empty
+                : PasswortSchutz.Entschuetze(AppPasswordProtected) ?? string.Empty;
     }
 }

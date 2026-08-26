@@ -4,8 +4,9 @@ using MailKit.Security;
 namespace AutomationService.Features.MailboxMonitor.Domain.Services;
 
 /// <summary>
-/// Meldet eine frische IMAP-Verbindung am Server an — Gmail-Weg mit
-/// App-Passwort, Outlook-Weg mit einem still erneuerten Microsoft-OAuth-Token
+/// Meldet eine frische IMAP-Verbindung am Server an — Passwort-Weg für
+/// gewöhnliche IMAP-Postfächer (1&amp;1/IONOS, Gmail), Outlook-Weg mit einem
+/// still erneuerten Microsoft-OAuth-Token
 /// (XOAUTH2, seit Microsoft im September 2024 IMAP-Basisauthentifizierung
 /// abgeschaltet hat).
 /// </summary>
