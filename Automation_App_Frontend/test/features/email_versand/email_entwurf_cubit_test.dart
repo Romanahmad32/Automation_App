@@ -340,6 +340,72 @@ void main() {
     await gebaut.cubit.close();
   });
 
+  test('nach der Uebergabe an Outlook bleibt der Entwurf stehen', () async {
+    // Der Dialog schliesst sich nicht mehr: Das Outlook-Fenster liegt
+    // womoeglich hinter der App, und ein Dialog, der einfach verschwindet,
+    // sieht aus wie ein verschluckter Klick.
+    final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+    await gebaut.cubit.starte(vorgang: vorgang);
+    final vorher = gebaut.cubit.state.entwurf;
+
+    await gebaut.cubit.entwurfOeffnen();
+
+    expect(gebaut.cubit.state.entwurfErgebnis?.inOutlook, isTrue);
+    expect(gebaut.cubit.state.entwurf, vorher);
+    expect(gebaut.cubit.state.kannEntwurfOeffnen, isTrue);
+    await gebaut.cubit.close();
+  });
+
+  test('ein Anhang laesst sich fuer die Mail umbenennen', () async {
+    // Umbenannt wird nur, was beim Empfaenger ankommt -- die Datei in der Akte
+    // behaelt ihren Namen, deshalb bleibt der Pfad unveraendert.
+    final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+    await gebaut.cubit.starte(
+      vorgang: vorgang,
+      anhangPfade: const [r'C:\Akte\IMG_2481.jpg'],
+    );
+
+    gebaut.cubit.anhangUmbenennen(r'C:\Akte\IMG_2481.jpg', 'Unfallfoto.jpg');
+
+    expect(gebaut.cubit.state.entwurf.anhangPfade, [r'C:\Akte\IMG_2481.jpg']);
+    expect(
+      gebaut.cubit.state.entwurf.nameVon(r'C:\Akte\IMG_2481.jpg'),
+      'Unfallfoto.jpg',
+    );
+    await gebaut.cubit.close();
+  });
+
+  test('ein leerer Name stellt den Dateinamen wieder her', () async {
+    final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+    await gebaut.cubit.starte(
+      vorgang: vorgang,
+      anhangPfade: const [r'C:\Akte\IMG_2481.jpg'],
+    );
+    gebaut.cubit.anhangUmbenennen(r'C:\Akte\IMG_2481.jpg', 'Unfallfoto.jpg');
+
+    gebaut.cubit.anhangUmbenennen(r'C:\Akte\IMG_2481.jpg', '  ');
+
+    expect(
+      gebaut.cubit.state.entwurf.nameVon(r'C:\Akte\IMG_2481.jpg'),
+      'IMG_2481.jpg',
+    );
+    await gebaut.cubit.close();
+  });
+
+  test('ein entfernter Anhang nimmt seinen Namen mit', () async {
+    final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+    await gebaut.cubit.starte(
+      vorgang: vorgang,
+      anhangPfade: const [r'C:\Akte\IMG_2481.jpg'],
+    );
+    gebaut.cubit.anhangUmbenennen(r'C:\Akte\IMG_2481.jpg', 'Unfallfoto.jpg');
+
+    gebaut.cubit.anhangEntfernen(r'C:\Akte\IMG_2481.jpg');
+
+    expect(gebaut.cubit.state.entwurf.anhangNamen, isEmpty);
+    await gebaut.cubit.close();
+  });
+
   test('ein abgebrochener Dialog lässt starte() still auslaufen', () async {
     // „Abbrechen", bevor die Bereitschaft da ist: Navigator.pop schließt den
     // BlocProvider und damit den Cubit, während starte() noch wartet. Der

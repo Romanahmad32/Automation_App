@@ -13,12 +13,18 @@ class EmailEntwurf extends Equatable {
   /// HTTP-Schnittstelle zu schieben (wie bei der Ablage in der Akte).
   final List<String> anhangPfade;
 
+  /// Abweichender Dateiname je Anhangpfad, wenn der Anwalt umbenannt hat.
+  /// Die Datei in der Akte behält ihren Namen — geändert wird nur, was beim
+  /// Empfänger ankommt: „Dokument1.pdf" sagt dort niemandem etwas.
+  final Map<String, String> anhangNamen;
+
   const EmailEntwurf({
     this.an = const [],
     this.kopie = const [],
     this.betreff = '',
     this.text = '',
     this.anhangPfade = const [],
+    this.anhangNamen = const {},
   });
 
   /// Ohne Empfänger und ohne Betreff wird nicht gesendet. Der Text darf leer
@@ -34,6 +40,7 @@ class EmailEntwurf extends Equatable {
     String? betreff,
     String? text,
     List<String>? anhangPfade,
+    Map<String, String>? anhangNamen,
   }) {
     return EmailEntwurf(
       an: an ?? this.an,
@@ -41,6 +48,7 @@ class EmailEntwurf extends Equatable {
       betreff: betreff ?? this.betreff,
       text: text ?? this.text,
       anhangPfade: anhangPfade ?? this.anhangPfade,
+      anhangNamen: anhangNamen ?? this.anhangNamen,
     );
   }
 
@@ -50,9 +58,22 @@ class EmailEntwurf extends Equatable {
     'betreff': betreff,
     'text': text,
     'anhangPfade': anhangPfade,
+    'anhangNamen': anhangNamen,
     'absenderName': absenderName,
   };
 
+  /// Der Name, unter dem ein Anhang hinausgeht: der umbenannte, sonst der
+  /// Dateiname auf Platte.
+  String nameVon(String pfad) =>
+      anhangNamen[pfad] ?? pfad.split(RegExp('[\\\\/]')).last;
+
   @override
-  List<Object?> get props => [an, kopie, betreff, text, anhangPfade];
+  List<Object?> get props => [
+    an,
+    kopie,
+    betreff,
+    text,
+    anhangPfade,
+    anhangNamen,
+  ];
 }

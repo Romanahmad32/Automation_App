@@ -11,8 +11,67 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// </summary>
 public static class AnhangPruefung
 {
-    public static IReadOnlyList<GeladenerAnhang> Lade(IReadOnlyList<string> pfade, int maxGesamtMb)
-        => [.. Sammle(pfade, maxGesamtMb).Select(datei => new GeladenerAnhang(datei.Name, LiesInhalt(datei)))];
+    /// <param name="pfade">Vollstaendige Pfade der Anhaenge.</param>
+    /// <param name="maxGesamtMb">Obergrenze aller Anhaenge zusammen.</param>
+    /// <param name="namen">
+    /// Abweichender Dateiname je Pfad, wenn der Anwalt umbenannt hat. Die Datei
+    /// auf Platte bleibt unberuehrt — umbenannt wird nur, was beim Empfaenger
+    /// ankommt.
+    /// </param>
+    public static IReadOnlyList<GeladenerAnhang> Lade(
+        IReadOnlyList<string> pfade,
+        int maxGesamtMb,
+        IReadOnlyDictionary<string, string>? namen = null)
+    {
+        var nachVollpfad = Normalisiert(namen);
+        return [.. Sammle(pfade, maxGesamtMb)
+            .Select(datei => new GeladenerAnhang(Anzeigename(datei, nachVollpfad), LiesInhalt(datei)))];
+    }
+
+    /// <summary>
+    /// Bringt die Schluessel auf dieselbe Form wie <c>FileInfo.FullName</c>.
+    /// Die Oberflaeche schickt den Pfad, wie sie ihn hat — mit Schraegstrichen
+    /// aus der Dateiauswahl etwa —, und ein Zeichenkettenvergleich darauf
+    /// scheiterte still: Der Anhang ginge unter seinem alten Namen hinaus.
+    /// </summary>
+    private static Dictionary<string, string> Normalisiert(IReadOnlyDictionary<string, string>? namen)
+    {
+        var karte = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (namen is null)
+        {
+            return karte;
+        }
+
+        foreach (var (pfad, name) in namen)
+        {
+            try
+            {
+                karte[Path.GetFullPath(pfad)] = name;
+            }
+            catch (Exception ausnahme) when (ausnahme is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+                // Unbrauchbarer Pfad: Dann bleibt es beim Namen auf Platte.
+            }
+        }
+
+        return karte;
+    }
+
+    /// <summary>
+    /// Der Name, unter dem der Anhang hinausgeht. Ein umbenannter Anhang darf
+    /// die Datei nicht aus ihrem Ordner heben: Nur der Dateiname zaehlt, ein
+    /// mitgegebener Pfad waere ein Versehen oder ein Angriff.
+    /// </summary>
+    private static string Anzeigename(FileInfo datei, Dictionary<string, string> namen)
+    {
+        if (!namen.TryGetValue(datei.FullName, out var gewuenscht))
+        {
+            return datei.Name;
+        }
+
+        var sauber = Path.GetFileName(gewuenscht.Trim());
+        return string.IsNullOrWhiteSpace(sauber) ? datei.Name : sauber;
+    }
 
     /// <summary>
     /// Prüft dieselben Bedingungen, ohne die Dateien einzulesen — für den

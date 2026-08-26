@@ -14,6 +14,11 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// laufen auf einer Maschine — der Weg über Pfade erspart es, jede Datei durch
 /// die HTTP-Schnittstelle zu schieben (dasselbe Muster wie bei der Ablage).
 /// </param>
+/// <param name="AnhangNamen">
+/// Abweichender Dateiname je Anhangpfad, sofern der Anwalt umbenannt hat.
+/// Die Datei in der Akte behaelt ihren Namen — geaendert wird nur, was beim
+/// Empfaenger ankommt. "Dokument1.pdf" sagt dort niemandem etwas.
+/// </param>
 /// <param name="AbsenderName">
 /// Anzeigename vor der Absenderadresse ("Kanzlei … &lt;kanzlei@…&gt;"). Kommt aus
 /// den Kanzleidaten des Frontends; die Adresse selbst steht im Postfach-Zugang.
@@ -24,4 +29,5 @@ public sealed record EmailNachricht(
     string Betreff,
     string Text,
     IReadOnlyList<string> AnhangPfade,
-    string AbsenderName);
+    string AbsenderName,
+    IReadOnlyDictionary<string, string>? AnhangNamen = null);

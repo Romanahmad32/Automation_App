@@ -12,7 +12,17 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// Grund im Klartext, wenn nicht bereit (kein Zugang hinterlegt, Microsoft-
 /// Anmeldung abgelaufen). Null, wenn alles steht.
 /// </param>
-public sealed record EmailVersandBereitschaft(bool Bereit, string Absender, string? Hinweis)
+/// <param name="Signatur">
+/// Der Signaturblock aus den Einstellungen, den der Direktversand anfuegt
+/// (§4.7). Die Oberflaeche zeigt ihn in der Vorschau — was unter der Mail
+/// steht, soll der Anwalt sehen, bevor sie hinausgeht, und nicht erst im
+/// Ordner "Gesendet".
+/// </param>
+public sealed record EmailVersandBereitschaft(
+    bool Bereit,
+    string Absender,
+    string? Hinweis,
+    string Signatur = "")
 {
     public static EmailVersandBereitschaft Nicht(string hinweis) => new(false, string.Empty, hinweis);
 }

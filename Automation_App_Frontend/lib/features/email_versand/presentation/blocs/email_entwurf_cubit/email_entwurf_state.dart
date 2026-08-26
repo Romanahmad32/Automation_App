@@ -1,5 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_empfaenger_vorschlag.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
+import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:equatable/equatable.dart';
@@ -36,6 +37,11 @@ class EmailEntwurfState extends Equatable {
 
   final EmailVersandErgebnis? ergebnis;
 
+  /// Der zuletzt ans Mailprogramm übergebene Entwurf. Bleibt stehen, damit
+  /// der Dialog sagen kann, dass die Mail dort liegt — und der Anwalt sie
+  /// nicht versehentlich ein zweites Mal übergibt oder gar direkt sendet.
+  final EmailEntwurfErgebnis? entwurfErgebnis;
+
   /// True, sobald der Anwalt den Text selbst angefasst hat. Danach schreibt die
   /// automatische Anrede ihn nicht mehr um — sonst verlöre er beim Hinzufügen
   /// eines Empfängers, was er schon getippt hat.
@@ -48,6 +54,7 @@ class EmailEntwurfState extends Equatable {
     this.phase = EmailVersandPhase.verfassen,
     this.fehler,
     this.ergebnis,
+    this.entwurfErgebnis,
     this.textSelbstGeschrieben = false,
   });
 
@@ -77,6 +84,7 @@ class EmailEntwurfState extends Equatable {
     EmailVersandPhase? phase,
     String? Function()? fehler,
     EmailVersandErgebnis? ergebnis,
+    EmailEntwurfErgebnis? entwurfErgebnis,
     bool? textSelbstGeschrieben,
   }) {
     return EmailEntwurfState(
@@ -86,6 +94,7 @@ class EmailEntwurfState extends Equatable {
       phase: phase ?? this.phase,
       fehler: fehler != null ? fehler() : this.fehler,
       ergebnis: ergebnis ?? this.ergebnis,
+      entwurfErgebnis: entwurfErgebnis ?? this.entwurfErgebnis,
       textSelbstGeschrieben:
           textSelbstGeschrieben ?? this.textSelbstGeschrieben,
     );
@@ -99,6 +108,7 @@ class EmailEntwurfState extends Equatable {
     phase,
     fehler,
     ergebnis,
+    entwurfErgebnis,
     textSelbstGeschrieben,
   ];
 }

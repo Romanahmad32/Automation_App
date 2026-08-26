@@ -37,7 +37,10 @@ public sealed class EntwurfOeffner(
             return new EntwurfErgebnis(EntwurfWeg.Outlook, null);
         }
 
-        var anhaenge = AnhangPruefung.Lade(nachricht.AnhangPfade, einstellungen.MaxAnhangGesamtMb);
+        var anhaenge = AnhangPruefung.Lade(
+            nachricht.AnhangPfade,
+            einstellungen.MaxAnhangGesamtMb,
+            nachricht.AnhangNamen);
         var absender = SmtpZugang.Aus(configStore.Current, einstellungen)?.Absender ?? string.Empty;
         var mime = EmailNachrichtBauer.Baue(nachricht, absender, anhaenge);
 

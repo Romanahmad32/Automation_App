@@ -114,16 +114,65 @@ public sealed class OutlookEntwurf(ILogger<OutlookEntwurf> logger)
         // bereits geprüft.
         foreach (var pfad in nachricht.AnhangPfade.Where(pfad => !string.IsNullOrWhiteSpace(pfad)))
         {
-            entwurf.Attachments.Add(pfad);
+            entwurf.Attachments.Add(UnterGewuenschtemNamen(pfad, nachricht.AnhangNamen));
         }
 
         // Den Inspector anzufassen lässt Outlook seine Signatur einsetzen.
-        _ = entwurf.GetInspector;
+        dynamic inspector = entwurf.GetInspector;
         var signatur = (object?)entwurf.HTMLBody as string ?? string.Empty;
         entwurf.HTMLBody = AlsHtml(nachricht.Text) + signatur;
 
         entwurf.Display();
+
+        // Ohne Activate erscheint das Fenster hinter der App — der Anwalt
+        // sieht dann nichts und haelt den Vorgang fuer haengengeblieben.
+        try
+        {
+            inspector.Activate();
+        }
+        catch (Exception)
+        {
+            // Das Fenster steht; wo es steht, ist kein Grund zu scheitern.
+        }
+
         return true;
+    }
+
+    /// <summary>
+    /// Outlook haengt Dateien unter ihrem Namen auf Platte an. Hat der Anwalt
+    /// umbenannt, muss also eine Kopie unter dem gewuenschten Namen her — die
+    /// Datei in der Akte behaelt ihren. Die Kopie liegt im Temp-Ordner; sie
+    /// wird nur bis zum Absenden in Outlook gebraucht.
+    /// </summary>
+    private static string UnterGewuenschtemNamen(
+        string pfad,
+        IReadOnlyDictionary<string, string>? namen)
+    {
+        if (namen is null || !namen.TryGetValue(pfad, out var gewuenscht))
+        {
+            return pfad;
+        }
+
+        var name = Path.GetFileName(gewuenscht.Trim());
+        if (string.IsNullOrWhiteSpace(name) || string.Equals(name, Path.GetFileName(pfad), StringComparison.Ordinal))
+        {
+            return pfad;
+        }
+
+        try
+        {
+            var ordner = Path.Combine(Path.GetTempPath(), "AutomationService", "Anhaenge");
+            Directory.CreateDirectory(ordner);
+            var ziel = Path.Combine(ordner, name);
+            File.Copy(pfad, ziel, overwrite: true);
+            return ziel;
+        }
+        catch (Exception ausnahme) when (ausnahme is IOException or UnauthorizedAccessException)
+        {
+            // Dann geht der Anhang unter seinem urspruenglichen Namen hinaus —
+            // besser als gar nicht.
+            return pfad;
+        }
     }
 
     private static IReadOnlyList<string> Brauchbare(IReadOnlyList<string> adressen) =>

@@ -73,6 +73,7 @@ class EmailVersandDialog extends StatelessWidget {
       context,
       entwurf: state.entwurf,
       absender: state.bereitschaft?.absender ?? '',
+      signatur: state.bereitschaft?.signatur ?? '',
     );
     if (!bestaetigt) return;
 
@@ -81,28 +82,22 @@ class EmailVersandDialog extends StatelessWidget {
     Navigator.pop(context, cubit.state.ergebnis);
   }
 
-  /// Übergibt an Outlook und schließt den Dialog: Weitergearbeitet wird dort,
-  /// und ein danach noch offener Entwurf in der App lüde zum zweiten Versand
-  /// derselben Mail ein. Der Hinweis geht über den ScaffoldMessenger der
-  /// Anwendung — der überlebt das Schließen, der Dialogkontext nicht.
+  /// Übergibt an Outlook und lässt den Dialog **stehen**. Der Anwalt sieht dort
+  /// noch, was er übergeben hat, und kann nachbessern und erneut übergeben —
+  /// das Outlook-Fenster liegt womöglich hinter der App, und ein Dialog, der
+  /// sich einfach schließt, sieht aus wie ein verschluckter Klick.
   Future<void> _entwurfOeffnen(BuildContext context) async {
-    final cubit = context.read<EmailEntwurfCubit>();
-    final melder = ScaffoldMessenger.of(context);
+    await context.read<EmailEntwurfCubit>().entwurfOeffnen();
+  }
 
-    final ergebnis = await cubit.entwurfOeffnen();
-    if (ergebnis == null || !context.mounted) return;
-
-    Navigator.pop(context);
-    melder.showSnackBar(
-      SnackBar(
-        content: Text(
-          ergebnis.hinweis ??
-              'Der Entwurf ist in Outlook geöffnet — mit Ihrer Signatur. '
-                  'Gesendet wird dort.',
-        ),
-        duration: const Duration(seconds: 6),
-      ),
-    );
+  /// „Öffnet…" waehrend der Uebergabe, danach „Erneut oeffnen" — Outlook
+  /// braucht kalt spuerbar Zeit, und ohne diesen Wechsel weiss niemand, ob der
+  /// erste Klick angekommen ist.
+  static String _entwurfBeschriftung(EmailEntwurfState state) {
+    if (state.uebergibtGerade) return 'Öffnet…';
+    return state.entwurfErgebnis == null
+        ? 'In Outlook öffnen'
+        : 'Erneut in Outlook öffnen';
   }
 
   @override
@@ -145,10 +140,12 @@ class EmailVersandDialog extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.drive_file_move_outline),
-                label: Text(
-                  state.uebergibtGerade ? 'Öffnet…' : 'In Outlook öffnen',
-                ),
+                    : Icon(
+                        state.entwurfErgebnis == null
+                            ? Icons.drive_file_move_outline
+                            : Icons.refresh,
+                      ),
+                label: Text(_entwurfBeschriftung(state)),
               ),
               FilledButton.icon(
                 onPressed: state.kannSenden
