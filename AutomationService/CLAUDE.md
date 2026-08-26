@@ -29,10 +29,10 @@ Verdrahtung über je eine `Add…Services`-Erweiterungsmethode, aufgerufen aus `
 `AddLifetimeServices`, `AddPersistenceServices`, `AddWordServices`, `AddPdfConversionServices`,
 `AddZentralrufServices`, `AddMailboxServices`, `AddSettingsServices`, `AddMandantenServices`,
 `AddVersichererServices`, `AddVorgaengeServices`, `AddFormTemplatesServices`, `AddBackupServices`,
-`AddDevSimulationServices`.
+`AddDevSimulationServices`, `AddEmailVersandServices`.
 
 Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName`: `WordAutomation`,
-`PdfConversion`, `Zentralruf`, `Mailbox`, `Simulation`. Ohne Options-Klasse direkt gelesen:
+`PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`. Ohne Options-Klasse direkt gelesen:
 `Urls`, `Cors:AllowedOrigins` (`Program.cs`) und `LegacyImport:*` (`LegacyJsonImportService`).
 
 ### Die Slices
@@ -65,7 +65,23 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Anleitung `docs/OUTLOOK_SETUP.md`).
   Laufzeitkonfiguration in `%APPDATA%\AutomationService\mailbox_config.json` (`MailboxConfigStore`,
   per ChangeToken heiß nachgeladen), ab Werk aus. Treffer landen im `DbReceivedReplyStore` und gehen
-  über den SignalR-Hub `MailboxHub` (`/hubs/mailbox`) an das Frontend.
+  über den SignalR-Hub `MailboxHub` (`/hubs/mailbox`) an das Frontend. Hängen Dateien an der
+  Antwort, legt `AntwortAnhaenge` sie unter `%APPDATA%\AutomationService\Anhaenge\<Schlüssel>` ab
+  (§4.3) — der Versand bietet sie zum Anhängen an. Kein Posteingang: aufgehoben wird nur, was an
+  einer **erfassten** Antwort hängt.
+- **EmailVersand** — versendet die fertig verfasste Mail zum Vorgang (§4.7, `POST api/EmailVersand/senden`,
+  `GET api/EmailVersand/bereitschaft`). Sendet per SMTP über **denselben** Zugang, den auch der
+  `MailboxMonitor` nutzt (`SmtpZugang.Aus` leitet den Postausgang aus dem Posteingang ab;
+  `EmailVersand:SmtpHost` in appsettings überschreibt). Alles oder nichts: Zugang, Anhänge und
+  Adressen werden geprüft, **bevor** verbunden wird (`AnhangPruefung`, `EmailNachrichtBauer`) —
+  ein Fehler heißt, dass nichts hinausgegangen ist. Danach trägt `GesendetOrdnerAblage` die
+  Nachricht per IMAP in "Gesendet" nach, außer der Anbieter tut es selbst (Gmail).
+  Zweiter Weg statt Versand: `POST api/EmailVersand/entwurf` öffnet die Nachricht als Entwurf in
+  Outlook (`OutlookEntwurf`, COM per **Late Binding** wie bei Word, eigener STA-Thread), sonst als
+  `.eml` (`EntwurfDatei`); `EntwurfOeffner` entscheidet. Dort setzt Outlook seine eigene Signatur —
+  deshalb hängt `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an.
+  `GET api/EmailVersand/signaturen` liest die in Outlook eingerichteten Signaturen
+  (`%APPDATA%\Microsoft\Signatures\*.txt`) zum einmaligen Übernehmen.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und

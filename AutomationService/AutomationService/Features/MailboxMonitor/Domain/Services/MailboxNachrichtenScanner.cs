@@ -130,12 +130,24 @@ public sealed class MailboxNachrichtenScanner(
         var data = parser.Parse(text);
         var warnings = ZentralrufReplyWarnings.Collect(data);
 
+        // Die Anhänge, bevor die Nachricht aus der Hand geht (§4.3): Der Monitor
+        // hat sie ohnehin vollständig geladen, und beim Versand fehlten sie
+        // sonst genau dort, wo der Anwalt sie sonst von Hand herüberzieht.
+        var anhangPfade = AntwortAnhaenge.LegeAb(message, dedupeKey, logger);
+
         int total;
         using (var scope = scopeFactory.CreateScope())
         {
             var store = scope.ServiceProvider.GetRequiredService<IReceivedReplyStore>();
             var reply = await store.AddAsync(
-                dedupeKey, data, message.Subject, message.From.ToString(), warnings, text, cancellationToken);
+                dedupeKey,
+                data,
+                message.Subject,
+                message.From.ToString(),
+                warnings,
+                text,
+                anhangPfade,
+                cancellationToken);
             if (reply is null)
             {
                 return;

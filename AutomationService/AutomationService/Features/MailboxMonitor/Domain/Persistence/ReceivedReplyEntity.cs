@@ -32,6 +32,13 @@ public class ReceivedReplyEntity
     /// <summary>Aus der Mail gewonnener Rohtext, der durch den Parser lief (Diagnose/Fallback).</summary>
     public string? Rohtext { get; set; }
 
+    /// <summary>
+    /// Serialisierte Pfade der abgelegten Mailanhänge (§4.3). Beim Versand
+    /// zum Anhängen angeboten — der Anwalt zieht sie sonst von Hand aus der
+    /// erhaltenen Nachricht herüber.
+    /// </summary>
+    public string? AnhaengeJson { get; set; }
+
     /// <summary>Vom Anwalt als gesehen/übernommen markiert.</summary>
     public bool Quittiert { get; set; }
 

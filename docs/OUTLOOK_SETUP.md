@@ -1,5 +1,11 @@
 # Outlook-/Microsoft-Postfach anbinden (einmalige Entwickler-Einrichtung)
 
+> **Dieser Weg gilt nur, wenn das Postfach wirklich bei Microsoft liegt** (Outlook.com,
+> Hotmail, Microsoft 365) — nicht schon dann, wenn es mit Outlook *gelesen* wird. Liegt es
+> bei einem anderen Anbieter (1&1/IONOS, Gmail), ist Outlook nur ein Client daneben und es
+> gilt der IMAP-Weg. Welcher Fall vorliegt, klärt
+> [`docs/POSTFACH_SETUP.md`](POSTFACH_SETUP.md) in zwei Minuten.
+
 Microsoft hat IMAP mit Passwort/App-Passwort im September 2024 endgültig abgeschaltet.
 Outlook.com-, Hotmail- und Microsoft-365-Postfächer lassen sich deshalb nur noch über
 OAuth2 („Mit Microsoft anmelden“) überwachen. Für den **Anwalt** ist das der einfachste
@@ -24,12 +30,19 @@ hinterlegt werden.
 4. **Registrieren** klicken.
 5. Auf der Übersichtsseite die **Anwendungs-ID (Client-ID)** kopieren (GUID).
 
-Berechtigungen: Die App fordert zur Laufzeit den delegierten Scope
-`https://outlook.office365.com/IMAP.AccessAsUser.All` an; der Nutzer stimmt bei der
+Berechtigungen: Die App fordert zur Laufzeit zwei delegierte Scopes an —
+`https://outlook.office365.com/IMAP.AccessAsUser.All` zum Empfangen und
+`https://outlook.office365.com/SMTP.Send` zum Versenden (§4.7); der Nutzer stimmt bei der
 ersten Anmeldung selbst zu. Ein Eintrag unter „API-Berechtigungen“ ist dafür bei
 persönlichen Konten nicht zwingend; für Microsoft-365-Organisationskonten schadet es
-nicht, die delegierte Berechtigung **IMAP.AccessAsUser.All** (Office 365 Exchange Online)
-zusätzlich einzutragen.
+nicht, die delegierten Berechtigungen **IMAP.AccessAsUser.All** und **SMTP.Send**
+(Office 365 Exchange Online) zusätzlich einzutragen.
+
+> **Nach einem Update, das einen Scope ergänzt, muss sich der Anwalt einmalig neu
+> anmelden.** MSAL holt für einen Scope, dem noch nie zugestimmt wurde, kein stilles
+> Token; bis zur Neuanmeldung meldet der Postfach-Status „Microsoft-Anmeldung
+> erforderlich …“ und der Versand schlägt mit demselben Hinweis fehl. Genau das ist beim
+> Sprung von „nur Empfang“ auf „Empfang und Versand“ passiert.
 
 ## 2. Client-ID in der App hinterlegen
 
@@ -61,7 +74,10 @@ Anmelden einen klaren Fehler.
   Windows DPAPI-verschlüsselt (`Microsoft.Identity.Client.Extensions.Msal`).
 - Der Monitor meldet sich per MailKit `SaslMechanismOAuth2` (XOAUTH2) an
   `outlook.office365.com:993` an; Zugriffstokens werden vor jedem Verbindungsaufbau
-  still erneuert (`AcquireTokenSilent`).
+  still erneuert (`AcquireTokenSilent`). Der Versand nutzt dieselben Tokens gegen
+  `smtp.office365.com:587` (STARTTLS). Passt der abgeleitete Servername nicht — private
+  Outlook.com-Konten senden über `smtp-mail.outlook.com` —, lässt er sich in
+  `appsettings.json` unter `EmailVersand:SmtpHost` überschreiben.
 - Läuft das Refresh-Token ab (z. B. Passwortwechsel, Konto entzogen), zeigt der
   Postfach-Status „Microsoft-Anmeldung erforderlich …“ — ein erneuter Klick auf
   „Mit Microsoft anmelden“ genügt.

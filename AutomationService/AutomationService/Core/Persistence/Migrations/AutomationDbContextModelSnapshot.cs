@@ -15,7 +15,7 @@ namespace AutomationService.Core.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
 
             modelBuilder.Entity("AutomationService.Features.FormTemplates.Domain.Persistence.FormTemplateEntity", b =>
                 {
@@ -51,6 +51,9 @@ namespace AutomationService.Core.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Absender")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AnhaengeJson")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Betreff")
@@ -178,6 +181,10 @@ namespace AutomationService.Core.Persistence.Migrations
 
                     b.Property<int>("LaufendeAuftragsnummer")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("MailSignatur")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()

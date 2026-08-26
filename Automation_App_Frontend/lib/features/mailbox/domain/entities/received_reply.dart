@@ -22,6 +22,11 @@ class ReceivedReply extends Equatable {
   /// zur Referenz, Negativ-Antwort) — identisch zur manuellen Auswertung.
   final List<String> warnings;
 
+  /// Dateien, die an der Antwort hingen (§4.3) — beim Versand zum Anhängen
+  /// angeboten. Der Anwalt zieht sie sonst im Mailprogramm von Hand aus der
+  /// erhaltenen Nachricht in die ausgehende.
+  final List<String> anhangPfade;
+
   /// Der aus der Mail gewonnene Rohtext, der durch den Parser lief. Fallback/
   /// Diagnose, falls das automatische Mapping unvollständig ist.
   final String? rawText;
@@ -39,6 +44,7 @@ class ReceivedReply extends Equatable {
     required this.acknowledged,
     required this.data,
     required this.warnings,
+    this.anhangPfade = const [],
     this.rawText,
     this.zuordnungVermutet = false,
   });
@@ -54,6 +60,7 @@ class ReceivedReply extends Equatable {
       acknowledged: json['acknowledged'] as bool? ?? false,
       data: ZentralrufReplyData.fromJson(json['data'] as Map<String, dynamic>),
       warnings: List<String>.from(json['warnings'] as List? ?? const []),
+      anhangPfade: List<String>.from(json['anhangPfade'] as List? ?? const []),
       rawText: json['rawText'] as String?,
       zuordnungVermutet: json['zuordnungVermutet'] as bool? ?? false,
     );
@@ -68,6 +75,7 @@ class ReceivedReply extends Equatable {
     acknowledged,
     data,
     warnings,
+    anhangPfade,
     rawText,
     zuordnungVermutet,
   ];

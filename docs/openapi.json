@@ -1948,6 +1948,255 @@
         }
       }
     },
+    "/api/EmailVersand/bereitschaft": {
+      "get": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Meldet, ob gesendet werden kann und von welcher Adresse aus. Die\r\nOberfl\u00E4che fragt das ab, bevor der Anwalt zu tippen beginnt.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailVersandBereitschaftDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailVersandBereitschaftDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailVersandBereitschaftDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/signaturen": {
+      "get": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Meldet die Signaturen, die im Outlook dieses Rechners eingerichtet\r\nsind (\u00A74.7). Zum einmaligen \u00DCbernehmen in die Einstellungen \u2014 danach\r\nh\u00E4ngt der Versand nicht mehr an Outlook. Eine leere Liste hei\u00DFt: hier\r\nist keine eingerichtet, und das ist kein Fehler.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OutlookSignaturDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OutlookSignaturDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OutlookSignaturDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/senden": {
+      "post": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Sendet die Mail. Entweder ganz oder gar nicht: Bei einem Fehler ist\r\nnichts hinausgegangen, und der Grund steht im Klartext in den\r\nProblemDetails.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVersandDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVersandDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVersandDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailVersandErgebnisDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailVersandErgebnisDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailVersandErgebnisDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/entwurf": {
+      "post": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "\u00D6ffnet die Mail als Entwurf im Mailprogramm, statt sie zu senden\r\n(\u00A74.7). Gesendet wird dort von Hand \u2014 die App erf\u00E4hrt davon nichts\r\nmehr, deshalb bleibt das H\u00E4kchen beim Abschluss manuell (\u00A74.8).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVersandDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVersandDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVersandDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntwurfErgebnisDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntwurfErgebnisDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntwurfErgebnisDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Simulation/zentralruf-antwort": {
       "post": {
         "tags": [
@@ -2311,6 +2560,131 @@
         },
         "description": "Schadensaufstellung f\u00FCr Vorlagen \u0022mit Auflistung\u0022: Positionen werden als Tabelle am\r\nPlatzhalter {{Schadensaufstellung}} eingef\u00FCgt, die RVG-Kosten als zus\u00E4tzliche Platzhalter."
       },
+      "EmailVersandBereitschaftDto": {
+        "required": [
+          "bereit",
+          "absender",
+          "hinweis"
+        ],
+        "type": "object",
+        "properties": {
+          "bereit": {
+            "type": "boolean"
+          },
+          "absender": {
+            "type": "string"
+          },
+          "hinweis": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Ob die App senden kann und von welcher Adresse aus (REQUIREMENTS.md \u00A74.7)."
+      },
+      "EmailVersandDto": {
+        "required": [
+          "an",
+          "kopie",
+          "betreff",
+          "text",
+          "anhangPfade",
+          "absenderName"
+        ],
+        "type": "object",
+        "properties": {
+          "an": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kopie": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "betreff": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "anhangPfade": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "absenderName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Die zu versendende Mail, wie die Oberfl\u00E4che sie schickt (REQUIREMENTS.md \u00A74.7).\r\nDie Absenderadresse steht bewusst nicht darin \u2014 sie ergibt sich aus dem\r\nhinterlegten Postfach-Zugang und ist nichts, was der Aufrufer bestimmen darf."
+      },
+      "EmailVersandErgebnisDto": {
+        "required": [
+          "gesendetAm",
+          "empfaenger",
+          "imGesendetOrdner",
+          "hinweis"
+        ],
+        "type": "object",
+        "properties": {
+          "gesendetAm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "empfaenger": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "imGesendetOrdner": {
+            "type": "boolean"
+          },
+          "hinweis": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Was der Versand ergeben hat (REQUIREMENTS.md \u00A74.7)."
+      },
+      "EntwurfErgebnisDto": {
+        "required": [
+          "weg",
+          "hinweis"
+        ],
+        "type": "object",
+        "properties": {
+          "weg": {
+            "type": "string",
+            "description": "\u0022outlook\u0022 oder \u0022datei\u0022."
+          },
+          "hinweis": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Klartext, wenn es nicht der Regelweg war; sonst null."
+          }
+        },
+        "description": "Wo der Entwurf ge\u00F6ffnet wurde (REQUIREMENTS.md \u00A74.7)."
+      },
       "FormTemplateDto": {
         "required": [
           "id",
@@ -2367,7 +2741,8 @@
           "laufendeAuftragsnummer",
           "abteilung",
           "tabellenkopfFarbeHex",
-          "aktenStammordner"
+          "aktenStammordner",
+          "mailSignatur"
         ],
         "type": "object",
         "properties": {
@@ -2407,6 +2782,9 @@
             "type": "string"
           },
           "aktenStammordner": {
+            "type": "string"
+          },
+          "mailSignatur": {
             "type": "string"
           }
         },
@@ -2676,6 +3054,22 @@
         },
         "description": "\u00DCbertragungsformat eines Mandanten. PascalCase-Properties werden als camelCase\r\nserialisiert und passen damit 1:1 zum JSON der Flutter-Entit\u00E4t \u0060Mandant\u0060.\r\nDie in der DB als JSON-Spalte abgelegten Listen werden hier in echte Arrays\r\n\u00FCbersetzt."
       },
+      "OutlookSignaturDto": {
+        "required": [
+          "name",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "Eine im Mailprogramm gefundene Signatur (REQUIREMENTS.md \u00A74.7)."
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -2723,6 +3117,7 @@
           "acknowledged",
           "data",
           "warnings",
+          "anhangPfade",
           "rawText",
           "zuordnungVermutet"
         ],
@@ -2754,6 +3149,12 @@
             "$ref": "#/components/schemas/ZentralrufReplyData"
           },
           "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "anhangPfade": {
             "type": "array",
             "items": {
               "type": "string"
@@ -3800,6 +4201,9 @@
     },
     {
       "name": "FormTemplates"
+    },
+    {
+      "name": "EmailVersand"
     },
     {
       "name": "Simulation"

@@ -18,7 +18,8 @@ public sealed record KanzleiSettingsDto(
     int LaufendeAuftragsnummer,
     string Abteilung,
     string TabellenkopfFarbeHex,
-    string AktenStammordner)
+    string AktenStammordner,
+    string MailSignatur)
 {
     public static KanzleiSettingsDto From(KanzleiSettingsEntity e) => new(
         e.Personentyp,
@@ -31,7 +32,8 @@ public sealed record KanzleiSettingsDto(
         e.LaufendeAuftragsnummer,
         e.Abteilung,
         e.TabellenkopfFarbeHex,
-        e.AktenStammordner);
+        e.AktenStammordner,
+        e.MailSignatur);
 
     public KanzleiSettingsEntity ToEntity() => new()
     {
@@ -47,5 +49,6 @@ public sealed record KanzleiSettingsDto(
         Abteilung = Abteilung,
         TabellenkopfFarbeHex = TabellenkopfFarbeHex,
         AktenStammordner = AktenStammordner,
+        MailSignatur = MailSignatur,
     };
 }

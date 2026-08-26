@@ -57,6 +57,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
       ],
     ),
     'aktenStammordner': FormControl<String>(),
+    'mailSignatur': FormControl<String>(),
   });
 
   @override
@@ -82,6 +83,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'abteilung': settings.abteilung,
       'tabellenkopfFarbeHex': settings.tabellenkopfFarbeHex,
       'aktenStammordner': settings.aktenStammordner,
+      'mailSignatur': settings.mailSignatur,
     });
   }
 
@@ -107,6 +109,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
             'tabellenkopfFarbeHex',
           ).replaceFirst('#', '').toUpperCase(),
           aktenStammordner: read('aktenStammordner'),
+          mailSignatur: read('mailSignatur'),
         ),
       ),
     );
