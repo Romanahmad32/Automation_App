@@ -14,7 +14,7 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// </summary>
 public sealed class EntwurfOeffner(
     MailboxConfigStore configStore,
-    OutlookEntwurf outlook,
+    OutlookVerbindung outlook,
     EntwurfDatei datei,
     IOptions<EmailVersandOptions> optionen) : IEntwurfOeffner
 {
@@ -31,7 +31,7 @@ public sealed class EntwurfOeffner(
 
         // Der COM-Aufruf blockiert bis zu einer Minute — nicht auf dem Thread,
         // der die Anfrage bedient.
-        var inOutlook = await Task.Run(() => outlook.Oeffne(nachricht), cancellationToken);
+        var inOutlook = await Task.Run(() => outlook.OeffneEntwurf(nachricht), cancellationToken);
         if (inOutlook)
         {
             return new EntwurfErgebnis(EntwurfWeg.Outlook, null);

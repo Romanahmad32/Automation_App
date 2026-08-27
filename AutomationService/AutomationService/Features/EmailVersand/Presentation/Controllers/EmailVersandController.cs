@@ -11,8 +11,10 @@ namespace AutomationService.Features.EmailVersand.Presentation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class EmailVersandController(IEmailVersender versender, IEntwurfOeffner oeffner)
-    : ControllerBase
+public class EmailVersandController(
+    IEmailVersender versender,
+    IEntwurfOeffner oeffner,
+    OutlookVerbindung outlook) : ControllerBase
 {
     /// <summary>
     /// Meldet, ob gesendet werden kann und von welcher Adresse aus. Die
@@ -64,6 +66,33 @@ public class EmailVersandController(IEmailVersender versender, IEntwurfOeffner o
                 statusCode: StatusFuer(exception.Grund));
         }
     }
+
+    /// <summary>
+    /// Startet Outlook im Hintergrund, damit der erste Entwurf den Kaltstart
+    /// nicht bezahlt (§4.7). Die Oberfläche ruft das beim Öffnen des
+    /// Versanddialogs — bis der Anwalt fertig getippt hat, steht Outlook.
+    /// Antwortet sofort und meldet nie einen Fehler: Misslingt es, ist der
+    /// Entwurfsweg deswegen nicht kaputt, nur wieder langsam.
+    /// </summary>
+    [HttpPost("entwurf/vorwaermen")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult EntwurfVorwaermen()
+    {
+        outlook.WaermeVor();
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Die Anhänge der Nachricht, die in Outlook gerade offen oder ausgewählt
+    /// ist (§4.7). Beobachtet wurde, dass genau diese Dateien im Mailprogramm
+    /// von Hand in die ausgehende Nachricht gezogen werden — die App fragt
+    /// stattdessen nach. Leere Liste heißt: nichts ausgewählt oder nichts
+    /// dran, und das ist kein Fehler.
+    /// </summary>
+    [HttpGet("outlook/anhaenge")]
+    [ProducesResponseType(typeof(IReadOnlyList<string>), StatusCodes.Status200OK)]
+    public ActionResult<IReadOnlyList<string>> GetOutlookAnhaenge() =>
+        Ok(outlook.AnhaengeDerAuswahl());
 
     /// <summary>
     /// Öffnet die Mail als Entwurf im Mailprogramm, statt sie zu senden

@@ -2107,6 +2107,58 @@
         }
       }
     },
+    "/api/EmailVersand/entwurf/vorwaermen": {
+      "post": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Startet Outlook im Hintergrund, damit der erste Entwurf den Kaltstart\r\nnicht bezahlt (\u00A74.7). Die Oberfl\u00E4che ruft das beim \u00D6ffnen des\r\nVersanddialogs \u2014 bis der Anwalt fertig getippt hat, steht Outlook.\r\nAntwortet sofort und meldet nie einen Fehler: Misslingt es, ist der\r\nEntwurfsweg deswegen nicht kaputt, nur wieder langsam.",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/outlook/anhaenge": {
+      "get": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Die Anh\u00E4nge der Nachricht, die in Outlook gerade offen oder ausgew\u00E4hlt\r\nist (\u00A74.7). Beobachtet wurde, dass genau diese Dateien im Mailprogramm\r\nvon Hand in die ausgehende Nachricht gezogen werden \u2014 die App fragt\r\nstattdessen nach. Leere Liste hei\u00DFt: nichts ausgew\u00E4hlt oder nichts\r\ndran, und das ist kein Fehler.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/EmailVersand/entwurf": {
       "post": {
         "tags": [

@@ -72,6 +72,33 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
   }
 
   @override
+  Future<void> waermeEntwurfVor() async {
+    try {
+      await _dio.post('/api/EmailVersand/entwurf/vorwaermen');
+    } on DioException {
+      // Vorwärmen ist eine Bequemlichkeit, kein Schritt des Ablaufs. Schlägt es
+      // fehl, öffnet der Entwurf eben so langsam wie vorher.
+    }
+  }
+
+  @override
+  Future<List<String>> ladeOutlookAnhaenge() async {
+    try {
+      final response = await _dio.get(
+        '/api/EmailVersand/outlook/anhaenge',
+        // Steht Outlook noch nicht, wird es hier gestartet — das dauert.
+        options: Options(receiveTimeout: _versandTimeout),
+      );
+      return [for (final pfad in response.data as List) pfad as String];
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ??
+            'Die Anhänge aus Outlook konnten nicht gelesen werden.',
+      );
+    }
+  }
+
+  @override
   Future<List<OutlookSignatur>> ladeOutlookSignaturen() async {
     final response = await _dio.get('/api/EmailVersand/signaturen');
     return [

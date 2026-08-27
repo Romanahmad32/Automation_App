@@ -24,6 +24,12 @@ class EmailAnhangListe extends StatelessWidget {
   /// (Pfad, neuer Name) — benennt nur für die Mail um, nicht auf Platte.
   final void Function(String pfad, String name) onUmbenennen;
 
+  /// Holt die Anhänge aus der Nachricht, die in Outlook gerade offen ist.
+  final VoidCallback? onAusOutlook;
+
+  /// True, solange Outlook danach gefragt wird.
+  final bool holtAusOutlook;
+
   final bool aktiv;
 
   const EmailAnhangListe({
@@ -32,8 +38,10 @@ class EmailAnhangListe extends StatelessWidget {
     required this.onHinzufuegen,
     required this.onEntfernen,
     required this.onUmbenennen,
+    this.onAusOutlook,
     this.namen = const {},
     this.ausDerAkte = const [],
+    this.holtAusOutlook = false,
     this.aktiv = true,
   });
 
@@ -92,6 +100,24 @@ class EmailAnhangListe extends StatelessWidget {
               icon: const Icon(Icons.folder_open),
               label: const Text('Datei anhängen…'),
             ),
+            // Der Weg für Dateien, die nur in einer Mail stecken und nirgends
+            // auf der Platte liegen — Gutachten, Kostenvoranschlag, Fotos.
+            if (onAusOutlook != null)
+              OutlinedButton.icon(
+                onPressed: aktiv && !holtAusOutlook ? onAusOutlook : null,
+                icon: holtAusOutlook
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.move_to_inbox_outlined),
+                label: Text(
+                  holtAusOutlook
+                      ? 'Fragt Outlook…'
+                      : 'Aus der Outlook-Nachricht',
+                ),
+              ),
             for (final pfad in offen)
               ActionChip(
                 avatar: const Icon(Icons.add, size: 18),

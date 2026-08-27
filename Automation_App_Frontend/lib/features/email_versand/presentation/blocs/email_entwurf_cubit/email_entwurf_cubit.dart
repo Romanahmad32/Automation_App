@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
@@ -76,6 +78,11 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
       ),
     );
 
+    // Outlook im Hintergrund hochfahren, während der Anwalt tippt. Bewusst
+    // ohne await: Der Entwurf steht schon, und ob es klappt, ändert hier
+    // nichts (§4.7).
+    unawaited(_repository.waermeEntwurfVor());
+
     final bereitschaft = await _ladeBereitschaft();
     if (isClosed) return;
     emit(state.copyWith(bereitschaft: bereitschaft));
@@ -94,26 +101,14 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     }
   }
 
-  void empfaengerHinzufuegen(String adresse) {
-    final neu = adresse.trim();
-    if (neu.isEmpty || _enthalten(state.entwurf.alleEmpfaenger, neu)) return;
-    _setzeEntwurf(state.entwurf.copyWith(an: [...state.entwurf.an, neu]));
-  }
+  void empfaengerHinzufuegen(String adresse) =>
+      _setzeEntwurf(state.entwurf.mitEmpfaenger(adresse));
 
-  void kopieHinzufuegen(String adresse) {
-    final neu = adresse.trim();
-    if (neu.isEmpty || _enthalten(state.entwurf.alleEmpfaenger, neu)) return;
-    _setzeEntwurf(state.entwurf.copyWith(kopie: [...state.entwurf.kopie, neu]));
-  }
+  void kopieHinzufuegen(String adresse) =>
+      _setzeEntwurf(state.entwurf.mitKopie(adresse));
 
-  void empfaengerEntfernen(String adresse) {
-    _setzeEntwurf(
-      state.entwurf.copyWith(
-        an: _ohne(state.entwurf.an, adresse),
-        kopie: _ohne(state.entwurf.kopie, adresse),
-      ),
-    );
-  }
+  void empfaengerEntfernen(String adresse) =>
+      _setzeEntwurf(state.entwurf.ohneEmpfaenger(adresse));
 
   void setzeBetreff(String betreff) {
     emit(state.copyWith(entwurf: state.entwurf.copyWith(betreff: betreff)));
@@ -130,38 +125,49 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     );
   }
 
-  void anhangHinzufuegen(String pfad) {
-    if (state.entwurf.anhangPfade.contains(pfad)) return;
-    _setzeEntwurf(
-      state.entwurf.copyWith(anhangPfade: [...state.entwurf.anhangPfade, pfad]),
-    );
+  void anhangHinzufuegen(String pfad) =>
+      _setzeEntwurf(state.entwurf.mitAnhang(pfad));
+
+  /// Holt die Anhänge aus der Nachricht, die in Outlook gerade offen ist, und
+  /// **bietet** sie an (§4.7). Angehängt werden sie erst auf Klick — wie die
+  /// Dateien aus dem Fall-Ordner. Liefert die Anzahl, damit die Oberfläche
+  /// „nichts gefunden" von „drei geholt" unterscheiden kann.
+  Future<int?> anhaengeAusOutlook() async {
+    if (state.holtAusOutlook) return null;
+    emit(state.copyWith(holtAusOutlook: true, fehler: () => null));
+
+    try {
+      final geholt = await _repository.ladeOutlookAnhaenge();
+      if (isClosed) return geholt.length;
+
+      // Was schon angehängt oder schon angeboten ist, nicht doppelt zeigen.
+      final bekannt = {...state.ausOutlook, ...state.entwurf.anhangPfade};
+      emit(
+        state.copyWith(
+          holtAusOutlook: false,
+          ausOutlook: [
+            ...state.ausOutlook,
+            ...geholt.where((pfad) => !bekannt.contains(pfad)),
+          ],
+        ),
+      );
+      return geholt.length;
+    } catch (e) {
+      if (isClosed) return null;
+      emit(
+        state.copyWith(holtAusOutlook: false, fehler: () => ausnahmeText(e)),
+      );
+      return null;
+    }
   }
 
   /// Benennt den Anhang **fuer die Mail** um; die Datei in der Akte behaelt
-  /// ihren Namen. Ein leerer Name stellt den Dateinamen wieder her.
-  void anhangUmbenennen(String pfad, String name) {
-    final sauber = name.trim();
-    final namen = Map<String, String>.from(state.entwurf.anhangNamen);
-    if (sauber.isEmpty) {
-      namen.remove(pfad);
-    } else {
-      namen[pfad] = sauber;
-    }
-    emit(state.copyWith(entwurf: state.entwurf.copyWith(anhangNamen: namen)));
-  }
+  /// ihren Namen.
+  void anhangUmbenennen(String pfad, String name) =>
+      emit(state.copyWith(entwurf: state.entwurf.mitAnhangName(pfad, name)));
 
-  void anhangEntfernen(String pfad) {
-    final namen = Map<String, String>.from(state.entwurf.anhangNamen)
-      ..remove(pfad);
-    _setzeEntwurf(
-      state.entwurf.copyWith(
-        anhangPfade: state.entwurf.anhangPfade
-            .where((vorhanden) => vorhanden != pfad)
-            .toList(),
-        anhangNamen: namen,
-      ),
-    );
-  }
+  void anhangEntfernen(String pfad) =>
+      _setzeEntwurf(state.entwurf.ohneAnhang(pfad));
 
   /// Sendet und meldet, ob es geklappt hat. Bei einem Fehler ist nichts
   /// hinausgegangen — der Entwurf bleibt vollständig erhalten, damit der
@@ -267,10 +273,4 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
       Left() => null,
     };
   }
-
-  static bool _enthalten(List<String> adressen, String gesucht) =>
-      adressen.any((adresse) => adresse.toLowerCase() == gesucht.toLowerCase());
-
-  static List<String> _ohne(List<String> adressen, String adresse) =>
-      adressen.where((vorhanden) => vorhanden != adresse).toList();
 }

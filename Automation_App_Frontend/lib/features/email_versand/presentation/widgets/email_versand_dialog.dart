@@ -6,6 +6,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/email_e
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_senden_bestaetigung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_formular.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
@@ -100,6 +101,17 @@ class EmailVersandDialog extends StatelessWidget {
         : 'Erneut in Outlook öffnen';
   }
 
+  /// Die Mail ansehen, ohne sie abzuschicken. Der Knopf steht neben „Senden",
+  /// weil genau dort die Frage aufkommt, ob wirklich das Richtige drinsteht.
+  Future<void> _vorschau(BuildContext context, EmailEntwurfState state) {
+    return EmailVorschauDialog.zeigen(
+      context,
+      entwurf: state.entwurf,
+      absender: state.bereitschaft?.absender ?? '',
+      signatur: state.bereitschaft?.signatur ?? '',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -129,6 +141,13 @@ class EmailVersandDialog extends StatelessWidget {
                     ? null
                     : () => Navigator.pop(context),
                 child: const Text('Abbrechen'),
+              ),
+              TextButton.icon(
+                onPressed: state.beschaeftigt
+                    ? null
+                    : () => _vorschau(context, state),
+                icon: const Icon(Icons.visibility_outlined),
+                label: const Text('Vorschau'),
               ),
               OutlinedButton.icon(
                 onPressed: state.kannEntwurfOeffnen

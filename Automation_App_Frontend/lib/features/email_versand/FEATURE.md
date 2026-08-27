@@ -6,8 +6,8 @@
 **Zustand:** `EmailEntwurfCubit` (`presentation/blocs/email_entwurf_cubit/`) — Factory, je Dialog ein eigener Entwurf.
 **Domain:** Entities `EmailEntwurf`, `EmailEmpfaengerVorschlag`, `EmpfaengerArt`, `EmailVersandBereitschaft`, `EmailVersandErgebnis`;
 Dienst `EmailEntwurfErzeuger` (Vorbelegung aus Vorgang/Mandant/Versicherer); Schnittstelle `EmailVersandRepository`. Keine UseCases.
-**Backend:** `Features/EmailVersand/` · `GET /api/EmailVersand/bereitschaft` · `POST /api/EmailVersand/senden` ·
-`POST /api/EmailVersand/entwurf` (in Outlook öffnen) · `GET /api/EmailVersand/signaturen`
+**Backend:** `Features/EmailVersand/` · `bereitschaft` · `senden` · `entwurf` (+ `entwurf/vorwaermen`) ·
+`outlook/anhaenge` · `signaturen` — alle unter `/api/EmailVersand/`
 **Tests:** `test/features/email_versand/`
 
 **Fallstricke**
@@ -24,8 +24,7 @@ Dienst `EmailEntwurfErzeuger` (Vorbelegung aus Vorgang/Mandant/Versicherer); Sch
 - Anhänge gehen als **Pfade** ans Backend, nicht als Inhalt (wie bei der Ablage). `anhangNamen` benennt nur
   **für die Mail** um; die Datei in der Akte behält ihren Namen. Für Outlook legt das Backend dafür eine
   Kopie unter dem gewünschten Namen an, weil COM nach Pfad anhängt.
-- Der Versand braucht ein `receiveTimeout` von 120 s in der Datasource; global stehen im `NetworkModule` 3 s.
-- Ein Versandfehler lässt den Entwurf **vollständig** stehen (Phase zurück auf `verfassen`).
+- Versand, Entwurf und Outlook-Anhänge brauchen `receiveTimeout: 120 s`; global stehen 3 s. Ein Versandfehler lässt den Entwurf **vollständig** stehen (Phase zurück auf `verfassen`).
 - Zwei Wege hinaus: Direktversand **oder** Entwurf in Outlook. Der Entwurf braucht **keinen**
   Postfach-Zugang (`kannEntwurfOeffnen` prüft ihn nicht) — er ist die Rückfalltür. Danach bleibt die Phase
   auf `verfassen` und `ergebnis` null: Ob dort gesendet wurde, weiß die App nicht (§4.8). Der Dialog
@@ -34,3 +33,7 @@ Dienst `EmailEntwurfErzeuger` (Vorbelegung aus Vorgang/Mandant/Versicherer); Sch
   setzt Outlook seine eigene. Ins Frontend kommt sie über `bereitschaft.signatur` **nur zum Anzeigen**.
 - Empfängerzeilen übernehmen die Eingabe auch beim Verlassen des Feldes und bei `,`/`;`. Was offen bleibt,
   meldet `onOffeneEingabe` nach oben; `VersandVoraussetzungen.fehlend` erklärt daraus, warum „Senden" grau ist.
+- Die Vorschau (`EmailVorschau`) steht im Dialog **und** in der Rueckfrage. Nur in der Rueckfrage
+  hiesse: Wer sich vergewissern will, muss erst auf „Senden" druecken.
+- `OutlookVerbindung` haelt die Outlook-Instanz; der Dialog laesst sie beim Oeffnen vorwaermen
+  (`waermeEntwurfVor`). Ohne das kostet der erste Entwurf den Kaltstart von Outlook.
