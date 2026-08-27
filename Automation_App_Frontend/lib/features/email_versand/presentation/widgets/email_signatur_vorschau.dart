@@ -16,8 +16,34 @@ class EmailSignaturVorschau extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (signatur.trim().isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    // Gar nichts anzuzeigen war die erste Fassung — und beim Testen fiel genau
+    // das auf: Ohne hinterlegte Signatur fehlte die Vorschau spurlos, und
+    // nichts sagte, warum. Der Hinweis kostet eine Zeile.
+    if (signatur.trim().isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8, left: 2),
+        child: Row(
+          children: [
+            Icon(
+              Icons.draw_outlined,
+              size: 14,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Keine Signatur hinterlegt — in den Einstellungen aus Outlook '
+                'übernehmen.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       width: double.infinity,

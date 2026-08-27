@@ -30,6 +30,25 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
   String _offenAn = '';
   String _offenKopie = '';
 
+  /// Fragt Outlook nach den Anhaengen der offenen Nachricht und sagt, was
+  /// dabei herauskam — „nichts gefunden" ist eine Antwort, kein Ausbleiben.
+  Future<void> _ausOutlook(
+    BuildContext context,
+    EmailEntwurfCubit cubit,
+  ) async {
+    final melder = ScaffoldMessenger.of(context);
+    final anzahl = await cubit.anhaengeAusOutlook();
+    if (!mounted || anzahl == null || anzahl > 0) return;
+
+    melder.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'In Outlook ist keine Nachricht mit Anhängen offen oder ausgewählt.',
+        ),
+      ),
+    );
+  }
+
   List<String> _fehltNoch(EmailEntwurfState state) =>
       VersandVoraussetzungen.fehlend(
         entwurf: state.entwurf,
@@ -148,10 +167,15 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
             EmailAnhangListe(
               anhangPfade: state.entwurf.anhangPfade,
               namen: state.entwurf.anhangNamen,
-              ausDerAkte: widget.ausDerAkte,
+              // Fall-Ordner und Outlook-Nachricht landen in derselben Reihe
+              // anklickbarer Vorschlaege: Woher eine Datei kommt, aendert
+              // nichts daran, wie man sie anhaengt.
+              ausDerAkte: [...widget.ausDerAkte, ...state.ausOutlook],
               onHinzufuegen: cubit.anhangHinzufuegen,
               onEntfernen: cubit.anhangEntfernen,
               onUmbenennen: cubit.anhangUmbenennen,
+              onAusOutlook: () => _ausOutlook(context, cubit),
+              holtAusOutlook: state.holtAusOutlook,
               aktiv: aktiv,
             ),
           ],

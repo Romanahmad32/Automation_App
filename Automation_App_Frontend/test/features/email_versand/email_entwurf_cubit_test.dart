@@ -49,6 +49,21 @@ class _FakeVersandRepository implements EmailVersandRepository {
     );
   }
 
+  /// Wie oft die Oberfläche Outlook vorwärmen liess.
+  int vorgewaermt = 0;
+
+  /// Was Outlook auf die Frage nach den Anhaengen der offenen Nachricht liefert.
+  List<String> outlookAnhaenge = const [];
+
+  @override
+  Future<List<String>> ladeOutlookAnhaenge() async {
+    if (wirft != null) throw wirft!;
+    return outlookAnhaenge;
+  }
+
+  @override
+  Future<void> waermeEntwurfVor() async => vorgewaermt++;
+
   @override
   Future<List<OutlookSignatur>> ladeOutlookSignaturen() async => const [];
 
@@ -337,6 +352,57 @@ void main() {
 
     expect(ergebnis?.inOutlook, isFalse);
     expect(ergebnis?.hinweis, contains('Outlook'));
+    await gebaut.cubit.close();
+  });
+
+  test('Anhaenge aus Outlook werden angeboten, nicht angehaengt', () async {
+    // Was mitgeht, entscheidet der Anwalt -- wie bei den Dateien aus dem
+    // Fall-Ordner (§4.7).
+    final repository = _FakeVersandRepository()
+      ..outlookAnhaenge = [r'C:\Outlook\Gutachten.pdf'];
+    final gebaut = baue(repository, mandanten: [mandant]);
+    await gebaut.cubit.starte(vorgang: vorgang);
+
+    final anzahl = await gebaut.cubit.anhaengeAusOutlook();
+
+    expect(anzahl, 1);
+    expect(gebaut.cubit.state.ausOutlook, [r'C:\Outlook\Gutachten.pdf']);
+    expect(gebaut.cubit.state.entwurf.anhangPfade, isEmpty);
+    await gebaut.cubit.close();
+  });
+
+  test('dieselbe Datei wird nicht zweimal angeboten', () async {
+    final repository = _FakeVersandRepository()
+      ..outlookAnhaenge = [r'C:\Outlook\Gutachten.pdf'];
+    final gebaut = baue(repository, mandanten: [mandant]);
+    await gebaut.cubit.starte(vorgang: vorgang);
+
+    await gebaut.cubit.anhaengeAusOutlook();
+    await gebaut.cubit.anhaengeAusOutlook();
+
+    expect(gebaut.cubit.state.ausOutlook, hasLength(1));
+    await gebaut.cubit.close();
+  });
+
+  test('ohne offene Nachricht meldet Outlook null Anhaenge', () async {
+    final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+    await gebaut.cubit.starte(vorgang: vorgang);
+
+    expect(await gebaut.cubit.anhaengeAusOutlook(), 0);
+    expect(gebaut.cubit.state.ausOutlook, isEmpty);
+    expect(gebaut.cubit.state.holtAusOutlook, isFalse);
+    await gebaut.cubit.close();
+  });
+
+  test('beim Oeffnen des Dialogs wird Outlook vorgewaermt', () async {
+    // Der Kaltstart von Outlook dauert; er soll laufen, waehrend der Anwalt
+    // tippt, nicht erst wenn er auf "In Outlook oeffnen" drueckt.
+    final repository = _FakeVersandRepository();
+    final gebaut = baue(repository, mandanten: [mandant]);
+
+    await gebaut.cubit.starte(vorgang: vorgang);
+
+    expect(repository.vorgewaermt, 1);
     await gebaut.cubit.close();
   });
 

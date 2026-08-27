@@ -62,6 +62,47 @@ class EmailEntwurf extends Equatable {
     'absenderName': absenderName,
   };
 
+  /// Nimmt die Adresse in „An" auf — es sei denn, sie steht schon irgendwo.
+  /// Wer zweimal angeschrieben wird, merkt das; die App soll es verhindern.
+  EmailEntwurf mitEmpfaenger(String adresse) =>
+      enthaelt(adresse) ? this : copyWith(an: [...an, adresse.trim()]);
+
+  EmailEntwurf mitKopie(String adresse) =>
+      enthaelt(adresse) ? this : copyWith(kopie: [...kopie, adresse.trim()]);
+
+  EmailEntwurf ohneEmpfaenger(String adresse) => copyWith(
+    an: an.where((vorhanden) => vorhanden != adresse).toList(),
+    kopie: kopie.where((vorhanden) => vorhanden != adresse).toList(),
+  );
+
+  /// Gross- und Kleinschreibung zaehlen bei Adressen nicht.
+  bool enthaelt(String adresse) {
+    final gesucht = adresse.trim().toLowerCase();
+    return gesucht.isEmpty ||
+        alleEmpfaenger.any((vorhanden) => vorhanden.toLowerCase() == gesucht);
+  }
+
+  EmailEntwurf mitAnhang(String pfad) => anhangPfade.contains(pfad)
+      ? this
+      : copyWith(anhangPfade: [...anhangPfade, pfad]);
+
+  EmailEntwurf ohneAnhang(String pfad) => copyWith(
+    anhangPfade: anhangPfade.where((vorhanden) => vorhanden != pfad).toList(),
+    anhangNamen: {...anhangNamen}..remove(pfad),
+  );
+
+  /// Ein leerer Name stellt den Dateinamen auf Platte wieder her.
+  EmailEntwurf mitAnhangName(String pfad, String name) {
+    final namen = {...anhangNamen};
+    final sauber = name.trim();
+    if (sauber.isEmpty) {
+      namen.remove(pfad);
+    } else {
+      namen[pfad] = sauber;
+    }
+    return copyWith(anhangNamen: namen);
+  }
+
   /// Der Name, unter dem ein Anhang hinausgeht: der umbenannte, sonst der
   /// Dateiname auf Platte.
   String nameVon(String pfad) =>

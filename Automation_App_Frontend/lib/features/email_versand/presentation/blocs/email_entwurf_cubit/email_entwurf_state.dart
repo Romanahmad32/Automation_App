@@ -26,6 +26,13 @@ class EmailEntwurfState extends Equatable {
   final EmailEntwurf entwurf;
   final List<EmailEmpfaengerVorschlag> vorschlaege;
 
+  /// Anhänge, die aus der offenen Outlook-Nachricht geholt wurden. Sie werden
+  /// **angeboten**, nicht angehängt — was mitgeht, entscheidet der Anwalt.
+  final List<String> ausOutlook;
+
+  /// True, solange Outlook nach seinen Anhängen gefragt wird.
+  final bool holtAusOutlook;
+
   /// Ob überhaupt gesendet werden kann; null, solange nicht abgefragt.
   final EmailVersandBereitschaft? bereitschaft;
 
@@ -50,6 +57,8 @@ class EmailEntwurfState extends Equatable {
   const EmailEntwurfState({
     this.entwurf = const EmailEntwurf(),
     this.vorschlaege = const [],
+    this.ausOutlook = const [],
+    this.holtAusOutlook = false,
     this.bereitschaft,
     this.phase = EmailVersandPhase.verfassen,
     this.fehler,
@@ -80,6 +89,8 @@ class EmailEntwurfState extends Equatable {
   EmailEntwurfState copyWith({
     EmailEntwurf? entwurf,
     List<EmailEmpfaengerVorschlag>? vorschlaege,
+    List<String>? ausOutlook,
+    bool? holtAusOutlook,
     EmailVersandBereitschaft? bereitschaft,
     EmailVersandPhase? phase,
     String? Function()? fehler,
@@ -90,6 +101,8 @@ class EmailEntwurfState extends Equatable {
     return EmailEntwurfState(
       entwurf: entwurf ?? this.entwurf,
       vorschlaege: vorschlaege ?? this.vorschlaege,
+      ausOutlook: ausOutlook ?? this.ausOutlook,
+      holtAusOutlook: holtAusOutlook ?? this.holtAusOutlook,
       bereitschaft: bereitschaft ?? this.bereitschaft,
       phase: phase ?? this.phase,
       fehler: fehler != null ? fehler() : this.fehler,
@@ -104,6 +117,8 @@ class EmailEntwurfState extends Equatable {
   List<Object?> get props => [
     entwurf,
     vorschlaege,
+    ausOutlook,
+    holtAusOutlook,
     bereitschaft,
     phase,
     fehler,

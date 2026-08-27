@@ -77,8 +77,12 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   ein Fehler heißt, dass nichts hinausgegangen ist. Danach trägt `GesendetOrdnerAblage` die
   Nachricht per IMAP in "Gesendet" nach, außer der Anbieter tut es selbst (Gmail).
   Zweiter Weg statt Versand: `POST api/EmailVersand/entwurf` öffnet die Nachricht als Entwurf in
-  Outlook (`OutlookEntwurf`, COM per **Late Binding** wie bei Word, eigener STA-Thread), sonst als
-  `.eml` (`EntwurfDatei`); `EntwurfOeffner` entscheidet. Dort setzt Outlook seine eigene Signatur —
+  Outlook, sonst als `.eml` (`EntwurfDatei`); `EntwurfOeffner` entscheidet. `OutlookVerbindung` hält
+  dafür COM per **Late Binding** (wie bei Word, kein PIA) auf einem **dauerhaften** STA-Thread und
+  lässt die Instanz leben — sonst kostet jeder Entwurf den Outlook-Kaltstart;
+  `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt.
+  `GET api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht
+  (`OutlookAuswahl`) — der Ersatz für das Ziehen von Anhang zu Anhang. Dort setzt Outlook seine eigene Signatur —
   deshalb hängt `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an.
   `GET api/EmailVersand/signaturen` liest die in Outlook eingerichteten Signaturen
   (`%APPDATA%\Microsoft\Signatures\*.txt`) zum einmaligen Übernehmen.

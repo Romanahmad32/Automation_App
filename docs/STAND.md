@@ -31,7 +31,10 @@ Paragraphenangaben verweisen auf `REQUIREMENTS.md` (nicht versioniert, siehe `CL
   vorbelegt und begründet. Zweiter Weg statt Direktversand: **Entwurf in Outlook öffnen** — mit
   Empfängern, Betreff, Text und Anhängen; dort gelten Signatur und Vorlage der Kanzlei, und was
   die App nicht kennt, zieht der Anwalt in gewohnter Weise hinein. Fehlt Outlook, öffnet eine
-  `.eml`. Die **Signatur** für den Direktversand wird einmal aus Outlook übernommen
+  `.eml`; Outlook wird beim Öffnen des Dialogs im Hintergrund hochgefahren, damit der Entwurf
+  nicht auf den Kaltstart wartet, und die Anhänge der dort offenen Nachricht lassen sich per Knopf
+  holen. Eine **Vorschau** zeigt jederzeit, was hinausgeht.
+  Die **Signatur** für den Direktversand wird einmal aus Outlook übernommen
   (Einstellungen → E-Mail-Signatur). Hängen an einer erfassten Postfach-Antwort Dateien, stehen
   sie beim Verfassen zum Anklicken bereit (§4.3). **Noch offen:** die pflegbaren
   Mail-Textvorlagen je Empfängertyp
