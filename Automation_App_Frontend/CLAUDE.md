@@ -136,4 +136,5 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 - `page_refresh/` — `PageRefreshScope`, `PageRefreshButton`, `PageRefreshController`,
   `PageRefreshInherited`
 - direkt darunter — `SeitenAppBar`, `EntitySearchBar`, `FehlerHinweis`, `AnwendungsInfo`,
-  `UeberAnwendungDialog`, `UpdateHerunterladenButton`, `VersionBadge`
+  `UeberAnwendungDialog`, `UpdateHerunterladenButton`, `VersionBadge`, `DateiAblageBereich`
+  (nimmt aus dem Explorer gezogene Dateien entgegen, `desktop_drop`)
