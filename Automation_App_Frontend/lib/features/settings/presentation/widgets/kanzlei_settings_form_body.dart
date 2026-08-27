@@ -3,7 +3,6 @@ import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
-import 'package:automation_app/features/settings/presentation/widgets/mail_signatur_field.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
 import 'package:automation_app/features/settings/presentation/widgets/tabellenkopf_farbe_field.dart';
 import 'package:flutter/material.dart';
@@ -128,15 +127,6 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'Die Zebra-Streifen der Positionszeilen werden daraus '
               'abgeleitet.',
           children: const [TabellenkopfFarbeField()],
-        ),
-        FormSection(
-          icon: Icons.mail_outline,
-          title: 'E-Mail-Signatur',
-          subtitle:
-              'Steht unter dem Text jeder Mail, die die App selbst versendet '
-              '(§4.7). Aus Outlook übernehmen statt abzutippen — beim Entwurf '
-              'in Outlook setzt dieses ohnehin seine eigene ein.',
-          children: const [MailSignaturField()],
         ),
         FormSection(
           icon: Icons.folder_special,
