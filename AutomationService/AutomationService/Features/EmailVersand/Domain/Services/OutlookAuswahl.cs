@@ -35,7 +35,14 @@ internal static class OutlookAuswahl
             return Array.Empty<string>();
         }
 
-        var ordner = AnhangAblage.OutlookOrdner();
+        // Ein Ordner je Nachricht, benannt nach ihrer EntryID. Damit liefert
+        // der zweite Griff nach derselben Mail dieselben Pfade, statt
+        // "Gutachten (2).pdf" daneben zu legen: Die Oberflaeche erkennt sie
+        // dann als schon geholt, und niemand muss zwei Kopien einzeln
+        // wegklicken. FreierPfad bleibt fuer den Fall, den es abdecken soll --
+        // zwei gleichnamige Anhaenge in *einer* Nachricht.
+        var ordner = Path.Combine(AnhangAblage.OutlookOrdner(), OrdnerName(nachricht));
+        Directory.CreateDirectory(ordner);
 
         var pfade = new List<string>();
         dynamic anhaenge = nachricht.Attachments;
@@ -52,7 +59,15 @@ internal static class OutlookAuswahl
 
             try
             {
-                var ziel = FreierPfad(ordner, SichererName((string)anhang.FileName));
+                var ziel = FreierPfad(ordner, SichererName((string)anhang.FileName), pfade);
+
+                // Vom vorigen Griff nach derselben Nachricht kann die Datei
+                // noch daliegen; sie soll ersetzt werden, nicht danebengelegt.
+                if (File.Exists(ziel))
+                {
+                    File.Delete(ziel);
+                }
+
                 anhang.SaveAsFile(ziel);
                 pfade.Add(ziel);
             }
@@ -161,13 +176,41 @@ internal static class OutlookAuswahl
     }
 
     /// <summary>
-    /// Derselbe Anhang aus zwei Nachrichten darf sich nicht überschreiben — der
-    /// zweite Griff holte sonst still den ersten Inhalt.
+    /// Der Ordner dieser Nachricht. Die EntryID ist stabil, taugt aber roh
+    /// nicht als Ordnername — sie ist eine lange Hex-Kette. Gekuerzt und
+    /// entschaerft reicht sie, um Nachrichten auseinanderzuhalten.
     /// </summary>
-    private static string FreierPfad(string ordner, string dateiname)
+    private static string OrdnerName(dynamic nachricht)
+    {
+        string kennung;
+        try
+        {
+            kennung = (string)nachricht.EntryID ?? string.Empty;
+        }
+        catch (COMException)
+        {
+            kennung = string.Empty;
+        }
+
+        var sauber = new string([.. kennung.Where(char.IsLetterOrDigit)]);
+        return sauber.Length switch
+        {
+            0 => "Ohne-Kennung",
+            > 40 => sauber[^40..],
+            _ => sauber,
+        };
+    }
+
+    /// <summary>
+    /// Zwei gleichnamige Anhaenge in derselben Nachricht duerfen sich nicht
+    /// ueberschreiben. Geprueft wird gegen die Namen, die dieser Griff schon
+    /// vergeben hat — nicht gegen die Platte: Was vom vorigen Griff nach
+    /// derselben Nachricht dort liegt, soll gerade ersetzt werden.
+    /// </summary>
+    private static string FreierPfad(string ordner, string dateiname, List<string> vergeben)
     {
         var pfad = Path.Combine(ordner, dateiname);
-        if (!File.Exists(pfad))
+        if (!vergeben.Contains(pfad, StringComparer.OrdinalIgnoreCase))
         {
             return pfad;
         }
@@ -177,7 +220,7 @@ internal static class OutlookAuswahl
         for (var nummer = 2; ; nummer++)
         {
             pfad = Path.Combine(ordner, $"{stamm} ({nummer}){endung}");
-            if (!File.Exists(pfad))
+            if (!vergeben.Contains(pfad, StringComparer.OrdinalIgnoreCase))
             {
                 return pfad;
             }

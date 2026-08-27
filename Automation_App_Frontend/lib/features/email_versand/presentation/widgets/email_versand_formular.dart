@@ -37,13 +37,20 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
     EmailEntwurfCubit cubit,
   ) async {
     final melder = ScaffoldMessenger.of(context);
-    final anzahl = await cubit.anhaengeAusOutlook();
-    if (!mounted || anzahl == null || anzahl > 0) return;
+    final ergebnis = await cubit.anhaengeAusOutlook();
+    if (!mounted || ergebnis == null) return;
+
+    // Neue Vorschläge sprechen für sich — sie stehen dann in der Reihe. Die
+    // beiden anderen Fälle sehen von außen gleich aus (nichts rührt sich) und
+    // müssen deshalb gesagt werden.
+    if (ergebnis.neu > 0) return;
 
     melder.showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'In Outlook ist keine Nachricht mit Anhängen offen oder ausgewählt.',
+          ergebnis.gefunden == 0
+              ? 'In Outlook ist keine Nachricht mit Anhängen offen oder ausgewählt.'
+              : 'Die Anhänge dieser Nachricht stehen bereits in der Auswahl.',
         ),
       ),
     );

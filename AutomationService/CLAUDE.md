@@ -82,7 +82,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   lässt die Instanz leben — sonst kostet jeder Entwurf den Outlook-Kaltstart;
   `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt.
   `GET api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht
-  (`OutlookAuswahl`) — der Ersatz für das Ziehen von Anhang zu Anhang; `DELETE` darauf wirft eine
+  (`OutlookAuswahl`, ein Ordner **je Nachricht** nach EntryID, damit der zweite Griff dieselben
+  Pfade liefert statt "… (2).pdf") — der Ersatz für das Ziehen von Anhang zu Anhang; `DELETE` darauf wirft eine
   geholte Datei wieder weg (nur dieser Ordner, die Antwort-Anhänge daneben bleiben). `AnhangAblage`
   räumt alle Zwischenlager nach 14 Tagen ab (`AnhangAufraeumService` beim Start) — dieselbe Regel
   wie beim Arbeitsordner. Dort setzt Outlook seine eigene Signatur —
