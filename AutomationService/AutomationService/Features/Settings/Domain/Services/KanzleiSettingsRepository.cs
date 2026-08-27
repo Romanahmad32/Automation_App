@@ -75,6 +75,7 @@ public sealed class KanzleiSettingsRepository(AutomationDbContext db)
         target.Abteilung = source.Abteilung;
         target.TabellenkopfFarbeHex = source.TabellenkopfFarbeHex;
         target.AktenStammordner = source.AktenStammordner;
+        target.MailSignatur = source.MailSignatur;
     }
 
     /// <summary>
