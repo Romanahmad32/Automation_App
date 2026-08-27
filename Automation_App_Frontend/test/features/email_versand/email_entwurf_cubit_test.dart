@@ -369,9 +369,9 @@ void main() {
     final gebaut = baue(repository, mandanten: [mandant]);
     await gebaut.cubit.starte(vorgang: vorgang);
 
-    final anzahl = await gebaut.cubit.anhaengeAusOutlook();
+    final ergebnis = await gebaut.cubit.anhaengeAusOutlook();
 
-    expect(anzahl, 1);
+    expect(ergebnis, (gefunden: 1, neu: 1));
     expect(gebaut.cubit.state.ausOutlook, [r'C:\Outlook\Gutachten.pdf']);
     expect(gebaut.cubit.state.entwurf.anhangPfade, isEmpty);
     await gebaut.cubit.close();
@@ -416,9 +416,13 @@ void main() {
     await gebaut.cubit.starte(vorgang: vorgang);
 
     await gebaut.cubit.anhaengeAusOutlook();
-    await gebaut.cubit.anhaengeAusOutlook();
+    final zweiter = await gebaut.cubit.anhaengeAusOutlook();
 
+    // Der Dienst legt je Nachricht denselben Pfad an, deshalb ist beim zweiten
+    // Griff nichts neu -- und die Oberflaeche kann das sagen, statt still
+    // nichts zu tun.
     expect(gebaut.cubit.state.ausOutlook, hasLength(1));
+    expect(zweiter, (gefunden: 1, neu: 0));
     await gebaut.cubit.close();
   });
 
@@ -426,7 +430,7 @@ void main() {
     final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
     await gebaut.cubit.starte(vorgang: vorgang);
 
-    expect(await gebaut.cubit.anhaengeAusOutlook(), 0);
+    expect(await gebaut.cubit.anhaengeAusOutlook(), (gefunden: 0, neu: 0));
     expect(gebaut.cubit.state.ausOutlook, isEmpty);
     expect(gebaut.cubit.state.holtAusOutlook, isFalse);
     await gebaut.cubit.close();

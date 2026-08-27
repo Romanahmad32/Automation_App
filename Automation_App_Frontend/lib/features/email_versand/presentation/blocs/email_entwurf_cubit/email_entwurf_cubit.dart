@@ -130,28 +130,33 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
 
   /// Holt die Anhänge aus der Nachricht, die in Outlook gerade offen ist, und
   /// **bietet** sie an (§4.7). Angehängt werden sie erst auf Klick — wie die
-  /// Dateien aus dem Fall-Ordner. Liefert die Anzahl, damit die Oberfläche
-  /// „nichts gefunden" von „drei geholt" unterscheiden kann.
-  Future<int?> anhaengeAusOutlook() async {
+  /// Dateien aus dem Fall-Ordner.
+  ///
+  /// Meldet beides: was in der Nachricht hing und was davon neu ist. Wer
+  /// zweimal drückt, soll „liegt schon da" zu sehen bekommen und nicht ein
+  /// Fenster, in dem sich nichts rührt. Null heißt: gescheitert, der Grund
+  /// steht im Zustand.
+  Future<({int gefunden, int neu})?> anhaengeAusOutlook() async {
     if (state.holtAusOutlook) return null;
     emit(state.copyWith(holtAusOutlook: true, fehler: () => null));
 
     try {
       final geholt = await _repository.ladeOutlookAnhaenge();
-      if (isClosed) return geholt.length;
 
       // Was schon angehängt oder schon angeboten ist, nicht doppelt zeigen.
+      // Der Dienst legt je Nachricht denselben Pfad an, deshalb trägt der
+      // Vergleich auch beim zweiten Griff nach derselben Mail.
       final bekannt = {...state.ausOutlook, ...state.entwurf.anhangPfade};
+      final neu = geholt.where((pfad) => !bekannt.contains(pfad)).toList();
+      if (isClosed) return (gefunden: geholt.length, neu: neu.length);
+
       emit(
         state.copyWith(
           holtAusOutlook: false,
-          ausOutlook: [
-            ...state.ausOutlook,
-            ...geholt.where((pfad) => !bekannt.contains(pfad)),
-          ],
+          ausOutlook: [...state.ausOutlook, ...neu],
         ),
       );
-      return geholt.length;
+      return (gefunden: geholt.length, neu: neu.length);
     } catch (e) {
       if (isClosed) return null;
       emit(
