@@ -32,6 +32,10 @@ abstract class EmailVersandRepository {
   /// ist — abgelegt und mit vollem Pfad. Leer, wenn nichts ausgewählt ist.
   Future<List<String>> ladeOutlookAnhaenge();
 
+  /// Wirft eine zwischengelagerte Anhangsdatei weg. Nur innerhalb der Ablage
+  /// des Dienstes — alles andere lehnt er ab.
+  Future<void> verwirfAnhang(String pfad);
+
   /// Die im Mailprogramm dieses Rechners eingerichteten Signaturen, zum
   /// einmaligen Übernehmen in die Einstellungen (§4.7). Leere Liste heißt: hier
   /// ist keine eingerichtet — kein Fehler.

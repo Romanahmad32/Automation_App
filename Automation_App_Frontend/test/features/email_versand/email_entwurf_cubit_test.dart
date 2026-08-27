@@ -55,6 +55,12 @@ class _FakeVersandRepository implements EmailVersandRepository {
   /// Was Outlook auf die Frage nach den Anhaengen der offenen Nachricht liefert.
   List<String> outlookAnhaenge = const [];
 
+  /// Die Pfade, deren Datei die Oberflaeche wegwerfen liess.
+  final List<String> verworfen = [];
+
+  @override
+  Future<void> verwirfAnhang(String pfad) async => verworfen.add(pfad);
+
   @override
   Future<List<String>> ladeOutlookAnhaenge() async {
     if (wirft != null) throw wirft!;
@@ -383,6 +389,8 @@ void main() {
     gebaut.cubit.outlookAnhangVerwerfen(r'C:\Outlook\Foto.jpg');
 
     expect(gebaut.cubit.state.ausOutlook, [r'C:\Outlook\Gutachten.pdf']);
+    // Was der Anwalt verwirft, soll nicht in der Ablage liegen bleiben.
+    expect(repository.verworfen, [r'C:\Outlook\Foto.jpg']);
     await gebaut.cubit.close();
   });
 

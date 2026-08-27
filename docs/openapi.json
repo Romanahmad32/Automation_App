@@ -2157,6 +2157,46 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Wirft eine aus Outlook geholte Datei weg (\u00A74.7). Der Anwalt verwirft\r\ndamit einen Vorschlag, den er nicht braucht \u2014 die Datei soll dann auch\r\nnicht liegen bleiben. Nur dieser eine Ordner; die Anh\u00E4nge erfasster\r\nAntworten daneben bleiben unber\u00FChrt (\u00A74.3). 204 auch dann, wenn schon\r\nnichts mehr da war.",
+        "parameters": [
+          {
+            "name": "pfad",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/EmailVersand/entwurf": {
