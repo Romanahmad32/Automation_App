@@ -5,6 +5,7 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
@@ -72,6 +73,16 @@ class _FakeVersandRepository implements EmailVersandRepository {
 
   @override
   Future<List<OutlookSignatur>> ladeOutlookSignaturen() async => const [];
+
+  @override
+  Future<SignaturStand> ladeSignaturStand() async => const SignaturStand();
+
+  @override
+  Future<SignaturStand> uebernimmSignatur(String name) async =>
+      const SignaturStand();
+
+  @override
+  Future<SignaturStand> verwirfSignaturFormat() async => const SignaturStand();
 
   @override
   Future<EmailVersandBereitschaft> ladeBereitschaft() async =>

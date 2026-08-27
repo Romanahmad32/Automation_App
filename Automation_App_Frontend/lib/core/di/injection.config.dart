@@ -502,6 +502,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i849.KanzleiSettingsRepository>(),
       ),
     );
+    gh.factory<_i318.EmailEntwurfCubit>(
+      () => _i318.EmailEntwurfCubit(
+        gh<_i67.EmailVersandRepository>(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i782.VersichererCubit>(),
+      ),
+    );
     gh.factory<_i263.TemplatePdfPreviewBloc>(
       () => _i263.TemplatePdfPreviewBloc(
         gh<_i223.UseCase<_i100.Uint8List, _i324.ConvertDocxToPdfParams>>(),
@@ -521,14 +529,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i702.TemplatePlaceholdersBloc>(
       () => _i702.TemplatePlaceholdersBloc(
         gh<_i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>>(),
-      ),
-    );
-    gh.factory<_i318.EmailEntwurfCubit>(
-      () => _i318.EmailEntwurfCubit(
-        gh<_i67.EmailVersandRepository>(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i782.VersichererCubit>(),
       ),
     );
     gh.factory<_i993.MandantEditCubit>(

@@ -7,12 +7,22 @@ class OutlookSignatur extends Equatable {
   final String name;
   final String text;
 
-  const OutlookSignatur({required this.name, required this.text});
+  /// True, wenn daneben eine formatierte Fassung liegt — Schrift, Farben,
+  /// Logo. Die App übernimmt sie mit; wie schwer ihre Bilder wiegen, zeigt
+  /// sich erst danach.
+  final bool hatFormat;
+
+  const OutlookSignatur({
+    required this.name,
+    required this.text,
+    this.hatFormat = false,
+  });
 
   factory OutlookSignatur.fromJson(Map<String, dynamic> json) {
     return OutlookSignatur(
       name: json['name'] as String? ?? '',
       text: json['text'] as String? ?? '',
+      hatFormat: json['hatFormat'] as bool? ?? false,
     );
   }
 
@@ -27,5 +37,5 @@ class OutlookSignatur extends Equatable {
   }
 
   @override
-  List<Object?> get props => [name, text];
+  List<Object?> get props => [name, text, hatFormat];
 }

@@ -13,16 +13,30 @@ class AnhangDarstellung {
   /// erkennt niemand, ob da das Schreiben oder das Gutachten hängt.
   static String name(String pfad) => pfad.split(RegExp(r'[\\/]')).last;
 
-  /// Größe als Klartext, leer wenn die Datei inzwischen fehlt — der Versand
+  /// Die Größe der Datei, oder null wenn sie inzwischen fehlt — der Versand
   /// meldet das ohnehin, und zwar bevor etwas hinausgeht.
-  static String groesse(String pfad) {
+  static int? bytes(String pfad) {
     try {
-      final bytes = File(pfad).lengthSync();
-      if (bytes < 1024) return '$bytes Bytes';
-      if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} KB';
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+      return File(pfad).lengthSync();
     } on FileSystemException {
-      return '';
+      return null;
     }
+  }
+
+  /// Zusammen, fehlende Dateien mit 0 gezählt.
+  static int summe(Iterable<String> pfade) =>
+      pfade.fold(0, (gesamt, pfad) => gesamt + (bytes(pfad) ?? 0));
+
+  /// Bytes in einer Einheit, die ein Mensch liest.
+  static String alsGroesse(int bytes) {
+    if (bytes < 1024) return '$bytes Bytes';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  /// Größe als Klartext, leer wenn die Datei fehlt.
+  static String groesse(String pfad) {
+    final gemessen = bytes(pfad);
+    return gemessen == null ? '' : alsGroesse(gemessen);
   }
 }

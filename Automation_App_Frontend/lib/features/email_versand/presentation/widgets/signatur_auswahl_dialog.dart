@@ -41,8 +41,16 @@ class SignaturAuswahlDialog extends StatelessWidget {
           children: [
             for (final signatur in signaturen)
               ListTile(
-                leading: const Icon(Icons.draw_outlined),
-                title: Text(signatur.name),
+                leading: Icon(
+                  signatur.hatFormat
+                      ? Icons.format_paint_outlined
+                      : Icons.draw_outlined,
+                ),
+                title: Text(
+                  signatur.hatFormat
+                      ? '${signatur.name} — mit Formatierung und Bildern'
+                      : signatur.name,
+                ),
                 subtitle: Text(
                   signatur.vorschau,
                   maxLines: 2,

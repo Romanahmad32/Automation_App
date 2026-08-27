@@ -1,7 +1,13 @@
+import 'dart:async';
+
+import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_aus_outlook_button.dart';
+import 'package:automation_app/features/settings/presentation/widgets/signatur_format_zeile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,6 +33,71 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
   String _gespeichert = '';
 
   bool _geladen = false;
+
+  /// Was der Dienst gespeichert hat: formatierte Fassung ja/nein und ihre
+  /// Bilder. Steht nicht im Einstellungssatz — die Bilder liegen im
+  /// Dateisystem des Dienstes, und die HTML-Fassung geht bewusst nicht über
+  /// die Leitung.
+  SignaturStand _stand = const SignaturStand();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_standLaden());
+  }
+
+  Future<void> _standLaden() async {
+    try {
+      final geladen = await getIt<EmailVersandRepository>().ladeSignaturStand();
+      if (mounted) setState(() => _stand = geladen);
+    } catch (_) {
+      // Ohne diese Auskunft fehlt nur die Zeile ueber dem Feld. Der Text
+      // darunter kommt aus den Einstellungen und steht ohnehin.
+    }
+  }
+
+  /// Nach einer Uebernahme steht in der Datenbank eine neue Signatur — auch
+  /// die HTML-Fassung, die das Formular nur durchreicht. Ohne das Nachladen
+  /// schriebe das naechste Speichern der Kanzleidaten die alte zurueck.
+  void _uebernommen(SignaturStand stand) {
+    setState(() {
+      _stand = stand;
+      _gespeichert = stand.text;
+      _text.text = stand.text;
+    });
+    context.read<KanzleiSettingsBloc>().add(const LoadKanzleiSettingsEvent());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          stand.hatFormat
+              ? 'Signatur übernommen — mit Formatierung und '
+                    '${stand.bilder.length} Bild(ern).'
+              : 'Signatur übernommen.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _formatVerwerfen() async {
+    final melder = ScaffoldMessenger.of(context);
+    final bloc = context.read<KanzleiSettingsBloc>();
+    try {
+      final stand = await getIt<EmailVersandRepository>()
+          .verwirfSignaturFormat();
+      if (!mounted) return;
+      setState(() => _stand = stand);
+      bloc.add(const LoadKanzleiSettingsEvent());
+      melder.showSnackBar(
+        const SnackBar(
+          content: Text('Die Formatierung ist weg — der Text bleibt.'),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        melder.showSnackBar(SnackBar(content: Text('Fehlgeschlagen: $e')));
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -70,10 +141,16 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
           icon: Icons.draw_outlined,
           title: 'E-Mail-Signatur',
           subtitle:
-              'Steht unter dem Text jeder Mail, die die App selbst versendet. '
+              'Steht unter dem Text jeder Mail, die die App selbst versendet — '
+              'mit Schrift, Farben und Bildern, wenn Outlook sie so führt. '
               'Wird die Mail stattdessen als Entwurf in Outlook geöffnet, '
               'setzt Outlook dort seine eigene ein.',
           children: [
+            SignaturFormatZeile(
+              stand: _stand,
+              onVerwerfen: _formatVerwerfen,
+              aktiv: !speichertGerade,
+            ),
             TextField(
               controller: _text,
               enabled: !speichertGerade,
@@ -96,9 +173,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
                   children: [
                     SignaturAusOutlookButton(
                       aktiv: !speichertGerade,
-                      onUebernommen: (signatur) => setState(() {
-                        _text.text = signatur.text;
-                      }),
+                      onUebernommen: _uebernommen,
                     ),
                     const Spacer(),
                     FilledButton.icon(

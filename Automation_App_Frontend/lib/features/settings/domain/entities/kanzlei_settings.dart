@@ -63,6 +63,13 @@ class KanzleiSettings extends Equatable {
   /// Outlook ungenutzt — dort setzt Outlook seine eigene ein.
   final String mailSignatur;
 
+  /// Die formatierte Fassung derselben Signatur (§4.7): Schrift, Farben, Logo.
+  /// Die App **reicht sie nur durch** — übernommen und geändert wird sie im
+  /// Dienst (`POST api/EmailVersand/signaturen/uebernehmen`), weil dabei auch
+  /// Bilder abzulegen sind. Hier steht sie, damit ein Speichern der
+  /// Einstellungen sie nicht mitlöscht.
+  final String mailSignaturHtml;
+
   const KanzleiSettings({
     this.personentyp = 'Rechtsanwalt',
     this.name = '',
@@ -76,6 +83,7 @@ class KanzleiSettings extends Equatable {
     this.tabellenkopfFarbeHex = defaultTabellenkopfFarbeHex,
     this.aktenStammordner = '',
     this.mailSignatur = '',
+    this.mailSignaturHtml = '',
   });
 
   static const KanzleiSettings empty = KanzleiSettings();
@@ -93,6 +101,7 @@ class KanzleiSettings extends Equatable {
     String? tabellenkopfFarbeHex,
     String? aktenStammordner,
     String? mailSignatur,
+    String? mailSignaturHtml,
   }) {
     return KanzleiSettings(
       personentyp: personentyp ?? this.personentyp,
@@ -108,6 +117,7 @@ class KanzleiSettings extends Equatable {
       tabellenkopfFarbeHex: tabellenkopfFarbeHex ?? this.tabellenkopfFarbeHex,
       aktenStammordner: aktenStammordner ?? this.aktenStammordner,
       mailSignatur: mailSignatur ?? this.mailSignatur,
+      mailSignaturHtml: mailSignaturHtml ?? this.mailSignaturHtml,
     );
   }
 
@@ -134,6 +144,7 @@ class KanzleiSettings extends Equatable {
           defaultTabellenkopfFarbeHex,
       aktenStammordner: json['aktenStammordner'] as String? ?? '',
       mailSignatur: json['mailSignatur'] as String? ?? '',
+      mailSignaturHtml: json['mailSignaturHtml'] as String? ?? '',
     );
   }
 
@@ -150,6 +161,7 @@ class KanzleiSettings extends Equatable {
     'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
     'aktenStammordner': aktenStammordner,
     'mailSignatur': mailSignatur,
+    'mailSignaturHtml': mailSignaturHtml,
   };
 
   @override
@@ -166,5 +178,6 @@ class KanzleiSettings extends Equatable {
     tabellenkopfFarbeHex,
     aktenStammordner,
     mailSignatur,
+    mailSignaturHtml,
   ];
 }

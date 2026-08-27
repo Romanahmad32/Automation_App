@@ -33,6 +33,12 @@ class EmailEntwurfState extends Equatable {
   /// True, solange Outlook nach seinen Anhängen gefragt wird.
   final bool holtAusOutlook;
 
+  /// Was die Anhänge zusammen wiegen. Einmal beim Ändern gemessen und nicht
+  /// bei jedem Neubau: Das Formular baut bei jedem Anschlag neu, und ein
+  /// Plattenzugriff je Anhang und Tastendruck wäre teuer für eine Zahl, die
+  /// sich beim Tippen nicht ändert.
+  final int anhangBytes;
+
   /// Ob überhaupt gesendet werden kann; null, solange nicht abgefragt.
   final EmailVersandBereitschaft? bereitschaft;
 
@@ -59,6 +65,7 @@ class EmailEntwurfState extends Equatable {
     this.vorschlaege = const [],
     this.ausOutlook = const [],
     this.holtAusOutlook = false,
+    this.anhangBytes = 0,
     this.bereitschaft,
     this.phase = EmailVersandPhase.verfassen,
     this.fehler,
@@ -75,9 +82,25 @@ class EmailEntwurfState extends Equatable {
   /// der beiden Wege.
   bool get beschaeftigt => sendetGerade || uebergibtGerade;
 
+  /// Was die mitgehenden Signaturbilder wiegen. Was der Anwalt für diese
+  /// Mail weggelassen hat, zählt nicht mit — genau deshalb lässt er es weg.
+  int get signaturBytes => (bereitschaft?.signaturBilder ?? [])
+      .where((bild) => entwurf.signaturBildGehtMit(bild.dateiname))
+      .fold(0, (summe, bild) => summe + bild.bytes);
+
+  /// Die Nachricht, wie der Postausgangsserver sie zählt.
+  int get gesamtBytes => anhangBytes + signaturBytes;
+
+  /// True, wenn das Postfach die Nachricht abweisen würde.
+  bool get ueberGrenze {
+    final grenze = bereitschaft?.maxBytes;
+    return grenze != null && gesamtBytes > grenze;
+  }
+
   bool get kannSenden =>
       phase == EmailVersandPhase.verfassen &&
       entwurf.istSendbar &&
+      !ueberGrenze &&
       (bereitschaft?.bereit ?? false);
 
   /// Der Entwurf braucht keinen Postfach-Zugang: Gesendet wird im
@@ -91,6 +114,7 @@ class EmailEntwurfState extends Equatable {
     List<EmailEmpfaengerVorschlag>? vorschlaege,
     List<String>? ausOutlook,
     bool? holtAusOutlook,
+    int? anhangBytes,
     EmailVersandBereitschaft? bereitschaft,
     EmailVersandPhase? phase,
     String? Function()? fehler,
@@ -103,6 +127,7 @@ class EmailEntwurfState extends Equatable {
       vorschlaege: vorschlaege ?? this.vorschlaege,
       ausOutlook: ausOutlook ?? this.ausOutlook,
       holtAusOutlook: holtAusOutlook ?? this.holtAusOutlook,
+      anhangBytes: anhangBytes ?? this.anhangBytes,
       bereitschaft: bereitschaft ?? this.bereitschaft,
       phase: phase ?? this.phase,
       fehler: fehler != null ? fehler() : this.fehler,
@@ -119,6 +144,7 @@ class EmailEntwurfState extends Equatable {
     vorschlaege,
     ausOutlook,
     holtAusOutlook,
+    anhangBytes,
     bereitschaft,
     phase,
     fehler,
