@@ -1,11 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_senden_bestaetigung.dart';
-import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_formular.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_inhalt.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
@@ -101,8 +99,9 @@ class EmailVersandDialog extends StatelessWidget {
         : 'Erneut in Outlook öffnen';
   }
 
-  /// Die Mail ansehen, ohne sie abzuschicken. Der Knopf steht neben „Senden",
-  /// weil genau dort die Frage aufkommt, ob wirklich das Richtige drinsteht.
+  /// Die Mail ansehen, ohne sie abzuschicken — der Weg für schmale Fenster.
+  /// Ist Platz für die Seitenspalte, steht die Vorschau ohnehin schon da und
+  /// dieser Knopf entfällt.
   Future<void> _vorschau(BuildContext context, EmailEntwurfState state) {
     return EmailVorschauDialog.zeigen(
       context,
@@ -126,15 +125,7 @@ class EmailVersandDialog extends StatelessWidget {
         builder: (context, state) {
           return AlertDialog(
             title: const Text('E-Mail versenden'),
-            content: SizedBox(
-              // Breit genug für Empfängerzeilen und Anhangs-Chips, aber nie
-              // breiter als das Fenster: Der Dialog läuft auch auf einem
-              // 1366er-Laptop, und ein fester Wert überliefe dort.
-              width: math.min(720, MediaQuery.sizeOf(context).width - 120),
-              child: SingleChildScrollView(
-                child: EmailVersandFormular(ausDerAkte: ausDerAkte),
-              ),
-            ),
+            content: EmailVersandInhalt(state: state, ausDerAkte: ausDerAkte),
             actions: [
               TextButton(
                 onPressed: state.beschaeftigt
@@ -142,13 +133,14 @@ class EmailVersandDialog extends StatelessWidget {
                     : () => Navigator.pop(context),
                 child: const Text('Abbrechen'),
               ),
-              TextButton.icon(
-                onPressed: state.beschaeftigt
-                    ? null
-                    : () => _vorschau(context, state),
-                icon: const Icon(Icons.visibility_outlined),
-                label: const Text('Vorschau'),
-              ),
+              if (!EmailVersandInhalt.zweispaltig(context))
+                TextButton.icon(
+                  onPressed: state.beschaeftigt
+                      ? null
+                      : () => _vorschau(context, state),
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('Vorschau'),
+                ),
               OutlinedButton.icon(
                 onPressed: state.kannEntwurfOeffnen
                     ? () => _entwurfOeffnen(context)

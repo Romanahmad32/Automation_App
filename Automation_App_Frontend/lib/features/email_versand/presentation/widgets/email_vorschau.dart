@@ -21,12 +21,18 @@ class EmailVorschau extends StatelessWidget {
   /// hinterlegte bleibt ungenutzt.
   final bool ohneSignatur;
 
+  /// True in der Seitenspalte des Versanddialogs: Der Text nimmt dann die
+  /// ganze verbleibende Höhe ein statt der festen 260 Pixel, die im Fenster
+  /// richtig sind. Setzt eine begrenzte Höhe von außen voraus.
+  final bool fuelltHoehe;
+
   const EmailVorschau({
     super.key,
     required this.entwurf,
     required this.absender,
     this.signatur = '',
     this.ohneSignatur = false,
+    this.fuelltHoehe = false,
   });
 
   /// Der vollständige Text, wie ihn der Empfänger sieht.
@@ -41,8 +47,14 @@ class EmailVorschau extends StatelessWidget {
     final theme = Theme.of(context);
     final ohneHinterlegte = !ohneSignatur && signatur.trim().isEmpty;
 
+    // Scrollbar begrenzt: Ein langes Anschreiben darf weder die Schaltflächen
+    // aus dem Fenster schieben noch die Kopfzeilen aus der Seitenspalte.
+    final textbereich = SingleChildScrollView(
+      child: SelectableText(volltext, style: theme.textTheme.bodyMedium),
+    );
+
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: fuelltHoehe ? MainAxisSize.max : MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         EmailZusammenfassungZeile(
@@ -71,14 +83,13 @@ class EmailVorschau extends StatelessWidget {
               : entwurf.anhangPfade.map(entwurf.nameVon).toList(),
         ),
         const Divider(height: 20),
-        // Scrollbar begrenzt: Ein langes Anschreiben darf die Schaltflächen
-        // nicht aus dem Fenster schieben.
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 260),
-          child: SingleChildScrollView(
-            child: SelectableText(volltext, style: theme.textTheme.bodyMedium),
+        if (fuelltHoehe)
+          Expanded(child: textbereich)
+        else
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 260),
+            child: textbereich,
           ),
-        ),
         const SizedBox(height: 10),
         Text(
           _signaturHinweis(ohneHinterlegte),

@@ -16,7 +16,15 @@ class EmailVersandFormular extends StatefulWidget {
   /// Dateien aus dem Fall-Ordner des Vorgangs, zum Anklicken.
   final List<String> ausDerAkte;
 
-  const EmailVersandFormular({super.key, this.ausDerAkte = const []});
+  /// Zeigt die hinterlegte Signatur unter dem Nachrichtenfeld. Aus, sobald die
+  /// Vorschau daneben steht — dort ist sie ohnehin im vollen Text zu sehen.
+  final bool mitSignaturVorschau;
+
+  const EmailVersandFormular({
+    super.key,
+    this.ausDerAkte = const [],
+    this.mitSignaturVorschau = true,
+  });
 
   @override
   State<EmailVersandFormular> createState() => _EmailVersandFormularState();
@@ -169,7 +177,10 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               ),
               onChanged: cubit.setzeText,
             ),
-            EmailSignaturVorschau(signatur: state.bereitschaft?.signatur ?? ''),
+            if (widget.mitSignaturVorschau)
+              EmailSignaturVorschau(
+                signatur: state.bereitschaft?.signatur ?? '',
+              ),
             const SizedBox(height: 16),
             EmailAnhangListe(
               anhangPfade: state.entwurf.anhangPfade,
