@@ -36,20 +36,20 @@ class EmailVersandInhalt extends StatelessWidget {
 
   void _abgelegt(BuildContext context, List<String> pfade) {
     final cubit = context.read<EmailEntwurfCubit>();
+    final schonDran = cubit.state.entwurf.anhangPfade.toSet();
     for (final pfad in pfade) {
       cubit.anhangHinzufuegen(pfad);
     }
+
+    // Ein zweites Ablegen derselben Datei haengt sie nicht doppelt an
+    // (`mitAnhang` prueft den Pfad). Ohne diesen Satz sieht das aber aus wie
+    // ein verschluckter Griff.
+    if (pfade.any((pfad) => !schonDran.contains(pfad))) return;
+    _melden(context, 'Diese Dateien hängen bereits an der Mail.');
   }
 
-  void _nurOrdner(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Ordner lassen sich nicht anhängen — bitte die einzelnen Dateien '
-          'ablegen.',
-        ),
-      ),
-    );
+  static void _melden(BuildContext context, String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   @override
@@ -67,7 +67,10 @@ class EmailVersandInhalt extends StatelessWidget {
       aktiv: !state.beschaeftigt,
       hinweis: 'Loslassen, um die Dateien anzuhängen',
       onDateien: (pfade) => _abgelegt(context, pfade),
-      onOrdnerAbgelehnt: () => _nurOrdner(context),
+      onOrdnerAbgelehnt: () => _melden(
+        context,
+        'Ordner lassen sich nicht anhängen — bitte die einzelnen Dateien ablegen.',
+      ),
       child: SizedBox(
         width: math.min(nebeneinander ? 1160 : 720, fenster.width - 120),
         // Zwei Spalten brauchen eine begrenzte Höhe, sonst hat die Vorschau
