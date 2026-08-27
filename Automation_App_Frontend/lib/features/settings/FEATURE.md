@@ -1,8 +1,8 @@
 # settings — Kanzleistammdaten und App-Einstellungen
 
 **Zweck:** Der Anwalt hinterlegt hier die Anfragerdaten für die Zentralruf-Anfrage, den
-Postfach-Zugang, den Akten-Stammordner, laufende Auftragsnummer samt Abteilung, die Farbe der
-Schadensaufstellungs-Titelzeile und das Erscheinungsbild.
+Postfach-Zugang samt Mail-Signatur, den Akten-Stammordner, laufende Auftragsnummer samt Abteilung,
+die Farbe der Schadensaufstellungs-Titelzeile und das Erscheinungsbild.
 **Anforderung:** `REQUIREMENTS.md` §7.1
 **Einstieg:** `presentation/pages/settings_page.dart`
 **Zustand:** `KanzleiSettingsBloc`
@@ -23,9 +23,9 @@ schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme
 - `PUT /api/Settings` ersetzt **alle** Felder des Einstellungssatzes, und `AppSettingsView` füllt das
   Formular wegen `_initialized` nur einmal. Wurde die Auftragsnummer zwischenzeitlich durch einen
   Vorgangsabschluss erhöht, schreibt ein späteres „Speichern" den veralteten Stand zurück.
-- `AppSettingsView` braucht `wantKeepAlive` (im Code begründet): ohne KeepAlive verwirft die
-  TabBarView beim Tab-Wechsel den State, der Bloc steht schon auf `Loaded`, der Listener feuert nicht
-  erneut — das Formular wäre leer und würde beim Speichern Defaults schreiben.
+- `AppSettingsView` braucht `wantKeepAlive` (im Code begründet): ohne KeepAlive verwirft die TabBarView
+  beim Tab-Wechsel den State, der Bloc steht schon auf `Loaded` und der Listener feuert nicht erneut — das
+  Formular wäre leer.
 - `KanzleiSettingsBloc` ist `@injectable`, also eine Factory. `word_automation_page.dart` erzeugt eine
   eigene Instanz und sendet `LoadKanzleiSettingsEvent` selbst; eine Änderung in den Einstellungen
   erreicht bereits offene Seiten nicht.
@@ -33,5 +33,8 @@ schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme
   `ablage_cubit/ablage_cubit.dart`), `vorgang_starten` liest `laufendeAuftragsnummer`/`abteilung`.
   Beide werten einen Ladefehler als leeren Stammordner (`Left() => ''`) — ein Backend-Fehler sieht
   dort aus wie „kein Ordner gewählt".
-- Die Reiter „Postfach-Zugang" und „Datensicherung" gehören den Features `mailbox` bzw. `backup`;
+- Die Reiter „E-Mail" und „Datensicherung" gehören den Features `mailbox` bzw. `backup`;
   `DefaultTabController(length: 5)` ist beim Ergänzen eines Reiters mitzupflegen.
+- Die **Mail-Signatur** steht im Reiter „E-Mail" (`MailSignaturSektion`), liegt aber im selben Einstellungssatz und speichert
+  über `SaveMailSignaturEvent` **für sich**; `…Loaded.gespeichert` sagt, welcher Reiter gespeichert hat. Deshalb setzt
+  `AppSettingsView._save` per `copyWith` auf dem geladenen Stand auf — sonst löscht es die Felder der Nachbarreiter mit.

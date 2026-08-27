@@ -19,3 +19,16 @@ final class SaveKanzleiSettingsEvent extends KanzleiSettingsEvent {
   @override
   List<Object?> get props => [settings];
 }
+
+/// Speichert **nur** die Signatur und lässt die Kanzleidaten stehen. Eigenes
+/// Ereignis, weil die beiden Formulare in verschiedenen Reitern liegen: Ein
+/// Rundum-Speichern aus dem einen würde die ungespeicherten Änderungen des
+/// anderen mit dem alten Stand überschreiben.
+final class SaveMailSignaturEvent extends KanzleiSettingsEvent {
+  final String signatur;
+
+  const SaveMailSignaturEvent(this.signatur);
+
+  @override
+  List<Object?> get props => [signatur];
+}

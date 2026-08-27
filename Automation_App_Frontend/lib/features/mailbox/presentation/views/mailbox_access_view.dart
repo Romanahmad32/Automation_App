@@ -7,6 +7,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_fil
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_credentials_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_server_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_microsoft_signin_section.dart';
+import 'package:automation_app/features/settings/presentation/widgets/mail_signatur_sektion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -17,6 +18,11 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// allein, wo das Postfach liegt: IMAP mit Passwort (1&1/IONOS, Gmail) oder
 /// Outlook/Microsoft per Browser-Anmeldung (OAuth — Microsoft erlaubt für IMAP
 /// kein Passwort mehr). Über denselben Zugang wird auch versendet (§4.7).
+///
+/// Weil hier alles zur E-Mail steht, hängt unten auch die Signatur des
+/// Direktversands (§4.7) — sie gehört fachlich zum Postausgang, nicht zu den
+/// Kanzleistammdaten. Sie speichert **für sich**: ihr Abschnitt hat einen
+/// eigenen Knopf, damit ein noch unfertiger Zugang sie nicht blockiert.
 class MailboxAccessView extends StatefulWidget {
   const MailboxAccessView({super.key});
 
@@ -248,6 +254,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
                             },
                           ),
                         ),
+                        const MailSignaturSektion(),
                       ],
                     ),
                   ),
