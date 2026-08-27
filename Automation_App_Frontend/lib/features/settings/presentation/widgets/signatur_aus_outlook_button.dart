@@ -1,18 +1,21 @@
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_auswahl_dialog.dart';
 import 'package:flutter/material.dart';
 
-/// Holt die in Outlook eingerichtete Signatur und gibt die gewählte nach oben
-/// (§4.7) — statt sie abtippen zu lassen.
+/// Übernimmt die in Outlook eingerichtete Signatur (§4.7) — statt sie abtippen
+/// zu lassen.
 ///
-/// Outlook pflegt zu jeder Signatur eine Nur-Text-Fassung; genau die wird
-/// gelesen. Danach hängt nichts mehr an Outlook: Die Signatur steht in den
-/// Einstellungen und ist dort auch von Hand änderbar.
+/// Übernommen wird beides: Outlooks Nur-Text-Fassung und, falls vorhanden, die
+/// formatierte samt Bildern. Das eigentliche Einlesen erledigt der Dienst; die
+/// App schickt nur den Namen. Die Bilder gehören ins Dateisystem, und die
+/// HTML-Fassung ist zehntausende Zeichen groß — beides durch die Oberfläche zu
+/// schleifen, nur damit es von dort zurückkommt, wären drei Stellen mehr, an
+/// denen etwas verlorengeht.
 class SignaturAusOutlookButton extends StatefulWidget {
-  /// Die vom Anwalt gewählte Signatur. Übernommen, aber noch nicht gespeichert.
-  final ValueChanged<OutlookSignatur> onUebernommen;
+  /// Der Stand, wie er nach der Übernahme gespeichert ist.
+  final ValueChanged<SignaturStand> onUebernommen;
 
   final bool aktiv;
 
@@ -33,10 +36,10 @@ class _SignaturAusOutlookButtonState extends State<SignaturAusOutlookButton> {
   Future<void> _holen() async {
     setState(() => _laedt = true);
     final melder = ScaffoldMessenger.of(context);
+    final zugang = getIt<EmailVersandRepository>();
 
     try {
-      final gefunden = await getIt<EmailVersandRepository>()
-          .ladeOutlookSignaturen();
+      final gefunden = await zugang.ladeOutlookSignaturen();
       if (!mounted) return;
 
       if (gefunden.isEmpty) {
@@ -53,11 +56,14 @@ class _SignaturAusOutlookButtonState extends State<SignaturAusOutlookButton> {
 
       final gewaehlt = await SignaturAuswahlDialog.zeigen(context, gefunden);
       if (gewaehlt == null || !mounted) return;
-      widget.onUebernommen(gewaehlt);
+
+      final stand = await zugang.uebernimmSignatur(gewaehlt.name);
+      if (!mounted) return;
+      widget.onUebernommen(stand);
     } catch (e) {
       if (!mounted) return;
       melder.showSnackBar(
-        SnackBar(content: Text('Die Signaturen ließen sich nicht lesen: $e')),
+        SnackBar(content: Text('Die Signatur ließ sich nicht lesen: $e')),
       );
     } finally {
       if (mounted) setState(() => _laedt = false);

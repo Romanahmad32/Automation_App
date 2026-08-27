@@ -4,10 +4,11 @@ import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
-import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/entwurf_quellen.dart';
+import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart';
@@ -26,19 +27,19 @@ import 'package:injectable/injectable.dart';
 @injectable
 class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
   final EmailVersandRepository _repository;
-  final UseCase<KanzleiSettings, NoParams> _getKanzleiSettings;
-  final UseCase<List<Mandant>, NoParams> _getMandanten;
   final VersichererCubit _versicherer;
+  final EntwurfQuellen _quellen;
 
   EmailEntwurfErzeuger? _erzeuger;
   KanzleiSettings _kanzlei = KanzleiSettings.empty;
 
   EmailEntwurfCubit(
     this._repository,
-    this._getKanzleiSettings,
-    this._getMandanten,
+    UseCase<KanzleiSettings, NoParams> getKanzleiSettings,
+    UseCase<List<Mandant>, NoParams> getMandanten,
     this._versicherer,
-  ) : super(const EmailEntwurfState());
+  ) : _quellen = EntwurfQuellen(_repository, getKanzleiSettings, getMandanten),
+      super(const EmailEntwurfState());
 
   /// Legt den vorbelegten Entwurf an und fragt nebenbei, ob überhaupt gesendet
   /// werden kann. Die Bereitschaft steht damit auf dem Schirm, bevor der Anwalt
@@ -57,11 +58,11 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     ZentralrufReplyData? antwort,
     List<String> anhangPfade = const [],
   }) async {
-    _kanzlei = await _ladeKanzlei();
+    _kanzlei = await _quellen.kanzlei();
     final erzeuger = EmailEntwurfErzeuger(
       kanzlei: _kanzlei,
       vorgang: vorgang,
-      mandant: mandant ?? await _mandantZu(vorgang),
+      mandant: mandant ?? await _quellen.mandantZu(vorgang),
       antwort: antwort,
       versicherer: _versicherer.state,
     );
@@ -83,22 +84,9 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     // nichts (§4.7).
     unawaited(_repository.waermeEntwurfVor());
 
-    final bereitschaft = await _ladeBereitschaft();
+    final bereitschaft = await _quellen.bereitschaft();
     if (isClosed) return;
     emit(state.copyWith(bereitschaft: bereitschaft));
-  }
-
-  /// Kein Zugang, keine Antwort vom Dienst: Der Anwalt soll das sehen, bevor er
-  /// tippt — und nicht erst, wenn er auf „Senden" drückt.
-  Future<EmailVersandBereitschaft> _ladeBereitschaft() async {
-    try {
-      return await _repository.ladeBereitschaft();
-    } catch (e) {
-      return EmailVersandBereitschaft(
-        bereit: false,
-        hinweis: 'Der Postausgang ist nicht erreichbar: ${ausnahmeText(e)}',
-      );
-    }
   }
 
   void empfaengerHinzufuegen(String adresse) =>
@@ -127,6 +115,11 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
 
   void anhangHinzufuegen(String pfad) =>
       _setzeEntwurf(state.entwurf.mitAnhang(pfad));
+
+  /// Nimmt ein Signaturbild für diese eine Mail heraus — oder wieder hinein.
+  /// Die Signatur in den Einstellungen bleibt, wie sie ist (§4.7).
+  void signaturBildUmschalten(String dateiname) =>
+      _setzeEntwurf(state.entwurf.mitUmgeschaltetemSignaturBild(dateiname));
 
   /// Holt die Anhänge aus der Nachricht, die in Outlook gerade offen ist, und
   /// **bietet** sie an (§4.7). Angehängt werden sie erst auf Klick — wie die
@@ -266,31 +259,12 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
               mitSchreiben: entwurf.anhangPfade.isNotEmpty,
             ),
           );
-    emit(state.copyWith(entwurf: angepasst, fehler: () => null));
-  }
-
-  /// Ohne Kanzleidaten fehlt nur die Unterschrift unter dem Entwurf — kein
-  /// Grund, den Versand zu verweigern.
-  Future<KanzleiSettings> _ladeKanzlei() async {
-    final ergebnis = await _getKanzleiSettings(const NoParams());
-    return switch (ergebnis) {
-      Right(value: final settings) => settings,
-      Left() => KanzleiSettings.empty,
-    };
-  }
-
-  /// Der am Vorgang hinterlegte Mandant. Fehlt er oder ist das Register nicht
-  /// erreichbar, entfällt nur sein Adressvorschlag — der Entwurf steht
-  /// trotzdem.
-  Future<Mandant?> _mandantZu(Vorgang? vorgang) async {
-    final id = vorgang?.mandantId;
-    if (id == null) return null;
-
-    final ergebnis = await _getMandanten(const NoParams());
-    return switch (ergebnis) {
-      Right(value: final mandanten) =>
-        mandanten.where((eintrag) => eintrag.id == id).firstOrNull,
-      Left() => null,
-    };
+    emit(
+      state.copyWith(
+        entwurf: angepasst,
+        anhangBytes: AnhangDarstellung.summe(angepasst.anhangPfade),
+        fehler: () => null,
+      ),
+    );
   }
 }

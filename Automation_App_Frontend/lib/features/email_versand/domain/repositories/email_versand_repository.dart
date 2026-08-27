@@ -3,6 +3,7 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 
 /// Zugang zum Postausgang der Kanzlei (§4.7).
 abstract class EmailVersandRepository {
@@ -40,4 +41,18 @@ abstract class EmailVersandRepository {
   /// einmaligen Übernehmen in die Einstellungen (§4.7). Leere Liste heißt: hier
   /// ist keine eingerichtet — kein Fehler.
   Future<List<OutlookSignatur>> ladeOutlookSignaturen();
+
+  /// Die Signatur, wie sie gerade in den Einstellungen liegt — mit ihren
+  /// Bildern und deren Größe.
+  Future<SignaturStand> ladeSignaturStand();
+
+  /// Übernimmt die gewählte Signatur in die Einstellungen — Text, formatierte
+  /// Fassung und deren Bilder. Das geschieht im Dienst und nicht hier: Die
+  /// Bilder müssen abgelegt werden, und die HTML-Fassung ist zehntausende
+  /// Zeichen groß.
+  Future<SignaturStand> uebernimmSignatur(String name);
+
+  /// Wirft die formatierte Fassung samt Bildern weg; der Signaturtext bleibt.
+  /// Für den Anwalt, dem die übernommene Formatierung nicht gefällt.
+  Future<SignaturStand> verwirfSignaturFormat();
 }

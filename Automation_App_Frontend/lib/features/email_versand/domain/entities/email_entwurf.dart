@@ -18,6 +18,12 @@ class EmailEntwurf extends Equatable {
   /// Empfänger ankommt: „Dokument1.pdf" sagt dort niemandem etwas.
   final Map<String, String> anhangNamen;
 
+  /// Dateinamen der Signaturbilder, die bei **dieser** Mail wegbleiben. Leer
+  /// heißt: alle gehen mit. Die Signatur in den Einstellungen bleibt davon
+  /// unberührt — entschieden wird je Nachricht, weil das schwere Werbebild
+  /// nicht unter jede gehört (§4.7).
+  final List<String> ohneSignaturBilder;
+
   const EmailEntwurf({
     this.an = const [],
     this.kopie = const [],
@@ -25,6 +31,7 @@ class EmailEntwurf extends Equatable {
     this.text = '',
     this.anhangPfade = const [],
     this.anhangNamen = const {},
+    this.ohneSignaturBilder = const [],
   });
 
   /// Ohne Empfänger und ohne Betreff wird nicht gesendet. Der Text darf leer
@@ -41,6 +48,7 @@ class EmailEntwurf extends Equatable {
     String? text,
     List<String>? anhangPfade,
     Map<String, String>? anhangNamen,
+    List<String>? ohneSignaturBilder,
   }) {
     return EmailEntwurf(
       an: an ?? this.an,
@@ -49,6 +57,7 @@ class EmailEntwurf extends Equatable {
       text: text ?? this.text,
       anhangPfade: anhangPfade ?? this.anhangPfade,
       anhangNamen: anhangNamen ?? this.anhangNamen,
+      ohneSignaturBilder: ohneSignaturBilder ?? this.ohneSignaturBilder,
     );
   }
 
@@ -59,8 +68,22 @@ class EmailEntwurf extends Equatable {
     'text': text,
     'anhangPfade': anhangPfade,
     'anhangNamen': anhangNamen,
+    'ohneSignaturBilder': ohneSignaturBilder,
     'absenderName': absenderName,
   };
+
+  /// Nimmt ein Signaturbild für diese Mail heraus oder wieder hinein.
+  EmailEntwurf mitUmgeschaltetemSignaturBild(String dateiname) =>
+      ohneSignaturBilder.contains(dateiname)
+      ? copyWith(
+          ohneSignaturBilder: ohneSignaturBilder
+              .where((weg) => weg != dateiname)
+              .toList(),
+        )
+      : copyWith(ohneSignaturBilder: [...ohneSignaturBilder, dateiname]);
+
+  bool signaturBildGehtMit(String dateiname) =>
+      !ohneSignaturBilder.contains(dateiname);
 
   /// Nimmt die Adresse in „An" auf — es sei denn, sie steht schon irgendwo.
   /// Wer zweimal angeschrieben wird, merkt das; die App soll es verhindern.
@@ -116,5 +139,6 @@ class EmailEntwurf extends Equatable {
     text,
     anhangPfade,
     anhangNamen,
+    ohneSignaturBilder,
   ];
 }

@@ -3,6 +3,7 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
@@ -118,6 +119,43 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       for (final eintrag in response.data as List)
         OutlookSignatur.fromJson(eintrag as Map<String, dynamic>),
     ];
+  }
+
+  @override
+  Future<SignaturStand> ladeSignaturStand() async {
+    final response = await _dio.get('/api/EmailVersand/signaturen/stand');
+    return SignaturStand.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<SignaturStand> uebernimmSignatur(String name) async {
+    try {
+      final response = await _dio.post(
+        '/api/EmailVersand/signaturen/uebernehmen',
+        data: {'name': name},
+        // Bilder lesen und ablegen dauert laenger als die 3 Sekunden, die der
+        // NetworkModule global setzt.
+        options: Options(receiveTimeout: _versandTimeout),
+      );
+      return SignaturStand.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ?? 'Die Signatur konnte nicht übernommen werden.',
+      );
+    }
+  }
+
+  @override
+  Future<SignaturStand> verwirfSignaturFormat() async {
+    try {
+      final response = await _dio.delete('/api/EmailVersand/signaturen/format');
+      return SignaturStand.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ??
+            'Die formatierte Fassung konnte nicht verworfen werden.',
+      );
+    }
   }
 
   /// Der Grund im Klartext aus den ProblemDetails des Backends. Genau dieser

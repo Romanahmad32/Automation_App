@@ -5,7 +5,9 @@ import 'package:automation_app/features/email_versand/presentation/widgets/email
 import 'package:automation_app/features/email_versand/presentation/widgets/email_bereitschaft_hinweis.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_empfaenger_feld.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_fehlt_noch_hinweis.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_groesse_zeile.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_bilder.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_vorschau.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,6 +70,8 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
       VersandVoraussetzungen.fehlend(
         entwurf: state.entwurf,
         offeneEingaben: [_offenAn, _offenKopie],
+        gesamtBytes: state.gesamtBytes,
+        maxBytes: state.bereitschaft?.maxBytes,
       );
 
   @override
@@ -194,6 +198,19 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               onOutlookVerwerfen: cubit.outlookAnhangVerwerfen,
               holtAusOutlook: state.holtAusOutlook,
               aktiv: aktiv,
+            ),
+            if (state.bereitschaft?.signaturBilder.isNotEmpty ?? false) ...[
+              const SizedBox(height: 16),
+              EmailSignaturBilder(
+                bilder: state.bereitschaft!.signaturBilder,
+                weggelassen: state.entwurf.ohneSignaturBilder,
+                onUmschalten: cubit.signaturBildUmschalten,
+                aktiv: aktiv,
+              ),
+            ],
+            EmailGroesseZeile(
+              gesamtBytes: state.gesamtBytes,
+              maxBytes: state.bereitschaft?.maxBytes,
             ),
           ],
         );
