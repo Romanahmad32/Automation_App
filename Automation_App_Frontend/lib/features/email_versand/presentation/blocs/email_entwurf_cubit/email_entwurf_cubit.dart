@@ -161,16 +161,20 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     }
   }
 
-  /// Nimmt einen aus Outlook geholten Vorschlag wieder aus der Reihe. Die
-  /// abgelegte Datei bleibt liegen — ein erneutes Holen bietet sie wieder an,
-  /// und das ist der Rueckweg, wenn man sich verklickt hat.
-  void outlookAnhangVerwerfen(String pfad) => emit(
-    state.copyWith(
-      ausOutlook: state.ausOutlook
-          .where((vorhanden) => vorhanden != pfad)
-          .toList(),
-    ),
-  );
+  /// Nimmt einen aus Outlook geholten Vorschlag aus der Reihe **und** loescht
+  /// die zwischengelagerte Datei: Was der Anwalt verwirft, soll nicht in der
+  /// Ablage liegen bleiben. Der Rueckweg bleibt das erneute Holen — die
+  /// Nachricht liegt ja weiter im Postfach.
+  void outlookAnhangVerwerfen(String pfad) {
+    emit(
+      state.copyWith(
+        ausOutlook: state.ausOutlook
+            .where((vorhanden) => vorhanden != pfad)
+            .toList(),
+      ),
+    );
+    unawaited(_repository.verwirfAnhang(pfad));
+  }
 
   /// Benennt den Anhang **fuer die Mail** um; die Datei in der Akte behaelt
   /// ihren Namen.

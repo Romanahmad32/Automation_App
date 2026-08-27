@@ -99,6 +99,19 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
   }
 
   @override
+  Future<void> verwirfAnhang(String pfad) async {
+    try {
+      await _dio.delete(
+        '/api/EmailVersand/outlook/anhaenge',
+        queryParameters: {'pfad': pfad},
+      );
+    } on DioException {
+      // Der Vorschlag ist aus der Reihe, das ist die Hauptsache. Bleibt die
+      // Datei liegen, holt sie spätestens das Aufräumen beim nächsten Start.
+    }
+  }
+
+  @override
   Future<List<OutlookSignatur>> ladeOutlookSignaturen() async {
     final response = await _dio.get('/api/EmailVersand/signaturen');
     return [

@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using AutomationService.Core.Persistence;
 
 namespace AutomationService.Features.EmailVersand.Domain.Services;
 
@@ -36,8 +35,7 @@ internal static class OutlookAuswahl
             return Array.Empty<string>();
         }
 
-        var ordner = Path.Combine(AppDataPaths.EnsureAnhaengeDirectory(), "Outlook");
-        Directory.CreateDirectory(ordner);
+        var ordner = AnhangAblage.OutlookOrdner();
 
         var pfade = new List<string>();
         dynamic anhaenge = nachricht.Attachments;

@@ -1,4 +1,5 @@
 using AutomationService.Features.EmailVersand.Domain.Services;
+using AutomationService.Features.EmailVersand.Presentation.HostedServices;
 
 namespace AutomationService.Features.EmailVersand.Presentation.DependencyInjection;
 
@@ -25,6 +26,8 @@ public static class EmailVersandInjection
         // Outlook-Instanz am Leben — je Anfrage neu aufzubauen hiesse, den
         // Kaltstart jedes Mal zu bezahlen.
         services.AddSingleton<OutlookVerbindung>();
+        services.AddSingleton<AnhangAblage>();
+        services.AddHostedService<AnhangAufraeumService>();
         services.AddScoped<EntwurfDatei>();
         services.AddScoped<IEntwurfOeffner, EntwurfOeffner>();
         services.AddScoped<IEmailVersender, SmtpEmailVersender>();

@@ -14,7 +14,8 @@ namespace AutomationService.Features.EmailVersand.Presentation.Controllers;
 public class EmailVersandController(
     IEmailVersender versender,
     IEntwurfOeffner oeffner,
-    OutlookVerbindung outlook) : ControllerBase
+    OutlookVerbindung outlook,
+    AnhangAblage ablage) : ControllerBase
 {
     /// <summary>
     /// Meldet, ob gesendet werden kann und von welcher Adresse aus. Die
@@ -93,6 +94,29 @@ public class EmailVersandController(
     [ProducesResponseType(typeof(IReadOnlyList<string>), StatusCodes.Status200OK)]
     public ActionResult<IReadOnlyList<string>> GetOutlookAnhaenge() =>
         Ok(outlook.AnhaengeDerAuswahl());
+
+    /// <summary>
+    /// Wirft eine aus Outlook geholte Datei weg (§4.7). Der Anwalt verwirft
+    /// damit einen Vorschlag, den er nicht braucht — die Datei soll dann auch
+    /// nicht liegen bleiben. Nur dieser eine Ordner; die Anhänge erfasster
+    /// Antworten daneben bleiben unberührt (§4.3). 204 auch dann, wenn schon
+    /// nichts mehr da war.
+    /// </summary>
+    [HttpDelete("outlook/anhaenge")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public IActionResult AnhangVerwerfen([FromQuery] string pfad)
+    {
+        if (ablage.VerwirfGeholten(pfad))
+        {
+            return NoContent();
+        }
+
+        return Problem(
+            title: "Der Anhang wurde nicht gelöscht",
+            detail: "Die Datei wurde nicht aus einer Outlook-Nachricht geholt.",
+            statusCode: StatusCodes.Status400BadRequest);
+    }
 
     /// <summary>
     /// Öffnet die Mail als Entwurf im Mailprogramm, statt sie zu senden

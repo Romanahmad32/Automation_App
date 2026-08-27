@@ -82,7 +82,10 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   lässt die Instanz leben — sonst kostet jeder Entwurf den Outlook-Kaltstart;
   `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt.
   `GET api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht
-  (`OutlookAuswahl`) — der Ersatz für das Ziehen von Anhang zu Anhang. Dort setzt Outlook seine eigene Signatur —
+  (`OutlookAuswahl`) — der Ersatz für das Ziehen von Anhang zu Anhang; `DELETE` darauf wirft eine
+  geholte Datei wieder weg (nur dieser Ordner, die Antwort-Anhänge daneben bleiben). `AnhangAblage`
+  räumt alle Zwischenlager nach 14 Tagen ab (`AnhangAufraeumService` beim Start) — dieselbe Regel
+  wie beim Arbeitsordner. Dort setzt Outlook seine eigene Signatur —
   deshalb hängt `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an.
   `GET api/EmailVersand/signaturen` liest die in Outlook eingerichteten Signaturen
   (`%APPDATA%\Microsoft\Signatures\*.txt`) zum einmaligen Übernehmen.

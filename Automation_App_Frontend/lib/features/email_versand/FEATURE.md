@@ -37,4 +37,4 @@ Dienst `EmailEntwurfErzeuger` (Vorbelegung aus Vorgang/Mandant/Versicherer); Sch
 - `OutlookVerbindung` haelt die Outlook-Instanz; der Dialog laesst sie beim Oeffnen vorwaermen
   (`waermeEntwurfVor`). Ohne das kostet der erste Entwurf den Kaltstart von Outlook.
 - Vorschlaege aus zwei Quellen, **nicht** vermischt: `ausDerAkte` ist Bestand, `ausOutlook` ein Griff,
-  der danebengehen darf — nur der traegt ein Kreuz (`outlookAnhangVerwerfen`, erneutes Holen bringt ihn zurueck).
+  der danebengehen darf — nur der traegt ein Kreuz (`outlookAnhangVerwerfen`; loescht auch die Datei, erneutes Holen bringt sie zurueck).
