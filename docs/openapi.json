@@ -2017,6 +2017,136 @@
         }
       }
     },
+    "/api/EmailVersand/signaturen/stand": {
+      "get": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Die Signatur, wie sie gerade in den Einstellungen liegt (\u00A74.7) \u2014 mit\r\nihren Bildern und deren Gr\u00F6\u00DFe. Die Einstellungsmaske zeigt daraus, was\r\nunter jeder Mail steht und was es wiegt; die HTML-Fassung selbst geht\r\nbewusst nicht \u00FCber die Leitung.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/signaturen/uebernehmen": {
+      "post": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "\u00DCbernimmt die gew\u00E4hlte Signatur in die Einstellungen (\u00A74.7): Text,\r\nformatierte Fassung und deren Bilder in einem Zug. Das geschieht hier\r\nund nicht in der Oberfl\u00E4che, weil die Bilder abgelegt werden m\u00FCssen und\r\ndie HTML-Fassung zehntausende Zeichen gro\u00DF ist.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignaturUebernahmeDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignaturUebernahmeDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SignaturUebernahmeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/signaturen/format": {
+      "delete": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Wirft die formatierte Fassung samt Bildern weg; die Nur-Text-Fassung\r\nbleibt stehen (\u00A74.7). F\u00FCr den Anwalt, dem die \u00FCbernommene Formatierung\r\nnicht gef\u00E4llt \u2014 ohne diesen Weg k\u00E4me er nur durch eine andere \u00DCbernahme\r\nwieder heraus.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/EmailVersand/senden": {
       "post": {
         "tags": [
@@ -2657,7 +2787,9 @@
           "bereit",
           "absender",
           "hinweis",
-          "signatur"
+          "signatur",
+          "signaturBilder",
+          "maxAnhangMb"
         ],
         "type": "object",
         "properties": {
@@ -2675,6 +2807,20 @@
           },
           "signatur": {
             "type": "string"
+          },
+          "signaturBilder": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignaturBildDto"
+            }
+          },
+          "maxAnhangMb": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "Ob die App senden kann und von welcher Adresse aus (REQUIREMENTS.md \u00A74.7)."
@@ -2687,7 +2833,8 @@
           "text",
           "anhangPfade",
           "absenderName",
-          "anhangNamen"
+          "anhangNamen",
+          "ohneSignaturBilder"
         ],
         "type": "object",
         "properties": {
@@ -2733,6 +2880,15 @@
               "object"
             ],
             "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "ohneSignaturBilder": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
               "type": "string"
             }
           }
@@ -2848,7 +3004,8 @@
           "abteilung",
           "tabellenkopfFarbeHex",
           "aktenStammordner",
-          "mailSignatur"
+          "mailSignatur",
+          "mailSignaturHtml"
         ],
         "type": "object",
         "properties": {
@@ -2891,6 +3048,9 @@
             "type": "string"
           },
           "mailSignatur": {
+            "type": "string"
+          },
+          "mailSignaturHtml": {
             "type": "string"
           }
         },
@@ -3163,15 +3323,22 @@
       "OutlookSignaturDto": {
         "required": [
           "name",
-          "text"
+          "text",
+          "hatFormat"
         ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Anzeigename in Outlook."
           },
           "text": {
-            "type": "string"
+            "type": "string",
+            "description": "Outlooks eigene Nur-Text-Fassung, fuer die Vorschau."
+          },
+          "hatFormat": {
+            "type": "boolean",
+            "description": "True, wenn daneben eine formatierte Fassung liegt (Schrift, Farben, Logo).\r\nWie schwer deren Bilder wiegen, sagt erst die \u00DCbernahme."
           }
         },
         "description": "Eine im Mailprogramm gefundene Signatur (REQUIREMENTS.md \u00A74.7)."
@@ -3468,6 +3635,62 @@
             ]
           }
         }
+      },
+      "SignaturBildDto": {
+        "required": [
+          "dateiname",
+          "bytes"
+        ],
+        "type": "object",
+        "properties": {
+          "dateiname": {
+            "type": "string"
+          },
+          "bytes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        },
+        "description": "Ein Bild der formatierten Signatur mit seiner Gr\u00F6\u00DFe (REQUIREMENTS.md \u00A74.7).\r\nDie Gr\u00F6\u00DFe geht mit, weil der Anwalt je Mail entscheidet, ob das Bild\r\nmitgeht \u2014 und diese Entscheidung ohne Zahl nicht zu treffen ist."
+      },
+      "SignaturStandDto": {
+        "required": [
+          "text",
+          "hatFormat",
+          "bilder"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "hatFormat": {
+            "type": "boolean"
+          },
+          "bilder": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignaturBildDto"
+            }
+          }
+        },
+        "description": "Die Signatur, wie sie nach einer \u00DCbernahme in den Einstellungen liegt\r\n(REQUIREMENTS.md \u00A74.7).\r\n\r\nDie HTML-Fassung selbst steht bewusst nicht darin: Sie ist zehntausende\r\nZeichen gro\u00DF, die Oberfl\u00E4che zeigt sie nicht an und kann sie nicht\r\nbearbeiten. Was sie wissen muss, ist, \u003Cb\u003Edass\u003C/b\u003E es eine gibt und welche\r\nBilder darin stecken."
+      },
+      "SignaturUebernahmeDto": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Welche der in Outlook eingerichteten Signaturen \u00FCbernommen werden soll\r\n(REQUIREMENTS.md \u00A74.7). Nur der Name \u2014 den Inhalt liest der Dienst selbst\r\naus dem Signaturordner, samt Bildern."
       },
       "SimulationAntwortRequestDto": {
         "required": [

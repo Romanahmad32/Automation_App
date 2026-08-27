@@ -6,4 +6,11 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// eine Kanzlei hat oft mehrere („Kurz", „Vollständig"), und welche gemeint
 /// ist, kann nur der Anwalt sagen.
 /// </summary>
-public sealed record OutlookSignatur(string Name, string Text);
+/// <param name="Name">Anzeigename in Outlook.</param>
+/// <param name="Text">Outlooks eigene Nur-Text-Fassung, für die Vorschau.</param>
+/// <param name="HatFormat">
+/// True, wenn daneben eine formatierte Fassung liegt (Schrift, Farben, Logo).
+/// Wie schwer deren Bilder wiegen, sagt erst die Übernahme: Dafür müssten sie
+/// hier alle gelesen werden, nur um eine Liste anzuzeigen.
+/// </param>
+public sealed record OutlookSignatur(string Name, string Text, bool HatFormat = false);

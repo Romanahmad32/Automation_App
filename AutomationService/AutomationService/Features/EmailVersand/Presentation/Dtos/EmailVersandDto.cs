@@ -14,7 +14,8 @@ public sealed record EmailVersandDto(
     string Text,
     IReadOnlyList<string>? AnhangPfade,
     string? AbsenderName,
-    IReadOnlyDictionary<string, string>? AnhangNamen)
+    IReadOnlyDictionary<string, string>? AnhangNamen,
+    IReadOnlyList<string>? OhneSignaturBilder)
 {
     public EmailNachricht ToDomain() => new(
         An ?? [],
@@ -23,5 +24,6 @@ public sealed record EmailVersandDto(
         Text ?? string.Empty,
         AnhangPfade ?? [],
         AbsenderName ?? string.Empty,
-        AnhangNamen);
+        AnhangNamen,
+        OhneSignaturBilder ?? []);
 }

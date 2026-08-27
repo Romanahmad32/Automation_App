@@ -15,7 +15,9 @@ public class EmailVersandController(
     IEmailVersender versender,
     IEntwurfOeffner oeffner,
     OutlookVerbindung outlook,
-    AnhangAblage ablage) : ControllerBase
+    AnhangAblage ablage,
+    SignaturUebernahme signaturUebernahme,
+    KanzleiSignatur signatur) : ControllerBase
 {
     /// <summary>
     /// Meldet, ob gesendet werden kann und von welcher Adresse aus. Die
@@ -40,6 +42,60 @@ public class EmailVersandController(
     [ProducesResponseType(typeof(IReadOnlyList<OutlookSignaturDto>), StatusCodes.Status200OK)]
     public ActionResult<IReadOnlyList<OutlookSignaturDto>> GetSignaturen() =>
         Ok(OutlookSignaturen.Lies().Select(OutlookSignaturDto.From).ToList());
+
+    /// <summary>
+    /// Die Signatur, wie sie gerade in den Einstellungen liegt (§4.7) — mit
+    /// ihren Bildern und deren Größe. Die Einstellungsmaske zeigt daraus, was
+    /// unter jeder Mail steht und was es wiegt; die HTML-Fassung selbst geht
+    /// bewusst nicht über die Leitung.
+    /// </summary>
+    [HttpGet("signaturen/stand")]
+    [ProducesResponseType(typeof(SignaturStandDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SignaturStandDto>> GetSignaturStand(
+        CancellationToken cancellationToken) =>
+        Ok(SignaturStandDto.From(await signatur.BlockAsync(cancellationToken)));
+
+    /// <summary>
+    /// Übernimmt die gewählte Signatur in die Einstellungen (§4.7): Text,
+    /// formatierte Fassung und deren Bilder in einem Zug. Das geschieht hier
+    /// und nicht in der Oberfläche, weil die Bilder abgelegt werden müssen und
+    /// die HTML-Fassung zehntausende Zeichen groß ist.
+    /// </summary>
+    [HttpPost("signaturen/uebernehmen")]
+    [ProducesResponseType(typeof(SignaturStandDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SignaturStandDto>> SignaturUebernehmen(
+        [FromBody] SignaturUebernahmeDto anfrage,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var block = await signaturUebernahme.UebernimmAsync(anfrage.Name ?? string.Empty, cancellationToken);
+            return Ok(SignaturStandDto.From(block));
+        }
+        catch (EmailVersandException exception)
+        {
+            return Problem(
+                title: "Die Signatur wurde nicht übernommen",
+                detail: exception.Message,
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+    }
+
+    /// <summary>
+    /// Wirft die formatierte Fassung samt Bildern weg; die Nur-Text-Fassung
+    /// bleibt stehen (§4.7). Für den Anwalt, dem die übernommene Formatierung
+    /// nicht gefällt — ohne diesen Weg käme er nur durch eine andere Übernahme
+    /// wieder heraus.
+    /// </summary>
+    [HttpDelete("signaturen/format")]
+    [ProducesResponseType(typeof(SignaturStandDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SignaturStandDto>> SignaturFormatVerwerfen(
+        CancellationToken cancellationToken)
+    {
+        var block = await signaturUebernahme.VerwirfFormatAsync(cancellationToken);
+        return Ok(SignaturStandDto.From(block));
+    }
 
     /// <summary>
     /// Sendet die Mail. Entweder ganz oder gar nicht: Bei einem Fehler ist

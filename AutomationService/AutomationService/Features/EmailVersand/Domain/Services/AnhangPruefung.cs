@@ -13,6 +13,11 @@ public static class AnhangPruefung
 {
     /// <param name="pfade">Vollstaendige Pfade der Anhaenge.</param>
     /// <param name="maxGesamtMb">Obergrenze aller Anhaenge zusammen.</param>
+    /// <param name="zusatzBytes">
+    /// Was ausserhalb der Anhaenge mitwiegt — die eingebetteten Bilder der
+    /// Signatur. Sie sind keine Anhaenge, gehen aber im selben Umschlag hinaus
+    /// und zaehlen fuer den Server der Gegenseite genauso (§4.7).
+    /// </param>
     /// <param name="namen">
     /// Abweichender Dateiname je Pfad, wenn der Anwalt umbenannt hat. Die Datei
     /// auf Platte bleibt unberuehrt — umbenannt wird nur, was beim Empfaenger
@@ -21,10 +26,11 @@ public static class AnhangPruefung
     public static IReadOnlyList<GeladenerAnhang> Lade(
         IReadOnlyList<string> pfade,
         int maxGesamtMb,
-        IReadOnlyDictionary<string, string>? namen = null)
+        IReadOnlyDictionary<string, string>? namen = null,
+        long zusatzBytes = 0)
     {
         var nachVollpfad = Normalisiert(namen);
-        return [.. Sammle(pfade, maxGesamtMb)
+        return [.. Sammle(pfade, maxGesamtMb, zusatzBytes)
             .Select(datei => new GeladenerAnhang(Anzeigename(datei, nachVollpfad), LiesInhalt(datei)))];
     }
 
@@ -79,9 +85,9 @@ public static class AnhangPruefung
     /// oder gesperrter Anhang soll trotzdem auffallen, bevor ein Fenster
     /// aufgeht, das nach fertiger Arbeit aussieht.
     /// </summary>
-    public static void Pruefe(IReadOnlyList<string> pfade, int maxGesamtMb)
+    public static void Pruefe(IReadOnlyList<string> pfade, int maxGesamtMb, long zusatzBytes = 0)
     {
-        foreach (var datei in Sammle(pfade, maxGesamtMb))
+        foreach (var datei in Sammle(pfade, maxGesamtMb, zusatzBytes))
         {
             // Öffnen und gleich wieder schließen: Das beantwortet die Frage
             // „lesbar?" vollständig und kostet nichts.
@@ -94,10 +100,10 @@ public static class AnhangPruefung
     /// Leere Pfade werden übergangen: Eine leere Zeile in der Liste ist keine
     /// Angabe, sondern nichts.
     /// </summary>
-    private static List<FileInfo> Sammle(IReadOnlyList<string> pfade, int maxGesamtMb)
+    private static List<FileInfo> Sammle(IReadOnlyList<string> pfade, int maxGesamtMb, long zusatzBytes)
     {
         var dateien = new List<FileInfo>(pfade.Count);
-        long gesamt = 0;
+        var gesamt = Math.Max(0, zusatzBytes);
         var grenze = (long)Math.Max(1, maxGesamtMb) * 1024 * 1024;
 
         foreach (var pfad in pfade)
@@ -121,9 +127,9 @@ public static class AnhangPruefung
             {
                 throw new EmailVersandException(
                     EmailVersandFehler.Anhang,
-                    $"Die Anhänge sind zusammen größer als {maxGesamtMb} MB. Die meisten " +
-                    "Postfächer weisen solche Nachrichten ab — bitte weniger anhängen " +
-                    "oder die Dateien vorher verkleinern.");
+                    $"Die Nachricht wird mit Anhängen größer als {maxGesamtMb} MB. Die meisten " +
+                    "Postfächer weisen solche Nachrichten ab — bitte weniger anhängen, die " +
+                    "Dateien vorher verkleinern oder Bilder aus der Signatur weglassen.");
             }
 
             dateien.Add(datei);

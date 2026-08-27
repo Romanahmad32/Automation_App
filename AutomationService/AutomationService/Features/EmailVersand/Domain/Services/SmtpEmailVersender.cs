@@ -41,11 +41,14 @@ public sealed class SmtpEmailVersender(
                 + "\"Postfach-Zugang\" erneut mit Microsoft anmelden.");
         }
 
+        var block = await signatur.BlockAsync(cancellationToken);
         return new EmailVersandBereitschaft(
             true,
             zugang.Absender,
             null,
-            await signatur.TextAsync(cancellationToken));
+            block.Text,
+            block.Bilder,
+            optionen.Value.MaxAnhangGesamtMb);
     }
 
     public async Task<EmailVersandErgebnis> SendeAsync(
@@ -59,18 +62,20 @@ public sealed class SmtpEmailVersender(
                 "Es ist kein Postfach-Zugang hinterlegt. Bitte in den Einstellungen unter "
                 + "\"Postfach-Zugang\" die Kanzlei-Adresse einrichten.");
 
+        // Die Signatur kommt erst hier dazu, nicht im Formular: Sie gehört den
+        // Einstellungen, nicht dem einzelnen Entwurf (§4.7). Ihre Bilder wiegen
+        // aber mit — deshalb steht sie vor der Anhangsprüfung.
+        var signaturblock = await signatur.FuerVersandAsync(
+            nachricht.OhneSignaturBilder ?? [],
+            cancellationToken);
+
         var anhaenge = AnhangPruefung.Lade(
             nachricht.AnhangPfade,
             einstellungen.MaxAnhangGesamtMb,
-            nachricht.AnhangNamen);
+            nachricht.AnhangNamen,
+            SignaturBytes(signaturblock));
 
-        // Die Signatur kommt erst hier dazu, nicht im Formular: Sie gehört den
-        // Einstellungen, nicht dem einzelnen Entwurf (§4.7).
-        var mitSignatur = nachricht with
-        {
-            Text = await signatur.UnterAsync(nachricht.Text, cancellationToken),
-        };
-        var mime = EmailNachrichtBauer.Baue(mitSignatur, zugang.Absender, anhaenge);
+        var mime = EmailNachrichtBauer.Baue(nachricht, zugang.Absender, anhaenge, signaturblock);
 
         await UebergebeAsync(mime, zugang, cancellationToken);
         var gesendetAm = DateTimeOffset.Now;
@@ -92,6 +97,31 @@ public sealed class SmtpEmailVersender(
                 ? null
                 : "Die Mail ist versendet, konnte aber nicht in den Ordner \"Gesendet\" "
                   + "des Postfachs kopiert werden.");
+    }
+
+    /// <summary>
+    /// Was die eingebetteten Signaturbilder wiegen. Sie sind keine Anhänge,
+    /// gehen aber im selben Umschlag hinaus — für den Server der Gegenseite
+    /// zählt die Nachricht als Ganzes.
+    /// </summary>
+    private static long SignaturBytes(SignaturVersand? signatur)
+    {
+        if (signatur is null)
+        {
+            return 0;
+        }
+
+        long gesamt = 0;
+        foreach (var pfad in signatur.BildPfade)
+        {
+            var datei = new FileInfo(pfad);
+            if (datei.Exists)
+            {
+                gesamt += datei.Length;
+            }
+        }
+
+        return gesamt;
     }
 
     /// <summary>
