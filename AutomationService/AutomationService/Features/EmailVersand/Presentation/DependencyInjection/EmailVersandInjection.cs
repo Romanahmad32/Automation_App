@@ -22,11 +22,13 @@ public static class EmailVersandInjection
 
         services.AddScoped<GesendetOrdnerAblage>();
         services.AddScoped<KanzleiSignatur>();
+        services.AddScoped<SignaturUebernahme>();
         // Singleton: Der Dienst haelt einen STA-Thread und die
         // Outlook-Instanz am Leben — je Anfrage neu aufzubauen hiesse, den
         // Kaltstart jedes Mal zu bezahlen.
         services.AddSingleton<OutlookVerbindung>();
         services.AddSingleton<AnhangAblage>();
+        services.AddSingleton<SignaturAblage>();
         services.AddHostedService<AnhangAufraeumService>();
         services.AddScoped<EntwurfDatei>();
         services.AddScoped<IEntwurfOeffner, EntwurfOeffner>();

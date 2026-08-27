@@ -86,10 +86,18 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Pfade liefert statt "… (2).pdf") — der Ersatz für das Ziehen von Anhang zu Anhang; `DELETE` darauf wirft eine
   geholte Datei wieder weg (nur dieser Ordner, die Antwort-Anhänge daneben bleiben). `AnhangAblage`
   räumt alle Zwischenlager nach 14 Tagen ab (`AnhangAufraeumService` beim Start) — dieselbe Regel
-  wie beim Arbeitsordner. Dort setzt Outlook seine eigene Signatur —
-  deshalb hängt `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an.
-  `GET api/EmailVersand/signaturen` liest die in Outlook eingerichteten Signaturen
-  (`%APPDATA%\Microsoft\Signatures\*.txt`) zum einmaligen Übernehmen.
+  wie beim Arbeitsordner. Im Outlook-Entwurf setzt Outlook seine eigene Signatur — deshalb hängt
+  `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an.
+  **Signatur** (§4.7): `GET signaturen` listet die in Outlook eingerichteten,
+  `POST signaturen/uebernehmen` liest eine davon ein — Nur-Text-Fassung (`.txt`) **und** formatierte
+  (`.htm` samt Bildern, `OutlookSignaturHtml`: Rumpf schneiden, Bildverweise auf den blanken
+  Dateinamen kürzen). Die Bilder liegen in `SignaturAblage`
+  (`%APPDATA%\AutomationService\Signatur`), das HTML in `KanzleiSettings.MailSignaturHtml`;
+  `GET signaturen/stand` meldet beides zurück, `DELETE signaturen/format` wirft die Formatierung
+  weg. Beim Versand baut `MailRumpf` daraus HTML **und** Text und hängt die Bilder als
+  `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`,
+  `SignaturHtmlFilter` nimmt die ganze `<img>`-Marke heraus) — sie zählen über `zusatzBytes` in
+  `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und

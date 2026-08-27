@@ -19,6 +19,11 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// Die Datei in der Akte behaelt ihren Namen — geaendert wird nur, was beim
 /// Empfaenger ankommt. "Dokument1.pdf" sagt dort niemandem etwas.
 /// </param>
+/// <param name="OhneSignaturBilder">
+/// Dateinamen der Signaturbilder, die bei <b>dieser</b> Mail wegbleiben — das
+/// schwere Werbebild etwa. Leer heißt: alle gehen mit. Die Signatur selbst
+/// bleibt davon unberührt; entschieden wird je Nachricht (§4.7).
+/// </param>
 /// <param name="AbsenderName">
 /// Anzeigename vor der Absenderadresse ("Kanzlei … &lt;kanzlei@…&gt;"). Kommt aus
 /// den Kanzleidaten des Frontends; die Adresse selbst steht im Postfach-Zugang.
@@ -30,4 +35,5 @@ public sealed record EmailNachricht(
     string Text,
     IReadOnlyList<string> AnhangPfade,
     string AbsenderName,
-    IReadOnlyDictionary<string, string>? AnhangNamen = null);
+    IReadOnlyDictionary<string, string>? AnhangNamen = null,
+    IReadOnlyList<string>? OhneSignaturBilder = null);

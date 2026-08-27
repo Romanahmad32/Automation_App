@@ -9,11 +9,15 @@ public sealed record EmailVersandBereitschaftDto(
     bool Bereit,
     string Absender,
     string? Hinweis,
-    string Signatur)
+    string Signatur,
+    IReadOnlyList<SignaturBildDto> SignaturBilder,
+    int MaxAnhangMb)
 {
     public static EmailVersandBereitschaftDto From(EmailVersandBereitschaft bereitschaft) => new(
         bereitschaft.Bereit,
         bereitschaft.Absender,
         bereitschaft.Hinweis,
-        bereitschaft.Signatur);
+        bereitschaft.Signatur,
+        [.. bereitschaft.Bilder.Select(SignaturBildDto.From)],
+        bereitschaft.MaxAnhangMb);
 }

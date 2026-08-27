@@ -17,10 +17,16 @@ public static partial class EmailNachrichtBauer
     /// Absender, den Outlook gleich wieder überschreibt.
     /// </param>
     /// <param name="anhaenge">Die bereits eingelesenen Anhänge.</param>
+    /// <param name="signatur">
+    /// Die Signatur für genau diese Mail, oder null. Ist eine formatierte
+    /// Fassung dabei, entsteht eine Nachricht mit HTML- und Textteil
+    /// (<see cref="MailRumpf"/>).
+    /// </param>
     public static MimeMessage Baue(
         EmailNachricht nachricht,
         string absenderAdresse,
-        IReadOnlyList<GeladenerAnhang> anhaenge)
+        IReadOnlyList<GeladenerAnhang> anhaenge,
+        SignaturVersand? signatur = null)
     {
         var nachrichtObjekt = new MimeMessage();
         if (!string.IsNullOrWhiteSpace(absenderAdresse))
@@ -40,16 +46,7 @@ public static partial class EmailNachrichtBauer
 
         nachrichtObjekt.Subject = nachricht.Betreff.Trim();
 
-        // Reiner Text, kein HTML: Das Anspruchsschreiben liegt als Anhang bei,
-        // der Mailtext ist das Anschreiben dazu. Ohne HTML gibt es auch nichts,
-        // was beim Empfänger anders aussieht als beim Absender.
-        var rumpf = new BodyBuilder { TextBody = nachricht.Text };
-        foreach (var anhang in anhaenge)
-        {
-            rumpf.Attachments.Add(anhang.Dateiname, anhang.Inhalt);
-        }
-
-        nachrichtObjekt.Body = rumpf.ToMessageBody();
+        nachrichtObjekt.Body = MailRumpf.Baue(nachricht.Text, signatur, anhaenge).ToMessageBody();
         return nachrichtObjekt;
     }
 

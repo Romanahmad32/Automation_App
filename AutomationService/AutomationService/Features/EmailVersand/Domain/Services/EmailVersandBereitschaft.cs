@@ -18,11 +18,25 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// steht, soll der Anwalt sehen, bevor sie hinausgeht, und nicht erst im
 /// Ordner "Gesendet".
 /// </param>
+/// <param name="SignaturBilder">
+/// Die Bilder der formatierten Signatur mit ihrer Groesse. Der Anwalt laesst
+/// einzelne davon je Mail weg — das schwere Werbebild etwa —, und dafuer muss
+/// er sehen, was sie wiegen.
+/// </param>
+/// <param name="MaxAnhangMb">
+/// Obergrenze der ganzen Nachricht. Sie steht hier, damit die Oberflaeche beim
+/// Anhaengen mitzaehlen kann: Die Grenze erst beim Senden zu nennen, hiesse sie
+/// nach dem einen unumkehrbaren Klick zu nennen.
+/// </param>
 public sealed record EmailVersandBereitschaft(
     bool Bereit,
     string Absender,
     string? Hinweis,
-    string Signatur = "")
+    string Signatur = "",
+    IReadOnlyList<SignaturBild>? SignaturBilder = null,
+    int MaxAnhangMb = 0)
 {
+    public IReadOnlyList<SignaturBild> Bilder => SignaturBilder ?? [];
+
     public static EmailVersandBereitschaft Nicht(string hinweis) => new(false, string.Empty, hinweis);
 }
