@@ -371,6 +371,36 @@ void main() {
     await gebaut.cubit.close();
   });
 
+  test('ein geholter Vorschlag laesst sich einzeln verwerfen', () async {
+    // Wer aus der falschen Nachricht geholt hat, soll die Reihe wieder leer
+    // bekommen, ohne den Dialog zu schliessen.
+    final repository = _FakeVersandRepository()
+      ..outlookAnhaenge = [r'C:\Outlook\Gutachten.pdf', r'C:\Outlook\Foto.jpg'];
+    final gebaut = baue(repository, mandanten: [mandant]);
+    await gebaut.cubit.starte(vorgang: vorgang);
+    await gebaut.cubit.anhaengeAusOutlook();
+
+    gebaut.cubit.outlookAnhangVerwerfen(r'C:\Outlook\Foto.jpg');
+
+    expect(gebaut.cubit.state.ausOutlook, [r'C:\Outlook\Gutachten.pdf']);
+    await gebaut.cubit.close();
+  });
+
+  test('ein verworfener Vorschlag kommt beim erneuten Holen wieder', () async {
+    // Der Rueckweg, wenn man sich verklickt hat: Die Datei liegt ja noch da.
+    final repository = _FakeVersandRepository()
+      ..outlookAnhaenge = [r'C:\Outlook\Gutachten.pdf'];
+    final gebaut = baue(repository, mandanten: [mandant]);
+    await gebaut.cubit.starte(vorgang: vorgang);
+    await gebaut.cubit.anhaengeAusOutlook();
+    gebaut.cubit.outlookAnhangVerwerfen(r'C:\Outlook\Gutachten.pdf');
+
+    await gebaut.cubit.anhaengeAusOutlook();
+
+    expect(gebaut.cubit.state.ausOutlook, [r'C:\Outlook\Gutachten.pdf']);
+    await gebaut.cubit.close();
+  });
+
   test('dieselbe Datei wird nicht zweimal angeboten', () async {
     final repository = _FakeVersandRepository()
       ..outlookAnhaenge = [r'C:\Outlook\Gutachten.pdf'];

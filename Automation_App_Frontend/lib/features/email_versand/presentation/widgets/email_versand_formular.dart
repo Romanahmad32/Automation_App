@@ -167,14 +167,13 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
             EmailAnhangListe(
               anhangPfade: state.entwurf.anhangPfade,
               namen: state.entwurf.anhangNamen,
-              // Fall-Ordner und Outlook-Nachricht landen in derselben Reihe
-              // anklickbarer Vorschlaege: Woher eine Datei kommt, aendert
-              // nichts daran, wie man sie anhaengt.
-              ausDerAkte: [...widget.ausDerAkte, ...state.ausOutlook],
+              ausDerAkte: widget.ausDerAkte,
+              ausOutlook: state.ausOutlook,
               onHinzufuegen: cubit.anhangHinzufuegen,
               onEntfernen: cubit.anhangEntfernen,
               onUmbenennen: cubit.anhangUmbenennen,
               onAusOutlook: () => _ausOutlook(context, cubit),
+              onOutlookVerwerfen: cubit.outlookAnhangVerwerfen,
               holtAusOutlook: state.holtAusOutlook,
               aktiv: aktiv,
             ),

@@ -33,7 +33,8 @@ Dienst `EmailEntwurfErzeuger` (Vorbelegung aus Vorgang/Mandant/Versicherer); Sch
   setzt Outlook seine eigene. Ins Frontend kommt sie über `bereitschaft.signatur` **nur zum Anzeigen**.
 - Empfängerzeilen übernehmen die Eingabe auch beim Verlassen des Feldes und bei `,`/`;`. Was offen bleibt,
   meldet `onOffeneEingabe` nach oben; `VersandVoraussetzungen.fehlend` erklärt daraus, warum „Senden" grau ist.
-- Die Vorschau (`EmailVorschau`) steht im Dialog **und** in der Rueckfrage. Nur in der Rueckfrage
-  hiesse: Wer sich vergewissern will, muss erst auf „Senden" druecken.
+- Die Vorschau (`EmailVorschau`) steht im Dialog **und** in der Rueckfrage — sonst muesste man zum Nachsehen erst auf „Senden" druecken.
 - `OutlookVerbindung` haelt die Outlook-Instanz; der Dialog laesst sie beim Oeffnen vorwaermen
   (`waermeEntwurfVor`). Ohne das kostet der erste Entwurf den Kaltstart von Outlook.
+- Vorschlaege aus zwei Quellen, **nicht** vermischt: `ausDerAkte` ist Bestand, `ausOutlook` ein Griff,
+  der danebengehen darf — nur der traegt ein Kreuz (`outlookAnhangVerwerfen`, erneutes Holen bringt ihn zurueck).

@@ -24,8 +24,17 @@ class EmailAnhangListe extends StatelessWidget {
   /// (Pfad, neuer Name) — benennt nur für die Mail um, nicht auf Platte.
   final void Function(String pfad, String name) onUmbenennen;
 
+  /// Aus der Outlook-Nachricht geholt und noch nicht angehängt. Getrennt von
+  /// [ausDerAkte], weil nur diese sich verwerfen lassen: Der Fall-Ordner ist
+  /// ein Bestand, den man nicht wegklickt — was aus Outlook kam, ist ein
+  /// Griff, der auch danebengehen darf.
+  final List<String> ausOutlook;
+
   /// Holt die Anhänge aus der Nachricht, die in Outlook gerade offen ist.
   final VoidCallback? onAusOutlook;
+
+  /// Nimmt einen geholten Vorschlag wieder aus der Reihe.
+  final ValueChanged<String>? onOutlookVerwerfen;
 
   /// True, solange Outlook danach gefragt wird.
   final bool holtAusOutlook;
@@ -39,6 +48,8 @@ class EmailAnhangListe extends StatelessWidget {
     required this.onEntfernen,
     required this.onUmbenennen,
     this.onAusOutlook,
+    this.onOutlookVerwerfen,
+    this.ausOutlook = const [],
     this.namen = const {},
     this.ausDerAkte = const [],
     this.holtAusOutlook = false,
@@ -59,7 +70,10 @@ class EmailAnhangListe extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final offen = ausDerAkte
+    final ausAkte = ausDerAkte
+        .where((pfad) => !anhangPfade.contains(pfad))
+        .toList();
+    final ausMail = ausOutlook
         .where((pfad) => !anhangPfade.contains(pfad))
         .toList();
 
@@ -118,7 +132,22 @@ class EmailAnhangListe extends StatelessWidget {
                       : 'Aus der Outlook-Nachricht',
                 ),
               ),
-            for (final pfad in offen)
+            // Aus Outlook geholt: anklicken haengt an, das Kreuz verwirft den
+            // Vorschlag. Wer aus der falschen Nachricht geholt hat, soll die
+            // Reihe wieder leer bekommen, ohne den Dialog zu schliessen.
+            for (final pfad in ausMail)
+              InputChip(
+                avatar: const Icon(Icons.add, size: 18),
+                label: Text(AnhangDarstellung.name(pfad)),
+                tooltip: 'Aus der Outlook-Nachricht: $pfad',
+                onPressed: aktiv ? () => onHinzufuegen(pfad) : null,
+                onDeleted: aktiv && onOutlookVerwerfen != null
+                    ? () => onOutlookVerwerfen!(pfad)
+                    : null,
+                deleteIcon: const Icon(Icons.close, size: 16),
+                deleteButtonTooltipMessage: 'Vorschlag verwerfen',
+              ),
+            for (final pfad in ausAkte)
               ActionChip(
                 avatar: const Icon(Icons.add, size: 18),
                 label: Text(AnhangDarstellung.name(pfad)),
