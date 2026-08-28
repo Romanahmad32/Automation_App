@@ -24,14 +24,17 @@ public sealed class SignaturUebernahme(
 {
     /// <summary>
     /// Übernimmt die Signatur mit diesem Namen. Gibt zurück, was danach
-    /// gespeichert ist — die Oberfläche zeigt daraus Text und Bildliste.
+    /// gespeichert ist — die Oberfläche zeigt daraus Text und Bildliste — und
+    /// welche Bilder dabei übergangen werden mussten.
     /// </summary>
     /// <exception cref="EmailVersandException">
     /// Wenn es unter diesem Namen keine Signatur gibt. Der Anwalt hat sie aus
     /// einer Liste gewählt; ist sie inzwischen weg, ist das eine Meldung wert
     /// und kein stilles Leeren der Einstellungen.
     /// </exception>
-    public async Task<SignaturBlock> UebernimmAsync(string name, CancellationToken cancellationToken)
+    public async Task<(SignaturBlock Block, IReadOnlyList<string> Uebergangen)> UebernimmAsync(
+        string name,
+        CancellationToken cancellationToken)
     {
         var text = OutlookSignaturen.LiesTextVon(name);
         var format = OutlookSignaturen.LiesFormat(name);
@@ -52,19 +55,34 @@ public sealed class SignaturUebernahme(
         }
         else
         {
-            bilder = ablage.Ersetze(format.Value.Bilder);
+            bilder = ablage.Ersetze(format.Bilder);
         }
 
         var block = new SignaturBlock(text ?? string.Empty, format?.Html ?? string.Empty, bilder);
         await SchreibeAsync(block, cancellationToken);
 
+        IReadOnlyList<string> uebergangen = format?.Uebergangen ?? [];
         logger.LogInformation(
-            "Signatur \"{Name}\" übernommen ({Zeichen} Zeichen HTML, {Bilder} Bilder).",
+            "Signatur \"{Name}\" übernommen ({Zeichen} Zeichen HTML, {Bilder} Bilder, "
+            + "{Uebergangen} übergangen).",
             name,
             block.Html.Length,
-            bilder.Count);
+            bilder.Count,
+            uebergangen.Count);
 
-        return block;
+        if (uebergangen.Count > 0)
+        {
+            // Nicht verschweigen: Der Anwalt sieht die Signatur danach ohne
+            // dieses Bild und soll wissen, warum — und dass es an der Groesse
+            // liegen kann, nicht an einem Fehler der App.
+            logger.LogWarning(
+                "Diese Bilder der Signatur \"{Name}\" wurden übergangen (zu groß, leer oder "
+                + "nicht lesbar): {Bilder}",
+                name,
+                string.Join(", ", uebergangen));
+        }
+
+        return (block, uebergangen);
     }
 
     /// <summary>

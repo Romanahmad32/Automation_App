@@ -2,8 +2,11 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_anhaenge.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
+import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
@@ -83,19 +86,51 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
   }
 
   @override
-  Future<List<String>> ladeOutlookAnhaenge() async {
+  Future<OutlookAnhaenge> ladeOutlookAnhaenge() async {
     try {
       final response = await _dio.get(
         '/api/EmailVersand/outlook/anhaenge',
         // Steht Outlook noch nicht, wird es hier gestartet — das dauert.
         options: Options(receiveTimeout: _versandTimeout),
       );
-      return [for (final pfad in response.data as List) pfad as String];
+      return OutlookAnhaenge.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
         _serverMeldung(e) ??
             'Die Anhänge aus Outlook konnten nicht gelesen werden.',
       );
+    }
+  }
+
+  @override
+  Future<List<VersandEintrag>> ladeVersandProtokoll(String referenz) async {
+    final response = await _dio.get(
+      '/api/EmailVersand/protokoll',
+      queryParameters: {'referenz': referenz},
+    );
+    return _eintraege(response.data);
+  }
+
+  @override
+  Future<List<VersandEintrag>> ladeLetzteVersaende() async {
+    final response = await _dio.get('/api/EmailVersand/protokoll/letzte');
+    return _eintraege(response.data);
+  }
+
+  List<VersandEintrag> _eintraege(Object? daten) => [
+    for (final eintrag in (daten as List?) ?? const [])
+      VersandEintrag.fromJson(eintrag as Map<String, dynamic>),
+  ];
+
+  @override
+  Future<OutlookStand> ladeOutlookStand() async {
+    try {
+      final response = await _dio.get('/api/EmailVersand/outlook/stand');
+      return OutlookStand.fromJson(response.data as Map<String, dynamic>);
+    } on DioException {
+      // Ohne Antwort wird nichts behauptet und nichts abgeschaltet: Die
+      // Oberflaeche bleibt, wie sie ohne diese Auskunft waere.
+      return OutlookStand.unbekannt;
     }
   }
 

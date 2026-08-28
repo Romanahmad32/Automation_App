@@ -58,9 +58,17 @@ class EmailSignaturBilder extends StatelessWidget {
           children: [
             for (final bild in bilder)
               FilterChip(
+                key: ValueKey(bild.dateiname),
                 selected: !weggelassen.contains(bild.dateiname),
                 onSelected: aktiv ? (_) => onUmschalten(bild.dateiname) : null,
-                avatar: const Icon(Icons.image_outlined, size: 18),
+                // Das Häkchen ist hier die ganze Auskunft: „geht mit". Ein
+                // Bildsymbol daneben trüge nichts bei — jede Kachel dieser
+                // Reihe ist ein Bild — und richtete Schaden an: Material
+                // zeichnet das Häkchen einer ausgewählten Kachel **über** den
+                // Avatar und legt dafür einen dunklen Schleier darüber. Der
+                // stand dann dauerhaft auf jeder ausgewählten Kachel und sah
+                // aus wie ein Zeiger, der auf allen zugleich steht.
+                showCheckmark: true,
                 label: Text(
                   '${bild.dateiname} · ${AnhangDarstellung.alsGroesse(bild.bytes)}',
                 ),

@@ -4,6 +4,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/email_e
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_senden_bestaetigung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_inhalt.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_titel.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
@@ -66,13 +67,37 @@ class EmailVersandDialog extends StatelessWidget {
     );
   }
 
-  Future<void> _senden(BuildContext context, EmailEntwurfState state) async {
+  /// Prüft, bevor irgendetwas geschieht, und meldet den ersten offenen Punkt.
+  ///
+  /// Der Knopf ist anfassbar, auch wenn die Mail noch nicht vollständig ist:
+  /// Ein abgeblendeter Knopf ist eine Behauptung ohne Begründung, und der
+  /// frühere Kasten „Zum Senden fehlt noch …" stand dafür dauerhaft über dem
+  /// Formular. Jetzt kommt die Begründung beim Drücken — hier in einem Satz,
+  /// und ausführlich an dem Feld, das sie behebt.
+  static bool _bereit(BuildContext context) {
     final cubit = context.read<EmailEntwurfCubit>();
+    if (cubit.istVersandbereit()) return true;
+
+    final punkt = cubit.state.pruefung.erster;
+    if (punkt != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(punkt)));
+    }
+    return false;
+  }
+
+  Future<void> _senden(BuildContext context) async {
+    final cubit = context.read<EmailEntwurfCubit>();
+    if (!_bereit(context)) return;
+
     final bestaetigt = await EmailSendenBestaetigung.zeigen(
       context,
-      entwurf: state.entwurf,
-      absender: state.bereitschaft?.absender ?? '',
-      signatur: state.bereitschaft?.signatur ?? '',
+      entwurf: cubit.state.entwurf,
+      absender: cubit.state.bereitschaft?.absender ?? '',
+      signatur: cubit.state.bereitschaft?.signatur ?? '',
+      signaturHtml: cubit.state.bereitschaft?.signaturHtml ?? '',
+      signaturBilder: cubit.state.bereitschaft?.signaturBilder ?? const [],
     );
     if (!bestaetigt) return;
 
@@ -86,6 +111,7 @@ class EmailVersandDialog extends StatelessWidget {
   /// das Outlook-Fenster liegt womöglich hinter der App, und ein Dialog, der
   /// sich einfach schließt, sieht aus wie ein verschluckter Klick.
   Future<void> _entwurfOeffnen(BuildContext context) async {
+    if (!_bereit(context)) return;
     await context.read<EmailEntwurfCubit>().entwurfOeffnen();
   }
 
@@ -108,6 +134,8 @@ class EmailVersandDialog extends StatelessWidget {
       entwurf: state.entwurf,
       absender: state.bereitschaft?.absender ?? '',
       signatur: state.bereitschaft?.signatur ?? '',
+      signaturHtml: state.bereitschaft?.signaturHtml ?? '',
+      signaturBilder: state.bereitschaft?.signaturBilder ?? const [],
     );
   }
 
@@ -124,7 +152,12 @@ class EmailVersandDialog extends StatelessWidget {
       child: BlocBuilder<EmailEntwurfCubit, EmailEntwurfState>(
         builder: (context, state) {
           return AlertDialog(
-            title: const Text('E-Mail versenden'),
+            // Die Absenderadresse steht in der Titelzeile statt in einem
+            // eigenen Kasten über dem Formular: Sie ändert sich nie und darf
+            // deshalb keinen Platz kosten, den die Empfängerzeilen brauchen.
+            title: EmailVersandTitel(
+              absender: state.bereitschaft?.absender ?? '',
+            ),
             content: EmailVersandInhalt(state: state, ausDerAkte: ausDerAkte),
             actions: [
               TextButton(
@@ -141,27 +174,36 @@ class EmailVersandDialog extends StatelessWidget {
                   icon: const Icon(Icons.visibility_outlined),
                   label: const Text('Vorschau'),
                 ),
-              OutlinedButton.icon(
-                onPressed: state.kannEntwurfOeffnen
-                    ? () => _entwurfOeffnen(context)
-                    : null,
-                icon: state.uebergibtGerade
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        state.entwurfErgebnis == null
-                            ? Icons.drive_file_move_outline
-                            : Icons.refresh,
-                      ),
-                label: Text(_entwurfBeschriftung(state)),
+              Tooltip(
+                // Vorher sagen, nicht hinterher: Ohne klassisches Outlook
+                // entsteht hier eine .eml-Datei, und ein Anwalt, der Outlook
+                // erwartet, hält das sonst fuer einen Fehlschlag.
+                message: state.outlookStand.steuerbar
+                    ? 'Legt die Mail als Entwurf in Outlook — gesendet wird '
+                          'dort von Hand'
+                    : '${state.outlookStand.kurz} Die Mail wird als '
+                          '.eml-Datei abgelegt und geöffnet; die Signatur der '
+                          'Kanzlei fehlt darin.',
+                child: OutlinedButton.icon(
+                  onPressed: state.kannEntwurfOeffnen
+                      ? () => _entwurfOeffnen(context)
+                      : null,
+                  icon: state.uebergibtGerade
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          state.entwurfErgebnis == null
+                              ? Icons.drive_file_move_outline
+                              : Icons.refresh,
+                        ),
+                  label: Text(_entwurfBeschriftung(state)),
+                ),
               ),
               FilledButton.icon(
-                onPressed: state.kannSenden
-                    ? () => _senden(context, state)
-                    : null,
+                onPressed: state.kannSenden ? () => _senden(context) : null,
                 icon: state.sendetGerade
                     ? const SizedBox(
                         width: 18,

@@ -24,6 +24,12 @@ class EmailEntwurf extends Equatable {
   /// nicht unter jede gehört (§4.7).
   final List<String> ohneSignaturBilder;
 
+  /// Der Vorgang, zu dem die Mail gehört. Er wandert mit ans Backend, das den
+  /// Versand darunter protokolliert (§4.7). Leer bei einem Anschreiben ohne
+  /// Vorgang — dann entsteht kein Eintrag, weil es keine Akte gibt, an der er
+  /// hinge.
+  final String vorgangReferenz;
+
   const EmailEntwurf({
     this.an = const [],
     this.kopie = const [],
@@ -32,6 +38,7 @@ class EmailEntwurf extends Equatable {
     this.anhangPfade = const [],
     this.anhangNamen = const {},
     this.ohneSignaturBilder = const [],
+    this.vorgangReferenz = '',
   });
 
   /// Ohne Empfänger und ohne Betreff wird nicht gesendet. Der Text darf leer
@@ -49,6 +56,7 @@ class EmailEntwurf extends Equatable {
     List<String>? anhangPfade,
     Map<String, String>? anhangNamen,
     List<String>? ohneSignaturBilder,
+    String? vorgangReferenz,
   }) {
     return EmailEntwurf(
       an: an ?? this.an,
@@ -58,6 +66,7 @@ class EmailEntwurf extends Equatable {
       anhangPfade: anhangPfade ?? this.anhangPfade,
       anhangNamen: anhangNamen ?? this.anhangNamen,
       ohneSignaturBilder: ohneSignaturBilder ?? this.ohneSignaturBilder,
+      vorgangReferenz: vorgangReferenz ?? this.vorgangReferenz,
     );
   }
 
@@ -69,6 +78,7 @@ class EmailEntwurf extends Equatable {
     'anhangPfade': anhangPfade,
     'anhangNamen': anhangNamen,
     'ohneSignaturBilder': ohneSignaturBilder,
+    'vorgangReferenz': vorgangReferenz,
     'absenderName': absenderName,
   };
 
@@ -140,5 +150,6 @@ class EmailEntwurf extends Equatable {
     anhangPfade,
     anhangNamen,
     ohneSignaturBilder,
+    vorgangReferenz,
   ];
 }

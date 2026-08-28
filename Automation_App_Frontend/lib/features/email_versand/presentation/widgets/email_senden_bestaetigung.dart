@@ -1,4 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau.dart';
 import 'package:flutter/material.dart';
 
@@ -15,11 +16,19 @@ class EmailSendenBestaetigung extends StatelessWidget {
   /// hier wirklich die Mail steht, die hinausgeht — und nicht fast.
   final String signatur;
 
+  /// Die formatierte Fassung — sie wird gerendert.
+  final String signaturHtml;
+
+  /// Die Bilder der Signatur, so wie sie mit dieser Mail hinausgehen.
+  final List<SignaturBild> signaturBilder;
+
   const EmailSendenBestaetigung({
     super.key,
     required this.entwurf,
     required this.absender,
     this.signatur = '',
+    this.signaturHtml = '',
+    this.signaturBilder = const [],
   });
 
   static Future<bool> zeigen(
@@ -27,6 +36,8 @@ class EmailSendenBestaetigung extends StatelessWidget {
     required EmailEntwurf entwurf,
     required String absender,
     String signatur = '',
+    String signaturHtml = '',
+    List<SignaturBild> signaturBilder = const [],
   }) async {
     final bestaetigt = await showDialog<bool>(
       context: context,
@@ -34,6 +45,8 @@ class EmailSendenBestaetigung extends StatelessWidget {
         entwurf: entwurf,
         absender: absender,
         signatur: signatur,
+        signaturHtml: signaturHtml,
+        signaturBilder: signaturBilder,
       ),
     );
     return bestaetigt ?? false;
@@ -51,10 +64,15 @@ class EmailSendenBestaetigung extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            EmailVorschau(
-              entwurf: entwurf,
-              absender: absender,
-              signatur: signatur,
+            SizedBox(
+              height: 380,
+              child: EmailVorschau(
+                entwurf: entwurf,
+                absender: absender,
+                signatur: signatur,
+                signaturHtml: signaturHtml,
+                signaturBilder: signaturBilder,
+              ),
             ),
             const SizedBox(height: 12),
             Text(

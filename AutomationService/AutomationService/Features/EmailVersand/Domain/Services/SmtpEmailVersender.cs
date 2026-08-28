@@ -19,6 +19,7 @@ public sealed class SmtpEmailVersender(
     MailboxConfigStore configStore,
     MicrosoftMailOAuthService microsoftOAuth,
     GesendetOrdnerAblage gesendetOrdner,
+    VersandProtokoll protokoll,
     KanzleiSignatur signatur,
     IOptions<EmailVersandOptions> optionen,
     ILogger<SmtpEmailVersender> logger) : IEmailVersender
@@ -47,6 +48,7 @@ public sealed class SmtpEmailVersender(
             zugang.Absender,
             null,
             block.Text,
+            block.Html,
             block.Bilder,
             optionen.Value.MaxAnhangGesamtMb);
     }
@@ -88,6 +90,22 @@ public sealed class SmtpEmailVersender(
         var kopieNoetig = einstellungen.KopieInGesendet ?? !zugang.ServerLegtKopieSelbstAb;
         var kopieAbgelegt = !kopieNoetig
             || await gesendetOrdner.LegeAbAsync(mime, zugang, cancellationToken);
+
+        // Erst hier, nicht vorher: Was protokolliert wird, ist hinausgegangen.
+        // Ein Fehlschlag beim Schreiben haelt nichts auf (siehe VersandProtokoll).
+        await protokoll.SchreibeAsync(
+            new VersandEintrag(
+                nachricht.VorgangReferenz,
+                gesendetAm,
+                VersandWeg.Direktversand,
+                zugang.Absender,
+                [.. mime.To.Mailboxes.Select(adresse => adresse.Address)],
+                [.. mime.Cc.Mailboxes.Select(adresse => adresse.Address)],
+                mime.Subject ?? string.Empty,
+                [.. anhaenge.Select(anhang => anhang.Dateiname)],
+                kopieAbgelegt,
+                mime.MessageId),
+            cancellationToken);
 
         return new EmailVersandErgebnis(
             gesendetAm,

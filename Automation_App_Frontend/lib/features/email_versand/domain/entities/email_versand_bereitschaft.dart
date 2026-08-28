@@ -16,6 +16,12 @@ class EmailVersandBereitschaft extends Equatable {
   /// Nur zum Anzeigen in der Vorschau — geändert wird er in den Einstellungen.
   final String signatur;
 
+  /// Dieselbe Signatur als **formatierte** Fassung, wie sie in die Mail geht.
+  /// Die Vorschau rendert sie; ohne sie zeigte sie Outlooks
+  /// Nur-Text-Übersetzung und damit etwas anderes, als beim Empfänger ankommt.
+  /// Leer, wenn keine formatierte Fassung übernommen wurde.
+  final String signaturHtml;
+
   /// Die Bilder der formatierten Signatur mit ihrer Größe. Der Anwalt lässt
   /// einzelne davon je Mail weg — das schwere Werbebild etwa —, und dafür muss
   /// er sehen, was sie wiegen.
@@ -32,6 +38,7 @@ class EmailVersandBereitschaft extends Equatable {
     this.absender = '',
     this.hinweis,
     this.signatur = '',
+    this.signaturHtml = '',
     this.signaturBilder = const [],
     this.maxAnhangMb = 0,
   });
@@ -42,6 +49,7 @@ class EmailVersandBereitschaft extends Equatable {
       absender: json['absender'] as String? ?? '',
       hinweis: json['hinweis'] as String?,
       signatur: json['signatur'] as String? ?? '',
+      signaturHtml: json['signaturHtml'] as String? ?? '',
       signaturBilder: [
         for (final bild in (json['signaturBilder'] as List?) ?? const [])
           SignaturBild.fromJson(bild as Map<String, dynamic>),
@@ -59,6 +67,7 @@ class EmailVersandBereitschaft extends Equatable {
     absender,
     hinweis,
     signatur,
+    signaturHtml,
     signaturBilder,
     maxAnhangMb,
   ];

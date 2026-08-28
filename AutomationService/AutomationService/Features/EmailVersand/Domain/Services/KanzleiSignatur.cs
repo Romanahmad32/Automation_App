@@ -76,6 +76,18 @@ public sealed class KanzleiSignatur(AutomationDbContext db, SignaturAblage ablag
         var weggelassen = ohneBilder.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var html = SignaturHtmlFilter.Ohne(block.Html, weggelassen);
 
+        // Das Netz gegen tote Verweise, und zwar an der letzten Stelle vor dem
+        // Umschlag: Was auf eine Datei zeigt, die nicht (mehr) in der Ablage
+        // liegt, fliegt mitsamt seiner Bildmarke heraus. Beim Übernehmen wird
+        // das schon abgefangen (OutlookSignaturHtml) — aber eine Datei kann
+        // danach verschwinden, und ein Platzhalterkreuz beim Empfänger ist das
+        // Letzte, was eine Kanzleisignatur zeigen soll.
+        var ohneDatei = SignaturHtmlFilter
+            .OertlicheQuellen(html)
+            .Where(name => ablage.PfadVon(name) is null)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        html = SignaturHtmlFilter.Ohne(html, ohneDatei);
+
         var pfade = new List<string>();
         foreach (var name in SignaturHtmlFilter.Verwendete(html, block.Bilder))
         {

@@ -1,3 +1,5 @@
+import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/signatur_ansicht.dart';
 import 'package:flutter/material.dart';
 
 /// Zeigt unter dem Nachrichtenfeld, was der Direktversand noch anfügt (§4.7).
@@ -12,7 +14,24 @@ import 'package:flutter/material.dart';
 class EmailSignaturVorschau extends StatelessWidget {
   final String signatur;
 
-  const EmailSignaturVorschau({super.key, required this.signatur});
+  /// Die formatierte Fassung — sie wird gerendert, weil genau sie beim
+  /// Empfänger ankommt. Der Text daneben ist nur Outlooks Übersetzung für
+  /// Programme, die kein HTML anzeigen.
+  final String html;
+
+  /// Die Bilder der formatierten Signatur.
+  final List<SignaturBild> bilder;
+
+  /// Dateinamen, die für diese Mail weggelassen wurden.
+  final List<String> weggelassen;
+
+  const EmailSignaturVorschau({
+    super.key,
+    required this.signatur,
+    this.html = '',
+    this.bilder = const [],
+    this.weggelassen = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +95,11 @@ class EmailSignaturVorschau extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          SelectableText(
-            signatur,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          SignaturAnsicht(
+            text: signatur,
+            html: html,
+            bilder: bilder,
+            weggelassen: weggelassen,
           ),
         ],
       ),

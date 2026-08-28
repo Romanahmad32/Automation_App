@@ -1,10 +1,9 @@
-import 'package:automation_app/features/email_versand/domain/services/versand_voraussetzungen.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_anhang_liste.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_bereitschaft_hinweis.dart';
+import 'package:automation_app/features/email_versand/presentation/utils/outlook_griff_meldung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_empfaenger_feld.dart';
-import 'package:automation_app/features/email_versand/presentation/widgets/email_fehlt_noch_hinweis.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_groesse_zeile.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_bilder.dart';
@@ -36,10 +35,6 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
   final TextEditingController _betreff = TextEditingController();
   final TextEditingController _text = TextEditingController();
 
-  /// Eingetippt, aber noch nicht übernommen — je Empfängerzeile.
-  String _offenAn = '';
-  String _offenKopie = '';
-
   /// Fragt Outlook nach den Anhaengen der offenen Nachricht und sagt, was
   /// dabei herauskam — „nichts gefunden" ist eine Antwort, kein Ausbleiben.
   Future<void> _ausOutlook(
@@ -50,29 +45,10 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
     final ergebnis = await cubit.anhaengeAusOutlook();
     if (!mounted || ergebnis == null) return;
 
-    // Neue Vorschläge sprechen für sich — sie stehen dann in der Reihe. Die
-    // beiden anderen Fälle sehen von außen gleich aus (nichts rührt sich) und
-    // müssen deshalb gesagt werden.
-    if (ergebnis.neu > 0) return;
-
-    melder.showSnackBar(
-      SnackBar(
-        content: Text(
-          ergebnis.gefunden == 0
-              ? 'In Outlook ist keine Nachricht mit Anhängen offen oder ausgewählt.'
-              : 'Die Anhänge dieser Nachricht stehen bereits in der Auswahl.',
-        ),
-      ),
-    );
+    final meldung = OutlookGriffMeldung.fuer(ergebnis.griff, ergebnis.neu);
+    if (meldung == null) return;
+    melder.showSnackBar(SnackBar(content: Text(meldung)));
   }
-
-  List<String> _fehltNoch(EmailEntwurfState state) =>
-      VersandVoraussetzungen.fehlend(
-        entwurf: state.entwurf,
-        offeneEingaben: [_offenAn, _offenKopie],
-        gesamtBytes: state.gesamtBytes,
-        maxBytes: state.bereitschaft?.maxBytes,
-      );
 
   @override
   void initState() {
@@ -119,8 +95,6 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               bereitschaft: state.bereitschaft,
               fehler: state.fehler,
             ),
-            if (state.fehler == null)
-              EmailFehltNochHinweis(punkte: _fehltNoch(state)),
             if (state.entwurfErgebnis case final uebergeben?) ...[
               const SizedBox(height: 8),
               EmailHinweisKasten(
@@ -142,7 +116,8 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               bereitsVergeben: state.entwurf.alleEmpfaenger,
               onHinzufuegen: cubit.empfaengerHinzufuegen,
               onEntfernen: cubit.empfaengerEntfernen,
-              onOffeneEingabe: (text) => setState(() => _offenAn = text),
+              onOffeneEingabe: (text) => cubit.setzeOffeneEingabe(an: text),
+              fehler: state.markiert.anFehler,
               aktiv: aktiv,
             ),
             const SizedBox(height: 16),
@@ -153,16 +128,18 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               bereitsVergeben: state.entwurf.alleEmpfaenger,
               onHinzufuegen: cubit.kopieHinzufuegen,
               onEntfernen: cubit.empfaengerEntfernen,
-              onOffeneEingabe: (text) => setState(() => _offenKopie = text),
+              onOffeneEingabe: (text) => cubit.setzeOffeneEingabe(kopie: text),
+              fehler: state.markiert.kopieFehler,
               aktiv: aktiv,
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _betreff,
               enabled: aktiv,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Betreff',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                errorText: state.markiert.betreffFehler,
                 isDense: true,
               ),
               onChanged: cubit.setzeBetreff,
@@ -184,6 +161,9 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
             if (widget.mitSignaturVorschau)
               EmailSignaturVorschau(
                 signatur: state.bereitschaft?.signatur ?? '',
+                html: state.bereitschaft?.signaturHtml ?? '',
+                bilder: state.bereitschaft?.signaturBilder ?? const [],
+                weggelassen: state.entwurf.ohneSignaturBilder,
               ),
             const SizedBox(height: 16),
             EmailAnhangListe(
@@ -194,6 +174,8 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               onHinzufuegen: cubit.anhangHinzufuegen,
               onEntfernen: cubit.anhangEntfernen,
               onUmbenennen: cubit.anhangUmbenennen,
+              outlookQuelle: state.outlookQuelle,
+              outlookStand: state.outlookStand,
               onAusOutlook: () => _ausOutlook(context, cubit),
               onOutlookVerwerfen: cubit.outlookAnhangVerwerfen,
               holtAusOutlook: state.holtAusOutlook,

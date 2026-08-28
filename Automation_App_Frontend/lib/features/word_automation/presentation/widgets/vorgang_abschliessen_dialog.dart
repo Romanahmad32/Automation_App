@@ -1,6 +1,10 @@
 import 'dart:io';
 
+import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
+import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/mail_versenden_button.dart';
@@ -44,11 +48,39 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
   EmailVersandErgebnis? _versand;
   bool _versandBestaetigt = false;
 
+  /// Was die App zu diesem Vorgang schon versendet hat — aus dem Protokoll,
+  /// nicht nur aus dieser Sitzung (§4.7).
+  List<VersandEintrag> _protokoll = const [];
+  bool _laedtProtokoll = true;
+
   @override
   void initState() {
     super.initState();
     _versand = widget.bereitsVersendet;
     _versandBestaetigt = _versand != null;
+    _protokollLaden();
+  }
+
+  /// Ein Direktversand im Protokoll belegt das Häkchen — auch wenn er aus
+  /// einer früheren Sitzung stammt. Eine Übergabe an Outlook tut es **nicht**:
+  /// Ob dort gesendet wurde, weiß die App nicht (§4.8), und das Häkchen
+  /// behauptet genau das.
+  Future<void> _protokollLaden() async {
+    try {
+      final eintraege = await getIt<EmailVersandRepository>()
+          .ladeVersandProtokoll(widget.vorgang.referenz);
+      if (!mounted) return;
+      setState(() {
+        _protokoll = eintraege;
+        _laedtProtokoll = false;
+        _versandBestaetigt =
+            _versandBestaetigt ||
+            eintraege.any((eintrag) => eintrag.weg.istNachweis);
+      });
+    } catch (_) {
+      // Ohne Protokoll bleibt es beim Häkchen von Hand — so war es vorher.
+      if (mounted) setState(() => _laedtProtokoll = false);
+    }
   }
 
   void _versandUebernehmen(EmailVersandErgebnis ergebnis) {
@@ -57,6 +89,10 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
       _versandBestaetigt = true;
     });
     widget.onVersendet(ergebnis);
+    // Der eben geschriebene Eintrag gehört in die Zeile darüber — und in die
+    // Vorgangsliste, die dahinter offen steht.
+    _protokollLaden();
+    getIt<LetzteVersaendeCubit>().neuLaden();
   }
 
   /// Zeigt das abgelegte Dokument im Explorer (markiert) — für den Anwalt, der
@@ -87,7 +123,7 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
               'hochgezählt.',
             ),
             const SizedBox(height: 16),
-            VersandStandZeile(versand: _versand),
+            VersandStandZeile(eintraege: _protokoll, laedt: _laedtProtokoll),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,

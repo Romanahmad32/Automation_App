@@ -32,9 +32,24 @@ public sealed class EmailVersandOptions
     public bool? KopieInGesendet { get; init; }
 
     /// <summary>
-    /// Obergrenze aller Anhänge zusammen. Die üblichen Postfächer weisen
-    /// größere Nachrichten ab — besser vorher im Klartext melden, als nach
-    /// einer Minute Upload eine englische Serverantwort zu zeigen.
+    /// Obergrenze aller Anhänge zusammen, gemessen an der <b>Dateigröße auf
+    /// Platte</b>. Die üblichen Postfächer weisen größere Nachrichten ab —
+    /// besser vorher im Klartext melden, als nach einer Minute Upload eine
+    /// englische Serverantwort zu zeigen.
+    ///
+    /// <b>Warum 35 und nicht 50.</b> Anhänge gehen base64-kodiert über die
+    /// Leitung und wachsen dabei um ein Drittel: Aus 35 MB Dateien wird eine
+    /// Nachricht von rund 48 MB, und das ist die Grenze, die die üblichen
+    /// Anbieter (1&amp;1/IONOS, die meisten Firmenpostfächer) je Nachricht
+    /// setzen. Eine Grenze von 50 hier hiesse also 68 MB auf der Leitung und
+    /// damit genau die abgewiesene Mail, die diese Prüfung verhindern soll.
+    ///
+    /// Lässt der eigene Anbieter mehr durch, gehört die Zahl in
+    /// <c>appsettings.json</c> unter <c>EmailVersand:MaxAnhangGesamtMb</c> —
+    /// dafür ist sie eine Einstellung und keine Konstante. Ganz abschalten
+    /// lässt sie sich bewusst nicht: Ohne Grenze lädt die App minutenlang
+    /// hoch, um am Ende dieselbe Absage zu bekommen, nur später und auf
+    /// Englisch.
     /// </summary>
-    public int MaxAnhangGesamtMb { get; init; } = 20;
+    public int MaxAnhangGesamtMb { get; init; } = 35;
 }

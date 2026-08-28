@@ -2047,6 +2047,48 @@
         }
       }
     },
+    "/api/EmailVersand/signaturen/bild": {
+      "get": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Ein einzelnes Bild der \u00FCbernommenen Signatur (\u00A74.7). Die Oberfl\u00E4che\r\nzeigt damit in der Vorschau, was wirklich unter der Mail steht \u2014 den\r\nSignaturtext allein anzuzeigen hie\u00DFe, das Logo erst im Ordner\r\n\u0022Gesendet\u0022 zu sehen.\r\n\r\nAusgeliefert wird nur, was in der Signaturablage liegt: Der Name kommt\r\nvon aussen, string? SignaturAblage.PfadVon(string dateiname) l\u00E4sst deshalb keinen\r\nPfad durch, der aus diesem einen Ordner hinausf\u00FChrt.",
+        "parameters": [
+          {
+            "name": "dateiname",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/EmailVersand/signaturen/uebernehmen": {
       "post": {
         "tags": [
@@ -2237,6 +2279,36 @@
         }
       }
     },
+    "/api/EmailVersand/outlook/stand": {
+      "get": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Welches Outlook auf diesem Rechner steht (\u00A74.7). Beim Start einmal\r\nermittelt, hier nur abgeholt.\r\n\r\nDie Oberfl\u00E4che fragt das, bevor sie Kn\u00F6pfe anbietet, die das klassische\r\nOutlook brauchen: Ohne dieses tun der Anhang-Griff und die\r\nSignatur-\u00DCbernahme still nichts, und der Entwurf geht als Datei auf.\r\nJedes f\u00FCr sich sieht aus wie ein Aussetzer.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutlookStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutlookStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutlookStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/EmailVersand/entwurf/vorwaermen": {
       "post": {
         "tags": [
@@ -2255,33 +2327,24 @@
         "tags": [
           "EmailVersand"
         ],
-        "summary": "Die Anh\u00E4nge der Nachricht, die in Outlook gerade offen oder ausgew\u00E4hlt\r\nist (\u00A74.7). Beobachtet wurde, dass genau diese Dateien im Mailprogramm\r\nvon Hand in die ausgehende Nachricht gezogen werden \u2014 die App fragt\r\nstattdessen nach. Leere Liste hei\u00DFt: nichts ausgew\u00E4hlt oder nichts\r\ndran, und das ist kein Fehler.",
+        "summary": "Die Anh\u00E4nge der Nachricht, die in Outlook gerade offen oder ausgew\u00E4hlt\r\nist (\u00A74.7). Beobachtet wurde, dass genau diese Dateien im Mailprogramm\r\nvon Hand in die ausgehende Nachricht gezogen werden \u2014 die App fragt\r\nstattdessen nach. Leere Liste hei\u00DFt: nichts ausgew\u00E4hlt oder nichts\r\ndran, und das ist kein Fehler.\r\n\r\nBetreff und Absender gehen mit zur\u00FCck: Welche Nachricht gelesen wurde,\r\nentscheidet Outlook, nicht der Anwalt \u2014 er soll es wenigstens erfahren.",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/OutlookAnhaengeDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/OutlookAnhaengeDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/OutlookAnhaengeDto"
                 }
               }
             }
@@ -2412,6 +2475,93 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/protokoll": {
+      "get": {
+        "tags": [
+          "VersandProtokoll"
+        ],
+        "summary": "Alle Vers\u00E4nde zu diesem Vorgang, der j\u00FCngste zuerst. Ohne Referenz eine\r\nleere Liste \u2014 kein Fehler: Ein Anschreiben ohne Vorgang hat keine Akte,\r\nan der es hinge.",
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/protokoll/letzte": {
+      "get": {
+        "tags": [
+          "VersandProtokoll"
+        ],
+        "summary": "Je Vorgang der j\u00FCngste Versand \u2014 f\u00FCr die Liste in der\r\nVorgangsverwaltung. Ein Aufruf statt einer Nachfrage je Zeile.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
                 }
               }
             }
@@ -2788,6 +2938,7 @@
           "absender",
           "hinweis",
           "signatur",
+          "signaturHtml",
           "signaturBilder",
           "maxAnhangMb"
         ],
@@ -2806,6 +2957,9 @@
             ]
           },
           "signatur": {
+            "type": "string"
+          },
+          "signaturHtml": {
             "type": "string"
           },
           "signaturBilder": {
@@ -2834,7 +2988,8 @@
           "anhangPfade",
           "absenderName",
           "anhangNamen",
-          "ohneSignaturBilder"
+          "ohneSignaturBilder",
+          "vorgangReferenz"
         ],
         "type": "object",
         "properties": {
@@ -2891,6 +3046,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "vorgangReferenz": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "description": "Die zu versendende Mail, wie die Oberfl\u00E4che sie schickt (REQUIREMENTS.md \u00A74.7).\r\nDie Absenderadresse steht bewusst nicht darin \u2014 sie ergibt sich aus dem\r\nhinterlegten Postfach-Zugang und ist nichts, was der Aufrufer bestimmen darf."
@@ -3320,6 +3481,37 @@
         },
         "description": "\u00DCbertragungsformat eines Mandanten. PascalCase-Properties werden als camelCase\r\nserialisiert und passen damit 1:1 zum JSON der Flutter-Entit\u00E4t \u0060Mandant\u0060.\r\nDie in der DB als JSON-Spalte abgelegten Listen werden hier in echte Arrays\r\n\u00FCbersetzt."
       },
+      "OutlookAnhaengeDto": {
+        "required": [
+          "pfade",
+          "betreff",
+          "absender",
+          "ausOffenemFenster",
+          "outlookErreicht"
+        ],
+        "type": "object",
+        "properties": {
+          "pfade": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "betreff": {
+            "type": "string"
+          },
+          "absender": {
+            "type": "string"
+          },
+          "ausOffenemFenster": {
+            "type": "boolean"
+          },
+          "outlookErreicht": {
+            "type": "boolean"
+          }
+        },
+        "description": "Die Anh\u00E4nge der Nachricht, die in Outlook gerade offen oder markiert ist\r\n(\u00A74.7) \u2014 samt der Angabe, welche Nachricht das war.\r\n\r\nDie Angabe ist kein Beiwerk: Der Griff nach Outlook ist der einzige Schritt\r\ndes Ablaufs, dessen Eingabe der Anwalt nicht in der App gew\u00E4hlt hat. Ohne\r\nBetreff und Absender bek\u00E4me er Dateien vorgelegt, ohne zu wissen, woher."
+      },
       "OutlookSignaturDto": {
         "required": [
           "name",
@@ -3342,6 +3534,32 @@
           }
         },
         "description": "Eine im Mailprogramm gefundene Signatur (REQUIREMENTS.md \u00A74.7)."
+      },
+      "OutlookStandDto": {
+        "required": [
+          "steuerbar",
+          "neu",
+          "hinweis"
+        ],
+        "type": "object",
+        "properties": {
+          "steuerbar": {
+            "type": "boolean",
+            "description": "Ob Entwurf, Anhang-Griff und Signatur-\u00DCbernahme \u00FCberhaupt etwas liefern\r\nk\u00F6nnen. False hei\u00DFt nicht \u201Ekaputt\u0022: Der Direktversand l\u00E4uft \u00FCber das\r\nPostfach und ist davon unber\u00FChrt."
+          },
+          "neu": {
+            "type": "boolean",
+            "description": "Die Store-App \u201EOutlook f\u00FCr Windows\u0022 liegt auf dem Rechner. Entscheidet nur\r\ndie Formulierung des Hinweises, nicht was m\u00F6glich ist."
+          },
+          "hinweis": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Der Grund im Klartext; null, wenn alles da ist."
+          }
+        },
+        "description": "Welches Outlook auf diesem Rechner steht (\u00A74.7). Die Oberfl\u00E4che fragt es,\r\nbevor sie Kn\u00F6pfe anbietet, die es brauchen \u2014 und schreibt hin, warum sie\r\nnichts liefern, statt es geschehen zu lassen."
       },
       "ProblemDetails": {
         "type": "object",
@@ -3661,24 +3879,40 @@
         "required": [
           "text",
           "hatFormat",
-          "bilder"
+          "html",
+          "bilder",
+          "uebergangen"
         ],
         "type": "object",
         "properties": {
           "text": {
-            "type": "string"
+            "type": "string",
+            "description": "Outlooks Nur-Text-Fassung derselben Signatur."
           },
           "hatFormat": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Ob eine formatierte Fassung \u00FCbernommen ist."
+          },
+          "html": {
+            "type": "string",
+            "description": "Die formatierte Fassung, wie sie in die Mail geht."
           },
           "bilder": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SignaturBildDto"
-            }
+            },
+            "description": "Die Bilder darin, mit ihrer Gr\u00F6\u00DFe."
+          },
+          "uebergangen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Bilder, die beim \u00DCbernehmen \u003Cb\u003Enicht\u003C/b\u003E mitgenommen werden konnten \u2014 zu\r\ngro\u00DF, leer oder nicht lesbar. Ihre Bildmarken sind aus dem HTML entfernt,\r\ndamit beim Empf\u00E4nger kein Platzhalterkreuz steht; hier stehen sie, damit\r\nder Anwalt erf\u00E4hrt, was fehlt. Beim blo\u00DFen Abfragen des Stands immer leer:\r\n\u00DCbergangen wird beim \u00DCbernehmen, nicht beim Nachsehen."
           }
         },
-        "description": "Die Signatur, wie sie nach einer \u00DCbernahme in den Einstellungen liegt\r\n(REQUIREMENTS.md \u00A74.7).\r\n\r\nDie HTML-Fassung selbst steht bewusst nicht darin: Sie ist zehntausende\r\nZeichen gro\u00DF, die Oberfl\u00E4che zeigt sie nicht an und kann sie nicht\r\nbearbeiten. Was sie wissen muss, ist, \u003Cb\u003Edass\u003C/b\u003E es eine gibt und welche\r\nBilder darin stecken."
+        "description": "Die Signatur, wie sie nach einer \u00DCbernahme in den Einstellungen liegt\r\n(REQUIREMENTS.md \u00A74.7).\r\n\r\n\u003Cb\u003EDie HTML-Fassung geht mit\u003C/b\u003E \u2014 zum Anzeigen, nicht zum Bearbeiten. Sie\r\nhielt sich hier lange heraus mit der Begr\u00FCndung, sie sei zehntausende\r\nZeichen gro\u00DF; das ist die ganze Outlook-Datei mit Word-Stilvorlage. Was\r\ndavon \u00FCbrig bleibt und wirklich versendet wird, ist der Rumpf: bei einer\r\n\u00FCppigen Kanzleisignatur wenige Kilobyte. Ohne ihn zeigte die Vorschau nur\r\nOutlooks Nur-Text-\u00DCbersetzung \u2014 und damit etwas anderes, als beim\r\nEmpf\u00E4nger ankommt."
       },
       "SignaturUebernahmeDto": {
         "required": [
@@ -3777,6 +4011,77 @@
             ]
           }
         }
+      },
+      "VersandEintragDto": {
+        "required": [
+          "vorgangReferenz",
+          "gesendetAm",
+          "weg",
+          "absender",
+          "empfaenger",
+          "kopie",
+          "betreff",
+          "anhaenge",
+          "imGesendetOrdner",
+          "messageId"
+        ],
+        "type": "object",
+        "properties": {
+          "vorgangReferenz": {
+            "type": "string",
+            "description": "Der Vorgang, zu dem der Versand geh\u00F6rt \u2014 die Liste \u00FCber alle Vorg\u00E4nge\r\n(\u0060protokoll/letzte\u0060) w\u00E4re ohne ihn nicht zuzuordnen."
+          },
+          "gesendetAm": {
+            "type": "string",
+            "description": "Zeitpunkt; beim Entwurfsweg der der \u00DCbergabe.",
+            "format": "date-time"
+          },
+          "weg": {
+            "type": "string",
+            "description": "\u0060Direktversand\u0060, \u0060OutlookEntwurf\u0060 oder \u0060Entwurfsdatei\u0060. Beim\r\nEntwurfsweg ist die Mail \u003Cb\u003E\u00FCbergeben\u003C/b\u003E, nicht nachweislich gesendet \u2014\r\ndie Oberfl\u00E4che muss den Unterschied zeigen."
+          },
+          "absender": {
+            "type": "string",
+            "description": "Die Adresse, von der aus gesendet wurde."
+          },
+          "empfaenger": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Die Adressen in \u201EAn\u0022."
+          },
+          "kopie": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Die Adressen in \u201EKopie\u0022."
+          },
+          "betreff": {
+            "type": "string",
+            "description": "Die Betreffzeile, wie sie hinausging."
+          },
+          "anhaenge": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Die Namen, unter denen die Anh\u00E4nge hinausgingen \u2014 nicht die auf Platte."
+          },
+          "imGesendetOrdner": {
+            "type": "boolean",
+            "description": "Ob die Kopie im Ordner \u201EGesendet\u0022 des Postfachs landete. Dort \u2014 und damit\r\nin Outlook am selben Konto \u2014 liegt die Mail selbst."
+          },
+          "messageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Die Message-ID der eingelieferten Nachricht; null beim Entwurfsweg."
+          }
+        },
+        "description": "Ein Eintrag im Versandprotokoll eines Vorgangs (\u00A74.7): wann, an wen, mit\r\nwelchen Anh\u00E4ngen \u2014 der Nachweis, dass das Anspruchsschreiben hinaus ist."
       },
       "VersichererDto": {
         "required": [
@@ -4533,6 +4838,9 @@
     },
     {
       "name": "EmailVersand"
+    },
+    {
+      "name": "VersandProtokoll"
     },
     {
       "name": "Simulation"

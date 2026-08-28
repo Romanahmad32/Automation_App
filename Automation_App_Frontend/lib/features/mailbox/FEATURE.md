@@ -4,7 +4,7 @@
 Zentralruf-Antworten; von hier wird ein Treffer geprüft und übernommen — und geschrieben
 (`MailboxVersandLeiste` öffnet den Entwurf aus `email_versand`, §4.7). Der Zugang wird über
 `MailboxAccessView` im Reiter „E-Mail" der `settings` gepflegt — dort haengt auch die Signatur des Direktversands
-(`MailSignaturSektion`, eigener Speichern-Knopf). Auswerten und Zuordnen liegt in `zentralruf_reply`.
+(`MailSignaturSektion`). Auswerten und Zuordnen liegt in `zentralruf_reply`.
 **Anforderung:** `REQUIREMENTS.md` §4.3, §4.7, §7.1
 **Einstieg:** `presentation/views/mailbox_inbox_view.dart`
 **Zustand:** `MailboxInboxCubit` (`presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart`),

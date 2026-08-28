@@ -20,8 +20,14 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
     /// <summary>
     /// Ein Bild, das größer ist als das, ist kein Signaturbild mehr, sondern
     /// ein Versehen — und ginge unter jede Mail der Kanzlei.
+    ///
+    /// 25 MB, damit das animierte Werbebild der Kanzlei sicher darunter liegt;
+    /// als Mail werden daraus base64-kodiert rund 33 MB, also noch innerhalb
+    /// des Gesamtbudgets (<see cref="EmailVersandOptions.MaxAnhangGesamtMb"/>).
+    /// Wer sie erhöht, sollte beides zusammen betrachten: Ein Signaturbild, das
+    /// allein die Nachrichtengrenze reißt, macht jede Mail unversendbar.
     /// </summary>
-    public const long MaxBildBytes = 15L * 1024 * 1024;
+    public const long MaxBildBytes = 25L * 1024 * 1024;
 
     public static string Ordner()
     {
@@ -106,6 +112,23 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
         var pfad = Path.Combine(Ordner(), sicher);
         return File.Exists(pfad) ? pfad : null;
     }
+
+    /// <summary>
+    /// Die Inhaltsart, unter der ein Signaturbild ausgeliefert wird. Outlook
+    /// legt in seinem Beiordner nur diese Formate ab; alles andere geht als
+    /// unbestimmter Bytestrom hinaus, statt als etwas ausgegeben zu werden,
+    /// das es nicht ist.
+    /// </summary>
+    public static string InhaltsArt(string dateiname) =>
+        Path.GetExtension(dateiname).ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".webp" => "image/webp",
+            _ => "application/octet-stream",
+        };
 
     public void Leere()
     {

@@ -24,6 +24,12 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// schwere Werbebild etwa. Leer heißt: alle gehen mit. Die Signatur selbst
 /// bleibt davon unberührt; entschieden wird je Nachricht (§4.7).
 /// </param>
+/// <param name="VorgangReferenz">
+/// Der Vorgang, zu dem die Mail gehoert (z. B. <c>84/26 C03_HG-E 1427</c>) --
+/// darunter wird der Versand protokolliert (&#167;4.7). Leer bei einem
+/// Anschreiben ohne Vorgang; dann entsteht kein Eintrag, weil es keine Akte
+/// gibt, an der er haenge.
+/// </param>
 /// <param name="AbsenderName">
 /// Anzeigename vor der Absenderadresse ("Kanzlei … &lt;kanzlei@…&gt;"). Kommt aus
 /// den Kanzleidaten des Frontends; die Adresse selbst steht im Postfach-Zugang.
@@ -36,4 +42,5 @@ public sealed record EmailNachricht(
     IReadOnlyList<string> AnhangPfade,
     string AbsenderName,
     IReadOnlyDictionary<string, string>? AnhangNamen = null,
-    IReadOnlyList<string>? OhneSignaturBilder = null);
+    IReadOnlyList<string>? OhneSignaturBilder = null,
+    string VorgangReferenz = "");

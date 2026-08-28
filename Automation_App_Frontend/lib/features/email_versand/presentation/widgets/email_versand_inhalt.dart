@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:automation_app/core/general_widgets/datei_ablage_bereich.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
+import 'package:automation_app/features/email_versand/presentation/utils/outlook_griff_meldung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_formular.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau_spalte.dart';
 import 'package:flutter/material.dart';
@@ -48,8 +49,52 @@ class EmailVersandInhalt extends StatelessWidget {
     _melden(context, 'Diese Dateien hängen bereits an der Mail.');
   }
 
+  /// Ein Ablegen, bei dem Windows keine einzige Datei durchgereicht hat — fast
+  /// immer ein Anhang, der aus einer Outlook-Nachricht gezogen wurde.
+  ///
+  /// Outlook gibt seine Anhänge nicht als Dateien heraus, sondern als
+  /// virtuelle Dateien, die erst beim Ablegen erzeugt werden; die App bekommt
+  /// davon nichts. Statt den Griff verpuffen zu lassen, fragt sie Outlook nach
+  /// den Anhängen genau der Nachricht, aus der gezogen wurde — es ist dieselbe,
+  /// die dort offen oder markiert ist. Angehängt wird nichts von selbst: Die
+  /// Dateien liegen danach als Vorschläge in der Reihe, einer davon der
+  /// gezogene.
+  Future<void> _nichtsErkannt(BuildContext context) async {
+    final melder = ScaffoldMessenger.of(context);
+    final cubit = context.read<EmailEntwurfCubit>();
+    final ergebnis = await cubit.anhaengeAusOutlook();
+
+    if (ergebnis == null) {
+      _zeigen(
+        melder,
+        'Diese Datei hat Windows nicht als Datei durchgereicht — aus Outlook '
+        'gezogene Anhänge kommen so nicht an. Der Knopf „Aus der '
+        'Outlook-Nachricht" holt sie.',
+      );
+      return;
+    }
+
+    _zeigen(
+      melder,
+      OutlookGriffMeldung.fuer(
+            ergebnis.griff,
+            ergebnis.neu,
+            vorspann: 'Outlook gibt gezogene Anhänge nicht als Datei heraus.',
+          ) ??
+          'Outlook gibt gezogene Anhänge nicht als Datei heraus — die Anhänge '
+              'von ${ergebnis.griff.bezeichnung} liegen jetzt unten zum '
+              'Anklicken bereit.',
+    );
+  }
+
   static void _melden(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    _zeigen(ScaffoldMessenger.of(context), text);
+  }
+
+  static void _zeigen(ScaffoldMessengerState melder, String text) {
+    melder.showSnackBar(
+      SnackBar(content: Text(text), duration: const Duration(seconds: 6)),
+    );
   }
 
   @override
@@ -71,6 +116,7 @@ class EmailVersandInhalt extends StatelessWidget {
         context,
         'Ordner lassen sich nicht anhängen — bitte die einzelnen Dateien ablegen.',
       ),
+      onNichtsErkannt: () => _nichtsErkannt(context),
       child: SizedBox(
         width: math.min(nebeneinander ? 1160 : 720, fenster.width - 120),
         // Zwei Spalten brauchen eine begrenzte Höhe, sonst hat die Vorschau
@@ -91,6 +137,9 @@ class EmailVersandInhalt extends StatelessWidget {
                       entwurf: state.entwurf,
                       absender: state.bereitschaft?.absender ?? '',
                       signatur: state.bereitschaft?.signatur ?? '',
+                      signaturHtml: state.bereitschaft?.signaturHtml ?? '',
+                      signaturBilder:
+                          state.bereitschaft?.signaturBilder ?? const [],
                     ),
                   ),
                 ],

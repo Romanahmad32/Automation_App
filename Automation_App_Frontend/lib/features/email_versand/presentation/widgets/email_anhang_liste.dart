@@ -1,5 +1,8 @@
+import 'package:automation_app/features/email_versand/domain/entities/outlook_anhaenge.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_anhang_chip.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/outlook_hinweis_zeile.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -30,6 +33,17 @@ class EmailAnhangListe extends StatelessWidget {
   /// Griff, der auch danebengehen darf.
   final List<String> ausOutlook;
 
+  /// Aus welcher Outlook-Nachricht die Vorschläge stammen; null, solange nicht
+  /// gegriffen wurde. Ohne diese Angabe lägen Dateien in der Reihe, ohne dass
+  /// etwas sagt, woher sie kommen — und ein Griff in die falsche Nachricht sähe
+  /// aus wie ein richtiger.
+  final OutlookAnhaenge? outlookQuelle;
+
+  /// Welches Outlook auf diesem Rechner steht. Ist es nicht steuerbar, steht
+  /// statt des Knopfes der Grund da: Ein Knopf, der wortlos eine leere Liste
+  /// liefert, ist die schlechteste Auskunft von allen.
+  final OutlookStand outlookStand;
+
   /// Holt die Anhänge aus der Nachricht, die in Outlook gerade offen ist.
   final VoidCallback? onAusOutlook;
 
@@ -47,6 +61,8 @@ class EmailAnhangListe extends StatelessWidget {
     required this.onHinzufuegen,
     required this.onEntfernen,
     required this.onUmbenennen,
+    this.outlookQuelle,
+    this.outlookStand = OutlookStand.unbekannt,
     this.onAusOutlook,
     this.onOutlookVerwerfen,
     this.ausOutlook = const [],
@@ -105,6 +121,16 @@ class EmailAnhangListe extends StatelessWidget {
             ],
           ),
         const SizedBox(height: 8),
+        if (ausMail.isNotEmpty && (outlookQuelle?.hatNachricht ?? false)) ...[
+          Text(
+            'Vorschläge aus ${outlookQuelle!.bezeichnung} — '
+            '${outlookQuelle!.ausOffenemFenster ? 'in Outlook geöffnet' : 'in der Outlook-Liste markiert'}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -116,20 +142,34 @@ class EmailAnhangListe extends StatelessWidget {
             ),
             // Der Weg für Dateien, die nur in einer Mail stecken und nirgends
             // auf der Platte liegen — Gutachten, Kostenvoranschlag, Fotos.
-            if (onAusOutlook != null)
-              OutlinedButton.icon(
-                onPressed: aktiv && !holtAusOutlook ? onAusOutlook : null,
-                icon: holtAusOutlook
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.move_to_inbox_outlined),
-                label: Text(
-                  holtAusOutlook
-                      ? 'Fragt Outlook…'
-                      : 'Aus der Outlook-Nachricht',
+            if (onAusOutlook != null && !outlookStand.steuerbar)
+              OutlookHinweisZeile(
+                stand: outlookStand,
+                was: 'Anhänge lassen sich nicht aus Outlook holen',
+              ),
+            if (onAusOutlook != null && outlookStand.steuerbar)
+              Tooltip(
+                // Kurz halten: Die Regel steht im Klartext an den Vorschlägen,
+                // sobald welche da sind („Vorschläge aus … — in Outlook
+                // geöffnet"). Der Tooltip muss nur sagen, welche Nachricht
+                // gemeint ist, bevor man drückt.
+                message:
+                    'Anhänge der Nachricht, die in Outlook offen oder '
+                    'markiert ist',
+                child: OutlinedButton.icon(
+                  onPressed: aktiv && !holtAusOutlook ? onAusOutlook : null,
+                  icon: holtAusOutlook
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.move_to_inbox_outlined),
+                  label: Text(
+                    holtAusOutlook
+                        ? 'Fragt Outlook…'
+                        : 'Aus der Outlook-Nachricht',
+                  ),
                 ),
               ),
             // Aus Outlook geholt: anklicken haengt an, das Kreuz verwirft den

@@ -165,6 +165,8 @@ $unterschrift''';
       betreff: betreffFuer(mitSchreiben: mitSchreiben),
       text: textFuer(adressen, mitSchreiben: mitSchreiben),
       anhangPfade: anhangPfade,
+      // Ohne Vorgang bleibt sie leer — dann wird auch nichts protokolliert.
+      vorgangReferenz: vorgang?.referenz ?? '',
     );
   }
 

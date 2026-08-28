@@ -17,6 +17,8 @@ public class EmailVersandController(
     OutlookVerbindung outlook,
     AnhangAblage ablage,
     SignaturUebernahme signaturUebernahme,
+    SignaturAblage signaturAblage,
+    OutlookErkennung outlookErkennung,
     KanzleiSignatur signatur) : ControllerBase
 {
     /// <summary>
@@ -56,6 +58,27 @@ public class EmailVersandController(
         Ok(SignaturStandDto.From(await signatur.BlockAsync(cancellationToken)));
 
     /// <summary>
+    /// Ein einzelnes Bild der übernommenen Signatur (§4.7). Die Oberfläche
+    /// zeigt damit in der Vorschau, was wirklich unter der Mail steht — den
+    /// Signaturtext allein anzuzeigen hieße, das Logo erst im Ordner
+    /// "Gesendet" zu sehen.
+    ///
+    /// Ausgeliefert wird nur, was in der Signaturablage liegt: Der Name kommt
+    /// von aussen, <see cref="SignaturAblage.PfadVon"/> lässt deshalb keinen
+    /// Pfad durch, der aus diesem einen Ordner hinausführt.
+    /// </summary>
+    [HttpGet("signaturen/bild")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult GetSignaturBild([FromQuery] string? dateiname)
+    {
+        var pfad = signaturAblage.PfadVon(dateiname ?? string.Empty);
+        return pfad is null
+            ? NotFound()
+            : PhysicalFile(pfad, SignaturAblage.InhaltsArt(pfad));
+    }
+
+    /// <summary>
     /// Übernimmt die gewählte Signatur in die Einstellungen (§4.7): Text,
     /// formatierte Fassung und deren Bilder in einem Zug. Das geschieht hier
     /// und nicht in der Oberfläche, weil die Bilder abgelegt werden müssen und
@@ -70,8 +93,10 @@ public class EmailVersandController(
     {
         try
         {
-            var block = await signaturUebernahme.UebernimmAsync(anfrage.Name ?? string.Empty, cancellationToken);
-            return Ok(SignaturStandDto.From(block));
+            var (block, uebergangen) = await signaturUebernahme.UebernimmAsync(
+                anfrage.Name ?? string.Empty,
+                cancellationToken);
+            return Ok(SignaturStandDto.From(block, uebergangen));
         }
         catch (EmailVersandException exception)
         {
@@ -125,6 +150,20 @@ public class EmailVersandController(
     }
 
     /// <summary>
+    /// Welches Outlook auf diesem Rechner steht (§4.7). Beim Start einmal
+    /// ermittelt, hier nur abgeholt.
+    ///
+    /// Die Oberfläche fragt das, bevor sie Knöpfe anbietet, die das klassische
+    /// Outlook brauchen: Ohne dieses tun der Anhang-Griff und die
+    /// Signatur-Übernahme still nichts, und der Entwurf geht als Datei auf.
+    /// Jedes für sich sieht aus wie ein Aussetzer.
+    /// </summary>
+    [HttpGet("outlook/stand")]
+    [ProducesResponseType(typeof(OutlookStandDto), StatusCodes.Status200OK)]
+    public ActionResult<OutlookStandDto> GetOutlookStand() =>
+        Ok(OutlookStandDto.From(outlookErkennung.Stand));
+
+    /// <summary>
     /// Startet Outlook im Hintergrund, damit der erste Entwurf den Kaltstart
     /// nicht bezahlt (§4.7). Die Oberfläche ruft das beim Öffnen des
     /// Versanddialogs — bis der Anwalt fertig getippt hat, steht Outlook.
@@ -145,11 +184,14 @@ public class EmailVersandController(
     /// von Hand in die ausgehende Nachricht gezogen werden — die App fragt
     /// stattdessen nach. Leere Liste heißt: nichts ausgewählt oder nichts
     /// dran, und das ist kein Fehler.
+    ///
+    /// Betreff und Absender gehen mit zurück: Welche Nachricht gelesen wurde,
+    /// entscheidet Outlook, nicht der Anwalt — er soll es wenigstens erfahren.
     /// </summary>
     [HttpGet("outlook/anhaenge")]
-    [ProducesResponseType(typeof(IReadOnlyList<string>), StatusCodes.Status200OK)]
-    public ActionResult<IReadOnlyList<string>> GetOutlookAnhaenge() =>
-        Ok(outlook.AnhaengeDerAuswahl());
+    [ProducesResponseType(typeof(OutlookAnhaengeDto), StatusCodes.Status200OK)]
+    public ActionResult<OutlookAnhaengeDto> GetOutlookAnhaenge() =>
+        Ok(OutlookAnhaengeDto.From(outlook.AnhaengeDerAuswahl()));
 
     /// <summary>
     /// Wirft eine aus Outlook geholte Datei weg (§4.7). Der Anwalt verwirft
