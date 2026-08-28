@@ -127,9 +127,10 @@ public static class AnhangPruefung
             {
                 throw new EmailVersandException(
                     EmailVersandFehler.Anhang,
-                    $"Die Nachricht wird mit Anhängen größer als {maxGesamtMb} MB. Die meisten " +
-                    "Postfächer weisen solche Nachrichten ab — bitte weniger anhängen, die " +
-                    "Dateien vorher verkleinern oder Bilder aus der Signatur weglassen.");
+                    $"Die Anhänge wiegen zusammen mehr als {maxGesamtMb} MB. Als Mail werden " +
+                    "daraus rund ein Drittel mehr, und die meisten Postfächer weisen so etwas " +
+                    "ab — bitte weniger anhängen, die Dateien vorher verkleinern oder Bilder " +
+                    "aus der Signatur weglassen.");
             }
 
             dateien.Add(datei);

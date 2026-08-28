@@ -13,12 +13,23 @@ import 'package:flutter/material.dart';
 /// Ordner werden **nicht** angenommen — ein Anhang ist eine Datei. Wird nur
 /// ein Ordner abgelegt, meldet sich [onOrdnerAbgelehnt]; ohne diese Meldung
 /// sähe das Ablegen aus wie ein verschluckter Griff.
+///
+/// Kommt **gar nichts** an, meldet sich [onNichtsErkannt]. Das ist kein
+/// theoretischer Fall: Windows reicht beim Ziehen aus dem Explorer Dateipfade
+/// durch (`CF_HDROP`), Outlook seine Anhänge dagegen als virtuelle Dateien
+/// (`CFSTR_FILEDESCRIPTORW`), die `desktop_drop` nicht liest. Ein Anhang, aus
+/// Outlook hereingezogen, kommt hier deshalb als leeres Ablegen an — und darf
+/// nicht mit „Ordner lassen sich nicht anhängen" beantwortet werden.
 class DateiAblageBereich extends StatefulWidget {
   /// Die abgelegten Dateien, Ordner bereits aussortiert. Nie leer.
   final ValueChanged<List<String>> onDateien;
 
-  /// Es wurde etwas abgelegt, aber keine einzige Datei war dabei.
+  /// Es wurde etwas abgelegt, aber keine einzige Datei war dabei — Ordner.
   final VoidCallback? onOrdnerAbgelehnt;
+
+  /// Es wurde etwas abgelegt, das Windows gar nicht als Datei durchgereicht
+  /// hat. Der übliche Fall: ein Anhang aus einer Outlook-Nachricht.
+  final VoidCallback? onNichtsErkannt;
 
   /// Steht im Schleier — sagt, was das Ablegen bewirkt.
   final String hinweis;
@@ -32,6 +43,7 @@ class DateiAblageBereich extends StatefulWidget {
     required this.onDateien,
     required this.child,
     this.onOrdnerAbgelehnt,
+    this.onNichtsErkannt,
     this.hinweis = 'Dateien hier ablegen',
     this.aktiv = true,
   });
@@ -52,6 +64,14 @@ class _DateiAblageBereichState extends State<DateiAblageBereich> {
 
   void _abgelegt(DropDoneDetails details) {
     setState(() => _schwebtDarueber = false);
+
+    // Leer heisst: Es kam nichts an, was Windows als Datei durchreicht — der
+    // Griff aus Outlook. Eine Liste, aus der nur die Ordner herausgefallen
+    // sind, ist etwas anderes und bekommt eine andere Antwort.
+    if (details.files.isEmpty) {
+      widget.onNichtsErkannt?.call();
+      return;
+    }
 
     final dateien = DateiAblageBereich.nurDateien(
       details.files.map((abgelegt) => abgelegt.path),

@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
@@ -60,6 +61,17 @@ class EntwurfQuellen {
         bereit: false,
         hinweis: 'Der Postausgang ist nicht erreichbar: ${ausnahmeText(e)}',
       );
+    }
+  }
+
+  /// Welches Outlook auf diesem Rechner steht. Antwortet der Dienst nicht,
+  /// gilt der unbekannte Stand: Dann wird nichts behauptet und nichts
+  /// abgeschaltet.
+  Future<OutlookStand> outlookStand() async {
+    try {
+      return await _repository.ladeOutlookStand();
+    } catch (_) {
+      return OutlookStand.unbekannt;
     }
   }
 }

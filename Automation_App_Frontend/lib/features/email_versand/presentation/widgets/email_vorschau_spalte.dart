@@ -1,4 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau.dart';
 import 'package:flutter/material.dart';
 
@@ -14,11 +15,19 @@ class EmailVorschauSpalte extends StatelessWidget {
   final String absender;
   final String signatur;
 
+  /// Die formatierte Fassung — sie wird gerendert.
+  final String signaturHtml;
+
+  /// Die Bilder der formatierten Signatur — die Vorschau zeigt sie mit.
+  final List<SignaturBild> signaturBilder;
+
   const EmailVorschauSpalte({
     super.key,
     required this.entwurf,
     required this.absender,
     this.signatur = '',
+    this.signaturHtml = '',
+    this.signaturBilder = const [],
   });
 
   @override
@@ -47,7 +56,9 @@ class EmailVorschauSpalte extends StatelessWidget {
         const SizedBox(height: 8),
         Expanded(
           child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            // Rechts schmal: Dort läuft die Bildlaufleiste der Vorschau, und
+            // sie soll am Rand der Fläche sitzen, nicht darin.
+            padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(8),
@@ -57,7 +68,8 @@ class EmailVorschauSpalte extends StatelessWidget {
               entwurf: entwurf,
               absender: absender,
               signatur: signatur,
-              fuelltHoehe: true,
+              signaturHtml: signaturHtml,
+              signaturBilder: signaturBilder,
             ),
           ),
         ),

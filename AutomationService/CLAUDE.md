@@ -83,8 +83,27 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt.
   `GET api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht
   (`OutlookAuswahl`, ein Ordner **je Nachricht** nach EntryID, damit der zweite Griff dieselben
-  Pfade liefert statt "… (2).pdf") — der Ersatz für das Ziehen von Anhang zu Anhang; `DELETE` darauf wirft eine
-  geholte Datei wieder weg (nur dieser Ordner, die Antwort-Anhänge daneben bleiben). `AnhangAblage`
+  Pfade liefert statt "… (2).pdf") — der Ersatz für das Ziehen von Anhang zu Anhang, das Windows
+  nicht hergibt: Outlook reicht Anhänge als *virtuelle* Dateien durch, nicht als Pfade. Zurück geht
+  ein `OutlookAnhaenge` mit Betreff, Absender und der Angabe, ob aus offenem Fenster oder Liste
+  gelesen wurde — welche Nachricht gemeint war, entscheidet Outlook, nicht der Anwalt, und ohne
+  diese Angabe sieht ein Griff in die falsche Mail aus wie ein richtiger. `OutlookErreicht` trennt
+  "Outlook schweigt" von "nichts ausgewählt". `DELETE` darauf wirft eine
+  geholte Datei wieder weg (nur dieser Ordner, die Antwort-Anhänge daneben bleiben).
+  **Alle drei Outlook-Wege** (Entwurf, Anhang-Griff, Signatur-Übernahme) brauchen das *klassische*
+  Outlook; das neue (Store-App) meldet keine COM-Schnittstelle an und legt seine Signaturen nicht als
+  Dateien ab — alle drei täten dann wortlos nichts. `OutlookErkennung` sieht deshalb **beim Start**
+  einmal nach (Singleton *und* `IHostedService`, sonst baut der Container sie erst beim ersten
+  Klick), `GET api/EmailVersand/outlook/stand` liefert den Grund im Klartext an die Oberfläche. Der
+  Direktversand über SMTP ist davon unberührt.
+  **Versandprotokoll** (§4.7): `VersandProtokoll` hält je Vorgang fest, was hinausging — Zeitpunkt,
+  Weg, Empfänger, Anhangnamen wie versendet, ob die Kopie in „Gesendet" landete, und die
+  Message-ID als eigentlichen Nachweis. Geschrieben wird **nach** erfolgreicher Einlieferung, nie
+  davor, und ein Fehlschlag dabei hält den Versand nicht auf (die Mail ist ja beim Empfänger).
+  Adressiert über die *Referenz* des Vorgangs statt über einen Fremdschlüssel — die Slice darf
+  `Vorgaenge` nicht kennen. `VersandProtokollController` (`api/EmailVersand/protokoll`, `/letzte`)
+  liest; die Outlook-Übergabe steht darin als `OutlookEntwurf` und **nicht** als Versand (§4.8).
+  `AnhangAblage`
   räumt alle Zwischenlager nach 14 Tagen ab (`AnhangAufraeumService` beim Start) — dieselbe Regel
   wie beim Arbeitsordner. Im Outlook-Entwurf setzt Outlook seine eigene Signatur — deshalb hängt
   `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an.
@@ -93,11 +112,14 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   (`.htm` samt Bildern, `OutlookSignaturHtml`: Rumpf schneiden, Bildverweise auf den blanken
   Dateinamen kürzen). Die Bilder liegen in `SignaturAblage`
   (`%APPDATA%\AutomationService\Signatur`), das HTML in `KanzleiSettings.MailSignaturHtml`;
-  `GET signaturen/stand` meldet beides zurück, `DELETE signaturen/format` wirft die Formatierung
+  `GET signaturen/stand` meldet beides zurück, `GET signaturen/bild?dateiname=` liefert ein
+  einzelnes Bild für die Vorschau der App, `DELETE signaturen/format` wirft die Formatierung
   weg. Beim Versand baut `MailRumpf` daraus HTML **und** Text und hängt die Bilder als
   `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`,
-  `SignaturHtmlFilter` nimmt die ganze `<img>`-Marke heraus) — sie zählen über `zusatzBytes` in
-  `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
+  `SignaturHtmlFilter`) — Word schreibt jedes Bild **zweimal**, als VML-Form
+  (`<v:shape>`/`<v:imagedata>`, für Outlook) und als `<img>` (für alle übrigen Programme); nur das
+  `<img>` zu entfernen hiess: abgewählt, und trotzdem sichtbar und mitgeschickt. Die Bilder zählen
+  über `zusatzBytes` in `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und

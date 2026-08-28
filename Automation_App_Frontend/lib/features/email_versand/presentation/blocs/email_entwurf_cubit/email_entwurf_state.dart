@@ -3,6 +3,10 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_anhaenge.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
+import 'package:automation_app/features/email_versand/domain/entities/versand_pruefung.dart';
+import 'package:automation_app/features/email_versand/domain/services/versand_voraussetzungen.dart';
 import 'package:equatable/equatable.dart';
 
 /// Wo der Entwurf gerade steht.
@@ -30,6 +34,11 @@ class EmailEntwurfState extends Equatable {
   /// **angeboten**, nicht angehängt — was mitgeht, entscheidet der Anwalt.
   final List<String> ausOutlook;
 
+  /// Der letzte Griff nach Outlook: aus welcher Nachricht die Vorschläge
+  /// stammen. Bleibt stehen, solange sie in der Reihe liegen — sonst lägen
+  /// Dateien da, ohne dass etwas sagt, woher sie kommen.
+  final OutlookAnhaenge? outlookQuelle;
+
   /// True, solange Outlook nach seinen Anhängen gefragt wird.
   final bool holtAusOutlook;
 
@@ -41,6 +50,10 @@ class EmailEntwurfState extends Equatable {
 
   /// Ob überhaupt gesendet werden kann; null, solange nicht abgefragt.
   final EmailVersandBereitschaft? bereitschaft;
+
+  /// Welches Outlook auf diesem Rechner steht. Bis der Dienst geantwortet hat
+  /// gilt `unbekannt` — dann wird nichts behauptet und nichts abgeschaltet.
+  final OutlookStand outlookStand;
 
   final EmailVersandPhase phase;
 
@@ -55,6 +68,18 @@ class EmailEntwurfState extends Equatable {
   /// nicht versehentlich ein zweites Mal übergibt oder gar direkt sendet.
   final EmailEntwurfErgebnis? entwurfErgebnis;
 
+  /// Was in der Zeile „An" steht, aber noch nicht übernommen wurde. Der
+  /// Zustand führt es mit, weil die Prüfung beim Senden es sehen muss: Das Feld
+  /// allein weiß davon, und „Senden" steht woanders im Dialog.
+  final String offenAn;
+
+  final String offenKopie;
+
+  /// True, sobald „Senden" oder „In Outlook öffnen" einmal gedrückt wurde. Erst
+  /// danach markiert das Formular, was fehlt — vorher wäre jedes leere Feld ein
+  /// Vorwurf an einen Entwurf, der gerade erst aufgegangen ist.
+  final bool versandVersucht;
+
   /// True, sobald der Anwalt den Text selbst angefasst hat. Danach schreibt die
   /// automatische Anrede ihn nicht mehr um — sonst verlöre er beim Hinzufügen
   /// eines Empfängers, was er schon getippt hat.
@@ -64,15 +89,34 @@ class EmailEntwurfState extends Equatable {
     this.entwurf = const EmailEntwurf(),
     this.vorschlaege = const [],
     this.ausOutlook = const [],
+    this.outlookQuelle,
     this.holtAusOutlook = false,
     this.anhangBytes = 0,
     this.bereitschaft,
+    this.outlookStand = OutlookStand.unbekannt,
     this.phase = EmailVersandPhase.verfassen,
     this.fehler,
     this.ergebnis,
     this.entwurfErgebnis,
+    this.offenAn = '',
+    this.offenKopie = '',
+    this.versandVersucht = false,
     this.textSelbstGeschrieben = false,
   });
+
+  /// Was der Mail noch fehlt, je Feld (§4.7).
+  VersandPruefung get pruefung => VersandVoraussetzungen.pruefe(
+    entwurf: entwurf,
+    offenAn: offenAn,
+    offenKopie: offenKopie,
+    gesamtBytes: gesamtBytes,
+    maxBytes: bereitschaft?.maxBytes,
+  );
+
+  /// Was das Formular anzeigen darf: nichts, bis der erste Versuch gelaufen
+  /// ist.
+  VersandPruefung get markiert =>
+      versandVersucht ? pruefung : VersandPruefung.ohneMangel;
 
   bool get sendetGerade => phase == EmailVersandPhase.sendet;
 
@@ -97,42 +141,54 @@ class EmailEntwurfState extends Equatable {
     return grenze != null && gesamtBytes > grenze;
   }
 
+  /// Ob der Knopf anfassbar ist — **nicht**, ob die Mail vollständig ist. Ein
+  /// abgeblendeter Knopf ist eine Behauptung ohne Begründung: Was fehlt, sagt
+  /// die Prüfung beim Drücken, und zwar an dem Feld, das es behebt.
+  /// Abgeblendet bleibt er nur, wo Drücken nichts bringen kann — während des
+  /// Versands und ohne Postfach-Zugang (der Grund dafür steht schon oben im
+  /// Dialog).
   bool get kannSenden =>
-      phase == EmailVersandPhase.verfassen &&
-      entwurf.istSendbar &&
-      !ueberGrenze &&
-      (bereitschaft?.bereit ?? false);
+      phase == EmailVersandPhase.verfassen && (bereitschaft?.bereit ?? false);
 
   /// Der Entwurf braucht keinen Postfach-Zugang: Gesendet wird im
   /// Mailprogramm, nicht von der App. Genau deshalb ist er die Rückfalltür,
   /// wenn die Bereitschaft fehlt (§4.7).
-  bool get kannEntwurfOeffnen =>
-      phase == EmailVersandPhase.verfassen && entwurf.istSendbar;
+  bool get kannEntwurfOeffnen => phase == EmailVersandPhase.verfassen;
 
   EmailEntwurfState copyWith({
     EmailEntwurf? entwurf,
     List<EmailEmpfaengerVorschlag>? vorschlaege,
     List<String>? ausOutlook,
+    OutlookAnhaenge? outlookQuelle,
     bool? holtAusOutlook,
     int? anhangBytes,
     EmailVersandBereitschaft? bereitschaft,
+    OutlookStand? outlookStand,
     EmailVersandPhase? phase,
     String? Function()? fehler,
     EmailVersandErgebnis? ergebnis,
     EmailEntwurfErgebnis? entwurfErgebnis,
+    String? offenAn,
+    String? offenKopie,
+    bool? versandVersucht,
     bool? textSelbstGeschrieben,
   }) {
     return EmailEntwurfState(
       entwurf: entwurf ?? this.entwurf,
       vorschlaege: vorschlaege ?? this.vorschlaege,
       ausOutlook: ausOutlook ?? this.ausOutlook,
+      outlookQuelle: outlookQuelle ?? this.outlookQuelle,
       holtAusOutlook: holtAusOutlook ?? this.holtAusOutlook,
       anhangBytes: anhangBytes ?? this.anhangBytes,
       bereitschaft: bereitschaft ?? this.bereitschaft,
+      outlookStand: outlookStand ?? this.outlookStand,
       phase: phase ?? this.phase,
       fehler: fehler != null ? fehler() : this.fehler,
       ergebnis: ergebnis ?? this.ergebnis,
       entwurfErgebnis: entwurfErgebnis ?? this.entwurfErgebnis,
+      offenAn: offenAn ?? this.offenAn,
+      offenKopie: offenKopie ?? this.offenKopie,
+      versandVersucht: versandVersucht ?? this.versandVersucht,
       textSelbstGeschrieben:
           textSelbstGeschrieben ?? this.textSelbstGeschrieben,
     );
@@ -143,13 +199,18 @@ class EmailEntwurfState extends Equatable {
     entwurf,
     vorschlaege,
     ausOutlook,
+    outlookQuelle,
     holtAusOutlook,
     anhangBytes,
     bereitschaft,
+    outlookStand,
     phase,
     fehler,
     ergebnis,
     entwurfErgebnis,
+    offenAn,
+    offenKopie,
+    versandVersucht,
     textSelbstGeschrieben,
   ];
 }

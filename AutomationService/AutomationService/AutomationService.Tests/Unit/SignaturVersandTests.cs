@@ -1,5 +1,5 @@
-using System.Text;
 using AutomationService.Features.EmailVersand.Domain.Services;
+using AutomationService.Tests.Support;
 using FluentAssertions;
 using MimeKit;
 using Xunit;
@@ -22,74 +22,13 @@ public sealed class SignaturVersandTests : IDisposable
 
     public SignaturVersandTests() => Directory.CreateDirectory(_ordner);
 
-    private string Datei(string name, byte[] inhalt)
-    {
-        var pfad = Path.Combine(_ordner, name);
-        Directory.CreateDirectory(Path.GetDirectoryName(pfad)!);
-        File.WriteAllBytes(pfad, inhalt);
-        return pfad;
-    }
+    private string Datei(string name, byte[] inhalt) =>
+        SignaturProben.Datei(_ordner, name, inhalt);
 
-    private static byte[] Bild(int bytes) => Enumerable.Repeat((byte)7, bytes).ToArray();
+    private static byte[] Bild(int bytes) => SignaturProben.Bild(bytes);
 
     private static EmailNachricht Nachricht(string text = "Sehr geehrte Damen und Herren,") =>
         new(["gegner@example.de"], [], "Anspruchsschreiben", text, [], "Kanzlei Ahmad");
-
-    [Fact]
-    public void OutlookSignaturHtml_SchneidetDenRumpfUndSammeltDieBilder()
-    {
-        Datei("Kanzlei-Dateien/logo.png", Bild(120));
-        var htm = Datei("Kanzlei.htm", Encoding.UTF8.GetBytes(
-            "<html><head><style>p{color:red}</style></head><body>"
-            + "<p>Mit freundlichen Gr&uuml;&szlig;en</p>"
-            + "<img src=\"Kanzlei-Dateien/logo.png\" width=\"120\">"
-            + "</body></html>"));
-
-        var gelesen = OutlookSignaturHtml.Lies(htm);
-
-        gelesen.Should().NotBeNull();
-        // Der Kopfbereich bleibt draussen: Outlooks Stilvorlage wuerde sonst
-        // den Mailtext mitformatieren.
-        gelesen!.Value.Html.Should().NotContain("<style>").And.Contain("Gr&uuml;&szlig;en");
-        // Der Verweis ist auf den blanken Dateinamen gekuerzt -- der Beiordner
-        // des Absenders existiert beim Empfaenger nicht.
-        gelesen.Value.Html.Should().Contain("src=\"logo.png\"");
-        gelesen.Value.Bilder.Should().ContainKey("logo.png");
-    }
-
-    [Fact]
-    public void OutlookSignaturHtml_LaesstVerweiseInsNetzStehen()
-    {
-        var htm = Datei("Web.htm", Encoding.UTF8.GetBytes(
-            "<body><img src=\"https://kanzlei.example.de/logo.png\"></body>"));
-
-        var gelesen = OutlookSignaturHtml.Lies(htm);
-
-        gelesen!.Value.Html.Should().Contain("https://kanzlei.example.de/logo.png");
-        gelesen.Value.Bilder.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void SignaturHtmlFilter_NimmtDieGanzeBildmarkeHeraus()
-    {
-        const string html = "<p>Gruss</p><img src=\"logo.png\"><img src=\"werbung.gif\" alt=\"x\">";
-
-        var uebrig = SignaturHtmlFilter.Ohne(html, new HashSet<string> { "werbung.gif" });
-
-        uebrig.Should().Contain("logo.png");
-        // Nicht nur die Quelle: Ein img ohne src zeigt beim Empfaenger ein
-        // Platzhalterkreuz und saehe nach einem Fehler aus.
-        uebrig.Should().NotContain("werbung.gif").And.NotContain("alt=\"x\"");
-    }
-
-    [Fact]
-    public void SignaturHtmlFilter_MeldetNurDieNochVerwendetenBilder()
-    {
-        const string html = "<img src=\"logo.png\">";
-        SignaturBild[] abgelegt = [new("logo.png", 100), new("werbung.gif", 4_000_000)];
-
-        SignaturHtmlFilter.Verwendete(html, abgelegt).Should().Equal("logo.png");
-    }
 
     [Fact]
     public void MailRumpf_OhneFormatierteSignatur_BleibtEsBeiReinemText()
@@ -149,6 +88,39 @@ public sealed class SignaturVersandTests : IDisposable
 
         act.Should().Throw<EmailVersandException>()
             .Which.Message.Should().Contain("Signatur");
+    }
+
+    /// <summary>
+    /// Das animierte Werbebild ist der Anlass des ganzen Abwählens (§4.7) — es
+    /// muss also erst einmal heil hinausgehen.
+    ///
+    /// Geprüft wird, was über „sieht gut aus" hinausgeht: dass die Bytes
+    /// <b>unverändert</b> ankommen (jede Umkodierung wäre das Ende der
+    /// Animation) und dass der Teil als <c>image/gif</c> ausgewiesen ist. Ohne
+    /// die richtige Inhaltsart zeigt manches Programm einen Anhang statt eines
+    /// Bildes.
+    /// </summary>
+    [Fact]
+    public void MailRumpf_SchicktEinAnimiertesGifUnveraendert()
+    {
+        var bytes = SignaturProben.AnimiertesGif();
+        var werbung = Datei("werbung.gif", bytes);
+        var signatur = new SignaturVersand(
+            "Kanzlei Ahmad",
+            "<p>Kanzlei Ahmad</p><img src=\"werbung.gif\">",
+            [werbung]);
+
+        var mime = EmailNachrichtBauer.Baue(Nachricht(), "kanzlei@example.de", [], signatur);
+
+        var eingebettet = mime.BodyParts.OfType<MimePart>()
+            .Single(teil => teil.ContentId is not null);
+        eingebettet.ContentType.MimeType.Should().Be("image/gif");
+
+        using var strom = new MemoryStream();
+        eingebettet.Content.Should().NotBeNull();
+        eingebettet.Content!.DecodeTo(strom);
+        strom.ToArray().Should().Equal(bytes);
+        mime.HtmlBody.Should().Contain($"cid:{eingebettet.ContentId}");
     }
 
     public void Dispose()

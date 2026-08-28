@@ -25,10 +25,15 @@ class EmailEmpfaengerFeld extends StatefulWidget {
   final ValueChanged<String> onEntfernen;
 
   /// Meldet, was gerade im Eingabefeld steht und noch **nicht** übernommen ist.
-  /// Der Dialog kann daraufhin sagen, warum „Senden" grau bleibt — eine
-  /// eingetippte, aber nicht übernommene Adresse ist der Fall, in dem das Feld
-  /// ausgefüllt aussieht und der Entwurf trotzdem keinen Empfänger hat.
+  /// Die Prüfung beim Senden greift darauf zurück — eine eingetippte, aber
+  /// nicht übernommene Adresse ist der Fall, in dem das Feld ausgefüllt
+  /// aussieht und der Entwurf trotzdem keinen Empfänger hat.
   final ValueChanged<String>? onOffeneEingabe;
+
+  /// Was an dieser Zeile fehlt, im Klartext; null, solange nichts zu bemängeln
+  /// ist. Steht unter dem Eingabefeld statt in einem Kasten über dem Formular:
+  /// dort, wo der Anwalt es behebt, und erst, nachdem er gesendet hat.
+  final String? fehler;
 
   final bool aktiv;
 
@@ -41,6 +46,7 @@ class EmailEmpfaengerFeld extends StatefulWidget {
     this.vorschlaege = const [],
     this.bereitsVergeben = const [],
     this.onOffeneEingabe,
+    this.fehler,
     this.aktiv = true,
   });
 
@@ -75,6 +81,25 @@ class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
     widget.onHinzufuegen(adresse);
     _eingabe.clear();
     widget.onOffeneEingabe?.call('');
+  }
+
+  /// Holt eine übernommene Adresse zum Berichtigen ins Eingabefeld zurück.
+  ///
+  /// Der Anlass ist der Tippfehler, der erst auffällt, wenn die Adresse schon
+  /// als Kachel dasteht: „schaden@huk.d". Ohne diesen Weg bliebe nur löschen
+  /// und alles neu tippen — bei einer Adresse mit Aktenzeichen darin ist das
+  /// die Sorte Kleinarbeit, bei der der zweite Tippfehler entsteht.
+  ///
+  /// Was schon im Feld steht, wird vorher übernommen: Es sonst mit der
+  /// angeklickten Adresse zu überschreiben, hiesse eine Eingabe gegen eine
+  /// andere zu tauschen.
+  void _bearbeiten(String adresse) {
+    _uebernehmen();
+    widget.onEntfernen(adresse);
+    _eingabe.text = adresse;
+    _eingabe.selection = TextSelection.collapsed(offset: adresse.length);
+    widget.onOffeneEingabe?.call(adresse);
+    _fokus.requestFocus();
   }
 
   /// Komma und Semikolon trennen Adressen — in jedem Mailprogramm. Wer sie
@@ -114,10 +139,14 @@ class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
             children: [
               for (final adresse in widget.adressen)
                 InputChip(
+                  key: ValueKey(adresse),
                   label: Text(adresse),
+                  tooltip: 'Zum Berichtigen anklicken',
+                  onPressed: widget.aktiv ? () => _bearbeiten(adresse) : null,
                   onDeleted: widget.aktiv
                       ? () => widget.onEntfernen(adresse)
                       : null,
+                  deleteButtonTooltipMessage: 'Empfänger entfernen',
                 ),
             ],
           ),
@@ -130,6 +159,8 @@ class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
           decoration: InputDecoration(
             isDense: true,
             hintText: 'Adresse eintippen und mit Eingabe übernehmen',
+            errorText: widget.fehler,
+            errorMaxLines: 3,
             border: const OutlineInputBorder(),
             suffixIcon: IconButton(
               tooltip: 'Übernehmen',

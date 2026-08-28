@@ -2,8 +2,11 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_anhaenge.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
+import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 
 /// Zugang zum Postausgang der Kanzlei (§4.7).
 abstract class EmailVersandRepository {
@@ -30,8 +33,22 @@ abstract class EmailVersandRepository {
   Future<void> waermeEntwurfVor();
 
   /// Die Anhänge der Nachricht, die in Outlook gerade offen oder ausgewählt
-  /// ist — abgelegt und mit vollem Pfad. Leer, wenn nichts ausgewählt ist.
-  Future<List<String>> ladeOutlookAnhaenge();
+  /// ist — abgelegt und mit vollem Pfad, dazu Betreff und Absender dieser
+  /// Nachricht. Leer, wenn nichts ausgewählt ist.
+  Future<OutlookAnhaenge> ladeOutlookAnhaenge();
+
+  /// Was zu diesem Vorgang schon hinausgegangen ist, der jüngste Versand
+  /// zuerst (§4.7) — der Nachweis, dass das Anspruchsschreiben raus ist.
+  Future<List<VersandEintrag>> ladeVersandProtokoll(String referenz);
+
+  /// Je Vorgang der jüngste Versand, für die Liste in der Vorgangsverwaltung.
+  /// Ein Aufruf statt einer Nachfrage je Zeile.
+  Future<List<VersandEintrag>> ladeLetzteVersaende();
+
+  /// Welches Outlook auf diesem Rechner steht — beim Start des Dienstes einmal
+  /// ermittelt. Entscheidet, ob Entwurf, Anhang-Griff und Signatur-Übernahme
+  /// überhaupt etwas liefern können.
+  Future<OutlookStand> ladeOutlookStand();
 
   /// Wirft eine zwischengelagerte Anhangsdatei weg. Nur innerhalb der Ablage
   /// des Dienstes — alles andere lehnt er ab.

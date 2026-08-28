@@ -8,6 +8,7 @@ import 'package:automation_app/features/email_versand/domain/repositories/email_
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/entwurf_quellen.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/outlook_anhaenge_griff.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
@@ -25,7 +26,8 @@ import 'package:injectable/injectable.dart';
 /// Stelle durchreichen, und der Dialog wird von zwei Tabs aus geöffnet, deren
 /// Blocs nichts miteinander zu tun haben.
 @injectable
-class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
+class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
+    with OutlookAnhaengeGriff {
   final EmailVersandRepository _repository;
   final VersichererCubit _versicherer;
   final EntwurfQuellen _quellen;
@@ -40,6 +42,9 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     this._versicherer,
   ) : _quellen = EntwurfQuellen(_repository, getKanzleiSettings, getMandanten),
       super(const EmailEntwurfState());
+
+  @override
+  EmailVersandRepository get versandRepository => _repository;
 
   /// Legt den vorbelegten Entwurf an und fragt nebenbei, ob überhaupt gesendet
   /// werden kann. Die Bereitschaft steht damit auf dem Schirm, bevor der Anwalt
@@ -84,9 +89,16 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
     // nichts (§4.7).
     unawaited(_repository.waermeEntwurfVor());
 
-    final bereitschaft = await _quellen.bereitschaft();
+    // Beides nebeneinander: Der Postausgang wird befragt, der Outlook-Stand
+    // liegt beim Dienst schon bereit (er sieht beim Start einmal nach).
+    final auskuenfte = await (
+      _quellen.bereitschaft(),
+      _quellen.outlookStand(),
+    ).wait;
     if (isClosed) return;
-    emit(state.copyWith(bereitschaft: bereitschaft));
+    emit(
+      state.copyWith(bereitschaft: auskuenfte.$1, outlookStand: auskuenfte.$2),
+    );
   }
 
   void empfaengerHinzufuegen(String adresse) =>
@@ -121,59 +133,6 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
   void signaturBildUmschalten(String dateiname) =>
       _setzeEntwurf(state.entwurf.mitUmgeschaltetemSignaturBild(dateiname));
 
-  /// Holt die Anhänge aus der Nachricht, die in Outlook gerade offen ist, und
-  /// **bietet** sie an (§4.7). Angehängt werden sie erst auf Klick — wie die
-  /// Dateien aus dem Fall-Ordner.
-  ///
-  /// Meldet beides: was in der Nachricht hing und was davon neu ist. Wer
-  /// zweimal drückt, soll „liegt schon da" zu sehen bekommen und nicht ein
-  /// Fenster, in dem sich nichts rührt. Null heißt: gescheitert, der Grund
-  /// steht im Zustand.
-  Future<({int gefunden, int neu})?> anhaengeAusOutlook() async {
-    if (state.holtAusOutlook) return null;
-    emit(state.copyWith(holtAusOutlook: true, fehler: () => null));
-
-    try {
-      final geholt = await _repository.ladeOutlookAnhaenge();
-
-      // Was schon angehängt oder schon angeboten ist, nicht doppelt zeigen.
-      // Der Dienst legt je Nachricht denselben Pfad an, deshalb trägt der
-      // Vergleich auch beim zweiten Griff nach derselben Mail.
-      final bekannt = {...state.ausOutlook, ...state.entwurf.anhangPfade};
-      final neu = geholt.where((pfad) => !bekannt.contains(pfad)).toList();
-      if (isClosed) return (gefunden: geholt.length, neu: neu.length);
-
-      emit(
-        state.copyWith(
-          holtAusOutlook: false,
-          ausOutlook: [...state.ausOutlook, ...neu],
-        ),
-      );
-      return (gefunden: geholt.length, neu: neu.length);
-    } catch (e) {
-      if (isClosed) return null;
-      emit(
-        state.copyWith(holtAusOutlook: false, fehler: () => ausnahmeText(e)),
-      );
-      return null;
-    }
-  }
-
-  /// Nimmt einen aus Outlook geholten Vorschlag aus der Reihe **und** loescht
-  /// die zwischengelagerte Datei: Was der Anwalt verwirft, soll nicht in der
-  /// Ablage liegen bleiben. Der Rueckweg bleibt das erneute Holen — die
-  /// Nachricht liegt ja weiter im Postfach.
-  void outlookAnhangVerwerfen(String pfad) {
-    emit(
-      state.copyWith(
-        ausOutlook: state.ausOutlook
-            .where((vorhanden) => vorhanden != pfad)
-            .toList(),
-      ),
-    );
-    unawaited(_repository.verwirfAnhang(pfad));
-  }
-
   /// Benennt den Anhang **fuer die Mail** um; die Datei in der Akte behaelt
   /// ihren Namen.
   void anhangUmbenennen(String pfad, String name) =>
@@ -182,11 +141,26 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
   void anhangEntfernen(String pfad) =>
       _setzeEntwurf(state.entwurf.ohneAnhang(pfad));
 
+  /// Nimmt auf, was in einer Empfängerzeile steht, aber noch nicht übernommen
+  /// ist. Der Zustand muss es kennen, damit die Prüfung beim Senden es sieht —
+  /// eine eingetippte, nicht übernommene Adresse ginge sonst still verloren.
+  void setzeOffeneEingabe({String? an, String? kopie}) =>
+      emit(state.copyWith(offenAn: an, offenKopie: kopie));
+
+  /// Merkt sich den Versuch und meldet, ob die Mail hinaus kann. Ab jetzt
+  /// markiert das Formular, was fehlt (§4.7): Der Knopf ist anfassbar, und die
+  /// Begründung kommt beim Drücken statt als dauerhafter Kasten über dem
+  /// Formular.
+  bool istVersandbereit() {
+    emit(state.copyWith(versandVersucht: true));
+    return state.pruefung.vollstaendig;
+  }
+
   /// Sendet und meldet, ob es geklappt hat. Bei einem Fehler ist nichts
   /// hinausgegangen — der Entwurf bleibt vollständig erhalten, damit der
   /// Anwalt nach der Ursache nur noch einmal auf „Senden" drücken muss.
   Future<bool> senden() async {
-    if (!state.kannSenden) return false;
+    if (!state.kannSenden || !state.pruefung.vollstaendig) return false;
     emit(state.copyWith(phase: EmailVersandPhase.sendet, fehler: () => null));
 
     try {
@@ -217,7 +191,7 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState> {
   /// wird dort von Hand — deshalb schaltet die Phase **nicht** auf `gesendet`:
   /// Was die App nicht weiß, darf sie im Abschlussdialog nicht behaupten.
   Future<EmailEntwurfErgebnis?> entwurfOeffnen() async {
-    if (!state.kannEntwurfOeffnen) return null;
+    if (!state.kannEntwurfOeffnen || !state.pruefung.vollstaendig) return null;
     emit(
       state.copyWith(phase: EmailVersandPhase.uebergibt, fehler: () => null),
     );

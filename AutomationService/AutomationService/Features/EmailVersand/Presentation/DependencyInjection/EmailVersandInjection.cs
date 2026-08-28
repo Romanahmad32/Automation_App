@@ -22,12 +22,17 @@ public static class EmailVersandInjection
 
         services.AddScoped<GesendetOrdnerAblage>();
         services.AddScoped<KanzleiSignatur>();
+        services.AddScoped<VersandProtokoll>();
         services.AddScoped<SignaturUebernahme>();
         // Singleton: Der Dienst haelt einen STA-Thread und die
         // Outlook-Instanz am Leben — je Anfrage neu aufzubauen hiesse, den
         // Kaltstart jedes Mal zu bezahlen.
         services.AddSingleton<OutlookVerbindung>();
         services.AddSingleton<AnhangAblage>();
+        // Singleton fuer die Abfrage, Hosted Service fuers Erzeugen: So laeuft
+        // die Erkennung beim Hochfahren und nicht erst beim ersten Klick.
+        services.AddSingleton<OutlookErkennung>();
+        services.AddHostedService(sp => sp.GetRequiredService<OutlookErkennung>());
         services.AddSingleton<SignaturAblage>();
         services.AddHostedService<AnhangAufraeumService>();
         services.AddScoped<EntwurfDatei>();

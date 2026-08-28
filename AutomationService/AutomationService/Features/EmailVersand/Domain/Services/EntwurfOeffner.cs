@@ -16,6 +16,7 @@ public sealed class EntwurfOeffner(
     MailboxConfigStore configStore,
     OutlookVerbindung outlook,
     EntwurfDatei datei,
+    VersandProtokoll protokoll,
     IOptions<EmailVersandOptions> optionen) : IEntwurfOeffner
 {
     public async Task<EntwurfErgebnis> OeffneAsync(
@@ -34,6 +35,7 @@ public sealed class EntwurfOeffner(
         var inOutlook = await Task.Run(() => outlook.OeffneEntwurf(nachricht), cancellationToken);
         if (inOutlook)
         {
+            await ProtokolliereAsync(nachricht, VersandWeg.OutlookEntwurf, cancellationToken);
             return new EntwurfErgebnis(EntwurfWeg.Outlook, null);
         }
 
@@ -46,6 +48,7 @@ public sealed class EntwurfOeffner(
 
         if (datei.Oeffne(mime))
         {
+            await ProtokolliereAsync(nachricht, VersandWeg.Entwurfsdatei, cancellationToken);
             return new EntwurfErgebnis(
                 EntwurfWeg.Datei,
                 "Outlook war nicht erreichbar. Der Entwurf wurde als Datei geöffnet — die "
@@ -57,4 +60,35 @@ public sealed class EntwurfOeffner(
             "Der Entwurf ließ sich weder in Outlook noch als Datei öffnen. Ist auf diesem "
             + "Rechner ein Mailprogramm eingerichtet?");
     }
+
+    /// <summary>
+    /// Hält die Übergabe fest — als <b>übergeben</b>, nicht als gesendet.
+    /// Gesendet wird im Mailprogramm, und ob es geschah, erfährt die App nie
+    /// (§4.8). Ohne diesen Eintrag stünde der zweite Versandweg nirgends, und
+    /// die Frage „ist das Schreiben raus?" wäre für ihn gar nicht zu stellen.
+    ///
+    /// Kein Zeitpunkt des Versands, sondern der der Übergabe — und keine
+    /// Message-ID: Die vergibt erst das Mailprogramm.
+    /// </summary>
+    private Task ProtokolliereAsync(
+        EmailNachricht nachricht,
+        VersandWeg weg,
+        CancellationToken cancellationToken) =>
+        protokoll.SchreibeAsync(
+            new VersandEintrag(
+                nachricht.VorgangReferenz,
+                DateTimeOffset.Now,
+                weg,
+                nachricht.AbsenderName,
+                nachricht.An,
+                nachricht.Kopie,
+                nachricht.Betreff,
+                [.. nachricht.AnhangPfade.Select(pfad => Anzeigename(nachricht, pfad))]),
+            cancellationToken);
+
+    /// <summary>Der Name, unter dem der Anhang beim Empfänger ankommt.</summary>
+    private static string Anzeigename(EmailNachricht nachricht, string pfad) =>
+        nachricht.AnhangNamen?.TryGetValue(pfad, out var name) == true && name.Length > 0
+            ? name
+            : Path.GetFileName(pfad);
 }

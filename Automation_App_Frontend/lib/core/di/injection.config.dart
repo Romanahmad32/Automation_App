@@ -37,6 +37,8 @@ import 'package:automation_app/features/email_versand/domain/repositories/email_
     as _i67;
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart'
     as _i318;
+import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart'
+    as _i161;
 import 'package:automation_app/features/form_template_setup/data/datasources/form_template_datasource.dart'
     as _i308;
 import 'package:automation_app/features/form_template_setup/data/datasources/word_template_datasource.dart'
@@ -322,6 +324,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i777.ZentralrufRepository>(
       () => _i248.ZentralrufRepositoryImpl(gh<_i615.ZentralrufDatasource>()),
+    );
+    gh.lazySingleton<_i161.LetzteVersaendeCubit>(
+      () => _i161.LetzteVersaendeCubit(gh<_i67.EmailVersandRepository>()),
     );
     gh.factory<_i865.MailboxConfigBloc>(
       () => _i865.MailboxConfigBloc(gh<_i469.MailboxRepository>()),

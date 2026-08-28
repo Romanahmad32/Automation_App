@@ -3,6 +3,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_fehlende_daten_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_naechster_schritt.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_status_chip.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_versand_zeile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_warte_hinweis.dart';
 import 'package:flutter/material.dart';
 
@@ -70,6 +71,7 @@ class VorgangVerwaltungTile extends StatelessWidget {
                       color: theme.colorScheme.outline,
                     ),
                   ),
+                  VorgangVersandZeile(referenz: vorgang.referenz),
                   VorgangWarteHinweis(vorgang: vorgang),
                   VorgangFehlendeDatenHinweis(vorgang: vorgang),
                 ],

@@ -18,6 +18,12 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// steht, soll der Anwalt sehen, bevor sie hinausgeht, und nicht erst im
 /// Ordner "Gesendet".
 /// </param>
+/// <param name="SignaturHtml">
+/// Die formatierte Fassung derselben Signatur — der Rumpf, wie er in die Mail
+/// geht. Die Vorschau rendert ihn; ohne ihn zeigte sie Outlooks
+/// Nur-Text-Uebersetzung und damit etwas anderes, als beim Empfaenger ankommt.
+/// Leer, wenn keine formatierte Fassung uebernommen wurde.
+/// </param>
 /// <param name="SignaturBilder">
 /// Die Bilder der formatierten Signatur mit ihrer Groesse. Der Anwalt laesst
 /// einzelne davon je Mail weg — das schwere Werbebild etwa —, und dafuer muss
@@ -33,6 +39,7 @@ public sealed record EmailVersandBereitschaft(
     string Absender,
     string? Hinweis,
     string Signatur = "",
+    string SignaturHtml = "",
     IReadOnlyList<SignaturBild>? SignaturBilder = null,
     int MaxAnhangMb = 0)
 {

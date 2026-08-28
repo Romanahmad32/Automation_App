@@ -29,11 +29,16 @@ internal static class OutlookAuswahl
 
     public static object? Anhaenge(dynamic outlook)
     {
-        var nachricht = AktuelleNachricht(outlook);
-        if (nachricht is null)
+        // Ueber object statt dynamic hinein: Ein Aufruf mit dynamischem
+        // Argument liefert wieder dynamic, und dynamic laesst sich nicht
+        // zerlegen.
+        var (gefunden, ausOffenemFenster) = AktuelleNachricht((object)outlook);
+        if (gefunden is null)
         {
-            return Array.Empty<string>();
+            return OutlookAnhaenge.Keine;
         }
+
+        dynamic nachricht = gefunden;
 
         // Ein Ordner je Nachricht, benannt nach ihrer EntryID. Damit liefert
         // der zweite Griff nach derselben Mail dieselben Pfade, statt
@@ -78,7 +83,7 @@ internal static class OutlookAuswahl
             }
         }
 
-        return pfade;
+        return OutlookAnhaenge.Von(nachricht, pfade, ausOffenemFenster);
     }
 
     /// <summary>
@@ -86,8 +91,14 @@ internal static class OutlookAuswahl
     /// Mail vor sich geöffnet hat, meint diese — auch wenn in der Liste
     /// dahinter noch eine andere markiert ist.
     /// </summary>
-    private static dynamic? AktuelleNachricht(dynamic outlook)
+    /// <returns>
+    /// Die Nachricht und ob sie aus einem offenen Fenster kam. Genau diese
+    /// Unterscheidung geht mit zurück an die Oberfläche: Sie ist der einzige
+    /// Grund, aus dem der Griff eine andere Mail erwischt als erwartet.
+    /// </returns>
+    private static (object? Nachricht, bool AusOffenemFenster) AktuelleNachricht(object anwendung)
     {
+        dynamic outlook = anwendung;
         try
         {
             object? inspector = outlook.ActiveInspector();
@@ -96,7 +107,7 @@ internal static class OutlookAuswahl
                 dynamic offen = inspector;
                 if (IstMail(offen.CurrentItem))
                 {
-                    return offen.CurrentItem;
+                    return (offen.CurrentItem, true);
                 }
             }
         }
@@ -110,14 +121,14 @@ internal static class OutlookAuswahl
             object? explorer = outlook.ActiveExplorer();
             if (explorer is null)
             {
-                return null;
+                return (null, false);
             }
 
             dynamic liste = explorer;
             dynamic auswahl = liste.Selection;
             if (auswahl.Count >= 1 && IstMail(auswahl.Item(1)))
             {
-                return auswahl.Item(1);
+                return (auswahl.Item(1), false);
             }
         }
         catch (COMException)
@@ -125,7 +136,7 @@ internal static class OutlookAuswahl
             // Keine Liste, keine Auswahl.
         }
 
-        return null;
+        return (null, false);
     }
 
     private static bool IstMail(dynamic? element)

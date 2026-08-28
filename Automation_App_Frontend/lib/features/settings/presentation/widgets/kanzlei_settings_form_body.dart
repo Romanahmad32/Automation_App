@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/reactive_searchable_dropdown.dart';
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
@@ -139,22 +140,10 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'möglich.',
           children: const [StammordnerField()],
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: ReactiveFormConsumer(
-            builder: (context, form, child) {
-              return FilledButton.icon(
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                label: const Text('Speichern'),
-                onPressed: (form.valid && !isSaving) ? onSave : null,
-              );
-            },
+        ReactiveFormConsumer(
+          builder: (context, form, child) => SpeichernButton(
+            speichert: isSaving,
+            onSpeichern: form.valid ? onSave : null,
           ),
         ),
       ],

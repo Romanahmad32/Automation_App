@@ -1,4 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
+import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau.dart';
 import 'package:flutter/material.dart';
 
@@ -13,11 +14,18 @@ class EmailVorschauDialog extends StatelessWidget {
   final String absender;
   final String signatur;
 
+  /// Die formatierte Fassung — sie wird gerendert.
+  final String signaturHtml;
+
+  final List<SignaturBild> signaturBilder;
+
   const EmailVorschauDialog({
     super.key,
     required this.entwurf,
     required this.absender,
     this.signatur = '',
+    this.signaturHtml = '',
+    this.signaturBilder = const [],
   });
 
   static Future<void> zeigen(
@@ -25,6 +33,8 @@ class EmailVorschauDialog extends StatelessWidget {
     required EmailEntwurf entwurf,
     required String absender,
     String signatur = '',
+    String signaturHtml = '',
+    List<SignaturBild> signaturBilder = const [],
   }) {
     return showDialog<void>(
       context: context,
@@ -32,6 +42,8 @@ class EmailVorschauDialog extends StatelessWidget {
         entwurf: entwurf,
         absender: absender,
         signatur: signatur,
+        signaturHtml: signaturHtml,
+        signaturBilder: signaturBilder,
       ),
     );
   }
@@ -40,12 +52,18 @@ class EmailVorschauDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Vorschau'),
+      // Feste Höhe: Die Vorschau bringt ihre eigene Bildlaufleiste mit und
+      // füllt, was sie bekommt. Ohne Grenze schöbe ein langes Anschreiben die
+      // Schaltfläche aus dem Fenster.
       content: SizedBox(
         width: 560,
+        height: 420,
         child: EmailVorschau(
           entwurf: entwurf,
           absender: absender,
           signatur: signatur,
+          signaturHtml: signaturHtml,
+          signaturBilder: signaturBilder,
         ),
       ),
       actions: [

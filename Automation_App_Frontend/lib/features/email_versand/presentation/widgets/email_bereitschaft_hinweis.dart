@@ -2,10 +2,14 @@ import 'package:automation_app/features/email_versand/domain/entities/email_vers
 import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
 import 'package:flutter/material.dart';
 
-/// Sagt oben im Dialog, von welcher Adresse aus gesendet wird — oder warum
-/// nicht gesendet werden kann (§4.7). Steht bewusst über dem Formular: Wer
-/// erst nach dem Tippen erfährt, dass die Anmeldung abgelaufen ist, hat
-/// umsonst getippt.
+/// Sagt oben im Dialog, warum **nicht** gesendet werden kann (§4.7). Steht
+/// bewusst über dem Formular: Wer erst nach dem Tippen erfährt, dass die
+/// Anmeldung abgelaufen ist, hat umsonst getippt.
+///
+/// Im Regelfall ist hier nichts — und das ist der Punkt. „Wird gesendet von
+/// kanzlei@…" stand hier früher als eigener Kasten und nahm dauerhaft Platz
+/// für eine Zeile weg, die sich nie ändert. Die Absenderadresse steht jetzt in
+/// der Titelzeile des Dialogs und in der Vorschau unter „Von".
 class EmailBereitschaftHinweis extends StatelessWidget {
   final EmailVersandBereitschaft? bereitschaft;
 
@@ -48,11 +52,6 @@ class EmailBereitschaftHinweis extends StatelessWidget {
       );
     }
 
-    return EmailHinweisKasten(
-      farbe: theme.colorScheme.surfaceContainerHighest,
-      vordergrund: theme.colorScheme.onSurfaceVariant,
-      symbol: Icons.outgoing_mail,
-      text: 'Wird gesendet von ${stand.absender}',
-    );
+    return const SizedBox.shrink();
   }
 }

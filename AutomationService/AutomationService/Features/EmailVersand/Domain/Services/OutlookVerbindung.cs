@@ -81,17 +81,23 @@ public sealed class OutlookVerbindung : IDisposable
 
     /// <summary>
     /// Die Anhänge der Nachricht, die in Outlook gerade offen oder ausgewählt
-    /// ist — abgelegt und mit vollem Pfad zurückgegeben (§4.7). Leer, wenn
-    /// nichts ausgewählt ist oder nichts dranhängt.
+    /// ist — abgelegt und mit vollem Pfad zurückgegeben (§4.7), dazu Betreff
+    /// und Absender dieser Nachricht.
+    ///
+    /// Leere Liste heißt: nichts ausgewählt oder nichts dran. Antwortet Outlook
+    /// gar nicht, kommt <see cref="OutlookAnhaenge.Unerreichbar"/> zurück —
+    /// beides als dieselbe leere Liste zu melden, hieße den Anwalt am falschen
+    /// Ende suchen zu lassen.
     /// </summary>
-    public IReadOnlyList<string> AnhaengeDerAuswahl()
+    public OutlookAnhaenge AnhaengeDerAuswahl()
     {
         if (!Verfuegbar)
         {
-            return [];
+            return OutlookAnhaenge.Unerreichbar;
         }
 
-        return Warte(Einreichen(OutlookAuswahl.Anhaenge)) as IReadOnlyList<string> ?? [];
+        return Warte(Einreichen(OutlookAuswahl.Anhaenge)) as OutlookAnhaenge
+            ?? OutlookAnhaenge.Unerreichbar;
     }
 
     private bool Verfuegbar => OperatingSystem.IsWindows() && !_entsorgt;

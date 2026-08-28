@@ -21,20 +21,20 @@ schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme
   im Backend in der Abschluss-Transaktion (`VorgangAbschlussService`); wer den UseCase danach aufruft, zählt doppelt.
 - `PUT /api/Settings` ersetzt **alle** Felder, und `AppSettingsView` füllt das Formular wegen `_initialized` nur einmal:
   Wurde die Auftragsnummer zwischenzeitlich durch einen Abschluss erhöht, schreibt „Speichern" den alten Stand zurück.
-- `AppSettingsView` braucht `wantKeepAlive` (im Code begründet): ohne KeepAlive verwirft die TabBarView
-  beim Tab-Wechsel den State, der Bloc steht schon auf `Loaded` und der Listener feuert nicht erneut — das
-  Formular wäre leer.
-- `KanzleiSettingsBloc` ist `@injectable`, also eine Factory. `word_automation_page.dart` erzeugt eine
-  eigene Instanz und sendet `LoadKanzleiSettingsEvent` selbst; eine Änderung in den Einstellungen
-  erreicht bereits offene Seiten nicht.
+- `AppSettingsView` braucht `wantKeepAlive` (im Code begründet): ohne KeepAlive verwirft die TabBarView beim
+  Tab-Wechsel den State, der Bloc steht auf `Loaded`, der Listener feuert nicht erneut — das Formular wäre leer.
+- `KanzleiSettingsBloc` ist `@injectable`, also eine Factory. `word_automation_page.dart` erzeugt eine eigene
+  Instanz und lädt selbst; eine Änderung in den Einstellungen erreicht bereits offene Seiten nicht.
 - Fremdabhängigkeiten: `mandanten` liest `aktenStammordner`, `vorgang_starten` liest
   `laufendeAuftragsnummer`/`abteilung`. Beide werten einen Ladefehler als leeren Wert (`Left() => ''`) — ein
   Backend-Fehler sieht dort aus wie „kein Ordner gewählt".
 - Die Reiter „E-Mail" und „Datensicherung" gehören den Features `mailbox` bzw. `backup`;
   `DefaultTabController(length: 5)` ist beim Ergänzen eines Reiters mitzupflegen.
-- Die **Mail-Signatur** steht im Reiter „E-Mail" (`MailSignaturSektion`) und speichert über `SaveMailSignaturEvent`
+- Die **Mail-Signatur** steht im Reiter „E-Mail" (`MailSignaturSektion`) und schreibt über `SaveMailSignaturEvent`
   **für sich**; `…Loaded.gespeichert` sagt, welcher Reiter gespeichert hat. Deshalb setzt `AppSettingsView._save` per
-  `copyWith` auf dem geladenen Stand auf — sonst löscht es die Felder der Nachbarreiter mit.
+  `copyWith` auf dem geladenen Stand auf — sonst löscht es die Felder der Nachbarreiter mit. Einen **eigenen Knopf**
+  hat sie trotzdem nicht: Den einen der Seite ruft `MailboxAccessView._save`, er schreibt beides
+  (`speichereWennGeaendert`) — zwei Knöpfe „Speichern" untereinander sahen aus wie zwei Formulare.
 - `mailSignaturHtml` wird **nur durchgereicht**: Übernommen und verworfen wird die formatierte Signatur im Dienst
   (`POST/DELETE api/EmailVersand/signaturen/…`), weil dabei Bilder abzulegen sind. Nach einer Übernahme lädt
   `MailSignaturSektion` die Einstellungen neu — sonst schriebe das nächste Speichern die alte Fassung zurück.

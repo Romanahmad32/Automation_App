@@ -1,47 +1,56 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
+import 'package:automation_app/features/email_versand/domain/entities/versand_pruefung.dart';
 
-/// Was noch fehlt, damit die Mail hinausgehen kann (§4.7).
+/// Prüft, ob die Mail hinausgehen kann, und sagt je Feld, was fehlt (§4.7).
 ///
-/// Ein abgeblendeter „Senden"-Knopf ist eine Behauptung ohne Begründung. Beim
-/// Testen fiel genau der Fall auf, in dem er am teuersten ist: Der Anwalt tippt
-/// die Adresse ein und drückt Senden, ohne sie mit der Eingabetaste übernommen
-/// zu haben. Das Feld sieht ausgefüllt aus, der Entwurf hat aber keinen
-/// Empfänger — und nichts auf dem Schirm erklärt den Unterschied.
+/// Beim Testen fiel der Fall auf, in dem eine Prüfung am teuersten fehlt: Der
+/// Anwalt tippt die Adresse ein und drückt Senden, ohne sie mit der
+/// Eingabetaste übernommen zu haben. Das Feld sieht ausgefüllt aus, der Entwurf
+/// hat aber keinen Empfänger — und nichts auf dem Schirm erklärt den
+/// Unterschied. Genau dieser Fall steht deshalb an der Empfängerzeile.
 class VersandVoraussetzungen {
   const VersandVoraussetzungen._();
 
-  /// Die offenen Punkte im Klartext, leer wenn gesendet werden kann.
+  /// [offenAn] und [offenKopie] sind Texte, die in einer Empfängerzeile stehen,
+  /// aber noch nicht übernommen wurden.
   ///
-  /// [offeneEingaben] sind Texte, die in einer Empfängerzeile stehen, aber noch
-  /// nicht übernommen wurden. Sie stehen bewusst **zuerst**: Sie sind der
-  /// einzige Punkt, den der Anwalt nicht sieht, indem er auf das Formular
-  /// schaut.
   /// [gesamtBytes] ist die Nachricht mit Anhängen und Signaturbildern,
   /// [maxBytes] die Grenze des Postfachs (null = unbekannt). Die Grenze erst
   /// beim Senden zu nennen, hieße sie nach dem einen unumkehrbaren Klick zu
   /// nennen — der Server der Gegenseite weist die Mail dann ab, und der Anwalt
   /// hat einen Fehler auf Englisch statt einer Zahl vor sich.
-  static List<String> fehlend({
+  static VersandPruefung pruefe({
     required EmailEntwurf entwurf,
-    List<String> offeneEingaben = const [],
+    String offenAn = '',
+    String offenKopie = '',
     int gesamtBytes = 0,
     int? maxBytes,
   }) {
-    final offen = offeneEingaben
-        .map((text) => text.trim())
-        .where((text) => text.isNotEmpty);
+    return VersandPruefung(
+      anFehler:
+          _nichtUebernommen(offenAn) ??
+          (entwurf.an.isEmpty
+              ? 'Ohne Empfänger geht keine Mail hinaus.'
+              : null),
+      kopieFehler: _nichtUebernommen(offenKopie),
+      betreffFehler: entwurf.betreff.trim().isEmpty
+          ? 'Ohne Betreff geht keine Mail hinaus.'
+          : null,
+      groesseFehler: maxBytes != null && gesamtBytes > maxBytes
+          ? 'Die Nachricht ist mit ${_mb(gesamtBytes)} MB zu groß — die Grenze '
+                'liegt bei ${_mb(maxBytes)} MB. Weniger anhängen, die Dateien '
+                'verkleinern oder ein Bild aus der Signatur weglassen.'
+          : null,
+    );
+  }
 
-    return [
-      for (final text in offen)
-        'Die Adresse „$text" ist noch nicht übernommen — mit der Eingabetaste '
-            'oder dem Pluszeichen hinzufügen.',
-      if (entwurf.an.isEmpty) 'ein Empfänger im Feld „An"',
-      if (entwurf.betreff.trim().isEmpty) 'ein Betreff',
-      if (maxBytes != null && gesamtBytes > maxBytes)
-        'Die Nachricht ist mit ${_mb(gesamtBytes)} MB zu groß — die Grenze '
-            'liegt bei ${_mb(maxBytes)} MB. Weniger anhängen, die Dateien '
-            'verkleinern oder ein Bild aus der Signatur weglassen.',
-    ];
+  /// Eine eingetippte, aber nicht übernommene Adresse. Sie ginge beim Senden
+  /// verloren, ohne dass es jemand merkt — deshalb hält sie den Versand auf.
+  static String? _nichtUebernommen(String eingabe) {
+    final text = eingabe.trim();
+    if (text.isEmpty) return null;
+    return 'Die Adresse „$text" ist noch nicht übernommen — mit der '
+        'Eingabetaste oder dem Pluszeichen hinzufügen.';
   }
 
   static String _mb(int bytes) => (bytes / (1024 * 1024)).toStringAsFixed(1);

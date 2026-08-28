@@ -55,7 +55,7 @@ public static class OutlookSignaturen
     /// Übernahme. Null, wenn es keine gibt oder sie unbrauchbar ist; dann
     /// bleibt es bei der Textfassung.
     /// </summary>
-    public static (string Html, Dictionary<string, byte[]> Bilder)? LiesFormat(string name)
+    public static OutlookSignaturFormat? LiesFormat(string name)
     {
         var ordner = Ordner();
         return ordner is null ? null : OutlookSignaturHtml.Lies(HtmlPfad(ordner, name));

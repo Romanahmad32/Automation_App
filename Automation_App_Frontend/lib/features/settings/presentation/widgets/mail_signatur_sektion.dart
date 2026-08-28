@@ -2,36 +2,59 @@ import 'dart:async';
 
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
+import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/outlook_hinweis_zeile.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_aus_outlook_button.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_format_zeile.dart';
+import 'package:automation_app/features/settings/presentation/widgets/signatur_render_vorschau.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Signatur unter dem Mailtext beim Direktversand (§4.7) — im Reiter
 /// „E-Mail", bei dem Zugang, über den die Mail hinausgeht.
 ///
-/// Sie liegt zwar im selben Einstellungssatz wie die Kanzleidaten, wird aber
-/// **einzeln** gespeichert: Die beiden Formulare stehen in verschiedenen
-/// Reitern, und ein Rundum-Speichern aus dem einen würde die ungespeicherten
-/// Änderungen des anderen überschreiben.
+/// **Kein eigener Speichern-Knopf.** Sie hatte einen, weil sie in einem anderen
+/// Einstellungssatz landet als die Postfachdaten daneben — eine Begründung aus
+/// der Bauart, die auf dem Schirm nichts erklärte: Zwei Knöpfe „Speichern"
+/// untereinander sahen aus wie zwei Formulare, und der obere stand mitten auf
+/// der Seite, als gälte er für alles. Jetzt schreibt der eine Knopf der Seite
+/// beides, jedes auf seinem Weg ([speichereWennGeaendert]).
 class MailSignaturSektion extends StatefulWidget {
-  const MailSignaturSektion({super.key});
+  /// Gehört der Seite, nicht diesem Abschnitt: Ihr Speichern-Knopf liest daraus.
+  final TextEditingController controller;
+
+  const MailSignaturSektion({super.key, required this.controller});
+
+  /// Schreibt die Signatur, wenn sie vom gespeicherten Stand abweicht, und
+  /// meldet, ob etwas hinausging.
+  ///
+  /// Eigenes Ereignis und nicht Teil des Kanzlei-Formulars: Beide hängen am
+  /// selben Einstellungssatz, stehen aber in verschiedenen Reitern — ein
+  /// Rundum-Speichern aus dem einen überschriebe die ungespeicherten Änderungen
+  /// des anderen.
+  static bool speichereWennGeaendert(BuildContext context, String signatur) {
+    final bloc = context.read<KanzleiSettingsBloc>();
+    final stand = bloc.state;
+    final gespeichert = stand is KanzleiSettingsLoaded
+        ? stand.settings.mailSignatur
+        : '';
+
+    final neu = signatur.trim();
+    if (neu == gespeichert.trim()) return false;
+    bloc.add(SaveMailSignaturEvent(neu));
+    return true;
+  }
 
   @override
   State<MailSignaturSektion> createState() => _MailSignaturSektionState();
 }
 
 class _MailSignaturSektionState extends State<MailSignaturSektion> {
-  final TextEditingController _text = TextEditingController();
-
-  /// Der Stand in der Datenbank. Weicht das Feld davon ab, gibt es etwas zu
-  /// speichern — und nur dann ist der Knopf scharf.
-  String _gespeichert = '';
-
   bool _geladen = false;
 
   /// Was der Dienst gespeichert hat: formatierte Fassung ja/nein und ihre
@@ -40,19 +63,41 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
   /// die Leitung.
   SignaturStand _stand = const SignaturStand();
 
+  /// Welches Outlook hier steht. Ohne das klassische gibt es nichts zu
+  /// übernehmen — dann steht statt des Knopfes der Grund da.
+  OutlookStand _outlook = OutlookStand.unbekannt;
+
   @override
   void initState() {
     super.initState();
+
+    // Den **vorhandenen** Stand lesen, nicht auf den nächsten Übergang warten:
+    // Beim zweiten Öffnen des Reiters steht der Bloc längst auf Loaded, es
+    // kommt kein Übergang mehr, und der Listener unten feuert nie. Das Feld
+    // blieb dann leer — und wer darauf „Speichern" drückte, schrieb die leere
+    // Fassung über die gepflegte.
+    final stand = context.read<KanzleiSettingsBloc>().state;
+    if (stand is KanzleiSettingsLoaded) _nachziehen(stand.settings);
+
     unawaited(_standLaden());
   }
 
   Future<void> _standLaden() async {
     try {
-      final geladen = await getIt<EmailVersandRepository>().ladeSignaturStand();
-      if (mounted) setState(() => _stand = geladen);
+      final dienst = getIt<EmailVersandRepository>();
+      final geladen = await (
+        dienst.ladeSignaturStand(),
+        dienst.ladeOutlookStand(),
+      ).wait;
+      if (!mounted) return;
+      setState(() {
+        _stand = geladen.$1;
+        _outlook = geladen.$2;
+      });
     } catch (_) {
-      // Ohne diese Auskunft fehlt nur die Zeile ueber dem Feld. Der Text
-      // darunter kommt aus den Einstellungen und steht ohnehin.
+      // Ohne diese Auskunft fehlen nur die Zeile ueber dem Feld und die Bilder
+      // in der Vorschau. Der Text darunter kommt aus den Einstellungen und
+      // steht ohnehin.
     }
   }
 
@@ -62,20 +107,34 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
   void _uebernommen(SignaturStand stand) {
     setState(() {
       _stand = stand;
-      _gespeichert = stand.text;
-      _text.text = stand.text;
+      widget.controller.text = stand.text;
     });
     context.read<KanzleiSettingsBloc>().add(const LoadKanzleiSettingsEvent());
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          stand.hatFormat
-              ? 'Signatur übernommen — mit Formatierung und '
-                    '${stand.bilder.length} Bild(ern).'
-              : 'Signatur übernommen.',
-        ),
+        content: Text(_uebernahmeMeldung(stand)),
+        duration: Duration(seconds: stand.uebergangen.isEmpty ? 4 : 8),
       ),
     );
+  }
+
+  /// Was übernommen wurde — und was nicht.
+  ///
+  /// Der zweite Teil ist der wichtigere: Ein Bild, das nicht mitgenommen
+  /// werden konnte, fehlt danach in jeder Mail. Es wegzulassen **und** zu
+  /// verschweigen, hiesse den Anwalt eine unvollständige Signatur führen zu
+  /// lassen, ohne dass er es je erfährt.
+  static String _uebernahmeMeldung(SignaturStand stand) {
+    final grundstock = stand.hatFormat
+        ? 'Signatur übernommen — mit Formatierung und '
+              '${stand.bilder.length} Bild(ern).'
+        : 'Signatur übernommen.';
+
+    if (stand.uebergangen.isEmpty) return grundstock;
+
+    final namen = stand.uebergangen.map(AnhangDarstellung.name).join(', ');
+    return '$grundstock Nicht mitgenommen wurde $namen — zu groß, leer oder '
+        'nicht lesbar. Die Signatur geht ohne dieses Bild hinaus.';
   }
 
   Future<void> _formatVerwerfen() async {
@@ -99,27 +158,13 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
     }
   }
 
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
   /// Übernimmt den geladenen Stand. Das Textfeld wird dabei nur **einmal**
   /// gesetzt: Speichert nebenan das Kanzleiformular, lädt der Bloc neu — was
   /// hier schon getippt ist, darf dabei nicht verschwinden.
   void _nachziehen(KanzleiSettings settings) {
-    _gespeichert = settings.mailSignatur;
-    if (!_geladen) {
-      _geladen = true;
-      _text.text = settings.mailSignatur;
-    }
-  }
-
-  void _speichern() {
-    context.read<KanzleiSettingsBloc>().add(
-      SaveMailSignaturEvent(_text.text.trim()),
-    );
+    if (_geladen) return;
+    _geladen = true;
+    widget.controller.text = settings.mailSignatur;
   }
 
   @override
@@ -128,11 +173,6 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       listener: (context, state) {
         if (state is! KanzleiSettingsLoaded) return;
         setState(() => _nachziehen(state.settings));
-        if (state.gespeichert == KanzleiSettingsBereich.signatur) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Signatur gespeichert')));
-        }
       },
       builder: (context, state) {
         final speichertGerade = state is KanzleiSettingsLoading;
@@ -152,7 +192,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
               aktiv: !speichertGerade,
             ),
             TextField(
-              controller: _text,
+              controller: widget.controller,
               enabled: !speichertGerade,
               minLines: 4,
               maxLines: 10,
@@ -165,33 +205,27 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
                 border: OutlineInputBorder(),
               ),
             ),
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _text,
-              builder: (context, wert, _) {
-                final geaendert = wert.text.trim() != _gespeichert.trim();
-                return Row(
-                  children: [
-                    SignaturAusOutlookButton(
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _outlook.steuerbar
+                  ? SignaturAusOutlookButton(
                       aktiv: !speichertGerade,
                       onUebernommen: _uebernommen,
+                    )
+                  : OutlookHinweisZeile(
+                      stand: _outlook,
+                      was:
+                          'Die Signatur lässt sich nicht aus Outlook '
+                          'übernehmen',
                     ),
-                    const Spacer(),
-                    FilledButton.icon(
-                      onPressed: geaendert && !speichertGerade
-                          ? _speichern
-                          : null,
-                      icon: speichertGerade
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save),
-                      label: const Text('Signatur speichern'),
-                    ),
-                  ],
-                );
-              },
+            ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: widget.controller,
+              builder: (context, wert, _) => SignaturRenderVorschau(
+                text: wert.text,
+                html: _stand.html,
+                bilder: _stand.bilder,
+              ),
             ),
           ],
         );

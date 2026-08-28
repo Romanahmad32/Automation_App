@@ -4,8 +4,11 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_anhaenge.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
+import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
+import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
@@ -56,16 +59,34 @@ class _FakeVersandRepository implements EmailVersandRepository {
   /// Was Outlook auf die Frage nach den Anhaengen der offenen Nachricht liefert.
   List<String> outlookAnhaenge = const [];
 
+  /// Die Nachricht, aus der die Anhaenge stammen.
+  String outlookBetreff = 'AW: Unfall vom 12.03.';
+
   /// Die Pfade, deren Datei die Oberflaeche wegwerfen liess.
   final List<String> verworfen = [];
+
+  @override
+  Future<OutlookStand> ladeOutlookStand() async => OutlookStand.unbekannt;
+
+  @override
+  Future<List<VersandEintrag>> ladeVersandProtokoll(String referenz) async =>
+      const [];
+
+  @override
+  Future<List<VersandEintrag>> ladeLetzteVersaende() async => const [];
 
   @override
   Future<void> verwirfAnhang(String pfad) async => verworfen.add(pfad);
 
   @override
-  Future<List<String>> ladeOutlookAnhaenge() async {
+  Future<OutlookAnhaenge> ladeOutlookAnhaenge() async {
     if (wirft != null) throw wirft!;
-    return outlookAnhaenge;
+    return OutlookAnhaenge(
+      pfade: outlookAnhaenge,
+      betreff: outlookAnhaenge.isEmpty ? '' : outlookBetreff,
+      absender: 'gegner@example.de',
+      ausOffenemFenster: true,
+    );
   }
 
   @override
@@ -213,7 +234,12 @@ void main() {
     expect(gebaut.register.aufrufe, 0);
     expect(gebaut.cubit.state.entwurf.an, isEmpty);
     expect(gebaut.cubit.state.entwurf.betreff, isEmpty);
-    expect(gebaut.cubit.state.kannSenden, isFalse);
+    // Der Knopf bleibt anfassbar -- was fehlt, sagt die Pruefung beim Druecken
+    // (§4.7), nicht ein abgeblendeter Knopf ohne Begruendung.
+    expect(gebaut.cubit.state.kannSenden, isTrue);
+    expect(gebaut.cubit.state.pruefung.vollstaendig, isFalse);
+    expect(gebaut.cubit.istVersandbereit(), isFalse);
+    expect(await gebaut.cubit.senden(), isFalse);
     await gebaut.cubit.close();
   });
 
@@ -382,7 +408,11 @@ void main() {
 
     final ergebnis = await gebaut.cubit.anhaengeAusOutlook();
 
-    expect(ergebnis, (gefunden: 1, neu: 1));
+    expect(ergebnis?.neu, 1);
+    expect(ergebnis?.griff.pfade, hasLength(1));
+    // Aus welcher Nachricht die Vorschlaege kommen, steht danach im Zustand --
+    // ohne das laegen Dateien da, ohne dass etwas ihre Herkunft sagt.
+    expect(gebaut.cubit.state.outlookQuelle?.betreff, 'AW: Unfall vom 12.03.');
     expect(gebaut.cubit.state.ausOutlook, [r'C:\Outlook\Gutachten.pdf']);
     expect(gebaut.cubit.state.entwurf.anhangPfade, isEmpty);
     await gebaut.cubit.close();
@@ -433,7 +463,8 @@ void main() {
     // Griff nichts neu -- und die Oberflaeche kann das sagen, statt still
     // nichts zu tun.
     expect(gebaut.cubit.state.ausOutlook, hasLength(1));
-    expect(zweiter, (gefunden: 1, neu: 0));
+    expect(zweiter?.neu, 0);
+    expect(zweiter?.griff.pfade, hasLength(1));
     await gebaut.cubit.close();
   });
 
@@ -441,7 +472,14 @@ void main() {
     final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
     await gebaut.cubit.starte(vorgang: vorgang);
 
-    expect(await gebaut.cubit.anhaengeAusOutlook(), (gefunden: 0, neu: 0));
+    final griff = await gebaut.cubit.anhaengeAusOutlook();
+
+    expect(griff?.neu, 0);
+    expect(griff?.griff.pfade, isEmpty);
+    // Outlook hat geantwortet, es war nur nichts ausgewaehlt -- das ist etwas
+    // anderes als ein stummes Outlook und wird auch anders gemeldet.
+    expect(griff?.griff.outlookErreicht, isTrue);
+    expect(griff?.griff.hatNachricht, isFalse);
     expect(gebaut.cubit.state.ausOutlook, isEmpty);
     expect(gebaut.cubit.state.holtAusOutlook, isFalse);
     await gebaut.cubit.close();

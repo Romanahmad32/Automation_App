@@ -67,6 +67,10 @@ internal static partial class MailRumpf
     /// Verglichen wird ohne Rücksicht auf Groß- und Kleinschreibung: Windows
     /// unterscheidet sie in Dateinamen nicht, Outlooks HTML tut es mitunter
     /// doch — und ein danebengehender Vergleich hieße: Logo weg.
+    ///
+    /// Getauscht wird an <b>jedem</b> Verweis, nicht nur am ersten: Dasselbe
+    /// Bild steht in Outlooks Signatur zweimal — einmal als VML-Form für
+    /// Outlook, einmal als <c>&lt;img&gt;</c> für alle übrigen Programme.
     /// </summary>
     private static string MitQuelle(string html, string dateiname, string cid) =>
         QuelleMuster().Replace(html, treffer =>
@@ -83,7 +87,7 @@ internal static partial class MailRumpf
     private static string AlsHtml(string text) =>
         WebUtility.HtmlEncode(text).Replace("\r\n", "\n").Replace("\n", "<br>");
 
-    [GeneratedRegex(@"(?<vor>\bsrc\s*=\s*(?<q>[""']))(?<url>[^""']*)(?<nach>\k<q>)",
+    [GeneratedRegex(@"(?<vor>\b(?:src|background)\s*=\s*(?<q>[""']))(?<url>[^""']*)(?<nach>\k<q>)",
         RegexOptions.IgnoreCase)]
     private static partial Regex QuelleMuster();
 }

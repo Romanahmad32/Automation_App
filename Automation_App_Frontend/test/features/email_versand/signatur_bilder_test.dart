@@ -62,7 +62,10 @@ void main() {
       anhangBytes: 5 * 1024 * 1024,
     );
     expect(mitWerbung.ueberGrenze, isTrue);
-    expect(mitWerbung.kannSenden, isFalse);
+    // Der Knopf bleibt anfassbar; die Pruefung haelt den Versand auf und sagt
+    // im selben Satz, dass ein Bild aus der Signatur der Ausweg ist (§4.7).
+    expect(mitWerbung.pruefung.vollstaendig, isFalse);
+    expect(mitWerbung.pruefung.groesseFehler, contains('Signatur'));
 
     final ohneWerbung = EmailEntwurfState(
       entwurf: entwurf.mitUmgeschaltetemSignaturBild('werbung.gif'),
@@ -70,6 +73,7 @@ void main() {
       anhangBytes: 5 * 1024 * 1024,
     );
     expect(ohneWerbung.ueberGrenze, isFalse);
+    expect(ohneWerbung.pruefung.vollstaendig, isTrue);
     expect(ohneWerbung.kannSenden, isTrue);
   });
 

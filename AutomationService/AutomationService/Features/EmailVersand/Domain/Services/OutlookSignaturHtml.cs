@@ -30,7 +30,7 @@ public static partial class OutlookSignaturHtml
     /// Die formatierte Fassung, oder null, wenn es keine brauchbare gibt.
     /// Kein Fehler: Dann geht die Mail wie bisher als reiner Text hinaus.
     /// </summary>
-    public static (string Html, Dictionary<string, byte[]> Bilder)? Lies(string htmPfad)
+    public static OutlookSignaturFormat? Lies(string htmPfad)
     {
         try
         {
@@ -48,8 +48,24 @@ public static partial class OutlookSignaturHtml
             }
 
             var bilder = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
-            var html = BilderEinsammeln(rumpf, datei.DirectoryName ?? string.Empty, bilder);
-            return (html, bilder);
+            var uebergangen = new List<string>();
+            var html = BilderEinsammeln(
+                rumpf,
+                datei.DirectoryName ?? string.Empty,
+                bilder,
+                uebergangen);
+
+            // Was nicht mitkommt, darf auch nicht mehr erwähnt werden: Ein
+            // Verweis auf eine Datei, die nirgends mitgeht, ist beim Empfänger
+            // ein Platzhalterkreuz.
+            if (uebergangen.Count > 0)
+            {
+                html = SignaturHtmlFilter.Ohne(
+                    html,
+                    uebergangen.ToHashSet(StringComparer.OrdinalIgnoreCase));
+            }
+
+            return new OutlookSignaturFormat(html, bilder, uebergangen);
         }
         catch (Exception ausnahme) when (ausnahme is IOException or UnauthorizedAccessException)
         {
@@ -74,23 +90,41 @@ public static partial class OutlookSignaturHtml
     /// legt das Bild in <paramref name="bilder"/>. Verweise ins Netz bleiben
     /// stehen, wie sie sind: Sie zeigen auf einen Server, der sie ausliefert,
     /// und gehören nicht in die Nachricht.
+    ///
+    /// Was gemeint war, aber nicht zu holen ist, kommt nach
+    /// <paramref name="uebergangen"/> — der Aufrufer entfernt dessen
+    /// Bildmarken danach.
     /// </summary>
     private static string BilderEinsammeln(
         string html,
         string ordner,
-        Dictionary<string, byte[]> bilder)
+        Dictionary<string, byte[]> bilder,
+        List<string> uebergangen)
     {
         return QuelleMuster().Replace(html, treffer =>
         {
             var verweis = treffer.Groups["url"].Value;
-            var name = DateiHinter(verweis, ordner, bilder);
+            var (name, unbrauchbar) = DateiHinter(verweis, ordner, bilder);
+            if (unbrauchbar)
+            {
+                uebergangen.Add(verweis);
+            }
+
             return name is null
                 ? treffer.Value
                 : $"{treffer.Groups["vor"].Value}{name}{treffer.Groups["nach"].Value}";
         });
     }
 
-    private static string? DateiHinter(
+    /// <returns>
+    /// Den blanken Dateinamen, wenn das Bild eingesammelt wurde.
+    /// <c>Unbrauchbar = false</c> ohne Namen heißt „nicht unsere Sache" — ein
+    /// Verweis ins Netz, eine Content-Id, ein eingebettetes <c>data:</c>-Bild;
+    /// der bleibt unangetastet. <c>Unbrauchbar = true</c> heißt: Gemeint war
+    /// eine Datei neben der Signatur, wir bekommen sie aber nicht — zu groß,
+    /// leer, weg oder nicht lesbar. Dann muss die ganze Bildmarke fallen.
+    /// </returns>
+    private static (string? Name, bool Unbrauchbar) DateiHinter(
         string verweis,
         string ordner,
         Dictionary<string, byte[]> bilder)
@@ -100,7 +134,7 @@ public static partial class OutlookSignaturHtml
             || verweis.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
             || ordner.Length == 0)
         {
-            return null;
+            return (null, false);
         }
 
         try
@@ -110,7 +144,7 @@ public static partial class OutlookSignaturHtml
             var datei = new FileInfo(pfad);
             if (!datei.Exists || datei.Length == 0 || datei.Length > SignaturAblage.MaxBildBytes)
             {
-                return null;
+                return (null, true);
             }
 
             var name = datei.Name;
@@ -119,13 +153,13 @@ public static partial class OutlookSignaturHtml
                 bilder[name] = File.ReadAllBytes(pfad);
             }
 
-            return name;
+            return (name, false);
         }
         catch (Exception ausnahme)
             when (ausnahme is IOException or UnauthorizedAccessException
                 or ArgumentException or NotSupportedException or PathTooLongException)
         {
-            return null;
+            return (null, true);
         }
     }
 
