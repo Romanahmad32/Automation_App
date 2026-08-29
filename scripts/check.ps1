@@ -63,9 +63,10 @@ Set-StrictMode -Version Latest
 # (Begruendung und Vergleichslogik in versionspruefung.ps1). Erst nach diesem
 # Abbruch gilt: Jeder rote Schritt weiter unten ist ein echter Befund.
 #
-# Bei Erfolg liefert die Pruefung das bin-Verzeichnis des projektlokalen
-# FVM-SDKs zurueck (oder nichts, dann gilt der PATH) — die Frontend-Schritte
-# fahren mit genau dem SDK, dessen Fassung eben geprueft wurde.
+# Bei Erfolg liefert die Pruefung das bin-Verzeichnis des FVM-SDKs zurueck —
+# der projektlokalen Junction oder, wenn die fehlt, der gepinnten Fassung im
+# FVM-Cache (oder nichts, dann gilt der PATH). Die Frontend-Schritte fahren
+# mit genau dem SDK, dessen Fassung eben geprueft wurde.
 $sdkBin = & (Join-Path $PSScriptRoot 'versionspruefung.ps1') -NurFrontend:$NurFrontend -NurBackend:$NurBackend
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
