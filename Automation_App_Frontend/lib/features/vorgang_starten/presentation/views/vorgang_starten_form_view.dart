@@ -187,7 +187,9 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
         daten: daten,
         neuerMandant: entscheidung.neuerMandant,
         aktualisierterMandant: entscheidung.aktualisierterMandant,
-        verknuepfteMandantId: gewaehlt?.id,
+        // Die gemerkte Id, nicht `gewaehlt?.id`: Fehlt der Mandant gerade in
+        // der Liste, ginge die bekannte Verknüpfung sonst still verloren.
+        verknuepfteMandantId: _selectedMandantId,
         zentralrufAusfuellen: zentralruf,
       ),
     );
@@ -214,12 +216,26 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     );
   }
 
-  /// Übernimmt den gerade gespeicherten Mandanten in die Auswahl: Liste neu laden
-  /// (für Kennzeichen-Chips/Dropdown) und Felder verknüpfen.
-  Future<void> _uebernehmeGespeicherten(Mandant mandant) async {
-    await _ladeMandanten();
-    if (!mounted) return;
-    _uebernehmeMandant(mandant);
+  /// Verknüpft den gerade gespeicherten Mandanten mit der Karte — **synchron**.
+  ///
+  /// Synchron, weil sonst zwischen dem Ende des Ladezustands (die Knöpfe sind
+  /// da wieder frei) und der Verknüpfung ein Fenster offen bliebe: Ein Klick
+  /// darin hielte den Mandanten noch für neu und liefe in den Namenskonflikt.
+  /// Aus demselben Grund wird die Liste hier schon ergänzt, statt auf das
+  /// Nachladen zu warten — das kann scheitern, ohne es zu melden.
+  ///
+  /// Die Formularfelder bleiben unangetastet: Der Mandant ist aus ihnen
+  /// entstanden, und auf dem Zentralruf-Weg liegen bis zu drei Minuten
+  /// dazwischen, in denen der Anwalt weitergetippt haben kann (§1.3 — die App
+  /// „überschreibt nichts stillschweigend"). Felder füllt nur, wer über das
+  /// Dropdown einen Mandanten *auswählt*: `_uebernehmeMandant`.
+  void _verknuepfeGespeicherten(Mandant mandant) {
+    setState(() {
+      _mandanten = [..._mandanten.where((m) => m.id != mandant.id), mandant];
+      _selectedMandantId = mandant.id;
+    });
+    // Nur noch Auffrischung für Kennzeichen-Chips und Reihenfolge.
+    unawaited(_ladeMandanten());
   }
 
   void _vorlageAusfuellen(String referenz) {
@@ -237,19 +253,19 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
         if (state is VorgangStartenDefaultsLoaded) {
           _patchDefaults(state.auftragsnummer, state.abteilung);
         }
-        if (state is MandantGespeichert) {
-          unawaited(_uebernehmeGespeicherten(state.mandant));
-        }
-        // Derselbe Aufräumpfad für den zweiten Weg („Speichern" /
-        // „Zentralruf-Formular ausfüllen"): ohne ihn hielte die Karte den
-        // gerade angelegten Mandanten weiter für neu und legte ihn beim
-        // nächsten Speichern ein zweites Mal an.
-        final gespeicherter = state is VorgangGespeichert
-            ? state.gespeicherterMandant
-            : null;
-        if (gespeicherter != null) {
-          unawaited(_uebernehmeGespeicherten(gespeicherter));
-        }
+        // Jeder Weg, auf dem ein Mandant entstanden sein kann, mündet hier —
+        // der Karten-Knopf, das Speichern des Vorgangs und der Fehlerpfad
+        // dahinter: Scheitert nach der Anlage das Vorbefüllen, ist der Mandant
+        // trotzdem gespeichert und muss verknüpft werden (FALLSTRICKE.md).
+        final gespeicherter = switch (state) {
+          MandantGespeichert(:final mandant) => mandant,
+          VorgangGespeichert(:final gespeicherterMandant) ||
+          VorgangStartenError(
+            :final gespeicherterMandant,
+          ) => gespeicherterMandant,
+          _ => null,
+        };
+        if (gespeicherter != null) _verknuepfeGespeicherten(gespeicherter);
       },
       child: ReactiveForm(
         formGroup: _form,

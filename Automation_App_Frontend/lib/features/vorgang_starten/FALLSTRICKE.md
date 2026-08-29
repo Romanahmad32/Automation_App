@@ -9,6 +9,9 @@ Erst den Mandanten anlegen bzw. aktualisieren, dann den Zentralruf-Prefill, zule
 `VorgangCubit.registriereAnfrage`. Scheitert einer der ersten beiden Schritte, entsteht **kein**
 Vorgang — der Bloc meldet `VorgangStartenError` und kehrt um.
 
+Der Mandant ist an dieser Stelle aber schon geschrieben. Deshalb trägt auch `VorgangStartenError`
+den `gespeicherterMandant` mit: Ein Fehler beim Prefill darf ihn nicht verschlucken (siehe unten).
+
 Die vom Prefill zurückgegebene Referenz schlägt die im Formular eingetippte: das Backend
 normalisiert sie, und was am Zentralruf steht, muss auch im Register stehen.
 
@@ -16,30 +19,64 @@ normalisiert sie, und was am Zentralruf steht, muss auch im Register stehen.
 
 Es gibt zwei Knöpfe, die einen Mandanten ins Register schreiben:
 
-| Weg | Event | Erfolgszustand |
+| Weg | Event | Zustand mit dem Mandanten |
 |---|---|---|
 | Karten-Knopf „Neuen Mandanten speichern" | `SpeichereMandantEvent` | `MandantGespeichert` |
-| Aktionsleiste „Speichern" / „Zentralruf-Formular ausfüllen" | `SpeichereVorgangEvent` | `VorgangGespeichert` |
+| Aktionsleiste „Speichern" / „Zentralruf-Formular ausfüllen" | `SpeichereVorgangEvent` | `VorgangGespeichert`, im Fehlerfall `VorgangStartenError` |
 
-Beide müssen in der View durch `_uebernehmeGespeicherten` laufen — Mandantenliste neu laden **und**
-`_selectedMandantId` setzen. Deshalb trägt `VorgangGespeichert` den angelegten bzw. aktualisierten
-Mandanten in `gespeicherterMandant` mit.
+Alle drei laufen in der View durch `_verknuepfeGespeicherten`.
 
-Was passiert, wenn er fehlt, war einmal echter Datenschaden und ist der Grund für
-`mandant_uebernahme_test.dart`: Ohne die Verknüpfung liefert `mandantAenderungsart` weiterhin `neu`,
-die Karte hält den gerade angelegten Mandanten für unbekannt, er lässt sich unter „Aus Mandanten
-übernehmen" nicht auswählen — und der nächste Klick auf „Speichern" legt **denselben Menschen ein
-zweites Mal** an. Eine Dublette im Mandantenregister ist kein Anzeigefehler.
+### Was passiert, wenn der Mandant nicht ankommt
 
-Der Zustand `VorgangStartenLoading` bleibt dabei bis zum Schluss stehen. Das ist Absicht: Er sperrt
-die Knöpfe in `VorgangAktionsleiste` und `MandantSpeichernButton`. Wer die Mandanten-Übernahme
-stattdessen als eigenes `MandantGespeichert` mitten in den Ablauf einschöbe, gäbe die Knöpfe frei,
-während der Prefill noch läuft — und handelte sich denselben Doppelklick auf anderem Weg wieder ein.
+Nicht das, was hier lange stand. Ohne die Verknüpfung liefert `mandantAenderungsart` weiterhin
+`neu`, die Karte hält den gerade angelegten Mandanten für unbekannt, und der nächste Klick auf
+„Speichern" versucht ihn ein zweites Mal anzulegen. Das lässt das Backend nicht zu:
+`MandantenRepository.EnsureNameUniqueAsync` vergleicht Vor- und Nachnamen normalisiert und wirft
+`MandantNameConflictException`, der Controller antwortet **409**, `MandantDatasource._mapError`
+macht daraus eine `MandantException`.
 
-## Warum Tests hier zweimal pumpen müssen
+Es entsteht also **keine Dublette, sondern eine Sackgasse**: Der Vorgang lässt sich ab da überhaupt
+nicht mehr speichern — jeder weitere Klick bringt dieselbe rote Meldung —, bis der Anwalt merkt,
+dass er den Mandanten von Hand aus dem Register wählen muss, oder die Seite neu lädt. Wer das für
+Anzeigeärger hält, unterschätzt es: Bis dahin ist der Vorgang selbst nirgends gespeichert.
 
-`MandantUebersichtDialog.zeige` gibt sein Ergebnis erst frei, wenn die Ausblende-Animation durch ist.
-Die Speicherkette startet also erst **nach** dem letzten Frame, den ein einzelnes `pumpAndSettle`
-sieht. Ein Widget-Test, der direkt danach misst, sieht `VorgangStartenLoading` und hält die
-Übernahme fälschlich für kaputt. `mandant_uebernahme_test.dart` wartet deshalb auf
-`VorgangGespeichert`, statt eine feste Anzahl Frames zu raten.
+Die frühere Fassung dieses Absatzes behauptete eine Dublette. Das war falsch und hat einen Prüfer
+in die Irre geführt, der die Annahme ungeprüft übernahm — deshalb bildet
+`MandantenRegisterDouble` den Konflikt inzwischen nach. Ein Double, das jede Anlage klaglos
+hinnimmt, lässt die Tests eine Welt beschreiben, die es nicht gibt.
+
+### Warum die Verknüpfung synchron passiert
+
+`_verknuepfeGespeicherten` setzt `_selectedMandantId` und ergänzt die Liste **im selben
+Listener-Aufruf**, bevor es das Nachladen anstößt. Der Grund ist dasselbe Zeitfenster:
+`VorgangStartenLoading` endet mit dem Zustand, der den Mandanten trägt — ab da sind die Knöpfe in
+`VorgangAktionsleiste` und `MandantSpeichernButton` wieder frei. Liefe die Übernahme erst über ein
+`await` auf `GET /api/Mandanten`, fiele ein Klick in genau dieses Loch und stünde wieder vor dem
+Namenskonflikt. Aus demselben Grund wird die Liste hier ergänzt statt abgewartet: `_ladeMandanten`
+verschluckt seinen Fehlerfall, und eine Id ohne passenden Eintrag ist so gut wie keine.
+
+Aus demselben Zeitfenster folgt auch, dass die Übernahme **keine Formularfelder schreibt**. Auf dem
+Zentralruf-Weg vergehen zwischen Klick und Rückkehr bis zu drei Minuten (Captcha); gesperrt sind
+dabei nur die Knöpfe, die Felder bleiben bedienbar. Was der Anwalt in dieser Zeit korrigiert, würde
+sonst kommentarlos auf den Stand vom Speicherzeitpunkt zurückfallen — gegen §1.3, „überschreibt
+nichts stillschweigend". Felder füllt nur `_uebernehmeMandant`, und das hängt allein am Dropdown
+„Aus Mandanten übernehmen".
+
+## Warum Widget-Tests hier nicht `pumpAndSettle` benutzen dürfen
+
+Zwei Fallen übereinander, beide in `mandant_uebernahme_test.dart` beschrieben:
+
+`MandantUebersichtDialog.zeige` gibt sein Ergebnis erst frei, wenn die Ausblende-Animation durch
+ist. Die Speicherkette startet also erst **nach** dem letzten Frame, den ein einzelnes
+`pumpAndSettle` sieht. Wer direkt danach misst, sieht den Ladezustand und hält die Übernahme
+fälschlich für kaputt.
+
+Wer daraufhin `pumpAndSettle` nachschiebt, hängt: Solange der Bloc lädt, dreht sich der Ladekringel
+in der Aktionsleiste, „bis nichts mehr animiert" tritt nie ein, und der Lauf läuft erst nach zehn
+Minuten Testuhr in seinen Timeout. Der Test pumpt deshalb in einer Schleife und bricht ab, sobald
+der Bloc den Lauf abgeschlossen hat — Erfolg **oder** Fehler; die Framezahl ist nur die Obergrenze.
+
+Mitgezählt wird über einen `BlocListener` im Widgetbaum. Ein von Hand geöffnetes
+`bloc.stream.listen(…)` überlebt den Testkörper und blockiert das Aufräumen; dasselbe gilt für
+`await bloc.close()` im Test. Der Bloc wird hier bewusst nicht geschlossen — mit dem Testprozess ist
+er ohnehin weg.
