@@ -1,6 +1,6 @@
 import 'dart:io';
 
-/// Verzeichnisse, die beim Aufbau des [Pfadverzeichnis] uebersprungen werden:
+/// Verzeichnisse, die beim Durchlaufen des Repos uebersprungen werden:
 /// Build-Ausgaben, Werkzeugcaches und Fremdcode. Ohne diese Liste laeuft der
 /// Doku-Test minutenlang durch `.git/` und `.dart_tool/`.
 const Set<String> nichtDurchsucht = {
@@ -22,9 +22,26 @@ const Set<String> nichtDurchsucht = {
   'worktrees',
 };
 
-/// True, wenn der Pfad durch einen der [nichtDurchsucht]-Ordner laeuft.
-bool uebersprungen(String pfad) =>
-    normalisiert(pfad).split('/').any(nichtDurchsucht.contains);
+/// Alle Dateien unterhalb von [wurzel], ohne die [nichtDurchsucht]-Ordner.
+///
+/// Bricht schon beim Absteigen ab, statt hinterher zu filtern:
+/// `listSync(recursive: true)` liest `.git/`, `.dart_tool/` und einen
+/// danebenliegenden Worktree erst vollstaendig ein, nur damit das Ergebnis
+/// danach weggeworfen wird.
+Iterable<File> dateienUnter(Directory wurzel) sync* {
+  final offen = <Directory>[wurzel];
+  while (offen.isNotEmpty) {
+    for (final eintrag in offen.removeLast().listSync(followLinks: false)) {
+      if (eintrag is Directory) {
+        if (!nichtDurchsucht.contains(dateiname(eintrag.path))) {
+          offen.add(eintrag);
+        }
+      } else if (eintrag is File) {
+        yield eintrag;
+      }
+    }
+  }
+}
 
 /// Endungen, an denen ein Backtick-Token als Verweis auf eine Datei im Repo
 /// erkannt wird.
@@ -82,21 +99,13 @@ class Pfadverzeichnis {
     final pfade = <String>{};
     final namen = <String>{};
     final praefix = '${normalisiert(wurzel.path)}/';
-    final offen = <Directory>[wurzel];
 
-    while (offen.isNotEmpty) {
-      for (final eintrag in offen.removeLast().listSync(followLinks: false)) {
-        final name = dateiname(eintrag.path);
-        if (eintrag is Directory) {
-          if (!nichtDurchsucht.contains(name)) offen.add(eintrag);
-        } else if (eintrag is File) {
-          final pfad = normalisiert(eintrag.path);
-          pfade.add(
-            pfad.startsWith(praefix) ? pfad.substring(praefix.length) : pfad,
-          );
-          namen.add(name);
-        }
-      }
+    for (final datei in dateienUnter(wurzel)) {
+      final pfad = normalisiert(datei.path);
+      pfade.add(
+        pfad.startsWith(praefix) ? pfad.substring(praefix.length) : pfad,
+      );
+      namen.add(dateiname(datei.path));
     }
     return Pfadverzeichnis._(pfade, namen);
   }
@@ -113,16 +122,14 @@ class Pfadverzeichnis {
 List<String> markdownUnter(String pfad) {
   final ordner = Directory(pfad);
   if (!ordner.existsSync()) return const [];
-  return ordner
-      .listSync(recursive: true, followLinks: false)
-      .whereType<File>()
+  // Ueber denselben Walker wie das Pfadverzeichnis, also mit derselben
+  // Ausnahmeliste. Ohne sie liest der Doku-Test bis in die Build-Ausgabe
+  // hinein und prueft die mitgelieferte Fremddokumentation von Playwright —
+  // Verweise, die niemand hier geschrieben hat und niemand hier berichtigen
+  // kann.
+  return dateienUnter(ordner)
       .map((datei) => normalisiert(datei.path))
       .where((datei) => datei.endsWith('.md'))
-      // Dieselbe Ausnahmeliste wie beim Pfadverzeichnis. Ohne sie liest der
-      // Doku-Test bis in die Build-Ausgabe hinein und prueft die mitgelieferte
-      // Fremddokumentation von Playwright — Verweise, die niemand hier
-      // geschrieben hat und niemand hier berichtigen kann.
-      .where((datei) => !uebersprungen(datei))
       .toList()
     ..sort();
 }
