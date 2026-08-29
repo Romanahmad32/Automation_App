@@ -9,11 +9,9 @@ korrigieren und übernimmt sie in einen Vorgang. Nicht hier: das Stellen der Anf
 **Zustand:** `ZentralrufReplyBloc` (`presentation/blocs/zentralruf_reply_bloc.dart`) — nur der
 Parse-Vorgang; die editierten Feldwerte hält `VorgangsdatenForm` im eigenen State.
 **Domain:** `ZentralrufReplyData`, `ZentralrufReplyInput`, `ZentralrufReplyParseResult`
-(`domain/entities/zentralruf_reply_data.dart`); UseCase `ParseZentralrufReply`;
-`VorgangsdatenFieldMatcher` (`domain/services/`, Vorbelegung freier Vorlagenfelder)
+(`domain/entities/zentralruf_reply_data.dart`); UseCase `ParseZentralrufReply`
 **Backend:** `Features/ZentralrufAutomation/` · `POST /api/Zentralruf/antwort/parse`
-**Tests:** `test/features/zentralruf_reply/vorgangsdaten_field_matcher_test.dart`,
-`test/features/zentralruf_reply/versicherer_ergaenzung_test.dart`,
+**Tests:** `test/features/zentralruf_reply/versicherer_ergaenzung_test.dart`,
 `test/features/vorgaenge/antwort_konflikte_test.dart`
 
 **Fallstricke**
@@ -37,3 +35,6 @@ Parse-Vorgang; die editierten Feldwerte hält `VorgangsdatenForm` im eigenen Sta
   Abwarten der Folgemail der Normalweg, nicht ein Fehler.
 - Leere Versichererfelder füllt `VersichererErgaenzung` aus der Wissensbasis nach; sie überschreibt
   nie Eingetipptes und läuft nach `VersichererCubit.ladeErneut()` ein zweites Mal.
+- Die Vorbelegung freier Vorlagenfelder saß früher hier (`VorgangsdatenFieldMatcher`) und kannte
+  nur die Antwort. Sie liegt jetzt bei `FeldDatenquelleErkennung` (Feature `form_template_setup`),
+  weil dieselbe Zuordnung auch den Vorgang und das Mandantenregister erreichen muss.

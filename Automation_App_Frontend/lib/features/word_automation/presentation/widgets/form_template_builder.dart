@@ -4,6 +4,7 @@ import 'package:automation_app/core/general_widgets/form/german_date_field.dart'
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -169,8 +170,12 @@ class FormTemplateBuilder extends StatelessWidget {
 
   /// Zahlungsfrist-Felder werden mit Generierungsdatum + 5 Wochen vorbelegt,
   /// alle anderen Datumsfelder mit dem heutigen Datum.
+  ///
+  /// Verglichen wird über [FeldDatenquelleErkennung.normalisiere], nicht über
+  /// ein blosses `toLowerCase()`: sonst bekäme `{{Zahlungs-Frist}}` die
+  /// Vorbelegung nicht, obwohl dasselbe gemeint ist.
   static DateTime _defaultDateFor(String label) =>
-      label.toLowerCase().contains('zahlungsfrist')
+      FeldDatenquelleErkennung.normalisiere(label).contains('zahlungsfrist')
       ? DateTime.now().add(const Duration(days: 35))
       : DateTime.now();
 }

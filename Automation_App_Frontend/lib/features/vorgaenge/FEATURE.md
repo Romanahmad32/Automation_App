@@ -11,7 +11,7 @@ app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashb
 `LetzteVersaendeCubit` aus **email_versand** für die Versandzeile der Liste
 **Domain:** Entities `Vorgang`, `VorgangStatus`, `ReferenzTeile`, `Rechtsgebiet`; Port
 `VorgangRepository`; Dienste `AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`,
-`VorgangVollstaendigkeit`, `VorgangWartezeit`, `RegisterWordExporter`. Keine UseCase-Klassen.
+`VorgangVollstaendigkeit`, `VorgangWartezeit`, `RegisterWordExporter`, `MandantAnschrift`. Keine UseCase-Klassen.
 **Backend:** `Features/Vorgaenge/` · `GET|PUT /api/Vorgaenge`, `DELETE /api/Vorgaenge?referenz=`,
 `POST /api/Vorgaenge/abschliessen?referenz=`, `POST /api/Vorgaenge/referenz?von=&nach=`
 **Tests:** `test/features/vorgaenge/` — u. a. `vorgang_cubit_test.dart`, `vorgang_test.dart`,

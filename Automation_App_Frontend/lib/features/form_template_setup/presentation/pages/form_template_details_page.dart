@@ -5,6 +5,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/feld
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_action_buttons.dart';
@@ -100,12 +101,13 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
           validators: [Validators.required],
         ),
       });
+      // Feldtyp und Datenquelle aus dem Platzhalternamen vorschlagen — sichtbar
+      // im Dropdown und änderbar, nichts wird stillschweigend gebunden (§1.3).
       fields.add(
-        FieldData(
+        FeldDatenquelleErkennung.neuesFeld(
           order: fields.length,
-          label: fieldKey,
-          required: false,
-          inputType: InputType.text,
+          controlKey: fieldKey,
+          platzhalter: initialLabel,
         ),
       );
     });

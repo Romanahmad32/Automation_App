@@ -3,6 +3,7 @@ import 'package:automation_app/core/general_widgets/form/general_text_field.dart
 import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_name_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -36,101 +37,109 @@ class TemplateFieldItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(2.0),
       ),
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-      child: Row(
-        spacing: 10,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ReorderableDragStartListener(
-            index: index,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.grab,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(
-                  Icons.drag_indicator,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: GeneralTextField(
-                formControlName: fieldData.label,
-                inputDecoration: const InputDecoration(
-                  border: InputBorder.none,
-                ),
-                validationMessages: {
-                  ValidationMessage.required: (_) =>
-                      'Der Feldname darf nicht leer sein.',
-                },
-              ),
-            ),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: SearchableDropdown<InputType>(
-              value: fieldData.inputType,
-              hintText: 'Typ suchen oder auswählen',
-              entries: [
-                for (final type in InputType.values)
-                  SearchableDropdownEntry(value: type, label: type.displayName),
-              ],
-              onChanged: onTypeChanged,
-            ),
-          ),
-
-          Expanded(
-            flex: 3,
-            child: SearchableDropdown<FeldDatenquelle>(
-              value: fieldData.datenquelle,
-              hintText: 'Datenquelle suchen oder auswählen',
-              entries: [
-                for (final quelle in FeldDatenquelle.values)
-                  SearchableDropdownEntry(
-                    value: quelle,
-                    label: quelle.displayName,
-                  ),
-              ],
-              onChanged: onDatenquelleChanged,
-            ),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: InkWell(
-              onTap: () => onRequiredChanged.call(!fieldData.required),
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: fieldData.required,
-                    activeColor: theme.colorScheme.primary,
-                    onChanged: onRequiredChanged,
-                  ),
-                  Text(
-                    'ERFORDERLICH',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          IconButton(
-            icon: Icon(Icons.delete, color: theme.colorScheme.error),
-            onPressed: onDelete,
+          Row(spacing: 10, children: _zeile(theme)),
+          FeldNameHinweis(
+            formControlName: fieldData.label,
+            datenquelleGesetzt: fieldData.datenquelle.istGesetzt,
           ),
         ],
       ),
     );
+  }
+
+  /// Die eigentliche Feldzeile: Ziehgriff, Name, Typ, Datenquelle, Pflicht,
+  /// Löschen. Als Liste herausgezogen, damit der Hinweis darunter passt, ohne
+  /// die Zeile selbst zu verschachteln.
+  List<Widget> _zeile(ThemeData theme) {
+    return [
+      ReorderableDragStartListener(
+        index: index,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.grab,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Icon(
+              Icons.drag_indicator,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(width: 8),
+
+      Expanded(
+        flex: 3,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: GeneralTextField(
+            formControlName: fieldData.label,
+            inputDecoration: const InputDecoration(border: InputBorder.none),
+            validationMessages: {
+              ValidationMessage.required: (_) =>
+                  'Der Feldname darf nicht leer sein.',
+            },
+          ),
+        ),
+      ),
+
+      Expanded(
+        flex: 2,
+        child: SearchableDropdown<InputType>(
+          value: fieldData.inputType,
+          hintText: 'Typ suchen oder auswählen',
+          entries: [
+            for (final type in InputType.values)
+              SearchableDropdownEntry(value: type, label: type.displayName),
+          ],
+          onChanged: onTypeChanged,
+        ),
+      ),
+
+      Expanded(
+        flex: 3,
+        child: SearchableDropdown<FeldDatenquelle>(
+          value: fieldData.datenquelle,
+          hintText: 'Datenquelle suchen oder auswählen',
+          entries: [
+            for (final quelle in FeldDatenquelle.values)
+              SearchableDropdownEntry(value: quelle, label: quelle.displayName),
+          ],
+          onChanged: onDatenquelleChanged,
+        ),
+      ),
+
+      Expanded(
+        flex: 2,
+        child: InkWell(
+          onTap: () => onRequiredChanged.call(!fieldData.required),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          child: Row(
+            children: [
+              Checkbox(
+                value: fieldData.required,
+                activeColor: theme.colorScheme.primary,
+                onChanged: onRequiredChanged,
+              ),
+              Text(
+                'ERFORDERLICH',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      IconButton(
+        icon: Icon(Icons.delete, color: theme.colorScheme.error),
+        onPressed: onDelete,
+      ),
+    ];
   }
 }
