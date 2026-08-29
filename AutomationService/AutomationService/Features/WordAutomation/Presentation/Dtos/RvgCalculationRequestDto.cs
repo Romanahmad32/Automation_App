@@ -15,7 +15,9 @@ public class RvgCalculationRequestDto
     // RvgFeeCalculator.Calculate) — dieselbe Zahl, die dann auch im Dokument steht. Mit der
     // früheren Untergrenze 0,01 bekam die Vorschau dafür ein 400, obwohl das Schreiben
     // sich erzeugen ließ.
-    [Range(0, 100_000_000)]
+    // Nachkommastellen an den Grenzen: siehe DamageItemDto.Amount — ohne sie bindet
+    // die int-Ueberladung, und negative Nachkommawerte kaemen durch.
+    [Range(0.0, 100_000_000.0)]
     public decimal Gegenstandswert { get; set; }
 
     /// <summary>Gebührensatz der Geschäftsgebühr, üblicherweise 1,3.</summary>

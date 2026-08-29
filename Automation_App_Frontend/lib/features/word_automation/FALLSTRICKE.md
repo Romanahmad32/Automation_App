@@ -27,11 +27,19 @@ sechzig Dateien das größte der App, entsprechend viel davon.
 - **Eine Schadensposition über `0,00 €` ist gültig** (noch nicht beziffert), ein negativer Betrag
   nicht. Geprüft wird im Formular an der Zeile (`utils/schadenspositionen_pruefung.dart`), nicht
   erst im Dienst: dessen `[Range]` antwortet mit einem HTTP 400, das keine Zeile benennt.
-  `damage_listing_form.dart` reicht eine negative Zeile deshalb **absichtlich** nach oben durch —
-  sonst könnte die Meldung ihre Positionsnummer nicht nennen.
-- Ein Gegenstandswert von `0` ist rechenbar und ergibt die unterste Wertgebührenstufe (51,50 €).
-  Wer den Wächter im `RvgCalculationBloc` wieder auf `<= 0` stellt, macht die Vorschau an dieser
-  Stelle stumm, während das Dokument die Gebühr trotzdem ausweist.
+- **Das Verdikt kommt aus dem Formular, nicht aus der `DamageListing`.** `DamageListingForm.onChanged`
+  meldet Stand **und** Beanstandungen; `WizardState.schadenspositionFehler` hält sie, und
+  `schadensaufstellungIstErzeugbar` ist die einzige Stelle, die über den Knopf entscheidet. Der
+  Grund: Eine Zeile ohne Bezeichnung wandert nicht in die Aufstellung. Wer die Beanstandungen aus
+  ihr ableitet, übersieht genau die Zeile mit `-250` und leerer Bezeichnung — Feld rot, Knopf frei.
+- Die Geldgrenzen der Backend-DTOs (`DamageItemDto.Amount`, `RvgCalculationRequestDto.Gegenstandswert`)
+  brauchen ihre **Nachkommastellen**: `[Range(0, …)]` bindet `RangeAttribute(int, int)`, rundet den
+  Betrag vor dem Vergleich und lässt `-0,49` durch; jenseits von `int.MaxValue` wird aus 400 ein 500.
+  `RangeUeberladungTests` hält das fest.
+- Ein Gegenstandswert von `0` **mit** Positionen ist rechenbar und ergibt die unterste
+  Wertgebührenstufe (51,50 €); `0` **ohne** Positionen ist der Reset. Beides unterscheidet allein
+  `CalculateRvgEvent.hatPositionen` — der leere Stand muss beim Bloc ankommen, sonst bleibt der
+  zuletzt berechnete Betrag in der Vorschau stehen und eine laufende Anfrage unstorniert.
 
 ## Vorlagen
 
