@@ -5,14 +5,13 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
-import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
-import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_uebersicht_dialog.dart';
+import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_entscheidung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_aktionsleiste.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_group.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_reader.dart';
@@ -168,43 +167,29 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
   }
 
   /// Gemeinsamer Absende-Pfad für „Speichern" und „Zentralruf ausfüllen":
-  /// zeigt — wenn am Mandanten etwas neu oder geändert ist — die Übersicht zur
-  /// Bestätigung (§1.3) und schickt das Speicher-Event. Abgebrochene Übersicht
-  /// bricht das Speichern ab.
+  /// holt — wenn am Mandanten etwas neu oder geändert ist — die Bestätigung
+  /// über die Übersicht (§1.3) und schickt das Speicher-Event. Abgebrochene
+  /// Übersicht bricht das Speichern ab.
   Future<void> _absenden({required bool zentralruf}) async {
     final daten = leseVorgangDaten(_form, _rechtsgebiet);
     final gewaehlt = _selectedMandantId == null
         ? null
         : _findeMandant(_selectedMandantId!);
-    final art = mandantAenderungsart(daten, gewaehlt);
+    final entscheidung = await MandantEntscheidung.hole(
+      context,
+      daten: daten,
+      gewaehlt: gewaehlt,
+    );
+    if (!entscheidung.bestaetigt || !mounted) return;
 
-    CreateMandantRequest? neuerMandant;
-    Mandant? aktualisierterMandant;
-
-    if (art != MandantAenderungsart.keine) {
-      final istNeu = art == MandantAenderungsart.neu;
-      final bestaetigt = await MandantUebersichtDialog.zeige(
-        context,
-        istNeu: istNeu,
-        zeilen: istNeu
-            ? mandantNeuFelder(daten)
-            : mandantDiff(daten, gewaehlt!),
-      );
-      if (bestaetigt != true) return;
-      if (istNeu) {
-        neuerMandant = daten.toCreateRequest();
-      } else {
-        aktualisierterMandant = daten.applyTo(gewaehlt!);
-      }
-    }
-
-    if (!mounted) return;
     context.read<VorgangStartenBloc>().add(
       SpeichereVorgangEvent(
         daten: daten,
-        neuerMandant: neuerMandant,
-        aktualisierterMandant: aktualisierterMandant,
-        verknuepfteMandantId: gewaehlt?.id,
+        neuerMandant: entscheidung.neuerMandant,
+        aktualisierterMandant: entscheidung.aktualisierterMandant,
+        // Die gemerkte Id, nicht `gewaehlt?.id`: Fehlt der Mandant gerade in
+        // der Liste, ginge die bekannte Verknüpfung sonst still verloren.
+        verknuepfteMandantId: _selectedMandantId,
         zentralrufAusfuellen: zentralruf,
       ),
     );
@@ -231,12 +216,26 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     );
   }
 
-  /// Übernimmt den gerade gespeicherten Mandanten in die Auswahl: Liste neu laden
-  /// (für Kennzeichen-Chips/Dropdown) und Felder verknüpfen.
-  Future<void> _uebernehmeGespeicherten(Mandant mandant) async {
-    await _ladeMandanten();
-    if (!mounted) return;
-    _uebernehmeMandant(mandant);
+  /// Verknüpft den gerade gespeicherten Mandanten mit der Karte — **synchron**.
+  ///
+  /// Synchron, weil sonst zwischen dem Ende des Ladezustands (die Knöpfe sind
+  /// da wieder frei) und der Verknüpfung ein Fenster offen bliebe: Ein Klick
+  /// darin hielte den Mandanten noch für neu und liefe in den Namenskonflikt.
+  /// Aus demselben Grund wird die Liste hier schon ergänzt, statt auf das
+  /// Nachladen zu warten — das kann scheitern, ohne es zu melden.
+  ///
+  /// Die Formularfelder bleiben unangetastet: Der Mandant ist aus ihnen
+  /// entstanden, und auf dem Zentralruf-Weg liegen bis zu drei Minuten
+  /// dazwischen, in denen der Anwalt weitergetippt haben kann (§1.3 — die App
+  /// „überschreibt nichts stillschweigend"). Felder füllt nur, wer über das
+  /// Dropdown einen Mandanten *auswählt*: `_uebernehmeMandant`.
+  void _verknuepfeGespeicherten(Mandant mandant) {
+    setState(() {
+      _mandanten = [..._mandanten.where((m) => m.id != mandant.id), mandant];
+      _selectedMandantId = mandant.id;
+    });
+    // Nur noch Auffrischung für Kennzeichen-Chips und Reihenfolge.
+    unawaited(_ladeMandanten());
   }
 
   void _vorlageAusfuellen(String referenz) {
@@ -254,9 +253,19 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
         if (state is VorgangStartenDefaultsLoaded) {
           _patchDefaults(state.auftragsnummer, state.abteilung);
         }
-        if (state is MandantGespeichert) {
-          unawaited(_uebernehmeGespeicherten(state.mandant));
-        }
+        // Jeder Weg, auf dem ein Mandant entstanden sein kann, mündet hier —
+        // der Karten-Knopf, das Speichern des Vorgangs und der Fehlerpfad
+        // dahinter: Scheitert nach der Anlage das Vorbefüllen, ist der Mandant
+        // trotzdem gespeichert und muss verknüpft werden (FALLSTRICKE.md).
+        final gespeicherter = switch (state) {
+          MandantGespeichert(:final mandant) => mandant,
+          VorgangGespeichert(:final gespeicherterMandant) ||
+          VorgangStartenError(
+            :final gespeicherterMandant,
+          ) => gespeicherterMandant,
+          _ => null,
+        };
+        if (gespeicherter != null) _verknuepfeGespeicherten(gespeicherter);
       },
       child: ReactiveForm(
         formGroup: _form,

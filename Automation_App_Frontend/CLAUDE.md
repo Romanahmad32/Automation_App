@@ -71,8 +71,9 @@ Kanzleidaten), und der Steckbrief eines einzelnen Features sagt nicht, dass es T
 eine Kette an einer Stelle ändert und die andere stehen lässt, bricht sie — kein Test fängt das.
 
 Der Steckbrief hat ein Budget (40 Zeilen, keine über 130 Zeichen) — es hält ihn zum Einstieg
-tauglich. Wo mehr zu erklären ist, liegt daneben eine **`FALLSTRICKE.md` ohne Budget** (bisher
-`email_versand`, `word_automation`); der Steckbrief verweist darauf, ein Test besteht darauf.
+tauglich. Wo mehr zu erklären ist, liegt daneben eine **`FALLSTRICKE.md` ohne Budget** (welche
+Features eine haben, sagt `ls lib/features/*/FALLSTRICKE.md` — eine Aufzählung hier veraltet
+stillschweigend); der Steckbrief verweist darauf, ein Test besteht darauf.
 Was nicht mehr in die vierzig Zeilen passt, wandert **dorthin** — nie in kürzere Sätze: Absätze
 zusammenzuziehen, um unter das Budget zu kommen, hat schon einmal lesbare Doku unlesbar gemacht.
 
@@ -107,7 +108,7 @@ der Anwalt direkt nach dem Öffnen der App.
 - **Dateien kurz halten.** Handgeschriebene Dart-Dateien max. **250 Anweisungszeilen** und **450
   Zeilen insgesamt**. Kommentare und Leerzeilen zählen nicht mit — eine Datei aufzuteilen, um
   Kommentar unterzubringen, wäre ein Schnitt aus der Zählung statt aus dem Entwurf. Wird eine Datei
-  länger, in mehrere Widgets/Klassen aufteilen. Drei Formularseiten liegen noch darüber und stehen
+  länger, in mehrere Widgets/Klassen aufteilen. Zwei Formularseiten liegen noch darüber und stehen
   namentlich in `file_length_test.dart`; sie dürfen nur noch schrumpfen.
 - **Keine privaten Typen und keine privaten Top-Level-Funktionen** (kein `_WidgetXyz`, kein
   `_hilfsfunktion()`). Ein privates Widget ist außerhalb seiner Datei kein benennbarer Typ mehr:

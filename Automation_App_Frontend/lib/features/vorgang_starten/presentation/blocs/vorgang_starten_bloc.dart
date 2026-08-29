@@ -87,9 +87,13 @@ class VorgangStartenBloc
     emit(VorgangStartenLoading());
     final daten = event.daten;
 
-    // 1. Mandant auflösen (anlegen / aktualisieren / nur verknüpfen).
+    // 1. Mandant auflösen (anlegen / aktualisieren / nur verknüpfen). Was dabei
+    // herauskommt, wird durchgereicht — bis in den Erfolgszustand und, wenn es
+    // danach schiefgeht, in den Fehlerzustand: Die View braucht den Mandanten,
+    // um ihn zu verknüpfen (§5.1). Gespeichert ist er ab hier so oder so.
     int? mandantId = event.verknuepfteMandantId;
     String? mandantName = daten.mandantName.isEmpty ? null : daten.mandantName;
+    Mandant? gespeicherterMandant;
 
     if (event.neuerMandant != null) {
       final result = await _createMandant(event.neuerMandant!);
@@ -98,6 +102,7 @@ class VorgangStartenBloc
           emit(VorgangStartenError(failure.message));
           return;
         case Right(value: final mandant):
+          gespeicherterMandant = mandant;
           mandantId = mandant.id;
           mandantName = mandant.anzeigename;
       }
@@ -108,6 +113,7 @@ class VorgangStartenBloc
           emit(VorgangStartenError(failure.message));
           return;
         case Right(value: final mandant):
+          gespeicherterMandant = mandant;
           mandantId = mandant.id;
           mandantName = mandant.anzeigename;
       }
@@ -122,7 +128,15 @@ class VorgangStartenBloc
       final result = await _prefillForm(request);
       switch (result) {
         case Left(value: final failure):
-          emit(VorgangStartenError(failure.message));
+          // Der Mandant ist an dieser Stelle bereits im Register. Ginge er hier
+          // verloren, hielte die Karte ihn weiter für neu und der nächste
+          // Versuch bliebe am Namenskonflikt hängen (siehe FALLSTRICKE.md).
+          emit(
+            VorgangStartenError(
+              failure.message,
+              gespeicherterMandant: gespeicherterMandant,
+            ),
+          );
           return;
         case Right(value: final prefill):
           referenz = prefill.referenz;
@@ -155,6 +169,7 @@ class VorgangStartenBloc
         referenz: referenz,
         zentralrufAusgefuellt:
             event.zentralrufAusfuellen && daten.istVerkehrsunfall,
+        gespeicherterMandant: gespeicherterMandant,
       ),
     );
   }
