@@ -152,5 +152,18 @@ attorney confidentiality). `Beispiele/Anwortemail von Zentralruf.txt` is an
 firm block are replaced with placeholders while structure and formatting are
 kept, so the parser is still tested realistically. Generated letters
 (`Generated/`), the SQLite database and case folders are excluded via
-`.gitignore`. The requirements document and the agent instructions describe
-internal firm procedures and are kept out of this public repository as well.
+`.gitignore`.
+
+`REQUIREMENTS.md` and the agent instructions (`CLAUDE.md`, `.claude/`) **are**
+part of this public repository. They describe the intended behaviour of the
+software — deadlines, fee calculation, the points where a human must decide —
+and contain no client data, no credentials and no firm-internal addresses.
+They are versioned deliberately: an agent working in a fresh clone, a worktree
+or a cloud session otherwise has no binding specification to work from, and
+guesses instead.
+
+Credentials never belong in a versioned file. Mailbox access is entered in the
+application and stored under `%APPDATA%` (`docs/POSTFACH_SETUP.md`); the empty
+placeholder keys that used to sit in `appsettings.json` have been removed,
+because an empty field in a public repository is an invitation. Every push is
+scanned for secrets over the full history (`gitleaks`, see `.github/workflows/ci.yml`).
