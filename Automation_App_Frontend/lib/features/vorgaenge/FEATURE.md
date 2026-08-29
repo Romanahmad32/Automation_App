@@ -7,7 +7,8 @@ verwalten" (Pflege, Tab 7) und das Sachgebiete-Register der abgeschlossenen Vorg
 **Einstieg:** `presentation/blocs/vorgang_cubit.dart`
 **Zustand:** `VorgangCubit` (`presentation/blocs/vorgang_cubit.dart`, `@lazySingleton` — der
 app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashboard lesen) ·
-`VorgangPersistenzFehlerCubit` · `VorgangNavigationSignal` (beide `presentation/blocs/`)
+`VorgangPersistenzFehlerCubit` · `VorgangNavigationSignal` (beide `presentation/blocs/`) ·
+`LetzteVersaendeCubit` aus **email_versand** für die Versandzeile der Liste
 **Domain:** Entities `Vorgang`, `VorgangStatus`, `ReferenzTeile`, `Rechtsgebiet`; Port
 `VorgangRepository`; Dienste `AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`,
 `VorgangVollstaendigkeit`, `VorgangWartezeit`, `RegisterWordExporter`. Keine UseCase-Klassen.
@@ -35,3 +36,5 @@ app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashb
   `onPressed` ist auch im Zweig `verfuegbar == true` ein leerer Callback: die Handlung fehlt noch.
 - `Vorgang.copyWith` verknüpft jedes Feld mit `??`: Ein gesetzter Wert lässt sich damit nicht auf
   null zurücksetzen (Absicht — eine erneute Anfrage darf erfasste Antwortdaten nicht verlieren).
+- `VorgangVersandZeile` liest den Versandstand aus **email_versand** (ein Abruf für alle Zeilen,
+  Klick öffnet `VersandProtokollDialog`); leer heißt „nichts versendet **durch die App**" (§4.8).

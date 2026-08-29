@@ -7,6 +7,7 @@ import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_detail_pane.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_reply_list.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_status_banner.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_versand_leiste.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/antwort_konflikte.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/antwort_konflikt_dialog.dart';
@@ -154,6 +155,7 @@ class _MailboxInboxViewState extends State<MailboxInboxView> {
         return Column(
           children: [
             MailboxStatusBanner(status: state.status, error: state.error),
+            MailboxVersandLeiste(ausgewaehlt: selected),
             const Divider(height: 1),
             Expanded(
               child: Row(

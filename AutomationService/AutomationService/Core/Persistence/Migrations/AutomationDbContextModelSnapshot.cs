@@ -15,7 +15,57 @@ namespace AutomationService.Core.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
+
+            modelBuilder.Entity("AutomationService.Features.EmailVersand.Domain.Persistence.VersandEintragEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Absender")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AnhaengeJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Betreff")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmpfaengerJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("GesendetAm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ImGesendetOrdner")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("KopieJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MessageId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VorgangReferenz")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Weg")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VorgangReferenz");
+
+                    b.ToTable("Versandprotokoll");
+                });
 
             modelBuilder.Entity("AutomationService.Features.FormTemplates.Domain.Persistence.FormTemplateEntity", b =>
                 {
@@ -51,6 +101,9 @@ namespace AutomationService.Core.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Absender")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AnhaengeJson")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Betreff")
@@ -178,6 +231,14 @@ namespace AutomationService.Core.Persistence.Migrations
 
                     b.Property<int>("LaufendeAuftragsnummer")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("MailSignatur")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MailSignaturHtml")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()

@@ -65,12 +65,13 @@ featureübergreifende Fragen in einem Zugriff.
 | `zentralruf_request` | Vorbefüllung des Zentralruf-Onlineformulars |
 | `zentralruf_reply` | Antwortmail auswerten und in einen Vorgang übernehmen |
 | `mailbox` | Status und Posteingang des Postfachs — **und** die Zugangsmaske in den Einstellungen |
-| `word_automation` | Assistent füllen → (Schadensaufstellung) → prüfen → speichern, PDF-Vorschau, schließt den Vorgang ab |
+| `word_automation` | Assistent füllen → (Schadensaufstellung) → prüfen → speichern, versenden, schließt den Vorgang ab |
+| `email_versand` | Mail zum Vorgang verfassen: senden oder als Entwurf in Outlook öffnen; Signatur-Import |
 | `form_template_setup` | Feldbeschreibungen zu einer Word-Vorlage |
 | `mandanten` | Mandantenregister (Datenbank) + Akten/Fälle (Dateisystem) |
 | `versicherer` | lesender Zugriff auf die Versicherer-Wissensbasis; benutzt aus `zentralruf_reply` |
 | `vorgaenge` | Lebenszyklus der Vorgänge + Sachgebiete-/Auftragsregister |
-| `settings` | Kanzleidaten, Aktenstammordner, Auftragsnummer/Abteilung, Erscheinungsbild; hängt die Reiter aus `mailbox` und `backup` ein |
+| `settings` | Kanzleidaten, Aktenstammordner, Auftragsnummer/Abteilung, Mail-Signatur, Erscheinungsbild; hängt die Reiter aus `mailbox` und `backup` ein |
 | `backup` | Sicherung und Wiederherstellung; aufgerufen aus den Einstellungen |
 | `dev_simulation` | Demo-Vorgang + Simulationsmenü, nur in `kDebugMode` sichtbar |
 
@@ -135,4 +136,5 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 - `page_refresh/` — `PageRefreshScope`, `PageRefreshButton`, `PageRefreshController`,
   `PageRefreshInherited`
 - direkt darunter — `SeitenAppBar`, `EntitySearchBar`, `FehlerHinweis`, `AnwendungsInfo`,
-  `UeberAnwendungDialog`, `UpdateHerunterladenButton`, `VersionBadge`
+  `UeberAnwendungDialog`, `UpdateHerunterladenButton`, `VersionBadge`, `DateiAblageBereich`
+  (nimmt aus dem Explorer gezogene Dateien entgegen, `desktop_drop`)

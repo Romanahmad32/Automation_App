@@ -89,9 +89,20 @@ class _AppSettingsViewState extends State<AppSettingsView>
     final value = _form.value;
     String read(String key) => (value[key] as String?)?.trim() ?? '';
 
-    context.read<KanzleiSettingsBloc>().add(
+    final bloc = context.read<KanzleiSettingsBloc>();
+    final stand = bloc.state;
+
+    // Auf dem gespeicherten Stand aufsetzen und nur überschreiben, was dieses
+    // Formular besitzt. Die Signatur etwa steht im E-Mail-Reiter; würde hier
+    // ein frischer Satz gebaut, löschte jedes Speichern der Kanzleidaten sie
+    // still mit — und dasselbe gälte für jedes künftige Feld daneben.
+    final basis = stand is KanzleiSettingsLoaded
+        ? stand.settings
+        : KanzleiSettings.empty;
+
+    bloc.add(
       SaveKanzleiSettingsEvent(
-        KanzleiSettings(
+        basis.copyWith(
           personentyp: read('personentyp'),
           name: read('name'),
           strasseHausnummer: read('strasseHausnummer'),
@@ -122,7 +133,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
             _patch(state.settings);
             setState(() => _initialized = true);
           }
-          if (state.justSaved) {
+          if (state.gespeichert == KanzleiSettingsBereich.kanzlei) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Kanzleidaten gespeichert')),
             );

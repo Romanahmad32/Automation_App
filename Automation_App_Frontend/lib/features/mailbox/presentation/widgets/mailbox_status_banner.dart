@@ -34,13 +34,13 @@ class MailboxStatusBanner extends StatelessWidget {
         theme.colorScheme.outline,
         Icons.cloud_off,
         'Überwachung ausgeschaltet. In den Einstellungen unter '
-            '"Postfach-Zugang" aktivieren.',
+            '"E-Mail" aktivieren.',
       ),
       MailboxStatus(configured: false) => (
         theme.colorScheme.tertiary,
         Icons.key_off,
         'Kein Postfach-Zugang hinterlegt. In den Einstellungen unter '
-            '"Postfach-Zugang" einrichten.',
+            '"E-Mail" einrichten.',
       ),
       _ when status.lastError != null => (
         theme.colorScheme.error,

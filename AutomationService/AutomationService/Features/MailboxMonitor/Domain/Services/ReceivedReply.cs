@@ -34,6 +34,12 @@ public sealed record ReceivedReply
     /// </summary>
     public string? RawText { get; init; }
 
+    /// <summary>
+    /// Vollständige Pfade der Dateien, die an der Antwort hingen (§4.3). Der
+    /// Versand bietet sie zum Anhängen an (§4.7); leer, wenn nichts dranhing.
+    /// </summary>
+    public IReadOnlyList<string> AnhangPfade { get; init; } = [];
+
     /// <summary>Vom Nutzer als gesehen/übernommen markiert.</summary>
     public bool Acknowledged { get; init; }
 

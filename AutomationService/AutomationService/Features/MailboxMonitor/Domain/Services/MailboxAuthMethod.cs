@@ -6,9 +6,14 @@ namespace AutomationService.Features.MailboxMonitor.Domain.Services;
 public enum MailboxAuthMethod
 {
     /// <summary>
-    /// Benutzername + App-Passwort (Gmail-Weg: 2FA aktivieren, App-Passwort
-    /// erzeugen). Microsoft/Outlook akzeptiert diesen Weg seit September 2024
-    /// nicht mehr.
+    /// Gewöhnliche IMAP-Anmeldung mit Benutzername + Passwort. Bei 1&amp;1/IONOS
+    /// ist das das Postfach-Passwort, bei Gmail ein eigens erzeugtes
+    /// App-Passwort (2FA aktivieren). Microsoft/Outlook akzeptiert diesen Weg
+    /// seit September 2024 nicht mehr.
+    ///
+    /// Der Name bleibt <c>AppPassword</c>, weil er im HTTP-Vertrag und in der
+    /// gespeicherten Konfiguration steht — umbenennen hieße, beide Seiten und
+    /// bestehende Installationen anzufassen, ohne dass sich etwas ändert.
     /// </summary>
     AppPassword,
 

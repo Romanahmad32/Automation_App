@@ -4,13 +4,13 @@ import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_pas
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
-/// Zugangsdaten für den Gmail-Weg (App-Passwort): Postfach-Adresse und
-/// App-Passwort. Gebunden an die Formularfelder `username` und `appPassword`.
-class MailboxGmailCredentialsSection extends StatelessWidget {
-  /// Ob bereits ein App-Passwort gespeichert ist (Feld darf dann leer bleiben).
+/// Zugangsdaten für den Weg „IMAP mit Passwort": Postfach-Adresse und
+/// Passwort. Gebunden an die Formularfelder `username` und `appPassword`.
+class MailboxImapCredentialsSection extends StatelessWidget {
+  /// Ob bereits ein Passwort gespeichert ist (Feld darf dann leer bleiben).
   final bool appPasswordSet;
 
-  const MailboxGmailCredentialsSection({
+  const MailboxImapCredentialsSection({
     super.key,
     required this.appPasswordSet,
   });
@@ -21,9 +21,12 @@ class MailboxGmailCredentialsSection extends StatelessWidget {
       icon: Icons.alternate_email,
       title: 'Zugangsdaten',
       subtitle:
-          'Für Gmail: 2-Faktor-Authentifizierung aktivieren und unter '
-          'myaccount.google.com/apppasswords ein App-Passwort erzeugen — '
-          'dieses, nicht das Kontopasswort, gehört unten hinein.',
+          'Bei 1&1/IONOS: die vollständige Adresse und das Passwort des '
+          'Postfachs — dort gibt es kein App-Passwort. Bei Gmail: '
+          '2-Faktor-Authentifizierung aktivieren und unter '
+          'myaccount.google.com/apppasswords ein App-Passwort erzeugen. '
+          'Das Passwort wird verschlüsselt auf diesem Rechner gespeichert '
+          '(gebunden an die Windows-Anmeldung) und nie wieder angezeigt.',
       children: [
         GeneralTextField<String>(
           formControlName: 'username',

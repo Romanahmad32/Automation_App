@@ -61,7 +61,12 @@ public sealed class KanzleiSettingsRepository(AutomationDbContext db)
         return existing;
     }
 
-    /// <summary>Übernimmt alle fachlichen Felder (ohne Id) in die getrackte Zeile.</summary>
+    /// <summary>
+    /// Übernimmt alle fachlichen Felder (ohne Id) in die getrackte Zeile.
+    /// „Alle" ist wörtlich zu nehmen und wird geprüft
+    /// (<c>KanzleiSettingsRepositoryTests</c>): Ein hier vergessenes Feld geht
+    /// beim Speichern still verloren, während die Oberfläche Erfolg meldet.
+    /// </summary>
     static void CopyInto(KanzleiSettingsEntity target, KanzleiSettingsEntity source)
     {
         target.Personentyp = source.Personentyp;
@@ -75,6 +80,8 @@ public sealed class KanzleiSettingsRepository(AutomationDbContext db)
         target.Abteilung = source.Abteilung;
         target.TabellenkopfFarbeHex = source.TabellenkopfFarbeHex;
         target.AktenStammordner = source.AktenStammordner;
+        target.MailSignatur = source.MailSignatur;
+        target.MailSignaturHtml = source.MailSignaturHtml;
     }
 
     /// <summary>

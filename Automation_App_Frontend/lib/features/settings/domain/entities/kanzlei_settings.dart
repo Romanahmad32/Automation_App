@@ -58,6 +58,18 @@ class KanzleiSettings extends Equatable {
   /// Bewusst kein Default-Pfad: Die App läuft auf einem fremden Rechner.
   final String aktenStammordner;
 
+  /// Signaturblock unter dem Mailtext beim Direktversand (§4.7). Einmal aus
+  /// dem Mailprogramm übernommen, danach hier gepflegt. Beim Entwurf in
+  /// Outlook ungenutzt — dort setzt Outlook seine eigene ein.
+  final String mailSignatur;
+
+  /// Die formatierte Fassung derselben Signatur (§4.7): Schrift, Farben, Logo.
+  /// Die App **reicht sie nur durch** — übernommen und geändert wird sie im
+  /// Dienst (`POST api/EmailVersand/signaturen/uebernehmen`), weil dabei auch
+  /// Bilder abzulegen sind. Hier steht sie, damit ein Speichern der
+  /// Einstellungen sie nicht mitlöscht.
+  final String mailSignaturHtml;
+
   const KanzleiSettings({
     this.personentyp = 'Rechtsanwalt',
     this.name = '',
@@ -70,6 +82,8 @@ class KanzleiSettings extends Equatable {
     this.abteilung = defaultAbteilung,
     this.tabellenkopfFarbeHex = defaultTabellenkopfFarbeHex,
     this.aktenStammordner = '',
+    this.mailSignatur = '',
+    this.mailSignaturHtml = '',
   });
 
   static const KanzleiSettings empty = KanzleiSettings();
@@ -86,6 +100,8 @@ class KanzleiSettings extends Equatable {
     String? abteilung,
     String? tabellenkopfFarbeHex,
     String? aktenStammordner,
+    String? mailSignatur,
+    String? mailSignaturHtml,
   }) {
     return KanzleiSettings(
       personentyp: personentyp ?? this.personentyp,
@@ -100,6 +116,8 @@ class KanzleiSettings extends Equatable {
       abteilung: abteilung ?? this.abteilung,
       tabellenkopfFarbeHex: tabellenkopfFarbeHex ?? this.tabellenkopfFarbeHex,
       aktenStammordner: aktenStammordner ?? this.aktenStammordner,
+      mailSignatur: mailSignatur ?? this.mailSignatur,
+      mailSignaturHtml: mailSignaturHtml ?? this.mailSignaturHtml,
     );
   }
 
@@ -125,6 +143,8 @@ class KanzleiSettings extends Equatable {
           json['tabellenkopfFarbeHex'] as String? ??
           defaultTabellenkopfFarbeHex,
       aktenStammordner: json['aktenStammordner'] as String? ?? '',
+      mailSignatur: json['mailSignatur'] as String? ?? '',
+      mailSignaturHtml: json['mailSignaturHtml'] as String? ?? '',
     );
   }
 
@@ -140,6 +160,8 @@ class KanzleiSettings extends Equatable {
     'abteilung': abteilung,
     'tabellenkopfFarbeHex': tabellenkopfFarbeHex,
     'aktenStammordner': aktenStammordner,
+    'mailSignatur': mailSignatur,
+    'mailSignaturHtml': mailSignaturHtml,
   };
 
   @override
@@ -155,5 +177,7 @@ class KanzleiSettings extends Equatable {
     abteilung,
     tabellenkopfFarbeHex,
     aktenStammordner,
+    mailSignatur,
+    mailSignaturHtml,
   ];
 }

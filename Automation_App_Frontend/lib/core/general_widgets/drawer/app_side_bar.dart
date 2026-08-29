@@ -111,19 +111,31 @@ class AppSidebar extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 8),
 
-          for (final (index, dest) in _destinations.indexed)
-            SidebarItem(
-              icon: Icon(dest.icon),
-              selectedIcon: Icon(dest.selectedIcon),
-              label: dest.label,
-              isSelected: activeIndex == index,
-              isExtended: isExtended,
-              animationDuration: animationDuration,
-              collapsedWidth: collapsedWidth,
-              onTap: () => onDestinationSelected(index),
+          // Die Reiter nehmen den Platz zwischen Kopf und Fuß ein und scrollen,
+          // wenn das Fenster zu niedrig ist. Ohne das lief die Spalte auf
+          // kleinen Bildschirmen über (RenderFlex overflowed), und die unteren
+          // Reiter waren nicht mehr erreichbar — der Fuß bleibt so immer sichtbar.
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final (index, dest) in _destinations.indexed)
+                    SidebarItem(
+                      icon: Icon(dest.icon),
+                      selectedIcon: Icon(dest.selectedIcon),
+                      label: dest.label,
+                      isSelected: activeIndex == index,
+                      isExtended: isExtended,
+                      animationDuration: animationDuration,
+                      collapsedWidth: collapsedWidth,
+                      onTap: () => onDestinationSelected(index),
+                    ),
+                ],
+              ),
             ),
+          ),
 
-          const Spacer(),
           const Divider(height: 1),
 
           SidebarFooter(

@@ -39,4 +39,16 @@ public static class AppDataPaths
         Directory.CreateDirectory(directory);
         return directory;
     }
+
+    /// <summary>
+    /// Ordner für die Anhänge erfasster Postfach-Antworten (§4.3). Neben der
+    /// Datenbank und nicht im Temp-Verzeichnis: Sie werden beim Versand noch
+    /// gebraucht, und zwar Tage später — Windows räumt Temp ohne Vorwarnung.
+    /// </summary>
+    public static string EnsureAnhaengeDirectory()
+    {
+        var directory = Path.Combine(EnsureAppDataDirectory(), "Anhaenge");
+        Directory.CreateDirectory(directory);
+        return directory;
+    }
 }

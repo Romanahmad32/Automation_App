@@ -31,6 +31,14 @@ import 'package:automation_app/features/dev_simulation/data/datasources/simulati
     as _i383;
 import 'package:automation_app/features/dev_simulation/domain/repositories/simulation_repository.dart'
     as _i602;
+import 'package:automation_app/features/email_versand/data/datasources/email_versand_datasource.dart'
+    as _i715;
+import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart'
+    as _i67;
+import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart'
+    as _i318;
+import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart'
+    as _i161;
 import 'package:automation_app/features/form_template_setup/data/datasources/form_template_datasource.dart'
     as _i308;
 import 'package:automation_app/features/form_template_setup/data/datasources/word_template_datasource.dart'
@@ -241,6 +249,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i829.MailboxDatasource>(
       () => _i829.ApiMailboxDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i67.EmailVersandRepository>(
+      () => _i715.ApiEmailVersandDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i487.VorgangRepository>(
       () => _i933.ApiVorgaengeDatasource(gh<_i361.Dio>()),
     );
@@ -313,6 +324,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i777.ZentralrufRepository>(
       () => _i248.ZentralrufRepositoryImpl(gh<_i615.ZentralrufDatasource>()),
+    );
+    gh.lazySingleton<_i161.LetzteVersaendeCubit>(
+      () => _i161.LetzteVersaendeCubit(gh<_i67.EmailVersandRepository>()),
     );
     gh.factory<_i865.MailboxConfigBloc>(
       () => _i865.MailboxConfigBloc(gh<_i469.MailboxRepository>()),
@@ -491,6 +505,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
         gh<_i223.UseCase<_i10.AblageErgebnis, _i763.LegeDokumentAbParams>>(),
         gh<_i849.KanzleiSettingsRepository>(),
+      ),
+    );
+    gh.factory<_i318.EmailEntwurfCubit>(
+      () => _i318.EmailEntwurfCubit(
+        gh<_i67.EmailVersandRepository>(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i782.VersichererCubit>(),
       ),
     );
     gh.factory<_i263.TemplatePdfPreviewBloc>(

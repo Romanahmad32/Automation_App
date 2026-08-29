@@ -1,7 +1,7 @@
 # word_automation — Anspruchsschreiben aus Vorlage erzeugen
 
 **Zweck:** Der Anwalt füllt zu einem Vorgang eine Word-Vorlage aus, prüft das Ergebnis als PDF, legt es in der Mandantenakte ab und schließt den Vorgang ab. Größtes Feature (~60 Dateien).
-**Anforderung:** `REQUIREMENTS.md` §4.4, §4.5, §4.6, §4.8
+**Anforderung:** `REQUIREMENTS.md` §4.4, §4.5, §4.6, §4.7, §4.8
 **Einstieg:** `presentation/pages/word_automation_page.dart`
 **Zustand:** in `presentation/blocs/`: `WizardCubit` (Schritt + gesammelte Eingaben), `DocumentBloc` (geladene Vorlagendatei), `EditedDocumentBloc` (Erzeugung), `TemplatePdfPreviewBloc` + `ResultPdfPreviewBloc` (`pdf_preview_bloc.dart`), `RvgCalculationBloc`.
 Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTemplateOverviewBloc`, `VorgangCubit`.
@@ -31,9 +31,9 @@ UseCases `FillOutTemplate`, `ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateR
   == !vorsteuerabzugsberechtigt`); ein Listener rechnet die RVG-Kosten neu, die Änderung ist dialogbestätigt.
 - Der Vorgangsstatus wird nur vorwärts geschaltet (`status.index`): „erstellt" im Listener der Page, „abgelegt"
   in `schliesseAblageAb`, „versendet" über `VorgangCubit.abschliessen`. Vorher immer `findeZuReferenz`.
-- „Vorgang abschließen" verlangt im Dialog das Häkchen „E-Mail wurde versendet" (der Versand ist nicht
-  gebaut, §4.7); erst danach zählt das Backend die Auftragsnummer hoch. Nicht wegautomatisieren. Hier fällt
-  auch der Arbeitsordner — der letzte Halt für Arbeitskopien, die die Ablage stehen ließ.
+- Versand (§4.7) und Abschluss (§4.8) sind getrennt: Die Mail geht über `MailVersendenButton` hinaus
+  (Feature `email_versand`, Anhänge aus `MailAnhangAuswahl.zu` — PDF vorausgewählt), das Häkchen im
+  Abschlussdialog ist danach vorbelegt. Abgeschlossen wird trotzdem von Hand; hier fällt der Arbeitsordner.
 - Die Datasource setzt eigene `receiveTimeout`s (30 s Worderzeugung, 60 s PDF); global stehen im
   `NetworkModule` 3 s — ohne diese Überschreibung brechen beide Aufrufe ab.
 - `linkWordFileToTemplate` merkt sich die gewählte .docx am aktiven Vorlagen-Slot; die Vorlagenliste nur

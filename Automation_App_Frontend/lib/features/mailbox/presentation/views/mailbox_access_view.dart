@@ -1,21 +1,41 @@
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart';
+import 'package:automation_app/features/mailbox/presentation/utils/mailbox_zugang_felder.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_auth_method_selector.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_enabled_switch.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_filter_section.dart';
-import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_gmail_credentials_section.dart';
-import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_gmail_server_section.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_credentials_section.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_server_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_microsoft_signin_section.dart';
+import 'package:automation_app/features/settings/presentation/widgets/mail_signatur_sektion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Einstellungsmaske für den Postfach-Zugang (REQUIREMENTS.md §4.3/§7.1). Mit
 /// diesen Angaben überwacht das Backend das Postfach ereignisbasiert und erfasst
-/// eingehende Zentralruf-Antworten selbsttätig. Zwei Wege: Gmail mit
-/// App-Passwort oder Outlook/Microsoft per Browser-Anmeldung (OAuth — Microsoft
-/// erlaubt für IMAP kein Passwort mehr).
+/// eingehende Zentralruf-Antworten selbsttätig. Zwei Wege, und es entscheidet
+/// allein, wo das Postfach liegt: IMAP mit Passwort (1&1/IONOS, Gmail) oder
+/// Outlook/Microsoft per Browser-Anmeldung (OAuth — Microsoft erlaubt für IMAP
+/// kein Passwort mehr). Über denselben Zugang wird auch versendet (§4.7).
+///
+/// Weil hier alles zur E-Mail steht, hängt unten auch die Signatur des
+/// Direktversands (§4.7) — sie gehört fachlich zum Postausgang, nicht zu den
+/// Kanzleistammdaten.
+///
+/// **Ein Speichern-Knopf für die ganze Seite.** Die Signatur hatte einen
+/// eigenen, weil sie in einem anderen Einstellungssatz landet — eine
+/// Begründung aus der Bauart, die auf dem Schirm nichts erklärte: Zwei Knöpfe
+/// „Speichern" untereinander sahen aus wie zwei Formulare, und der obere stand
+/// mitten auf der Seite, als gälte er für alles. Dass es zwei Wege ins Backend
+/// sind, geht niemanden etwas an, der hier tippt.
+///
+/// Die Signatur geht dabei **auch dann** hinaus, wenn der Zugang unvollständig
+/// ist: Sie hing nie an ihm, und ein halb ausgefülltes Postfachformular darf
+/// sie nicht als Geisel nehmen. Dann wird gesagt, was gespeichert wurde und was
+/// nicht.
 class MailboxAccessView extends StatefulWidget {
   const MailboxAccessView({super.key});
 
@@ -42,13 +62,17 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
 
   final ScrollController _scrollController = ScrollController();
 
+  /// Die Signatur gehört der Seite, nicht ihrem Abschnitt: Der eine
+  /// Speichern-Knopf unten liest daraus.
+  final TextEditingController _signatur = TextEditingController();
+
   final FormGroup _form = FormGroup({
     'enabled': FormControl<bool>(value: false),
     'authMethod': FormControl<MailboxAuthMethod>(
       value: MailboxAuthMethod.appPassword,
     ),
     'host': FormControl<String>(
-      value: 'imap.gmail.com',
+      value: 'imap.ionos.de',
       validators: [Validators.required],
     ),
     'port': FormControl<String>(
@@ -68,57 +92,49 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   @override
   void dispose() {
     _scrollController.dispose();
+    _signatur.dispose();
     super.dispose();
   }
 
   void _patch(MailboxConfig config) {
     _config = config;
     _appPasswordSet = config.appPasswordSet;
-    _form.patchValue({
-      'enabled': config.enabled,
-      'authMethod': config.authMethod,
-      'host': config.host,
-      'port': config.port.toString(),
-      'useSsl': config.useSsl,
-      'username': config.username,
-      // Das gespeicherte Passwort liefert das Backend nie aus; Feld bleibt leer.
-      'appPassword': '',
-      'folder': config.folder,
-      'subjectFilter': config.subjectFilter,
-    });
+    MailboxZugangFelder.fuelle(_form, config);
   }
 
+  /// Speichert beides: die Signatur immer (wenn geändert), den Zugang nur
+  /// vollständig. Ein unvollständiger Zugang meldet sich, statt still nichts
+  /// zu tun — die Feldfehler werden dabei sichtbar gemacht.
+  ///
+  /// Über die Signatur steht hier nichts: Sie geht in einen anderen
+  /// Einstellungssatz, ihr Erfolg kommt entsprechend später — [MailSignaturSektion]
+  /// meldet ihn selbst, wenn er da ist.
   void _save() {
-    final value = _form.value;
-    String read(String key) => (value[key] as String?)?.trim() ?? '';
+    MailSignaturSektion.speichereWennGeaendert(context, _signatur.text);
 
-    final authMethod =
-        (value['authMethod'] as MailboxAuthMethod?) ??
-        MailboxAuthMethod.appPassword;
-    final microsoft = authMethod == MailboxAuthMethod.microsoftOAuth;
+    if (!_form.valid) {
+      _form.markAllAsTouched();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Der Postfach-Zugang ist noch unvollständig — er wurde nicht '
+            'gespeichert. Die rot markierten Felder fehlen.',
+          ),
+        ),
+      );
+      return;
+    }
 
-    final passwordInput = read('appPassword');
-    // Leer + bereits gesetzt = unverändert lassen (null). Sonst neuer Wert.
-    final String? appPassword = passwordInput.isEmpty
-        ? (_appPasswordSet ? null : '')
-        : passwordInput;
+    _speichereZugang();
+  }
 
+  void _speichereZugang() {
     context.read<MailboxConfigBloc>().add(
       SaveMailboxConfigEvent(
-        MailboxConfigUpdate(
-          enabled: (value['enabled'] as bool?) ?? false,
-          authMethod: authMethod,
-          // Beim Outlook-Weg sind Server und Konto durch die Anmeldung
-          // festgelegt — der Nutzer soll nichts davon pflegen müssen.
-          host: microsoft ? 'outlook.office365.com' : read('host'),
-          port: microsoft ? 993 : int.tryParse(read('port')) ?? 993,
-          useSsl: microsoft ? true : (value['useSsl'] as bool?) ?? true,
-          username: microsoft
-              ? (_config.microsoftAccount ?? read('username'))
-              : read('username'),
-          appPassword: microsoft ? null : appPassword,
-          folder: read('folder'),
-          subjectFilter: read('subjectFilter'),
+        MailboxZugangFelder.alsAenderung(
+          _form,
+          stand: _config,
+          appPasswortGesetzt: _appPasswordSet,
         ),
       ),
     );
@@ -215,37 +231,19 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
                                       ),
                                     ]
                                   : [
-                                      MailboxGmailCredentialsSection(
+                                      MailboxImapCredentialsSection(
                                         appPasswordSet: _appPasswordSet,
                                       ),
-                                      const MailboxGmailServerSection(),
+                                      const MailboxImapServerSection(),
                                     ],
                             );
                           },
                         ),
                         const MailboxFilterSection(),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ReactiveFormConsumer(
-                            builder: (context, form, child) {
-                              return FilledButton.icon(
-                                icon: isSaving
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.save),
-                                label: const Text('Speichern'),
-                                onPressed:
-                                    (form.valid && !isSaving && !signInPending)
-                                    ? _save
-                                    : null,
-                              );
-                            },
-                          ),
+                        MailSignaturSektion(controller: _signatur),
+                        SpeichernButton(
+                          speichert: isSaving,
+                          onSpeichern: signInPending ? null : _save,
                         ),
                       ],
                     ),
