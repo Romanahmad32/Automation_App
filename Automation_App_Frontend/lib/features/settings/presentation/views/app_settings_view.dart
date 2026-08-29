@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/settings/presentation/widgets/kanzlei_settings_form_body.dart';
@@ -126,13 +127,17 @@ class _AppSettingsViewState extends State<AppSettingsView>
   @override
   Widget build(BuildContext context) {
     super.build(context); // AutomaticKeepAliveClientMixin
-    return BlocConsumer<KanzleiSettingsBloc, KanzleiSettingsState>(
-      listener: (context, state) {
+    return StandNachziehen<KanzleiSettingsBloc, KanzleiSettingsState>(
+      // Auch der Stand, der beim Aufgehen schon dasteht — sonst bliebe das
+      // Formular leer, wenn der Bloc vor dem ersten Aufbau fertig war, und
+      // „Speichern" schriebe die Vorgabewerte über die Kanzleidaten.
+      nachziehen: (context, state) {
+        if (state is! KanzleiSettingsLoaded || _initialized) return;
+        _patch(state.settings);
+        _initialized = true;
+      },
+      beiUebergang: (context, state) {
         if (state is KanzleiSettingsLoaded) {
-          if (!_initialized) {
-            _patch(state.settings);
-            setState(() => _initialized = true);
-          }
           if (state.gespeichert == KanzleiSettingsBereich.kanzlei) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Kanzleidaten gespeichert')),

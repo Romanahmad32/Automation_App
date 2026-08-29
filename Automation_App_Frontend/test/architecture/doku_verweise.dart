@@ -36,8 +36,6 @@ const Set<String> keinVerweisZeichen = {' ', '*', '<', '>', '%'};
 /// Verweis hier eintraegt, ohne den Grund benennen zu koennen, hat statt der
 /// Doku den Test repariert.
 const Map<String, String> verweisAusnahmen = {
-  'REQUIREMENTS.md':
-      'absichtlich nicht versioniert (Kanzlei-Interna, oeffentliches Repo)',
   '.claude/settings.local.json': 'maschinenlokal, steht in .gitignore',
   'kanzlei_settings.json':
       'abgeschaffter JSON-Speicher; wird in CLAUDE.md genannt, um zu sagen, '

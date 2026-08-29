@@ -1,0 +1,58 @@
+# EditorConfig fuer das ganze Repo.
+#
+# Die Zeilenenden hier sind kein Geschmack, sondern muessen zu .gitattributes
+# passen: dort steht `* text=auto` (im Arbeitsverzeichnis unter Windows also
+# CRLF) mit Ausnahmen fuer die Dateien, die auf Unix-Seite gelesen werden.
+# Wer eine der beiden Dateien aendert, aendert die andere mit -- laufen sie
+# auseinander, schreibt der Editor etwas, das Git sofort wieder anfasst.
+#
+# Der .NET-Teilbaum hat eine eigene, vollstaendige AutomationService/.editorconfig
+# mit `root = true`: sie traegt zusaetzlich die Analyzer-Schweregrade und endet
+# die Kaskade bewusst. Was hier steht, gilt fuer Flutter, scripts/, docs/,
+# installer/ und tools/.
+#
+# Und die Einschraenkung, die man kennen muss: eine .editorconfig erreicht nur
+# Editoren und Formatierer. Ein Skript, das eine Datei schreibt, liest sie
+# nicht. Dagegen hilft `./scripts/check.ps1 -Beheben`.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# Werden auf Unix-Seite gelesen (CI-Schritte, Container, Installationsskripte)
+# und stehen deshalb auch in .gitattributes auf `eol=lf`.
+[*.{yml,yaml,sh}]
+end_of_line = lf
+
+# Schreibt `flutter pub get` bei jedem Lauf neu, und immer mit LF. Dagegen
+# anzuschreiben hiesse, sie nach jeder Pruefkette wieder als geaendert zu sehen.
+[{generated_plugin_registrant.cc,generated_plugin_registrant.h,generated_plugins.cmake,GeneratedPluginRegistrant.swift}]
+end_of_line = lf
+
+# Der .NET-Teilbaum bringt seine eigene .editorconfig mit; hier landen nur die
+# beiden Konsolen unter tools/. Die sind wie aller C#-Code des Repos vier Spalten
+# eingerueckt -- ohne diesen Abschnitt zoege ein Editor sie auf die zwei aus [*]
+# und erzeugte einen Diff, den niemand bestellt hat.
+[*.cs]
+indent_size = 4
+
+[*.ps1]
+indent_size = 4
+# Mit BOM, und das ist keine Geschmacksfrage: Windows PowerShell 5.1 liest eine
+# .ps1 ohne BOM als Windows-1252. Ein Gedankenstrich wird darin zu drei Zeichen,
+# und eines davon (0x94) ist das schliessende typografische Anfuehrungszeichen —
+# das beendet eine doppelt gequotete Zeichenkette mitten im Satz. Das Skript
+# laesst sich dann nicht mehr uebersetzen, und die Fehlermeldung zeigt auf eine
+# voellig andere Zeile. Ohne Umlaute im Text faellt es nur als Buchstabensalat
+# in der Ausgabe auf.
+charset = utf-8-bom
+
+[*.md]
+# Zwei Leerzeichen am Zeilenende sind in Markdown ein harter Umbruch.
+trim_trailing_whitespace = false
