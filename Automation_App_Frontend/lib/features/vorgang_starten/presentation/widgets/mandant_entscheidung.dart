@@ -21,7 +21,11 @@ class MandantEntscheidung {
     this.neuerMandant,
     this.aktualisierterMandant,
     this.bestaetigt = true,
-  });
+  }) : assert(
+         neuerMandant == null || aktualisierterMandant == null,
+         'Anlegen und Aktualisieren schließen sich aus. Beides gesetzt hieße: '
+         'der Bloc legt an und verknüpft den Vorgang danach mit dem anderen.',
+       );
 
   /// Die Übersicht wurde abgebrochen — nichts speichern.
   static const abgebrochen = MandantEntscheidung(bestaetigt: false);

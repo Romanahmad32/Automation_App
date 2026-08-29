@@ -33,7 +33,7 @@ Fremd eingebunden: `VorgangCubit` (vorgaenge).
 - `MandantErkennung` schlägt Registereinträge nur vor, die Übernahme bleibt ein Klick; jede Anlage
   oder Änderung läuft vorher durch `MandantUebersichtDialog` — wird der abgebrochen, wird auch der
   Vorgang nicht gespeichert.
-- Der lange Rest steht in `FALLSTRICKE.md` daneben: Reihenfolge im Speicherpfad, die zwei Wege,
-  einen Mandanten anzulegen (Dublettengefahr), und warum Widget-Tests hier zweimal pumpen.
+- Der lange Rest steht in `FALLSTRICKE.md` daneben: Reihenfolge im Speicherpfad, die drei Zustände
+  mit gespeichertem Mandanten (sonst 409-Sackgasse) und warum Tests kein `pumpAndSettle` vertragen.
 - `registriereAnfrage` ist ein Upsert über die Referenz: dieselbe Referenz erneut speichern
   aktualisiert nur die hier erfassten Felder und behält Antwort- und Dokumentdaten.

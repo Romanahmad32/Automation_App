@@ -7,6 +7,7 @@ import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorga
 import 'package:automation_app/features/vorgang_starten/presentation/views/vorgang_starten_form_view.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_section.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
+import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,27 +15,45 @@ import 'package:reactive_forms/reactive_forms.dart';
 
 import 'vorgang_starten_doubles.dart';
 
-/// Ein neu angelegter Mandant muss auf **jedem** Weg in der Karte ankommen.
+/// Ein gespeicherter Mandant muss auf **jedem** Weg in der Karte ankommen.
 ///
 /// Es gibt zwei Wege, beim Starten eines Vorgangs einen Mandanten anzulegen:
 /// den Knopf in der Mandanten-Karte und die Aktionsleiste unten („Vorgang
 /// speichern" / „Zentralruf-Formular ausfüllen"). Nur der erste räumte danach
 /// auf — er meldet `MandantGespeichert`, die View verknüpft den Mandanten.
 ///
-/// Der zweite meldete nichts. Die Karte hielt den Mandanten weiter für *neu*,
-/// und der nächste Klick auf „Speichern" legte **denselben Mandanten ein
-/// zweites Mal** an. Eine Dublette im Mandantenregister ist Datenschaden, nicht
-/// Bedienärger — deshalb zählt dieser Test die Anlagen, statt nur die Anzeige
-/// zu prüfen.
+/// Der zweite meldete nichts, und die Karte hielt den Mandanten weiter für
+/// *neu*. Der nächste Klick auf „Speichern" versuchte ihn deshalb ein zweites
+/// Mal anzulegen — und lief in den Riegel des Backends: `EnsureNameUniqueAsync`
+/// lässt denselben Namen kein zweites Mal zu, der Controller antwortet 409.
+/// Es entstand also keine Dublette, sondern eine **Sackgasse**: Der Vorgang
+/// ließ sich ab da überhaupt nicht mehr speichern, bis jemand die Seite neu
+/// lud. Deshalb bildet [MandantenRegisterDouble] den Konflikt nach — ohne ihn
+/// prüften diese Tests eine Welt, in der das Backend alles hinnimmt.
 void main() {
   late MandantenRegisterDouble register;
   late VorgangStartenBloc bloc;
 
+  /// Jeder Zustand, den der Bloc gemeldet hat — über einen `BlocListener` im
+  /// Baum, nicht über `bloc.stream`: Ein von Hand geöffnetes Abonnement
+  /// überlebt den Testkörper und blockiert das Aufräumen; dieses hier stirbt
+  /// mit dem Widget.
+  late List<VorgangStartenState> protokoll;
+
   /// Der Mandant, den die Karte gerade als verknüpft führt (null = „neuer
-  /// Mandant"). Das ist der Wert, an dem die Dublette hängt.
+  /// Mandant"). Das ist der Wert, an dem die Sackgasse hängt.
   int? gewaehlterMandant(WidgetTester tester) => tester
       .widget<MandantSection>(find.byType(MandantSection))
       .selectedMandantId;
+
+  FormGroup formular(WidgetTester tester) =>
+      tester.widget<ReactiveForm>(find.byType(ReactiveForm)).formGroup;
+
+  /// Wie oft der Bloc einen Speicherlauf abgeschlossen hat — mit Erfolg oder
+  /// mit Fehler. Daran hängt das Warten unten.
+  int laeufe() => protokoll
+      .where((s) => s is VorgangGespeichert || s is VorgangStartenError)
+      .length;
 
   /// Baut Doubles, Bloc und Formular und füllt es über die FormGroup — der Test
   /// prüft den Datenpfad nach dem Speichern, nicht das Tippen in die Felder.
@@ -43,20 +62,25 @@ void main() {
   /// wird, hängt an der echten Ereignisschleife statt an der Testuhr von
   /// `testWidgets` — der Bloc käme dann über `VorgangStartenLoading` nie hinaus,
   /// egal wie oft der Test pumpt.
-  Future<void> zeigeFormular(WidgetTester tester) async {
+  Future<void> zeigeFormular(
+    WidgetTester tester, {
+    UseCase<ZentralrufPrefillResult, ZentralrufRequest>? vorbefuellung,
+  }) async {
     register = MandantenRegisterDouble();
+    protokoll = [];
     final vorgaenge = VorgangCubit(
       VorgangAblageDouble(),
       VorgangPersistenzFehlerCubit(),
     );
     bloc = VorgangStartenBloc(
-      FesterZentralrufPrefill(
-        const ZentralrufPrefillResult(
-          referenz: '84/26 C03_GG-XY 123',
-          filledFields: [],
-          skippedFields: [],
-        ),
-      ),
+      vorbefuellung ??
+          FesterZentralrufPrefill(
+            const ZentralrufPrefillResult(
+              referenz: '84/26 C03_GG-XY 123',
+              filledFields: [],
+              skippedFields: [],
+            ),
+          ),
       OhneKanzleiEinstellungen(),
       MandantAnlegenDouble(register),
       MandantAktualisierenDouble(register),
@@ -82,16 +106,17 @@ void main() {
         home: Scaffold(
           body: BlocProvider.value(
             value: bloc,
-            child: const VorgangStartenFormView(),
+            child: BlocListener<VorgangStartenBloc, VorgangStartenState>(
+              listener: (_, state) => protokoll.add(state),
+              child: const VorgangStartenFormView(),
+            ),
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    final form = tester
-        .widget<ReactiveForm>(find.byType(ReactiveForm))
-        .formGroup;
+    final form = formular(tester);
     form.control('auftragsnummer').updateValue('84');
     form.control('kennzeichenGegner').updateValue('GG-XY 123');
     form.control('schadentag').updateValue('01.03.2026');
@@ -101,36 +126,38 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Drückt „Zentralruf-Formular ausfüllen" und bestätigt die Übersicht, falls
-  /// eine aufgeht. Kehrt erst zurück, wenn gespeichert und übernommen ist.
+  /// Drückt „Zentralruf-Formular ausfüllen", bestätigt die Übersicht, falls
+  /// eine aufgeht, und kehrt zurück, sobald der Bloc den Lauf abgeschlossen hat.
   ///
-  /// Das Warten ist kein Zierrat: `showDialog` gibt sein Ergebnis erst frei,
-  /// wenn die Ausblende-Animation durch ist. Die Speicherkette startet also erst
-  /// nach dem letzten Frame, den ein `pumpAndSettle` sieht — wer direkt danach
-  /// misst, misst den Ladezustand und hält die Übernahme fälschlich für kaputt.
+  /// Kein `pumpAndSettle`: Solange der Bloc lädt, dreht sich der Ladekringel in
+  /// der Aktionsleiste. „Pumpen, bis nichts mehr animiert" käme da nie zur Ruhe
+  /// und liefe nach zehn Minuten Testuhr in seinen Timeout — der Lauf hängt
+  /// dann minutenlang, statt etwas zu sagen. Gewartet wird deshalb auf das
+  /// Protokoll; die Framezahl ist nur die Obergrenze.
   ///
-  /// Gewartet wird mit einer festen Zahl `pump`-Frames, nicht mit
-  /// `pumpAndSettle`: Solange der Bloc lädt, dreht sich der Ladekringel in der
-  /// Aktionsleiste. „Pumpen, bis nichts mehr animiert" käme da nie zur Ruhe und
-  /// liefe nach zehn Minuten Testuhr in seinen Timeout — der Lauf hängt dann
-  /// minutenlang, statt etwas zu sagen. Auf `bloc.stream` zu horchen wäre die
-  /// genauere Abbruchbedingung und ist trotzdem keine: ein Abonnement auf den
-  /// Bloc überlebt den Testkörper und blockiert das Aufräumen.
-  Future<void> zentralrufAusfuellen(WidgetTester tester) async {
+  /// Das Warten selbst ist kein Zierrat: `showDialog` gibt sein Ergebnis erst
+  /// frei, wenn die Ausblende-Animation durch ist. Die Speicherkette startet
+  /// also erst nach dem letzten Frame, den ein `pumpAndSettle` sähe.
+  Future<void> zentralrufAusfuellen(
+    WidgetTester tester, {
+    String bestaetigen = 'Anlegen',
+  }) async {
+    final vorher = laeufe();
     await tester.tap(find.text('Zentralruf-Formular ausfüllen'));
-    await tester.pumpAndSettle();
-    // Beim zweiten Durchlauf kommt keine Übersicht mehr — genau das ist der
-    // Beweis, dass der Mandant inzwischen verknüpft ist.
-    if (tester.any(find.widgetWithText(FilledButton, 'Anlegen'))) {
-      await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    // Kommt keine Übersicht, ist am Mandanten nichts zu tun — genau das ist der
+    // Beweis, dass er inzwischen verknüpft ist.
+    if (tester.any(find.widgetWithText(FilledButton, bestaetigen))) {
+      await tester.tap(find.widgetWithText(FilledButton, bestaetigen));
     }
-    for (var frame = 0; frame < 60; frame++) {
+    for (var frame = 0; laeufe() == vorher && frame < 60; frame++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
     expect(
-      bloc.state,
-      isA<VorgangGespeichert>(),
-      reason: 'Der Vorgang wurde nicht gespeichert',
+      laeufe(),
+      vorher + 1,
+      reason: 'Der Speicherlauf ist nicht zum Abschluss gekommen',
     );
   }
 
@@ -143,18 +170,19 @@ void main() {
     expect(gewaehlterMandant(tester), register.bestand.single.id);
   });
 
-  testWidgets(
-    'legt denselben Mandanten beim zweiten Speichern nicht erneut an',
-    (tester) async {
-      await zeigeFormular(tester);
-      await zentralrufAusfuellen(tester);
-      await zentralrufAusfuellen(tester);
+  testWidgets('versucht beim zweiten Speichern keine zweite Anlage', (
+    tester,
+  ) async {
+    await zeigeFormular(tester);
+    await zentralrufAusfuellen(tester);
+    await zentralrufAusfuellen(tester);
 
-      // Ohne die Übernahme stünde hier 2: derselbe Mensch zweimal im Register.
-      expect(register.anlagen, 1);
-      expect(register.bestand, hasLength(1));
-    },
-  );
+    // Ohne die Übernahme stünde hier 2 — und der zweite Versuch käme als
+    // Namenskonflikt zurück, statt den Vorgang zu speichern.
+    expect(register.anlagen, 1);
+    expect(register.bestand, hasLength(1));
+    expect(protokoll.whereType<VorgangStartenError>(), isEmpty);
+  });
 
   testWidgets('sperrt den Karten-Knopf, sobald der Mandant verknüpft ist', (
     tester,
@@ -175,4 +203,80 @@ void main() {
     );
     expect(knopf.onPressed, isNull);
   });
+
+  /// Der Weg, auf dem die Reparatur sonst vorbeiläuft: Der Mandant ist
+  /// angelegt, danach scheitert das Vorbefüllen. Er liegt trotzdem im Register
+  /// und muss verknüpft werden — sonst ist der zweite Anlauf die Sackgasse.
+  testWidgets('verknüpft den Mandanten auch, wenn das Vorbefüllen scheitert', (
+    tester,
+  ) async {
+    await zeigeFormular(
+      tester,
+      vorbefuellung: ScheiterndeZentralrufVorbefuellung(),
+    );
+    await zentralrufAusfuellen(tester);
+
+    expect(protokoll.whereType<VorgangStartenError>(), hasLength(1));
+    expect(register.anlagen, 1);
+    expect(gewaehlterMandant(tester), register.bestand.single.id);
+
+    // Und der zweite Anlauf legt nicht noch einmal an.
+    await zentralrufAusfuellen(tester);
+    expect(register.anlagen, 1);
+  });
+
+  testWidgets('aktualisiert den verknüpften Mandanten, statt neu anzulegen', (
+    tester,
+  ) async {
+    await zeigeFormular(tester);
+    await zentralrufAusfuellen(tester);
+
+    formular(tester).control('mandantOrt').updateValue('Frankfurt');
+    await tester.pumpAndSettle();
+    await zentralrufAusfuellen(tester, bestaetigen: 'Aktualisieren');
+
+    expect(register.anlagen, 1);
+    expect(register.aktualisierungen, 1);
+    expect(register.bestand, hasLength(1));
+    expect(register.bestand.single.ort, 'Frankfurt');
+  });
+
+  /// §1.3 — die App „überschreibt nichts stillschweigend". Auf dem
+  /// Zentralruf-Weg liegen zwischen Klick und Rückkehr bis zu drei Minuten, in
+  /// denen nur die Knöpfe gesperrt sind, die Felder aber bedienbar bleiben.
+  testWidgets(
+    'überschreibt nicht, was während des Vorbefüllens getippt wurde',
+    (tester) async {
+      final angehalten = AngehalteneZentralrufVorbefuellung(
+        const ZentralrufPrefillResult(
+          referenz: '84/26 C03_GG-XY 123',
+          filledFields: [],
+          skippedFields: [],
+        ),
+      );
+      await zeigeFormular(tester, vorbefuellung: angehalten);
+
+      await tester.tap(find.text('Zentralruf-Formular ausfüllen'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
+      for (var frame = 0; !angehalten.laeuft && frame < 60; frame++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(angehalten.laeuft, isTrue, reason: 'Der Bloc wartet nicht');
+
+      // Der Anwalt tippt weiter, während der Browser offen steht.
+      formular(tester).control('mandantEmail').updateValue('neu@kanzlei.de');
+      await tester.pump();
+
+      angehalten.gib();
+      for (var frame = 0; laeufe() == 0 && frame < 60; frame++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      expect(laeufe(), 1);
+      expect(gewaehlterMandant(tester), register.bestand.single.id);
+      expect(formular(tester).control('mandantEmail').value, 'neu@kanzlei.de');
+    },
+  );
 }

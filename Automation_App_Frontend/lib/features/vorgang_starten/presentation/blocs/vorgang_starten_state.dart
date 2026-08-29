@@ -30,10 +30,14 @@ final class VorgangStartenDefaultsLoaded extends VorgangStartenState {
 /// das Zentralruf-Formular im Browser vorbefüllt wurde (dann anderer Hinweistext).
 ///
 /// [gespeicherterMandant] trägt den auf diesem Weg angelegten oder aktualisierten
-/// Mandanten mit — sonst wüsste die View nichts davon, hielte ihn weiter für neu
-/// und legte ihn beim nächsten Speichern ein zweites Mal an. Er ist der einzige
-/// Unterschied zum Karten-Weg, der dafür `MandantGespeichert` meldet; beide
-/// laufen in der View in dieselbe Nachbereitung.
+/// Mandanten mit — sonst wüsste die View nichts davon und hielte ihn weiter für
+/// neu. Der nächste Klick liefe dann in den Namenskonflikt: Das Backend legt
+/// denselben Namen kein zweites Mal an (`MandantenRepository.EnsureNameUnique-
+/// Async` → 409), der Vorgang ließe sich ab da überhaupt nicht mehr speichern.
+///
+/// Denselben Mandanten meldet der Karten-Weg als `MandantGespeichert` und der
+/// Fehlerpfad als `VorgangStartenError`; alle drei laufen in der View in
+/// dieselbe Nachbereitung.
 final class VorgangGespeichert extends VorgangStartenState {
   final String referenz;
   final bool zentralrufAusgefuellt;
@@ -69,11 +73,19 @@ final class MandantGespeichert extends VorgangStartenState {
   List<Object?> get props => [mandant, warNeu];
 }
 
+/// Etwas ist schiefgegangen; [message] steht so in der SnackBar.
+///
+/// [gespeicherterMandant] ist gesetzt, wenn der Mandant vor dem Fehler bereits
+/// gespeichert wurde — etwa wenn danach das Vorbefüllen scheitert. Er liegt dann
+/// im Register und muss trotzdem in der View ankommen: Ohne die Verknüpfung
+/// hielte die Karte ihn für neu, und der nächste Versuch käme über den
+/// Namenskonflikt nicht mehr hinaus.
 final class VorgangStartenError extends VorgangStartenState {
   final String message;
+  final Mandant? gespeicherterMandant;
 
-  const VorgangStartenError(this.message);
+  const VorgangStartenError(this.message, {this.gespeicherterMandant});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, gespeicherterMandant];
 }
