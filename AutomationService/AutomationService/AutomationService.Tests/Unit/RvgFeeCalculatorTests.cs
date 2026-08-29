@@ -76,12 +76,32 @@ public class RvgFeeCalculatorTests
     }
 
     [Theory]
-    [InlineData(0)]
+    [InlineData(-0.01)]
     [InlineData(-100)]
-    public void Calculate_WithNonPositiveValue_Throws(decimal gegenstandswert)
+    public void Calculate_WithNegativeValue_Throws(decimal gegenstandswert)
     {
         var action = () => RvgFeeCalculator.Calculate(gegenstandswert);
         action.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// Eine Aufstellung, deren Positionen alle noch mit 0,00 € dastehen, ist gültig
+    /// (siehe <c>DamageItemDto.Amount</c>) — dann rechnet der Gegenstandswert 0 die
+    /// unterste Stufe der Gebührentabelle. Bis zur Öffnung von 0,00 warf diese
+    /// Berechnung; der Test hält das neue Verhalten fest, damit es nicht wieder
+    /// unbemerkt zur Ausnahme wird.
+    /// </summary>
+    [Fact]
+    public void Calculate_WithZeroValue_UsesLowestFeeBracket()
+    {
+        var result = RvgFeeCalculator.Calculate(gegenstandswert: 0m, gebuehrensatz: 1.3m, applyVat: true);
+
+        result.Wertgebuehr.Should().Be(51.50m);         // Grundgebühr bis 500 € (§ 13 Abs. 1 RVG)
+        result.Geschaeftsgebuehr.Should().Be(66.95m);   // 51,50 × 1,3
+        result.Auslagenpauschale.Should().Be(13.39m);   // 20 %, unter dem Deckel von 20 €
+        result.Netto.Should().Be(80.34m);
+        result.Umsatzsteuer.Should().Be(15.26m);        // 80,34 × 19 %
+        result.Brutto.Should().Be(95.60m);
     }
 
     [Fact]

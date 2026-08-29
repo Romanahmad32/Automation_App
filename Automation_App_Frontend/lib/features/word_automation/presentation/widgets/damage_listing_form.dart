@@ -1,4 +1,5 @@
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
 import 'package:flutter/material.dart';
 
@@ -7,7 +8,14 @@ import 'package:flutter/material.dart';
 /// kommt aus der Vorsteuer-Checkbox im Ausfüll-Schritt und wird hier nicht mehr
 /// erfasst. Meldet bei jeder Änderung den aktuellen Stand über [onChanged].
 class DamageListingForm extends StatefulWidget {
-  final ValueChanged<DamageListing> onChanged;
+  /// Meldet den erfassten Stand **und** die Beanstandungen, die das Formular an
+  /// seinen Zeilen sieht.
+  ///
+  /// Beides zusammen und nicht nacheinander: Die Aufstellung enthält nur
+  /// vollständige Zeilen, die Beanstandungen betreffen aber auch angefangene
+  /// (eine Zeile mit `-250` und leerer Bezeichnung). Wer nur die Aufstellung
+  /// bekäme, hielte diesen Fall für einwandfrei — und genau das war er nicht.
+  final void Function(DamageListing aufstellung, List<String> fehler) onChanged;
 
   /// Vorbelegung, damit beim Zurück- und wieder Vorblättern im Wizard die
   /// bereits erfassten Positionen erhalten bleiben.
@@ -70,6 +78,12 @@ class _DamageListingFormState extends State<DamageListingForm> {
 
   @override
   Widget build(BuildContext context) {
+    // Einmal je Aufbau lesen statt einmal je Verwendung — im Aufbau standen
+    // sonst so viele Parses wie Zeilen mal Verwendungen. Dass `_emit` seine
+    // eigene Lesung braucht, bleibt: Es läuft aus einem Rückruf heraus, nicht
+    // im Aufbau, und darf nicht auf einem veralteten Stand rechnen.
+    final zeilen = _zeilen();
+
     return Column(
       children: [
         for (final (index, item) in _items.indexed)
@@ -93,14 +107,24 @@ class _DamageListingFormState extends State<DamageListingForm> {
                   flex: 2,
                   child: TextField(
                     controller: item.amount,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Betrag (€)',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      // Die Beanstandung steht an der Zeile, die sie auslöst —
+                      // nicht als Sammelmeldung über der Aufstellung.
+                      errorText: betragUnzulaessig(zeilen[index].betrag)
+                          ? negativerBetragHinweis
+                          : null,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    onChanged: (_) => _emit(),
+                    // setState, weil sich mit dem Text auch der errorText
+                    // ändert; _emit() allein baut nur den Rest der Seite neu.
+                    onChanged: (_) {
+                      setState(() {});
+                      _emit();
+                    },
                   ),
                 ),
                 IconButton(
@@ -180,14 +204,32 @@ class _DamageListingFormState extends State<DamageListingForm> {
     );
   }
 
+  /// Der aktuelle Stand aller Zeilen — auch der angefangenen. Grundlage sowohl
+  /// für die Markierung an der Zeile als auch für das Verdikt, das nach oben
+  /// geht; beide sehen damit garantiert dasselbe.
+  List<Schadenspositionszeile> _zeilen() => [
+    for (final item in _items)
+      (
+        bezeichnung: item.description.text,
+        betrag: _parseAmount(item.amount.text),
+      ),
+  ];
+
+  /// Meldet Stand und Beanstandungen nach oben.
+  ///
+  /// Halbfertige Zeilen (keine Bezeichnung, kein lesbarer Betrag) bleiben aus
+  /// der Aufstellung draußen — sie sollen nicht in der Vorschau auftauchen,
+  /// während getippt wird. Beanstandet werden sie trotzdem: Das Verdikt läuft
+  /// über **alle** Zeilen, sonst bliebe eine Zeile mit `-250` und leerer
+  /// Bezeichnung sichtbar rot und „Dokument erstellen" trotzdem frei.
   void _emit() {
+    final zeilen = _zeilen();
     final items = [
-      for (final item in _items)
-        if (item.description.text.trim().isNotEmpty &&
-            _parseAmount(item.amount.text) != null)
+      for (final zeile in zeilen)
+        if (zeile.bezeichnung.trim().isNotEmpty && zeile.betrag != null)
           DamageItem(
-            description: item.description.text.trim(),
-            amount: _parseAmount(item.amount.text)!,
+            description: zeile.bezeichnung.trim(),
+            amount: zeile.betrag!,
           ),
     ];
 
@@ -203,11 +245,21 @@ class _DamageListingFormState extends State<DamageListingForm> {
           _auslagenpauschaleOverrideController.text,
         ),
       ),
+      schadenspositionenFehler(zeilen),
     );
   }
 
-  static double? _parseAmount(String text) =>
-      double.tryParse(text.trim().replaceAll('.', '').replaceAll(',', '.'));
+  /// `-0,0` wird zu `0.0` normalisiert: Es ist numerisch null, gilt also nicht
+  /// als negativ (`-0.0 < 0` ist `false`) — würde aber als `-0.0` im JSON an das
+  /// Backend hinausgehen und der Zusage „kein negativer Betrag" wörtlich
+  /// widersprechen.
+  static double? _parseAmount(String text) {
+    final wert = double.tryParse(
+      text.trim().replaceAll('.', '').replaceAll(',', '.'),
+    );
+    if (wert == 0) return 0.0;
+    return wert;
+  }
 
   /// Zahl als deutsche Eingabe formatieren (Komma, ohne überflüssige Nullen).
   static String _formatNumber(double value) {
