@@ -13,13 +13,15 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Einrichten der Vorlage, wo er sich beheben lässt (§1.3).
 ///
 /// Hört live auf den Feldnamen, weil der Anwalt ihn im selben Formular tippt.
-/// Bei gesetzter Datenquelle schweigt der Hinweis: Dann hat der Anwalt bereits
-/// entschieden, was das Feld liefern soll.
+/// Steht am Feld eine Datenquelle, schweigt der Hinweis: Sie gewinnt ohnehin
+/// über die Erkennung, der Name ist dann für die Vorbelegung ohne Belang.
 class FeldNameHinweis extends StatelessWidget {
   /// Schlüssel des reactive_forms-Controls, in dem der Feldname steht.
   final String formControlName;
 
-  /// Ob am Feld eine Datenquelle von Hand gewählt wurde.
+  /// Ob am Feld überhaupt eine Datenquelle steht — von Hand gewählt oder beim
+  /// Übernehmen des Platzhalters vorgeschlagen (`neuesFeld`). Beides zählt:
+  /// Der Hinweis erklärt einen *ungebundenen* Namen, sonst nichts.
   final bool datenquelleGesetzt;
 
   const FeldNameHinweis({
