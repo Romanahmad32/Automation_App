@@ -87,9 +87,12 @@ class VorgangStartenBloc
     emit(VorgangStartenLoading());
     final daten = event.daten;
 
-    // 1. Mandant auflösen (anlegen / aktualisieren / nur verknüpfen).
+    // 1. Mandant auflösen (anlegen / aktualisieren / nur verknüpfen). Was dabei
+    // herauskommt, wird bis in den Erfolgszustand durchgereicht — die View
+    // braucht den Mandanten, um ihn zu verknüpfen (§5.1).
     int? mandantId = event.verknuepfteMandantId;
     String? mandantName = daten.mandantName.isEmpty ? null : daten.mandantName;
+    Mandant? gespeicherterMandant;
 
     if (event.neuerMandant != null) {
       final result = await _createMandant(event.neuerMandant!);
@@ -98,8 +101,7 @@ class VorgangStartenBloc
           emit(VorgangStartenError(failure.message));
           return;
         case Right(value: final mandant):
-          mandantId = mandant.id;
-          mandantName = mandant.anzeigename;
+          gespeicherterMandant = mandant;
       }
     } else if (event.aktualisierterMandant != null) {
       final result = await _updateMandant(event.aktualisierterMandant!);
@@ -108,9 +110,12 @@ class VorgangStartenBloc
           emit(VorgangStartenError(failure.message));
           return;
         case Right(value: final mandant):
-          mandantId = mandant.id;
-          mandantName = mandant.anzeigename;
+          gespeicherterMandant = mandant;
       }
+    }
+    if (gespeicherterMandant != null) {
+      mandantId = gespeicherterMandant.id;
+      mandantName = gespeicherterMandant.anzeigename;
     }
 
     // 2. Optional das Zentralruf-Formular vorbefüllen. Die zurückgegebene
@@ -155,6 +160,7 @@ class VorgangStartenBloc
         referenz: referenz,
         zentralrufAusgefuellt:
             event.zentralrufAusfuellen && daten.istVerkehrsunfall,
+        gespeicherterMandant: gespeicherterMandant,
       ),
     );
   }

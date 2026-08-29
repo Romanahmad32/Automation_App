@@ -28,17 +28,32 @@ final class VorgangStartenDefaultsLoaded extends VorgangStartenState {
 
 /// Der Vorgang wurde gespeichert. [zentralrufAusgefuellt] zeigt an, ob zusätzlich
 /// das Zentralruf-Formular im Browser vorbefüllt wurde (dann anderer Hinweistext).
+///
+/// [gespeicherterMandant] trägt den auf diesem Weg angelegten oder aktualisierten
+/// Mandanten mit — sonst wüsste die View nichts davon, hielte ihn weiter für neu
+/// und legte ihn beim nächsten Speichern ein zweites Mal an. Er ist der einzige
+/// Unterschied zum Karten-Weg, der dafür `MandantGespeichert` meldet; beide
+/// laufen in der View in dieselbe Nachbereitung.
 final class VorgangGespeichert extends VorgangStartenState {
   final String referenz;
   final bool zentralrufAusgefuellt;
 
+  /// Der bei diesem Speichern angelegte bzw. aktualisierte Mandant; null, wenn
+  /// nur verknüpft oder gar kein Mandant erfasst wurde.
+  final Mandant? gespeicherterMandant;
+
   const VorgangGespeichert({
     required this.referenz,
     this.zentralrufAusgefuellt = false,
+    this.gespeicherterMandant,
   });
 
   @override
-  List<Object?> get props => [referenz, zentralrufAusgefuellt];
+  List<Object?> get props => [
+    referenz,
+    zentralrufAusgefuellt,
+    gespeicherterMandant,
+  ];
 }
 
 /// Der Mandant wurde eigenständig (über den Karten-Button) gespeichert.
