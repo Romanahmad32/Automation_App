@@ -278,16 +278,27 @@ Auskunft an jeder Stelle, an der Zweige aufgelistet werden.
 
 **Erzwungen an zwei Stellen:**
 
-- `.claude/hooks/zweigname.ps1` hält schon das Anlegen an (`git checkout -b`, `git switch -c`,
-  `git branch`) und nennt den fertigen Ersatzbefehl. Vor dem ersten Commit kostet Umbenennen
-  nichts; hängen erst Commits und ein Push daran, bleibt ein schiefer Name meistens stehen.
+- `.claude/hooks/zweigname.ps1` hält schon das Anlegen an — `git checkout -b`, `git switch -c`
+  samt `--create`, `git branch <name>` und das Umbenennen mit `git branch -m` — und nennt den
+  fertigen Ersatzbefehl. Vor dem ersten Commit kostet Umbenennen nichts; hängen erst Commits und
+  ein Push daran, bleibt ein schiefer Name meistens stehen.
 - Der CI-Schritt **„Zweigname"** prüft denselben Satz am Pull Request — für alles, was nicht über
   den Hook entstanden ist (Weboberfläche, fremder Klon, anderer Rechner).
 
+Groß- und Kleinschreibung zählt an beiden Stellen mit: `Feature/x` ist kein `feature/x`. Das ist
+keine Strenge um ihrer selbst willen, sondern Gleichlauf — das `case` in der CI vergleicht
+ohnehin genau, und ein Hook, der großzügiger ist als die CI, verschiebt den Fund nur nach hinten.
+
 **Eine Ausnahme, und sie ist keine Nachlässigkeit:** `dependabot/…`. Diese Zweige legt niemand von
 Hand an, ihr Name kommt von Dependabot und lässt sich nicht wählen. Ohne die Ausnahme wäre jeder
-Abhängigkeits-PR rot — und ein Schritt, der immer rot ist, wird ignoriert. Wer den zulässigen Satz
-ändert, ändert ihn in **beiden** Prüfungen: `$erlaubt` im Hook und das `case` in `ci.yml`.
+Abhängigkeits-PR rot — und ein Schritt, der immer rot ist, wird ignoriert. Der Hook kennt sie
+ebenfalls: `gh pr checkout` legt für einen Abhängigkeits-PR lokal genau so einen Zweig an.
+
+Wer den zulässigen Satz ändert, ändert ihn in **beiden** Prüfungen: `$erlaubt` im Hook und das
+`case` in `ci.yml`. Dass beide gleich lauten, prüft
+`Automation_App_Frontend/test/architecture/zweigname_hook_test.dart` — zusammen mit dem Verhalten
+des Hooks an echten Befehlszeilen. Der Satz musste zweimal nachgebessert werden, beide Male weil
+er bei Alltagsbefehlen anschlug; ein Wächter, der das tut, wird abgeschaltet.
 
 ## Geheimnisse bleiben draußen
 
