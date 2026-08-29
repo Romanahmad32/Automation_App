@@ -29,8 +29,11 @@ class RvgCalculationBloc
     CalculateRvgEvent event,
     Emitter<RvgCalculationState> emit,
   ) async {
-    // Ohne gültige Positionen gibt es nichts zu berechnen (Backend würde 400 liefern).
-    if (event.gegenstandswert <= 0) {
+    // Ein negativer Gegenstandswert ist unzulässig (Backend liefert 400); der
+    // Schadensaufstellungs-Schritt meldet ihn ohnehin schon an der Zeile.
+    // Der Wert **0** ist dagegen rechenbar — eine Aufstellung aus lauter noch
+    // unbezifferten Positionen ergibt die unterste Wertgebührenstufe.
+    if (event.gegenstandswert < 0) {
       emit(RvgCalculationInitial());
       return;
     }

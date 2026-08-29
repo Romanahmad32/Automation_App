@@ -27,6 +27,13 @@ public static class RvgFeeCalculator
 
     /// <param name="gegenstandswert">
     /// Gegenstandswert in € — Grundlage der Wertgebühr nach § 13 RVG.
+    ///
+    /// <c>0</c> ist zugelassen und ergibt die **unterste** Stufe der Gebührentabelle
+    /// (51,50 €): § 13 Abs. 1 RVG kennt nach unten keine Schwelle, bis 500 € gilt
+    /// durchgehend dieselbe Wertgebühr. Das steht hier ausdrücklich, weil es sonst wie
+    /// ein Nebeneffekt der Schleife in <see cref="WertgebuehrFor"/> aussieht — eine
+    /// Aufstellung aus lauter noch unbezifferten Positionen macht dem Anwalt dieselbe
+    /// Arbeit und ist deshalb nicht kostenfrei. Negative Werte bleiben unzulässig.
     /// </param>
     /// <param name="gebuehrensatz">
     /// Gebührensatz der Geschäftsgebühr (Regelsatz 1,3 nach Nr. 2300 VV RVG).
@@ -50,8 +57,8 @@ public static class RvgFeeCalculator
         decimal? geschaeftsgebuehrOverride = null,
         decimal? auslagenpauschaleOverride = null)
     {
-        if (gegenstandswert <= 0)
-            throw new ArgumentOutOfRangeException(nameof(gegenstandswert), "Gegenstandswert muss positiv sein.");
+        if (gegenstandswert < 0)
+            throw new ArgumentOutOfRangeException(nameof(gegenstandswert), "Gegenstandswert darf nicht negativ sein.");
         if (gebuehrensatz <= 0)
             throw new ArgumentOutOfRangeException(nameof(gebuehrensatz), "Gebührensatz muss positiv sein.");
         if (geschaeftsgebuehrOverride is < 0)

@@ -157,5 +157,40 @@ public sealed class WordSchadensaufstellungTests : IDisposable
         output.Text.Should().Contain("Auslagen: 25,00");
     }
 
+    /// <summary>
+    /// Eine noch unbezifferte Position gehört ins Schreiben: Sie steht mit 0,00 € in
+    /// der Tabelle und geht in die Zwischensumme ein, ohne sie zu verändern. Vorher
+    /// kam sie nie bis hierher — die Modellvalidierung wies sie mit 400 ab.
+    /// </summary>
+    [Fact]
+    public void GenerateReplacedDocument_WithZeroAmountItem_ShowsItInTheTable()
+    {
+        var templatePath = _umgebung.CreateTemplate("AuflistungNull", "{{Schadensaufstellung}}");
+
+        var service = _umgebung.CreateService();
+        var result = service.GenerateReplacedDocument(new WordReplacementRequest
+        {
+            TemplateFilePath = templatePath,
+            ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
+            DamageListing = new DamageListing
+            {
+                Items =
+                [
+                    new DamageItem { Description = "Reparaturkosten netto nach Gutachten", Amount = 2560.87m },
+                    new DamageItem { Description = "Sachverständigenkosten (Rechnung steht aus)", Amount = 0m }
+                ]
+            }
+        });
+
+        using var output = DocX.Load(result.OutputFilePath);
+        var table = output.Tables.Should().ContainSingle().Subject;
+
+        table.Rows[2].Cells[0].Paragraphs[0].Text.Should().Be("2");
+        table.Rows[2].Cells[1].Paragraphs[0].Text.Should().Be("Sachverständigenkosten (Rechnung steht aus)");
+        table.Rows[2].Cells[2].Paragraphs[0].Text.Should().Be("0,00");
+        // Kopfzeile + 2 Positionen + Leerzeile + Zwischensumme + Anwaltskosten
+        table.Rows[4].Cells[2].Paragraphs[0].Text.Should().Be("2.560,87");
+    }
+
     public void Dispose() => _umgebung.Dispose();
 }
