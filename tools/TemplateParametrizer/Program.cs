@@ -1,6 +1,11 @@
 // Einmal-Werkzeug: erzeugt aus den Beispielbriefen parametrisierte Vorlagen mit {{Platzhaltern}}
 // für den AutomationService. Bei geänderten Beispieldateien einfach erneut ausführen.
 //
+// Das Ergebnis landet im Vorlagenordner des Anwenders (%APPDATA%\AutomationService\Vorlagen)
+// und NICHT im Repository. Grund: die Ersetzung trifft nur den Fließtext — Kopf- und Fußzeile
+// tragen weiterhin Briefkopf, Steuernummer und Bankverbindung der Kanzlei, und der
+// Schriftsatztext selbst ist ihre Arbeit. Im Repo liegen nur die neutralen Muster_*.docx.
+//
 // Die Ersetzungstabelle steht BEWUSST NICHT in dieser Datei: sie bildet die echten
 // Mandantendaten des Ausgangsschreibens auf Platzhalter ab (Name, Anschrift, Kennzeichen,
 // Versicherungsschein-Nr., Aktenzeichen) und gehört damit nicht ins Repository.
@@ -11,7 +16,10 @@ using Xceed.Words.NET;
 
 var root = Environment.GetEnvironmentVariable("AUTOMATION_APP_ROOT")
            ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-var templatesDirectory = Path.Combine(root, "AutomationService", "AutomationService", "Templates");
+var templatesDirectory = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+    "AutomationService",
+    "Vorlagen");
 var mappingPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "ersetzungen.local.tsv");
 
 if (!File.Exists(mappingPath))

@@ -8,17 +8,25 @@
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
-# Mandantendaten — duerfen NIE versioniert werden (DSGVO, § 203 StGB)
+# Mandanten- UND Kanzleidaten — duerfen NIE versioniert werden
+# (DSGVO, § 203 StGB; das Repo ist oeffentlich)
 # ---------------------------------------------------------------------------
 # Echte Aktenordner
 /VUnvallsache*/
 # Die Ausgangs-Vorlagen unter Beispiele/ sind KEINE Vorlagen im technischen
 # Sinn, sondern fertig ausgefuellte echte Mandantenschreiben (Name, Anschrift,
 # Kennzeichen, Versicherungsschein-Nr. des Mandanten und der Gegenseite).
-# Sie bleiben lokal. Die parametrisierten Fassungen, die die App tatsaechlich
-# laedt, liegen unter AutomationService/AutomationService/Templates/ und
-# enthalten ausschliesslich {{Platzhalter}} — die sind versioniert.
 Beispiele/*.docx
+# Auch die PARAMETRISIERTEN Fassungen bleiben lokal. Das Ersetzen trifft nur
+# den Fliesstext: Kopf- und Fusszeile tragen weiterhin Briefkopf, Steuernummer
+# und Bankverbindung der Kanzlei, und der Schriftsatztext selbst ist ihre
+# Arbeit. Genau das ist einmal versehentlich hier gelandet.
+# Versioniert sind ausschliesslich die neutralen Muster_*.docx ohne
+# Kanzleibezug; die echten Vorlagen gehoeren in den Vorlagenordner des
+# Anwenders (%APPDATA%\AutomationService\Vorlagen), wohin der
+# TemplateParametrizer sie auch schreibt.
+AutomationService/AutomationService/Templates/*.docx
+!AutomationService/AutomationService/Templates/Muster_*.docx
 # Die Ersetzungstabelle des TemplateParametrizer bildet die Mandantendaten des
 # Ausgangsschreibens auf Platzhalter ab und ist damit selbst eine Sammlung
 # echter Personendaten. Muster ohne Echtdaten: ersetzungen.example.tsv
