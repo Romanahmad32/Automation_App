@@ -1,5 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/empfaenger_art.dart';
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
+import 'package:automation_app/features/email_versand/domain/services/versand_voraussetzungen.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
@@ -257,7 +258,12 @@ void main() {
     expect(entwurf.betreff, isEmpty);
     expect(entwurf.text, startsWith('Sehr geehrte Damen und Herren,'));
     expect(entwurf.text, isNot(contains('Anspruchsschreiben')));
-    expect(entwurf.istSendbar, isFalse);
+
+    // Absenden liesse sich das so nicht — geprueft wird das dort, wo es der
+    // Dialog auch tut.
+    final pruefung = VersandVoraussetzungen.pruefe(entwurf: entwurf);
+    expect(pruefung.anFehler, isNotNull);
+    expect(pruefung.betreffFehler, isNotNull);
   });
 
   test('entwurfMit leitet aus den Anhängen ab, dass ein Schreiben mitgeht', () {

@@ -2327,7 +2327,7 @@
         "tags": [
           "EmailVersand"
         ],
-        "summary": "Die Anh\u00E4nge der Nachricht, die in Outlook gerade offen oder ausgew\u00E4hlt\r\nist (\u00A74.7). Beobachtet wurde, dass genau diese Dateien im Mailprogramm\r\nvon Hand in die ausgehende Nachricht gezogen werden \u2014 die App fragt\r\nstattdessen nach. Leere Liste hei\u00DFt: nichts ausgew\u00E4hlt oder nichts\r\ndran, und das ist kein Fehler.\r\n\r\nBetreff und Absender gehen mit zur\u00FCck: Welche Nachricht gelesen wurde,\r\nentscheidet Outlook, nicht der Anwalt \u2014 er soll es wenigstens erfahren.",
+        "summary": "Die Anh\u00E4nge der Nachricht, die in Outlook gerade offen oder ausgew\u00E4hlt\r\nist (\u00A74.7). Beobachtet wurde, dass genau diese Dateien im Mailprogramm\r\nvon Hand in die ausgehende Nachricht gezogen werden \u2014 die App fragt\r\nstattdessen nach. Leere Liste hei\u00DFt: nichts ausgew\u00E4hlt oder nichts\r\ndran, und das ist kein Fehler.\r\n\r\nBetreff und Absender gehen mit zur\u00FCck: Welche Nachricht gelesen wurde,\r\nentscheidet Outlook, nicht der Anwalt \u2014 er soll es wenigstens erfahren.\r\n\r\nDer COM-Aufruf wartet bei kaltem Outlook bis zu 90 Sekunden \u2014 wie beim\r\nEntwurf (EntwurfOeffner) geh\u00F6rt er deshalb nicht auf den\r\nThread, der die Anfrage bedient.",
         "responses": {
           "200": {
             "description": "OK",

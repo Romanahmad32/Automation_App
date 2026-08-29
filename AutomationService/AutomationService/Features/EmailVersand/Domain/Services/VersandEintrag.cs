@@ -30,7 +30,13 @@ public enum VersandWeg
 /// Zeitpunkt der Einlieferung — beim Entwurfsweg der der Übergabe.
 /// </param>
 /// <param name="Weg">Direktversand, Outlook-Entwurf oder Entwurfsdatei.</param>
-/// <param name="Absender">Die Adresse, von der aus gesendet wurde.</param>
+/// <param name="Absender">
+/// Die Adresse, von der aus gesendet wurde; leer beim Entwurfsweg, wo das
+/// Mailprogramm entscheidet, über welches Konto es hinausgeht. Immer eine Adresse
+/// oder gar nichts — nie ein Anzeigename: Eine Spalte, in der einmal
+/// „kanzlei@…" und einmal „Rechtsanwalt …" steht, ist als Nachweis nicht zu
+/// lesen.
+/// </param>
 /// <param name="Empfaenger">Die Adressen in „An".</param>
 /// <param name="Kopie">Die Adressen in „Kopie".</param>
 /// <param name="Betreff">Die Betreffzeile, wie sie hinausging.</param>

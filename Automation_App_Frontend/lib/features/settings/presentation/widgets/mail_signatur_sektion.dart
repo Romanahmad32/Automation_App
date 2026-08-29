@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
@@ -30,24 +31,28 @@ class MailSignaturSektion extends StatefulWidget {
 
   const MailSignaturSektion({super.key, required this.controller});
 
-  /// Schreibt die Signatur, wenn sie vom gespeicherten Stand abweicht, und
-  /// meldet, ob etwas hinausging.
+  /// Schreibt die Signatur, wenn sie vom gespeicherten Stand abweicht.
   ///
   /// Eigenes Ereignis und nicht Teil des Kanzlei-Formulars: Beide hängen am
   /// selben Einstellungssatz, stehen aber in verschiedenen Reitern — ein
   /// Rundum-Speichern aus dem einen überschriebe die ungespeicherten Änderungen
   /// des anderen.
-  static bool speichereWennGeaendert(BuildContext context, String signatur) {
+  ///
+  /// **Meldet nichts zurück.** Ob geschrieben wurde, weiß erst der Bloc:
+  /// Er kopiert die Signatur in den zuletzt geladenen Einstellungssatz hinein
+  /// und steigt ohne einen solchen wortlos wieder aus, und auch danach kann das
+  /// Speichern noch scheitern. Der Abschnitt sagt deshalb selbst Bescheid,
+  /// sobald der Bloc den Erfolg als [KanzleiSettingsBereich.signatur] meldet —
+  /// vorher stand hier „Die Signatur ist gespeichert", während nichts
+  /// geschrieben war.
+  static void speichereWennGeaendert(BuildContext context, String signatur) {
     final bloc = context.read<KanzleiSettingsBloc>();
     final stand = bloc.state;
-    final gespeichert = stand is KanzleiSettingsLoaded
-        ? stand.settings.mailSignatur
-        : '';
+    if (stand is! KanzleiSettingsLoaded) return;
 
     final neu = signatur.trim();
-    if (neu == gespeichert.trim()) return false;
+    if (neu == stand.settings.mailSignatur.trim()) return;
     bloc.add(SaveMailSignaturEvent(neu));
-    return true;
   }
 
   @override
@@ -153,7 +158,9 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       );
     } catch (e) {
       if (mounted) {
-        melder.showSnackBar(SnackBar(content: Text('Fehlgeschlagen: $e')));
+        melder.showSnackBar(
+          SnackBar(content: Text('Fehlgeschlagen: ${ausnahmeText(e)}')),
+        );
       }
     }
   }
@@ -172,6 +179,11 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
     return BlocConsumer<KanzleiSettingsBloc, KanzleiSettingsState>(
       listener: (context, state) {
         if (state is! KanzleiSettingsLoaded) return;
+        if (state.gespeichert == KanzleiSettingsBereich.signatur) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Die Signatur ist gespeichert.')),
+          );
+        }
         setState(() => _nachziehen(state.settings));
       },
       builder: (context, state) {

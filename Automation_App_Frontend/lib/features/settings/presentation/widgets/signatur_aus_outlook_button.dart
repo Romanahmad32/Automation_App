@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_auswahl_dialog.dart';
@@ -63,7 +64,11 @@ class _SignaturAusOutlookButtonState extends State<SignaturAusOutlookButton> {
     } catch (e) {
       if (!mounted) return;
       melder.showSnackBar(
-        SnackBar(content: Text('Die Signatur ließ sich nicht lesen: $e')),
+        SnackBar(
+          content: Text(
+            'Die Signatur ließ sich nicht lesen: ${ausnahmeText(e)}',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _laedt = false);

@@ -80,7 +80,9 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Outlook, sonst als `.eml` (`EntwurfDatei`); `EntwurfOeffner` entscheidet. `OutlookVerbindung` hält
   dafür COM per **Late Binding** (wie bei Word, kein PIA) auf einem **dauerhaften** STA-Thread und
   lässt die Instanz leben — sonst kostet jeder Entwurf den Outlook-Kaltstart;
-  `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt.
+  `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt. **Jeder
+  Einzelgriff wird wieder losgelassen** (`ComFreigabe`, wie beim Word-Interop), die Instanz beim
+  Herunterfahren auf ihrem STA-Thread — sonst bleibt outlook.exe als Prozess stehen.
   `GET api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht
   (`OutlookAuswahl`, ein Ordner **je Nachricht** nach EntryID, damit der zweite Griff dieselben
   Pfade liefert statt "… (2).pdf") — der Ersatz für das Ziehen von Anhang zu Anhang, das Windows
@@ -118,7 +120,9 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`,
   `SignaturHtmlFilter`) — Word schreibt jedes Bild **zweimal**, als VML-Form
   (`<v:shape>`/`<v:imagedata>`, für Outlook) und als `<img>` (für alle übrigen Programme); nur das
-  `<img>` zu entfernen hiess: abgewählt, und trotzdem sichtbar und mitgeschickt. Die Bilder zählen
+  `<img>` zu entfernen hiess: abgewählt, und trotzdem sichtbar und mitgeschickt. Ein Bild ohne
+  eigene Marke (`background=` an einer Tabellenzelle) verliert nur sein Attribut — die Zelle bleibt.
+  Das eine Muster für alle drei Wege steht in `BildVerweis`. Die Bilder zählen
   über `zusatzBytes` in `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext

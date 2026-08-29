@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_eintrag_zeile.dart';
@@ -43,7 +44,10 @@ class _VersandProtokollDialogState extends State<VersandProtokollDialog> {
           .ladeVersandProtokoll(widget.referenz);
       if (mounted) setState(() => _eintraege = geladen);
     } catch (e) {
-      if (mounted) setState(() => _fehler = '$e');
+      // ausnahmeText statt '$e': Die Datenquelle übersetzt den Serverfehler
+      // bereits ins Deutsche, das vorangestellte „Exception:" sähe davor nur
+      // nach Defekt aus.
+      if (mounted) setState(() => _fehler = ausnahmeText(e));
     }
   }
 

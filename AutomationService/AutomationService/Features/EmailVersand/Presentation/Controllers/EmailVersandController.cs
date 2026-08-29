@@ -187,11 +187,17 @@ public class EmailVersandController(
     ///
     /// Betreff und Absender gehen mit zurück: Welche Nachricht gelesen wurde,
     /// entscheidet Outlook, nicht der Anwalt — er soll es wenigstens erfahren.
+    ///
+    /// Der COM-Aufruf wartet bei kaltem Outlook bis zu 90 Sekunden — wie beim
+    /// Entwurf (<see cref="EntwurfOeffner"/>) gehört er deshalb nicht auf den
+    /// Thread, der die Anfrage bedient.
     /// </summary>
     [HttpGet("outlook/anhaenge")]
     [ProducesResponseType(typeof(OutlookAnhaengeDto), StatusCodes.Status200OK)]
-    public ActionResult<OutlookAnhaengeDto> GetOutlookAnhaenge() =>
-        Ok(OutlookAnhaengeDto.From(outlook.AnhaengeDerAuswahl()));
+    public async Task<ActionResult<OutlookAnhaengeDto>> GetOutlookAnhaenge(
+        CancellationToken cancellationToken) =>
+        Ok(OutlookAnhaengeDto.From(
+            await Task.Run(outlook.AnhaengeDerAuswahl, cancellationToken)));
 
     /// <summary>
     /// Wirft eine aus Outlook geholte Datei weg (§4.7). Der Anwalt verwirft

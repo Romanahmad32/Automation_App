@@ -1,4 +1,3 @@
-using System.Net;
 using System.Runtime.InteropServices;
 
 namespace AutomationService.Features.EmailVersand.Domain.Services;
@@ -11,6 +10,10 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 ///
 /// Alle Aufrufe laufen über Late Binding und gehören auf den STA-Thread des
 /// Aufrufers; diese Klasse startet selbst nichts.
+///
+/// <b>Jeder Griff wird wieder losgelassen</b> (<see cref="ComFreigabe"/>): Das
+/// Entwurfsfenster gehört nach <c>Display</c> Outlook selbst, unsere Verweise
+/// darauf hielten sonst nur den Prozess fest.
 /// </summary>
 internal static class OutlookNachricht
 {
@@ -19,45 +22,70 @@ internal static class OutlookNachricht
 
     public static bool Zeige(dynamic outlook, EmailNachricht nachricht)
     {
-        dynamic entwurf = outlook.CreateItem(OlMailItem);
-        entwurf.To = string.Join("; ", Brauchbare(nachricht.An));
-
-        var kopie = Brauchbare(nachricht.Kopie);
-        if (kopie.Count > 0)
-        {
-            entwurf.CC = string.Join("; ", kopie);
-        }
-
-        entwurf.Subject = nachricht.Betreff;
-
-        // Outlook hängt die Dateien selbst an — die Bytes hier zu laden wäre
-        // Arbeit für den Papierkorb. Dass sie lesbar sind, hat der Aufrufer
-        // bereits geprüft.
-        foreach (var pfad in nachricht.AnhangPfade.Where(pfad => !string.IsNullOrWhiteSpace(pfad)))
-        {
-            entwurf.Attachments.Add(UnterGewuenschtemNamen(pfad, nachricht.AnhangNamen));
-        }
-
-        // Den Inspector anzufassen lässt Outlook seine Signatur einsetzen;
-        // deshalb wird der eigene Text davorgehängt statt HTMLBody zu setzen.
-        dynamic inspector = entwurf.GetInspector;
-        var signatur = (object?)entwurf.HTMLBody as string ?? string.Empty;
-        entwurf.HTMLBody = AlsHtml(nachricht.Text) + signatur;
-
-        entwurf.Display();
-
-        // Ohne Activate erscheint das Fenster hinter der App — der Anwalt sieht
-        // dann nichts und hält den Vorgang für hängengeblieben.
+        object entwurfGriff = outlook.CreateItem(OlMailItem);
+        object? fensterGriff = null;
         try
         {
-            inspector.Activate();
-        }
-        catch (COMException)
-        {
-            // Das Fenster steht; wo es steht, ist kein Grund zu scheitern.
-        }
+            dynamic entwurf = entwurfGriff;
+            entwurf.To = string.Join("; ", Brauchbare(nachricht.An));
 
-        return true;
+            var kopie = Brauchbare(nachricht.Kopie);
+            if (kopie.Count > 0)
+            {
+                entwurf.CC = string.Join("; ", kopie);
+            }
+
+            entwurf.Subject = nachricht.Betreff;
+            Haenge(entwurf, nachricht);
+
+            // Den Inspector anzufassen lässt Outlook seine Signatur einsetzen;
+            // deshalb wird der eigene Text davorgehängt statt HTMLBody zu setzen.
+            fensterGriff = entwurf.GetInspector;
+            var signatur = (object?)entwurf.HTMLBody as string ?? string.Empty;
+            entwurf.HTMLBody = TextAlsHtml.Absatz(nachricht.Text) + signatur;
+
+            entwurf.Display();
+
+            // Ohne Activate erscheint das Fenster hinter der App — der Anwalt
+            // sieht dann nichts und hält den Vorgang für hängengeblieben.
+            try
+            {
+                ((dynamic)fensterGriff).Activate();
+            }
+            catch (COMException)
+            {
+                // Das Fenster steht; wo es steht, ist kein Grund zu scheitern.
+            }
+
+            return true;
+        }
+        finally
+        {
+            ComFreigabe.Gib(fensterGriff, entwurfGriff);
+        }
+    }
+
+    /// <summary>
+    /// Hängt die Dateien an. Outlook holt sie selbst von der Platte — die Bytes
+    /// hier zu laden wäre Arbeit für den Papierkorb. Dass sie lesbar sind, hat
+    /// der Aufrufer bereits geprüft.
+    /// </summary>
+    private static void Haenge(dynamic entwurf, EmailNachricht nachricht)
+    {
+        object sammlungGriff = entwurf.Attachments;
+        try
+        {
+            dynamic sammlung = sammlungGriff;
+            foreach (var pfad in nachricht.AnhangPfade.Where(pfad => !string.IsNullOrWhiteSpace(pfad)))
+            {
+                object angehaengt = sammlung.Add(UnterGewuenschtemNamen(pfad, nachricht.AnhangNamen));
+                ComFreigabe.Gib(angehaengt);
+            }
+        }
+        finally
+        {
+            ComFreigabe.Gib(sammlungGriff);
+        }
     }
 
     /// <summary>
@@ -100,17 +128,4 @@ internal static class OutlookNachricht
 
     private static IReadOnlyList<string> Brauchbare(IReadOnlyList<string> adressen) =>
         [.. adressen.Select(adresse => adresse.Trim()).Where(adresse => adresse.Length > 0)];
-
-    /// <summary>
-    /// Der Text als schlichtes HTML. Outlook führt den Entwurf über
-    /// <c>HTMLBody</c> — nur so bleibt die Signatur erhalten, die es selbst
-    /// eingesetzt hat. Escapen ist Pflicht: Ein „&amp;" im Aktenzeichen oder
-    /// spitze Klammern um eine Adresse dürfen nicht als Auszeichnung gelesen
-    /// werden.
-    /// </summary>
-    private static string AlsHtml(string text) =>
-        "<div>"
-        + WebUtility.HtmlEncode(text).Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace("\n", "<br>", StringComparison.Ordinal)
-        + "</div>";
 }

@@ -31,7 +31,7 @@ public sealed class SmtpEmailVersender(
         {
             return EmailVersandBereitschaft.Nicht(
                 "Es ist kein Postfach-Zugang hinterlegt. Bitte in den Einstellungen unter "
-                + "\"Postfach-Zugang\" die Kanzlei-Adresse einrichten.");
+                + "\"E-Mail\" die Kanzlei-Adresse einrichten.");
         }
 
         if (zugang.AuthMethod == MailboxAuthMethod.MicrosoftOAuth
@@ -39,7 +39,7 @@ public sealed class SmtpEmailVersender(
         {
             return EmailVersandBereitschaft.Nicht(
                 "Die Microsoft-Anmeldung ist abgelaufen. Bitte in den Einstellungen unter "
-                + "\"Postfach-Zugang\" erneut mit Microsoft anmelden.");
+                + "\"E-Mail\" erneut mit Microsoft anmelden.");
         }
 
         var block = await signatur.BlockAsync(cancellationToken);
@@ -62,7 +62,7 @@ public sealed class SmtpEmailVersender(
             ?? throw new EmailVersandException(
                 EmailVersandFehler.KeinZugang,
                 "Es ist kein Postfach-Zugang hinterlegt. Bitte in den Einstellungen unter "
-                + "\"Postfach-Zugang\" die Kanzlei-Adresse einrichten.");
+                + "\"E-Mail\" die Kanzlei-Adresse einrichten.");
 
         // Die Signatur kommt erst hier dazu, nicht im Formular: Sie gehört den
         // Einstellungen, nicht dem einzelnen Entwurf (§4.7). Ihre Bilder wiegen
@@ -169,7 +169,7 @@ public sealed class SmtpEmailVersender(
             throw new EmailVersandException(
                 EmailVersandFehler.Anmeldung,
                 "Das Postfach hat die Anmeldung abgelehnt. Bitte das Passwort in den Einstellungen "
-                + "unter \"Postfach-Zugang\" prüfen — bei Gmail muss dort ein App-Passwort stehen, "
+                + "unter \"E-Mail\" prüfen — bei Gmail muss dort ein App-Passwort stehen, "
                 + $"nicht das Kontopasswort. ({exception.Message})");
         }
         catch (Exception exception) when (exception is SmtpCommandException or SmtpProtocolException)

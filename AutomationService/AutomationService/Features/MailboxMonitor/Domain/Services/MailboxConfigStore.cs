@@ -168,10 +168,24 @@ public sealed class MailboxConfigStore : IDisposable
 
     private void Persist(MailboxOptions options)
     {
+        var abzulegen = PersistedMailboxConfig.From(options);
+        if (abzulegen is null)
+        {
+            // Den Zugang mit leerem Passwortfeld abzulegen, hiesse: im Speicher
+            // läuft alles weiter, und erst nach dem nächsten Start steht die
+            // Überwachung ohne Zugang da — grundlos, soweit irgendwo ablesbar.
+            _logger.LogError(
+                "Das Postfach-Passwort liess sich nicht verschlüsseln (DPAPI). Der gespeicherte "
+                + "Zugang bleibt deshalb unverändert ({Path}); die laufende Sitzung arbeitet mit "
+                + "den eingegebenen Werten weiter.",
+                _filePath);
+            return;
+        }
+
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
-            var json = JsonSerializer.Serialize(PersistedMailboxConfig.From(options), JsonOptions);
+            var json = JsonSerializer.Serialize(abzulegen, JsonOptions);
             File.WriteAllText(_filePath, json);
         }
         catch (Exception exception)
@@ -213,18 +227,31 @@ public sealed class MailboxConfigStore : IDisposable
         public bool BrauchtUmzug =>
             string.IsNullOrEmpty(AppPasswordProtected) && !string.IsNullOrEmpty(AppPassword);
 
-        public static PersistedMailboxConfig From(MailboxOptions options) => new(
-            options.Enabled,
-            options.AuthMethod.ToString(),
-            options.Host,
-            options.Port,
-            options.UseSsl,
-            options.Username,
-            // Das Klartextfeld bleibt ab jetzt leer.
-            null,
-            options.Folder,
-            options.SubjectFilter,
-            PasswortSchutz.Schuetze(options.AppPassword));
+        /// <returns>
+        /// Null, wenn das Passwort sich nicht verschlüsseln liess. Dann darf
+        /// nichts abgelegt werden: Ein Datensatz ohne Passwortfeld sähe aus wie
+        /// ein Zugang, bei dem nie eines eingetragen war —
+        /// <see cref="BrauchtUmzug"/> bliebe false, und niemand käme darauf,
+        /// dass hier etwas verlorenging.
+        /// </returns>
+        public static PersistedMailboxConfig? From(MailboxOptions options)
+        {
+            var geschuetzt = PasswortSchutz.Schuetze(options.AppPassword);
+            return geschuetzt is null
+                ? null
+                : new(
+                    options.Enabled,
+                    options.AuthMethod.ToString(),
+                    options.Host,
+                    options.Port,
+                    options.UseSsl,
+                    options.Username,
+                    // Das Klartextfeld bleibt ab jetzt leer.
+                    null,
+                    options.Folder,
+                    options.SubjectFilter,
+                    geschuetzt);
+        }
 
         public MailboxOptions ApplyTo(MailboxOptions seed) => new()
         {

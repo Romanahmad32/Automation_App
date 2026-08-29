@@ -101,26 +101,24 @@ public static partial class OutlookSignaturHtml
         Dictionary<string, byte[]> bilder,
         List<string> uebergangen)
     {
-        return QuelleMuster().Replace(html, treffer =>
+        return BildVerweis.Ersetze(html, verweis =>
         {
-            var verweis = treffer.Groups["url"].Value;
             var (name, unbrauchbar) = DateiHinter(verweis, ordner, bilder);
             if (unbrauchbar)
             {
                 uebergangen.Add(verweis);
             }
 
-            return name is null
-                ? treffer.Value
-                : $"{treffer.Groups["vor"].Value}{name}{treffer.Groups["nach"].Value}";
+            return name;
         });
     }
 
     /// <returns>
     /// Den blanken Dateinamen, wenn das Bild eingesammelt wurde.
     /// <c>Unbrauchbar = false</c> ohne Namen heißt „nicht unsere Sache" — ein
-    /// Verweis ins Netz, eine Content-Id, ein eingebettetes <c>data:</c>-Bild;
-    /// der bleibt unangetastet. <c>Unbrauchbar = true</c> heißt: Gemeint war
+    /// leerer Verweis, einer ins Netz, eine Content-Id, ein eingebettetes
+    /// <c>data:</c>-Bild; der bleibt unangetastet. <c>Unbrauchbar = true</c>
+    /// heißt: Gemeint war
     /// eine Datei neben der Signatur, wir bekommen sie aber nicht — zu groß,
     /// leer, weg oder nicht lesbar. Dann muss die ganze Bildmarke fallen.
     /// </returns>
@@ -129,10 +127,7 @@ public static partial class OutlookSignaturHtml
         string ordner,
         Dictionary<string, byte[]> bilder)
     {
-        if (verweis.Contains("://", StringComparison.Ordinal)
-            || verweis.StartsWith("cid:", StringComparison.OrdinalIgnoreCase)
-            || verweis.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            || ordner.Length == 0)
+        if (!BildVerweis.Oertlich(verweis) || ordner.Length == 0)
         {
             return (null, false);
         }
@@ -166,8 +161,4 @@ public static partial class OutlookSignaturHtml
     [GeneratedRegex(@"<body[^>]*>(?<inhalt>.*)</body>",
         RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex RumpfMuster();
-
-    [GeneratedRegex(@"(?<vor>\b(?:src|background)\s*=\s*(?<q>[""']))(?<url>[^""']+)(?<nach>\k<q>)",
-        RegexOptions.IgnoreCase)]
-    private static partial Regex QuelleMuster();
 }

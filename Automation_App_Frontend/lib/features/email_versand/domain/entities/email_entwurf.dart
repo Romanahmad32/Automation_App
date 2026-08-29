@@ -41,10 +41,6 @@ class EmailEntwurf extends Equatable {
     this.vorgangReferenz = '',
   });
 
-  /// Ohne Empfänger und ohne Betreff wird nicht gesendet. Der Text darf leer
-  /// sein — ein Anschreiben, das nur aus dem Anhang besteht, ist zulässig.
-  bool get istSendbar => an.isNotEmpty && betreff.trim().isNotEmpty;
-
   /// Alle angeschriebenen Adressen, für Rückfrage und Zusammenfassung.
   List<String> get alleEmpfaenger => [...an, ...kopie];
 

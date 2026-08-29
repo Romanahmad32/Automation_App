@@ -11,6 +11,12 @@ import 'package:flutter/material.dart';
 /// wirklich das richtige Schreiben dran? — und sie zu beantworten darf nicht
 /// heißen, den Dialog zu verlassen.
 class EmailAnhangChip extends StatefulWidget {
+  /// Breitengrenze für den Namen. Der Chip steht in einem `Wrap` und hat
+  /// deshalb keine Breite, gegen die er umbrechen könnte — ein im
+  /// Umbenennen-Dialog vergebener langer Name schöbe sonst Stift und Kreuz aus
+  /// dem Dialog hinaus. Gekürzt bleibt der volle Name im Tooltip lesbar.
+  static const double maxNameBreite = 260;
+
   final String pfad;
 
   /// Der Name, unter dem der Anhang hinausgeht — nicht zwingend der auf Platte.
@@ -114,11 +120,18 @@ class _EmailAnhangChipState extends State<EmailAnhangChip> {
               onTap: () => _oeffnen(context),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  widget.name,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    decoration: TextDecoration.underline,
-                    decorationStyle: TextDecorationStyle.dotted,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: EmailAnhangChip.maxNameBreite,
+                  ),
+                  child: Text(
+                    widget.name,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      decoration: TextDecoration.underline,
+                      decorationStyle: TextDecorationStyle.dotted,
+                    ),
                   ),
                 ),
               ),

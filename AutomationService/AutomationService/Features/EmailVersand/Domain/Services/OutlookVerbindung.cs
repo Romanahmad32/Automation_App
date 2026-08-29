@@ -18,6 +18,11 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// beim Word-Interop: ein dauerhafter STA-Thread mit Warteschlange, der die
 /// Instanz hält, dazu ein Vorwärmen, das den Kaltstart bezahlt, während der
 /// Anwalt noch tippt.
+///
+/// <b>Losgelassen wird trotzdem</b> (<see cref="ComFreigabe"/>): jeder
+/// Einzelgriff sofort, die Anwendungsinstanz beim Herunterfahren — und zwar auf
+/// dem STA-Thread, der sie geholt hat. Sonst bliebe outlook.exe stehen, nachdem
+/// der Anwalt sein Fenster geschlossen hat.
 /// </summary>
 public sealed class OutlookVerbindung : IDisposable
 {
@@ -28,12 +33,21 @@ public sealed class OutlookVerbindung : IDisposable
     /// </summary>
     private static readonly TimeSpan Geduld = TimeSpan.FromSeconds(90);
 
+    /// <summary>
+    /// So lange wartet <see cref="Dispose"/> auf den Arbeiter. Er soll die
+    /// Outlook-Instanz noch selbst freigeben; laeuft dabei ausgerechnet ein
+    /// Auftrag in die <see cref="Geduld"/>, wird der Dienst darauf nicht
+    /// warten — er faehrt gerade herunter.
+    /// </summary>
+    private static readonly TimeSpan Abschiedsfrist = TimeSpan.FromSeconds(5);
+
     private sealed record Auftrag(
         Func<dynamic, object?>? Arbeit,
         TaskCompletionSource<object?> Fertig);
 
     private readonly BlockingCollection<Auftrag> _auftraege = [];
     private readonly ILogger<OutlookVerbindung> _logger;
+    private readonly Thread _arbeiter;
 
     private dynamic? _outlook;
     private bool _entsorgt;
@@ -41,13 +55,13 @@ public sealed class OutlookVerbindung : IDisposable
     public OutlookVerbindung(ILogger<OutlookVerbindung> logger)
     {
         _logger = logger;
-        var arbeiter = new Thread(ArbeiterSchleife)
+        _arbeiter = new Thread(ArbeiterSchleife)
         {
             IsBackground = true,
             Name = "OutlookVerbindung",
         };
-        arbeiter.SetApartmentState(ApartmentState.STA);
-        arbeiter.Start();
+        _arbeiter.SetApartmentState(ApartmentState.STA);
+        _arbeiter.Start();
     }
 
     /// <summary>
@@ -139,6 +153,21 @@ public sealed class OutlookVerbindung : IDisposable
 
     private void ArbeiterSchleife()
     {
+        try
+        {
+            Abarbeiten();
+        }
+        finally
+        {
+            // Die Freigabe gehört auf denselben STA-Thread, der die Instanz
+            // geholt hat — von aussen losgelassen, verschöbe sie sich in ein
+            // fremdes Apartment.
+            Loslassen();
+        }
+    }
+
+    private void Abarbeiten()
+    {
         foreach (var auftrag in _auftraege.GetConsumingEnumerable())
         {
             try
@@ -150,7 +179,7 @@ public sealed class OutlookVerbindung : IDisposable
                 // Outlook kann zwischendurch beendet worden sein. Einmal frisch
                 // anfassen und den Auftrag wiederholen.
                 _logger.LogWarning(ausnahme, "Outlook-Zugriff fehlgeschlagen, baue die Verbindung neu auf.");
-                _outlook = null;
+                Loslassen();
                 try
                 {
                     auftrag.Fertig.TrySetResult(Erledige(auftrag.Arbeit));
@@ -209,6 +238,19 @@ public sealed class OutlookVerbindung : IDisposable
         return _outlook;
     }
 
+    /// <summary>
+    /// Gibt die Anwendungsinstanz zurück, ohne Outlook zu beenden: Sie kann
+    /// längst dem Anwalt gehören, der sein Postfach offen hat. Nur der Verweis
+    /// darauf verschwindet — und mit ihm der Grund, aus dem der Prozess nach
+    /// dem Schliessen des Fensters weiterliefe.
+    /// </summary>
+    private void Loslassen()
+    {
+        object? gehalten = _outlook;
+        _outlook = null;
+        ComFreigabe.Gib(gehalten);
+    }
+
     public void Dispose()
     {
         if (_entsorgt)
@@ -219,9 +261,15 @@ public sealed class OutlookVerbindung : IDisposable
         _entsorgt = true;
         _auftraege.CompleteAdding();
 
-        // Die Instanz nur loslassen, nicht Outlook beenden: Sie kann längst dem
-        // Anwalt gehören, der sein Postfach offen hat.
-        _outlook = null;
-        _auftraege.Dispose();
+        // Die Warteschlange erst entsorgen, wenn der Arbeiter sie ausgelesen
+        // hat: Sie ihm unter den Händen wegzuziehen, während er noch
+        // konsumiert, wirft dort eine ObjectDisposedException. Beim Auslaufen
+        // gibt er die Outlook-Instanz frei. Kommt er nicht binnen der Frist
+        // zurück, bleibt die Warteschlange stehen — der Thread läuft im
+        // Hintergrund, und der Prozess endet ohnehin gleich.
+        if (_arbeiter.Join(Abschiedsfrist))
+        {
+            _auftraege.Dispose();
+        }
     }
 }

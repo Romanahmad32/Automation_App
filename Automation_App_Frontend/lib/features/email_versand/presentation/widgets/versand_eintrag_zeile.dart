@@ -1,13 +1,10 @@
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/versand_darstellung.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/versand_weg_symbol.dart';
 import 'package:flutter/material.dart';
 
-/// Ein Eintrag des Versandprotokolls als Zeile (§4.7).
-///
-/// Der Haken ist grün nur beim Direktversand: Nur dort hat die App die
-/// Einlieferung gesehen. Eine Übergabe an Outlook trägt deshalb ein anderes
-/// Zeichen — ein Protokoll, das beides gleich aussehen lässt, wäre als
-/// Nachweis schlechter als keines.
+/// Ein Eintrag des Versandprotokolls als Zeile (§4.7) — das Zeichen davor
+/// setzt [VersandWegSymbol], den Satz daneben `VersandDarstellung`.
 class VersandEintragZeile extends StatelessWidget {
   final VersandEintrag eintrag;
 
@@ -24,16 +21,11 @@ class VersandEintragZeile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final nachweis = eintrag.weg.istNachweis;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          nachweis ? Icons.check_circle : Icons.outbox_outlined,
-          size: 20,
-          color: nachweis ? Colors.green : theme.colorScheme.outline,
-        ),
+        VersandWegSymbol(weg: eintrag.weg),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
