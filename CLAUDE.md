@@ -70,7 +70,7 @@ Automation_App/                  ← dieser Ordner IST das Git-Repo (Romanahmad3
 Das Backend lauscht auf `http://localhost:5143` (net10.0, SignalR für die Postfach-Meldungen).
 CI: `.github/workflows/ci.yml`; Auslieferung läuft über Git-Tags
 (`git tag v1.2.0 && git push origin v1.2.0`, Einzelheiten in [`docs/RELEASE.md`](docs/RELEASE.md)).
-Die Toolchain ist festgenagelt (`global.json`, `FLUTTER_VERSION`); ein Versionssprung gehört in
+Die Toolchain ist festgenagelt (`global.json`, `FLUTTER_VERSION`, `.fvmrc`); ein Versionssprung gehört in
 einen eigenen Commit.
 
 Ein Fachthema, zwei Orte — die Zuordnung Feature ↔ Slice:
