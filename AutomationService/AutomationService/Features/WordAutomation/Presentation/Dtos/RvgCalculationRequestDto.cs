@@ -17,8 +17,15 @@ public class RvgCalculationRequestDto
     // sich erzeugen ließ.
     // Nachkommastellen an den Grenzen: siehe DamageItemDto.Amount — ohne sie bindet
     // die int-Ueberladung, und negative Nachkommawerte kaemen durch.
+    //
+    // [Required] auf einem decimal? und nicht ein blankes decimal: Sobald 0 ein gueltiger
+    // Wert ist, unterscheidet ein nicht-nullbares Feld "ausdruecklich 0 geschickt" nicht
+    // mehr von "gar nicht geschickt". Ein leerer Rumpf oder ein falsch geschriebener
+    // Feldname ergaebe sonst still 51,50 EUR Gebuehren statt eines Fehlers — eine Zahl,
+    // der der Anwalt keinen Grund hat zu misstrauen.
+    [Required]
     [Range(0.0, 100_000_000.0)]
-    public decimal Gegenstandswert { get; set; }
+    public decimal? Gegenstandswert { get; set; }
 
     /// <summary>Gebührensatz der Geschäftsgebühr, üblicherweise 1,3.</summary>
     [Range(0.1, 10)]
@@ -28,10 +35,10 @@ public class RvgCalculationRequestDto
     public bool ApplyVat { get; set; }
 
     /// <summary>Manuell korrigierte Geschäftsgebühr in €; null = automatisch nach § 13 RVG berechnen.</summary>
-    [Range(0, 10_000_000)]
+    [Range(0.0, 10_000_000.0)]
     public decimal? GeschaeftsgebuehrOverride { get; set; }
 
     /// <summary>Manuell korrigierte Auslagenpauschale in €; null = 20 % der Geschäftsgebühr, max. 20 € (Nr. 7002 VV RVG).</summary>
-    [Range(0, 10_000_000)]
+    [Range(0.0, 10_000_000.0)]
     public decimal? AuslagenpauschaleOverride { get; set; }
 }

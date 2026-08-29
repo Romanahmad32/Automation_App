@@ -150,11 +150,19 @@ class WizardCubit extends Cubit<WizardState> {
   /// sofort übernommen (die Vorbelegung reagiert), der verknüpfte Mandant aus
   /// dem Register danach asynchron nachgeladen — die Antwortdaten stecken schon
   /// im Vorgang, die Mandanten-Stammdaten ergänzen Name und Anschrift.
+  ///
+  /// Die Schadensaufstellung fällt dabei weg, wie schon bei [selectFormTemplate]
+  /// und [setMitAuflistung]: Sie gehört zum vorigen Vorgang. Blieb sie stehen,
+  /// zeigte der nächste Vorgang die Positionen des vorigen — und der
+  /// Listener des Schadensaufstellungs-Schritts lud die **eigene** gespeicherte
+  /// Aufstellung nie nach, weil er nur bei `damageListing == null` greift.
   Future<void> selectVorgang(Vorgang? vorgang) async {
     emit(
       state.copyWith(
         selectedVorgang: () => vorgang,
         selectedMandant: () => null,
+        damageListing: () => null,
+        schadenspositionFehler: const [],
       ),
     );
     if (vorgang?.mandantId == null) return;
