@@ -31,24 +31,42 @@ try {
 
     $wurzel = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 
-    # Native Installation bevorzugt, sonst dasselbe Abbild wie in der CI —
-    # dieselbe Fassung, damit hier und dort dieselben Regeln gelten.
-    if (Get-Command gitleaks -ErrorAction SilentlyContinue) {
-        $ausgabe = & gitleaks git $wurzel --staged --no-banner --redact 2>&1
+    # gitleaks meldet seine Funde auf dem Fehlerstrom. Mit dem
+    # SilentlyContinue oben faellt jede dieser Zeilen weg — der Hook
+    # blockierte dann mit einer Begruendung ohne Fundstelle, und wer sie
+    # sehen will, muesste gitleaks von Hand nachfahren. Deshalb fuer die
+    # Dauer des Aufrufs zurueckgeschaltet.
+    $vorher = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        # Native Installation bevorzugt, sonst dasselbe Abbild wie in der CI —
+        # dieselbe Fassung, damit hier und dort dieselben Regeln gelten.
+        if (Get-Command gitleaks -ErrorAction SilentlyContinue) {
+            $ausgabe = & gitleaks git $wurzel --staged --no-banner --redact -v 2>&1 |
+                ForEach-Object { [string]$_ }
+        }
+        elseif (Get-Command docker -ErrorAction SilentlyContinue) {
+            $ausgabe = & docker run --rm -v "${wurzel}:/repo" `
+                zricethezav/gitleaks:v8.30.1 git /repo --staged --no-banner --redact -v 2>&1 |
+                ForEach-Object { [string]$_ }
+        }
+        else {
+            exit 0
+        }
     }
-    elseif (Get-Command docker -ErrorAction SilentlyContinue) {
-        $ausgabe = & docker run --rm -v "${wurzel}:/repo" `
-            zricethezav/gitleaks:v8.30.1 git /repo --staged --no-banner --redact 2>&1
-    }
-    else {
-        exit 0
+    finally {
+        $ErrorActionPreference = $vorher
     }
 
     # Exit 1 heisst bei gitleaks "Fund", nicht "Fehler" (Fehler ist Exit 2).
     # Nur der Fund darf blockieren; alles andere ist eine Stoerung des
     # Werkzeugs und geht den Commit nichts an.
     if ($LASTEXITCODE -eq 1) {
-        Write-Error @"
+        # Nicht Write-Error: Das $ErrorActionPreference oben (das jede eigene
+        # Stoerung schlucken soll) verschluckt auch die Begruendung — der
+        # Aufruf braeche dann wortlos ab. Der Fehlerstrom wird deshalb direkt
+        # beschrieben.
+        [Console]::Error.WriteLine(@"
 gitleaks hat in den vorgemerkten Aenderungen ein Geheimnis gefunden. Der Commit
 wurde nicht ausgefuehrt.
 
@@ -62,7 +80,7 @@ noch, den Zugang zu wechseln. Zugangsdaten gehoeren zur Laufzeit nach
 Falscher Alarm? Dann gehoert eine Regel-Ausnahme in eine .gitleaks.toml im
 Wurzelverzeichnis — namentlich und mit Begruendung, wie jede andere Ausnahme
 in diesem Repository.
-"@
+"@)
         exit 2
     }
 }
