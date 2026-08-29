@@ -235,6 +235,66 @@ void main() {
     );
   });
 
+  // Features, deren Steckbrief keinen Test nennen kann, weil es keinen gibt.
+  // Namentlich, damit die Luecke sichtbar bleibt, statt sich hinter einem
+  // Gedankenstrich zu verstecken — diese Liste soll leer werden.
+  const ohneTests = {
+    'backup': 'Sicherung/Wiederherstellung, bisher nur von Hand geprueft',
+    'dev_simulation': 'nur in kDebugMode sichtbar, nicht im Auslieferstand',
+  };
+
+  test('das Feld Tests nennt einen Testpfad statt eines Gedankenstrichs', () {
+    // Der allgemeine Verweis-Test faengt das nicht: Ein Gedankenstrich ist
+    // kein Verweis und faellt deshalb durch jede Pruefung auf tote Pfade. Er
+    // verfaellt zudem still — geprueft an zwei Steckbriefen, die noch "—"
+    // trugen, als ihre Tests laengst dalagen.
+    final verstoesse = <String>[];
+
+    for (final feature in mitSteckbrief()) {
+      final text = steckbrief(feature).readAsStringSync();
+      // Das Feld reicht bis zum naechsten fett gesetzten Feldnamen.
+      final feld = text
+          .split('**Tests:**')
+          .last
+          .split(RegExp(r'^\*\*', multiLine: true))
+          .first;
+      final nenntPfad = feld.contains(RegExp('`test/'));
+
+      if (!nenntPfad && !ohneTests.containsKey(feature)) {
+        verstoesse.add('$feature: nennt keinen Pfad unter test/');
+      } else if (nenntPfad && ohneTests.containsKey(feature)) {
+        verstoesse.add(
+          '$feature: nennt jetzt Tests — Eintrag aus ohneTests streichen',
+        );
+      }
+
+      // Der eigene Testordner muss im Feld vorkommen. Ohne das bleibt ein
+      // Steckbrief gruen, der auf Nachbartests verweist, waehrend daneben
+      // laengst ein eigener Ordner liegt — die Aussage stimmt dann nicht mehr,
+      // und genau so verfaellt das Feld unbemerkt.
+      if (Directory('test/features/$feature').existsSync() &&
+          !feld.contains('`test/features/$feature/')) {
+        verstoesse.add(
+          '$feature: test/features/$feature/ liegt da, das Feld nennt ihn nicht',
+        );
+      }
+    }
+    verstoesse.sort();
+
+    expect(
+      verstoesse,
+      isEmpty,
+      reason:
+          'Das Feld **Tests:** im Steckbrief:\n  ${verstoesse.join('\n  ')}\n'
+          'Es nennt den Einstieg in die Absicherung eines Features. Steht dort '
+          'ein blosser Gedankenstrich, kostet die Frage "ist das getestet?" '
+          'jedes Mal eine Suche — und die Antwort ist oft ja, nur an einer '
+          'Stelle, die niemand vermutet. Den Pfad eintragen (auch einen in '
+          'einem fremden Feature-Ordner, wenn die Tests dort liegen). Gibt es '
+          'wirklich keinen, gehoert das Feature mit Grund in ohneTests.',
+    );
+  });
+
   test('die Feature-Tabelle in CLAUDE.md nennt jedes Feature', () {
     final tabelle = File('CLAUDE.md').readAsStringSync().split('### Features');
     final genannt = RegExp(

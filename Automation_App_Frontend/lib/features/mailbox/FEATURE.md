@@ -17,7 +17,7 @@ Repository direkt.
 `POST /api/mailbox/microsoft/signin` · `POST /api/mailbox/microsoft/signout` ·
 `GET /api/mailbox/status` · `GET /api/mailbox/replies` ·
 `POST /api/mailbox/replies/{id}/acknowledge` · SignalR-Hub `/hubs/mailbox`
-**Tests:** —
+**Tests:** `test/features/mailbox/mailbox_zugang_anzeige_test.dart` (Zugangsmaske am schon geladenen Bloc)
 
 **Fallstricke**
 
