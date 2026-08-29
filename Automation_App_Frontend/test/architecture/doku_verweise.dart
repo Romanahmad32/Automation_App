@@ -15,7 +15,16 @@ const Set<String> nichtDurchsucht = {
   'packages',
   'ephemeral',
   'Generated',
+  // Ein Worktree ist eine zweite, vollstaendige Kopie des Repos — womoeglich
+  // auf einem anderen Zweig. Seine Doku gegen den Dateibestand *dieses*
+  // Arbeitsverzeichnisses zu pruefen, beantwortet keine Frage und schlaegt
+  // frueher oder spaeter grundlos an.
+  'worktrees',
 };
+
+/// True, wenn der Pfad durch einen der [nichtDurchsucht]-Ordner laeuft.
+bool uebersprungen(String pfad) =>
+    normalisiert(pfad).split('/').any(nichtDurchsucht.contains);
 
 /// Endungen, an denen ein Backtick-Token als Verweis auf eine Datei im Repo
 /// erkannt wird.
@@ -109,6 +118,11 @@ List<String> markdownUnter(String pfad) {
       .whereType<File>()
       .map((datei) => normalisiert(datei.path))
       .where((datei) => datei.endsWith('.md'))
+      // Dieselbe Ausnahmeliste wie beim Pfadverzeichnis. Ohne sie liest der
+      // Doku-Test bis in die Build-Ausgabe hinein und prueft die mitgelieferte
+      // Fremddokumentation von Playwright — Verweise, die niemand hier
+      // geschrieben hat und niemand hier berichtigen kann.
+      .where((datei) => !uebersprungen(datei))
       .toList()
     ..sort();
 }

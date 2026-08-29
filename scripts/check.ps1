@@ -84,6 +84,28 @@ $testNebenlaeufigkeit = '8'
 
 $hinweise = New-Object System.Collections.ArrayList
 
+# Git-Hooks verdrahten. `.githooks/` ist versioniert, `core.hooksPath` nicht —
+# ein frischer Klon kennt den Ordner also, benutzt ihn aber nicht. Hier gesetzt
+# statt in einer Anleitung, weil dieses Skript ohnehin jeder faehrt, der etwas
+# beitraegt: Damit greift der Geheimnis-Waechter ab dem ersten Pruefdurchlauf
+# und nicht erst, wenn jemand einen Satz in der README gelesen hat.
+#
+# Nur schreiben, wenn es abweicht: `git config` beruehrt sonst .git/config bei
+# jedem Lauf. Zeigt der Pfad woandershin, hat das jemand mit Absicht getan —
+# dann bleibt es stehen und wird nur gemeldet.
+$hooksPfad = (& git -C $wurzel config --local core.hooksPath 2>$null)
+if ([string]::IsNullOrWhiteSpace($hooksPfad)) {
+    & git -C $wurzel config --local core.hooksPath '.githooks' 2>&1 | Out-Null
+    $null = $hinweise.Add(
+        'core.hooksPath auf .githooks/ gesetzt — der Geheimnis-Waechter laeuft ' +
+        'ab jetzt vor jedem Commit (docs/RELEASE.md).')
+}
+elseif ($hooksPfad.Trim() -ne '.githooks') {
+    $null = $hinweise.Add(
+        "core.hooksPath zeigt auf '$($hooksPfad.Trim())' statt auf .githooks/ — " +
+        'der Geheimnis-Waechter vor dem Commit laeuft damit nicht.')
+}
+
 # Laeuft die Anwendung, haelt ihr Kindprozess AutomationService.exe *und*
 # .dll in bin\<Konfiguration>\net10.0\ offen. Jeder Build bricht dann mit
 # MSB3021 ab — ein Fehler, der wie ein Uebersetzungsfehler aussieht und keiner

@@ -42,7 +42,7 @@ Dokumenten.
 |---|---|
 | einen Endpunkt hinzufügen oder ändern | Skill `neuer-endpunkt` — lädt sich selbst; sonst `.claude/skills/neuer-endpunkt/SKILL.md` |
 | wissen, welche Felder ein Endpunkt hat | [`docs/openapi.json`](docs/openapi.json) — nicht die Controller greppen |
-| an einem Feature arbeiten | `Automation_App_Frontend/lib/features/<feature>/FEATURE.md` |
+| an einem Feature arbeiten | `Automation_App_Frontend/lib/features/<feature>/FEATURE.md` — reicht die Änderung über das Feature hinaus, zuerst [`docs/DATENFLUESSE.md`](docs/DATENFLUESSE.md) |
 | am Flutter-Frontend arbeiten | `Automation_App_Frontend/CLAUDE.md` |
 | am Backend arbeiten | `AutomationService/CLAUDE.md` |
 | an Prozessstart, Pfaden, Vorlagen, Sicherung, Versionierung, CI, Installer arbeiten | [`docs/RELEASE.md`](docs/RELEASE.md) |
