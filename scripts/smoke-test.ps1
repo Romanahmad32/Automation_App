@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Rauchtest des gebauten Pakets: startet den ausgelieferten Dienst und wartet
     auf seine Bereitschaft.

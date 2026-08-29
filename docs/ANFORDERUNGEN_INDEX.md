@@ -1,16 +1,21 @@
 # Anforderungen — Index
 
-`REQUIREMENTS.md` im Wurzelverzeichnis ist das **bindende** Anforderungsdokument. Es ist
-absichtlich **nicht versioniert** (`.gitignore`): es enthält Kanzlei-Interna, das Repo ist
-öffentlich. Im frischen Klon, im Worktree und in einer Cloud-Sitzung fehlt es deshalb.
+[`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurzelverzeichnis ist das **bindende**
+Anforderungsdokument. Es ist versioniert und liegt in jedem Klon vor.
 
-Diese Datei ist der **Ersatz für das Inhaltsverzeichnis, nicht für den Inhalt**. Sie sagt, unter
-welcher Nummer welches Thema geregelt ist — damit man gezielt danach fragen kann, statt die
-Anforderung zu raten.
+Diese Datei ist das **Inhaltsverzeichnis dazu, nicht der Inhalt**. Sie sagt, unter welcher Nummer
+welches Thema geregelt ist — als Einstieg, und als prüfbare Gliederung: `anforderungen_test.dart`
+und `DokumentationTests.cs` halten jeden `§4.8`-Verweis im Code gegen die Nummern hier.
 
-> **Regel:** Wer fachliches Verhalten ändert und `REQUIREMENTS.md` nicht vorliegen hat,
-> **fragt nach**. Diese Übersicht ist keine Ermächtigung, den Wortlaut zu erfinden — sie nennt
-> Thema und Fundstelle, mehr nicht.
+> **Regel:** Wer fachliches Verhalten ändert, liest den Wortlaut in `REQUIREMENTS.md`. Diese
+> Übersicht nennt Thema und Fundstelle, mehr nicht — sie ersetzt das Nachlesen nicht.
+>
+> **Nachziehen ist Pflicht, und es wird geprüft:** Wer die Gliederung in `REQUIREMENTS.md`
+> ändert, zieht die Nummern hier mit nach. `anforderungen_test.dart` hält beide Gliederungen
+> gegeneinander und wird rot, sobald eine Nummer nur auf einer Seite steht — sonst veralteten
+> Index und Verweise gemeinsam und zeigten geschlossen auf eine Gliederung, die es nicht mehr
+> gibt. Was der Test **nicht** sieht, ist der Text neben der Nummer: Eine Zeile, die unter der
+> richtigen Nummer das falsche Thema nennt, bleibt grün.
 
 ## Wie die Anforderungen mit dem Code verbunden sind
 
@@ -31,7 +36,7 @@ Jede einzelne Anforderung im Dokument trägt eine Marke:
 |---|---|
 | **[M]** Muss | ohne sie verfehlt die App ihren Zweck |
 | **[S]** Soll | deutlicher Nutzen, der Kernworkflow läuft aber auch ohne |
-| **[K]** Später | bewusst zurückgestellt, wird bei Bedarf ausgebaut |
+| **[K]** Später | bewusst zurückgestellt, wird bei Bedarf ausgebaut — welche das sind, steht unter 8 |
 
 Was tatsächlich gebaut ist, steht **nicht** dort, sondern in [`docs/STAND.md`](STAND.md).
 
@@ -66,7 +71,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 | 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |
 | 4.6 | Ablage in der Akte; Ablageort am Vorgang festhalten |
-| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, Textvorlagen, Versandnachweis je Vorgang |
+| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, Textvorlagen, Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
 | 4.8 | Auftragsabschluss als eigener Schritt: erledigt, Auftragsnummer weiterzählen, Registereintrag |
 | 4.9 | Folgekorrespondenz zu einem offenen Vorgang |
 | 4.10 | Erstkontakt über die Kanzlei-Website (durchgehend **[K]**) |
@@ -92,16 +97,39 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 |---|---|
 | 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Aktenstammordner, Versand, Postfach-Zugang, Darstellung, Sicherung |
 | 7.2 | Datensicherung und Datenintegrität: Schutz vor Datenverlust, Sichern/Wiederherstellen, robuste Wiederherstellung, dauerhafte Kennungen, Änderungsstand |
-| 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus |
+| 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[K]**, siehe 8) |
 
 ### 8 Nicht-Ziele / Abgrenzung
 
-Was die App **nicht** wird: keine vollständige Kanzleisoftware, keine Fristenlogik, kein
-eigenständiger Mailversand, keine Vollautomatisierung ohne Anwalt, andere Rechtsgebiete zunächst
-nur getragen, kein Mehrbenutzerbetrieb, keine Auslagerung des Datenbestands.
-
 **Vor jedem Vorschlag lesen, der Funktionsumfang hinzufügt.** Die häufigste vermeidbare Fehlleistung
-hier ist, einen bewusst ausgeschlossenen Bereich als „naheliegende Ergänzung" einzubauen.
+hier ist, einen bewusst ausgeschlossenen Bereich als „naheliegende Ergänzung" einzubauen — sie
+passiert beim Bauen an einem Paragraphen, dessen Thema harmlos aussieht. Deshalb steht hier, welcher
+Ausschluss auf welches Kapitel drückt: Wer an dem Kapitel arbeitet, liest die Zeile mit.
+
+| Nicht-Ziel | drückt auf |
+|---|---|
+| Keine vollständige Kanzleisoftware (kein Fristenmanagement, keine Buchhaltung, keine Mandantenkommunikation über den Workflow hinaus) | §3, §5.1, §6 |
+| Keine Fristen- oder Wiedervorlagelogik — die App erinnert nicht aktiv; die Übersicht nach Bearbeitungsstand genügt | §3, §4.9 |
+| **Kein Mailprogramm** — die Workflow-Mails versendet die App **sehr wohl selbst** (§4.7); was fehlt, ist das Postfach: kein Posteingang zum Lesen und Beantworten, keine Ordner, keine Suche | §4.7, §4.9 |
+| Keine Vollautomatisierung ohne Anwalt — Captcha, inhaltliche Freigabe, Übernahme der Antwort und Auftragsabschluss bleiben bestätigte Schritte | §4.2, §4.3, §4.5, §4.8 |
+| Andere Rechtsgebiete nur getragen, nicht ausgebaut — der durchgängige Workflow ist nur für Verkehrsunfall-Mandate ausgearbeitet | §3, §4 |
+| Kein Mehrbenutzer- oder Netzwerkbetrieb — Einzelplatz, ein Nutzer, lokale Daten | §2, §7 |
+| Keine Auslagerung des Datenbestands — alles bleibt auf dem Rechner der Kanzlei, ohne Internet arbeitsfähig | §2, §7.2 |
+
+### Zurückgestelltes ([K]) im Überblick
+
+Ein **[K]** heißt: bewusst nicht gebaut. Wer es trotzdem baut, baut gegen die Anforderung — und
+merkt es nicht, weil nichts rot wird. Die Übersicht steht hier, damit man das nicht erst hinterher
+im Volltext findet:
+
+| § | zurückgestellt |
+|---|---|
+| 4.10 | Erstkontakt über die Kanzlei-Website — **durchgehend [K]**, jeder Punkt darin |
+| 7.3 | Aktualisierung aus der App heraus (Hinweis auf neue Version, Selbstaktualisierung); der Weg über ein neues Setup genügt |
+
+Sonst trägt kein Paragraph zurückgestellte Punkte. Kommt einer dazu, gehört er in diese Tabelle —
+sie ist im frischen Klon die **einzige** Auskunft darüber, und ein Ausschluss, der nur im
+nicht versionierten Volltext steht, hält niemanden auf.
 
 ### 9 Offene Punkte
 

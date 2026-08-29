@@ -4,18 +4,7 @@ import 'package:automation_app/features/settings/domain/entities/kanzlei_setting
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Die Signatur steht im E-Mail-Reiter, liegt aber im selben Einstellungssatz
-/// wie die Kanzleidaten (§4.7). Sie darf deshalb weder die Nachbarfelder
-/// überschreiben noch deren Bestätigungsmeldung auslösen.
-class FesterSettingsAbruf implements UseCase<KanzleiSettings, NoParams> {
-  final KanzleiSettings stand;
-
-  FesterSettingsAbruf(this.stand);
-
-  @override
-  Future<Either<Failure, KanzleiSettings>> call(NoParams params) async =>
-      Right(stand);
-}
+import 'kanzlei_settings_doubles.dart';
 
 class MitschreibendesSpeichern
     implements UseCase<KanzleiSettings, KanzleiSettings> {
@@ -28,6 +17,9 @@ class MitschreibendesSpeichern
   }
 }
 
+/// Die Signatur steht im E-Mail-Reiter, liegt aber im selben Einstellungssatz
+/// wie die Kanzleidaten (§4.7). Sie darf deshalb weder die Nachbarfelder
+/// überschreiben noch deren Bestätigungsmeldung auslösen.
 void main() {
   const gespeichert = KanzleiSettings(
     name: 'Kanzlei Ahmad',

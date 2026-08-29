@@ -20,7 +20,8 @@ public static class EmailVersandInjection
                 "EmailVersand:MaxAnhangGesamtMb muss größer als 0 sein.")
             .ValidateOnStart();
 
-        services.AddScoped<GesendetOrdnerAblage>();
+        services.AddScoped<IGesendetOrdnerAblage, GesendetOrdnerAblage>();
+        services.AddScoped<ISmtpUebergabe, SmtpUebergabe>();
         services.AddScoped<KanzleiSignatur>();
         services.AddScoped<VersandProtokoll>();
         services.AddScoped<SignaturUebernahme>();

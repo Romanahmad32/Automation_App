@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
@@ -76,14 +77,9 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
   void initState() {
     super.initState();
 
-    // Den **vorhandenen** Stand lesen, nicht auf den nächsten Übergang warten:
-    // Beim zweiten Öffnen des Reiters steht der Bloc längst auf Loaded, es
-    // kommt kein Übergang mehr, und der Listener unten feuert nie. Das Feld
-    // blieb dann leer — und wer darauf „Speichern" drückte, schrieb die leere
-    // Fassung über die gepflegte.
-    final stand = context.read<KanzleiSettingsBloc>().state;
-    if (stand is KanzleiSettingsLoaded) _nachziehen(stand.settings);
-
+    // Den vorhandenen Stand liest [StandNachziehen] unten — beim zweiten
+    // Öffnen des Reiters steht der Bloc längst auf Loaded, und ein blosser
+    // Listener feuerte nie.
     unawaited(_standLaden());
   }
 
@@ -176,15 +172,17 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<KanzleiSettingsBloc, KanzleiSettingsState>(
-      listener: (context, state) {
-        if (state is! KanzleiSettingsLoaded) return;
-        if (state.gespeichert == KanzleiSettingsBereich.signatur) {
+    return StandNachziehen<KanzleiSettingsBloc, KanzleiSettingsState>(
+      nachziehen: (context, state) {
+        if (state is KanzleiSettingsLoaded) _nachziehen(state.settings);
+      },
+      beiUebergang: (context, state) {
+        if (state is KanzleiSettingsLoaded &&
+            state.gespeichert == KanzleiSettingsBereich.signatur) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Die Signatur ist gespeichert.')),
           );
         }
-        setState(() => _nachziehen(state.settings));
       },
       builder: (context, state) {
         final speichertGerade = state is KanzleiSettingsLoading;

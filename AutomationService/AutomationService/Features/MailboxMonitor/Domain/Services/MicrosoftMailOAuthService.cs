@@ -18,7 +18,7 @@ namespace AutomationService.Features.MailboxMonitor.Domain.Services;
 /// (<see cref="MailboxOptions.MicrosoftClientId"/>, Anleitung: docs/OUTLOOK_SETUP.md).
 /// </summary>
 public sealed class MicrosoftMailOAuthService(
-    MailboxConfigStore configStore,
+    IMailboxConfigSource configStore,
     ILogger<MicrosoftMailOAuthService> logger) : IDisposable
 {
     /// <summary>

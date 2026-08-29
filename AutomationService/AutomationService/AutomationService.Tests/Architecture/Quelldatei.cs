@@ -21,6 +21,46 @@ public sealed partial class Quelldatei(string relativerPfad, string absoluterPfa
     public int Zeilenzahl => File.ReadAllLines(AbsoluterPfad).Length;
 
     /// <summary>
+    /// Zeilen ohne Leerzeilen und ohne reine Kommentarzeilen -- das Mass, an
+    /// dem die Laengenregel haengt (siehe DateilaengeTests).
+    ///
+    /// Gezaehlt wird, was nach dem Trimmen uebrig bleibt und nicht mit "//",
+    /// "/*" oder "*" beginnt. Das erfasst Zeilen- und XML-Kommentare sowie
+    /// formatierte Blockkommentare.
+    ///
+    /// <para>Es ist eine Naeherung, und sie irrt in <b>beide</b> Richtungen.
+    /// Zu viel: eine Fliesstextzeile innerhalb eines Blockkommentars, die nicht
+    /// mit "*" eingerueckt ist. Zu wenig: jede Zeile innerhalb eines
+    /// Zeichenkettenliterals, die mit einem der drei Praefixe beginnt -- eine
+    /// URL in einer Rohzeichenkette, eine Aufzaehlung mit "*", eingebetteter
+    /// Code mit eigenen Kommentaren (siehe tools/ZentralrufDomDump, das ein
+    /// Skript als Rohzeichenkette fuehrt). Eine Datei kann die Grenze also auch
+    /// reissen, ohne dass dieser Test es merkt.</para>
+    ///
+    /// <para>Das ist bewusst in Kauf genommen: Sauber unterscheiden hiesse
+    /// tokenisieren, und die Regel ist eine Faustzahl fuer die Lesbarkeit, kein
+    /// Beweis. Wer sie schaerfer braucht, faengt bei den Zeichenkettenliteralen
+    /// an -- nicht bei den Kommentarpraefixen.</para>
+    /// </summary>
+    public int Anweisungszeilen =>
+        File.ReadAllLines(AbsoluterPfad).Count(IstAnweisungszeile);
+
+    /// <summary>
+    /// Dieselbe Zaehlweise wie in dart_source_files.dart im Frontend. Wer eine
+    /// der beiden aendert, aendert die andere mit -- sonst gilt fuer dieselbe
+    /// Regel auf beiden Seiten eine andere Zahl.
+    /// </summary>
+    public static bool IstAnweisungszeile(string zeile)
+    {
+        var inhalt = zeile.AsSpan().Trim();
+        if (inhalt.IsEmpty) return false;
+
+        return !inhalt.StartsWith("//")
+            && !inhalt.StartsWith("/*")
+            && !inhalt.StartsWith("*");
+    }
+
+    /// <summary>
     /// Name des Feature-Slices (Ordner unter Features/) oder null, wenn die
     /// Datei ausserhalb von Features/ liegt (Core, Program.cs, Tests).
     /// </summary>
