@@ -137,8 +137,7 @@ Für jeden Menschen **und jeden AI-Agent**, der hier Code ändert:
   Abkürzung, die den Fehler mitsamt seinem Wächter beseitigt.
 - Benennung von Datasources und Repositories: siehe `Automation_App_Frontend/CLAUDE.md`.
 
-Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Test statt eines
-übersehenen Hinweises:
+Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Test statt eines übersehenen Hinweises:
 
 | Regel | Erzwungen von |
 |---|---|
@@ -167,9 +166,10 @@ Versioniert, damit jeder Agent dieselbe Umgebung vorfindet — hier, im Worktree
   Git-Befehle (`push`, `reset --hard`, `clean`, `rebase`, `checkout --`) fragen nach.
 - **`hooks/`** — greifen von selbst: `dart-format.ps1` formatiert jede geschriebene `.dart`-Datei
   (für Dart prüft die CI keine Formatierung — ohne ihn sammelt sich Rauschen in den Diffs und
-  verdeckt die Änderung), `gitleaks-staged.ps1` hält einen `git commit` an, in dem ein Geheimnis
-  steckt, `zweigname.ps1` ein `git checkout -b` ohne `feature/`- oder `bugfix/`-Präfix. Jeder
-  schweigt bei eigener Störung; die Begründung steht im Kopf der jeweiligen Datei.
+  verdeckt die Änderung), `zweigname.ps1` hält ein `git checkout -b` ohne `feature/`- oder
+  `bugfix/`-Präfix an. Beide schweigen bei eigener Störung; die Begründung steht im Kopf der
+  Datei. Der Geheimnis-Wächter ist bewusst **kein** Agenten-Hook, sondern `.githooks/pre-commit`
+  — nur ein Git-Hook greift auch bei einem Commit im Terminal (`docs/RELEASE.md`).
 - **`commands/`** — auf Zuruf: `/pruefen` (komplette Prüfkette, dieselben Schritte wie die CI),
   `/generieren` (build_runner + was danach zu prüfen ist).
 - **`skills/`** — zieht sich selbst, wenn die Aufgabe passt: `neuer-endpunkt` (das Rezept für

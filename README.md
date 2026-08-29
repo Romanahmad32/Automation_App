@@ -165,5 +165,11 @@ guesses instead.
 Credentials never belong in a versioned file. Mailbox access is entered in the
 application and stored under `%APPDATA%` (`docs/POSTFACH_SETUP.md`); the empty
 placeholder keys that used to sit in `appsettings.json` have been removed,
-because an empty field in a public repository is an invitation. Every push is
-scanned for secrets over the full history (`gitleaks`, see `.github/workflows/ci.yml`).
+because an empty field in a public repository is an invitation. Every pull
+request and every push to `master` is scanned for secrets over the **full
+history** (`gitleaks`, see `.github/workflows/ci.yml`) — a secret that was
+committed once and removed in the next commit is still in the repository.
+
+A `pre-commit` hook runs the same scan locally before a commit is created. It
+needs `gitleaks` (`winget install gitleaks`) or Docker; without either it stays
+silent, so CI remains the binding check. See [docs/RELEASE.md](docs/RELEASE.md).
