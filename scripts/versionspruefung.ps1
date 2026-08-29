@@ -13,11 +13,15 @@
     Defekt im Repo — und wer solche Laeufe oft sieht, lernt das Falsche:
     rote Schritte wegzuerklaeren.
 
-    Fuer Flutter gilt: liegt das projektlokale FVM-SDK vor (fvm use in
-    Automation_App_Frontend, siehe docs/RELEASE.md), wird genau dessen
-    Fassung geprueft — und der Pfad bei Erfolg auf stdout gemeldet, damit
-    check.ps1 die Frontend-Schritte mit demselben SDK faehrt. FVM ist
-    Angebot, nicht Pflicht: ohne .fvm/ zaehlt das Flutter aus dem PATH.
+    Fuer Flutter loest das Skript das SDK selbst auf: zuerst die projektlokale
+    Junction .fvm/flutter_sdk (aus `fvm use`), sonst die in .fvmrc gepinnte
+    Fassung im FVM-Cache. Geprueft wird die Fassung, die dabei herauskommt —
+    und der Pfad bei Erfolg auf stdout gemeldet, damit check.ps1 die
+    Frontend-Schritte mit demselben SDK faehrt. Die Junction ist gitignored;
+    ohne den Weg ueber den Cache verweigerte die Kette in jedem frischen Klon
+    und jedem neuen Worktree den Dienst, obwohl das richtige SDK dalag. FVM
+    ist Angebot, nicht Pflicht: findet sich keins von beidem, zaehlt das
+    Flutter aus dem PATH.
 
     check.ps1 ruft dieses Skript als allerersten Schritt und bricht ab, wenn
     es fehlschlaegt. Von Hand aufgerufen sagt es einem frisch aufgesetzten
@@ -48,27 +52,81 @@ if (-not $NurBackend) {
     # Die gepinnte Fassung von dort lesen, wo sie gilt (ci.yml), statt sie
     # hier zu wiederholen: zwei Stellen liefen auseinander, und dieses Skript
     # pruefte dann gegen die falsche.
+    #
+    # Erst pruefen, ob die Datei da ist: `Get-Content` auf einen fehlenden Pfad
+    # ist ein *nicht* abbrechender Fehler. Das Skript lief bisher darueber
+    # hinweg, jede folgende Zeile brach an $gepinnt ab, kein einziges $fehler
+    # wurde gesetzt — und es endete mit 0. check.ps1 sah einen bestandenen
+    # Versionsvergleich, der nie stattgefunden hatte, und fuhr die ganze Kette
+    # gegen ein ungeprueftes Flutter. Ein Waechter, der bei eigener Stoerung
+    # gruen meldet, ist schlimmer als keiner.
     $ciDatei = Join-Path $wurzel '.github/workflows/ci.yml'
-    $gepinnt = [regex]::Match((Get-Content $ciDatei -Raw), 'FLUTTER_VERSION:\s*"([^"]+)"').Groups[1].Value
+    $gepinnt = ''
+    if (Test-Path -LiteralPath $ciDatei) {
+        $inhalt = Get-Content -LiteralPath $ciDatei -Raw
+        $gepinnt = [regex]::Match($inhalt, 'FLUTTER_VERSION:\s*"([^"]+)"').Groups[1].Value
+    }
 
     # .fvmrc pinnt dieselbe Fassung ein zweites Mal, weil fvm nur sie liest.
     # Laufen die beiden auseinander, benutzte die Kette hier ein anderes SDK,
     # als die CI prueft — genau der Zustand, den dieses Skript verhindert.
     $fvmrc = Join-Path $wurzel 'Automation_App_Frontend/.fvmrc'
-    if ($gepinnt -and (Test-Path $fvmrc)) {
-        $fvmrcFassung = (Get-Content $fvmrc -Raw | ConvertFrom-Json).flutter
-        if ($fvmrcFassung -ne $gepinnt) {
+    $fvmrcFassung = ''
+    if (Test-Path -LiteralPath $fvmrc) {
+        $fvmrcFassung = (Get-Content -LiteralPath $fvmrc -Raw | ConvertFrom-Json).flutter
+        if ($gepinnt -and $fvmrcFassung -ne $gepinnt) {
             $fehler += ".fvmrc nennt Flutter $fvmrcFassung, ci.yml FLUTTER_VERSION $gepinnt. " +
                 'Ein Versionssprung aendert beide zusammen, in einem eigenen Commit (docs/RELEASE.md).'
         }
     }
 
-    $fvmBin = Join-Path $wurzel 'Automation_App_Frontend/.fvm/flutter_sdk/bin'
-    $flutterBefehl = 'flutter'
-    if (Test-Path (Join-Path $fvmBin 'flutter.bat')) {
-        $sdkBin = $fvmBin
-        $flutterBefehl = Join-Path $fvmBin 'flutter.bat'
+    # Wo das SDK gesucht wird, in dieser Reihenfolge:
+    #
+    #   1. .fvm/flutter_sdk — die Junction aus `fvm use`. Wer sie gelegt hat,
+    #      hat das mit Absicht getan und bekommt genau dieses SDK, auch wenn im
+    #      Cache noch andere Fassungen liegen.
+    #   2. Die gepinnte Fassung im FVM-Cache.
+    #
+    # Der zweite Weg ist der wichtigere, weil die Junction gitignored ist: In
+    # einem frischen Klon und in jedem neuen Worktree fehlt sie *immer*, das
+    # SDK aber liegt auf einem Rechner, der hier schon gearbeitet hat, laengst
+    # im Cache. Ohne diesen Schritt fiel die Pruefung dort auf das Flutter aus
+    # dem PATH zurueck und brach aus reinen Umgebungsgruenden ab — und wer die
+    # Kette regelmaessig ohne Defekt rot sieht, lernt das Falsche: rote
+    # Schritte wegzuerklaeren.
+    #
+    # Nachinstalliert wird dabei nichts. Fehlt die Fassung auch im Cache,
+    # bleibt es beim Abbruch weiter unten mit dem Hinweis auf `fvm install`:
+    # ein *pruefendes* Skript soll weder den Arbeitsbaum aendern noch
+    # ungefragt ins Netz greifen.
+    # Gesucht wird nach .fvmrc, denn nur die liest fvm beim Anlegen des Cache-
+    # Eintrags. Fehlt sie, zaehlt die Pinnung aus ci.yml: Ein Klon ohne .fvmrc
+    # soll nicht stillschweigend am Cache vorbeilaufen — und wichen die beiden
+    # voneinander ab, stuende der Abbruch schon oben.
+    $kandidaten = @(Join-Path $wurzel 'Automation_App_Frontend/.fvm/flutter_sdk/bin')
+    $imCache = if ($fvmrcFassung) { $fvmrcFassung } else { $gepinnt }
+    if ($imCache) {
+        # fvm legt seine SDKs unter <Cache>/versions/<Fassung> ab; der Cache
+        # ist FVM_CACHE_PATH, sonst ~/fvm (nachzusehen in `fvm api context`).
+        # Ein per `fvm config --cache-path` verstellter Cache steht nur in
+        # fvms eigener Konfiguration und bleibt hier unsichtbar — dann greift
+        # der Abbruch unten, nicht ein falsches SDK.
+        $fvmCache = if ($env:FVM_CACHE_PATH) { $env:FVM_CACHE_PATH } else { Join-Path $HOME 'fvm' }
+        $kandidaten += Join-Path $fvmCache "versions/$imCache/bin"
     }
+
+    # -LiteralPath, weil Test-Path den Pfad sonst als Platzhaltermuster liest:
+    # Ein Klonpfad mit eckigen Klammern macht ein vorhandenes SDK unsichtbar,
+    # und die Kette faellt genau so grundlos auf den PATH zurueck, wie sie es
+    # ohne den Cache-Weg tat.
+    foreach ($kandidat in $kandidaten) {
+        if (Test-Path -LiteralPath (Join-Path $kandidat 'flutter.bat')) {
+            $sdkBin = $kandidat
+            break
+        }
+    }
+
+    $flutterBefehl = if ($sdkBin) { Join-Path $sdkBin 'flutter.bat' } else { 'flutter' }
 
     if (-not $gepinnt) {
         $fehler += "In $ciDatei steht keine FLUTTER_VERSION mehr — die Pinnung ist " +
