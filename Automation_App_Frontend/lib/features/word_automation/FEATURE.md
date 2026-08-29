@@ -18,7 +18,7 @@ Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTempla
 `POST /api/PdfConversion/convert-from-path`; über `VorgangCubit` zusätzlich `PUT /api/Vorgaenge`
 und `POST /api/Vorgaenge/abschliessen`
 **Tests:** `test/features/word_automation/` (Formularextraktion, `WizardCubit`,
-`EditedDocumentBloc`, Dokument-Export)
+`EditedDocumentBloc`, Dokument-Export, Betrag einer Schadensposition)
 
 **Fallstricke**
 

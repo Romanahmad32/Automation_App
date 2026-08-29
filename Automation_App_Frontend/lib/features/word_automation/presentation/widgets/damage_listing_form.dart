@@ -1,4 +1,5 @@
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
 import 'package:flutter/material.dart';
 
@@ -93,14 +94,25 @@ class _DamageListingFormState extends State<DamageListingForm> {
                   flex: 2,
                   child: TextField(
                     controller: item.amount,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Betrag (€)',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      // Die Beanstandung steht an der Zeile, die sie auslöst —
+                      // nicht als Sammelmeldung über der Aufstellung.
+                      errorText:
+                          betragUnzulaessig(_parseAmount(item.amount.text))
+                          ? negativerBetragHinweis
+                          : null,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    onChanged: (_) => _emit(),
+                    // setState, weil sich mit dem Text auch der errorText
+                    // ändert; _emit() allein baut nur den Rest der Seite neu.
+                    onChanged: (_) {
+                      setState(() {});
+                      _emit();
+                    },
                   ),
                 ),
                 IconButton(
@@ -180,6 +192,11 @@ class _DamageListingFormState extends State<DamageListingForm> {
     );
   }
 
+  /// Halbfertige Zeilen (keine Bezeichnung, kein lesbarer Betrag) bleiben
+  /// draußen — sie sollen nicht in der Vorschau auftauchen, während getippt
+  /// wird. Ein **negativer** Betrag geht dagegen mit hinaus: Nur so kann der
+  /// Schritt die Meldung an die Positionsnummer hängen, unter der die Zeile
+  /// auch in der Vorschau steht ([schadenspositionenFehler]).
   void _emit() {
     final items = [
       for (final item in _items)

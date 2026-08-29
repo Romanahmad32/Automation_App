@@ -24,6 +24,14 @@ sechzig Dateien das größte der App, entsprechend viel davon.
 - Die Vorsteuer-Checkbox steht in zwei gleichzeitig gemounteten Schritten auf demselben
   Cubit-Feld (`applyVat == !vorsteuerabzugsberechtigt`); ein Listener rechnet die RVG-Kosten neu,
   die Änderung ist dialogbestätigt.
+- **Eine Schadensposition über `0,00 €` ist gültig** (noch nicht beziffert), ein negativer Betrag
+  nicht. Geprüft wird im Formular an der Zeile (`utils/schadenspositionen_pruefung.dart`), nicht
+  erst im Dienst: dessen `[Range]` antwortet mit einem HTTP 400, das keine Zeile benennt.
+  `damage_listing_form.dart` reicht eine negative Zeile deshalb **absichtlich** nach oben durch —
+  sonst könnte die Meldung ihre Positionsnummer nicht nennen.
+- Ein Gegenstandswert von `0` ist rechenbar und ergibt die unterste Wertgebührenstufe (51,50 €).
+  Wer den Wächter im `RvgCalculationBloc` wieder auf `<= 0` stellt, macht die Vorschau an dieser
+  Stelle stumm, während das Dokument die Gebühr trotzdem ausweist.
 
 ## Vorlagen
 

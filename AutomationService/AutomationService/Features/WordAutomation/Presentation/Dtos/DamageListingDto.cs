@@ -38,6 +38,12 @@ public class DamageItemDto
     [MaxLength(200)]
     public string Description { get; set; } = string.Empty;
 
-    [Range(0.01, 10_000_000)]
+    /// <summary>Forderung dieser Position in €; 0,00 = noch nicht beziffert.</summary>
+    // Die Untergrenze ist 0 und nicht 0,01: Eine Position, die im Schreiben stehen soll,
+    // aber noch aussteht (etwa ein Gutachten ohne Rechnung), ist fachlich gültig. Negative
+    // Beträge bleiben unzulässig — ein Abzug ist keine Schadensposition. Gemeldet werden
+    // sie im Formular an der Zeile, die sie verursacht (schadenspositionen_pruefung.dart);
+    // diese Schranke ist nur noch das Netz dahinter und nennt keine Zeile.
+    [Range(0, 10_000_000)]
     public decimal Amount { get; set; }
 }

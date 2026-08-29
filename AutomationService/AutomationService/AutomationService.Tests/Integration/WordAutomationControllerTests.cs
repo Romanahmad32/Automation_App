@@ -124,12 +124,82 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task CalculateRvgFees_WithNonPositiveGegenstandswert_ReturnsBadRequest()
+    public async Task CalculateRvgFees_WithNegativeGegenstandswert_ReturnsBadRequest()
     {
         var client = _factory.CreateClient();
-        var payload = new RvgCalculationRequestDto { Gegenstandswert = 0m };
+        var payload = new RvgCalculationRequestDto { Gegenstandswert = -1m };
 
         var response = await client.PostAsJsonAsync("/api/WordAutomation/rvg-calculation", payload);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>
+    /// Eine Aufstellung aus lauter noch unbezifferten Positionen summiert sich auf 0.
+    /// Die Vorschau muss dafür dieselbe Zahl liefern, die auch im Dokument landet —
+    /// vorher wies die Modellvalidierung sie mit 400 ab.
+    /// </summary>
+    [Fact]
+    public async Task CalculateRvgFees_WithZeroGegenstandswert_ReturnsLowestFeeBracket()
+    {
+        var client = _factory.CreateClient();
+        var payload = new RvgCalculationRequestDto { Gegenstandswert = 0m, Gebuehrensatz = 1.3m };
+
+        var response = await client.PostAsJsonAsync("/api/WordAutomation/rvg-calculation", payload);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<RvgCalculationResponseDto>();
+        body.Should().NotBeNull();
+        body!.Success.Should().BeTrue();
+        body.Wertgebuehr.Should().Be(51.50m);
+        body.Geschaeftsgebuehr.Should().Be(66.95m);
+    }
+
+    /// <summary>
+    /// Eine Position mit 0,00 € darf die Modellvalidierung nicht mehr aufhalten. Der
+    /// Beleg dafür ist der Fehler *danach*: Die Anfrage kommt bis zur Vorlagensuche
+    /// durch und scheitert erst an der fehlenden Datei — bei einem abgewiesenen Modell
+    /// käme stattdessen ein 400, ohne die Zeile zu nennen, die schuld ist.
+    /// </summary>
+    [Fact]
+    public async Task GenerateReplacedDocument_WithZeroAmountItem_PassesModelValidation()
+    {
+        var client = _factory.CreateClient();
+        var payload = new WordReplacementDto
+        {
+            TemplateFilePath = Path.Combine(Path.GetTempPath(), $"missing_{Guid.NewGuid():N}.docx"),
+            ReplacePatterns = new Dictionary<string, string> { ["Name"] = "Roman" },
+            DamageListing = new DamageListingDto
+            {
+                Items =
+                [
+                    new DamageItemDto { Description = "Sachverständigenkosten (Rechnung steht aus)", Amount = 0m }
+                ]
+            }
+        };
+
+        var response = await client.PostAsJsonAsync("/api/WordAutomation/replaced-document", payload);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var body = await response.Content.ReadFromJsonAsync<ReplacedDocumentResponseDto>();
+        body!.ErrorCode.Should().Be("template_not_found");
+    }
+
+    [Fact]
+    public async Task GenerateReplacedDocument_WithNegativeAmountItem_ReturnsBadRequest()
+    {
+        var client = _factory.CreateClient();
+        var payload = new WordReplacementDto
+        {
+            TemplateFilePath = Path.Combine(Path.GetTempPath(), $"missing_{Guid.NewGuid():N}.docx"),
+            ReplacePatterns = new Dictionary<string, string> { ["Name"] = "Roman" },
+            DamageListing = new DamageListingDto
+            {
+                Items = [new DamageItemDto { Description = "Bereits reguliert", Amount = -100m }]
+            }
+        };
+
+        var response = await client.PostAsJsonAsync("/api/WordAutomation/replaced-document", payload);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

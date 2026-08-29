@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
@@ -7,9 +8,11 @@ import 'package:automation_app/features/word_automation/presentation/blocs/rvg_c
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_listing_form.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/generation_overlay.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/schadensaufstellung_preview.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/vorsteuer_checkbox_karte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,46 +22,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Erst hier wird das Dokument erzeugt.
 class WizardStepSchadensaufstellung extends StatelessWidget {
   const WizardStepSchadensaufstellung({super.key});
-
-  /// Die Vorsteuer-Checkbox in diesem Schritt ist ein synchronisiertes
-  /// Spiegelbild der Checkbox aus dem Schritt "Vorlage wählen & ausfüllen"
-  /// (gemeinsame Quelle: [WizardState.vorsteuerabzugsberechtigt]). Weil dieselbe
-  /// Einstellung dort auch das Ankreuzen im Dokument steuert, wird eine Änderung
-  /// hier zur Sicherheit per Dialog bestätigt, bevor sie übernommen wird.
-  Future<void> _onVorsteuerToggleRequested(
-    BuildContext context,
-    bool value,
-  ) async {
-    final cubit = context.read<WizardCubit>();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Vorsteuerabzugsberechtigung ändern?'),
-        content: const Text(
-          'Diese Einstellung stammt aus dem Schritt "Vorlage wählen & '
-          'ausfüllen". Sie beeinflusst nicht nur die Umsatzsteuer in der '
-          'Schadensaufstellung, sondern auch das Ankreuzen im Dokument '
-          '("ist / ist nicht vorsteuerabzugsberechtigt"). Möchten Sie sie '
-          'wirklich ändern?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Ändern'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed ?? false) {
-      // Nur das gemeinsame Cubit-Feld setzen; die Neuberechnung von applyVat
-      // und RVG-Kosten erledigt der BlocListener in [build].
-      cubit.setVorsteuerabzugsberechtigt(value);
-    }
-  }
 
   void _onDamageListingChanged(BuildContext context, DamageListing listing) {
     final wizardState = context.read<WizardCubit>().state;
@@ -79,6 +42,12 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
           : null,
     );
     context.read<WizardCubit>().setDamageListing(enriched);
+
+    // Ohne erfasste Position gibt es nichts zu berechnen. Eine Aufstellung, die
+    // sich auf 0,00 € summiert (lauter noch unbezifferte Positionen), ist
+    // dagegen rechenbar — sie ergibt die unterste Wertgebührenstufe, und genau
+    // die steht später auch im Dokument.
+    if (listing.items.isEmpty) return;
 
     final gegenstandswert = listing.items.fold<double>(
       0,
@@ -107,8 +76,16 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
         : null;
     final damageListing = wizardState.damageListing;
     final hasValidItems = damageListing?.items.isNotEmpty ?? false;
+    // Unzulässige Positionen sperren das Erzeugen hier, statt das Backend mit
+    // einem HTTP 400 antworten zu lassen, das keine Zeile benennt.
+    final fehler = schadenspositionenFehler(
+      damageListing?.items ?? const <DamageItem>[],
+    );
     final canGenerate =
-        hasValidItems && wizardState.formData != null && loadedPath != null;
+        hasValidItems &&
+        fehler.isEmpty &&
+        wizardState.formData != null &&
+        loadedPath != null;
 
     return MultiBlocListener(
       listeners: [
@@ -160,28 +137,7 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Card(
-                              margin: EdgeInsets.zero,
-                              child: CheckboxListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                title: const Text(
-                                  'Mandant ist vorsteuerabzugsberechtigt',
-                                ),
-                                subtitle: const Text(
-                                  'Übernommen aus "Vorlage wählen & ausfüllen". '
-                                  'Steuert die RVG-Umsatzsteuer dieser '
-                                  'Aufstellung.',
-                                ),
-                                value: wizardState.vorsteuerabzugsberechtigt,
-                                onChanged: (value) =>
-                                    _onVorsteuerToggleRequested(
-                                      context,
-                                      value ?? false,
-                                    ),
-                              ),
-                            ),
+                            const VorsteuerCheckboxKarte(),
                             const SizedBox(height: 16),
                             Text(
                               'Schadenspositionen',
@@ -220,6 +176,17 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                 ),
               ),
               const Divider(height: 1),
+              if (fehler.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final meldung in fehler)
+                        FehlerHinweis(nachricht: meldung),
+                    ],
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
