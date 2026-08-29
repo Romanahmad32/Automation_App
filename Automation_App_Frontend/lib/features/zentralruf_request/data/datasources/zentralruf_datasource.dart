@@ -61,8 +61,12 @@ class ApiZentralrufDatasource implements ZentralrufDatasource {
       final responseData = response.data as Map<String, dynamic>;
       return ZentralrufPrefillResult(
         referenz: responseData['referenz'] as String? ?? '',
-        filledFields: List<String>.from(responseData['filledFields'] ?? []),
-        skippedFields: List<String>.from(responseData['skippedFields'] ?? []),
+        filledFields: List<String>.from(
+          responseData['filledFields'] as List? ?? const [],
+        ),
+        skippedFields: List<String>.from(
+          responseData['skippedFields'] as List? ?? const [],
+        ),
       );
     } on DioException catch (e) {
       // Verbindungsfehler (Backend läuft nicht) für den nicht-technischen

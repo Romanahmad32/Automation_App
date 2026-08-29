@@ -26,7 +26,7 @@ class InitialTemplateForm {
 
     final fields = <FieldData>[];
     int index = 0;
-    for (final element in template?.fields ?? const []) {
+    for (final element in template?.fields ?? const <FieldData>[]) {
       final fieldKey = 'field_$index';
       fields.add(
         FieldData(
