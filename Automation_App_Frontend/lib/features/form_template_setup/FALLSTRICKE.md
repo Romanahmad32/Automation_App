@@ -10,9 +10,10 @@ regelmäßig schiefgeht — die kurzen Merksätze bleiben drüben.
 gibt: hier beim Übernehmen eines Platzhalters (Vorauswahl im Dropdown, sichtbar und änderbar) und
 zur Laufzeit im `VorgangPrefillMatcher` für Bestandsfelder, an denen nie eine Quelle gesetzt wurde.
 
-Vorher lagen dieselben Stichwörter in drei Listen mit je eigener Prüfreihenfolge
-(`MandantFeldHeuristik`, `VorgangsdatenFieldMatcher`, das Dropdown). Was der Anwalt sah, war
-deshalb etwas anderes als das, was beim Ausfüllen passierte.
+Vorher lagen dieselben Stichwörter in drei Listen mit je eigener Prüfreihenfolge: eine für die
+Mandantenfelder, der inzwischen abgeschaffte `VorgangsdatenFieldMatcher` für die Antwortfelder,
+und das Dropdown. Was der Anwalt sah, war deshalb etwas anderes als das, was beim Ausfüllen
+passierte.
 
 - **Die Reihenfolge der Prüfungen ist die Regel** — spezifisch vor allgemein. Wer eine Zeile
   verschiebt, ändert das Verhalten; die Tests halten jede Regel einzeln fest.

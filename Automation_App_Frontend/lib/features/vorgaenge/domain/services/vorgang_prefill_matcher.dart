@@ -4,7 +4,7 @@ import 'package:automation_app/features/form_template_setup/domain/services/feld
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/services/mandant_feld_heuristik.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/mandant_anschrift.dart';
 
 /// Ordnet die in einem [Vorgang] gebündelten Daten (Mandant + Zentralruf-Antwort
 /// + Vorgangsfelder) den frei benannten Feldern einer Formularvorlage zu.
@@ -15,7 +15,8 @@ import 'package:automation_app/features/vorgaenge/domain/services/mandant_feld_h
 /// *jedes* Feld denselben Weg durch [_ausDatenquelle].
 ///
 /// Vorher liefen hier zwei weitere Zuordnungen mit eigenen Wortlisten daneben
-/// (`MandantFeldHeuristik.wertFuer`, `VorgangsdatenFieldMatcher`). Sie kannten
+/// (eine für die Mandantenfelder, dazu der abgeschaffte
+/// `VorgangsdatenFieldMatcher` für die Antwortfelder). Sie kannten
 /// jeweils nur einen Teil der Daten: Unfallort, Unfalluhrzeit und
 /// Polizei-Vorgangsnummer hatten gar keine Entsprechung, und Unfalldatum,
 /// Kennzeichen und Referenz kamen ausschließlich aus der Antwort — ohne
@@ -109,7 +110,7 @@ class VorgangPrefillMatcher {
       case FeldDatenquelle.mandantOrt:
         return mandant?.ort;
       case FeldDatenquelle.mandantAnschrift:
-        return MandantFeldHeuristik.anschrift(mandant);
+        return MandantAnschrift.aus(mandant);
       case FeldDatenquelle.mandantEmail:
         return mandant?.emailAdresse;
       case FeldDatenquelle.mandantTelefon:
