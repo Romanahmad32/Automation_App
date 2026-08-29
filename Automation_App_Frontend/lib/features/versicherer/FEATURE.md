@@ -10,7 +10,8 @@ Zustand ist schlicht `List<Versicherer>`, lädt sich im Konstruktor selbst
 **Domain:** `Versicherer` (`domain/entities/versicherer.dart`, spiegelt das Backend-DTO
 `VersichererDto`) · kein UseCase, nur der Port `VersichererRepository`
 **Backend:** `Features/Versicherer/` · `GET /api/Versicherer` (der einzige Endpunkt — nur lesend)
-**Tests:** `test/features/zentralruf_reply/versicherer_ergaenzung_test.dart`
+**Tests:** `test/features/versicherer/` (Cache und Namensabgleich im Cubit, Abbild des DTOs) · aus
+Sicht des Aufrufers `test/features/zentralruf_reply/versicherer_ergaenzung_test.dart`
 
 **Fallstricke**
 
