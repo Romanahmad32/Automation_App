@@ -25,16 +25,16 @@ void main() {
   /// Dateien, die bei der Umstellung schon über der Grenze lagen, mit ihrem
   /// damaligen Stand als Obergrenze: sie dürfen nur noch schrumpfen.
   ///
-  /// Alle drei sind große Formularseiten mit wenig Kommentar — die Regel zeigt
+  /// Beide sind große Formularseiten mit wenig Kommentar — die Regel zeigt
   /// hier also richtig hin. Sie stehen namentlich hier statt hinter einem
   /// hochgesetzten Limit, damit sichtbar bleibt, dass es Schulden sind und wie
-  /// viele. Wer eine davon aufteilt, streicht ihre Zeile.
+  /// viele. Wer eine davon aufteilt, streicht ihre Zeile — so geschehen mit
+  /// `vorgang_starten_form_view.dart`, aus der `MandantEntscheidung` heraus-
+  /// geschnitten wurde.
   const altlasten = <String, int>{
     'lib/features/form_template_setup/presentation/pages/form_template_details_page.dart':
         263,
     'lib/features/mandanten/presentation/pages/mandant_details_page.dart': 279,
-    'lib/features/vorgang_starten/presentation/views/vorgang_starten_form_view.dart':
-        254,
   };
 
   int grenzeFuer(String pfad) => altlasten[pfad] ?? maxAnweisungen;

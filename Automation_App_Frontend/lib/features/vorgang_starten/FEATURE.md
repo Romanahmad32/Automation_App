@@ -15,13 +15,11 @@ Fremd eingebunden: `VorgangCubit` (vorgaenge).
 **Backend:** `Features/ZentralrufAutomation/` · `POST /api/Zentralruf/prefill`; mittelbar
 `GET /api/Settings`, `POST /api/Mandanten`, `PUT /api/Mandanten/{id}`, `PUT /api/Vorgaenge`
 **Tests:** `test/features/vorgang_starten/vorgang_starten_bloc_test.dart`,
-`test/features/vorgang_starten/mandant_aenderung_test.dart`
+`test/features/vorgang_starten/mandant_aenderung_test.dart`,
+`test/features/vorgang_starten/mandant_uebernahme_test.dart`
 
 **Fallstricke**
 
-- Reihenfolge in `_onSpeichereVorgang`: erst Mandant anlegen/aktualisieren, dann Zentralruf-Prefill,
-  zuletzt `VorgangCubit.registriereAnfrage`. Scheitert einer der ersten beiden Schritte, entsteht
-  kein Vorgang; die vom Prefill zurückgegebene Referenz schlägt die im Formular eingetippte.
 - Der Prefill füllt das Formular nur aus — Captcha und Absenden macht der Anwalt selbst im
   sichtbaren Browserfenster (`receiveTimeout` 3 min statt der globalen 3 s). Nicht wegautomatisieren.
 - Die laufende Auftragsnummer wird hier nur gelesen, nie erhöht: hochgezählt wird sie erst beim
@@ -35,5 +33,7 @@ Fremd eingebunden: `VorgangCubit` (vorgaenge).
 - `MandantErkennung` schlägt Registereinträge nur vor, die Übernahme bleibt ein Klick; jede Anlage
   oder Änderung läuft vorher durch `MandantUebersichtDialog` — wird der abgebrochen, wird auch der
   Vorgang nicht gespeichert.
+- Der lange Rest steht in `FALLSTRICKE.md` daneben: Reihenfolge im Speicherpfad, die zwei Wege,
+  einen Mandanten anzulegen (Dublettengefahr), und warum Widget-Tests hier zweimal pumpen.
 - `registriereAnfrage` ist ein Upsert über die Referenz: dieselbe Referenz erneut speichern
   aktualisiert nur die hier erfassten Felder und behält Antwort- und Dokumentdaten.

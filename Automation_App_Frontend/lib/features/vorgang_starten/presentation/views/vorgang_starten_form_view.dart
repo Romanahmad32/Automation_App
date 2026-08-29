@@ -5,14 +5,13 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
-import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
-import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_uebersicht_dialog.dart';
+import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_entscheidung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_aktionsleiste.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_group.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_reader.dart';
@@ -168,42 +167,26 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
   }
 
   /// Gemeinsamer Absende-Pfad für „Speichern" und „Zentralruf ausfüllen":
-  /// zeigt — wenn am Mandanten etwas neu oder geändert ist — die Übersicht zur
-  /// Bestätigung (§1.3) und schickt das Speicher-Event. Abgebrochene Übersicht
-  /// bricht das Speichern ab.
+  /// holt — wenn am Mandanten etwas neu oder geändert ist — die Bestätigung
+  /// über die Übersicht (§1.3) und schickt das Speicher-Event. Abgebrochene
+  /// Übersicht bricht das Speichern ab.
   Future<void> _absenden({required bool zentralruf}) async {
     final daten = leseVorgangDaten(_form, _rechtsgebiet);
     final gewaehlt = _selectedMandantId == null
         ? null
         : _findeMandant(_selectedMandantId!);
-    final art = mandantAenderungsart(daten, gewaehlt);
+    final entscheidung = await MandantEntscheidung.hole(
+      context,
+      daten: daten,
+      gewaehlt: gewaehlt,
+    );
+    if (!entscheidung.bestaetigt || !mounted) return;
 
-    CreateMandantRequest? neuerMandant;
-    Mandant? aktualisierterMandant;
-
-    if (art != MandantAenderungsart.keine) {
-      final istNeu = art == MandantAenderungsart.neu;
-      final bestaetigt = await MandantUebersichtDialog.zeige(
-        context,
-        istNeu: istNeu,
-        zeilen: istNeu
-            ? mandantNeuFelder(daten)
-            : mandantDiff(daten, gewaehlt!),
-      );
-      if (bestaetigt != true) return;
-      if (istNeu) {
-        neuerMandant = daten.toCreateRequest();
-      } else {
-        aktualisierterMandant = daten.applyTo(gewaehlt!);
-      }
-    }
-
-    if (!mounted) return;
     context.read<VorgangStartenBloc>().add(
       SpeichereVorgangEvent(
         daten: daten,
-        neuerMandant: neuerMandant,
-        aktualisierterMandant: aktualisierterMandant,
+        neuerMandant: entscheidung.neuerMandant,
+        aktualisierterMandant: entscheidung.aktualisierterMandant,
         verknuepfteMandantId: gewaehlt?.id,
         zentralrufAusfuellen: zentralruf,
       ),
@@ -256,6 +239,16 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
         }
         if (state is MandantGespeichert) {
           unawaited(_uebernehmeGespeicherten(state.mandant));
+        }
+        // Derselbe Aufräumpfad für den zweiten Weg („Speichern" /
+        // „Zentralruf-Formular ausfüllen"): ohne ihn hielte die Karte den
+        // gerade angelegten Mandanten weiter für neu und legte ihn beim
+        // nächsten Speichern ein zweites Mal an.
+        final gespeicherter = state is VorgangGespeichert
+            ? state.gespeicherterMandant
+            : null;
+        if (gespeicherter != null) {
+          unawaited(_uebernehmeGespeicherten(gespeicherter));
         }
       },
       child: ReactiveForm(
