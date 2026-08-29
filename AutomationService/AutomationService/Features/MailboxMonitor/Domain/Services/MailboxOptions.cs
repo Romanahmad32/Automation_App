@@ -6,9 +6,12 @@ namespace AutomationService.Features.MailboxMonitor.Domain.Services;
 /// IDLE benachrichtigen, sobald eine Zentralruf-Antwort eintrifft — er pollt
 /// also nicht im Takt.
 ///
-/// Für Gmail: 2-Faktor-Authentifizierung aktivieren und ein App-Passwort
-/// erzeugen (https://myaccount.google.com/apppasswords); dieses App-Passwort,
-/// nicht das normale Kontopasswort, gehört in <see cref="AppPassword"/>.
+/// Der Regelfall dieser Kanzlei ist ein 1&amp;1/IONOS-Postfach: imap.ionos.de,
+/// Port 993, SSL, Anmeldung mit der vollständigen Adresse und dem
+/// Postfach-Passwort (dort gibt es kein App-Passwort-Konzept). Bei Gmail
+/// stattdessen 2-Faktor-Authentifizierung aktivieren und ein App-Passwort
+/// erzeugen (https://myaccount.google.com/apppasswords) — dieses, nicht das
+/// Kontopasswort, gehört in <see cref="AppPassword"/>.
 /// Ist <see cref="Enabled"/> false oder fehlen Zugangsdaten, bleibt der Monitor
 /// inaktiv (kein Verbindungsversuch, kein Fehler).
 /// </summary>
@@ -20,24 +23,28 @@ public sealed class MailboxOptions
     public bool Enabled { get; init; }
 
     /// <summary>
-    /// Anmeldeverfahren: App-Passwort (Gmail) oder Microsoft-OAuth (Outlook).
-    /// Outlook/Microsoft-Postfächer erlauben seit September 2024 kein
-    /// IMAP-Passwort mehr — dort ist <see cref="MailboxAuthMethod.MicrosoftOAuth"/>
-    /// der einzige Weg.
+    /// Anmeldeverfahren: IMAP-Passwort (1&amp;1/IONOS, Gmail) oder Microsoft-OAuth
+    /// (Outlook.com, Microsoft 365). Outlook/Microsoft-Postfächer erlauben seit
+    /// September 2024 kein IMAP-Passwort mehr — dort ist
+    /// <see cref="MailboxAuthMethod.MicrosoftOAuth"/> der einzige Weg.
     /// </summary>
     public MailboxAuthMethod AuthMethod { get; init; } = MailboxAuthMethod.AppPassword;
 
-    public string Host { get; init; } = "imap.gmail.com";
+    public string Host { get; init; } = "imap.ionos.de";
 
     public int Port { get; init; } = 993;
 
     /// <summary>SSL/TLS direkt beim Verbindungsaufbau (Port 993). Für IMAP über STARTTLS auf false setzen.</summary>
     public bool UseSsl { get; init; } = true;
 
-    /// <summary>Vollständige E-Mail-Adresse des Postfachs (Gmail-Adresse).</summary>
+    /// <summary>Vollständige E-Mail-Adresse des Postfachs; zugleich der IMAP-Benutzername.</summary>
     public string Username { get; init; } = string.Empty;
 
-    /// <summary>Gmail-App-Passwort (nicht das Kontopasswort). Bei Microsoft-OAuth ungenutzt.</summary>
+    /// <summary>
+    /// Passwort für die IMAP-Anmeldung: bei 1&amp;1/IONOS das Postfach-Passwort,
+    /// bei Gmail das App-Passwort (nicht das Kontopasswort). Bei Microsoft-OAuth
+    /// ungenutzt. Auf Platte liegt es DPAPI-verschlüsselt (<see cref="PasswortSchutz"/>).
+    /// </summary>
     public string AppPassword { get; init; } = string.Empty;
 
     /// <summary>

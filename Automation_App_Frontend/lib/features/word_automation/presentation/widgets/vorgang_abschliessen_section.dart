@@ -1,32 +1,56 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
 import 'package:automation_app/features/word_automation/domain/usecases/arbeitsordner_aufraeumen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/mail_versenden_button.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgang_abschliessen_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Abschluss des Vorgangs (§4.8): markiert den Auftrag als erledigt
-/// (Status „versendet"), zählt die laufende Auftragsnummer in den Einstellungen
-/// hoch und nimmt den Vorgang damit ins Sachgebiete-Register auf. Greift den
-/// gewählten Vorgang live aus dem [VorgangCubit] ab, damit der Status nach dem
-/// Abschluss sofort umschlägt.
+/// Versand und Abschluss des Vorgangs (§4.7, §4.8) — die beiden letzten
+/// Schritte, bewusst getrennt: Die Mail kann mehrfach hinausgehen (Mandant
+/// nachträglich, Korrekturschreiben), abgeschlossen wird genau einmal. Der
+/// Abschluss markiert den Auftrag als erledigt, zählt die laufende
+/// Auftragsnummer hoch und nimmt den Vorgang ins Sachgebiete-Register auf.
 ///
 /// Zugleich der letzte Halt für den Arbeitsordner: Ist der Auftrag erledigt,
 /// kann darin nichts mehr gebraucht werden. Die Ablage räumt ihn nur auf, wenn
-/// die Word-Fassung in der Akte landet (§4.6) — bei „nur PDF" bleibt er sonst
+/// die Word-Fassung in der Akte landet (§4.6) — bei „nur PDF" bliebe er sonst
 /// bis zur Altersgrenze des Dienstes stehen.
-class VorgangAbschliessenSection extends StatelessWidget {
+class VorgangAbschliessenSection extends StatefulWidget {
   const VorgangAbschliessenSection({super.key});
+
+  @override
+  State<VorgangAbschliessenSection> createState() =>
+      _VorgangAbschliessenSectionState();
+}
+
+class _VorgangAbschliessenSectionState
+    extends State<VorgangAbschliessenSection> {
+  /// Der Versand dieser Sitzung — er begründet im Abschlussdialog das
+  /// vorbelegte Häkchen. Bewusst nicht am Vorgang persistiert: §4.7 verlangt
+  /// keinen Versandnachweis in der App, dafür genügt der Ordner „Gesendet".
+  EmailVersandErgebnis? _versand;
+
+  void _versandUebernehmen(EmailVersandErgebnis ergebnis) {
+    if (!mounted) return;
+    setState(() => _versand = ergebnis);
+  }
 
   Future<void> _abschliessen(BuildContext context, Vorgang vorgang) async {
     final bestaetigt = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => VorgangAbschliessenDialog(vorgang: vorgang),
+      builder: (dialogContext) => VorgangAbschliessenDialog(
+        vorgang: vorgang,
+        mandant: context.read<WizardCubit>().state.selectedMandant,
+        bereitsVersendet: _versand,
+        onVersendet: _versandUebernehmen,
+      ),
     );
     if (bestaetigt != true || !context.mounted) return;
     // Statuswechsel und Auftragsnummer laufen atomar im Backend; bei false ist
@@ -64,21 +88,23 @@ class VorgangAbschliessenSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selected = context.watch<WizardCubit>().state.selectedVorgang;
+    final wizard = context.watch<WizardCubit>().state;
+    final selected = wizard.selectedVorgang;
 
     if (selected == null) {
       return Column(
         children: [
           Text(
-            'Vorgang abschließen',
+            'E-Mail und Abschluss',
             textAlign: TextAlign.center,
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 12),
           Text(
             'Diesem Dokument ist kein Vorgang zugeordnet. Wählen Sie im ersten '
-            'Schritt einen Vorgang, um ihn nach dem Versand abzuschließen '
-            '(Auftragsnummer hochzählen, Registereintrag).',
+            'Schritt einen Vorgang, um das Schreiben zu versenden und den '
+            'Vorgang danach abzuschließen (Auftragsnummer hochzählen, '
+            'Registereintrag).',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.outline,
@@ -99,7 +125,7 @@ class VorgangAbschliessenSection extends StatelessWidget {
         return Column(
           children: [
             Text(
-              'Vorgang abschließen',
+              'E-Mail und Abschluss',
               textAlign: TextAlign.center,
               style: theme.textTheme.titleSmall,
             ),
@@ -110,6 +136,13 @@ class VorgangAbschliessenSection extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
+            ),
+            const SizedBox(height: 12),
+            MailVersendenButton(
+              vorgang: aktuell,
+              mandant: wizard.selectedMandant,
+              bereitsVersendet: _versand,
+              onVersendet: _versandUebernehmen,
             ),
             const SizedBox(height: 12),
             if (abgeschlossen)

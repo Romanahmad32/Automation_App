@@ -41,6 +41,7 @@ public sealed class DbReceivedReplyStore(
         string? from,
         IReadOnlyList<string> warnings,
         string? rawText = null,
+        IReadOnlyList<string>? anhangPfade = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(dedupeKey);
@@ -76,6 +77,7 @@ public sealed class DbReceivedReplyStore(
             Absender = from,
             RohdatenJson = JsonSerializer.Serialize(data, JsonOptions),
             WarnungenJson = JsonSerializer.Serialize(warnings, JsonOptions),
+            AnhaengeJson = JsonSerializer.Serialize(anhangPfade ?? [], JsonOptions),
             Rohtext = rawText,
             Quittiert = false,
             Zugeordnet = match is not null,
@@ -139,7 +141,8 @@ public sealed class DbReceivedReplyStore(
         Subject = e.Betreff,
         From = e.Absender,
         Data = Deserialize(e.RohdatenJson),
-        Warnings = DeserializeWarnings(e.WarnungenJson),
+        Warnings = DeserializeListe(e.WarnungenJson),
+        AnhangPfade = DeserializeListe(e.AnhaengeJson),
         RawText = e.Rohtext,
         Acknowledged = e.Quittiert,
         ZuordnungVermutet = e.ZuordnungVermutet,
@@ -162,7 +165,8 @@ public sealed class DbReceivedReplyStore(
         }
     }
 
-    private static List<string> DeserializeWarnings(string? json)
+    /// <summary>Eine als JSON abgelegte Zeichenkettenliste; leer, wenn nichts oder Unlesbares dasteht.</summary>
+    private static List<string> DeserializeListe(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {

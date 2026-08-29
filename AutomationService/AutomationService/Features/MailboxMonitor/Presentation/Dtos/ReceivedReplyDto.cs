@@ -12,6 +12,7 @@ public sealed record ReceivedReplyDto(
     bool Acknowledged,
     ZentralrufReplyData Data,
     IReadOnlyList<string> Warnings,
+    IReadOnlyList<string> AnhangPfade,
     string? RawText,
     bool ZuordnungVermutet)
 {
@@ -23,6 +24,7 @@ public sealed record ReceivedReplyDto(
         reply.Acknowledged,
         reply.Data,
         reply.Warnings,
+        reply.AnhangPfade,
         reply.RawText,
         reply.ZuordnungVermutet);
 }

@@ -1,8 +1,8 @@
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:flutter/material.dart';
 
-/// App-Passwort-Feld: obscured; ist bereits eines gespeichert, darf es leer
-/// bleiben (dann wird das gespeicherte beibehalten).
+/// Passwortfeld für den IMAP-Zugang: obscured; ist bereits eines gespeichert,
+/// darf es leer bleiben (dann wird das gespeicherte beibehalten).
 class MailboxPasswordField extends StatefulWidget {
   final bool alreadySet;
 
@@ -21,12 +21,12 @@ class _MailboxPasswordFieldState extends State<MailboxPasswordField> {
       formControlName: 'appPassword',
       obscureText: _obscured,
       labelText: widget.alreadySet
-          ? 'App-Passwort (gespeichert — leer lassen = unverändert)'
-          : 'App-Passwort',
+          ? 'Passwort (gespeichert — leer lassen = unverändert)'
+          : 'Passwort',
       inputDecoration: InputDecoration(
         helperText: widget.alreadySet
-            ? 'Es ist bereits ein App-Passwort hinterlegt.'
-            : 'Gmail-App-Passwort, nicht das Kontopasswort.',
+            ? 'Es ist bereits ein Passwort hinterlegt.'
+            : '1&1/IONOS: Postfach-Passwort. Gmail: App-Passwort.',
         suffixIcon: IconButton(
           icon: Icon(_obscured ? Icons.visibility : Icons.visibility_off),
           tooltip: _obscured ? 'Anzeigen' : 'Verbergen',

@@ -44,12 +44,12 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
         appBar: const SeitenAppBar(
           titel: 'Einstellungen',
           icon: Icons.settings_outlined,
-          untertitel: 'Kanzleidaten, Postfach-Zugang und Darstellung',
+          untertitel: 'Kanzleidaten, E-Mail und Darstellung',
           aktionen: [PageRefreshButton()],
           bottom: TabBar(
             tabs: [
               Tab(icon: Icon(Icons.business), text: 'Kanzlei'),
-              Tab(icon: Icon(Icons.mark_email_unread), text: 'Postfach-Zugang'),
+              Tab(icon: Icon(Icons.mail_outline), text: 'E-Mail'),
               Tab(icon: Icon(Icons.palette_outlined), text: 'Darstellung'),
               Tab(icon: Icon(Icons.backup_outlined), text: 'Datensicherung'),
               Tab(icon: Icon(Icons.info_outline), text: 'Über'),

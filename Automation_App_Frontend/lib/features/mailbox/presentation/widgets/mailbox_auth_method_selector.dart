@@ -2,8 +2,10 @@ import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.d
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
-/// Wahl des E-Mail-Anbieters bzw. Anmeldewegs für die Postfach-Überwachung:
-/// Gmail (App-Passwort) oder Outlook/Microsoft (Anmeldung im Browser).
+/// Wahl des Anmeldewegs für die Postfach-Überwachung: gewöhnliche
+/// IMAP-Anmeldung mit Passwort (1&1/IONOS, Gmail) oder Outlook/Microsoft per
+/// Browser-Anmeldung. Welcher Weg gilt, entscheidet allein, wo das Postfach
+/// liegt — nicht, mit welchem Programm es sonst gelesen wird.
 /// Gebunden an das Formularfeld `authMethod`.
 class MailboxAuthMethodSelector extends StatelessWidget {
   const MailboxAuthMethodSelector({super.key});
@@ -20,16 +22,13 @@ class MailboxAuthMethodSelector extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 8,
             children: [
-              Text(
-                'E-Mail-Anbieter',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
+              Text('Anmeldeweg', style: Theme.of(context).textTheme.labelLarge),
               SegmentedButton<MailboxAuthMethod>(
                 segments: const [
                   ButtonSegment(
                     value: MailboxAuthMethod.appPassword,
                     icon: Icon(Icons.mail_outline),
-                    label: Text('Gmail (App-Passwort)'),
+                    label: Text('IMAP mit Passwort'),
                   ),
                   ButtonSegment(
                     value: MailboxAuthMethod.microsoftOAuth,

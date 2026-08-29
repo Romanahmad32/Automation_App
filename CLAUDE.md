@@ -49,7 +49,8 @@ Dokumenten.
 | an Prozessstart, Pfaden, Vorlagen, Sicherung, Versionierung, CI, Installer arbeiten | [`docs/RELEASE.md`](docs/RELEASE.md) |
 | fachliches Verhalten ändern | `REQUIREMENTS.md`; fehlt sie, sagt [`docs/ANFORDERUNGEN_INDEX.md`](docs/ANFORDERUNGEN_INDEX.md), wonach zu fragen ist |
 | wissen, was gebaut ist und was fehlt | [`docs/STAND.md`](docs/STAND.md) |
-| das Postfach an Outlook/M365 anbinden | [`docs/OUTLOOK_SETUP.md`](docs/OUTLOOK_SETUP.md) |
+| das Postfach anbinden (welcher Weg? 1&1/IONOS, Gmail) | [`docs/POSTFACH_SETUP.md`](docs/POSTFACH_SETUP.md) |
+| das Postfach an Outlook/M365 anbinden (Azure-Einrichtung) | [`docs/OUTLOOK_SETUP.md`](docs/OUTLOOK_SETUP.md) |
 
 ## Landkarte
 
@@ -80,7 +81,7 @@ Ein Fachthema, zwei Orte — die Zuordnung Feature ↔ Slice:
 | 0 Übersicht | `dashboard` (nur lesend, springt in den zuständigen Tab) | — |
 | 1 Vorgang starten | `vorgang_starten`, `zentralruf_request` | `Vorgaenge`, `ZentralrufAutomation` |
 | 2 Postfach | `mailbox`, `zentralruf_reply`, `versicherer` | `MailboxMonitor`, `ZentralrufAutomation`, `Versicherer` |
-| 3 Word Automation | `word_automation` | `WordAutomation`, `PdfConversion` |
+| 3 Word Automation | `word_automation`, `email_versand` | `WordAutomation`, `PdfConversion`, `EmailVersand` |
 | 4 Vorlagen Verwalten | `form_template_setup` | `FormTemplates` |
 | 5 Mandanten | `mandanten` | `Mandanten` |
 | 6 Register | `vorgaenge` (Registeransicht) | `Vorgaenge` |

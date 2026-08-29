@@ -45,6 +45,10 @@
              gepatchte Version transitiv mitbringt. Mit echter Migration verifiziert. -->
         <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+        <!-- Windows-DPAPI fuer das auf Platte abgelegte Postfach-Passwort
+             (PasswortSchutz). Kam bisher nur transitiv ueber MSAL herein —
+             explizit, weil der Code den Typ direkt benutzt. -->
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
     </ItemGroup>
 
     <ItemGroup>

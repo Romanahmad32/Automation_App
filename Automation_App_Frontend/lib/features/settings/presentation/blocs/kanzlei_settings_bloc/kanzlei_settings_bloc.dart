@@ -20,6 +20,7 @@ class KanzleiSettingsBloc
     : super(const KanzleiSettingsLoading()) {
     on<LoadKanzleiSettingsEvent>(_onLoad);
     on<SaveKanzleiSettingsEvent>(_onSave);
+    on<SaveMailSignaturEvent>(_onSaveSignatur);
   }
 
   Future<void> _onLoad(
@@ -39,12 +40,35 @@ class KanzleiSettingsBloc
   Future<void> _onSave(
     SaveKanzleiSettingsEvent event,
     Emitter<KanzleiSettingsState> emit,
+  ) => _speichere(event.settings, KanzleiSettingsBereich.kanzlei, emit);
+
+  /// Die Signatur steht im E-Mail-Reiter und wird dort einzeln gespeichert.
+  /// Sie wird in den zuletzt geladenen Stand hineinkopiert, damit die
+  /// Kanzleidaten daneben unberührt bleiben.
+  Future<void> _onSaveSignatur(
+    SaveMailSignaturEvent event,
+    Emitter<KanzleiSettingsState> emit,
+  ) async {
+    final aktuell = state;
+    if (aktuell is! KanzleiSettingsLoaded) return;
+
+    return _speichere(
+      aktuell.settings.copyWith(mailSignatur: event.signatur),
+      KanzleiSettingsBereich.signatur,
+      emit,
+    );
+  }
+
+  Future<void> _speichere(
+    KanzleiSettings settings,
+    KanzleiSettingsBereich bereich,
+    Emitter<KanzleiSettingsState> emit,
   ) async {
     emit(const KanzleiSettingsLoading());
-    final result = await _saveSettings(event.settings);
+    final result = await _saveSettings(settings);
     switch (result) {
-      case Right(value: final settings):
-        emit(KanzleiSettingsLoaded(settings, justSaved: true));
+      case Right(value: final gespeichert):
+        emit(KanzleiSettingsLoaded(gespeichert, gespeichert: bereich));
       case Left(value: final failure):
         emit(KanzleiSettingsError(failure.message));
     }

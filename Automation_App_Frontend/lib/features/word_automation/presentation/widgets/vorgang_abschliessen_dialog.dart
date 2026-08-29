@@ -1,20 +1,43 @@
 import 'dart:io';
 
+import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
+import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/mail_versenden_button.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/versand_stand_zeile.dart';
 import 'package:flutter/material.dart';
 
-/// Bestätigungsdialog für den Vorgangsabschluss (§4.8). Solange der
-/// E-Mail-Versand nicht in der App umgesetzt ist, schließt er die Lücke zwischen
-/// „abschließen" und tatsächlichem Versand: Er öffnet auf Wunsch einen
-/// E-Mail-Entwurf im Standard-Mailprogramm bzw. den Ablageordner des Dokuments
-/// und lässt das Abschließen erst zu, wenn der Anwalt den Versand ausdrücklich
-/// bestätigt hat — erst dann zählt die Auftragsnummer hoch.
+/// Bestätigungsdialog für den Vorgangsabschluss (§4.8).
+///
+/// Der Abschluss ist bewusst ein **eigener** Schritt: Er hängt nicht am
+/// Versand, sondern an der Entscheidung des Anwalts, dass der Auftrag erledigt
+/// ist. Deshalb bleibt das Häkchen — es ist nur schon gesetzt und begründet,
+/// wenn die App selbst gesendet hat, und von Hand zu setzen, wenn der Anwalt
+/// außerhalb der App gesendet hat. Erst danach zählt die Auftragsnummer hoch.
 ///
 /// Liefert `true` (per `Navigator.pop`), wenn abgeschlossen werden soll.
 class VorgangAbschliessenDialog extends StatefulWidget {
   final Vorgang vorgang;
+  final Mandant? mandant;
 
-  const VorgangAbschliessenDialog({super.key, required this.vorgang});
+  /// Versand, der vor dem Öffnen des Dialogs schon gelaufen ist.
+  final EmailVersandErgebnis? bereitsVersendet;
+
+  /// Wird gerufen, wenn aus diesem Dialog heraus gesendet wurde — damit der
+  /// Speicherschritt denselben Stand zeigt.
+  final ValueChanged<EmailVersandErgebnis> onVersendet;
+
+  const VorgangAbschliessenDialog({
+    super.key,
+    required this.vorgang,
+    required this.onVersendet,
+    this.mandant,
+    this.bereitsVersendet,
+  });
 
   @override
   State<VorgangAbschliessenDialog> createState() =>
@@ -22,31 +45,58 @@ class VorgangAbschliessenDialog extends StatefulWidget {
 }
 
 class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
+  EmailVersandErgebnis? _versand;
   bool _versandBestaetigt = false;
 
-  /// Öffnet einen mailto-Entwurf im Standard-Mailprogramm. Direkt über
-  /// rundll32 statt cmd/start, damit `&` in der Query nicht von der Shell
-  /// interpretiert wird. Den Anhang muss der Anwalt selbst anfügen (mailto
-  /// kann keine Anhänge); der Hinweis samt Dokumentpfad steht im Entwurf.
-  void _oeffneEmailEntwurf() {
-    final vorgang = widget.vorgang;
-    final betreff = Uri.encodeComponent(
-      'Anspruchsschreiben ${vorgang.referenz}',
-    );
-    final pfad = vorgang.dokumentPfad;
-    final body = Uri.encodeComponent(
-      pfad == null
-          ? 'Bitte das Anspruchsschreiben als Anhang anfügen.'
-          : 'Bitte das Anspruchsschreiben als Anhang anfügen:\n$pfad',
-    );
-    Process.run('rundll32', [
-      'url.dll,FileProtocolHandler',
-      'mailto:?subject=$betreff&body=$body',
-    ]);
+  /// Was die App zu diesem Vorgang schon versendet hat — aus dem Protokoll,
+  /// nicht nur aus dieser Sitzung (§4.7).
+  List<VersandEintrag> _protokoll = const [];
+  bool _laedtProtokoll = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _versand = widget.bereitsVersendet;
+    _versandBestaetigt = _versand != null;
+    _protokollLaden();
   }
 
-  /// Zeigt das abgelegte Dokument im Explorer (markiert), damit es sich direkt
-  /// in den E-Mail-Entwurf ziehen lässt.
+  /// Ein Direktversand im Protokoll belegt das Häkchen — auch wenn er aus
+  /// einer früheren Sitzung stammt. Eine Übergabe an Outlook tut es **nicht**:
+  /// Ob dort gesendet wurde, weiß die App nicht (§4.8), und das Häkchen
+  /// behauptet genau das.
+  Future<void> _protokollLaden() async {
+    try {
+      final eintraege = await getIt<EmailVersandRepository>()
+          .ladeVersandProtokoll(widget.vorgang.referenz);
+      if (!mounted) return;
+      setState(() {
+        _protokoll = eintraege;
+        _laedtProtokoll = false;
+        _versandBestaetigt =
+            _versandBestaetigt ||
+            eintraege.any((eintrag) => eintrag.weg.istNachweis);
+      });
+    } catch (_) {
+      // Ohne Protokoll bleibt es beim Häkchen von Hand — so war es vorher.
+      if (mounted) setState(() => _laedtProtokoll = false);
+    }
+  }
+
+  void _versandUebernehmen(EmailVersandErgebnis ergebnis) {
+    setState(() {
+      _versand = ergebnis;
+      _versandBestaetigt = true;
+    });
+    widget.onVersendet(ergebnis);
+    // Der eben geschriebene Eintrag gehört in die Zeile darüber — und in die
+    // Vorgangsliste, die dahinter offen steht.
+    _protokollLaden();
+    getIt<LetzteVersaendeCubit>().neuLaden();
+  }
+
+  /// Zeigt das abgelegte Dokument im Explorer (markiert) — für den Anwalt, der
+  /// außerhalb der App senden will.
   void _zeigeDokumentImOrdner() {
     final pfad = widget.vorgang.dokumentPfad;
     if (pfad == null) return;
@@ -73,21 +123,17 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
               'hochgezählt.',
             ),
             const SizedBox(height: 16),
-            Text(
-              'Das Versenden der E-Mail (§4.7) erfolgt noch manuell:',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            VersandStandZeile(eintraege: _protokoll, laedt: _laedtProtokoll),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                OutlinedButton.icon(
-                  onPressed: _oeffneEmailEntwurf,
-                  icon: const Icon(Icons.outgoing_mail),
-                  label: const Text('E-Mail-Entwurf öffnen'),
+                MailVersendenButton(
+                  vorgang: widget.vorgang,
+                  mandant: widget.mandant,
+                  bereitsVersendet: _versand,
+                  onVersendet: _versandUebernehmen,
                 ),
                 OutlinedButton.icon(
                   onPressed: hatDokument ? _zeigeDokumentImOrdner : null,
@@ -106,6 +152,14 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
               title: const Text(
                 'Die E-Mail mit dem Schreiben wurde versendet.',
               ),
+              subtitle: _versand == null
+                  ? Text(
+                      'Auch außerhalb der App versendet? Dann hier bestätigen.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    )
+                  : null,
             ),
           ],
         ),

@@ -24,4 +24,21 @@ public class KanzleiSettingsEntity
     public string Abteilung { get; set; } = string.Empty;
     public string TabellenkopfFarbeHex { get; set; } = string.Empty;
     public string AktenStammordner { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Signaturblock unter dem Mailtext beim Direktversand (§4.7). Kommt aus
+    /// der bereits eingerichteten Signatur des Mailprogramms ("Aus Outlook
+    /// übernehmen"), nicht aus Abtippen. Beim Entwurf im Mailprogramm bleibt
+    /// er ungenutzt — dort setzt Outlook seine eigene ein.
+    /// </summary>
+    public string MailSignatur { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Die formatierte Fassung derselben Signatur als HTML-Rumpf (§4.7):
+    /// Schrift, Farben, Logo. Uebernommen aus Outlook (<c>SignaturUebernahme</c>),
+    /// nicht von Hand gepflegt — die Bilder liegen daneben im Dateisystem
+    /// (<c>SignaturAblage</c>) und werden hier ueber ihren Dateinamen
+    /// angesprochen. Leer heisst: Die Mail geht als reiner Text hinaus.
+    /// </summary>
+    public string MailSignaturHtml { get; set; } = string.Empty;
 }
