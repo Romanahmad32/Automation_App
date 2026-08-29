@@ -22,6 +22,15 @@ class WizardState extends Equatable {
   final FormTemplate? selectedFormTemplate;
   final DamageListing? damageListing;
 
+  /// Was das Schadensaufstellungs-Formular an seinen Zeilen beanstandet — je
+  /// Eintrag ein fertiger Satz. Leer = nichts zu beanstanden.
+  ///
+  /// Steht hier und nicht im Formular, weil der Schritt daran den Knopf
+  /// „Dokument erstellen" sperrt. Wird **zusammen** mit [damageListing] gesetzt
+  /// ([setDamageListing]): Die Beanstandungen betreffen auch Zeilen, die es
+  /// nicht in die Aufstellung schaffen, lassen sich also nicht aus ihr ableiten.
+  final List<String> schadenspositionFehler;
+
   /// Ob der Nutzer die Version **mit** Auflistung (Schadensaufstellung) gewählt
   /// hat. Nur möglich, wenn die Vorlage eine entsprechende Datei hinterlegt hat.
   /// Steuert die geladene Word-Datei und die sichtbaren Wizard-Schritte.
@@ -52,12 +61,23 @@ class WizardState extends Equatable {
     this.currentStep = WizardStep.fillOut,
     this.selectedFormTemplate,
     this.damageListing,
+    this.schadenspositionFehler = const [],
     this.mitAuflistung = false,
     this.vorsteuerabzugsberechtigt = true,
     this.formData,
     this.selectedVorgang,
     this.selectedMandant,
   });
+
+  /// Ob aus der erfassten Schadensaufstellung ein Dokument entstehen darf:
+  /// mindestens eine Position, und keine Zeile beanstandet.
+  ///
+  /// Ein einziger Ausdruck statt zweier Bedingungen im Schritt — die musste
+  /// jemand von Hand gleichlaufend halten, und „hat Positionen" behauptete dabei
+  /// eine Gültigkeit, die es nicht prüfte.
+  bool get schadensaufstellungIstErzeugbar =>
+      (damageListing?.items.isNotEmpty ?? false) &&
+      schadenspositionFehler.isEmpty;
 
   /// Pfad der aktuell relevanten Word-Datei (je nach [mitAuflistung]).
   String? get activeWordFilePath => mitAuflistung
@@ -74,6 +94,7 @@ class WizardState extends Equatable {
     WizardStep? currentStep,
     FormTemplate? Function()? selectedFormTemplate,
     DamageListing? Function()? damageListing,
+    List<String>? schadenspositionFehler,
     bool? mitAuflistung,
     bool? vorsteuerabzugsberechtigt,
     Map<String, String>? Function()? formData,
@@ -88,6 +109,8 @@ class WizardState extends Equatable {
       damageListing: damageListing != null
           ? damageListing()
           : this.damageListing,
+      schadenspositionFehler:
+          schadenspositionFehler ?? this.schadenspositionFehler,
       mitAuflistung: mitAuflistung ?? this.mitAuflistung,
       vorsteuerabzugsberechtigt:
           vorsteuerabzugsberechtigt ?? this.vorsteuerabzugsberechtigt,
@@ -106,6 +129,7 @@ class WizardState extends Equatable {
     currentStep,
     selectedFormTemplate,
     damageListing,
+    schadenspositionFehler,
     mitAuflistung,
     vorsteuerabzugsberechtigt,
     formData,
@@ -187,6 +211,7 @@ class WizardCubit extends Cubit<WizardState> {
       vorsteuerabzugsberechtigt: true,
       // Eingaben gehören zur vorherigen Vorlage und werden verworfen.
       damageListing: () => null,
+      schadenspositionFehler: const [],
       formData: () => null,
     );
     if (!next.steps.contains(next.currentStep)) {
@@ -201,6 +226,7 @@ class WizardCubit extends Cubit<WizardState> {
     var next = state.copyWith(
       mitAuflistung: mitAuflistung,
       damageListing: () => null,
+      schadenspositionFehler: const [],
     );
     if (!next.steps.contains(next.currentStep)) {
       next = next.copyWith(currentStep: WizardStep.fillOut);
@@ -212,8 +238,19 @@ class WizardCubit extends Cubit<WizardState> {
     emit(state.copyWith(vorsteuerabzugsberechtigt: value));
   }
 
-  void setDamageListing(DamageListing? damageListing) {
-    emit(state.copyWith(damageListing: () => damageListing));
+  /// Stand und Beanstandungen kommen zusammen aus dem Formular und werden
+  /// zusammen gesetzt — getrennt gesetzt könnten sie auseinanderlaufen, und
+  /// dann sperrte oder öffnete der Knopf zum falschen Stand.
+  void setDamageListing(
+    DamageListing? damageListing, {
+    List<String> fehler = const [],
+  }) {
+    emit(
+      state.copyWith(
+        damageListing: () => damageListing,
+        schadenspositionFehler: fehler,
+      ),
+    );
   }
 
   void setFormData(Map<String, String>? formData) {

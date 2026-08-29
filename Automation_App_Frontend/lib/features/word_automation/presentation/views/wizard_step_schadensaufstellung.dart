@@ -23,7 +23,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class WizardStepSchadensaufstellung extends StatelessWidget {
   const WizardStepSchadensaufstellung({super.key});
 
-  void _onDamageListingChanged(BuildContext context, DamageListing listing) {
+  void _onDamageListingChanged(
+    BuildContext context,
+    DamageListing listing,
+    List<String> fehler,
+  ) {
     final wizardState = context.read<WizardCubit>().state;
     // applyVat (Umsatzsteuer ausweisen) ist die Umkehrung der
     // Vorsteuerabzugsberechtigung aus dem Ausfüll-Schritt.
@@ -41,14 +45,12 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
           ? settingsState.settings.tabellenkopfFarbeHex
           : null,
     );
-    context.read<WizardCubit>().setDamageListing(enriched);
+    context.read<WizardCubit>().setDamageListing(enriched, fehler: fehler);
 
-    // Ohne erfasste Position gibt es nichts zu berechnen. Eine Aufstellung, die
-    // sich auf 0,00 € summiert (lauter noch unbezifferte Positionen), ist
-    // dagegen rechenbar — sie ergibt die unterste Wertgebührenstufe, und genau
-    // die steht später auch im Dokument.
-    if (listing.items.isEmpty) return;
-
+    // Auch ohne Position wird das Ereignis abgeschickt, nicht unterdrückt: Es
+    // ist zugleich der Reset. Wer es hier zurückhält, lässt den zuletzt
+    // berechneten Betrag in der Vorschau stehen — und storniert über
+    // restartable() auch keine noch laufende Anfrage zum alten Wert.
     final gegenstandswert = listing.items.fold<double>(
       0,
       (sum, item) => sum + item.amount,
@@ -56,6 +58,7 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
     context.read<RvgCalculationBloc>().add(
       CalculateRvgEvent(
         gegenstandswert: gegenstandswert,
+        hatPositionen: listing.items.isNotEmpty,
         gebuehrensatz: listing.gebuehrensatz,
         applyVat: applyVat,
         geschaeftsgebuehrOverride: listing.geschaeftsgebuehrOverride,
@@ -75,15 +78,12 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
         ? documentState.path
         : null;
     final damageListing = wizardState.damageListing;
-    final hasValidItems = damageListing?.items.isNotEmpty ?? false;
-    // Unzulässige Positionen sperren das Erzeugen hier, statt das Backend mit
+    // Die Beanstandungen kommen aus dem Formular (es kennt auch die
+    // angefangenen Zeilen) und sperren das Erzeugen hier, statt das Backend mit
     // einem HTTP 400 antworten zu lassen, das keine Zeile benennt.
-    final fehler = schadenspositionenFehler(
-      damageListing?.items ?? const <DamageItem>[],
-    );
+    final fehler = wizardState.schadenspositionFehler;
     final canGenerate =
-        hasValidItems &&
-        fehler.isEmpty &&
+        wizardState.schadensaufstellungIstErzeugbar &&
         wizardState.formData != null &&
         loadedPath != null;
 
@@ -101,7 +101,14 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
           listener: (context, state) {
             final listing = state.damageListing;
             if (listing != null) {
-              _onDamageListingChanged(context, listing);
+              // Der Stand kommt hier nicht aus dem Formular, sondern aus dem
+              // Cubit — die Beanstandungen deshalb aus den Positionen ableiten
+              // statt die alten stehen zu lassen.
+              _onDamageListingChanged(
+                context,
+                listing,
+                positionenFehler(listing.items),
+              );
             }
           },
         ),
@@ -117,7 +124,11 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
           listener: (context, state) {
             final gespeichert = state.selectedVorgang?.schadensaufstellung;
             if (state.damageListing == null && gespeichert != null) {
-              _onDamageListingChanged(context, gespeichert);
+              _onDamageListingChanged(
+                context,
+                gespeichert,
+                positionenFehler(gespeichert.items),
+              );
             }
           },
         ),
@@ -159,8 +170,12 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                                   wizardState
                                       .selectedVorgang
                                       ?.schadensaufstellung,
-                              onChanged: (listing) =>
-                                  _onDamageListingChanged(context, listing),
+                              onChanged: (listing, fehler) =>
+                                  _onDamageListingChanged(
+                                    context,
+                                    listing,
+                                    fehler,
+                                  ),
                             ),
                           ],
                         ),

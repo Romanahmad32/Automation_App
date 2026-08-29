@@ -185,8 +185,16 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
         body!.ErrorCode.Should().Be("template_not_found");
     }
 
-    [Fact]
-    public async Task GenerateReplacedDocument_WithNegativeAmountItem_ReturnsBadRequest()
+    /// <summary>
+    /// Auch <c>-0,49</c>: Der Wert liegt unterhalb der Rundungsschwelle auf 0 und kam
+    /// deshalb durch, solange die Range in Int32 verglich (siehe
+    /// <c>RangeUeberladungTests</c>). Er steht hier neben -100, weil nur er den Fehler
+    /// gefunden haette.
+    /// </summary>
+    [Theory]
+    [InlineData(-100)]
+    [InlineData(-0.49)]
+    public async Task GenerateReplacedDocument_WithNegativeAmountItem_ReturnsBadRequest(decimal amount)
     {
         var client = _factory.CreateClient();
         var payload = new WordReplacementDto
@@ -195,12 +203,32 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
             ReplacePatterns = new Dictionary<string, string> { ["Name"] = "Roman" },
             DamageListing = new DamageListingDto
             {
-                Items = [new DamageItemDto { Description = "Bereits reguliert", Amount = -100m }]
+                Items = [new DamageItemDto { Description = "Bereits reguliert", Amount = amount }]
             }
         };
 
         var response = await client.PostAsJsonAsync("/api/WordAutomation/replaced-document", payload);
 
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>
+    /// Ein Betrag jenseits von int.MaxValue muss als Validierungsfehler zurueckkommen.
+    /// Mit der int-Ueberladung warf das Konvertieren eine OverflowException, die
+    /// RangeAttribute nicht abfaengt — die Antwort war ein 500.
+    /// </summary>
+    [Theory]
+    [InlineData(-0.4)]
+    [InlineData(3_000_000_000.0)]
+    public async Task CalculateRvgFees_WithUnzulaessigemWert_ReturnsBadRequest(decimal gegenstandswert)
+    {
+        var client = _factory.CreateClient();
+        var payload = new RvgCalculationRequestDto { Gegenstandswert = gegenstandswert };
+
+        var response = await client.PostAsJsonAsync("/api/WordAutomation/rvg-calculation", payload);
+
+        // 400 und nicht 500: [ApiController] beantwortet das ungueltige Modell selbst
+        // (ProblemDetails), noch bevor die Action laeuft.
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

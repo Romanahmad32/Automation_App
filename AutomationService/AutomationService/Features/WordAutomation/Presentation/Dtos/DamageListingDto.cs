@@ -44,6 +44,12 @@ public class DamageItemDto
     // Beträge bleiben unzulässig — ein Abzug ist keine Schadensposition. Gemeldet werden
     // sie im Formular an der Zeile, die sie verursacht (schadenspositionen_pruefung.dart);
     // diese Schranke ist nur noch das Netz dahinter und nennt keine Zeile.
-    [Range(0, 10_000_000)]
+    //
+    // Die Nachkommastellen an den Grenzen sind PFLICHT und kein Schönheitsfehler:
+    // "0" waehlt die Ueberladung RangeAttribute(int, int), und die rundet den decimal-Wert
+    // vor dem Vergleich auf Int32. -0,49 gilt dann als gueltig, und ein Wert jenseits von
+    // int.MaxValue wirft eine OverflowException, die RangeAttribute nicht faengt — aus 400
+    // wird 500. Genau so war es hier schon einmal; RangeUeberladungTests haelt es fest.
+    [Range(0.0, 10_000_000.0)]
     public decimal Amount { get; set; }
 }
