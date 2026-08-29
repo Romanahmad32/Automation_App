@@ -1,25 +1,29 @@
 import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/mandant_feld_heuristik.dart';
-import 'package:automation_app/features/zentralruf_reply/domain/services/vorgangsdaten_field_matcher.dart';
 
-/// Ordnet die in einem [Vorgang] gebündelten Daten den frei benannten Feldern
-/// einer Formularvorlage zu — die Phase-4-Erweiterung des
-/// [VorgangsdatenFieldMatcher]:
+/// Ordnet die in einem [Vorgang] gebündelten Daten (Mandant + Zentralruf-Antwort
+/// + Vorgangsfelder) den frei benannten Feldern einer Formularvorlage zu.
 ///
-/// * Mandant-/Geschädigten-/Kundenfelder kommen aus dem verknüpften [Mandant]
-///   (bzw. dem Namens-Schnappschuss des Vorgangs, wenn kein Registereintrag
-///   vorliegt),
-/// * das Rechtsgebiet aus dem Vorgang,
-/// * alle übrigen Felder (Versicherer, Unfalldatum, Referenz …) aus der
-///   übernommenen Zentralruf-Antwort über die bewährte Antwort-Heuristik.
+/// Eine Kette, nicht mehrere Wege: **Name → Datenquelle → Wert.** Ist am Feld
+/// eine [FeldDatenquelle] gewählt, gilt sie; sonst löst
+/// [FeldDatenquelleErkennung] den Namen zu einer Quelle auf. Danach nimmt
+/// *jedes* Feld denselben Weg durch [_ausDatenquelle].
 ///
-/// Felder ohne eindeutige Zuordnung bleiben leer — lieber unbefüllt als falsch
-/// vorbelegt (§1.3). Jeder Wert trägt seine Herkunft ([PrefillWert]) für
-/// die Anzeige am Feld, damit der Anwalt falsche Vorbelegungen sofort erkennt.
+/// Vorher liefen hier zwei weitere Zuordnungen mit eigenen Wortlisten daneben
+/// (`MandantFeldHeuristik.wertFuer`, `VorgangsdatenFieldMatcher`). Sie kannten
+/// jeweils nur einen Teil der Daten: Unfallort, Unfalluhrzeit und
+/// Polizei-Vorgangsnummer hatten gar keine Entsprechung, und Unfalldatum,
+/// Kennzeichen und Referenz kamen ausschließlich aus der Antwort — ohne
+/// übernommene Antwort blieben sie leer, obwohl der Vorgang sie kannte.
+///
+/// Felder ohne Zuordnung bleiben leer — lieber unbefüllt als falsch vorbelegt
+/// (§1.3). Jeder Wert trägt seine Herkunft ([PrefillWert]) für die Anzeige am
+/// Feld, damit der Anwalt falsche Vorbelegungen sofort erkennt.
 class VorgangPrefillMatcher {
   const VorgangPrefillMatcher._();
 
@@ -38,46 +42,30 @@ class VorgangPrefillMatcher {
     ).map((label, wert) => MapEntry(label, wert.wert));
   }
 
-  /// Liefert je Feld den vorzubelegenden Wert samt Herkunft. Felder mit
-  /// explizit gewählter [FeldDatenquelle] werden direkt aufgelöst; Felder ohne
-  /// feste Quelle ([FeldDatenquelle.keine]) laufen über die Namens-Heuristik
-  /// ([matchFieldsMitHerkunft]), damit bestehende Vorlagen unverändert
-  /// weiterlaufen.
+  /// Liefert je Feld den vorzubelegenden Wert samt Herkunft.
   ///
   /// Wurde zum Vorgang schon einmal ein Dokument erzeugt, gewinnen die dabei
-  /// bestätigten Werte ([Vorgang.feldWerte]) über beide Wege — der Anwalt hat
-  /// sie bereits gesehen und abgesegnet (Rückfluss, siehe VorgangRueckfluss).
+  /// bestätigten Werte ([Vorgang.feldWerte]) über die Datenquelle — der Anwalt
+  /// hat sie bereits gesehen und abgesegnet (Rückfluss, siehe
+  /// VorgangRueckfluss).
   static Map<String, PrefillWert> matchTemplateFieldsMitHerkunft(
     List<FieldData> fields,
     Vorgang vorgang, {
     Mandant? mandant,
   }) {
     final result = <String, PrefillWert>{};
-    final heuristikLabels = <String>[];
 
     for (final field in fields) {
-      if (!field.datenquelle.istGesetzt) {
-        heuristikLabels.add(field.label);
-        continue;
-      }
-      final wert = _ausDatenquelle(field.datenquelle, vorgang, mandant);
+      final quelle = field.datenquelle.istGesetzt
+          ? field.datenquelle
+          : FeldDatenquelleErkennung.quelleFuer(field.label);
+      final wert = _ausDatenquelle(quelle, vorgang, mandant);
       if (wert != null && wert.isNotEmpty) {
         result[field.label] = PrefillWert(
           wert,
-          _quelleFuerDatenquelle(field.datenquelle, vorgang, mandant),
+          _quelleFuerDatenquelle(quelle, vorgang, mandant),
         );
       }
-    }
-
-    // Ungebundene Felder über die bewährte Heuristik nachziehen. Explizit
-    // gesetzte Felder gewinnen, falls ein Label zufällig beide Wege träfe.
-    final ausHeuristik = matchFieldsMitHerkunft(
-      heuristikLabels,
-      vorgang,
-      mandant: mandant,
-    );
-    for (final eintrag in ausHeuristik.entries) {
-      result.putIfAbsent(eintrag.key, () => eintrag.value);
     }
 
     // Zuletzt bestätigte Werte des Vorgangs haben höchste Priorität (nur für
@@ -94,8 +82,8 @@ class VorgangPrefillMatcher {
     return result;
   }
 
-  /// Löst eine explizit gewählte [FeldDatenquelle] gegen die Daten des Vorgangs
-  /// (Mandant + Zentralruf-Antwort + Vorgangsfelder) auf.
+  /// Löst eine [FeldDatenquelle] gegen die Daten des Vorgangs (Mandant +
+  /// Zentralruf-Antwort + Vorgangsfelder) auf.
   static String? _ausDatenquelle(
     FeldDatenquelle quelle,
     Vorgang vorgang,
@@ -108,6 +96,12 @@ class VorgangPrefillMatcher {
 
       case FeldDatenquelle.mandantName:
         return mandant?.anzeigename ?? vorgang.mandantName;
+      case FeldDatenquelle.mandantVorname:
+        return mandant?.vorname;
+      case FeldDatenquelle.mandantNachname:
+        return mandant?.nachname;
+      case FeldDatenquelle.mandantBriefanrede:
+        return mandant?.briefanrede;
       case FeldDatenquelle.mandantStrasse:
         return mandant?.strasseHausnummer;
       case FeldDatenquelle.mandantPlz:
@@ -196,67 +190,5 @@ class VorgangPrefillMatcher {
         if (schluessel.startsWith('versicher')) return PrefillQuelle.antwort;
         return PrefillQuelle.vorgang;
     }
-  }
-
-  /// Liefert je Feldname (Label) den vorzubelegenden Wert (ohne Herkunft).
-  static Map<String, String> matchFields(
-    Iterable<String> fieldLabels,
-    Vorgang vorgang, {
-    Mandant? mandant,
-  }) {
-    return matchFieldsMitHerkunft(
-      fieldLabels,
-      vorgang,
-      mandant: mandant,
-    ).map((label, wert) => MapEntry(label, wert.wert));
-  }
-
-  /// Namens-Heuristik mit Herkunft: Mandantenfelder aus dem Register
-  /// ([MandantFeldHeuristik]), Rechtsgebiet aus dem Vorgang, alle übrigen
-  /// Felder aus der Zentralruf-Antwort.
-  static Map<String, PrefillWert> matchFieldsMitHerkunft(
-    Iterable<String> fieldLabels,
-    Vorgang vorgang, {
-    Mandant? mandant,
-  }) {
-    final labels = fieldLabels.toList();
-
-    // Versicherer-/Antwortfelder über die bewährte Antwort-Heuristik. Sie lässt
-    // Mandant-/Geschädigtenfelder bewusst leer, sodass es hier keine Kollision
-    // mit der Mandanten-Vorbelegung gibt.
-    final antwort = vorgang.antwort;
-    final ausAntwort = antwort == null
-        ? const <String, String>{}
-        : VorgangsdatenFieldMatcher.matchFields(labels, antwort);
-
-    final result = <String, PrefillWert>{};
-    for (final label in labels) {
-      final normalized = MandantFeldHeuristik.normalize(label);
-
-      final mandantWert = MandantFeldHeuristik.wertFuer(
-        normalized,
-        mandant,
-        vorgang,
-      );
-      if (mandantWert != null && mandantWert.wert.isNotEmpty) {
-        result[label] = mandantWert;
-        continue;
-      }
-
-      if (normalized.contains('rechtsgebiet') ||
-          normalized.contains('sachgebiet')) {
-        result[label] = PrefillWert(
-          vorgang.rechtsgebiet.displayName,
-          PrefillQuelle.vorgang,
-        );
-        continue;
-      }
-
-      final antwortWert = ausAntwort[label];
-      if (antwortWert != null && antwortWert.isNotEmpty) {
-        result[label] = PrefillWert(antwortWert, PrefillQuelle.antwort);
-      }
-    }
-    return result;
   }
 }

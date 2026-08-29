@@ -3,14 +3,27 @@
 /// vorbelegt wird. Ersetzt das fehleranfällige Raten über den Feldnamen — der
 /// Anwalt ordnet jedem Feld die Quelle einmal eindeutig zu.
 ///
-/// [keine] bedeutet: keine feste Zuordnung. Solche Felder werden weiterhin über
-/// die Namens-Heuristik vorbelegt (Abwärtskompatibilität für bestehende
-/// Vorlagen, die noch keine Quelle gesetzt haben).
+/// [keine] bedeutet: keine feste Zuordnung. Solche Felder löst
+/// `FeldDatenquelleErkennung` beim Ausfüllen über den Feldnamen auf
+/// (Abwärtskompatibilität für bestehende Vorlagen, die noch keine Quelle
+/// gesetzt haben).
+///
+/// Die Aufteilung folgt einer Regel: **Was einzeln gespeichert ist, bekommt
+/// eine eigene Quelle; Zusammensetzungen schreibt man als zwei Platzhalter
+/// nebeneinander in die Word-Datei.** Einzige Ausnahme sind die Anschriften —
+/// sie lassen fehlende Teile weg, was nebeneinandergesetzte Platzhalter nicht
+/// können (sie hinterlassen dort eine Leerstelle).
 enum FeldDatenquelle {
   keine(name: 'Keine (automatisch erraten)', value: 'keine'),
 
   // Mandant / Geschädigter (aus dem Mandantenregister bzw. dem Vorgang).
   mandantName(name: 'Mandant · Name', value: 'mandantName'),
+  mandantVorname(name: 'Mandant · Vorname', value: 'mandantVorname'),
+  mandantNachname(name: 'Mandant · Nachname', value: 'mandantNachname'),
+  mandantBriefanrede(
+    name: 'Mandant · Briefanrede („Sehr geehrter Herr …“)',
+    value: 'mandantBriefanrede',
+  ),
   mandantStrasse(name: 'Mandant · Straße & Hausnr.', value: 'mandantStrasse'),
   mandantPlz(name: 'Mandant · PLZ', value: 'mandantPlz'),
   mandantOrt(name: 'Mandant · Ort', value: 'mandantOrt'),
