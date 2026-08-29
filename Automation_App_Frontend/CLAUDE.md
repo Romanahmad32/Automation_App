@@ -11,7 +11,14 @@ dart run build_runner build   # nach Änderungen an DI, Routen, freezed- oder js
 flutter run -d windows
 flutter test
 flutter analyze
+
+flutter test test/features/versicherer/versicherer_cubit_test.dart   # eine Datei
+flutter test --plain-name "findet den Eintrag"                       # ein Test, überall
 ```
+
+Während der Arbeit **einzeln** testen: Die volle Suite braucht rund 30 s, eine Datei unter 2 s.
+Steht das projektlokale FVM-SDK bereit (`docs/RELEASE.md`), `fvm flutter …` bzw. `fvm dart …`
+verwenden — sonst läuft der Befehl mit dem Flutter aus dem PATH, das von der Pinnung abweichen darf.
 
 Dateien auf `.g.dart`, `.freezed.dart`, `.gr.dart`, `.config.dart` und `.mocks.dart` sind generiert —
 **nie von Hand ändern**, stattdessen build_runner laufen lassen. Versioniert sind davon nur

@@ -145,47 +145,49 @@ public sealed class WordVorsteuerTests : IDisposable
     [Fact]
     public void GenerateReplacedDocument_WhenWordCheckboxControls_TogglesCheckedStateAndGlyph()
     {
-        // Echte Kanzlei-Vorlage mit Word-Kontrollkästchen (sdt/w14:checkbox).
-        var samplePath = FindBeispielTemplate("VORLAGE Fahrspurwechsel mit Auflistung.docx");
-        if (samplePath is null)
-        {
-            return; // Beispieldatei nicht verfügbar (z. B. CI) → übersprungen.
-        }
+        // Vorlage mit Word-Kontrollkästchen (sdt/w14:checkbox), im Aufbau der
+        // Kanzlei-Vorlage: Ausgangszustand bewusst verkehrt herum, damit der
+        // Tausch beider Kästchen sichtbar wird.
+        var templatePath = _umgebung.CreateTemplateWithWordCheckboxes(
+            "VorsteuerKontrollkaestchen",
+            (" ist", true),
+            (" ist nicht vorsteuerabzugsberechtigt.", false));
 
         var service = _umgebung.CreateService();
         var result = service.GenerateReplacedDocument(new WordReplacementRequest
         {
-            TemplateFilePath = samplePath,
+            TemplateFilePath = templatePath,
             ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
             Vorsteuerabzugsberechtigt = false
         });
 
         result.Warnings.Should().NotContain(w => w.Contains("vorsteuerabzugsberechtigt"));
 
-        var (checkedGlyphs, uncheckedGlyphs) = ReadCheckboxStates(result.OutputFilePath);
-        // Der Vorsteuer-Block hat genau zwei Kontrollkästchen. Bei "nicht
-        // vorsteuerabzugsberechtigt" ist genau die "ist nicht"-Box angekreuzt.
-        checkedGlyphs.Should().ContainSingle().Which.Should().Be("☒");
-        uncheckedGlyphs.Should().ContainSingle().Which.Should().Be("☐");
+        var kaestchen = ReadCheckboxStates(result.OutputFilePath);
+        kaestchen.Should().HaveCount(2);
+
+        // Beide Kästchen kippen, und zwar Zustand *und* Glyph: Word zeigt das
+        // Glyph an, ausgewertet wird w14:checked. Wer nur eines von beiden
+        // setzt, bekommt ein Dokument, das anders aussieht, als es gemeint ist.
+        var negativ = kaestchen.Single(k => k.Text.Contains("nicht"));
+        var positiv = kaestchen.Single(k => !k.Text.Contains("nicht"));
+
+        negativ.Checked.Should().BeTrue();
+        negativ.Glyph.Should().Be("☒");
+        positiv.Checked.Should().BeFalse();
+        positiv.Glyph.Should().Be("☐");
     }
 
-    /// <summary>Sucht ab dem Test-Arbeitsverzeichnis aufwärts nach Beispiele/&lt;name&gt;.</summary>
-    private static string? FindBeispielTemplate(string fileName)
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            var candidate = Path.Combine(dir.FullName, "Beispiele", fileName);
-            if (File.Exists(candidate))
-                return candidate;
-            dir = dir.Parent;
-        }
-        return null;
-    }
-
-    /// <summary>Liest pro Word-Kontrollkästchen das angezeigte Glyph, getrennt nach
-    /// checked (w14:checked val="1") und unchecked.</summary>
-    private static (List<string> Checked, List<string> Unchecked) ReadCheckboxStates(string docxPath)
+    /// <summary>
+    /// Liest je Word-Kontrollkästchen den Absatztext, den Zustand
+    /// (w14:checked val="1") und das angezeigte Glyph.
+    ///
+    /// Der Absatztext gehört dazu: Ohne ihn bliebe offen, ob das *richtige*
+    /// Kästchen angekreuzt ist. Bei zwei Kästchen mit vertauschtem Ausgangs-
+    /// zustand käme ein Dienst, der gar nichts tut, durch eine Prüfung, die
+    /// nur angekreuzte und leere Kästchen zählt.
+    /// </summary>
+    private static List<(string Text, bool Checked, string Glyph)> ReadCheckboxStates(string docxPath)
     {
         const string w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
         using var archive = ZipFile.OpenRead(docxPath);
@@ -193,8 +195,7 @@ public sealed class WordVorsteuerTests : IDisposable
         using var stream = entry.Open();
         var document = XDocument.Load(stream);
 
-        var checkedGlyphs = new List<string>();
-        var uncheckedGlyphs = new List<string>();
+        var kaestchen = new List<(string, bool, string)>();
         foreach (var sdt in document.Descendants()
                      .Where(e => e.Name.LocalName == "sdt"
                          && e.Descendants().Any(c => c.Name.LocalName == "checkbox")))
@@ -202,9 +203,11 @@ public sealed class WordVorsteuerTests : IDisposable
             var isChecked = sdt.Descendants().First(e => e.Name.LocalName == "checked")
                 .Attributes().First(a => a.Name.LocalName == "val").Value == "1";
             var glyph = sdt.Descendants(XName.Get("t", w)).First().Value;
-            (isChecked ? checkedGlyphs : uncheckedGlyphs).Add(glyph);
+            var absatz = sdt.Ancestors().First(e => e.Name.LocalName == "p");
+            var text = string.Concat(absatz.Descendants(XName.Get("t", w)).Select(t => t.Value));
+            kaestchen.Add((text, isChecked, glyph));
         }
-        return (checkedGlyphs, uncheckedGlyphs);
+        return kaestchen;
     }
 
     public void Dispose() => _umgebung.Dispose();

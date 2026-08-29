@@ -12,8 +12,8 @@ schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme
 `SaveKanzleiSettings`, `ErhoeheAuftragsnummer`
 **Backend:** `Features/Settings/` · `GET /api/Settings`, `PUT /api/Settings`,
 `POST /api/Settings/auftragsnummer/erhoehe`
-**Tests:** — (nur indirekt: `test/features/vorgang_starten/vorgang_starten_bloc_test.dart` fälscht
-`GetKanzleiSettings`)
+**Tests:** `test/features/settings/` (Kanzleidaten- und Signatur-Anzeige, Speichern) · indirekt
+`test/features/vorgang_starten/vorgang_starten_bloc_test.dart`, das `GetKanzleiSettings` fälscht
 
 **Fallstricke**
 

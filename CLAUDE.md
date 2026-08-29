@@ -133,6 +133,9 @@ Für jeden Menschen **und jeden AI-Agent**, der hier Code ändert:
   Bausteine in eigenen Dateien. (State-Klassen von `StatefulWidget` sind die übliche Ausnahme.)
 - **Vorhandenes bevorzugen.** Vor jedem neuen Baustein prüfen, ob es schon einen passenden gibt,
   und diesen verwenden oder erweitern statt zu verdoppeln.
+- **Ein roter Test wird grün, indem der Code repariert wird.** Eine Testerwartung ändert man nur
+  auf ausdrücklichen Auftrag und begründet es im Commit — sonst ist „Test angepasst" die
+  Abkürzung, die den Fehler mitsamt seinem Wächter beseitigt.
 - Benennung von Datasources und Repositories: siehe `Automation_App_Frontend/CLAUDE.md`.
 
 Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Test statt eines
