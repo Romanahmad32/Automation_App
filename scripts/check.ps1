@@ -58,6 +58,13 @@ param(
 
 Set-StrictMode -Version Latest
 
+# Allererster Schritt: Stimmen die Werkzeugfassungen? Eine abweichende
+# Toolchain macht bis zu sechs Schritte rot, die wie Codefehler aussehen
+# (Begruendung und Vergleichslogik in versionspruefung.ps1). Erst nach diesem
+# Abbruch gilt: Jeder rote Schritt weiter unten ist ein echter Befund.
+& (Join-Path $PSScriptRoot 'versionspruefung.ps1') -NurFrontend:$NurFrontend -NurBackend:$NurBackend
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
 $wurzel   = Split-Path -Parent $PSScriptRoot
 $frontend = Join-Path $wurzel 'Automation_App_Frontend'
 $backend  = Join-Path $wurzel 'AutomationService/AutomationService'
