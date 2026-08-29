@@ -31,7 +31,9 @@ class FormTemplate extends Equatable {
 
   factory FormTemplate.fromJson(Map<String, dynamic> json) {
     final fields =
-        (json['fields'] as List).map((e) => FieldData.fromJson(e)).toList()
+        (json['fields'] as List)
+            .map((e) => FieldData.fromJson(e as Map<String, dynamic>))
+            .toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
     // Ein früherer Zweig hob hier Altbestände mit `wordFilePath` +
@@ -39,8 +41,8 @@ class FormTemplate extends Equatable {
     // unerreichbar: schon die Erst-Migration der Backend-Datenbank kennt nur
     // die getrennten Spalten, und dieses JSON kommt ausschließlich von dort.
     return FormTemplate(
-      id: json['id'],
-      templateName: json['templateName'],
+      id: json['id'] as int,
+      templateName: json['templateName'] as String,
       fields: fields,
       wordFilePathOhneAuflistung: json['wordFilePathOhneAuflistung'] as String?,
       wordFilePathMitAuflistung: json['wordFilePathMitAuflistung'] as String?,
