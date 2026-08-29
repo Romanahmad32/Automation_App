@@ -4448,7 +4448,7 @@
             "type": "string"
           }
         },
-        "description": "Kanzlei-/Anfragerdaten, mit denen der Abschnitt \u0022Anfrager\u0022 des Zentralruf-Formulars gef\u00FCllt wird.\r\nWird optional vom Client mitgeschickt; fehlt der Block, gelten die Werte aus appsettings.json\r\n(\u0060Zentralruf:Anfrager\u0060)."
+        "description": "Kanzlei-/Anfragerdaten, mit denen der Abschnitt \u0022Anfrager\u0022 des Zentralruf-Formulars gef\u00FCllt wird.\r\nWird optional vom Client mitgeschickt; fehlt der Block, gelten die Vorgabewerte von\r\n\u0060ZentralrufAnfragerOptions\u0060 (Personentyp \u0022Rechtsanwalt\u0022, Rest leer) \u2014 das Formular\r\nbleibt dann bei den Anfragerfeldern leer."
       },
       "ZentralrufGeschaedigterDto": {
         "required": [
@@ -4549,7 +4549,7 @@
                 "type": "null"
               },
               {
-                "description": "Kanzlei-/Anfragerdaten aus den App-Einstellungen. Wenn null, gelten die Werte aus\r\nappsettings.json (\u0060Zentralruf:Anfrager\u0060).",
+                "description": "Kanzlei-/Anfragerdaten aus den App-Einstellungen. Wenn null, gelten die Vorgabewerte\r\nvon \u0060ZentralrufAnfragerOptions\u0060 \u2014 die Anfragerfelder bleiben dann leer.",
                 "$ref": "#/components/schemas/ZentralrufAnfragerDto"
               }
             ]

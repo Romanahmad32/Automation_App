@@ -65,6 +65,11 @@ Feature zuerst den Steckbrief lesen**, er erspart das Absuchen des Ordners. Alle
 dieselben Feldnamen, `grep -h "Backend:" lib/features/*/FEATURE.md` beantwortet also
 featureübergreifende Fragen in einem Zugriff.
 
+**Was über den Feature-Rand hinausgeht, steht in [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md)**:
+vier Ketten laufen quer durch mehrere Features (Vorbelegung, Antwortübernahme, Abschluss,
+Kanzleidaten), und der Steckbrief eines einzelnen Features sagt nicht, dass es Teil einer ist. Wer
+eine Kette an einer Stelle ändert und die andere stehen lässt, bricht sie — kein Test fängt das.
+
 Der Steckbrief hat ein Budget (40 Zeilen, keine über 130 Zeichen) — es hält ihn zum Einstieg
 tauglich. Wo mehr zu erklären ist, liegt daneben eine **`FALLSTRICKE.md` ohne Budget** (bisher
 `email_versand`, `word_automation`); der Steckbrief verweist darauf, ein Test besteht darauf.

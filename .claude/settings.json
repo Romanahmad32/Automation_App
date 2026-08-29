@@ -38,19 +38,6 @@
               "-ExecutionPolicy",
               "Bypass",
               "-File",
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/gitleaks-staged.ps1"
-            ],
-            "timeout": 60,
-            "statusMessage": "gitleaks"
-          },
-          {
-            "type": "command",
-            "command": "powershell",
-            "args": [
-              "-NoProfile",
-              "-ExecutionPolicy",
-              "Bypass",
-              "-File",
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/zweigname.ps1"
             ],
             "timeout": 15,

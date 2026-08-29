@@ -38,8 +38,8 @@ public class ZentralrufPrefillDto
     public ZentralrufGeschaedigterDto? Geschaedigter { get; set; }
 
     /// <summary>
-    /// Kanzlei-/Anfragerdaten aus den App-Einstellungen. Wenn null, gelten die Werte aus
-    /// appsettings.json (<c>Zentralruf:Anfrager</c>).
+    /// Kanzlei-/Anfragerdaten aus den App-Einstellungen. Wenn null, gelten die Vorgabewerte
+    /// von <c>ZentralrufAnfragerOptions</c> — die Anfragerfelder bleiben dann leer.
     /// </summary>
     public ZentralrufAnfragerDto? Anfrager { get; set; }
 }
