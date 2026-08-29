@@ -18,7 +18,7 @@ namespace AutomationService.Features.MailboxMonitor.Domain.Services;
 /// ausgelöst, damit der laufende Monitor seine Verbindung sofort mit den neuen
 /// Werten neu aufbaut (Muster wie ein Konfigurations-Reload-Token).
 /// </summary>
-public sealed class MailboxConfigStore : IDisposable
+public sealed class MailboxConfigStore : IMailboxConfigSource, IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -29,6 +29,7 @@ public sealed class MailboxConfigStore : IDisposable
 
     private MailboxOptions _current;
     private CancellationTokenSource _changeSource = new();
+    private bool _disposed;
 
     public MailboxConfigStore(IOptions<MailboxOptions> seed, ILogger<MailboxConfigStore> logger)
     {
@@ -113,11 +114,27 @@ public sealed class MailboxConfigStore : IDisposable
     /// Gibt die zuletzt ausgegebene Änderungsquelle frei. <see cref="NotifyChanged"/>
     /// entsorgt jeweils die abgelöste Quelle; die aktuelle bleibt bis zum
     /// Herunterfahren bestehen und wird hier vom DI-Container mit entsorgt.
+    ///
+    /// <para><b>Läuft zweimal</b>, und das ist kein Fehler des Aufrufers: Der
+    /// Container kennt diese Instanz unter zwei Registrierungen (Klasse und
+    /// <see cref="IMailboxConfigSource"/>, siehe <c>MailboxInjection</c>) und
+    /// vermerkt das Ergebnis einer Fabrik erneut als zu entsorgen, ohne zu
+    /// prüfen, ob er dasselbe Objekt bereits hält. Daher der Riegel: Ohne ihn
+    /// bliebe der Rumpf nur so lange harmlos, wie er allein aus einer
+    /// idempotenten <see cref="CancellationTokenSource.Dispose()"/> besteht —
+    /// das nächste Feld, das hier freigegeben wird, käme beim Herunterfahren
+    /// als <see cref="ObjectDisposedException"/> zurück.</para>
     /// </summary>
     public void Dispose()
     {
         lock (_gate)
         {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
             _changeSource.Dispose();
         }
     }

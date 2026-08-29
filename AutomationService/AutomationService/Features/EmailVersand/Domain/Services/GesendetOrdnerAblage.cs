@@ -17,9 +17,9 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// den Misserfolg zurück, damit die Oberfläche einen Hinweis zeigen kann.
 /// </summary>
 public sealed class GesendetOrdnerAblage(
-    MailboxConfigStore configStore,
+    IMailboxConfigSource configStore,
     MicrosoftMailOAuthService microsoftOAuth,
-    ILogger<GesendetOrdnerAblage> logger)
+    ILogger<GesendetOrdnerAblage> logger) : IGesendetOrdnerAblage
 {
     public async Task<bool> LegeAbAsync(
         MimeMessage nachricht,

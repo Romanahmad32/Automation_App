@@ -45,6 +45,10 @@ msal_token_cache.bin
 # ---------------------------------------------------------------------------
 [Bb]in/
 [Oo]bj/
+# Ausweichverzeichnis von check.ps1, wenn die Anwendung laeuft und bin/ sperrt.
+# Das Skript raeumt es selbst wieder ab; die Regel faengt nur den abgebrochenen
+# Lauf, damit ein Rest nicht als Aenderung im Arbeitsverzeichnis auftaucht.
+bin-pruef/
 
 # ---------------------------------------------------------------------------
 # Auslieferungspaket und Installer (scripts/build-package.ps1, installer/)

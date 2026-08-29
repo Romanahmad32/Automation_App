@@ -56,11 +56,26 @@ jobs:
       - name: Test
         run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
 
-      # Prueft, ob der Code der Formatierung aus der .editorconfig entspricht.
+      # Prueft Zeilenenden, Kodierung und Einrueckung gegen die .editorconfig.
       # Laeuft nach den Tests: ein Formatierungsfehler soll den Blick nicht von
       # einem echten Testfehler ablenken.
-      - name: Format
-        run: dotnet format AutomationService/AutomationService.slnx --verify-no-changes --verbosity diagnostic
+      #
+      # Nur `whitespace`, nicht das ganze `dotnet format`: Directory.Build.props
+      # setzt EnforceCodeStyleInBuild und TreatWarningsAsErrors, jede IDE-Regel
+      # und jeder Analyzer-Befund bricht also schon den Build-Schritt oben.
+      # `style` und `analyzers` pruefen dieselben Regeln mit derselben Schwelle
+      # ein zweites Mal und kosten dabei 42 der 50 Sekunden. Zeilenenden und
+      # Kodierung sieht der Compiler dagegen gar nicht — das ist der Teil, der
+      # hier wirklich gebraucht wird.
+      #
+      # Zwei Aufrufe, weil AutomationService.slnx nur das Dienstprojekt
+      # enthaelt: Das Testprojekt liegt in dessen Ordner, ist aber per
+      # Compile Remove ausgenommen und wurde deshalb nie geprueft.
+      - name: Format (Dienst)
+        run: dotnet format whitespace AutomationService/AutomationService.slnx --verify-no-changes --verbosity diagnostic
+
+      - name: Format (Tests)
+        run: dotnet format whitespace ${{ env.TEST_PROJECT }} --verify-no-changes --verbosity diagnostic
 
   frontend:
     runs-on: windows-latest
@@ -105,22 +120,29 @@ jobs:
           lib/core/di/injection.config.dart
           lib/core/router/app_router.gr.dart
 
-      # Gegenstueck zu "dotnet format --verify-no-changes" im Backend-Job. Ohne
+      # Gegenstueck zu "dotnet format whitespace" im Backend-Job. Ohne
       # diese Pruefung sammelt sich Formatierungsrauschen in den Dart-Diffs und
       # verdeckt die eigentliche Aenderung — teuer in jedem Review.
       - name: Format
         run: dart format --output=none --set-exit-if-changed lib test
 
       # Analyze laeuft vor den Tests: Fehler hier sind billiger zu finden.
+      # --no-pub bei analyze und test: `flutter pub get` ist ein eigener Schritt
+      # weiter oben. Ohne den Schalter holen beide es noch einmal nach.
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-pub
 
       # Enthaelt die Architektur-Tests unter test/architecture/ (Schichtenregeln,
       # Dateilaengen-Limit und das Verbot privater Typen aus CLAUDE.md als
       # ausfuehrbare Regeln) sowie den Abgleich der Dart-Seite gegen den
       # versionierten HTTP-Vertrag docs/openapi.json.
+      #
+      # --concurrency: Die Vorgabe ist Kerne/2, auf dem Runner also zwei. Die
+      # Testlaeufe sind aber start- und nicht rechenlastig (je Datei eine eigene
+      # VM); gemessen auf vier Kernen 73 s bei der Vorgabe gegen 51 s bei acht.
+      # Dieselbe Zahl steht in scripts/check.ps1.
       - name: Test
-        run: flutter test
+        run: flutter test --no-pub --concurrency=8
 
   # Baut das auslieferbare Paket und startet den veroeffentlichten Dienst.
   #

@@ -11,8 +11,12 @@ Fuehre die Pruefkette dieses Repos aus:
 Das Skript faehrt dieselben Schritte wie `.github/workflows/ci.yml` — Pub get,
 Codegenerierung, Abgleich des generierten Stands, Formatierung, Analyse und
 Tests im Frontend, Build, Tests und Formatierung im Backend. Es bricht nicht
-beim ersten Fehler ab, sondern fasst am Ende alles zusammen. Fuer einen
-Teillauf: `-NurFrontend` bzw. `-NurBackend`.
+beim ersten Fehler ab, sondern fasst am Ende alles zusammen, mit der Dauer je
+Schritt. Rund zweieinviertel Minuten.
+
+Fuer einen Teillauf: `-NurFrontend` bzw. `-NurBackend`. Schlaegt nur die
+Formatierung fehl, ist `-Beheben` der ganze Weg: Er laesst beide Formatierer
+vorher schreibend laufen, statt eine Raterunde ueber Zeilenenden zu eroeffnen.
 
 Regeln fuer die Auswertung:
 

@@ -58,6 +58,12 @@ Feature zuerst den Steckbrief lesen**, er erspart das Absuchen des Ordners. Alle
 dieselben Feldnamen, `grep -h "Backend:" lib/features/*/FEATURE.md` beantwortet also
 featureübergreifende Fragen in einem Zugriff.
 
+Der Steckbrief hat ein Budget (40 Zeilen, keine über 130 Zeichen) — es hält ihn zum Einstieg
+tauglich. Wo mehr zu erklären ist, liegt daneben eine **`FALLSTRICKE.md` ohne Budget** (bisher
+`email_versand`, `word_automation`); der Steckbrief verweist darauf, ein Test besteht darauf.
+Was nicht mehr in die vierzig Zeilen passt, wandert **dorthin** — nie in kürzere Sätze: Absätze
+zusammenzuziehen, um unter das Budget zu kommen, hat schon einmal lesbare Doku unlesbar gemacht.
+
 | Feature | wofür |
 |---|---|
 | `dashboard` | Startseite: offene Vorgänge, unbearbeitete Antworten, letzte Registerzeilen — lesend |
@@ -86,14 +92,25 @@ der Anwalt direkt nach dem Öffnen der App.
 
 ## Code-Qualität (verbindlich)
 
-- **Dateien kurz halten.** Handgeschriebene Dart-Dateien max. **250 Zeilen**, in Ausnahmefällen bis
-  **300**. Wird eine Datei länger, in mehrere Widgets/Klassen aufteilen.
+- **Dateien kurz halten.** Handgeschriebene Dart-Dateien max. **250 Anweisungszeilen** und **450
+  Zeilen insgesamt**. Kommentare und Leerzeilen zählen nicht mit — eine Datei aufzuteilen, um
+  Kommentar unterzubringen, wäre ein Schnitt aus der Zählung statt aus dem Entwurf. Wird eine Datei
+  länger, in mehrere Widgets/Klassen aufteilen. Drei Formularseiten liegen noch darüber und stehen
+  namentlich in `file_length_test.dart`; sie dürfen nur noch schrumpfen.
 - **Keine privaten Typen und keine privaten Top-Level-Funktionen** (kein `_WidgetXyz`, kein
   `_hilfsfunktion()`). Ein privates Widget ist außerhalb seiner Datei kein benennbarer Typ mehr:
   nicht wiederverwendbar, nicht einzeln testbar — und die nächste Änderung baut daneben eine zweite
   Fassung davon. Einzige Ausnahme: die `State`-Klasse eines `StatefulWidget`.
 - **Widgets wiederverwendbar gestalten.** Projektweit Genutztes unter `lib/core/general_widgets/`,
   Feature-Eigenes unter `lib/features/<feature>/presentation/widgets/` — je Widget eine Datei.
+- **Formular aus einem Bloc füllen: `StandNachziehen`, nie ein blosser Listener.** Ein
+  `BlocListener` hört **Übergänge** — den Zustand, auf dem der Bloc beim Mounten schon steht,
+  sieht er nie. Das Formular zeigt dann seine Vorgabewerte und sieht aus wie geladen; wer
+  „Speichern" drückt, schreibt sie über die echten Daten. Dreimal passiert (Signatur,
+  Postfach-Zugang, Kanzleidaten), zweimal in der Kanzlei aufgefallen statt in der Prüfkette.
+  `core/general_widgets/stand_nachziehen.dart` trennt `nachziehen` (beim Aufgehen **und** bei
+  jedem Zustand) von `beiUebergang` (nur Meldungen). Dazu je ein Widget-Test nach dem Muster
+  „war der Bloc schon geladen" — `test/features/mailbox/mailbox_zugang_anzeige_test.dart`.
 - **Vorhandene Widgets bevorzugen.** Vor dem Neubau prüfen, ob es schon eins gibt, und dieses
   verwenden bzw. erweitern statt zu duplizieren.
 - **Datasources: Sache im Dateinamen, Technik im Klassennamen.** Datei `<sache>_datasource.dart` —
@@ -113,13 +130,13 @@ der Anwalt direkt nach dem Öffnen der App.
 
 | Regel | Test |
 |---|---|
-| Dateilänge ≤ 300 Zeilen (Richtwert 250) | `test/architecture/file_length_test.dart` |
+| Dateilänge ≤ 250 Anweisungszeilen, ≤ 450 gesamt | `test/architecture/file_length_test.dart` |
 | Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
 | Benennung Datasources/Repositories | `test/architecture/benennung_test.dart` |
 | Schichten `domain`/`data`/`presentation` (vier Regeln) | `test/architecture/clean_architecture_test.dart` |
 | HTTP-Vertrag gegen `docs/openapi.json` (Wurzel-`CLAUDE.md`) | `test/architecture/http_vertrag_test.dart` |
 | Steckbrief je Feature, Feature-Tabelle, Zeilenbudget der `CLAUDE.md`, lebende Verweise | `test/architecture/dokumentation_test.dart` |
-| Anforderungsverweise (`§4.8`, nie `Req. …`) gegen `docs/ANFORDERUNGEN_INDEX.md` | `test/architecture/anforderungen_test.dart` |
+| Anforderungsverweise (`§4.8`, nie `Req. …`) gegen den Index, Index gegen `REQUIREMENTS.md` | `test/architecture/anforderungen_test.dart` |
 | Formatierung | `dart format --set-exit-if-changed` (CI) |
 
 Generierte Dateien sind überall ausgenommen (`test/architecture/dart_source_files.dart`).

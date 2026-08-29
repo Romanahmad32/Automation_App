@@ -205,7 +205,7 @@ fertig. Die Prüfungen, die typischerweise bei genau dieser Arbeit anschlagen:
 | `OpenApiVertragTests` | `docs/openapi.json` nicht mitgeführt |
 | `http_vertrag_test.dart` | Dart benutzt einen Pfad oder ein Feld, das der Vertrag nicht kennt |
 | `benennung_test.dart` | Datasource oder Repository-Umsetzung falsch benannt |
-| `file_length_test.dart` | Datei über 300 Zeilen — aufteilen, nicht das Limit heben |
+| `file_length_test.dart` | Datei über 250 Anweisungszeilen — aufteilen, nicht das Limit heben |
 | `private_typen_test.dart` | privates `_Widget` statt eigener Datei |
 | `SliceIsolationTests` | Backend-Slice greift in eine andere Slice |
 | `git diff --exit-code` (CI) | `build_runner` nicht gelaufen oder Ergebnis nicht committet |
