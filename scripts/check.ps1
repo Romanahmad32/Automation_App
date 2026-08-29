@@ -62,8 +62,15 @@ Set-StrictMode -Version Latest
 # Toolchain macht bis zu sechs Schritte rot, die wie Codefehler aussehen
 # (Begruendung und Vergleichslogik in versionspruefung.ps1). Erst nach diesem
 # Abbruch gilt: Jeder rote Schritt weiter unten ist ein echter Befund.
-& (Join-Path $PSScriptRoot 'versionspruefung.ps1') -NurFrontend:$NurFrontend -NurBackend:$NurBackend
+#
+# Bei Erfolg liefert die Pruefung das bin-Verzeichnis des projektlokalen
+# FVM-SDKs zurueck (oder nichts, dann gilt der PATH) — die Frontend-Schritte
+# fahren mit genau dem SDK, dessen Fassung eben geprueft wurde.
+$sdkBin = & (Join-Path $PSScriptRoot 'versionspruefung.ps1') -NurFrontend:$NurFrontend -NurBackend:$NurBackend
 if ($LASTEXITCODE -ne 0) { exit 1 }
+
+$flutterBefehl = if ($sdkBin) { Join-Path $sdkBin 'flutter.bat' } else { 'flutter' }
+$dartBefehl    = if ($sdkBin) { Join-Path $sdkBin 'dart.bat' }    else { 'dart' }
 
 $wurzel   = Split-Path -Parent $PSScriptRoot
 $frontend = Join-Path $wurzel 'Automation_App_Frontend'
@@ -219,7 +226,7 @@ $seiteFahren = {
 
 $frontendSchritte = @()
 if (-not $NurBackend) {
-    $frontendSchritte += New-Schritt 'Frontend: Abhaengigkeiten' $frontend 'flutter' @('pub', 'get')
+    $frontendSchritte += New-Schritt 'Frontend: Abhaengigkeiten' $frontend $flutterBefehl @('pub', 'get')
 
     # Die Sperrdatei ist versioniert und muss zu der gepinnten Flutter-Fassung
     # passen. Aendert `pub get` sie, war der committete Stand mit dieser
@@ -229,7 +236,7 @@ if (-not $NurBackend) {
         @('diff', '--exit-code', '--', 'Automation_App_Frontend/pubspec.lock') `
         -Hilfe 'pub get hat pubspec.lock geaendert: die aufgeloeste Fassung mitcommitten, nicht zurueckwerfen.'
 
-    $frontendSchritte += New-Schritt 'Frontend: Codegenerierung' $frontend 'dart' `
+    $frontendSchritte += New-Schritt 'Frontend: Codegenerierung' $frontend $dartBefehl `
         @('run', 'build_runner', 'build') `
         -Hilfe 'Fehler in einer Annotation oder in build.yaml — nicht in den generierten Dateien selbst.'
 
@@ -241,7 +248,7 @@ if (-not $NurBackend) {
     # den Bruch. So faellt stattdessen hier der Schritt darunter auf, was
     # genau richtig ist: dann ist die Codegenerierung nicht dart-format-rein.
     if ($Beheben) {
-        $frontendSchritte += New-Schritt 'Frontend: Formatierung beheben' $frontend 'dart' @('format', 'lib', 'test')
+        $frontendSchritte += New-Schritt 'Frontend: Formatierung beheben' $frontend $dartBefehl @('format', 'lib', 'test')
     }
 
     # Die generierten Dateien sind versioniert. Weichen sie nach dem Lauf ab,
@@ -253,15 +260,15 @@ if (-not $NurBackend) {
           'Automation_App_Frontend/lib/core/router/app_router.gr.dart') `
         -Hilfe 'build_runner hat die generierten Dateien geaendert: mit in denselben Commit nehmen.'
 
-    $frontendSchritte += New-Schritt 'Frontend: Formatierung' $frontend 'dart' `
+    $frontendSchritte += New-Schritt 'Frontend: Formatierung' $frontend $dartBefehl `
         @('format', '--output=none', '--set-exit-if-changed', 'lib', 'test') `
         -Hilfe 'dart format lib test — oder ./scripts/check.ps1 -Beheben'
 
     # --no-pub bei analyze und test: `pub get` steht schon als erster Schritt
     # oben. Ohne den Schalter holen beide es noch einmal nach.
-    $frontendSchritte += New-Schritt 'Frontend: Analyse' $frontend 'flutter' @('analyze', '--no-pub')
+    $frontendSchritte += New-Schritt 'Frontend: Analyse' $frontend $flutterBefehl @('analyze', '--no-pub')
 
-    $frontendSchritte += New-Schritt 'Frontend: Tests' $frontend 'flutter' `
+    $frontendSchritte += New-Schritt 'Frontend: Tests' $frontend $flutterBefehl `
         @('test', '--no-pub', "--concurrency=$testNebenlaeufigkeit") `
         -Hilfe 'Enthaelt die Architektur-Tests (Schichten, Dateilaenge, private Typen, HTTP-Vertrag).'
 }
