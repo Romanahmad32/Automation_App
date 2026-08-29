@@ -17,6 +17,12 @@ FieldData feld(String label, FeldDatenquelle quelle) => FieldData(
   datenquelle: quelle,
 );
 
+/// Felder ohne gesetzte Datenquelle — der Weg bestehender Vorlagen, deren
+/// Namen erst zur Laufzeit über `FeldDatenquelleErkennung` aufgelöst werden.
+List<FieldData> ungebunden(List<String> labels) => [
+  for (final label in labels) feld(label, FeldDatenquelle.keine),
+];
+
 void main() {
   // Antwortdaten aus "Beispiele/Anwortemail von Zentralruf.txt".
   const antwort = ZentralrufReplyData(
@@ -47,6 +53,12 @@ void main() {
     int? mandantId = 7,
     String? mandantName = 'Erika Mustermann',
     Rechtsgebiet rechtsgebiet = Rechtsgebiet.verkehrsrecht,
+    String? kennzeichen,
+    String? geschaedigtenKennzeichen,
+    String? unfallDatum,
+    String? unfallort,
+    String? unfalluhrzeit,
+    String? polizeiVorgangsnummer,
   }) {
     return Vorgang(
       referenz: '84/26 C03_GG-XY 123',
@@ -54,26 +66,36 @@ void main() {
       rechtsgebiet: rechtsgebiet,
       mandantId: mandantId,
       mandantName: mandantName,
+      kennzeichen: kennzeichen,
+      geschaedigtenKennzeichen: geschaedigtenKennzeichen,
+      unfallDatum: unfallDatum,
+      unfallort: unfallort,
+      unfalluhrzeit: unfalluhrzeit,
+      polizeiVorgangsnummer: polizeiVorgangsnummer,
       antwort: mitAntwort,
     );
   }
 
   test('füllt Mandantenfelder aus dem Registereintrag', () {
-    final result = VorgangPrefillMatcher.matchFields(
-      [
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden([
         'Name des Mandanten',
+        'Vorname des Mandanten',
+        'Nachname des Mandanten',
         'Straße des Mandanten',
         'PLZ Mandant',
         'Ort des Mandanten',
         'E-Mail des Mandanten',
         'Telefon Mandant',
         'Anschrift des Geschädigten',
-      ],
+      ]),
       vorgang(),
       mandant: mandant,
     );
 
     expect(result['Name des Mandanten'], 'Erika Mustermann');
+    expect(result['Vorname des Mandanten'], 'Erika');
+    expect(result['Nachname des Mandanten'], 'Mustermann');
     expect(result['Straße des Mandanten'], 'Hauptstr. 1');
     expect(result['PLZ Mandant'], '61348');
     expect(result['Ort des Mandanten'], 'Bad Homburg');
@@ -86,15 +108,15 @@ void main() {
   });
 
   test('füllt Antwort- und Rechtsgebietsfelder aus dem Vorgang', () {
-    final result = VorgangPrefillMatcher.matchFields(
-      [
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden([
         'Gegnerische Versicherung',
         'Versicherungsschein-Nr.',
         'Unfalldatum',
         'Kennzeichen des Unfallgegners',
         'Aktenzeichen',
         'Rechtsgebiet',
-      ],
+      ]),
       vorgang(rechtsgebiet: Rechtsgebiet.verkehrsrecht),
       mandant: mandant,
     );
@@ -107,22 +129,87 @@ void main() {
     expect(result['Rechtsgebiet'], 'Verkehrsrecht');
   });
 
-  test('rät kein Kennzeichen des Mandanten/Geschädigten', () {
-    final result = VorgangPrefillMatcher.matchFields(
-      ['Kennzeichen des Geschädigten', 'Kennzeichen Mandant'],
+  test('füllt Unfallort, -uhrzeit und Polizei-Vorgangsnummer', () {
+    // Diese drei hatten in der abgelösten Heuristik gar keine Entsprechung:
+    // Ohne Dropdown blieben sie immer leer, obwohl der Vorgang sie kannte.
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden(['Unfallort', 'Unfalluhrzeit', 'Polizei-Vorgangsnummer']),
+      vorgang(
+        unfallort: 'Bad Homburg, Louisenstr.',
+        unfalluhrzeit: '14:35',
+        polizeiVorgangsnummer: 'ST/1234567/2026',
+      ),
+      mandant: mandant,
+    );
+
+    expect(result['Unfallort'], 'Bad Homburg, Louisenstr.');
+    expect(result['Unfalluhrzeit'], '14:35');
+    expect(result['Polizei-Vorgangsnummer'], 'ST/1234567/2026');
+  });
+
+  test('füllt Vorgangsangaben auch ohne übernommene Antwort', () {
+    // Die alte Heuristik schöpfte für diese Felder ausschließlich aus der
+    // Zentralruf-Antwort — ohne sie blieben sie leer, obwohl der Vorgang die
+    // Angabe längst kannte.
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden(['Unfalldatum', 'Kennzeichen', 'Referenz']),
+      vorgang(
+        mitAntwort: null,
+        kennzeichen: 'GG-XY 123',
+        unfallDatum: '09.03.2026',
+      ),
+      mandant: mandant,
+    );
+
+    expect(result['Unfalldatum'], '09.03.2026');
+    expect(result['Kennzeichen'], 'GG-XY 123');
+    expect(result['Referenz'], '84/26 C03_GG-XY 123');
+  });
+
+  group('Kennzeichen des Mandanten/Geschädigten', () {
+    test('kommt aus dem Vorgang, statt leer zu bleiben', () {
+      // Bewusste Verhaltensänderung: Früher lieferte dieses Feld nichts, weil
+      // es sonst an den Gegner-Matcher durchgefallen wäre.
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        ungebunden(['Kennzeichen des Geschädigten', 'Kennzeichen Mandant']),
+        vorgang(geschaedigtenKennzeichen: 'HG-E 1427'),
+        mandant: mandant,
+      );
+
+      expect(result['Kennzeichen des Geschädigten'], 'HG-E 1427');
+      expect(result['Kennzeichen Mandant'], 'HG-E 1427');
+    });
+
+    test('bleibt leer — nie das Kennzeichen des Gegners', () {
+      // Die Regression, für die es die alte Notbremse gab: Kennt der Vorgang
+      // das eigene Fahrzeug nicht, darf keinesfalls das gegnerische einrücken.
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        ungebunden(['Kennzeichen des Geschädigten']),
+        vorgang(),
+        mandant: mandant,
+      );
+
+      expect(result.containsKey('Kennzeichen des Geschädigten'), isFalse);
+    });
+  });
+
+  test('bindet mehrdeutige Platzhalter nicht', () {
+    // „VersicherungPlzOrt" lieferte still nur die PLZ. Jetzt liefert er nichts
+    // — und der Vorlageneditor sagt warum (FeldNameHinweis).
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden(['VersicherungPlzOrt']),
       vorgang(),
       mandant: mandant,
     );
 
-    expect(result.containsKey('Kennzeichen des Geschädigten'), isFalse);
-    expect(result.containsKey('Kennzeichen Mandant'), isFalse);
+    expect(result.containsKey('VersicherungPlzOrt'), isFalse);
   });
 
   test('nutzt den Namens-Schnappschuss, wenn kein Mandant aufgelöst ist', () {
-    final result = VorgangPrefillMatcher.matchFields([
-      'Name des Mandanten',
-      'Straße des Mandanten',
-    ], vorgang());
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden(['Name des Mandanten', 'Straße des Mandanten']),
+      vorgang(),
+    );
 
     expect(result['Name des Mandanten'], 'Erika Mustermann');
     // Ohne Registereintrag bleibt die Anschrift leer statt geraten.
@@ -130,8 +217,8 @@ void main() {
   });
 
   test('ohne Antwort bleiben Versichererfelder leer', () {
-    final result = VorgangPrefillMatcher.matchFields(
-      ['Gegnerische Versicherung', 'Name des Mandanten'],
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden(['Gegnerische Versicherung', 'Name des Mandanten']),
       vorgang(mitAntwort: null),
       mandant: mandant,
     );
@@ -159,7 +246,7 @@ void main() {
       expect(result['Versicherer'], 'HUK-COBURG');
     });
 
-    test('explizite Quelle gewinnt gegen die Namens-Heuristik', () {
+    test('explizite Quelle gewinnt gegen die Erkennung über den Namen', () {
       // Label klingt nach Mandant, ist aber bewusst auf den Versicherernamen
       // gebunden — die explizite Wahl muss greifen.
       final result = VorgangPrefillMatcher.matchTemplateFields(
@@ -171,14 +258,17 @@ void main() {
       expect(result['Name des Mandanten'], 'HUK-COBURG');
     });
 
-    test('ungebundene Felder nutzen weiterhin die Heuristik', () {
+    test('eine gesetzte Quelle bindet auch mehrdeutige Namen', () {
+      // Bestehende Vorlagen laufen unverändert weiter: Wer die Quelle einmal
+      // gewählt hat, bekommt sie — der Mehrdeutigkeitshinweis gilt nur für
+      // Felder, die noch niemand gebunden hat.
       final result = VorgangPrefillMatcher.matchTemplateFields(
-        [feld('Unfalldatum', FeldDatenquelle.keine)],
+        [feld('VersicherungPlzOrt', FeldDatenquelle.versichererPlz)],
         vorgang(),
         mandant: mandant,
       );
 
-      expect(result['Unfalldatum'], '09.03.2026');
+      expect(result['VersicherungPlzOrt'], '60524');
     });
   });
 
@@ -192,17 +282,19 @@ void main() {
         },
       );
 
+      final felder = [
+        feld('Unfalldatum', FeldDatenquelle.unfalldatum),
+        feld('Versicherer', FeldDatenquelle.keine),
+        feld('Ort des Mandanten', FeldDatenquelle.mandantOrt),
+      ];
+
       final result = VorgangPrefillMatcher.matchTemplateFields(
-        [
-          feld('Unfalldatum', FeldDatenquelle.unfalldatum),
-          feld('Versicherer', FeldDatenquelle.keine),
-          feld('Ort des Mandanten', FeldDatenquelle.mandantOrt),
-        ],
+        felder,
         mitWerten,
         mandant: mandant,
       );
 
-      // Gespeichert schlägt Datenquelle und Heuristik …
+      // Gespeichert schlägt Datenquelle und Erkennung …
       expect(result['Unfalldatum'], '10.03.2026');
       expect(result['Versicherer'], 'HUK-COBURG Allgemeine');
       // … Felder ohne gespeicherten Wert kommen weiter aus den Quellen, und
@@ -212,11 +304,7 @@ void main() {
 
       // Die Herkunft weist genau die zwei gespeicherten Werte aus.
       final herkunft = VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
-        [
-          feld('Unfalldatum', FeldDatenquelle.unfalldatum),
-          feld('Versicherer', FeldDatenquelle.keine),
-          feld('Ort des Mandanten', FeldDatenquelle.mandantOrt),
-        ],
+        felder,
         mitWerten,
         mandant: mandant,
       );
