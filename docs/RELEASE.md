@@ -331,14 +331,38 @@ auf etwas anderem, lässt `check.ps1` es stehen und sagt es nur.
 `global.json` legt das .NET-SDK fest, `FLUTTER_VERSION` in beiden Workflows die
 Flutter-Version.
 
-Für die Flutter-Seite liegt daneben eine `.fvmrc` (in `Automation_App_Frontend/`):
-Wer [FVM](https://fvm.app) benutzt, bekommt mit `fvm use` genau die gepinnte
-Fassung, egal welches Flutter sonst im PATH steht. Prüfkette und Format-Hook
-greifen von selbst zum projektlokalen SDK (`.fvm/flutter_sdk`), sobald es
-existiert; `scripts/versionspruefung.ps1` prüft dann dessen Fassung und schlägt
-an, wenn `.fvmrc` und `FLUTTER_VERSION` auseinanderlaufen. FVM ist Angebot,
-nicht Pflicht — ohne `.fvm/` prüft und benutzt die Kette das Flutter aus dem
-PATH, wie bisher.
+Für die Flutter-Seite liegt daneben eine `.fvmrc` (in `Automation_App_Frontend/`)
+mit derselben Fassung. Sie ist versioniert und genügt der Prüfkette:
+`scripts/versionspruefung.ps1` sucht das SDK zuerst unter `.fvm/flutter_sdk`
+und, wenn das fehlt, unter der in `.fvmrc` gepinnten Fassung im
+[FVM](https://fvm.app)-Cache (`FVM_CACHE_PATH`, sonst `~/fvm`) — geprüft wird
+die Fassung, die dabei herauskommt, und die Frontend-Schritte fahren genau
+dieses SDK. Zusätzlich schlägt sie an, wenn `.fvmrc` und `FLUTTER_VERSION`
+auseinanderlaufen.
+
+**`fvm use` ist damit Komfort, keine Voraussetzung.** Es legt die Junction
+`.fvm/flutter_sdk` an, und die hat weiterhin Vorrang — wer sie bewusst gesetzt
+hat, bekommt dieses SDK. Sie verkürzt Aufrufe von Hand und ist das, woran der
+Format-Hook (`.claude/hooks/dart-format.ps1`) sein `dart` erkennt. Die Kette
+selbst braucht sie nicht mehr: Die Junction ist gitignored und fehlt deshalb in
+jedem frischen Klon und in jedem neuen Worktree. **Wer klont und die gepinnte
+Fassung schon einmal per FVM geholt hat, ruft `scripts/check.ps1` und es
+läuft** — ohne einen einzigen Handgriff dazwischen.
+
+Findet sich keins von beidem, zählt weiter das Flutter aus dem PATH: Ist das
+zufällig die gepinnte Fassung, läuft die Kette auch damit. Sonst bricht die
+Prüfung ab und sagt, was zu tun ist (`fvm install <Fassung>`). Dieser Abbruch
+ist Absicht und keine Lücke — auf einem wirklich frischen Rechner ist das ein
+Download, und den soll ein *prüfendes* Skript nicht stillschweigend auslösen.
+Ebenso unsichtbar bleibt ein per `fvm config --cache-path` verstellter Cache:
+Er steht nur in FVMs eigener Konfiguration, und die Auflösung kommt bewusst
+ohne `fvm` im PATH aus. Auch dann greift der Abbruch, nie ein falsches SDK.
+
+Festgenagelt ist das Ganze durch
+`Automation_App_Frontend/test/architecture/versionspruefung_test.dart`: Es fährt
+`versionspruefung.ps1` gegen Wegwerf-Repos und prüft beide Cache-Wege, den
+Vorrang der Junction, den Abbruch bei fehlender Fassung — und dass die Prüfung
+nicht grün meldet, wenn ihr selbst eine Datei fehlt.
 
 Der Grund steht in der Historie: die CI war ab dem 01.08.2026 eine Woche lang rot,
 ohne dass jemand Code angefasst hätte. Beide Jobs zogen mit `channel: stable` und
