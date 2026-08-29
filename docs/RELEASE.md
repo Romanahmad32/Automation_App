@@ -258,6 +258,48 @@ funktioniert weiter, du musst dann wieder selbst Bescheid geben.
 > Setup und ist eine eigene Umstellung; sie lohnt erst, wenn mehrere Rechner zu
 > versorgen sind.
 
+## Zweignamen
+
+Ein Zweig trägt eines von zwei Präfixen:
+
+| Präfix | wofür |
+|---|---|
+| `feature/` | eine neue oder geänderte Fähigkeit |
+| `bugfix/` | ein behobener Fehler |
+
+Dahinter ein kurzer Name in Kleinbuchstaben mit Bindestrichen, der die *Sache* nennt, nicht die
+Datei: `feature/email-versand`, `bugfix/nullbetrag-schadensposition`.
+
+Der Grund ist die Leseseite, nicht die Ordnung an sich: In der Zweigliste und in der PR-Übersicht
+steht damit schon vor dem Diff, ob eine Änderung etwas Neues bringt oder etwas geradezieht. Das
+entscheidet, wie man liest — bei einem Fehler sucht man die Ursache und den Test, der ihn künftig
+fängt, bei einem Feature den Umfang. Ein Repository, in dem beides gleich heißt, verschenkt diese
+Auskunft an jeder Stelle, an der Zweige aufgelistet werden.
+
+**Erzwungen an zwei Stellen:**
+
+- `.claude/hooks/zweigname.ps1` hält schon das Anlegen an — `git checkout -b`, `git switch -c`
+  samt `--create`, `git branch <name>` und das Umbenennen mit `git branch -m` — und nennt den
+  fertigen Ersatzbefehl. Vor dem ersten Commit kostet Umbenennen nichts; hängen erst Commits und
+  ein Push daran, bleibt ein schiefer Name meistens stehen.
+- Der CI-Schritt **„Zweigname"** prüft denselben Satz am Pull Request — für alles, was nicht über
+  den Hook entstanden ist (Weboberfläche, fremder Klon, anderer Rechner).
+
+Groß- und Kleinschreibung zählt an beiden Stellen mit: `Feature/x` ist kein `feature/x`. Das ist
+keine Strenge um ihrer selbst willen, sondern Gleichlauf — das `case` in der CI vergleicht
+ohnehin genau, und ein Hook, der großzügiger ist als die CI, verschiebt den Fund nur nach hinten.
+
+**Eine Ausnahme, und sie ist keine Nachlässigkeit:** `dependabot/…`. Diese Zweige legt niemand von
+Hand an, ihr Name kommt von Dependabot und lässt sich nicht wählen. Ohne die Ausnahme wäre jeder
+Abhängigkeits-PR rot — und ein Schritt, der immer rot ist, wird ignoriert. Der Hook kennt sie
+ebenfalls: `gh pr checkout` legt für einen Abhängigkeits-PR lokal genau so einen Zweig an.
+
+Wer den zulässigen Satz ändert, ändert ihn in **beiden** Prüfungen: `$erlaubt` im Hook und das
+`case` in `ci.yml`. Dass beide gleich lauten, prüft
+`Automation_App_Frontend/test/architecture/zweigname_hook_test.dart` — zusammen mit dem Verhalten
+des Hooks an echten Befehlszeilen. Der Satz musste zweimal nachgebessert werden, beide Male weil
+er bei Alltagsbefehlen anschlug; ein Wächter, der das tut, wird abgeschaltet.
+
 ## Geheimnisse bleiben draußen
 
 Das Repository ist öffentlich. Geprüft wird an zwei Stellen, und nur die zweite ist eine Zusage:
