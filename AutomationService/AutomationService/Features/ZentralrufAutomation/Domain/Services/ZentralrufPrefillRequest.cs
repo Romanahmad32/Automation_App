@@ -36,9 +36,13 @@ public sealed record ZentralrufPrefillRequest
     public ZentralrufGeschaedigter? Geschaedigter { get; init; }
 
     /// <summary>
-    /// Kanzlei-/Anfragerdaten aus den App-Einstellungen. Wenn null, gelten die
-    /// Werte aus appsettings.json (<c>Zentralruf:Anfrager</c>); einzelne
-    /// Leerwerte fallen feldweise dorthin zurück.
+    /// Kanzlei-/Anfragerdaten aus den App-Einstellungen. Wenn null — etwa weil
+    /// das Backend die Einstellungen gerade nicht liefern konnte —, greift der
+    /// Rückfall <see cref="ZentralrufOptions.Anfrager"/>; einzelne Leerwerte
+    /// fallen feldweise dorthin zurück. Der trägt heute nur noch seine
+    /// Klassenvorgaben (Personentyp „Rechtsanwalt", Rest leer): In der
+    /// versionierten appsettings.json steht der Abschnitt bewusst nicht mehr,
+    /// weil dort sonst Name und Anschrift des Anwalts landen.
     /// </summary>
     public ZentralrufAnfragerOptions? Anfrager { get; init; }
 }

@@ -105,7 +105,9 @@ public sealed class ZentralrufAutomationService(
 
     /// <summary>
     /// Liefert die effektiven Anfragerdaten: bevorzugt die vom Client gesendeten (App-Einstellungen),
-    /// ersatzweise die aus appsettings.json. Einzelne Leerwerte fallen feldweise auf appsettings zurück.
+    /// ersatzweise <see cref="ZentralrufOptions.Anfrager"/>. Einzelne Leerwerte fallen feldweise
+    /// dorthin zurück. Der Rückfall trägt heute nur seine Klassenvorgaben — in der versionierten
+    /// appsettings.json steht der Abschnitt bewusst nicht mehr (docs/DATENFLUESSE.md, Kette 4).
     /// </summary>
     private ZentralrufAnfragerOptions ResolveAnfrager(ZentralrufPrefillRequest request)
     {

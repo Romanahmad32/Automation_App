@@ -4,8 +4,9 @@ namespace AutomationService.Features.ZentralrufAutomation.Presentation.Dtos;
 
 /// <summary>
 /// Kanzlei-/Anfragerdaten, mit denen der Abschnitt "Anfrager" des Zentralruf-Formulars gefüllt wird.
-/// Wird optional vom Client mitgeschickt; fehlt der Block, gelten die Werte aus appsettings.json
-/// (<c>Zentralruf:Anfrager</c>).
+/// Wird optional vom Client mitgeschickt; fehlt der Block, gelten die Vorgabewerte von
+/// <c>ZentralrufAnfragerOptions</c> (Personentyp "Rechtsanwalt", Rest leer) — das Formular
+/// bleibt dann bei den Anfragerfeldern leer.
 /// </summary>
 public class ZentralrufAnfragerDto
 {
