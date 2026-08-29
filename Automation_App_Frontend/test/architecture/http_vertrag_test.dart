@@ -76,12 +76,119 @@ void main() {
     );
   });
 
-  // Feldnamen: je Dart-Datei das DTO, dessen camelCase-Eigenschaften sie
-  // spiegelt. Weitere Paare gehoeren hier hinein, sobald eine Datei die
-  // Feldnamen eines DTOs von Hand fuehrt.
-  const gespiegelteDtos = {
-    'lib/features/vorgaenge/domain/entities/vorgang_json.dart': 'VorgangDto',
+  // Feldnamen: je Dart-Datei die Backend-DTOs, deren camelCase-Eigenschaften
+  // sie von Hand fuehrt — meist eines; ein zweites, wo das Anlegen oder
+  // Aendern ueber ein eigenes Create-/Update-DTO laeuft.
+  //
+  // Der Test unten haelt die Liste vollstaendig: jede Datei unter lib/ mit
+  // json['…']-Zugriffen muss hier oder in [ohneDto] stehen. Die Liste einmal
+  // zu fuellen repariert den Bestand; sie vollstaendig zu halten repariert
+  // ihn dauerhaft.
+  const gespiegelteDtos = <String, List<String>>{
+    'lib/features/email_versand/domain/entities/email_entwurf_ergebnis.dart': [
+      'EntwurfErgebnisDto',
+    ],
+    'lib/features/email_versand/domain/entities/email_versand_bereitschaft.dart':
+        ['EmailVersandBereitschaftDto'],
+    'lib/features/email_versand/domain/entities/email_versand_ergebnis.dart': [
+      'EmailVersandErgebnisDto',
+    ],
+    'lib/features/email_versand/domain/entities/outlook_anhaenge.dart': [
+      'OutlookAnhaengeDto',
+    ],
+    'lib/features/email_versand/domain/entities/outlook_signatur.dart': [
+      'OutlookSignaturDto',
+    ],
+    'lib/features/email_versand/domain/entities/outlook_stand.dart': [
+      'OutlookStandDto',
+    ],
+    'lib/features/email_versand/domain/entities/signatur_bild.dart': [
+      'SignaturBildDto',
+    ],
+    'lib/features/email_versand/domain/entities/signatur_stand.dart': [
+      'SignaturStandDto',
+    ],
+    'lib/features/email_versand/domain/entities/versand_eintrag.dart': [
+      'VersandEintragDto',
+    ],
+    'lib/features/form_template_setup/domain/entities/form_template.dart': [
+      'FormTemplateDto',
+      'CreateFormTemplateDto',
+    ],
+    'lib/features/mailbox/domain/entities/mailbox_config.dart': [
+      'MailboxConfigDto',
+      'MailboxConfigUpdateDto',
+    ],
+    'lib/features/mailbox/domain/entities/mailbox_status.dart': [
+      'MailboxStatusDto',
+    ],
+    'lib/features/mailbox/domain/entities/received_reply.dart': [
+      'ReceivedReplyDto',
+    ],
+    'lib/features/mandanten/domain/entities/mandant.dart': [
+      'MandantDto',
+      'CreateMandantDto',
+    ],
+    'lib/features/settings/domain/entities/kanzlei_settings.dart': [
+      'KanzleiSettingsDto',
+    ],
+    'lib/features/versicherer/domain/entities/versicherer.dart': [
+      'VersichererDto',
+    ],
+    'lib/features/vorgaenge/domain/entities/vorgang_json.dart': ['VorgangDto'],
+    'lib/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart':
+        ['ArbeitsordnerAufgeraeumtDto', 'ArbeitsordnerDto'],
+    'lib/features/word_automation/domain/entities/damage_listing.dart': [
+      'DamageListingDto',
+      'DamageItemDto',
+    ],
+    'lib/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart':
+        ['ZentralrufReplyData'],
   };
+
+  // Dateien mit json['…']-Zugriffen, die bewusst kein Backend-DTO spiegeln —
+  // mit dem Grund, damit die naechste Aenderung ihn nachpruefen kann statt
+  // ihn zu glauben.
+  const ohneDto = <String, String>{
+    'lib/core/backend/backend_health_probe.dart':
+        'liest GET /health — die Bereitschaftsabfrage vor dem DI-Aufbau, '
+        'bewusst kein Teil des OpenAPI-Vertrags',
+    'lib/core/theme/domain/theme_preferences.dart':
+        'geraetelokale Darstellungs-Einstellung, geht nie ueber HTTP',
+    'lib/features/form_template_setup/domain/entities/field_data.dart':
+        'Inhalt der opaken fields-Spalte von FormTemplateDto — das Schema '
+        'lebt nur in Dart (FALLSTRICKE.md des Features)',
+  };
+
+  test('jede Datei mit json-Zugriffen ist ihrem Backend-DTO zugeordnet', () {
+    final zugeordnet = {...gespiegelteDtos.keys, ...ohneDto.keys};
+    final mitJsonZugriff = <String>{
+      for (final datei in dartQuelldateien('lib'))
+        if (datei.readAsStringSync().contains("json['")) relPfad(datei),
+    };
+
+    final unzugeordnet = mitJsonZugriff.difference(zugeordnet).toList()..sort();
+    expect(
+      unzugeordnet,
+      isEmpty,
+      reason:
+          'Diese Dateien fuehren Feldnamen von Hand, stehen aber in keiner '
+          'der beiden Listen dieses Tests. In gespiegelteDtos das DTO aus '
+          'docs/openapi.json eintragen — oder, wenn die Datei wirklich kein '
+          'Backend-DTO spiegelt, mit Begruendung in ohneDto:\n  '
+          '${unzugeordnet.join('\n  ')}',
+    );
+
+    final veraltet = zugeordnet.difference(mitJsonZugriff).toList()..sort();
+    expect(
+      veraltet,
+      isEmpty,
+      reason:
+          'Diese Eintraege zeigen auf Dateien ohne json-Zugriffe mehr '
+          '(geloescht, verschoben oder umgebaut) — Eintrag entfernen oder '
+          'Pfad nachziehen:\n  ${veraltet.join('\n  ')}',
+    );
+  });
 
   final schemata =
       (vertrag['components'] as Map<String, dynamic>)['schemas']
@@ -89,18 +196,19 @@ void main() {
 
   for (final eintrag in gespiegelteDtos.entries) {
     test('${eintrag.key.split('/').last} benutzt nur Felder aus '
-        '${eintrag.value}', () {
-      final schema = schemata[eintrag.value] as Map<String, dynamic>?;
-      expect(
-        schema,
-        isNotNull,
-        reason:
-            'Das Schema ${eintrag.value} steht nicht in docs/openapi.json — '
-            'wurde das DTO umbenannt oder entfernt?',
-      );
-
-      final erlaubt = (schema!['properties'] as Map<String, dynamic>).keys
-          .toSet();
+        '${eintrag.value.join(' und ')}', () {
+      final erlaubt = <String>{};
+      for (final dto in eintrag.value) {
+        final schema = schemata[dto] as Map<String, dynamic>?;
+        expect(
+          schema,
+          isNotNull,
+          reason:
+              'Das Schema $dto steht nicht in docs/openapi.json — '
+              'wurde das DTO umbenannt oder entfernt?',
+        );
+        erlaubt.addAll((schema!['properties'] as Map<String, dynamic>).keys);
+      }
 
       final quelle = File(eintrag.key).readAsStringSync();
       final gelesen = RegExp(
@@ -120,11 +228,11 @@ void main() {
         unbekannt,
         isEmpty,
         reason:
-            'Diese Feldnamen benutzt ${eintrag.key}, das Backend-DTO '
-            '${eintrag.value} kennt sie aber nicht. Ein solcher Name faellt '
-            'sonst nirgends auf: die Anwendung uebersetzt, alle Tests bleiben '
-            'gruen, und das Feld ist zur Laufzeit still null.\n  '
-            '${unbekannt.join('\n  ')}',
+            'Diese Feldnamen benutzt ${eintrag.key}, die Backend-DTOs '
+            '${eintrag.value.join(' und ')} kennen sie aber nicht. Ein '
+            'solcher Name faellt sonst nirgends auf: die Anwendung '
+            'uebersetzt, alle Tests bleiben gruen, und das Feld ist zur '
+            'Laufzeit still null.\n  ${unbekannt.join('\n  ')}',
       );
     });
   }
