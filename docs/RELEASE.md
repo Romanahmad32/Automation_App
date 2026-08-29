@@ -258,6 +258,32 @@ funktioniert weiter, du musst dann wieder selbst Bescheid geben.
 > Setup und ist eine eigene Umstellung; sie lohnt erst, wenn mehrere Rechner zu
 > versorgen sind.
 
+## Geheimnisse bleiben draußen
+
+Das Repository ist öffentlich. Geprüft wird an zwei Stellen, und nur die zweite ist eine Zusage:
+
+- **`.githooks/pre-commit`** — vor jedem Commit, auf Index **und** Arbeitsbaum. Der zweite
+  Durchgang ist kein Übereifer: Bei `git commit -a` stehen die Änderungen zum Zeitpunkt des Hooks
+  noch nicht im Index, eine Prüfung nur auf `--staged` ließe genau diesen Weg durch.
+- **CI-Schritt „Gitleaks"** — bei jedem Pull Request und bei jedem Push auf `master`, über die
+  **volle Historie**. Ein Zugang, der einmal committet und im nächsten Commit entfernt wurde, steht
+  weiter im Repository und gilt trotzdem als verbrannt.
+
+**Der Hook braucht `gitleaks` oder Docker.** Ist beides nicht da, schweigt er und lässt durch —
+ein Wächter, der bei eigener Störung die Arbeit anhält, wird abgeschaltet. Der Preis ist, dass man
+„geprüft, sauber" nicht von „gar nicht gelaufen" unterscheidet; deshalb steht hier, was fehlt:
+
+```powershell
+winget install gitleaks     # oder: Docker installieren, dann laeuft er im Container
+```
+
+**Verdrahtet wird der Hook über `core.hooksPath`**, und das setzt `scripts/check.ps1` beim ersten
+Lauf auf `.githooks`. Der Ordner ist versioniert, die Einstellung nicht — ein frischer Klon kennt
+die Hooks also, benutzt sie aber erst, wenn jemand die Prüfkette gefahren hat. Das ist die
+Abwägung: Ein Git-Hook greift bei *jedem* Commit (Terminal, IDE, Agent, `-a`, `-C <pfad>`), was ein
+Hook im Agenten-Setup nicht kann — dafür ist er nicht automatisch da. Steht `core.hooksPath` schon
+auf etwas anderem, lässt `check.ps1` es stehen und sagt es nur.
+
 ## Toolchain ist festgenagelt
 
 `global.json` legt das .NET-SDK fest, `FLUTTER_VERSION` in beiden Workflows die
