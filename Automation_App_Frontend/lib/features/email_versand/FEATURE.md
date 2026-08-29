@@ -22,7 +22,7 @@ Dienste `EmailEntwurfErzeuger` (Vorbelegung), `VersandVoraussetzungen` (Prüfung
 - Zwei Wege hinaus: Direktversand **oder** Entwurf in Outlook — die Rückfalltür, ohne Postfach-Zugang. Danach bleibt die Phase auf `verfassen` und `ergebnis` null: Ob dort gesendet wurde, weiß die App nicht (§4.8), der Dialog schließt sich **nicht**.
   `OutlookVerbindung` hält die Instanz, der Dialog wärmt vor (`waermeEntwurfVor`) — sonst Kaltstart.
 - Die **Signatur** hängt das Backend an (`KanzleiSignatur`), nur beim Direktversand — beim Outlook-Entwurf setzt Outlook seine eigene. Outlook führt sie **doppelt**: `signatur` ist seine Nur-Text-Übersetzung, `signaturHtml` die formatierte Fassung, die beim Empfänger ankommt. Die Vorschau rendert **die HTML-Fassung** (`SignaturAnsicht`, `flutter_widget_from_html_core`); ihre Bildverweise zeigt `SignaturHtmlAufbereitung` auf `signaturen/bild` um.
-  **Outlook schreibt jedes Bild zweimal** (VML-Form *und* `<img>`) — beim Abwählen müssen beide fallen; pixelgleich wird die Ansicht nie (Word-Modul).
+  **Outlook schreibt jedes Bild zweimal** (VML-Form *und* `<img>`) — beim Abwählen müssen beide fallen, ein Zellenhintergrund (`background=`) verliert nur sein Attribut; pixelgleich wird die Ansicht nie (Word-Modul).
   Ein Bild, das **nicht** mitgenommen werden kann (>25 MB, leer, unlesbar), verliert seine ganze Marke statt einen toten Verweis zu hinterlassen —
   beim Übernehmen (`OutlookSignaturFormat.Uebergangen`, gemeldet in den Einstellungen) und als Netz beim Versand (`KanzleiSignatur`, `OertlicheQuellen`).
 - Signaturbilder sind je Mail abwählbar (`ohneSignaturBilder`) und **wiegen mit**: `state.gesamtBytes` = Anhänge + mitgehende

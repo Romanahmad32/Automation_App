@@ -25,10 +25,17 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
 
   @override
   Future<EmailVersandBereitschaft> ladeBereitschaft() async {
-    final response = await _dio.get('/api/EmailVersand/bereitschaft');
-    return EmailVersandBereitschaft.fromJson(
-      response.data as Map<String, dynamic>,
-    );
+    try {
+      final response = await _dio.get('/api/EmailVersand/bereitschaft');
+      return EmailVersandBereitschaft.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ??
+            'Der Postausgang ist nicht erreichbar. Läuft der Dienst noch?',
+      );
+    }
   }
 
   @override
@@ -104,17 +111,33 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
 
   @override
   Future<List<VersandEintrag>> ladeVersandProtokoll(String referenz) async {
-    final response = await _dio.get(
-      '/api/EmailVersand/protokoll',
-      queryParameters: {'referenz': referenz},
-    );
-    return _eintraege(response.data);
+    try {
+      final response = await _dio.get(
+        '/api/EmailVersand/protokoll',
+        queryParameters: {'referenz': referenz},
+      );
+      return _eintraege(response.data);
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ??
+            'Das Versandprotokoll konnte nicht gelesen werden. Läuft der '
+                'Dienst noch?',
+      );
+    }
   }
 
   @override
   Future<List<VersandEintrag>> ladeLetzteVersaende() async {
-    final response = await _dio.get('/api/EmailVersand/protokoll/letzte');
-    return _eintraege(response.data);
+    try {
+      final response = await _dio.get('/api/EmailVersand/protokoll/letzte');
+      return _eintraege(response.data);
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ??
+            'Das Versandprotokoll konnte nicht gelesen werden. Läuft der '
+                'Dienst noch?',
+      );
+    }
   }
 
   List<VersandEintrag> _eintraege(Object? daten) => [
@@ -149,17 +172,30 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
 
   @override
   Future<List<OutlookSignatur>> ladeOutlookSignaturen() async {
-    final response = await _dio.get('/api/EmailVersand/signaturen');
-    return [
-      for (final eintrag in response.data as List)
-        OutlookSignatur.fromJson(eintrag as Map<String, dynamic>),
-    ];
+    try {
+      final response = await _dio.get('/api/EmailVersand/signaturen');
+      return [
+        for (final eintrag in response.data as List)
+          OutlookSignatur.fromJson(eintrag as Map<String, dynamic>),
+      ];
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ??
+            'Die Signaturen aus Outlook konnten nicht gelesen werden.',
+      );
+    }
   }
 
   @override
   Future<SignaturStand> ladeSignaturStand() async {
-    final response = await _dio.get('/api/EmailVersand/signaturen/stand');
-    return SignaturStand.fromJson(response.data as Map<String, dynamic>);
+    try {
+      final response = await _dio.get('/api/EmailVersand/signaturen/stand');
+      return SignaturStand.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(
+        _serverMeldung(e) ?? 'Die Signatur konnte nicht gelesen werden.',
+      );
+    }
   }
 
   @override
@@ -196,6 +232,10 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
   /// Der Grund im Klartext aus den ProblemDetails des Backends. Genau dieser
   /// Text landet vor dem Anwalt — er sagt ihm, was zu tun ist (Anhang
   /// schließen, neu anmelden), was eine Statusnummer nie könnte.
+  ///
+  /// **Jede** Methode hier übersetzt so, auch die lesenden: Ein durchgereichter
+  /// `DioException` steht sonst mitsamt Verbindungsdaten und Stapel vor dem
+  /// Anwalt, sobald ein Aufrufer den Fehler anzeigt statt ihn zu schlucken.
   String? _serverMeldung(DioException e) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {

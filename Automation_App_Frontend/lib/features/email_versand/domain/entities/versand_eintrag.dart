@@ -34,6 +34,10 @@ enum VersandWeg {
 /// ist. Die Mail selbst liegt im Ordner „Gesendet" des Postfachs — und damit
 /// in Outlook am selben Konto; dieser Eintrag ist der Index darüber, nicht
 /// sein Ersatz.
+///
+/// Das Backend liefert daneben eine `messageId`. Sie steht hier nicht: Sie
+/// wäre für den Anwalt keine Auskunft, und ein Feld, das niemand liest, sieht
+/// beim nächsten Blick aus wie eines, das jemand zu lesen vergessen hat.
 class VersandEintrag extends Equatable {
   final String vorgangReferenz;
   final DateTime gesendetAm;
@@ -49,9 +53,6 @@ class VersandEintrag extends Equatable {
   /// Ob die Kopie im Ordner „Gesendet" landete.
   final bool imGesendetOrdner;
 
-  /// Die Message-ID der eingelieferten Nachricht; leer beim Entwurfsweg.
-  final String messageId;
-
   const VersandEintrag({
     required this.vorgangReferenz,
     required this.gesendetAm,
@@ -62,7 +63,6 @@ class VersandEintrag extends Equatable {
     this.betreff = '',
     this.anhaenge = const [],
     this.imGesendetOrdner = false,
-    this.messageId = '',
   });
 
   factory VersandEintrag.fromJson(Map<String, dynamic> json) => VersandEintrag(
@@ -77,7 +77,6 @@ class VersandEintrag extends Equatable {
     betreff: json['betreff'] as String? ?? '',
     anhaenge: _texte(json['anhaenge']),
     imGesendetOrdner: json['imGesendetOrdner'] as bool? ?? false,
-    messageId: json['messageId'] as String? ?? '',
   );
 
   static List<String> _texte(Object? wert) => [
@@ -98,6 +97,5 @@ class VersandEintrag extends Equatable {
     betreff,
     anhaenge,
     imGesendetOrdner,
-    messageId,
   ];
 }

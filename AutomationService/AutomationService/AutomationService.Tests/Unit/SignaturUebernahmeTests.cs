@@ -175,6 +175,40 @@ public sealed class SignaturUebernahmeTests : IDisposable
             .Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Ein Hintergrundbild haengt an einer Tabellenzelle, nicht an einer
+    /// eigenen Marke. Bliebe der Verweis stehen, waere das Bild abgewaehlt und
+    /// ginge trotzdem mit hinaus: Verwendete faende den Dateinamen wieder, und
+    /// MailRumpf bettete die Datei ein.
+    /// </summary>
+    [Fact]
+    public void SignaturHtmlFilter_NimmtAuchDasHintergrundbildHeraus()
+    {
+        const string html =
+            "<table><tr><td background=\"werbung.gif\" valign=\"top\">Kanzlei</td>"
+            + "<td background=\"logo.png\">RA</td></tr></table>";
+
+        var uebrig = SignaturHtmlFilter.Ohne(html, new HashSet<string> { "werbung.gif" });
+
+        uebrig.Should().NotContain("werbung.gif");
+        // Die Zelle bleibt mit allem, was in ihr steht: Sie herauszunehmen
+        // hiesse, die Signatur auseinanderzunehmen.
+        uebrig.Should().Contain("Kanzlei").And.Contain("valign=\"top\"");
+        uebrig.Should().Contain("background=\"logo.png\"");
+        SignaturHtmlFilter.Verwendete(uebrig, [new SignaturBild("werbung.gif", 4_000_000)])
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SignaturHtmlFilter_ZaehltDasHintergrundbildAlsOertlicheQuelle()
+    {
+        // Sonst faende das Netz gegen tote Verweise (KanzleiSignatur) es nicht,
+        // und eine geloeschte Datei bliebe als background= in der Mail stehen.
+        const string html = "<td background=\"logo.png\">RA</td>";
+
+        SignaturHtmlFilter.OertlicheQuellen(html).Should().Equal("logo.png");
+    }
+
     [Fact]
     public void SignaturHtmlFilter_MeldetNurDieNochVerwendetenBilder()
     {

@@ -40,7 +40,7 @@ ein, damit niemand Servernamen abtippt:
 | Passwort | das Passwort des Postfachs (1&1 kennt kein App-Passwort-Konzept) |
 | SMTP | wird abgeleitet (`smtp.ionos.de`, Port 587 STARTTLS) — **nichts einzutragen** |
 
-In der App: *Einstellungen → Postfach-Zugang* → Anmeldeweg **„IMAP mit Passwort"** →
+In der App: *Einstellungen → E-Mail* → Anmeldeweg **„IMAP mit Passwort"** →
 Voreinstellung **„1&1 / IONOS"** → Adresse und Passwort eintragen → Überwachung einschalten →
 speichern. Die Überwachung verbindet sich sofort mit den neuen Werten neu.
 
@@ -83,5 +83,5 @@ die App danach per IMAP in „Gesendet" nach, außer der Anbieter tut es selbst 
 - **Zwei Programme am selben Postfach sind unkritisch.** Die Überwachung ändert nichts am
   Postfach: keine Gelesen-Markierung, kein Verschieben, kein Löschen. Umgekehrt erscheint die
   von der App gesendete Mail auch im „Gesendet" des Mailprogramms.
-- **Anhänge.** Zusammen höchstens 20 MB (`EmailVersand:MaxAnhangGesamtMb`); größere Nachrichten
+- **Anhänge.** Zusammen höchstens 35 MB (`EmailVersand:MaxAnhangGesamtMb`); größere Nachrichten
   weisen die üblichen Postfächer ab.

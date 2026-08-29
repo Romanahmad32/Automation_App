@@ -14,6 +14,12 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// sie stattdessen einfach nach.
 ///
 /// Läuft auf dem STA-Thread von <see cref="OutlookVerbindung"/>.
+///
+/// <b>Jeder Griff wird wieder losgelassen</b> (<see cref="ComFreigabe"/>).
+/// Dieser Weg ist der heikelste: Er läuft je Entwurf mehrfach und fasst dabei
+/// Explorer, Auswahl, Nachricht, Anhangsammlung und jeden einzelnen Anhang an.
+/// Bliebe davon etwas liegen, hielte die App Outlook fest, nachdem der Anwalt
+/// es längst geschlossen hat.
 /// </summary>
 internal static class OutlookAuswahl
 {
@@ -38,52 +44,90 @@ internal static class OutlookAuswahl
             return OutlookAnhaenge.Keine;
         }
 
-        dynamic nachricht = gefunden;
-
-        // Ein Ordner je Nachricht, benannt nach ihrer EntryID. Damit liefert
-        // der zweite Griff nach derselben Mail dieselben Pfade, statt
-        // "Gutachten (2).pdf" daneben zu legen: Die Oberflaeche erkennt sie
-        // dann als schon geholt, und niemand muss zwei Kopien einzeln
-        // wegklicken. FreierPfad bleibt fuer den Fall, den es abdecken soll --
-        // zwei gleichnamige Anhaenge in *einer* Nachricht.
-        var ordner = Path.Combine(AnhangAblage.OutlookOrdner(), OrdnerName(nachricht));
-        Directory.CreateDirectory(ordner);
-
-        var pfade = new List<string>();
-        dynamic anhaenge = nachricht.Attachments;
-        int anzahl = anhaenge.Count;
-
-        // Outlook zählt ab 1, nicht ab 0.
-        for (var nummer = 1; nummer <= anzahl; nummer++)
+        try
         {
-            dynamic anhang = anhaenge.Item(nummer);
-            if (!IstEchteDatei(anhang))
-            {
-                continue;
-            }
+            dynamic nachricht = gefunden;
 
-            try
-            {
-                var ziel = FreierPfad(ordner, SichererName((string)anhang.FileName), pfade);
+            // Ein Ordner je Nachricht, benannt nach ihrer EntryID. Damit
+            // liefert der zweite Griff nach derselben Mail dieselben Pfade,
+            // statt "Gutachten (2).pdf" daneben zu legen: Die Oberflaeche
+            // erkennt sie dann als schon geholt, und niemand muss zwei Kopien
+            // einzeln wegklicken.
+            var ordner = Path.Combine(
+                AnhangAblage.OutlookOrdner(),
+                OutlookAnhangNamen.Ordner(nachricht));
+            Directory.CreateDirectory(ordner);
 
-                // Vom vorigen Griff nach derselben Nachricht kann die Datei
-                // noch daliegen; sie soll ersetzt werden, nicht danebengelegt.
-                if (File.Exists(ziel))
+            return OutlookAnhaenge.Von(nachricht, Hole(nachricht, ordner), ausOffenemFenster);
+        }
+        finally
+        {
+            ComFreigabe.Gib(gefunden);
+        }
+    }
+
+    /// <summary>Legt jeden echten Anhang der Nachricht in den Ordner.</summary>
+    private static List<string> Hole(dynamic nachricht, string ordner)
+    {
+        var pfade = new List<string>();
+        object sammlungGriff = nachricht.Attachments;
+        try
+        {
+            dynamic sammlung = sammlungGriff;
+            int anzahl = sammlung.Count;
+
+            // Outlook zählt ab 1, nicht ab 0.
+            for (var nummer = 1; nummer <= anzahl; nummer++)
+            {
+                object anhangGriff = sammlung.Item(nummer);
+                try
                 {
-                    File.Delete(ziel);
+                    Speichere(anhangGriff, ordner, pfade);
                 }
-
-                anhang.SaveAsFile(ziel);
-                pfade.Add(ziel);
-            }
-            catch (COMException)
-            {
-                // Ein Anhang, den Outlook nicht herausrückt, darf die übrigen
-                // nicht mitnehmen.
+                finally
+                {
+                    ComFreigabe.Gib(anhangGriff);
+                }
             }
         }
+        finally
+        {
+            ComFreigabe.Gib(sammlungGriff);
+        }
 
-        return OutlookAnhaenge.Von(nachricht, pfade, ausOffenemFenster);
+        return pfade;
+    }
+
+    private static void Speichere(object anhangGriff, string ordner, List<string> pfade)
+    {
+        dynamic anhang = anhangGriff;
+        if (!IstEchteDatei(anhang))
+        {
+            return;
+        }
+
+        try
+        {
+            var ziel = OutlookAnhangNamen.Frei(
+                ordner,
+                OutlookAnhangNamen.Sicher((string)anhang.FileName),
+                pfade);
+
+            // Vom vorigen Griff nach derselben Nachricht kann die Datei noch
+            // daliegen; sie soll ersetzt werden, nicht danebengelegt.
+            if (File.Exists(ziel))
+            {
+                File.Delete(ziel);
+            }
+
+            anhang.SaveAsFile(ziel);
+            pfade.Add(ziel);
+        }
+        catch (COMException)
+        {
+            // Ein Anhang, den Outlook nicht herausrückt, darf die übrigen
+            // nicht mitnehmen.
+        }
     }
 
     /// <summary>
@@ -94,49 +138,83 @@ internal static class OutlookAuswahl
     /// <returns>
     /// Die Nachricht und ob sie aus einem offenen Fenster kam. Genau diese
     /// Unterscheidung geht mit zurück an die Oberfläche: Sie ist der einzige
-    /// Grund, aus dem der Griff eine andere Mail erwischt als erwartet.
+    /// Grund, aus dem der Griff eine andere Mail erwischt als erwartet. Den
+    /// zurückgegebenen Verweis gibt der Aufrufer wieder frei.
     /// </returns>
     private static (object? Nachricht, bool AusOffenemFenster) AktuelleNachricht(object anwendung)
     {
-        dynamic outlook = anwendung;
+        var offen = AusFenster(anwendung);
+        return offen is not null ? (offen, true) : (AusListe(anwendung), false);
+    }
+
+    private static object? AusFenster(object anwendung)
+    {
+        object? fenster = null;
         try
         {
-            object? inspector = outlook.ActiveInspector();
-            if (inspector is not null)
+            fenster = ((dynamic)anwendung).ActiveInspector();
+            if (fenster is null)
             {
-                dynamic offen = inspector;
-                if (IstMail(offen.CurrentItem))
-                {
-                    return (offen.CurrentItem, true);
-                }
+                return null;
             }
+
+            object? element = ((dynamic)fenster).CurrentItem;
+            if (IstMail(element))
+            {
+                return element;
+            }
+
+            ComFreigabe.Gib(element);
+            return null;
         }
         catch (COMException)
         {
             // Kein offenes Fenster.
+            return null;
         }
+        finally
+        {
+            ComFreigabe.Gib(fenster);
+        }
+    }
 
+    private static object? AusListe(object anwendung)
+    {
+        object? liste = null;
+        object? auswahl = null;
         try
         {
-            object? explorer = outlook.ActiveExplorer();
-            if (explorer is null)
+            liste = ((dynamic)anwendung).ActiveExplorer();
+            if (liste is null)
             {
-                return (null, false);
+                return null;
             }
 
-            dynamic liste = explorer;
-            dynamic auswahl = liste.Selection;
-            if (auswahl.Count >= 1 && IstMail(auswahl.Item(1)))
+            auswahl = ((dynamic)liste).Selection;
+            dynamic markiert = auswahl;
+            if (markiert.Count < 1)
             {
-                return (auswahl.Item(1), false);
+                return null;
             }
+
+            object? element = markiert.Item(1);
+            if (IstMail(element))
+            {
+                return element;
+            }
+
+            ComFreigabe.Gib(element);
+            return null;
         }
         catch (COMException)
         {
             // Keine Liste, keine Auswahl.
+            return null;
         }
-
-        return (null, false);
+        finally
+        {
+            ComFreigabe.Gib(auswahl, liste);
+        }
     }
 
     private static bool IstMail(dynamic? element)
@@ -158,6 +236,7 @@ internal static class OutlookAuswahl
     /// </summary>
     private static bool IstEchteDatei(dynamic anhang)
     {
+        object? zugriff = null;
         try
         {
             if (anhang.Type != OlByValue)
@@ -165,7 +244,9 @@ internal static class OutlookAuswahl
                 return false;
             }
 
-            var inhaltsKennung = anhang.PropertyAccessor.GetProperty(ContentIdEigenschaft) as string;
+            zugriff = anhang.PropertyAccessor;
+            var inhaltsKennung =
+                ((dynamic)zugriff).GetProperty(ContentIdEigenschaft) as string;
             return string.IsNullOrEmpty(inhaltsKennung);
         }
         catch (COMException)
@@ -173,68 +254,9 @@ internal static class OutlookAuswahl
             // Keine Content-Id vorhanden: ein gewöhnlicher Anhang.
             return true;
         }
-    }
-
-    private static string SichererName(string dateiname)
-    {
-        var name = Path.GetFileName(dateiname);
-        foreach (var verboten in Path.GetInvalidFileNameChars())
+        finally
         {
-            name = name.Replace(verboten, '_');
-        }
-
-        return string.IsNullOrWhiteSpace(name) ? "Anhang" : name;
-    }
-
-    /// <summary>
-    /// Der Ordner dieser Nachricht. Die EntryID ist stabil, taugt aber roh
-    /// nicht als Ordnername — sie ist eine lange Hex-Kette. Gekuerzt und
-    /// entschaerft reicht sie, um Nachrichten auseinanderzuhalten.
-    /// </summary>
-    private static string OrdnerName(dynamic nachricht)
-    {
-        string kennung;
-        try
-        {
-            kennung = (string)nachricht.EntryID ?? string.Empty;
-        }
-        catch (COMException)
-        {
-            kennung = string.Empty;
-        }
-
-        var sauber = new string([.. kennung.Where(char.IsLetterOrDigit)]);
-        return sauber.Length switch
-        {
-            0 => "Ohne-Kennung",
-            > 40 => sauber[^40..],
-            _ => sauber,
-        };
-    }
-
-    /// <summary>
-    /// Zwei gleichnamige Anhaenge in derselben Nachricht duerfen sich nicht
-    /// ueberschreiben. Geprueft wird gegen die Namen, die dieser Griff schon
-    /// vergeben hat — nicht gegen die Platte: Was vom vorigen Griff nach
-    /// derselben Nachricht dort liegt, soll gerade ersetzt werden.
-    /// </summary>
-    private static string FreierPfad(string ordner, string dateiname, List<string> vergeben)
-    {
-        var pfad = Path.Combine(ordner, dateiname);
-        if (!vergeben.Contains(pfad, StringComparer.OrdinalIgnoreCase))
-        {
-            return pfad;
-        }
-
-        var stamm = Path.GetFileNameWithoutExtension(dateiname);
-        var endung = Path.GetExtension(dateiname);
-        for (var nummer = 2; ; nummer++)
-        {
-            pfad = Path.Combine(ordner, $"{stamm} ({nummer}){endung}");
-            if (!vergeben.Contains(pfad, StringComparer.OrdinalIgnoreCase))
-            {
-                return pfad;
-            }
+            ComFreigabe.Gib(zugriff);
         }
     }
 }

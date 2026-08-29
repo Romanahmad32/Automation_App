@@ -3,6 +3,7 @@ import 'package:automation_app/features/email_versand/domain/entities/versand_ei
 import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/versand_darstellung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_protokoll_dialog.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/versand_weg_symbol.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -44,7 +45,6 @@ class _VorgangVersandZeileState extends State<VorgangVersandZeile> {
         final eintrag = getIt<LetzteVersaendeCubit>().zu(widget.referenz);
         if (eintrag == null) return const SizedBox.shrink();
 
-        final nachweis = eintrag.weg.istNachweis;
         return Padding(
           padding: const EdgeInsets.only(top: 4),
           child: InkWell(
@@ -53,11 +53,7 @@ class _VorgangVersandZeileState extends State<VorgangVersandZeile> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  nachweis ? Icons.check_circle : Icons.outbox_outlined,
-                  size: 14,
-                  color: nachweis ? Colors.green : theme.colorScheme.outline,
-                ),
+                VersandWegSymbol(weg: eintrag.weg, groesse: 14),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(

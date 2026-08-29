@@ -22,6 +22,11 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// Outlook — das Programm, das die meisten Empfänger benutzen — zeigt das
 /// abgewählte Bild weiterhin an, und es geht auch weiterhin mit hinaus. Beide
 /// Fassungen müssen fallen.
+///
+/// <b>Ein Bild muss keine Marke haben.</b> Als <c>background</c> hängt es an
+/// einer Tabellenzelle. Die Zelle mitsamt ihrem Inhalt zu entfernen, hiesse die
+/// Signatur auseinanderzunehmen — dort fällt deshalb nur das Attribut, und die
+/// Zelle bleibt ohne ihr Bild stehen.
 /// </summary>
 public static partial class SignaturHtmlFilter
 {
@@ -32,8 +37,11 @@ public static partial class SignaturHtmlFilter
             return html;
         }
 
-        return BildMarken().Replace(html, treffer =>
+        var uebrig = BildMarken().Replace(html, treffer =>
             Zeigt(treffer.Value, dateinamen) ? string.Empty : treffer.Value);
+
+        return HintergrundMuster().Replace(uebrig, treffer =>
+            dateinamen.Contains(treffer.Groups["url"].Value) ? string.Empty : treffer.Value);
     }
 
     /// <summary>Die Dateinamen, auf die die Signatur noch verweist.</summary>
@@ -41,8 +49,7 @@ public static partial class SignaturHtmlFilter
     {
         var vorhanden = html.Length == 0
             ? []
-            : VerweisMuster().Matches(html).Select(treffer => treffer.Groups["url"].Value).ToHashSet(
-                StringComparer.OrdinalIgnoreCase);
+            : BildVerweis.Alle(html).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return [.. bilder.Select(bild => bild.Dateiname).Where(vorhanden.Contains)];
     }
@@ -55,17 +62,10 @@ public static partial class SignaturHtmlFilter
     /// </summary>
     public static IReadOnlyList<string> OertlicheQuellen(string html) =>
     [
-        .. VerweisMuster().Matches(html)
-            .Select(treffer => treffer.Groups["url"].Value)
-            .Where(Oertlich)
+        .. BildVerweis.Alle(html)
+            .Where(BildVerweis.Oertlich)
             .Distinct(StringComparer.OrdinalIgnoreCase),
     ];
-
-    private static bool Oertlich(string verweis) =>
-        verweis.Length > 0
-        && !verweis.Contains("://", StringComparison.Ordinal)
-        && !verweis.StartsWith("cid:", StringComparison.OrdinalIgnoreCase)
-        && !verweis.StartsWith("data:", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Ob diese Marke eines der weggelassenen Bilder zeigt. Gelesen werden alle
@@ -73,7 +73,7 @@ public static partial class SignaturHtmlFilter
     /// <c>&lt;v:imagedata&gt;</c>, nicht an sich selbst.
     /// </summary>
     private static bool Zeigt(string marke, IReadOnlySet<string> dateinamen) =>
-        VerweisMuster().Matches(marke).Any(treffer => dateinamen.Contains(treffer.Groups["url"].Value));
+        BildVerweis.Alle(marke).Any(dateinamen.Contains);
 
     /// <summary>
     /// Alles, was ein Bild an die Stelle setzt: die VML-Form mitsamt Inhalt,
@@ -86,11 +86,13 @@ public static partial class SignaturHtmlFilter
     private static partial Regex BildMarken();
 
     /// <summary>
-    /// Ein Bildverweis. <c>background</c> zählt mit: Outlook hängt damit
-    /// Hintergrundbilder an Tabellenzellen, und die gehen genauso mit hinaus
-    /// wie ein <c>src</c>.
+    /// Das ganze <c>background</c>-Attribut samt führendem Leerraum. Es hängt
+    /// an einer Zelle, die stehen bleiben muss — anders als bei einer Bildmarke
+    /// wird deshalb nur das Attribut entfernt. Bliebe es stehen, fände
+    /// <see cref="Verwendete"/> das abgewählte Bild wieder und
+    /// <see cref="MailRumpf"/> bettete es erneut ein.
     /// </summary>
-    [GeneratedRegex(@"\b(?:src|background)\s*=\s*(?<q>[""'])(?<url>[^""']*)\k<q>",
+    [GeneratedRegex(@"\s*\bbackground\s*=\s*(?<q>[""'])(?<url>[^""']*)\k<q>",
         RegexOptions.IgnoreCase)]
-    private static partial Regex VerweisMuster();
+    private static partial Regex HintergrundMuster();
 }

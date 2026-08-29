@@ -69,6 +69,14 @@ public sealed class EntwurfOeffner(
     ///
     /// Kein Zeitpunkt des Versands, sondern der der Übergabe — und keine
     /// Message-ID: Die vergibt erst das Mailprogramm.
+    ///
+    /// Auch <b>kein Absender</b>: Über welches Konto Outlook die Nachricht
+    /// hinausschickt, entscheidet Outlook. Die Spalte trägt beim Direktversand
+    /// die Adresse, von der aus gesendet wurde (<see cref="VersandEintrag"/>) —
+    /// hier stattdessen den Namen des Anwalts einzutragen, hiesse zwei Wertarten
+    /// in eine Spalte zu mischen; im Protokoll stünde einmal „Von: kanzlei@…"
+    /// und einmal „Von: Rechtsanwalt …". Leer ist ehrlicher: Die Oberfläche
+    /// lässt die Zeile dann weg.
     /// </summary>
     private Task ProtokolliereAsync(
         EmailNachricht nachricht,
@@ -79,7 +87,7 @@ public sealed class EntwurfOeffner(
                 nachricht.VorgangReferenz,
                 DateTimeOffset.Now,
                 weg,
-                nachricht.AbsenderName,
+                string.Empty,
                 nachricht.An,
                 nachricht.Kopie,
                 nachricht.Betreff,

@@ -105,18 +105,18 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   /// Speichert beides: die Signatur immer (wenn geändert), den Zugang nur
   /// vollständig. Ein unvollständiger Zugang meldet sich, statt still nichts
   /// zu tun — die Feldfehler werden dabei sichtbar gemacht.
+  ///
+  /// Über die Signatur steht hier nichts: Sie geht in einen anderen
+  /// Einstellungssatz, ihr Erfolg kommt entsprechend später — [MailSignaturSektion]
+  /// meldet ihn selbst, wenn er da ist.
   void _save() {
-    final signaturGeschrieben = MailSignaturSektion.speichereWennGeaendert(
-      context,
-      _signatur.text,
-    );
+    MailSignaturSektion.speichereWennGeaendert(context, _signatur.text);
 
     if (!_form.valid) {
       _form.markAllAsTouched();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            '${signaturGeschrieben ? 'Die Signatur ist gespeichert. ' : ''}'
             'Der Postfach-Zugang ist noch unvollständig — er wurde nicht '
             'gespeichert. Die rot markierten Felder fehlen.',
           ),

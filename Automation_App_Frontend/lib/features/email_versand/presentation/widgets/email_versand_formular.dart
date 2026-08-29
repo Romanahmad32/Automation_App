@@ -104,7 +104,7 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
                 text:
                     uebergeben.hinweis ??
                     'Der Entwurf liegt in Outlook — dort gesendet, gilt er als '
-                        'ausserhalb der App versendet. Das Haekchen beim '
+                        'außerhalb der App versendet. Das Häkchen beim '
                         'Abschluss setzen Sie von Hand.',
               ),
             ],

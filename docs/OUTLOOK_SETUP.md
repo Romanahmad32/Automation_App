@@ -59,7 +59,7 @@ Anmelden einen klaren Fehler.
 
 ## 3. Was der Kunde später macht (der einfache Teil)
 
-1. Einstellungen → Postfach-Zugang → Anbieter **„Outlook / Microsoft“** wählen.
+1. Einstellungen → E-Mail → Anbieter **„Outlook / Microsoft“** wählen.
 2. **„Mit Microsoft anmelden“** klicken — der normale Browser öffnet sich.
 3. Mit der Outlook-Adresse und dem **normalen Kontopasswort** anmelden und zustimmen.
 4. Fertig: Adresse und Server werden automatisch übernommen, die Überwachung verbindet

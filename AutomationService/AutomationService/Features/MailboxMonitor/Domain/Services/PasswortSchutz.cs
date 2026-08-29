@@ -23,6 +23,11 @@ public static class PasswortSchutz
     /// <summary>
     /// Verschluesselt fuer die Ablage. Leere Eingabe bleibt leer (es gibt nichts
     /// zu schuetzen); null bedeutet, dass das Verschluesseln fehlgeschlagen ist.
+    ///
+    /// Bei null darf der Aufrufer den abgelegten Bestand <b>nicht</b>
+    /// ueberschreiben (<see cref="MailboxConfigStore"/>): Ein Datensatz ohne
+    /// Passwortfeld ist von einem nie befuellten nicht zu unterscheiden, und
+    /// das Passwort waere nach dem naechsten Start wortlos weg.
     /// </summary>
     public static string? Schuetze(string klartext)
     {
