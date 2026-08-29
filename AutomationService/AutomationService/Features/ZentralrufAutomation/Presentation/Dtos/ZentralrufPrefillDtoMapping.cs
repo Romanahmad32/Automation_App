@@ -40,9 +40,9 @@ public static class ZentralrufPrefillDtoMapping
     }
 
     /// <summary>
-    /// Die Anfragerdaten haben in der Domain bereits einen Typ: dieselben Felder
-    /// werden aus appsettings.json gebunden (<c>Zentralruf:Anfrager</c>) und
-    /// dienen als feldweiser Rückfall. Deshalb kein dritter Typ.
+    /// Die Anfragerdaten haben in der Domain bereits einen Typ: derselbe
+    /// <c>ZentralrufAnfragerOptions</c> dient als feldweiser Rückfall
+    /// (<c>ZentralrufAutomationService.ResolveAnfrager</c>). Deshalb kein dritter Typ.
     /// </summary>
     public static ZentralrufAnfragerOptions ToDomain(this ZentralrufAnfragerDto dto)
     {

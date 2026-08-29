@@ -7,6 +7,9 @@
 # Quellen, die immer LF brauchen, weil sie auf Unix-Seite gelesen werden
 # (Shell-Skripte in Containern, CI-Schritte, Playwright-Installationsskripte).
 *.sh            text eol=lf
+# Git-Hooks fuehrt Git mit seiner eigenen sh aus — auch auf Windows. Sie tragen
+# keine Endung und fielen sonst unter die CRLF-Regel darunter.
+.githooks/*     text eol=lf
 *.yml           text eol=lf
 *.yaml          text eol=lf
 

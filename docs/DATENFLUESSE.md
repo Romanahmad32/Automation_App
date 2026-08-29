@@ -21,8 +21,9 @@ form_template_setup ──▶ vorgaenge ──▶ mandanten / zentralruf_reply �
 - **Ausfüllen:** `VorgangPrefillMatcher` (`vorgaenge/domain/services/`) löst dieselbe
   `FeldDatenquelle` zum Wert auf — und greift auf die Erkennung zurück, wo an einem Bestandsfeld
   nie eine Quelle gesetzt wurde.
-- **Quellen:** `Vorgang` (vorgaenge), `Mandant` (mandanten, zusammengesetzt in
-  `mandant_anschrift.dart`) und die übernommene `ZentralrufReplyData` (zentralruf_reply).
+- **Quellen:** `Vorgang` (vorgaenge), `Mandant` (mandanten) und die übernommene
+  `ZentralrufReplyData` (zentralruf_reply). Zusammengesetzt wird in `mandant_anschrift.dart` —
+  das liegt bei `vorgaenge`, nicht bei `mandanten`: Es dient der Vorbelegung, nicht dem Register.
 
 **Die Naht:** Die `FeldDatenquelle` ist die einzige Verbindung zwischen Einrichten und Ausfüllen.
 Ein neuer Wert dort braucht **beide** Seiten — ohne den Zweig im Matcher steht die Quelle im
@@ -74,11 +75,14 @@ Verbraucher: `vorgang_starten_bloc.dart` baut daraus den **Anfrager** für das
 Zentralruf-Formular, `word_automation` füllt Briefkopf-Platzhalter, `email_versand` hängt die
 Signatur an.
 
-**Die Naht:** Der Anfrager wird **immer** vom Frontend mitgeschickt
-(`ZentralrufAutomationService.ResolveAnfrager` nimmt ihn bevorzugt). Der Rückfall aus
-`appsettings.json` ist deshalb toter Boden — dort standen bis zuletzt leere Felder für Name,
-Anschrift und Telefon des Anwalts, ohne je zu wirken. Sie sind entfernt; wer sie wieder einträgt,
-schreibt personenbezogene Daten in ein öffentliches Repository, ohne etwas zu bewirken.
+**Die Naht:** `ZentralrufAutomationService.ResolveAnfrager` nimmt den vom Frontend gesendeten
+Anfrager bevorzugt und füllt **feldweise** aus `ZentralrufOptions.Anfrager` auf. Dieser Rückfall
+greift wirklich — `vorgang_starten_bloc.dart` schickt `null`, wenn das Backend die Einstellungen
+gerade nicht liefern konnte —, er trägt aber nur noch seine Klassenvorgaben (Personentyp
+„Rechtsanwalt", Rest leer). In der versionierten `appsettings.json` stand derselbe Abschnitt
+zusätzlich mit leeren Feldern für Name, Anschrift und Telefon des Anwalts: kein anderes Verhalten,
+nur eine Einladung, personenbezogene Daten in ein öffentliches Repository zu schreiben. Er ist
+entfernt — der Rückfall selbst bleibt.
 
 ## Wo eine Kette anfängt zu lügen
 

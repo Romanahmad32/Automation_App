@@ -1,0 +1,89 @@
+#!/bin/sh
+# Sucht Geheimnisse in dem, was gerade committet werden soll.
+#
+# Git-Hook, kein Agenten-Hook: Er greift bei *jedem* Commit — im Terminal, aus
+# der IDE, aus Claude Code, mit `-a`, mit `-C <pfad>`. Die Vorgaengerfassung
+# hing an Claude Codes PreToolUse und sah nur, was der Agent selbst ausfuehrte;
+# `git commit -am` lief zudem an ihr vorbei, weil `--staged` nur den Index
+# sieht und `-a` erst danach vormerkt.
+#
+# Verdrahtet wird er ueber core.hooksPath — scripts/check.ps1 setzt das beim
+# ersten Lauf. Ein frischer Klon bringt es nicht mit; deshalb bleibt der
+# CI-Schritt "Gitleaks" die eigentliche Zusage, dieser Hook ist die fruehe
+# Warnung.
+#
+# Zwei Ausgaenge, und nur diese: Ein *Fund* haelt den Commit an (Exit 1).
+# Alles andere — kein gitleaks, kein Docker, ein abgestuerztes Werkzeug —
+# laesst durch und schweigt. Ein Waechter, der bei eigener Stoerung die Arbeit
+# anhaelt, wird abgeschaltet, und dann bewacht er gar nichts mehr.
+
+# Dieselbe Fassung wie in .github/workflows/ci.yml, damit hier und dort
+# dieselben Regeln gelten.
+GITLEAKS_IMAGE="zricethezav/gitleaks:v8.30.1"
+
+wurzel=$(git rev-parse --show-toplevel) || exit 0
+
+# Kein Werkzeug da? Dann schweigen (siehe Kopf). Die Pruefung steht in
+# docs/RELEASE.md, damit niemand raten muss, warum hier nie etwas passiert.
+if command -v gitleaks >/dev/null 2>&1; then
+    lokal=ja
+elif command -v docker >/dev/null 2>&1; then
+    lokal=nein
+else
+    exit 0
+fi
+
+# MSYS_NO_PATHCONV: Unter Git fuer Windows laeuft dieser Hook in einer
+# MSYS-Shell, die jedes Argument, das wie ein Unix-Pfad aussieht, in einen
+# Windows-Pfad umschreibt. Aus dem Containerziel `/repo` wurde dabei
+# `C:/Program Files/Git/repo`, und gitleaks brach ab, statt zu pruefen. Auf
+# Linux und macOS ist die Variable wirkungslos.
+pruefe() {
+    if [ "$lokal" = ja ]; then
+        gitleaks git "$wurzel" "$1" --no-banner --redact -v 2>&1
+    else
+        MSYS_NO_PATHCONV=1 docker run --rm -v "$wurzel:/repo" "$GITLEAKS_IMAGE" \
+            git /repo "$1" --no-banner --redact -v 2>&1
+    fi
+}
+
+# Zwei Durchgaenge, und der zweite ist der wichtigere:
+#
+#   --staged      der Index — was `git add` vorgemerkt hat.
+#   --pre-commit  der Arbeitsbaum — was `git commit -a` gleich mitnimmt.
+#
+# Bei `git commit -a` stehen die Aenderungen zum Zeitpunkt dieses Hooks noch
+# *nicht* im Index; Git baut den Commit erst danach. Eine Pruefung, die nur
+# `--staged` faehrt, laesst genau diesen Weg durch — nachgestellt, bevor das
+# hier stand: Ein Testgeheimnis ging per `git commit -am` glatt hindurch.
+for modus in --staged --pre-commit; do
+    ausgabe=$(pruefe "$modus")
+    code=$?
+
+    # Ein Fund ist Exit 1 *und* eine Fundmeldung. Der Ruecksprungwert allein
+    # genuegt nicht: Ein abgebrochener Lauf (fehlendes Abbild, unerreichbarer
+    # Docker-Dienst, falsch uebersetzter Pfad) endet ebenfalls mit 1. Ohne die
+    # zweite Bedingung haelt der Hook dann den Commit an und behauptet einen
+    # Fund, den es nicht gibt — die sicherste Art, abgeschaltet zu werden.
+    [ "$code" -eq 1 ] || continue
+    echo "$ausgabe" | grep -q "leaks found" || continue
+
+    cat >&2 <<MELDUNG
+gitleaks hat in den vorgemerkten Aenderungen ein Geheimnis gefunden. Der Commit
+wurde nicht ausgefuehrt.
+
+$ausgabe
+
+Den Fund aus der Aenderung nehmen, nicht den Hook umgehen: Ist er erst
+committet, steht er in der Historie und gilt als verbrannt — dann hilft nur
+noch, den Zugang zu wechseln. Zugangsdaten gehoeren zur Laufzeit nach
+%APPDATA%, nicht in eine versionierte Datei (docs/POSTFACH_SETUP.md).
+
+Falscher Alarm? Dann gehoert eine Regel-Ausnahme in eine .gitleaks.toml im
+Wurzelverzeichnis — namentlich und mit Begruendung, wie jede andere Ausnahme
+in diesem Repository.
+MELDUNG
+    exit 1
+done
+
+exit 0
