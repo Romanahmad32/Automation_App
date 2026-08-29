@@ -70,8 +70,7 @@ Automation_App/                  ← dieser Ordner IST das Git-Repo (Romanahmad3
 Das Backend lauscht auf `http://localhost:5143` (net10.0, SignalR für die Postfach-Meldungen).
 CI: `.github/workflows/ci.yml`; Auslieferung läuft über Git-Tags
 (`git tag v1.2.0 && git push origin v1.2.0`, Einzelheiten in [`docs/RELEASE.md`](docs/RELEASE.md)).
-Die Toolchain ist festgenagelt (`global.json`, `FLUTTER_VERSION`, `.fvmrc`); ein Versionssprung gehört in
-einen eigenen Commit.
+Die Toolchain ist festgenagelt (`global.json`, `FLUTTER_VERSION`, `.fvmrc`); ein Versionssprung gehört in einen eigenen Commit.
 
 Ein Fachthema, zwei Orte — die Zuordnung Feature ↔ Slice:
 
@@ -154,6 +153,7 @@ Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Tes
 | Formatierung | `dart format --set-exit-if-changed`, `dotnet format --verify-no-changes` (CI) |
 | Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
 | `pubspec.lock` passt zur gepinnten Flutter-Fassung | `pub get` + `git diff --exit-code` (CI, `check.ps1`) |
+| Zweigname beginnt mit `feature/` oder `bugfix/` ([`docs/RELEASE.md`](docs/RELEASE.md)) | `.claude/hooks/zweigname.ps1`, CI-Schritt „Zweigname" |
 
 Schlägt eine davon fehl, ist die Antwort **nie**, die Regel zu lockern oder das Limit
 hochzusetzen. Begründete Ausnahmen gehören namentlich in den jeweiligen Test.
@@ -165,11 +165,11 @@ Versioniert, damit jeder Agent dieselbe Umgebung vorfindet — hier, im Worktree
 - **`settings.json`** — Rechte und Hooks. Die Routinebefehle der Toolchain (`flutter`, `dart`,
   `dotnet`, `git`) laufen ohne Rückfrage; die auswärts wirkenden bzw. schwer umkehrbaren
   Git-Befehle (`push`, `reset --hard`, `clean`, `rebase`, `checkout --`) fragen nach.
-- **`hooks/dart-format.ps1`** — läuft nach jedem Edit/Write an einer `.dart`-Datei und formatiert
-  sie. Grund: die CI prüft die Backend-Formatierung, für Dart gibt es keine solche Prüfung — ohne
-  den Hook sammelt sich Formatierungsrauschen in den Diffs und verdeckt die eigentliche Änderung.
-  Generierte Dateien lässt er aus, und er schweigt in jedem Fehlerfall (ein Formatierer, der eine
-  Werkzeugausführung abbricht, kostet mehr als er einbringt).
+- **`hooks/`** — greifen von selbst: `dart-format.ps1` formatiert jede geschriebene `.dart`-Datei
+  (für Dart prüft die CI keine Formatierung — ohne ihn sammelt sich Rauschen in den Diffs und
+  verdeckt die Änderung), `gitleaks-staged.ps1` hält einen `git commit` an, in dem ein Geheimnis
+  steckt, `zweigname.ps1` ein `git checkout -b` ohne `feature/`- oder `bugfix/`-Präfix. Jeder
+  schweigt bei eigener Störung; die Begründung steht im Kopf der jeweiligen Datei.
 - **`commands/`** — auf Zuruf: `/pruefen` (komplette Prüfkette, dieselben Schritte wie die CI),
   `/generieren` (build_runner + was danach zu prüfen ist).
 - **`skills/`** — zieht sich selbst, wenn die Aufgabe passt: `neuer-endpunkt` (das Rezept für

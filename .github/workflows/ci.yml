@@ -23,6 +23,38 @@ env:
   FLUTTER_VERSION: "3.41.2"
 
 jobs:
+  # Zweigname. Das Praefix sagt in der Zweigliste und im Pull Request, worum es
+  # geht, ohne dass jemand den Diff aufmacht — aber nur, solange es jeder
+  # traegt. Der Hook .claude/hooks/zweigname.ps1 haelt schon beim Anlegen an;
+  # dieser Schritt faengt, was von aussen kommt (Weboberflaeche, fremder Klon).
+  zweigname:
+    # Nur am Pull Request: Bei einem Push auf master gibt es keinen head_ref,
+    # und master traegt selbst kein Praefix.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Praefix pruefen
+        # Der Zweigname kommt ueber die Umgebung, nicht per ${{ }} direkt in
+        # die Zeile: Ein Name darf Anfuehrungszeichen und Semikola enthalten,
+        # und eingesetzt wuerde er zu ausgefuehrter Shell.
+        env:
+          ZWEIG: ${{ github.head_ref }}
+        run: |
+          case "$ZWEIG" in
+            # dependabot/ ist die einzige Ausnahme, und sie ist keine
+            # Nachlaessigkeit: Diese Zweige legt niemand von Hand an, ihr Name
+            # kommt von Dependabot. Ohne die Zeile waere jeder Abhaengigkeits-PR
+            # rot — und ein Schritt, der immer rot ist, wird ignoriert.
+            feature/*|bugfix/*|dependabot/*)
+              echo "Zweigname \"$ZWEIG\" ist in Ordnung." ;;
+            *)
+              echo "::error::Der Zweigname \"$ZWEIG\" traegt kein zulaessiges Praefix."
+              echo "Erlaubt sind feature/ (neue oder geaenderte Faehigkeit) und bugfix/ (behobener Fehler)."
+              echo "Zweig umbenennen und den Pull Request neu aufmachen; Einzelheiten in docs/RELEASE.md."
+              exit 1 ;;
+          esac
+
   # Geheimnisse im Quellcode. Das Repository ist oeffentlich, und
   # appsettings.json ist der naheliegende Ort, an dem beim Ausprobieren ein
   # echtes Postfach-Passwort landet.
