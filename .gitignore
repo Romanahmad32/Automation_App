@@ -107,3 +107,7 @@ Textdokument*.txt
 # ---------------------------------------------------------------------------
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
+# Arbeitskopien, die ein Agent fuer eine Nebenaufgabe anlegt: je ein
+# vollstaendiger Klon des Repos samt Build-Ausgabe. Maschinenlokal und
+# kurzlebig — versioniert waeren sie ein zweites Repo im Repo.
+.claude/worktrees/

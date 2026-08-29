@@ -258,6 +258,37 @@ funktioniert weiter, du musst dann wieder selbst Bescheid geben.
 > Setup und ist eine eigene Umstellung; sie lohnt erst, wenn mehrere Rechner zu
 > versorgen sind.
 
+## Zweignamen
+
+Ein Zweig trägt eines von zwei Präfixen:
+
+| Präfix | wofür |
+|---|---|
+| `feature/` | eine neue oder geänderte Fähigkeit |
+| `bugfix/` | ein behobener Fehler |
+
+Dahinter ein kurzer Name in Kleinbuchstaben mit Bindestrichen, der die *Sache* nennt, nicht die
+Datei: `feature/email-versand`, `bugfix/nullbetrag-schadensposition`.
+
+Der Grund ist die Leseseite, nicht die Ordnung an sich: In der Zweigliste und in der PR-Übersicht
+steht damit schon vor dem Diff, ob eine Änderung etwas Neues bringt oder etwas geradezieht. Das
+entscheidet, wie man liest — bei einem Fehler sucht man die Ursache und den Test, der ihn künftig
+fängt, bei einem Feature den Umfang. Ein Repository, in dem beides gleich heißt, verschenkt diese
+Auskunft an jeder Stelle, an der Zweige aufgelistet werden.
+
+**Erzwungen an zwei Stellen:**
+
+- `.claude/hooks/zweigname.ps1` hält schon das Anlegen an (`git checkout -b`, `git switch -c`,
+  `git branch`) und nennt den fertigen Ersatzbefehl. Vor dem ersten Commit kostet Umbenennen
+  nichts; hängen erst Commits und ein Push daran, bleibt ein schiefer Name meistens stehen.
+- Der CI-Schritt **„Zweigname"** prüft denselben Satz am Pull Request — für alles, was nicht über
+  den Hook entstanden ist (Weboberfläche, fremder Klon, anderer Rechner).
+
+**Eine Ausnahme, und sie ist keine Nachlässigkeit:** `dependabot/…`. Diese Zweige legt niemand von
+Hand an, ihr Name kommt von Dependabot und lässt sich nicht wählen. Ohne die Ausnahme wäre jeder
+Abhängigkeits-PR rot — und ein Schritt, der immer rot ist, wird ignoriert. Wer den zulässigen Satz
+ändert, ändert ihn in **beiden** Prüfungen: `$erlaubt` im Hook und das `case` in `ci.yml`.
+
 ## Toolchain ist festgenagelt
 
 `global.json` legt das .NET-SDK fest, `FLUTTER_VERSION` in beiden Workflows die
