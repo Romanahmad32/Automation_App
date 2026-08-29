@@ -31,34 +31,21 @@ class FormTemplate extends Equatable {
 
   factory FormTemplate.fromJson(Map<String, dynamic> json) {
     final fields =
-        (json['fields'] as List).map((e) => FieldData.fromJson(e)).toList()
+        (json['fields'] as List)
+            .map((e) => FieldData.fromJson(e as Map<String, dynamic>))
+            .toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
-    var ohne = json['wordFilePathOhneAuflistung'] as String?;
-    var mit = json['wordFilePathMitAuflistung'] as String?;
-
-    // Abwärtskompatibilität: Bestandsdaten hatten genau einen Pfad
-    // (`wordFilePath`) plus das Flag `hasSchadensaufstellung`. Den alten Pfad
-    // in den passenden Slot übernehmen, falls die neuen Felder noch fehlen.
-    if (ohne == null && mit == null) {
-      final legacyPath = json['wordFilePath'] as String?;
-      if (legacyPath != null) {
-        final legacyMitAuflistung =
-            json['hasSchadensaufstellung'] as bool? ?? false;
-        if (legacyMitAuflistung) {
-          mit = legacyPath;
-        } else {
-          ohne = legacyPath;
-        }
-      }
-    }
-
+    // Ein früherer Zweig hob hier Altbestände mit `wordFilePath` +
+    // `hasSchadensaufstellung` auf die zwei getrennten Slots. Er war
+    // unerreichbar: schon die Erst-Migration der Backend-Datenbank kennt nur
+    // die getrennten Spalten, und dieses JSON kommt ausschließlich von dort.
     return FormTemplate(
-      id: json['id'],
-      templateName: json['templateName'],
+      id: json['id'] as int,
+      templateName: json['templateName'] as String,
       fields: fields,
-      wordFilePathOhneAuflistung: ohne,
-      wordFilePathMitAuflistung: mit,
+      wordFilePathOhneAuflistung: json['wordFilePathOhneAuflistung'] as String?,
+      wordFilePathMitAuflistung: json['wordFilePathMitAuflistung'] as String?,
     );
   }
 

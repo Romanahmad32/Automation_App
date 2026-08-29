@@ -37,10 +37,10 @@ class FieldData {
 
   factory FieldData.fromJson(Map<String, dynamic> json) {
     return FieldData(
-      order: json['order'],
-      label: json['label'],
-      required: json['required'],
-      inputType: InputType.fromValue(json['inputType']),
+      order: json['order'] as int,
+      label: json['label'] as String,
+      required: json['required'] as bool,
+      inputType: InputType.fromValue(json['inputType'] as String),
       // Bestandsvorlagen ohne Feld → keine (fällt auf die Heuristik zurück).
       datenquelle: FeldDatenquelle.fromValue(json['datenquelle'] as String?),
     );

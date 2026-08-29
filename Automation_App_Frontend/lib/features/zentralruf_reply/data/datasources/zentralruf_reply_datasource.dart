@@ -31,8 +31,12 @@ class ApiZentralrufReplyDatasource implements ZentralrufReplyDatasource {
         data: ZentralrufReplyData.fromJson(
           responseData['data'] as Map<String, dynamic>,
         ),
-        missingFields: List<String>.from(responseData['missingFields'] ?? []),
-        warnings: List<String>.from(responseData['warnings'] ?? []),
+        missingFields: List<String>.from(
+          responseData['missingFields'] as List? ?? const [],
+        ),
+        warnings: List<String>.from(
+          responseData['warnings'] as List? ?? const [],
+        ),
       );
     } on DioException catch (e) {
       final errorMessage = (e.response?.data is Map<String, dynamic>)
