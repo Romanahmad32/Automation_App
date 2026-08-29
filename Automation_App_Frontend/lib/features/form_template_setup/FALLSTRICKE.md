@@ -17,6 +17,10 @@ passierte.
 
 - **Die Reihenfolge der Prüfungen ist die Regel** — spezifisch vor allgemein. Wer eine Zeile
   verschiebt, ändert das Verhalten; die Tests halten jede Regel einzeln fest.
+- Ganz vorn stehen die Unfallangaben, erst danach die Beteiligten: `{{Unfallort des
+  Geschädigten}}` meint den Ort des Unfalls. Andersherum fischte das „ort" der Mandantengruppe
+  den Namen ab, und das Schreiben trüge still den Wohnort. Wörter wie „unfallort", „unfalltag"
+  oder „polizei" benennen nie eine Stammdatenangabe — nur deshalb dürfen sie vorne stehen.
 - Nennt ein Name zwei einzeln gespeicherte Angaben (`{{VersicherungPlzOrt}}`,
   `{{MandantVornameNachname}}`), bindet die Erkennung ihn **nicht**, und `FeldNameHinweis` sagt
   unter dem Feld, warum. Grund: Solche Namen lieferten früher still nur die erste der beiden

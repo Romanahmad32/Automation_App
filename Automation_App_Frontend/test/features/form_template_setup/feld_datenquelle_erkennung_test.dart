@@ -77,6 +77,19 @@ void main() {
       );
     });
 
+    test('der Unfall geht dem Beteiligten vor', () {
+      // Sonst fischt das „ort" der Mandantengruppe diese Namen ab und das
+      // Schreiben trägt still den Wohnort statt des Unfallorts.
+      expect(quelle('Unfallort des Geschädigten'), FeldDatenquelle.unfallort);
+      expect(quelle('Unfalltag des Mandanten'), FeldDatenquelle.unfalldatum);
+      expect(
+        quelle('Polizei-Vorgangsnummer des Geschädigten'),
+        FeldDatenquelle.polizeiVorgangsnummer,
+      );
+      // Die Gegenprobe: Ohne Unfallwort bleibt „Ort" der Wohnort.
+      expect(quelle('Ort des Geschädigten'), FeldDatenquelle.mandantOrt);
+    });
+
     test('erkennt Unfalldatum, Rechtsgebiet und Referenz', () {
       expect(quelle('Unfalldatum'), FeldDatenquelle.unfalldatum);
       expect(quelle('Unfalltag'), FeldDatenquelle.unfalldatum);

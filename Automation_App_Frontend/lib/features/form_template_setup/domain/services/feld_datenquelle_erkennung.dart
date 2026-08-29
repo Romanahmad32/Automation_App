@@ -58,7 +58,11 @@ class FeldDatenquelleErkennung {
       .replaceAll(RegExp(r'[^a-z0-9]'), '');
 
   /// Vorschlag zu einem Platzhalternamen. [FeldDatenquelle.keine], wenn nichts
-  /// passt — geraten wird nie (§1.3).
+  /// eindeutig passt — statt den nächstbesten Treffer zu nehmen.
+  ///
+  /// Ein Vorschlag bleibt ein Vorschlag: Er steht sichtbar im Dropdown und ist
+  /// änderbar, nichts wird stillschweigend gebunden (§1.3, „Vorschlagen statt
+  /// entscheiden").
   static DatenquelleVorschlag erkenne(String name) {
     final normalisiert = normalisiere(name);
     final hinweis = _mehrdeutigkeit(normalisiert);
@@ -137,8 +141,25 @@ class FeldDatenquelleErkennung {
   static FeldDatenquelle _quelleFuer(String name) {
     bool hat(String wort) => name.contains(wort);
 
-    // Alles, was den Mandanten/Geschädigten nennt, kommt aus dem Register —
-    // nie aus der Zentralruf-Antwort, die kennt seine Daten nicht.
+    // Der Unfall steht vor den Beteiligten: „Unfallort des Geschädigten" meint
+    // den Ort des Unfalls, nicht den Wohnort des Mandanten. Käme die
+    // Mandantengruppe zuerst, fischte deren „ort" diesen Namen ab und das
+    // Schreiben trüge still den falschen Ort. Keines dieser Wörter benennt je
+    // eine Stammdatenangabe, deshalb dürfen sie ganz nach vorn.
+    if (hat('unfallort')) return FeldDatenquelle.unfallort;
+    if (hat('unfalluhrzeit') || hat('unfallzeit')) {
+      return FeldDatenquelle.unfalluhrzeit;
+    }
+    if (hat('polizei')) return FeldDatenquelle.polizeiVorgangsnummer;
+    if (hat('unfalldatum') ||
+        hat('unfalltag') ||
+        hat('schadentag') ||
+        hat('verkehrsunfall')) {
+      return FeldDatenquelle.unfalldatum;
+    }
+
+    // Alles Übrige, was den Mandanten/Geschädigten nennt, kommt aus dem
+    // Register — nie aus der Zentralruf-Antwort, die kennt seine Daten nicht.
     if (hat('mandant') || hat('geschaedigt') || hat('kunde')) {
       return _mandantenfeld(name);
     }
@@ -153,17 +174,6 @@ class FeldDatenquelleErkennung {
       return FeldDatenquelle.versicherungsscheinNr;
     }
     if (hat('versicherungsbeginn')) return FeldDatenquelle.versicherungsbeginn;
-    if (hat('unfallort')) return FeldDatenquelle.unfallort;
-    if (hat('unfalluhrzeit') || hat('unfallzeit')) {
-      return FeldDatenquelle.unfalluhrzeit;
-    }
-    if (hat('polizei')) return FeldDatenquelle.polizeiVorgangsnummer;
-    if (hat('unfalldatum') ||
-        hat('unfalltag') ||
-        hat('schadentag') ||
-        hat('verkehrsunfall')) {
-      return FeldDatenquelle.unfalldatum;
-    }
     // Ein Kennzeichen ohne Mandantenbezug ist das des Gegners — Referenz und
     // Antwort kennen nur dieses.
     if (hat('kennzeichen')) return FeldDatenquelle.kennzeichenGegner;
