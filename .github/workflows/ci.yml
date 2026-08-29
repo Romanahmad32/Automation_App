@@ -23,6 +23,38 @@ env:
   FLUTTER_VERSION: "3.41.2"
 
 jobs:
+  # Geheimnisse im Quellcode. Das Repository ist oeffentlich, und
+  # appsettings.json ist der naheliegende Ort, an dem beim Ausprobieren ein
+  # echtes Postfach-Passwort landet.
+  #
+  # Geprueft wird die ganze Historie, nicht nur der Diff: Ein Zugang, der
+  # einmal committet und im naechsten Commit wieder entfernt wurde, steht
+  # weiter im Repository und ist trotzdem verbrannt. Beim Einbauen lief der
+  # Scan ueber alle 157 Commits — ohne Fund; dieser Schritt haelt den Zustand.
+  geheimnisse:
+    # Als einziger Job auf Linux: hier wird nichts gebaut, nur gelesen, und
+    # der Runner startet schneller.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Ohne die volle Historie saehe der Scan nur den letzten Commit.
+          fetch-depth: 0
+
+      # Feste Fassung statt :latest — dieselbe Regel wie bei global.json und
+      # FLUTTER_VERSION. Eine neue Regelgeneration wuerde sonst ueber Nacht
+      # Funde melden, ohne dass jemand etwas geaendert hat.
+      #
+      # --redact ist Pflicht, kein Feinschliff: Ohne den Schalter schreibt
+      # gitleaks den gefundenen Zugang im Klartext ins Protokoll — und die
+      # Protokolle dieses Repositories sind oeffentlich lesbar. Der Fund
+      # wuerde also genau das tun, wogegen dieser Schritt geschrieben ist.
+      - name: Gitleaks
+        run: >
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1
+          git /repo --no-banner --redact
+
   backend:
     # Windows, nicht ubuntu: Der Dienst nutzt Word-COM-Interop (PdfConversion)
     # und Playwright gegen installiertes Edge/Chrome — beides gibt es nur hier.
