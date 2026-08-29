@@ -33,7 +33,11 @@ void main() {
     versichererStrasse: 'Lyoner Str. 10',
     versichererPlz: '60524',
     versichererOrt: 'Frankfurt',
+    versichererTelefon: '0800/248544533',
+    versichererFax: '0800-2485329',
+    versichererEmail: 'info@huk-coburg.de',
     versicherungsscheinNr: '999/123456-X',
+    versicherungsbeginn: '07.10.2015',
   );
 
   final mandant = Mandant(
@@ -127,6 +131,53 @@ void main() {
     expect(result['Kennzeichen des Unfallgegners'], 'GG XY 123');
     expect(result['Aktenzeichen'], '84/26 C03_GG-XY 123');
     expect(result['Rechtsgebiet'], 'Verkehrsrecht');
+  });
+
+  test('füllt Adressteile und Kontaktwege des Versicherers mit Werten', () {
+    // Diese Zuordnungen hingen bis zur Zusammenführung am eigenen Test des
+    // abgelösten `VorgangsdatenFieldMatcher`. Die Erkennung prüft nur Name →
+    // Quelle; dass hinter jeder Quelle auch das richtige Feld der Antwort
+    // steht, hängt allein an diesem Test — sonst fiele ein vertauschtes
+    // Telefon/Fax niemandem auf.
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden([
+        'Straße der Versicherung',
+        'PLZ Versicherer',
+        'Ort der Versicherung',
+        'Anschrift der Versicherung',
+        'E-Mail der Versicherung',
+        'Telefon der Versicherung',
+        'Fax der Versicherung',
+        'Versicherungsbeginn',
+      ]),
+      vorgang(),
+      mandant: mandant,
+    );
+
+    expect(result['Straße der Versicherung'], 'Lyoner Str. 10');
+    expect(result['PLZ Versicherer'], '60524');
+    expect(result['Ort der Versicherung'], 'Frankfurt');
+    expect(
+      result['Anschrift der Versicherung'],
+      'HUK-COBURG, Lyoner Str. 10, 60524 Frankfurt',
+    );
+    expect(result['E-Mail der Versicherung'], 'info@huk-coburg.de');
+    expect(result['Telefon der Versicherung'], '0800/248544533');
+    expect(result['Fax der Versicherung'], '0800-2485329');
+    expect(result['Versicherungsbeginn'], '07.10.2015');
+  });
+
+  test('lässt Felder leer, deren Wert in der Antwort fehlt', () {
+    // Nicht dasselbe wie „gar keine Antwort": Die Antwort ist übernommen, nur
+    // dieses eine Feld war in der Zentralruf-Mail nicht besetzt.
+    final result = VorgangPrefillMatcher.matchTemplateFields(
+      ungebunden(['Versicherungsschein-Nr.', 'Gegnerische Versicherung']),
+      vorgang(mitAntwort: const ZentralrufReplyData(kennzeichen: 'GG XY 123')),
+      mandant: mandant,
+    );
+
+    expect(result.containsKey('Versicherungsschein-Nr.'), isFalse);
+    expect(result.containsKey('Gegnerische Versicherung'), isFalse);
   });
 
   test('füllt Unfallort, -uhrzeit und Polizei-Vorgangsnummer', () {
