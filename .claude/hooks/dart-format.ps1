@@ -30,7 +30,13 @@ try {
 
     if (-not (Test-Path -LiteralPath $pfad)) { exit 0 }
 
-    & dart format $pfad | Out-Null
+    # Das projektlokale FVM-SDK bevorzugen (fvm use, siehe docs/RELEASE.md):
+    # der Hook formatiert dann mit derselben dart-Fassung wie Pruefkette und
+    # CI. Ohne .fvm/ gilt wie bisher das dart aus dem PATH.
+    $dart = Join-Path $PSScriptRoot '..\..\Automation_App_Frontend\.fvm\flutter_sdk\bin\dart.bat'
+    if (-not (Test-Path -LiteralPath $dart)) { $dart = 'dart' }
+
+    & $dart format $pfad | Out-Null
 }
 catch {
     # bewusst leer, siehe Kopf

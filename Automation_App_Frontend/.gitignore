@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# FVM: projektlokales Flutter-SDK (Junction in den fvm-Cache) — die Pinnung
+# selbst ist versioniert (.fvmrc), das SDK nicht.
+.fvm/
