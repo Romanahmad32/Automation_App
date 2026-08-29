@@ -22,6 +22,16 @@ public static class MailboxInjection
         // ConfigStore macht den Zugang zur Laufzeit (über die Einstellungen)
         // änderbar; appsettings.json liefert nur noch die Startwerte.
         services.AddSingleton<MailboxConfigStore>();
+        // Dieselbe Instanz, nicht eine zweite: Wer nur liest, haengt an der
+        // Schnittstelle -- der Zustand bleibt aber einer.
+        //
+        // Der Container merkt sich die Instanz dabei zweimal als zu entsorgen:
+        // Was eine Fabrik zurueckgibt, vermerkt er ohne Blick darauf, ob er
+        // dasselbe Objekt schon haelt. MailboxConfigStore.Dispose laeuft beim
+        // Herunterfahren also zweimal und ist genau dafuer verriegelt -- wer
+        // dort ein Feld ergaenzt, liest zuerst den Kommentar an Dispose.
+        services.AddSingleton<IMailboxConfigSource>(
+            sp => sp.GetRequiredService<MailboxConfigStore>());
         services.AddSingleton<MailboxConnectionState>();
 
         // Microsoft-OAuth für Outlook-Postfächer: Singleton, weil MSAL-App und

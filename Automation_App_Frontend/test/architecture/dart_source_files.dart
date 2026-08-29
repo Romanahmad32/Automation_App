@@ -17,6 +17,39 @@ bool istGeneriert(String pfad) =>
 /// und Reports plattformunabhängig stabil sind.
 String relPfad(File datei) => datei.path.replaceAll('\\', '/');
 
+/// Zeilen einer Quelldatei ohne Leerzeilen und ohne reine Kommentarzeilen —
+/// das Maß, an dem die Längenregel hängt (siehe `file_length_test.dart`).
+///
+/// Gezählt wird, was nach dem Trimmen übrig bleibt und nicht mit `//`, `/*`
+/// oder `*` beginnt. Das erfasst Zeilen- und Doc-Kommentare sowie formatierte
+/// Blockkommentare.
+///
+/// Es ist eine Näherung, und sie irrt in **beide** Richtungen. Zu viel: eine
+/// Fließtextzeile innerhalb eines Blockkommentars, die nicht mit `*` eingerückt
+/// ist. Zu wenig: jede Zeile innerhalb eines Zeichenkettenliterals, die mit
+/// einem der drei Präfixe beginnt — eine URL in einem `'''…'''`, eine
+/// Aufzählung mit `*`, eingebetteter Code mit eigenen Kommentaren. Eine Datei
+/// kann die Grenze also auch reißen, ohne dass dieser Test es merkt.
+///
+/// Das ist bewusst in Kauf genommen: Sauber unterscheiden hieße tokenisieren,
+/// und die Regel ist eine Faustzahl für die Lesbarkeit, kein Beweis. Wer sie
+/// schärfer braucht, fängt bei den Zeichenkettenliteralen an — nicht bei den
+/// Kommentarpräfixen.
+///
+/// Dieselbe Zählweise steht in `Quelldatei.IstAnweisungszeile` im Backend. Wer
+/// eine der beiden ändert, ändert die andere mit — sonst gilt für dieselbe
+/// Regel auf beiden Seiten eine andere Zahl.
+int anweisungszeilen(File datei) =>
+    datei.readAsLinesSync().where(istAnweisungszeile).length;
+
+bool istAnweisungszeile(String zeile) {
+  final inhalt = zeile.trim();
+  if (inhalt.isEmpty) return false;
+  return !inhalt.startsWith('//') &&
+      !inhalt.startsWith('/*') &&
+      !inhalt.startsWith('*');
+}
+
 /// Alle handgeschriebenen Dart-Dateien unter [verzeichnis] (rekursiv),
 /// ohne generierte Dateien. Stabil sortiert für reproduzierbare Reports.
 ///

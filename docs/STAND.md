@@ -2,7 +2,7 @@
 
 Was gebaut ist und was bewusst noch fehlt. Diese Datei ist der einzige Ort für den
 Umsetzungsstand — `CLAUDE.md` beschreibt Dauerregeln und veraltet deshalb nicht.
-Paragraphenangaben verweisen auf `REQUIREMENTS.md` (nicht versioniert, siehe `CLAUDE.md`).
+Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurzelverzeichnis.
 
 ## Umgesetzt
 

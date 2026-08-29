@@ -1,9 +1,5 @@
-using System.Net.Sockets;
 using AutomationService.Features.MailboxMonitor.Domain.Services;
-using MailKit.Net.Smtp;
-using MailKit.Security;
 using Microsoft.Extensions.Options;
-using MimeKit;
 
 namespace AutomationService.Features.EmailVersand.Domain.Services;
 
@@ -16,9 +12,10 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// scheitern, bevor irgendetwas das Haus verlassen hat.
 /// </summary>
 public sealed class SmtpEmailVersender(
-    MailboxConfigStore configStore,
+    IMailboxConfigSource configStore,
     MicrosoftMailOAuthService microsoftOAuth,
-    GesendetOrdnerAblage gesendetOrdner,
+    IGesendetOrdnerAblage gesendetOrdner,
+    ISmtpUebergabe uebergabe,
     VersandProtokoll protokoll,
     KanzleiSignatur signatur,
     IOptions<EmailVersandOptions> optionen,
@@ -79,7 +76,7 @@ public sealed class SmtpEmailVersender(
 
         var mime = EmailNachrichtBauer.Baue(nachricht, zugang.Absender, anhaenge, signaturblock);
 
-        await UebergebeAsync(mime, zugang, cancellationToken);
+        await uebergabe.UebergebeAsync(mime, zugang, cancellationToken);
         var gesendetAm = DateTimeOffset.Now;
         logger.LogInformation(
             "E-Mail über {Absender} an {Anzahl} Empfänger gesendet ({Anhaenge} Anhänge).",
@@ -140,50 +137,5 @@ public sealed class SmtpEmailVersender(
         }
 
         return gesamt;
-    }
-
-    /// <summary>
-    /// Der eigentliche Verbindungsaufbau. Ab hier sind die Fehler keine des
-    /// Anwalts mehr, sondern die des Servers — sie werden übersetzt, statt eine
-    /// englische Protokollmeldung durchzureichen.
-    /// </summary>
-    private async Task UebergebeAsync(
-        MimeMessage mime,
-        SmtpZugang zugang,
-        CancellationToken cancellationToken)
-    {
-        using var client = new SmtpClient();
-        try
-        {
-            // Auto statt StartTls: Der Port ist konfigurierbar (EmailVersand:SmtpPort),
-            // der Verschluesselungsweg haengt aber daran — 587 spricht STARTTLS, 465
-            // verschluesselt sofort. Fest verdrahtetes StartTls liesse 465 an einem
-            // Verbindungsfehler scheitern, der wie "Server nicht erreichbar" aussieht.
-            await client.ConnectAsync(zugang.Host, zugang.Port, SecureSocketOptions.Auto, cancellationToken);
-            await PostfachAnmeldung.AnmeldenAsync(client, zugang, microsoftOAuth, cancellationToken);
-            await client.SendAsync(mime, cancellationToken);
-            await client.DisconnectAsync(quit: true, cancellationToken);
-        }
-        catch (AuthenticationException exception)
-        {
-            throw new EmailVersandException(
-                EmailVersandFehler.Anmeldung,
-                "Das Postfach hat die Anmeldung abgelehnt. Bitte das Passwort in den Einstellungen "
-                + "unter \"E-Mail\" prüfen — bei Gmail muss dort ein App-Passwort stehen, "
-                + $"nicht das Kontopasswort. ({exception.Message})");
-        }
-        catch (Exception exception) when (exception is SmtpCommandException or SmtpProtocolException)
-        {
-            throw new EmailVersandException(
-                EmailVersandFehler.Server,
-                $"Der Postausgangsserver {zugang.Host} hat die Nachricht abgewiesen: {exception.Message}");
-        }
-        catch (Exception exception) when (exception is SocketException or IOException)
-        {
-            throw new EmailVersandException(
-                EmailVersandFehler.Server,
-                $"Der Postausgangsserver {zugang.Host}:{zugang.Port} ist nicht erreichbar. "
-                + $"Besteht eine Internetverbindung? ({exception.Message})");
-        }
     }
 }

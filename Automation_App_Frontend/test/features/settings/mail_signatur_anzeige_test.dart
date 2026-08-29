@@ -1,6 +1,4 @@
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/core/general_classes/failures/failure.dart';
-import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
@@ -18,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+
+import 'kanzlei_settings_doubles.dart';
 
 /// Die gespeicherte Signatur muss im Feld stehen, **wann immer** der Abschnitt
 /// aufgeht — auch beim zweiten Mal.
@@ -81,23 +81,6 @@ class LeererSignaturDienst implements EmailVersandRepository {
 
   @override
   Future<SignaturStand> verwirfSignaturFormat() async => const SignaturStand();
-}
-
-class FesterSettingsAbruf implements UseCase<KanzleiSettings, NoParams> {
-  final KanzleiSettings stand;
-
-  FesterSettingsAbruf(this.stand);
-
-  @override
-  Future<Either<Failure, KanzleiSettings>> call(NoParams params) async =>
-      Right(stand);
-}
-
-class DurchreichendesSpeichern
-    implements UseCase<KanzleiSettings, KanzleiSettings> {
-  @override
-  Future<Either<Failure, KanzleiSettings>> call(KanzleiSettings params) async =>
-      Right(params);
 }
 
 void main() {

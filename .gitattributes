@@ -36,6 +36,17 @@
 *.db            binary
 *.bin           binary
 
+# Die Plattform-Registranten schreibt `flutter pub get` bei jedem Lauf neu -- und
+# immer mit LF. Ohne diese Zeilen will Git im Arbeitsverzeichnis CRLF, und die
+# sieben Dateien stehen nach jeder Pruefkette als geaendert im `git status`, ohne
+# dass sich ein Zeichen geaendert haette. Die Kopfdatei gehoert dazu: sie
+# entsteht im selben Lauf und im selben Ordner wie die .cc daneben, und ohne
+# eigene Zeile faellt sie unter `* text=auto` zurueck.
+**/generated_plugin_registrant.cc      text eol=lf
+**/generated_plugin_registrant.h       text eol=lf
+**/generated_plugins.cmake             text eol=lf
+**/GeneratedPluginRegistrant.swift     text eol=lf
+
 # Generierte Dateien: im Diff einklappen, aber weiter versioniert.
 *.g.dart              linguist-generated=true
 *.freezed.dart        linguist-generated=true

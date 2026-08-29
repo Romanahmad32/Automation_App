@@ -18,12 +18,11 @@ Versicherer, Füllen der Word-Anspruchsschreiben (inkl. RVG-Gebühren), dann Pr�
 Versenden. Oberfläche, erzeugte Dokumente, Fachbegriffe und viele Kommentare sind deutsch —
 diese Konvention beibehalten.
 
-**`REQUIREMENTS.md` im Wurzelverzeichnis ist das bindende Anforderungsdokument** — vor jeder
-Änderung am fachlichen Ablauf lesen. Sie ist **absichtlich nicht versioniert** (`.gitignore`):
-sie enthält Kanzlei-Interna, das Repo ist öffentlich. In einem frischen Clone, einem Worktree
-oder einer Cloud-Sitzung liegt sie deshalb nicht vor. Wer dort an Workflow-Verhalten arbeitet
-und die Datei nicht sieht, **fragt nach, statt die Anforderung zu raten** — CLAUDE.md
-beschreibt, wie gebaut wird, nicht was fachlich gefordert ist.
+**[`REQUIREMENTS.md`](REQUIREMENTS.md) im Wurzelverzeichnis ist das bindende
+Anforderungsdokument** — vor jeder Änderung am fachlichen Ablauf lesen. Sie ist versioniert und
+liegt damit in jedem Clone, jedem Worktree und jeder Cloud-Sitzung vor. CLAUDE.md beschreibt,
+wie gebaut wird, nicht was fachlich gefordert ist: Was hier fehlt, steht dort — und wird
+nicht geraten.
 
 Bewusste Haltepunkte für den Menschen (nicht wegautomatisieren): Captcha im Zentralruf-Formular,
 Sichtprüfung des Dokuments, Freigabe des Versands.
@@ -47,7 +46,7 @@ Dokumenten.
 | am Flutter-Frontend arbeiten | `Automation_App_Frontend/CLAUDE.md` |
 | am Backend arbeiten | `AutomationService/CLAUDE.md` |
 | an Prozessstart, Pfaden, Vorlagen, Sicherung, Versionierung, CI, Installer arbeiten | [`docs/RELEASE.md`](docs/RELEASE.md) |
-| fachliches Verhalten ändern | `REQUIREMENTS.md`; fehlt sie, sagt [`docs/ANFORDERUNGEN_INDEX.md`](docs/ANFORDERUNGEN_INDEX.md), wonach zu fragen ist |
+| fachliches Verhalten ändern | [`REQUIREMENTS.md`](REQUIREMENTS.md) — den Wortlaut; [`docs/ANFORDERUNGEN_INDEX.md`](docs/ANFORDERUNGEN_INDEX.md) ist nur der Themenindex dazu |
 | wissen, was gebaut ist und was fehlt | [`docs/STAND.md`](docs/STAND.md) |
 | das Postfach anbinden (welcher Weg? 1&1/IONOS, Gmail) | [`docs/POSTFACH_SETUP.md`](docs/POSTFACH_SETUP.md) |
 | das Postfach an Outlook/M365 anbinden (Azure-Einrichtung) | [`docs/OUTLOOK_SETUP.md`](docs/OUTLOOK_SETUP.md) |
@@ -112,19 +111,23 @@ stehen in den beiden Teilbaum-Dateien.
 ## Prüfkette
 
 ```powershell
-./scripts/check.ps1            # alles; -NurFrontend / -NurBackend für Teilläufe
+./scripts/check.ps1            # alles (~2:30); -NurFrontend / -NurBackend für Teilläufe
+./scripts/check.ps1 -Beheben   # Formatierer vorher schreibend laufen lassen
 ```
 
 Fährt genau die Schritte aus `.github/workflows/ci.yml`, bricht nicht beim ersten Fehler ab und
-fasst am Ende zusammen. **Vor dem Abschließen einer Änderung laufen lassen** — die Einzelbefehle
-für die Arbeit dazwischen stehen in den Teilbaum-Dateien.
+fasst am Ende zusammen — mit der Dauer je Schritt, damit sichtbar bleibt, wo die Zeit hingeht.
+**Vor dem Abschließen einer Änderung laufen lassen** — die Einzelbefehle für die Arbeit dazwischen
+stehen in den Teilbaum-Dateien. Wer die Kette schneller machen will, liest zuerst den Kopf von
+`check.ps1`: was schon gemessen und verworfen wurde, steht dort.
 
 ## Regeln, die nicht verhandelbar sind
 
 Für jeden Menschen **und jeden AI-Agent**, der hier Code ändert:
 
-- **Dateien kurz halten.** Nicht generierte Code-Dateien max. **250** Zeilen, in Ausnahmefällen
-  bis **300**. Wird eine Datei länger, in mehrere Klassen/Widgets aufteilen.
+- **Dateien kurz halten.** Nicht generierte Code-Dateien max. **250 Anweisungszeilen** (Kommentare
+  und Leerzeilen zählen **nicht** mit) und **450 Zeilen insgesamt**. Wird eine Datei länger, in
+  mehrere Klassen/Widgets aufteilen — nie das Erklären kürzen, um unter die Grenze zu kommen.
 - **Keine privaten Typen oder Top-Level-Funktionen** im Frontend (kein `_`-Präfix bei Klassen,
   keine privaten `_WidgetXyz`) — stattdessen eigenständige, öffentliche, wiederverwendbare
   Bausteine in eigenen Dateien. (State-Klassen von `StatefulWidget` sind die übliche Ausnahme.)
@@ -137,14 +140,14 @@ Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Tes
 
 | Regel | Erzwungen von |
 |---|---|
-| Dateilänge ≤ 300 Zeilen | `test/architecture/file_length_test.dart`, `Architecture/DateilaengeTests.cs` |
+| Dateilänge ≤ 250 Anweisungszeilen, ≤ 450 gesamt | `test/architecture/file_length_test.dart`, `Architecture/DateilaengeTests.cs` |
 | Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
 | Benennung von Datasources/Repositories | `test/architecture/benennung_test.dart` |
 | Schichten (Clean Architecture / senkrechte Schnitte) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
 | Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs`, `test/architecture/http_vertrag_test.dart` |
 | Doku: Steckbrief je Feature, Zeilenbudgets, lebende Verweise | `test/architecture/dokumentation_test.dart`, `Architecture/DokumentationTests.cs` |
-| Anforderungsverweise (`§4.8`) gegen `docs/ANFORDERUNGEN_INDEX.md` | `test/architecture/anforderungen_test.dart`, `Architecture/DokumentationTests.cs` |
+| Anforderungsverweise (`§4.8`) gegen `docs/ANFORDERUNGEN_INDEX.md`, und dessen Gliederung gegen `REQUIREMENTS.md` | `test/architecture/anforderungen_test.dart`, `Architecture/DokumentationTests.cs` |
 | Formatierung | `dart format --set-exit-if-changed`, `dotnet format --verify-no-changes` (CI) |
 | Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
 | `pubspec.lock` passt zur gepinnten Flutter-Fassung | `pub get` + `git diff --exit-code` (CI, `check.ps1`) |

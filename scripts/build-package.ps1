@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Baut das auslieferbare Paket: Flutter-Anwendung plus den lokalen Dienst im
     Unterordner "backend".

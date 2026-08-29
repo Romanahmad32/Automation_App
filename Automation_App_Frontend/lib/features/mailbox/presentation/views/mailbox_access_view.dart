@@ -1,5 +1,6 @@
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
+import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart';
 import 'package:automation_app/features/mailbox/presentation/utils/mailbox_zugang_felder.dart';
@@ -140,17 +141,24 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
     );
   }
 
-  void _onLoaded(BuildContext context, MailboxConfigLoaded state) {
+  /// Zieht die Maske auf den geladenen Zugang nach. Wiederholbar und ohne
+  /// `setState` — [StandNachziehen] ruft das beim Aufgehen und bei jedem
+  /// weiteren Zustand und baut danach selbst neu auf.
+  void _uebernimm(MailboxConfigLoaded state) {
     if (!_initialized || state.justSignedIn) {
       // Nach der Microsoft-Anmeldung hat das Backend Konto und Server
       // übernommen — die Maske muss die neuen Werte zeigen.
       _patch(state.config);
-      setState(() => _initialized = true);
+      _initialized = true;
     } else {
       _config = state.config;
       _appPasswordSet = state.config.appPasswordSet;
     }
+  }
 
+  /// Was einmalig zu melden ist. Bewusst getrennt von [_uebernimm]: Beim
+  /// Aufgehen dieselbe Erfolgsmeldung noch einmal zu zeigen, wäre falsch.
+  void _melde(BuildContext context, MailboxConfigLoaded state) {
     final message = state.justSignedIn
         ? 'Microsoft-Anmeldung erfolgreich — das Postfach '
               '${state.config.microsoftAccount ?? ''} wird verwendet.'
@@ -168,10 +176,16 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   @override
   Widget build(BuildContext context) {
     super.build(context); // AutomaticKeepAliveClientMixin
-    return BlocConsumer<MailboxConfigBloc, MailboxConfigState>(
-      listener: (context, state) {
+    return StandNachziehen<MailboxConfigBloc, MailboxConfigState>(
+      // Diese Maske liegt im zweiten Reiter und geht erst auf, wenn jemand ihn
+      // antippt — da hat der Bloc längst geladen. Ein blosser Listener sähe
+      // diesen Zustand nie, und das Formular zeigte seine Vorgabewerte.
+      nachziehen: (context, state) {
+        if (state is MailboxConfigLoaded) _uebernimm(state);
+      },
+      beiUebergang: (context, state) {
         if (state is MailboxConfigLoaded) {
-          _onLoaded(context, state);
+          _melde(context, state);
         } else if (state is MailboxConfigError) {
           ScaffoldMessenger.of(
             context,

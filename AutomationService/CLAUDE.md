@@ -76,6 +76,10 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Adressen werden geprüft, **bevor** verbunden wird (`AnhangPruefung`, `EmailNachrichtBauer`) —
   ein Fehler heißt, dass nichts hinausgegangen ist. Danach trägt `GesendetOrdnerAblage` die
   Nachricht per IMAP in "Gesendet" nach, außer der Anbieter tut es selbst (Gmail).
+  Was nach außen wirkt, hängt an drei Nähten, damit der ganze Weg ausführbar prüfbar ist statt nur
+  lesbar (`VersandwegTests`): `ISmtpUebergabe` (Einlieferung), `IGesendetOrdnerAblage` (Kopie) und
+  `IMailboxConfigSource` (der Zugang — der `MailboxConfigStore` dahinter liest im Konstruktor aus
+  `%APPDATA%`, ein Test an der Klasse läse also das echte Postfach des Rechners).
   Zweiter Weg statt Versand: `POST api/EmailVersand/entwurf` öffnet die Nachricht als Entwurf in
   Outlook, sonst als `.eml` (`EntwurfDatei`); `EntwurfOeffner` entscheidet. `OutlookVerbindung` hält
   dafür COM per **Late Binding** (wie bei Word, kein PIA) auf einem **dauerhaften** STA-Thread und
@@ -182,7 +186,7 @@ Health, WordAutomation-Controller, HTTP-Vertrag), `Support/` (Helfer: `RepoWurze
 
 | Regel | Erzwungen von |
 |---|---|
-| ≤ 300 Zeilen je Datei (Richtwert 250; `bin/`, `obj/`, `Migrations/` ausgenommen) | `Architecture/DateilaengeTests.cs` |
+| ≤ 250 Anweisungszeilen und ≤ 450 Zeilen je Datei (`bin/`, `obj/`, `Migrations/` ausgenommen) | `Architecture/DateilaengeTests.cs` |
 | Jede Quelldatei deklariert einen Namespace; Namespace == Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
 | Domain ohne eigene Presentation und ohne ASP.NET MVC; kein Zugriff auf fremde Presentation; nur die Schichten Domain/Presentation | `Architecture/SliceIsolationTests.cs` |
 | HTTP-Vertrag == `docs/openapi.json` | `Integration/OpenApiVertragTests.cs` |
