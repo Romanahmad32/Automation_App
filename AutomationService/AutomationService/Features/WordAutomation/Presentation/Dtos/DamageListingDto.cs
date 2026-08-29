@@ -20,11 +20,11 @@ public class DamageListingDto
     public bool ApplyVat { get; set; }
 
     /// <summary>Manuell korrigierte Geschäftsgebühr in €; null = automatisch nach § 13 RVG berechnen.</summary>
-    [Range(0, 10_000_000)]
+    [Range(0.0, 10_000_000.0)]
     public decimal? GeschaeftsgebuehrOverride { get; set; }
 
     /// <summary>Manuell korrigierte Auslagenpauschale in €; null = 20 % der Geschäftsgebühr, max. 20 € (Nr. 7002 VV RVG).</summary>
-    [Range(0, 10_000_000)]
+    [Range(0.0, 10_000_000.0)]
     public decimal? AuslagenpauschaleOverride { get; set; }
 
     /// <summary>Hintergrundfarbe der Titelzeile der Tabelle als Hex-Wert (z. B. "D9D9D9"); null = Standardgrau.</summary>
@@ -38,6 +38,18 @@ public class DamageItemDto
     [MaxLength(200)]
     public string Description { get; set; } = string.Empty;
 
-    [Range(0.01, 10_000_000)]
+    /// <summary>Forderung dieser Position in €; 0,00 = noch nicht beziffert.</summary>
+    // Die Untergrenze ist 0 und nicht 0,01: Eine Position, die im Schreiben stehen soll,
+    // aber noch aussteht (etwa ein Gutachten ohne Rechnung), ist fachlich gültig. Negative
+    // Beträge bleiben unzulässig — ein Abzug ist keine Schadensposition. Gemeldet werden
+    // sie im Formular an der Zeile, die sie verursacht (schadenspositionen_pruefung.dart);
+    // diese Schranke ist nur noch das Netz dahinter und nennt keine Zeile.
+    //
+    // Die Nachkommastellen an den Grenzen sind PFLICHT und kein Schönheitsfehler:
+    // "0" waehlt die Ueberladung RangeAttribute(int, int), und die rundet den decimal-Wert
+    // vor dem Vergleich auf Int32. -0,49 gilt dann als gueltig, und ein Wert jenseits von
+    // int.MaxValue wirft eine OverflowException, die RangeAttribute nicht faengt — aus 400
+    // wird 500. Genau so war es hier schon einmal; RangeUeberladungTests haelt es fest.
+    [Range(0.0, 10_000_000.0)]
     public decimal Amount { get; set; }
 }

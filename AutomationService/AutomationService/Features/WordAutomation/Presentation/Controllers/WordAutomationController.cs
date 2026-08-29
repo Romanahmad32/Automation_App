@@ -130,7 +130,8 @@ public class WordAutomationController(
         try
         {
             var calculation = RvgFeeCalculator.Calculate(
-                requestDto.Gegenstandswert,
+                // Nicht null: [Required] haelt die Anfrage ohne Feld schon vorher auf.
+                requestDto.Gegenstandswert!.Value,
                 requestDto.Gebuehrensatz,
                 requestDto.ApplyVat,
                 requestDto.GeschaeftsgebuehrOverride,

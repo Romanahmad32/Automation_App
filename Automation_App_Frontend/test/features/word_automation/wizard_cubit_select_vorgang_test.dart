@@ -4,6 +4,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/form
 import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -74,6 +75,30 @@ void main() {
 
     expect(cubit.state.selectedVorgang, isNull);
     expect(cubit.state.selectedMandant, isNull);
+    await cubit.close();
+  });
+
+  /// Die Aufstellung gehört zum Vorgang. Blieb sie beim Umwählen stehen, zeigte
+  /// der nächste Vorgang die Positionen des vorigen — und weil der Listener des
+  /// Schadensaufstellungs-Schritts nur bei `damageListing == null` greift, lud
+  /// er die eigene gespeicherte Aufstellung nie nach. Eine stehengebliebene
+  /// Beanstandung sperrte obendrein den Knopf im falschen Vorgang.
+  test('selectVorgang verwirft Aufstellung und Beanstandungen', () async {
+    final cubit = WizardCubit(_FakeUpdateFormTemplate(), _FakeGetMandanten([]));
+
+    cubit.setDamageListing(
+      const DamageListing(
+        items: [DamageItem(description: 'Reparaturkosten', amount: 500)],
+      ),
+      fehler: const [
+        'Position 2 (ohne Bezeichnung): Betrag darf nicht negativ sein',
+      ],
+    );
+    await cubit.selectVorgang(vorgang());
+
+    expect(cubit.state.damageListing, isNull);
+    expect(cubit.state.schadenspositionFehler, isEmpty);
+    expect(cubit.state.schadensaufstellungIstErzeugbar, isFalse);
     await cubit.close();
   });
 }

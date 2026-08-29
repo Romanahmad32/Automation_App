@@ -2859,12 +2859,13 @@
           },
           "amount": {
             "maximum": 10000000,
-            "minimum": 0.01,
+            "minimum": 0,
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
               "number",
               "string"
             ],
+            "description": "Forderung dieser Position in \u20AC; 0,00 = noch nicht beziffert.",
             "format": "double"
           }
         }
@@ -3703,16 +3704,21 @@
         }
       },
       "RvgCalculationRequestDto": {
+        "required": [
+          "gegenstandswert"
+        ],
         "type": "object",
         "properties": {
           "gegenstandswert": {
             "maximum": 100000000,
-            "minimum": 0.01,
+            "minimum": 0,
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
+              "null",
               "number",
               "string"
             ],
+            "description": "Summe der Schadenspositionen in \u20AC.",
             "format": "double"
           },
           "gebuehrensatz": {
