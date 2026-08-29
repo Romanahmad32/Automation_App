@@ -63,9 +63,8 @@ class FormTemplateActionButtons extends StatelessWidget {
                         return;
                       }
                       final List<FieldData> formData = fields.map((field) {
-                        final String labelValue = formGroup
-                            .control(field.label)
-                            .value;
+                        final labelValue =
+                            formGroup.control(field.label).value as String;
                         return FieldData(
                           order: fields.indexOf(field),
                           label: labelValue,
@@ -80,7 +79,9 @@ class FormTemplateActionButtons extends StatelessWidget {
                         SubmitFormTemplateDataEvent(
                           existingItemId: existingItemId,
                           // 6. Pass the ID to the BLoC event
-                          templateName: formGroup.control('templateName').value,
+                          templateName:
+                              formGroup.control('templateName').value
+                                  as String?,
                           formData: formData,
                           wordFilePathOhneAuflistung:
                               wordFilePathOhneAuflistung,

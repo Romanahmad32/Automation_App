@@ -9,6 +9,17 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# Implizite Casts aus dynamic sind ab hier Analysefehler: Der JSON-Layer ist
+# handgeschrieben (siehe gespiegelteDtos in test/architecture/
+# http_vertrag_test.dart), und ein json['order'] ohne 'as int' verschiebt den
+# Typfehler von der Analyse in die Laufzeit. strict-inference und
+# strict-raw-types bleiben bewusst aus: gemessen waeren das 52 rein
+# mechanische Typargumente auf Dio-Aufrufen ohne einen gefundenen Fehler.
+analyzer:
+  language:
+    strict-casts: true
+
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
