@@ -75,25 +75,26 @@ Textdokument*.txt
 .dotnet/
 
 # ---------------------------------------------------------------------------
-# Interne Kanzleidokumente
-# Kein Mandantenbezug, aber Geschaeftsinterna: Aktenzeichen-Schema, Vergabe der
-# Auftragsnummern, RVG-Abrechnung, Registerfuehrung. Gehoert nicht in ein
-# oeffentliches Repo, bleibt aber lokal im Arbeitsverzeichnis liegen.
+# Interne Kanzleidokumente — hier steht bewusst nichts mehr
 #
-# CLAUDE.md stand hier frueher mit und ist bewusst herausgenommen: sie enthaelt
-# keine Anforderungen, sondern die technischen Konventionen des Repos
-# (Schichtenregeln, Dateilaengen, Befehle, Startreihenfolge). Ignoriert war sie
-# fuer jeden Agenten unsichtbar, der nicht in genau diesem Arbeitsverzeichnis
-# laeuft — Cloud-Review, frischer Clone, Worktree, zweiter Rechner. Der sieht
-# dann nicht einmal, dass ihm die Regeln fehlen, und schreibt Code an ihnen
-# vorbei. Was an ihr nach Interna aussieht (Beispiel-Kennzeichen, Referenz-
-# schema, Registerspalten), steht ohnehin seit jeher im versionierten
-# Quellcode: in UI-Labels, Testdaten und dem Demo-Vorgang.
+# CLAUDE.md und REQUIREMENTS.md standen frueher beide hier, und beide sind aus
+# demselben Grund heraus: Ignoriert ist eine Datei fuer jeden Agenten
+# unsichtbar, der nicht in genau diesem Arbeitsverzeichnis laeuft —
+# Cloud-Review, frischer Clone, Worktree, zweiter Rechner. Der sieht dann nicht
+# einmal, dass ihm etwas fehlt, und raet, statt zu fragen. Bei CLAUDE.md ging es
+# um die Bauregeln, bei REQUIREMENTS.md um das, was fachlich gefordert ist —
+# ausgerechnet die Datei, die am wenigsten zu raten ist.
 #
-# REQUIREMENTS.md bleibt draussen — das ist das Dokument mit den echten
-# fachlichen Anforderungen.
+# Was an REQUIREMENTS.md nach Interna aussieht, ist Arbeitskonvention und kein
+# Mandantenbezug: Aktenzeichen-Schema, Abteilungskuerzel, Registerspalten,
+# Ablagemuster. Namen, Anschriften, Kontaktdaten und Aktenzeichen echter Faelle
+# stehen nicht darin; die Beispiele sind erfunden ("Mueller", HG-E 1427) und
+# stehen ohnehin seit jeher im versionierten Quellcode: in UI-Labels, Testdaten
+# und dem Demo-Vorgang.
+#
+# Echte Mandantendaten gehoeren weiterhin nirgends ins Repo. Sie entstehen unter
+# %APPDATA% und im Aktenstammordner, beide ausserhalb des Projektbaums.
 # ---------------------------------------------------------------------------
-/REQUIREMENTS.md
 
 # ---------------------------------------------------------------------------
 # Agent-Konfiguration
