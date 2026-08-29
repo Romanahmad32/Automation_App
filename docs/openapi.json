@@ -3704,6 +3704,9 @@
         }
       },
       "RvgCalculationRequestDto": {
+        "required": [
+          "gegenstandswert"
+        ],
         "type": "object",
         "properties": {
           "gegenstandswert": {
@@ -3711,6 +3714,7 @@
             "minimum": 0,
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
             "type": [
+              "null",
               "number",
               "string"
             ],

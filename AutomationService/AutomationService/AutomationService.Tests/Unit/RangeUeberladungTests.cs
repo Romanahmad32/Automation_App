@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using AutomationService.Features.WordAutomation.Presentation.Dtos;
 using FluentAssertions;
 using Xunit;
@@ -6,8 +7,8 @@ using Xunit;
 namespace AutomationService.Tests.Unit;
 
 /// <summary>
-/// Haelt fest, dass die Geldgrenzen der DTOs in <c>double</c> vergleichen und nicht in
-/// <c>int</c>.
+/// Haelt fest, dass jede <c>[Range]</c> an einer <c>decimal</c>-Eigenschaft in
+/// <c>double</c> vergleicht und nicht in <c>int</c>.
 ///
 /// Warum ein eigener Test dafuer: <c>[Range(0, 10_000_000)]</c> und
 /// <c>[Range(0.0, 10_000_000.0)]</c> sehen im Diff fast gleich aus, verhalten sich aber
@@ -15,40 +16,71 @@ namespace AutomationService.Tests.Unit;
 /// <c>OperandType</c> wird damit <c>Int32</c>, und der uebergebene <c>decimal</c> wird
 /// **vor** dem Vergleich gerundet. Zwei Folgen, beide gemessen:
 ///
-/// - <c>-0,49</c> rundet auf 0 und gilt als gueltig — eine negative Position kaeme durch
-///   die Validierung, die genau das verhindern soll, und stuende als "-0,49" im Schreiben.
+/// - <c>-0,49</c> rundet auf 0 und gilt als gueltig — ein negativer Betrag kaeme durch
+///   die Validierung, die genau das verhindern soll, und stuende so im Schreiben.
 /// - Ein Wert jenseits von <c>int.MaxValue</c> wirft beim Konvertieren eine
 ///   <c>OverflowException</c>. <c>RangeAttribute</c> faengt nur Format-, InvalidCast- und
 ///   NotSupported-Fehler ab, die Validierung fliegt also auseinander: aus 400
 ///   "validation_failed" wird ein 500.
 ///
-/// Der Fehler ist hier schon einmal entstanden, beim Oeffnen der Untergrenze von 0,01 auf
-/// 0 (#27) — eine Aenderung, die nach Fachlogik aussah und in Wahrheit die Ueberladung
-/// umgeschaltet hat. Kein anderer Test schlaegt dabei an: Der Dienst uebersetzt, alle
-/// bisherigen Faelle bleiben gruen, und der Vertrag in docs/openapi.json meldet
-/// unveraendert "minimum: 0".
+/// Der Fehler ist hier schon zweimal entstanden — beim Oeffnen der Untergrenze von 0,01
+/// auf 0 (#27) und davor unbemerkt an den vier Override-Feldern. Deshalb sammelt dieser
+/// Test die Grenzen **selbst ein**, statt sie aufzuzaehlen: Eine Handliste haette die
+/// Nachbarn derselben Datei nicht erwischt, und genau das ist passiert. Jede neue
+/// Geldgrenze faellt ab jetzt von allein unter die Regel.
+///
+/// Nicht betroffen sind <c>[Range]</c> an <c>int</c>-Eigenschaften
+/// (<c>ZentralrufPrefillDto</c>): Dort ist die int-Ueberladung die richtige.
 /// </summary>
 public class RangeUeberladungTests
 {
-    private static RangeAttribute RangeVon<T>(string eigenschaft) =>
-        (RangeAttribute)Attribute.GetCustomAttribute(
-            typeof(T).GetProperty(eigenschaft)!, typeof(RangeAttribute))!;
-
-    public static TheoryData<string, RangeAttribute> Geldgrenzen() => new()
+    /// <summary>
+    /// Alle <c>decimal</c>-Eigenschaften mit <c>[Range]</c> aus der Presentation-Schicht
+    /// des Dienstes — eingesammelt aus der Assembly, nicht von Hand gepflegt.
+    /// </summary>
+    public static TheoryData<string, RangeAttribute> Geldgrenzen()
     {
-        { "DamageItemDto.Amount", RangeVon<DamageItemDto>(nameof(DamageItemDto.Amount)) },
+        var daten = new TheoryData<string, RangeAttribute>();
+        var dtoTypen = typeof(DamageListingDto).Assembly
+            .GetTypes()
+            .Where(typ => typ.IsClass && typ.Namespace?.Contains(".Presentation.Dtos", StringComparison.Ordinal) == true);
+
+        foreach (var typ in dtoTypen)
         {
-            "RvgCalculationRequestDto.Gegenstandswert",
-            RangeVon<RvgCalculationRequestDto>(nameof(RvgCalculationRequestDto.Gegenstandswert))
+            foreach (var eigenschaft in typ.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var istGeld = Nullable.GetUnderlyingType(eigenschaft.PropertyType) == typeof(decimal)
+                    || eigenschaft.PropertyType == typeof(decimal);
+                var grenze = eigenschaft.GetCustomAttribute<RangeAttribute>();
+                if (istGeld && grenze is not null)
+                {
+                    daten.Add($"{typ.Name}.{eigenschaft.Name}", grenze);
+                }
+            }
         }
-    };
+
+        return daten;
+    }
+
+    /// <summary>
+    /// Ohne diese Zusicherung koennte die Sammlung oben still leer laufen — etwa wenn die
+    /// DTOs den Namespace wechseln — und der Test meldete Erfolg fuer eine Pruefung, die
+    /// nie gelaufen ist.
+    /// </summary>
+    [Fact]
+    public void Geldgrenzen_WerdenUeberhauptGefunden()
+    {
+        Geldgrenzen().Should().HaveCountGreaterThanOrEqualTo(
+            6, "die WordAutomation-DTOs tragen sechs Geldgrenzen; findet der Test weniger, sucht er falsch");
+    }
 
     [Theory]
     [MemberData(nameof(Geldgrenzen))]
     public void Geldgrenze_VergleichtInDouble(string name, RangeAttribute grenze)
     {
         grenze.OperandType.Should().Be<double>(
-            "{0} vergliche sonst in Int32 und wuerde den Betrag vorher runden", name);
+            "{0} vergliche sonst in Int32 und wuerde den Betrag vorher runden — " +
+            "die Grenzen brauchen ihre Nachkommastellen", name);
     }
 
     [Theory]
@@ -71,9 +103,11 @@ public class RangeUeberladungTests
 
     /// <summary>Die Oeffnung aus #27: 0,00 bleibt eine gueltige Position.</summary>
     [Theory]
-    [MemberData(nameof(Geldgrenzen))]
-    public void Geldgrenze_NimmtNullAn(string name, RangeAttribute grenze)
+    [InlineData(nameof(DamageItemDto.Amount))]
+    public void Betrag_NimmtNullAn(string name)
     {
-        grenze.IsValid(0m).Should().BeTrue("{0} laesst noch unbezifferte Positionen zu", name);
+        var grenze = typeof(DamageItemDto).GetProperty(name)!.GetCustomAttribute<RangeAttribute>()!;
+
+        grenze.IsValid(0m).Should().BeTrue("eine noch unbezifferte Position ist gueltig");
     }
 }

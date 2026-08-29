@@ -1,5 +1,4 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
-import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
@@ -12,6 +11,7 @@ import 'package:automation_app/features/word_automation/presentation/utils/schad
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_listing_form.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/generation_overlay.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/schadensaufstellung_preview.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/schadensposition_fehlerliste.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorsteuer_checkbox_karte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -101,13 +101,16 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
           listener: (context, state) {
             final listing = state.damageListing;
             if (listing != null) {
-              // Der Stand kommt hier nicht aus dem Formular, sondern aus dem
-              // Cubit — die Beanstandungen deshalb aus den Positionen ableiten
-              // statt die alten stehen zu lassen.
+              // Die Beanstandungen bleiben, wie sie sind: Das Formular steht
+              // unverändert da, nur die Umsatzsteuer hat sich geändert. Sie hier
+              // aus `listing.items` neu abzuleiten, hiesse genau die Zeilen zu
+              // verlieren, die es nicht in die Aufstellung schaffen — eine Zeile
+              // ohne Bezeichnung mit -250 wäre nach dem Umschalten wieder
+              // unbeanstandet, das Feld weiter rot und der Knopf frei.
               _onDamageListingChanged(
                 context,
                 listing,
-                positionenFehler(listing.items),
+                state.schadenspositionFehler,
               );
             }
           },
@@ -192,16 +195,7 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
               ),
               const Divider(height: 1),
               if (fehler.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final meldung in fehler)
-                        FehlerHinweis(nachricht: meldung),
-                    ],
-                  ),
-                ),
+                SchadenspositionFehlerliste(meldungen: fehler),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(

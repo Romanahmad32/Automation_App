@@ -249,6 +249,33 @@ void main() {
     expect(erstellenKnopf(tester).onPressed, isNull);
   });
 
+  /// Das Umschalten der Vorsteuer rechnet die Aufstellung neu — dabei dürfen die
+  /// Beanstandungen nicht verlorengehen. Sie aus `listing.items` neu abzuleiten
+  /// tut aber genau das: Die beanstandete Zeile ohne Bezeichnung steht da gar
+  /// nicht drin. Ergebnis wäre ein rotes Feld über einem freigegebenen Knopf.
+  testWidgets('das Umschalten der Vorsteuer hebt die Sperre nicht auf', (
+    tester,
+  ) async {
+    await zeigeSchritt(tester);
+    await erfasse(tester, bezeichnung: 'Reparaturkosten', betrag: '500');
+    await tester.tap(find.widgetWithText(TextButton, 'Position hinzufügen'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(3), '-250');
+    await beruhige(tester);
+    expect(erstellenKnopf(tester).onPressed, isNull);
+
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Ändern'));
+    await beruhige(tester);
+
+    expect(
+      find.text('Position 2 ($ohneBezeichnung): $negativerBetragHinweis'),
+      findsOneWidget,
+    );
+    expect(erstellenKnopf(tester).onPressed, isNull);
+  });
+
   /// Der Reset der Vorschau hängt daran, dass auch der leere Stand beim Bloc
   /// ankommt. Wird er unterdrückt, bleibt der zuletzt berechnete Betrag stehen
   /// und die Vorschau behauptet Anwaltskosten zu einer Aufstellung, die es

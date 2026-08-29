@@ -78,9 +78,10 @@ class _DamageListingFormState extends State<DamageListingForm> {
 
   @override
   Widget build(BuildContext context) {
-    // Je Zeile einmal lesen statt einmal je Verwendung: Der Betrag wurde sonst
-    // bei jedem Tastendruck mehrfach geparst — einmal für den errorText und
-    // zweimal in _emit.
+    // Einmal je Aufbau lesen statt einmal je Verwendung — im Aufbau standen
+    // sonst so viele Parses wie Zeilen mal Verwendungen. Dass `_emit` seine
+    // eigene Lesung braucht, bleibt: Es läuft aus einem Rückruf heraus, nicht
+    // im Aufbau, und darf nicht auf einem veralteten Stand rechnen.
     final zeilen = _zeilen();
 
     return Column(

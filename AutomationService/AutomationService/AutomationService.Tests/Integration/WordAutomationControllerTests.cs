@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using AutomationService.Features.WordAutomation.Presentation.Dtos;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -229,6 +230,29 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
 
         // 400 und nicht 500: [ApiController] beantwortet das ungueltige Modell selbst
         // (ProblemDetails), noch bevor die Action laeuft.
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>
+    /// Seit 0 ein gueltiger Gegenstandswert ist, waere ein fehlendes Feld sonst nicht
+    /// mehr von einer ausdruecklichen 0 zu unterscheiden: Ein leerer Rumpf — oder ein im
+    /// Frontend umbenanntes Feld — ergaebe still 51,50 EUR Gebuehren statt eines Fehlers.
+    ///
+    /// Nicht abgedeckt und auch nicht noetig: eine blosse Abweichung in der Gross- und
+    /// Kleinschreibung. ASP.NET Core bindet JSON-Felder case-insensitiv, "gegenstandsWert"
+    /// trifft also weiterhin — gemessen.
+    /// </summary>
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"gegenstandsSumme\": 5000}")]
+    public async Task CalculateRvgFees_OhneGegenstandswert_ReturnsBadRequest(string rumpf)
+    {
+        var client = _factory.CreateClient();
+        using var inhalt = new StringContent(rumpf, Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync(
+            new Uri("/api/WordAutomation/rvg-calculation", UriKind.Relative), inhalt);
+
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }
