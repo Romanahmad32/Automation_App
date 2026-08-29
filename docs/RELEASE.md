@@ -263,6 +263,15 @@ funktioniert weiter, du musst dann wieder selbst Bescheid geben.
 `global.json` legt das .NET-SDK fest, `FLUTTER_VERSION` in beiden Workflows die
 Flutter-Version.
 
+Für die Flutter-Seite liegt daneben eine `.fvmrc` (in `Automation_App_Frontend/`):
+Wer [FVM](https://fvm.app) benutzt, bekommt mit `fvm use` genau die gepinnte
+Fassung, egal welches Flutter sonst im PATH steht. Prüfkette und Format-Hook
+greifen von selbst zum projektlokalen SDK (`.fvm/flutter_sdk`), sobald es
+existiert; `scripts/versionspruefung.ps1` prüft dann dessen Fassung und schlägt
+an, wenn `.fvmrc` und `FLUTTER_VERSION` auseinanderlaufen. FVM ist Angebot,
+nicht Pflicht — ohne `.fvm/` prüft und benutzt die Kette das Flutter aus dem
+PATH, wie bisher.
+
 Der Grund steht in der Historie: die CI war ab dem 01.08.2026 eine Woche lang rot,
 ohne dass jemand Code angefasst hätte. Beide Jobs zogen mit `channel: stable` und
 `10.0.x` bei jedem Lauf das Neueste, während der Entwicklerrechner drei
