@@ -4,6 +4,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/feld
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_name_hinweis.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_vorkommen_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -41,6 +42,9 @@ class TemplateFieldItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(spacing: 10, children: _zeile(theme)),
+          // Kennzeichen „beide · nur HGN · nur Auflistung · in keiner Datei"
+          // (#35 Teil 3) — sagt, welches Schreiben dieses Feld braucht.
+          FeldVorkommenBadge(formControlName: fieldData.label),
           FeldNameHinweis(
             formControlName: fieldData.label,
             datenquelleGesetzt: fieldData.datenquelle.istGesetzt,
