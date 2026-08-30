@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart';
@@ -8,16 +10,23 @@ class RegisterSpiegelAttrappe implements RegisterSpiegelRepository {
   final RegisterSpiegelErgebnis antwort;
   final Object? wirft;
 
+  /// Hält `ladeStand` an, bis der Test sie freigibt — damit ein Knopfdruck
+  /// *währenddessen* prüfbar wird.
+  final Completer<void>? standHaengt;
+
   bool? letztesErzwingen;
   int standAbrufe = 0;
+  int exportAufrufe = 0;
 
   RegisterSpiegelAttrappe({
     this.antwort = const RegisterSpiegelErgebnis(),
     this.wirft,
+    this.standHaengt,
   });
 
   @override
   Future<RegisterSpiegelErgebnis> exportiere({bool erzwingen = true}) async {
+    exportAufrufe++;
     letztesErzwingen = erzwingen;
     if (wirft != null) throw wirft!;
     return antwort;
@@ -26,6 +35,7 @@ class RegisterSpiegelAttrappe implements RegisterSpiegelRepository {
   @override
   Future<RegisterSpiegelErgebnis> ladeStand() async {
     standAbrufe++;
+    if (standHaengt != null) await standHaengt!.future;
     if (wirft != null) throw wirft!;
     return antwort;
   }
@@ -72,6 +82,33 @@ void main() {
     expect(cubit.state.fehler, contains('nicht erreichbar'));
     expect(cubit.state.geschrieben, isFalse);
   });
+
+  /// Der Knopf gilt auch dann, wenn die Seite gerade erst aufgeht.
+  ///
+  /// `ladeStand()` startet beim Öffnen des Registers und dauert eine
+  /// Netzwerkrunde. Ein Druck in dieser Sekunde wurde vorher stillschweigend
+  /// verworfen: Der Knopf blinkte kurz, danach stand derselbe Stand da wie
+  /// zuvor, und niemand erfuhr, warum nichts geschah.
+  test(
+    'ein Knopfdruck während ladeStand wird eingereiht, nicht verworfen',
+    () async {
+      final tor = Completer<void>();
+      final attrappe = RegisterSpiegelAttrappe(
+        antwort: const RegisterSpiegelErgebnis(geschrieben: true),
+        standHaengt: tor,
+      );
+      final cubit = RegisterSpiegelCubit(attrappe);
+
+      final laden = cubit.ladeStand();
+      final druck = cubit.exportiere();
+      tor.complete();
+      await Future.wait([laden, druck]);
+
+      expect(attrappe.exportAufrufe, 1, reason: 'der Druck kommt durch');
+      expect(cubit.state.geschrieben, isTrue);
+      expect(cubit.laeuft, isFalse);
+    },
+  );
 
   test(
     'laeuft ist nach dem Lauf wieder false — auch nach einem Fehler',
