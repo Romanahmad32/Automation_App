@@ -2,9 +2,11 @@ import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_b
 import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/tamplate_fields_table_header.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_field_item.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Karte mit den Eingabefeldern der Vorlage: Hinzufügen, sortierbare Liste
@@ -69,12 +71,17 @@ class TemplateFieldsCard extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
               onReorder: onReorder,
-              // Das gezogene Element wird in ein Overlay außerhalb
-              // des ReactiveForm gehoben — hier neu umschließen.
+              // Das gezogene Element wird in ein Overlay außerhalb des
+              // ReactiveForm UND der Bloc-Provider der Seite gehoben — hier
+              // beides neu umschließen (das FeldVorkommenBadge in der Zeile
+              // braucht den TemplatePlaceholdersBloc).
               proxyDecorator: (child, index, animation) {
-                return ReactiveForm(
-                  formGroup: formGroup,
-                  child: Material(color: Colors.transparent, child: child),
+                return BlocProvider.value(
+                  value: context.read<TemplatePlaceholdersBloc>(),
+                  child: ReactiveForm(
+                    formGroup: formGroup,
+                    child: Material(color: Colors.transparent, child: child),
+                  ),
                 );
               },
               itemCount: fields.length,
