@@ -64,11 +64,15 @@ public sealed class RegisterSpiegelService(
         var abdruck = RegisterSpiegelStand.Fingerabdruck(zeilen, nurAbgeschlossene);
 
         if (!erzwingen && Unveraendert(letzter, abdruck, ablage))
-            return RegisterSpiegelErgebnis.Uebersprungen(Unveraendert_, zeilen.Count, letzter?.GeschriebenAm);
+        {
+            return RegisterSpiegelErgebnis.Uebersprungen(
+                Unveraendert_, zeilen.Count, letzter?.GeschriebenAm);
+        }
 
         try
         {
-            return await SchreibeDateienAsync(ablage, zeilen, nurAbgeschlossene, abdruck, cancellationToken);
+            return await SchreibeDateienAsync(
+                ablage, zeilen, nurAbgeschlossene, abdruck, letzter, cancellationToken);
         }
         catch (ZieldateiGesperrtException ex)
         {
@@ -93,22 +97,29 @@ public sealed class RegisterSpiegelService(
 
     /// <summary>
     /// Unverändert heißt: gleicher Fingerabdruck, gleiches Ziel <em>und</em>
-    /// die Dateien liegen noch dort. Die letzte Bedingung ist der Grund, warum
-    /// eine von Hand gelöschte Datei beim nächsten Abschluss von selbst
-    /// zurückkommt.
+    /// der Ablageordner sieht noch so aus, wie der letzte Lauf ihn verlassen
+    /// hat. Die letzte Bedingung ist der Grund, warum eine von Hand gelöschte
+    /// Datei beim nächsten Abschluss von selbst zurückkommt.
+    ///
+    /// Beim PDF wird auf <em>Gleichheit</em> geprüft, nicht auf Vorhandensein:
+    /// Ein Lauf ohne Word hinterlässt bewusst keins, und dann ist „da liegt
+    /// keins" der erwartete Zustand. Mit <c>File.Exists</c> allein wäre er nie
+    /// erreicht, und der Spiegel schriebe auf einem Rechner ohne Word bei
+    /// jedem Abschluss dieselbe .docx neu.
     /// </summary>
     static bool Unveraendert(RegisterSpiegelStand.Eintrag? letzter, string abdruck, RegisterSpiegelAblage ablage) =>
         letzter is not null
         && letzter.Fingerabdruck == abdruck
         && string.Equals(letzter.Ziel, ablage.Docx, StringComparison.OrdinalIgnoreCase)
         && File.Exists(ablage.Docx)
-        && File.Exists(ablage.Pdf);
+        && letzter.PdfGeschrieben == File.Exists(ablage.Pdf);
 
     async Task<RegisterSpiegelErgebnis> SchreibeDateienAsync(
         RegisterSpiegelAblage ablage,
         IReadOnlyList<RegisterZeile> zeilen,
         bool nurAbgeschlossene,
         string abdruck,
+        RegisterSpiegelStand.Eintrag? letzter,
         CancellationToken cancellationToken)
     {
         var jetzt = DateTime.Now;
@@ -119,23 +130,18 @@ public sealed class RegisterSpiegelService(
         {
             RegisterDokument.Schreibe(bauDocx, zeilen, jetzt, nurAbgeschlossene);
 
-            // Erst wandeln, dann umziehen: Scheitert die Wandlung, liegt im
-            // Ablageordner weiterhin die alte, in sich stimmige Fassung —
-            // besser als eine neue .docx neben einem veralteten PDF.
+            // Erst wandeln, dann umziehen: Was scheitert, scheitert damit,
+            // bevor der Ablageordner angefasst wird.
             var pdfFehler = await PdfSchreibenAsync(bauDocx, bauPdf, cancellationToken);
 
             AtomareAblage.Ersetze(bauDocx, ablage.Docx);
             AtomareAblage.SchreibschutzSetzen(ablage.Docx);
 
-            string? pdfPfad = null;
-            if (pdfFehler is null)
-            {
-                AtomareAblage.Ersetze(bauPdf, ablage.Pdf);
-                AtomareAblage.SchreibschutzSetzen(ablage.Pdf);
-                pdfPfad = ablage.Pdf;
-            }
+            pdfFehler = PdfAblegen(ablage, bauPdf, pdfFehler, letzter);
+            var pdfPfad = pdfFehler is null ? ablage.Pdf : null;
 
-            stand.Schreiben(new RegisterSpiegelStand.Eintrag(abdruck, ablage.Docx, jetzt));
+            stand.Schreiben(new RegisterSpiegelStand.Eintrag(
+                abdruck, ablage.Docx, jetzt, PdfGeschrieben: pdfFehler is null));
             logger.LogInformation(
                 "Register-Spiegel geschrieben: {Zeilen} Zeilen nach {Ziel}.", zeilen.Count, ablage.Docx);
 
@@ -157,7 +163,78 @@ public sealed class RegisterSpiegelService(
     }
 
     /// <summary>
-    /// Wandelt die .docx und legt das Ergebnis neben ihr ab. Gibt den Grund
+    /// Legt die PDF-Fassung ab — oder räumt die alte weg, wenn keine entstand.
+    ///
+    /// Das Wegräumen ist der eigentliche Punkt. Ein PDF von gestern neben einer
+    /// .docx von heute ist schlimmer als gar keins: Es sieht vollständig aus,
+    /// sagt aber etwas anderes als die verbindliche Fassung daneben — und
+    /// unterwegs liest man das PDF, nicht die .docx. Bliebe es liegen, hielte
+    /// der Stand den Lauf zudem für erledigt, und der Spiegel käme aus diesem
+    /// Zustand nie wieder heraus.
+    /// </summary>
+    /// <returns>Der Grund, warum kein PDF liegt, oder null.</returns>
+    string? PdfAblegen(
+        RegisterSpiegelAblage ablage,
+        string bauPdf,
+        string? pdfFehler,
+        RegisterSpiegelStand.Eintrag? letzter)
+    {
+        if (pdfFehler is not null)
+        {
+            VeraltetesPdfWegraeumen(ablage, letzter);
+            return pdfFehler;
+        }
+
+        try
+        {
+            AtomareAblage.Ersetze(bauPdf, ablage.Pdf);
+            AtomareAblage.SchreibschutzSetzen(ablage.Pdf);
+            return null;
+        }
+        catch (Exception ex)
+            when (ex is ZieldateiGesperrtException or IOException or UnauthorizedAccessException)
+        {
+            // Die .docx liegt zu diesem Zeitpunkt schon richtig. Den ganzen
+            // Lauf als gescheitert zu melden hiesse, etwas anderes zu sagen,
+            // als auf der Platte steht — gemeldet wird deshalb genau das, was
+            // fehlt.
+            logger.LogWarning(ex, "Register-Spiegel: PDF-Fassung konnte nicht abgelegt werden.");
+            VeraltetesPdfWegraeumen(ablage, letzter);
+            return $"Die PDF-Fassung konnte nicht abgelegt werden ({ex.Message}). "
+                   + "Die Word-Datei ist geschrieben.";
+        }
+    }
+
+    /// <summary>
+    /// Entfernt die PDF-Fassung des vorigen Laufs. Angefasst wird nur, was der
+    /// Spiegel selbst dort abgelegt hat — der Stand führt dasselbe Ziel und
+    /// weiß, dass damals ein PDF entstand. Alles andere im Ordner geht ihn
+    /// nichts an.
+    /// </summary>
+    static void VeraltetesPdfWegraeumen(RegisterSpiegelAblage ablage, RegisterSpiegelStand.Eintrag? letzter)
+    {
+        if (letzter is null
+            || !letzter.PdfGeschrieben
+            || !string.Equals(letzter.Ziel, ablage.Docx, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        AtomareAblage.SchreibschutzLoesen(ablage.Pdf);
+        try
+        {
+            if (File.Exists(ablage.Pdf)) File.Delete(ablage.Pdf);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Bleibt es liegen, sieht der nächste Lauf den Ordner als verändert
+            // an und schreibt neu — besser, als deswegen den bereits
+            // geschriebenen Spiegel zu verwerfen.
+        }
+    }
+
+    /// <summary>
+    /// Wandelt die .docx und legt das Ergebnis im Bauordner ab. Gibt den Grund
     /// zurück, wenn es nicht ging — auf einem Rechner ohne Word ist das
     /// erwartbar und kein Fehlschlag des Spiegels: Die .docx ist die
     /// verbindliche Fassung, das PDF die bequeme.

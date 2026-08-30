@@ -1,12 +1,7 @@
-using AutomationService.Core.Persistence;
 using AutomationService.Features.Settings.Domain.Services;
-using AutomationService.Features.Vorgaenge.Domain.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Services;
 using AutomationService.Tests.Support;
 using FluentAssertions;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace AutomationService.Tests.Unit;
@@ -15,61 +10,26 @@ namespace AutomationService.Tests.Unit;
 /// Prüft den Register-Spiegel als Ganzes (§6.2, #40) gegen eine echte
 /// In-Memory-SQLite und einen echten Ordner: Wann geschrieben wird, wann nicht,
 /// und was im Ablageordner passiert, wenn etwas schiefgeht.
+///
+/// Alles, was an der PDF-Fassung hängt, steht in
+/// <see cref="RegisterSpiegelPdfTests"/> — die beiden Dateien teilen sich
+/// <see cref="RegisterSpiegelUmgebung"/>.
 /// </summary>
 public sealed class RegisterSpiegelServiceTests : IDisposable
 {
-    readonly SqliteConnection _verbindung;
-    readonly AutomationDbContext _db;
-    readonly string _ablage = Directory.CreateTempSubdirectory("register-ablage").FullName;
-    readonly string _bau = Directory.CreateTempSubdirectory("register-bau").FullName;
-    readonly string _standDatei;
-    readonly PdfAttrappe _pdf = new();
+    readonly RegisterSpiegelUmgebung _umgebung = new();
 
-    public RegisterSpiegelServiceTests()
-    {
-        _verbindung = new SqliteConnection("DataSource=:memory:");
-        _verbindung.Open();
-        _db = new AutomationDbContext(new DbContextOptionsBuilder<AutomationDbContext>()
-            .UseSqlite(_verbindung).Options);
-        _db.Database.EnsureCreated();
-        _standDatei = Path.Combine(_bau, "stand.json");
-    }
+    RegisterSpiegelService Dienst() => _umgebung.Dienst();
 
-    RegisterSpiegelService Dienst() => new(
-        _db,
-        _pdf,
-        new RegisterSpiegelStand(_standDatei),
-        new RegisterSpiegelBauordner(_bau),
-        NullLogger<RegisterSpiegelService>.Instance);
+    Task EinstellungenAnlegen(string? ordner = null, string filter = "alle") =>
+        _umgebung.EinstellungenAnlegen(ordner, filter);
 
-    async Task EinstellungenAnlegen(string? ordner = null, string filter = "alle")
-    {
-        var einstellungen = KanzleiSettingsRepository.CreateDefault();
-        einstellungen.RegisterAblageOrdner = ordner ?? _ablage;
-        einstellungen.RegisterExportFilter = filter;
-        _db.KanzleiSettings.Add(einstellungen);
-        await _db.SaveChangesAsync();
-    }
+    Task VorgangAnlegen(string referenz, int nummer, string status = "versendet") =>
+        _umgebung.VorgangAnlegen(referenz, nummer, status);
 
-    async Task VorgangAnlegen(string referenz, int nummer, string status = "versendet")
-    {
-        _db.Vorgaenge.Add(new VorgangEntity
-        {
-            Referenz = referenz,
-            Status = status,
-            Rechtsgebiet = "verkehrsrecht",
-            LaufendeNummer = nummer,
-            Jahr = "26",
-            Abteilung = "C03",
-            MandantName = "Mustermann",
-            Gegner = "HUK",
-            AngefragtAm = new DateTime(2026, 1, 5),
-        });
-        await _db.SaveChangesAsync();
-    }
+    string Docx => _umgebung.DocxPfad;
 
-    string Docx => Path.Combine(_ablage, $"{RegisterSpiegelVorgabe.Dateiname}.docx");
-    string Pdf => Path.Combine(_ablage, $"{RegisterSpiegelVorgabe.Dateiname}.pdf");
+    string Pdf => _umgebung.PdfPfad;
 
     [Fact]
     public async Task Schreibe_LegtWordUndPdfImAblageordnerAn()
@@ -95,7 +55,7 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
 
         ergebnis.Geschrieben.Should().BeFalse();
         ergebnis.Grund.Should().Contain("kein Ablageordner");
-        Directory.EnumerateFiles(_ablage).Should().BeEmpty();
+        Directory.EnumerateFiles(_umgebung.Ablage).Should().BeEmpty();
     }
 
     /// <summary>
@@ -116,7 +76,7 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
         zweiter.Geschrieben.Should().BeFalse();
         zweiter.Grund.Should().Contain("nicht geändert");
         File.GetLastWriteTimeUtc(Docx).Should().Be(ersterStand);
-        _pdf.Aufrufe.Should().Be(1, "auch die teure Wandlung entfällt");
+        _umgebung.Pdf.Aufrufe.Should().Be(1, "auch die teure Wandlung entfällt");
     }
 
     [Fact]
@@ -179,29 +139,10 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
         new FileInfo(Docx).Length.Should().Be(alteGroesse);
     }
 
-    /// <summary>
-    /// Ohne installiertes Word gibt es kein PDF — die .docx ist trotzdem die
-    /// verbindliche Fassung und muss geschrieben werden.
-    /// </summary>
-    [Fact]
-    public async Task Schreibe_LegtDieWordDateiAn_AuchWennDieWandlungScheitert()
-    {
-        await EinstellungenAnlegen();
-        await VorgangAnlegen("01/26 C03", 1);
-        _pdf.Wirft = new InvalidOperationException("Word ist nicht verfügbar.");
-
-        var ergebnis = await Dienst().SchreibeAsync();
-
-        ergebnis.Geschrieben.Should().BeTrue();
-        ergebnis.PdfFehler.Should().Contain("Word ist nicht verfügbar");
-        File.Exists(Docx).Should().BeTrue();
-        File.Exists(Pdf).Should().BeFalse();
-    }
-
     [Fact]
     public async Task Schreibe_LaesstDasGewachseneKanzleidokumentDanebenUnangetastet()
     {
-        var kanzleidatei = Path.Combine(_ablage, "Sachgebiete_laufende Nummern_ab 2018.docx");
+        var kanzleidatei = Path.Combine(_umgebung.Ablage, "Sachgebiete_laufende Nummern_ab 2018.docx");
         await File.WriteAllTextAsync(kanzleidatei, "die Handarbeit von sieben Jahren");
         await EinstellungenAnlegen();
         await VorgangAnlegen("01/26 C03", 1);
@@ -219,7 +160,7 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
 
         await Dienst().SchreibeAsync();
 
-        Directory.EnumerateFiles(_ablage).Select(Path.GetFileName)
+        Directory.EnumerateFiles(_umgebung.Ablage).Select(Path.GetFileName)
             .Should().BeEquivalentTo([$"{RegisterSpiegelVorgabe.Dateiname}.docx",
                 $"{RegisterSpiegelVorgabe.Dateiname}.pdf"]);
     }
@@ -230,7 +171,8 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
         await EinstellungenAnlegen();
         await VorgangAnlegen("01/26 C03", 1);
         await File.WriteAllTextAsync(
-            Path.Combine(_ablage, $"{RegisterSpiegelVorgabe.Dateiname}-LAPTOP-ANWALT.docx"), "unterwegs");
+            Path.Combine(_umgebung.Ablage, $"{RegisterSpiegelVorgabe.Dateiname}-LAPTOP-ANWALT.docx"),
+            "unterwegs");
 
         var ergebnis = await Dienst().SchreibeAsync();
 
@@ -254,12 +196,5 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
         File.GetLastWriteTimeUtc(Docx).Should().Be(geschriebenAm);
     }
 
-    public void Dispose()
-    {
-        _db.Dispose();
-        _verbindung.Dispose();
-        foreach (var datei in Directory.EnumerateFiles(_ablage)) AtomareAblage.SchreibschutzLoesen(datei);
-        Directory.Delete(_ablage, recursive: true);
-        Directory.Delete(_bau, recursive: true);
-    }
+    public void Dispose() => _umgebung.Dispose();
 }

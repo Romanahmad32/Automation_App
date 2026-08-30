@@ -36,7 +36,26 @@ public sealed class RegisterSpiegelStand(string dateiPfad)
     /// </summary>
     const char Trenner = '\u001F';
 
-    public sealed record Eintrag(string Fingerabdruck, string Ziel, DateTime GeschriebenAm);
+    /// <summary>
+    /// Was der letzte Lauf hinterlassen hat.
+    /// </summary>
+    /// <param name="Fingerabdruck">Über die Zeilen, den Filter und die Layout-Fassung.</param>
+    /// <param name="Ziel">Der volle Pfad der geschriebenen .docx.</param>
+    /// <param name="GeschriebenAm">Zeitpunkt des Laufs.</param>
+    /// <param name="PdfGeschrieben">
+    /// Ob dabei auch die PDF-Fassung entstand. Ohne dieses Feld liesse sich
+    /// „im Ablageordner liegt kein PDF" nicht von „dort liegt ein veraltetes"
+    /// unterscheiden — und genau daran hing, dass eine einmal gescheiterte
+    /// Wandlung ein PDF von gestern für immer neben einer aktuellen .docx
+    /// stehen liess. Fehlt das Feld in einer älteren Standdatei, ist es
+    /// <c>false</c>: Der nächste Lauf schreibt dann einmal neu, und das ist
+    /// die sichere Richtung.
+    /// </param>
+    public sealed record Eintrag(
+        string Fingerabdruck,
+        string Ziel,
+        DateTime GeschriebenAm,
+        bool PdfGeschrieben = false);
 
     public Eintrag? Lesen()
     {
