@@ -95,14 +95,37 @@ class RegisterAblageFelder extends StatelessWidget {
 
 /// Bietet den erkannten synchronisierten Ordner mit einem Klick an. Erscheint
 /// nur, solange nichts eingetragen ist und ein solcher Ordner gefunden wurde.
-class RegisterAblageVorschlag extends StatelessWidget {
+///
+/// Zustandsbehaftet wegen einer Kleinigkeit mit spürbaren Folgen: Die Suche
+/// sieht auf der Platte nach, ob der Ordner aus der Umgebungsvariablen wirklich
+/// existiert. Im `build` stand sie damit bei **jedem** Neuzeichnen des
+/// Formulars — bei jedem Tastendruck im Feld daneben — und bei einem getrennten
+/// oder auf „Dateien bei Bedarf" gestellten OneDrive dauert schon das
+/// Nachsehen. Jetzt läuft sie einmal beim Aufbauen, und zwar nebenläufig.
+class RegisterAblageVorschlag extends StatefulWidget {
   const RegisterAblageVorschlag({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final vorschlag = SynchronisierterOrdner.vorschlag();
-    if (vorschlag == null) return const SizedBox.shrink();
+  State<RegisterAblageVorschlag> createState() =>
+      RegisterAblageVorschlagState();
+}
 
+class RegisterAblageVorschlagState extends State<RegisterAblageVorschlag> {
+  late final Future<String?> _gesucht = SynchronisierterOrdner.suche();
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<String?>(
+    future: _gesucht,
+    builder: (context, ergebnis) {
+      final vorschlag = ergebnis.data;
+      // Solange gesucht wird, steht hier nichts: Ein Platzhalter für einen
+      // Knopf, den es vielleicht gar nicht gibt, liesse das Formular springen.
+      if (vorschlag == null) return const SizedBox.shrink();
+      return _knopf(vorschlag);
+    },
+  );
+
+  Widget _knopf(String vorschlag) {
     return ReactiveValueListenableBuilder<String>(
       formControlName: 'registerAblageOrdner',
       builder: (context, control, _) {
