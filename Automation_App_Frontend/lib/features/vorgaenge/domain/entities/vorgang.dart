@@ -1,5 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
@@ -64,6 +65,13 @@ class Vorgang extends Equatable {
   /// für die Wiederverwendung bei Folge-/Korrekturschreiben.
   final DamageListing? schadensaufstellung;
 
+  /// Ein **angefangener**, noch nicht bestätigter Ausfüllstand — das Gegenstück
+  /// zu [feldWerte]. Er überlebt Vorlagenwechsel, Neuladen und Abbruch und wird
+  /// beim Wiedereinstieg **angeboten**, nie still eingesetzt. Null, wenn keiner
+  /// offen ist; sobald aus den Werten ein Dokument entsteht, verdrängt der
+  /// bestätigte Stand ihn ([VorgangRueckfluss]).
+  final VorgangEntwurf? entwurf;
+
   /// Pfad des erzeugten Anspruchsschreibens bzw. der Ablageort in der Akte.
   final String? dokumentPfad;
   final String? aktenOrdner;
@@ -90,6 +98,7 @@ class Vorgang extends Equatable {
     this.antwort,
     this.feldWerte,
     this.schadensaufstellung,
+    this.entwurf,
     this.dokumentPfad,
     this.aktenOrdner,
     this.abgeschlossenAm,
@@ -167,6 +176,14 @@ class Vorgang extends Equatable {
         : '$parteienBezeichnung\n$sachbestand';
   }
 
+  /// Ändert einzelne Felder. Alle Parameter außer [entwurf] sind nach dem
+  /// Muster „null heißt: unverändert" gebaut — sie können deshalb nichts
+  /// löschen, was in dieser Richtung (Daten wachsen an einem Vorgang) auch
+  /// niemand braucht.
+  ///
+  /// [entwurf] ist die Ausnahme und deshalb ein Rückgabe-Aufruf: Ein Entwurf
+  /// muss sich **löschen** lassen — „Verwerfen" ist die halbe Funktion, und mit
+  /// `??` bliebe er stehen.
   Vorgang copyWith({
     VorgangStatus? status,
     Rechtsgebiet? rechtsgebiet,
@@ -181,6 +198,7 @@ class Vorgang extends Equatable {
     ZentralrufReplyData? antwort,
     Map<String, String>? feldWerte,
     DamageListing? schadensaufstellung,
+    VorgangEntwurf? Function()? entwurf,
     String? dokumentPfad,
     String? aktenOrdner,
     DateTime? abgeschlossenAm,
@@ -207,6 +225,7 @@ class Vorgang extends Equatable {
       antwort: antwort ?? this.antwort,
       feldWerte: feldWerte ?? this.feldWerte,
       schadensaufstellung: schadensaufstellung ?? this.schadensaufstellung,
+      entwurf: entwurf != null ? entwurf() : this.entwurf,
       dokumentPfad: dokumentPfad ?? this.dokumentPfad,
       aktenOrdner: aktenOrdner ?? this.aktenOrdner,
       abgeschlossenAm: abgeschlossenAm ?? this.abgeschlossenAm,
@@ -247,6 +266,7 @@ class Vorgang extends Equatable {
       antwort: data,
       feldWerte: feldWerte,
       schadensaufstellung: schadensaufstellung,
+      entwurf: entwurf,
       dokumentPfad: dokumentPfad,
       aktenOrdner: aktenOrdner,
       abgeschlossenAm: abgeschlossenAm,
@@ -274,6 +294,7 @@ class Vorgang extends Equatable {
     antwort,
     feldWerte,
     schadensaufstellung,
+    entwurf,
     dokumentPfad,
     aktenOrdner,
     abgeschlossenAm,

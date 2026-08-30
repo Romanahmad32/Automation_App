@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AutomationService.Features.Vorgaenge.Domain.Services;
 using AutomationService.Features.Vorgaenge.Presentation.Dtos;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +48,44 @@ public class VorgaengeController(
     {
         var saved = await repository.UpsertAsync(dto.ToEntity(), cancellationToken);
         return Ok(VorgangDto.From(saved));
+    }
+
+    /// <summary>
+    /// Hinterlegt den angefangenen Ausfüllstand des Word-Assistenten am Vorgang
+    /// (§4.4). Eigener Weg statt eines Upsert des ganzen Vorgangs: Der Entwurf
+    /// wird beim Tippen laufend geschrieben, und ein Upsert würde dabei jedes
+    /// Mal alle übrigen Spalten aus der Sicht des Aufrufers überschreiben — auch
+    /// eine inzwischen eingetroffene Zentralruf-Antwort.
+    /// </summary>
+    [HttpPut("entwurf")]
+    [ProducesResponseType(typeof(VorgangDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VorgangDto>> SetzeEntwurf(
+        [FromQuery] string referenz,
+        [FromBody] JsonElement entwurf,
+        CancellationToken cancellationToken)
+    {
+        var vorgang = await repository.SetzeEntwurfAsync(
+            referenz,
+            entwurf.GetRawText(),
+            cancellationToken);
+        return vorgang is null ? NotFound() : Ok(VorgangDto.From(vorgang));
+    }
+
+    /// <summary>
+    /// Verwirft den angefangenen Ausfüllstand — vom Anwalt ausgelöst („Verwerfen")
+    /// oder nachdem aus ihm ein bestätigter Stand geworden ist. Die bestätigten
+    /// Werte (<c>FeldWerte</c>) bleiben davon unberührt.
+    /// </summary>
+    [HttpDelete("entwurf")]
+    [ProducesResponseType(typeof(VorgangDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VorgangDto>> VerwirfEntwurf(
+        [FromQuery] string referenz,
+        CancellationToken cancellationToken)
+    {
+        var vorgang = await repository.SetzeEntwurfAsync(referenz, null, cancellationToken);
+        return vorgang is null ? NotFound() : Ok(VorgangDto.From(vorgang));
     }
 
     /// <summary>

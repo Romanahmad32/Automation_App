@@ -22,6 +22,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'wizard_doubles.dart';
+
 /// Der Betrag einer Schadensposition: `0,00` gehört ins Schreiben, ein
 /// negativer Betrag nicht.
 ///
@@ -30,19 +32,6 @@ import 'package:flutter_test/flutter_test.dart';
 /// Form der Rückmeldung: spät, unspezifisch, und die Zwischensumme darüber
 /// sieht dabei völlig plausibel aus. Geprüft wird deshalb hier, im Formular,
 /// an der Zeile.
-class _FakeUpdateFormTemplate
-    implements UseCase<FormTemplate, UpdateFormTemplateParams> {
-  @override
-  Future<Either<Failure, FormTemplate>> call(UpdateFormTemplateParams params) =>
-      throw UnimplementedError();
-}
-
-class _FakeGetMandanten implements UseCase<List<Mandant>, NoParams> {
-  @override
-  Future<Either<Failure, List<Mandant>>> call(NoParams params) async =>
-      Right([]);
-}
-
 class _FakeVorlagenUebersicht implements UseCase<VorlagenUebersicht, NoParams> {
   @override
   Future<Either<Failure, VorlagenUebersicht>> call(NoParams params) =>
@@ -92,7 +81,7 @@ class _NieGespeicherteSettings
 }
 
 void main() {
-  WizardCubit? wizard;
+  WizardUmgebung? wizard;
   DocumentBloc? document;
 
   // Diese beiden gehen als BlocProvider.value in den Baum; deren Vertrag lässt
@@ -102,7 +91,7 @@ void main() {
   // einen Timer startet, schlägt er in einem *anderen* Test als „A Timer is
   // still pending" auf.
   tearDown(() async {
-    await wizard?.close();
+    await wizard?.schliesse();
     await document?.close();
     wizard = null;
     document = null;
@@ -112,11 +101,12 @@ void main() {
   /// Formular aus Schritt 1 und eine geladene Vorlagendatei. Fehlte eines von
   /// beiden, wäre der Knopf ohnehin gesperrt und der Test bewiese nichts.
   Future<void> zeigeSchritt(WidgetTester tester) async {
-    final cubit = WizardCubit(_FakeUpdateFormTemplate(), _FakeGetMandanten());
+    final umgebung = WizardUmgebung();
+    final cubit = umgebung.wizard;
     cubit.setFormData({'Name': 'Mustermann'});
     final dokument = DocumentBloc(_FakeVorlagenUebersicht());
     dokument.add(const SetDocumentPathEvent(r'C:\Vorlagen\HGN.docx'));
-    wizard = cubit;
+    wizard = umgebung;
     document = dokument;
 
     await tester.pumpWidget(
@@ -204,7 +194,7 @@ void main() {
     );
 
     expect(find.text(negativerBetragHinweis), findsNothing);
-    expect(wizard!.state.damageListing?.items.single.amount, 0);
+    expect(wizard!.wizard.state.damageListing?.items.single.amount, 0);
     expect(erstellenKnopf(tester).onPressed, isNotNull);
   });
 
@@ -219,7 +209,7 @@ void main() {
     await zeigeSchritt(tester);
     await erfasse(tester, bezeichnung: 'Gutachten', betrag: '-0,00');
 
-    final betrag = wizard!.state.damageListing!.items.single.amount;
+    final betrag = wizard!.wizard.state.damageListing!.items.single.amount;
     expect(betrag.isNegative, isFalse);
     expect(find.text(negativerBetragHinweis), findsNothing);
     expect(erstellenKnopf(tester).onPressed, isNotNull);

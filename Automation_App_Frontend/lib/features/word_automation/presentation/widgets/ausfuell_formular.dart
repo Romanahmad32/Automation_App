@@ -5,6 +5,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/edite
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/entwurf_hinweis.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgangsdaten_hinweis.dart';
 import 'package:flutter/material.dart';
@@ -46,9 +47,18 @@ class AusfuellFormular extends StatelessWidget {
         .where((wert) => wert.quelle == PrefillQuelle.gespeichert)
         .length;
 
+    final angebot = wizardState.entwurfAngebot;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (angebot != null)
+          EntwurfHinweis(
+            entwurf: angebot,
+            onWeiterarbeiten: () =>
+                context.read<WizardCubit>().uebernimmEntwurf(),
+            onVerwerfen: () => context.read<WizardCubit>().verwirfEntwurf(),
+          ),
         if (prefill.isNotEmpty)
           VorgangsdatenHinweis(
             anzahlFelder: prefill.length,
@@ -61,6 +71,7 @@ class AusfuellFormular extends StatelessWidget {
           // Der mitgeschriebene Tippstand überlebt damit den Neuaufbau des
           // Formulars, den eine nebenan bearbeitete Vorlage auslöst.
           erfassteWerte: wizardState.formDataEntwurf ?? const {},
+          aufbauMarke: wizardState.aufbauMarke,
           onWerteGeaendert: (werte) =>
               context.read<WizardCubit>().setFormDataEntwurf(werte),
           submitButtonLabel: Text(
