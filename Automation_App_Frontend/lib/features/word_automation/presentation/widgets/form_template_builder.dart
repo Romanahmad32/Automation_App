@@ -50,6 +50,18 @@ class FormTemplateBuilder extends StatelessWidget {
   /// und die Vorschau kommen ohne aus.
   final void Function(FieldData)? onFeldBearbeiten;
 
+  /// Die {{Platzhalter}} der gerade gewählten Word-Datei. Pflicht ist ein Feld
+  /// nur, wenn sein Name hier vorkommt — je Variante abgeleitet statt global
+  /// gespeichert (#35 Teil 2): Ein Feld, das nur in der Auflistungs-Datei
+  /// steht, blockiert so nie das HGN-Schreiben.
+  ///
+  /// Null heißt: keine Ableitung — jede markierte Pflicht gilt (der Weg der
+  /// freien Erfassung ohne bekannte Datei). Die leere Menge heißt dagegen:
+  /// nichts ist Pflicht — sie ist der richtige Wert, solange die Platzhalter
+  /// (noch) nicht gelesen werden konnten („solange nichts bekannt ist: nicht
+  /// sperren").
+  final Set<String>? aktivePlatzhalter;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
@@ -61,6 +73,7 @@ class FormTemplateBuilder extends StatelessWidget {
     this.onWerteGeaendert,
     this.aufbauMarke = 0,
     this.onFeldBearbeiten,
+    this.aktivePlatzhalter,
   });
 
   @override
@@ -70,11 +83,12 @@ class FormTemplateBuilder extends StatelessWidget {
     }
 
     // Der Schlüssel bestimmt, wann die FormGroup neu gebaut wird: bei einer
-    // anderen Vorlage, bei geänderten Feldern und bei neuer Vorbelegung.
+    // anderen Vorlage, bei geänderten Feldern, bei neuer Vorbelegung und bei
+    // anderen Platzhaltern (von ihnen hängen die Pflicht-Validatoren ab).
     return ReactiveFormBuilder(
       key: ValueKey(
         '${formTemplate!.id}#$aufbauMarke#$_feldSignatur#'
-        '$_initialValuesSignature',
+        '$_initialValuesSignature#$_platzhalterSignatur',
       ),
       form: () => FormGroup(
         Map.fromEntries(
@@ -184,12 +198,35 @@ class FormTemplateBuilder extends StatelessWidget {
     );
   }
 
-  /// Pflicht ist ein Feld nur, wenn es so markiert ist **und** die App seinen
-  /// Platzhalter nicht selbst füllt: Ein app-eigenes Feld (Schadensaufstellung,
-  /// RVG-Werte) ließe sich von Hand nie füllen und sperrte den Knopf dauerhaft
-  /// (#35 Teil 1). Statisch ableitbar, muss also nicht in [_feldSignatur].
-  static bool _istPflicht(FieldData field) =>
-      field.required && !AppEigenePlatzhalter.istAppEigen(field.label);
+  /// Pflicht ist ein Feld nur, wenn es so markiert ist, die App seinen
+  /// Platzhalter nicht selbst füllt (#35 Teil 1) **und** sein Name in der
+  /// gerade gewählten Word-Datei vorkommt (#35 Teil 2, [aktivePlatzhalter]).
+  ///
+  /// Der Namensvergleich läuft ohne Groß-/Kleinschreibung — die Ersetzung im
+  /// Backend arbeitet mit `RegexOptions.IgnoreCase`; wiche die Prüfung davon
+  /// ab, widersprächen sich Formular und Dokument.
+  bool _istPflicht(FieldData field) =>
+      field.required &&
+      !AppEigenePlatzhalter.istAppEigen(field.label) &&
+      _kommtInAktiverDateiVor(field.label);
+
+  bool _kommtInAktiverDateiVor(String label) {
+    final platzhalter = aktivePlatzhalter;
+    if (platzhalter == null) return true;
+    final gesucht = label.trim().toLowerCase();
+    return platzhalter.any((name) => name.trim().toLowerCase() == gesucht);
+  }
+
+  /// Signatur der Platzhaltermenge für den FormGroup-Schlüssel: Ändert sie
+  /// sich, ändern sich die Pflicht-Validatoren — die Gruppe muss neu entstehen.
+  /// Damit das keine Eingaben kostet, reicht der Aufrufer die Menge **vor**
+  /// dem ersten Aufbau herein statt sie nachzuschieben.
+  String get _platzhalterSignatur {
+    final platzhalter = aktivePlatzhalter;
+    if (platzhalter == null) return '?';
+    return (platzhalter.map((name) => name.toLowerCase()).toList()..sort())
+        .join(',');
+  }
 
   Widget _buildField(BuildContext context, FieldData field) {
     final validationMessages = _istPflicht(field)
