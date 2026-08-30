@@ -1,5 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_sachverhalt_zelle.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_status_chip.dart';
 import 'package:flutter/material.dart';
 
 /// Das Sachgebiete-Register als Tabelle im verbindlichen Spaltenschema
@@ -17,6 +18,14 @@ class RegisterTabelle extends StatelessWidget {
   /// Gedrängtere Zeilenhöhen für die Startseiten-Karte.
   final bool kompakt;
 
+  /// Blendet eine fünfte Spalte mit dem Vorgangsstatus ein. Nur die
+  /// Registerseite braucht sie, seit dort **alle** Vorgänge stehen und nicht
+  /// mehr nur die abgeschlossenen — ohne sie wäre einer Zeile ohne laufende
+  /// Nummer nicht anzusehen, ob sie noch läuft oder ob die Nummer fehlt.
+  /// In der Spiegeldatei übernimmt das die Kursivstellung: Dort ist der
+  /// Satzspiegel für eine fünfte Spalte zu schmal.
+  final bool mitStatus;
+
   /// Ab dieser verfügbaren Breite (logische Pixel, nicht Bildschirmpunkte)
   /// stehen Parteien und Sachbestand in einer Zeile nebeneinander statt
   /// untereinander.
@@ -26,6 +35,7 @@ class RegisterTabelle extends StatelessWidget {
     super.key,
     required this.zeilen,
     this.kompakt = false,
+    this.mitStatus = false,
   });
 
   @override
@@ -95,6 +105,11 @@ class RegisterTabelle extends StatelessWidget {
                   label: Text('Rechtsgebiet'),
                   columnWidth: IntrinsicColumnWidth(),
                 ),
+                if (mitStatus)
+                  const DataColumn(
+                    label: Text('Status'),
+                    columnWidth: IntrinsicColumnWidth(),
+                  ),
               ],
               rows: [
                 for (final vorgang in zeilen)
@@ -109,6 +124,8 @@ class RegisterTabelle extends StatelessWidget {
                         ),
                       ),
                       DataCell(Text(vorgang.rechtsgebiet.displayName)),
+                      if (mitStatus)
+                        DataCell(VorgangStatusChip(status: vorgang.status)),
                     ],
                   ),
               ],

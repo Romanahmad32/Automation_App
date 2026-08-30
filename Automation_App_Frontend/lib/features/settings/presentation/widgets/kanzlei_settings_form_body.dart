@@ -4,6 +4,7 @@ import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/settings/presentation/widgets/register_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -129,6 +130,18 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'Stammordner ist nur das manuelle Speichern '
               'möglich.',
           children: const [StammordnerField()],
+        ),
+        FormSection(
+          icon: Icons.cloud_sync_outlined,
+          title: 'Register-Ablage',
+          subtitle:
+              'Das Sachgebiete-Register wird zusätzlich als Word- und '
+              'PDF-Datei in diesen Ordner geschrieben. Liegt er im '
+              'synchronisierten Bereich (z. B. OneDrive), ist das Register '
+              'unterwegs lesbar — die App spricht dabei mit keiner Cloud, sie '
+              'legt nur eine Datei ab. Gepflegt wird das Register weiterhin '
+              'ausschließlich hier in der App; die Datei dort ist ein Spiegel.',
+          children: const [RegisterAblageFelder()],
         ),
         ReactiveFormConsumer(
           builder: (context, form, child) => SpeichernButton(

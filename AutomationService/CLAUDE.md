@@ -122,12 +122,10 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   einzelnes Bild für die Vorschau der App, `DELETE signaturen/format` wirft die Formatierung
   weg. Beim Versand baut `MailRumpf` daraus HTML **und** Text und hängt die Bilder als
   `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`,
-  `SignaturHtmlFilter`) — Word schreibt jedes Bild **zweimal**, als VML-Form
-  (`<v:shape>`/`<v:imagedata>`, für Outlook) und als `<img>` (für alle übrigen Programme); nur das
-  `<img>` zu entfernen hiess: abgewählt, und trotzdem sichtbar und mitgeschickt. Ein Bild ohne
-  eigene Marke (`background=` an einer Tabellenzelle) verliert nur sein Attribut — die Zelle bleibt.
-  Das eine Muster für alle drei Wege steht in `BildVerweis`. Die Bilder zählen
-  über `zusatzBytes` in `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
+  `SignaturHtmlFilter`) — Word schreibt jedes Bild **zweimal** (VML für Outlook, `<img>` für alle
+  übrigen); nur eins davon zu entfernen hiesse: abgewählt und trotzdem sichtbar. Das eine Muster
+  für alle drei Fälle steht samt Begründung an `BildVerweis`. Die Bilder zählen über `zusatzBytes`
+  in `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und
@@ -145,6 +143,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Referenzänderung, angefangener Ausfüllstand über `PUT|DELETE api/Vorgaenge/entwurf`).
   `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und das
   Hochzählen der laufenden Auftragsnummer in **einer** Transaktion, idempotent (§4.8, §7.1).
+  `RegisterSpiegelService` schreibt danach das Register als Word- und PDF-Datei in einen Ordner aus
+  den Einstellungen (§6.2, `…/register/export|stand`); die Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
   doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier.
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu
