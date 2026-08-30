@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 using AutomationService.Features.Vorgaenge.Domain.Services;
+using AutomationService.Tests.Support;
 using FluentAssertions;
 using Xunit;
 
@@ -16,6 +17,7 @@ namespace AutomationService.Tests.Unit;
 /// über den rechten Rand ragt. Genau das soll hier nicht herauskommen — und ein
 /// Augenschein würde eine zurückgefallene Einstellung nie bemerken.
 /// </summary>
+[Collection(WordDokumentSammlung.Name)]
 public sealed class RegisterDokumentTests : IDisposable
 {
     readonly string _ordner = Directory.CreateTempSubdirectory("register-dokument").FullName;
