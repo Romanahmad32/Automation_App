@@ -212,6 +212,32 @@ namespace AutomationService.Core.Persistence.Migrations
                     b.ToTable("Mandanten");
                 });
 
+            modelBuilder.Entity("AutomationService.Features.Mandanten.Domain.Persistence.OrdnerStatusEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("GesetztAm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Ordnername")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Ordnername")
+                        .IsUnique();
+
+                    b.ToTable("OrdnerStatus");
+                });
+
             modelBuilder.Entity("AutomationService.Features.Settings.Domain.Persistence.KanzleiSettingsEntity", b =>
                 {
                     b.Property<int>("Id")

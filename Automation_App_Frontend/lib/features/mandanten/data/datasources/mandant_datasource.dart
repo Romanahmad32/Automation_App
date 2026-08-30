@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
@@ -9,6 +10,17 @@ import 'package:injectable/injectable.dart';
 /// Dublettenprüfung macht jetzt das Backend.
 abstract class MandantDatasource {
   Future<List<Mandant>> loadMandanten();
+
+  /// Ein Ausschnitt des Registers für die Mandantenliste. [suche] gilt dem
+  /// ganzen Bestand, nicht dem schon geladenen Teil.
+  Future<MandantenSeite> ladeSeite({
+    String suche,
+    int ueberspringen,
+    int anzahl,
+  });
+
+  /// Die Namen aller zugeordneten Akten-Ordner — für den Zuordnungsstapel.
+  Future<List<String>> ladeAktenOrdnernamen();
 
   Future<Mandant> createMandant(CreateMandantRequest request);
 
@@ -30,6 +42,29 @@ class ApiMandantDatasource implements MandantDatasource {
     return list
         .map((item) => Mandant.fromJson(item as Map<String, dynamic>))
         .toList();
+  }
+
+  @override
+  Future<MandantenSeite> ladeSeite({
+    String suche = '',
+    int ueberspringen = 0,
+    int anzahl = 0,
+  }) async {
+    final response = await _dio.get(
+      '/api/Mandanten/seite',
+      queryParameters: {
+        if (suche.trim().isNotEmpty) 'suche': suche.trim(),
+        'ueberspringen': ueberspringen,
+        'anzahl': anzahl,
+      },
+    );
+    return MandantenSeite.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<List<String>> ladeAktenOrdnernamen() async {
+    final response = await _dio.get('/api/Mandanten/aktenordner');
+    return (response.data as List).whereType<String>().toList();
   }
 
   @override

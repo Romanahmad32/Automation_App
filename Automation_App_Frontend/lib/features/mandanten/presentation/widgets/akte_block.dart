@@ -30,15 +30,36 @@ class AkteBlock extends StatelessWidget {
               ),
             ],
           ),
-          for (final fall in akte.faelle)
+          if (!akte.faelleGeladen)
             Padding(
               padding: const EdgeInsets.only(left: 24, top: 2),
               child: Text(
-                '• ${fall.name}'
-                '${fall.dokumente.isEmpty ? '' : '  (${fall.dokumente.length})'}',
-                style: theme.textTheme.bodySmall,
+                'Fälle werden gelesen …',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
               ),
-            ),
+            )
+          else if (akte.faelle.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 24, top: 2),
+              child: Text(
+                'Keine Fälle in diesem Ordner.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            )
+          else
+            for (final fall in akte.faelle)
+              Padding(
+                padding: const EdgeInsets.only(left: 24, top: 2),
+                child: Text(
+                  '• ${fall.name}'
+                  '${fall.dokumente.isEmpty ? '' : '  (${fall.dokumente.length})'}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
         ],
       ),
     );

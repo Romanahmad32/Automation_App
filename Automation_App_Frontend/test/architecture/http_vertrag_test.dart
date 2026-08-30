@@ -125,9 +125,23 @@ void main() {
     'lib/features/mailbox/domain/entities/received_reply.dart': [
       'ReceivedReplyDto',
     ],
+    'lib/features/mandanten/domain/entities/import_bericht.dart': [
+      'ImportBerichtDto',
+      'ImportEintragDto',
+    ],
     'lib/features/mandanten/domain/entities/mandant.dart': [
       'MandantDto',
       'CreateMandantDto',
+    ],
+    'lib/features/mandanten/domain/entities/mandanten_import_datei.dart': [
+      'MandantenImportDto',
+      'ImportMandantDto',
+    ],
+    'lib/features/mandanten/domain/entities/mandanten_seite.dart': [
+      'MandantenSeiteDto',
+    ],
+    'lib/features/mandanten/domain/entities/ordner_status.dart': [
+      'OrdnerStatusDto',
     ],
     'lib/features/settings/domain/entities/kanzlei_settings.dart': [
       'KanzleiSettingsDto',

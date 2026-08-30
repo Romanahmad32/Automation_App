@@ -6,6 +6,7 @@ import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/views/mandanten_overview.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_zustands_bereich.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -64,38 +65,8 @@ class MandantenOverviewPage extends StatelessWidget
               ],
             ),
             Expanded(
-              child: BlocBuilder<MandantenOverviewBloc, MandantenOverviewState>(
-                builder: (context, state) {
-                  return switch (state) {
-                    MandantenOverviewLoading() => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    MandantenOverviewLoaded() => MandantenOverview(
-                      state: state,
-                    ),
-                    MandantenOverviewError() => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 12,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: theme.colorScheme.error,
-                          ),
-                          Text(state.message, textAlign: TextAlign.center),
-                          OutlinedButton.icon(
-                            onPressed: () => context
-                                .read<MandantenOverviewBloc>()
-                                .add(LoadMandantenUebersichtEvent()),
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Erneut versuchen'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  };
-                },
+              child: MandantenZustandsBereich(
+                builder: (context, state) => MandantenOverview(state: state),
               ),
             ),
           ],
@@ -107,8 +78,10 @@ class MandantenOverviewPage extends StatelessWidget
   Future<void> _neuerMandant(BuildContext context) async {
     final bloc = context.read<MandantenOverviewBloc>();
     final didChange = await context.router.push<bool>(MandantDetailsRoute());
+    // Ein neuer Mandant ist ein Registereintrag — am Dateisystem ändert sich
+    // nichts, der teure Akten-Scan bleibt stehen.
     if (didChange == true) {
-      bloc.add(LoadMandantenUebersichtEvent());
+      bloc.add(const LoadMandantenUebersichtEvent(nurRegister: true));
     }
   }
 }

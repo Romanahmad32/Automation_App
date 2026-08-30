@@ -15,9 +15,19 @@ import 'package:injectable/injectable.dart';
 class FilesystemAktenDatasource {
   const FilesystemAktenDatasource();
 
-  /// Scannt den Stammordner: jeder direkte Unterordner ist eine Akte, dessen
-  /// Unterordner sind die Fälle. Leere Liste, wenn [stammordner] leer ist oder
-  /// nicht existiert (kein Fehler — der Nutzer hat ihn evtl. noch nicht gesetzt).
+  /// Scannt den Stammordner **flach**: jeder direkte Unterordner ist eine
+  /// Akte. Die Fälle bleiben ungelesen (`faelleGeladen == false`) und kommen
+  /// erst über [scanFaelle] dazu.
+  ///
+  /// Der Grund ist gemessen, nicht Geschmack: im Produktivbestand liegen rund
+  /// 4000 Akten-Ordner. Fälle und Dateien gleich mitzulesen kostet
+  /// zehntausende Verzeichniszugriffe — auf einem Netzlaufwerk Minuten, nur um
+  /// „N Fälle" als Untertitel anzuzeigen. Flach ist es eine Auflistung plus ein
+  /// `stat` je Ordner; das `stat` bleibt, weil der Änderungszeitpunkt den
+  /// Filter „geändert seit …" trägt.
+  ///
+  /// Leere Liste, wenn [stammordner] leer ist oder nicht existiert (kein
+  /// Fehler — der Nutzer hat ihn evtl. noch nicht gesetzt).
   Future<List<Akte>> scanAkten(String stammordner) async {
     final pfad = stammordner.trim();
     if (pfad.isEmpty) return const [];
@@ -27,12 +37,11 @@ class FilesystemAktenDatasource {
     final akten = <Akte>[];
     await for (final eintrag in wurzel.list(followLinks: false)) {
       if (eintrag is! Directory) continue;
-      final ordnername = _basename(eintrag.path);
       akten.add(
         Akte(
-          ordnername: ordnername,
+          ordnername: _basename(eintrag.path),
           pfad: eintrag.path,
-          faelle: await _scanFaelle(eintrag),
+          geaendertAm: (await eintrag.stat()).modified,
         ),
       );
     }
@@ -43,7 +52,15 @@ class FilesystemAktenDatasource {
     return akten;
   }
 
-  Future<List<Fall>> _scanFaelle(Directory akte) async {
+  /// Die Fälle **einer** Akte samt ihrer Dokumente, zuletzt geänderte zuerst.
+  /// Wird beim Aufklappen einer Akte nachgeladen, siehe [scanAkten].
+  ///
+  /// Leere Liste, wenn der Ordner nicht (mehr) existiert — er kann seit dem
+  /// Scan im Explorer umbenannt oder verschoben worden sein.
+  Future<List<Fall>> scanFaelle(String aktenPfad) async {
+    final akte = Directory(aktenPfad);
+    if (!await akte.exists()) return const [];
+
     final faelle = <Fall>[];
     await for (final eintrag in akte.list(followLinks: false)) {
       if (eintrag is! Directory) continue;

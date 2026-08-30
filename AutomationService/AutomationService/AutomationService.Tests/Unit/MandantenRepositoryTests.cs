@@ -109,6 +109,79 @@ public sealed class MandantenRepositoryTests : IDisposable
         result.Should().BeNull();
     }
 
+    // Die Mandantenliste zeigt in der Kanzlei tausende Eintraege. Sie holt
+    // deshalb Ausschnitte — und die Suche muss trotzdem den ganzen Bestand
+    // sehen, sonst haenge es am Scrollstand, ob ein Mandant gefunden wird.
+    [Fact]
+    public async Task GetSeiteAsync_LiefertNurDenAusschnittUndBeideZahlen()
+    {
+        for (var i = 0; i < 5; i++) await _repository.CreateAsync(Neu(nachname: $"Nr{i}"));
+
+        var seite = await _repository.GetSeiteAsync(suche: null, ueberspringen: 2, anzahl: 2);
+
+        seite.Mandanten.Should().HaveCount(2);
+        seite.Gesamt.Should().Be(5);
+        seite.Gefiltert.Should().Be(5);
+    }
+
+    // Ein Import legt tausende Mandanten in derselben Sekunde an: ohne zweite
+    // Sortierstufe teilten zwei Abrufe den Bestand verschieden auf.
+    [Fact]
+    public async Task GetSeiteAsync_TeiltDenBestandUeberlappungsfreiAuf()
+    {
+        for (var i = 0; i < 6; i++) await _repository.CreateAsync(Neu(nachname: $"Nr{i}"));
+
+        var erste = await _repository.GetSeiteAsync(null, ueberspringen: 0, anzahl: 3);
+        var zweite = await _repository.GetSeiteAsync(null, ueberspringen: 3, anzahl: 3);
+
+        var ids = erste.Mandanten.Concat(zweite.Mandanten).Select(m => m.Id).ToList();
+        ids.Should().OnlyHaveUniqueItems().And.HaveCount(6);
+    }
+
+    [Fact]
+    public async Task GetSeiteAsync_SuchtUeberNameOrtUndOrdner()
+    {
+        var mitOrdner = Neu("Mark", "Schmidt");
+        mitOrdner.AktenOrdnernamenJson = MandantListen.Schreib(["VUnfallursache Mark"]);
+        await _repository.CreateAsync(mitOrdner);
+
+        var ausFrankfurt = Neu("Saeed", "Bein");
+        ausFrankfurt.Ort = "Frankfurt";
+        await _repository.CreateAsync(ausFrankfurt);
+
+        (await _repository.GetSeiteAsync("mark schmidt", 0, 50)).Gefiltert.Should().Be(1);
+        (await _repository.GetSeiteAsync("frankfurt", 0, 50)).Gefiltert.Should().Be(1);
+        (await _repository.GetSeiteAsync("VUnfallursache", 0, 50)).Gefiltert.Should().Be(1);
+        (await _repository.GetSeiteAsync("nichts davon", 0, 50)).Gefiltert.Should().Be(0);
+    }
+
+    // Ein Prozentzeichen im Suchbegriff ist ein Zeichen, kein Platzhalter.
+    [Fact]
+    public async Task GetSeiteAsync_NimmtLikePlatzhalterWoertlich()
+    {
+        await _repository.CreateAsync(Neu("Max", "Müller"));
+
+        var seite = await _repository.GetSeiteAsync("%", 0, 50);
+
+        seite.Gefiltert.Should().Be(0);
+        seite.Gesamt.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetAktenOrdnernamenAsync_LiefertAlleZugeordnetenOrdner()
+    {
+        var a = Neu(nachname: "Schmidt");
+        a.AktenOrdnernamenJson = MandantListen.Schreib(["VUnfallursache Mark", "Strafsache Mark"]);
+        await _repository.CreateAsync(a);
+        var b = Neu(nachname: "Bein");
+        b.AktenOrdnernamenJson = MandantListen.Schreib(["OWi Bein"]);
+        await _repository.CreateAsync(b);
+
+        var namen = await _repository.GetAktenOrdnernamenAsync();
+
+        namen.Should().BeEquivalentTo("VUnfallursache Mark", "Strafsache Mark", "OWi Bein");
+    }
+
     [Fact]
     public async Task DeleteAsync_EntferntUndMeldetUnbekannte()
     {

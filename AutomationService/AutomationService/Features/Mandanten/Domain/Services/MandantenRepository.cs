@@ -11,11 +11,83 @@ namespace AutomationService.Features.Mandanten.Domain.Services;
 /// </summary>
 public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepository
 {
+    /// <summary>Größe eines Ausschnitts, wenn der Aufrufer keine nennt.</summary>
+    public const int SeitenGroesse = 50;
+
     public async Task<IReadOnlyList<MandantEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await db.Mandanten
             .OrderByDescending(m => m.ErstelltAm)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<MandantenSeite> GetSeiteAsync(
+        string? suche,
+        int ueberspringen,
+        int anzahl,
+        CancellationToken cancellationToken = default)
+    {
+        var treffer = Suche(db.Mandanten, suche);
+
+        var mandanten = await treffer
+            // Die zweite Sortierstufe ist nicht Zierde: ein Import legt
+            // tausende Mandanten in derselben Sekunde an. Bei gleichem
+            // ErstelltAm wäre die Reihenfolge sonst dem SQLite überlassen, und
+            // zwei Seitenabrufe teilten den Bestand verschieden auf — Zeilen
+            // erschienen doppelt und andere nie.
+            .OrderByDescending(m => m.ErstelltAm)
+            .ThenByDescending(m => m.Id)
+            .Skip(Math.Max(0, ueberspringen))
+            .Take(anzahl > 0 ? anzahl : SeitenGroesse)
+            .ToListAsync(cancellationToken);
+
+        return new MandantenSeite(
+            mandanten,
+            Gesamt: await db.Mandanten.CountAsync(cancellationToken),
+            Gefiltert: await treffer.CountAsync(cancellationToken));
+    }
+
+    public async Task<IReadOnlyList<string>> GetAktenOrdnernamenAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var spalten = await db.Mandanten
+            .Select(m => m.AktenOrdnernamenJson)
+            .ToListAsync(cancellationToken);
+
+        return
+        [
+            .. spalten
+                .SelectMany(MandantListen.Lies)
+                .Distinct(StringComparer.OrdinalIgnoreCase),
+        ];
+    }
+
+    /// <summary>
+    /// Freitextsuche über Name, Ort und die zugeordneten Ordner. Der Name wird
+    /// zusammengesetzt verglichen, damit „Max Mustermann" trifft, was in zwei
+    /// Spalten steht.
+    ///
+    /// Die Ordner liegen als JSON-Text in einer Spalte und werden auch als
+    /// solcher durchsucht — für Ordnernamen genügt das; einen Suchbegriff mit
+    /// Anführungszeichen oder Rückstrich fände es nicht, weil JSON sie
+    /// maskiert. Groß-/Kleinschreibung übergeht SQLites LIKE von sich aus,
+    /// allerdings nur bei ASCII: „Über" und „über" sind ihm zwei Wörter.
+    /// </summary>
+    static IQueryable<MandantEntity> Suche(IQueryable<MandantEntity> quelle, string? suche)
+    {
+        var begriff = (suche ?? string.Empty).Trim();
+        if (begriff.Length == 0) return quelle;
+
+        const string maskierung = "\\";
+        var muster = "%" + begriff
+            .Replace(maskierung, maskierung + maskierung)
+            .Replace("%", maskierung + "%")
+            .Replace("_", maskierung + "_") + "%";
+
+        return quelle.Where(m =>
+            EF.Functions.Like(m.Vorname + " " + m.Nachname, muster, maskierung) ||
+            EF.Functions.Like(m.Ort, muster, maskierung) ||
+            EF.Functions.Like(m.AktenOrdnernamenJson, muster, maskierung));
     }
 
     public async Task<MandantEntity> CreateAsync(MandantEntity neu, CancellationToken cancellationToken = default)
@@ -74,7 +146,7 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
     /// </summary>
     async Task EnsureNameUniqueAsync(string vorname, string nachname, int? eigeneId, CancellationToken ct)
     {
-        var norm = Normalisiere(vorname, nachname);
+        var norm = MandantName.Normalisiere(vorname, nachname);
         if (norm.Length == 0) return;
 
         // In-Memory normalisieren, weil SQLite Trim/Lower nicht identisch abbildet.
@@ -83,16 +155,13 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
             .ToListAsync(ct);
 
         var konflikt = alle.Any(m =>
-            m.Id != eigeneId && Normalisiere(m.Vorname, m.Nachname) == norm);
+            m.Id != eigeneId && MandantName.Normalisiere(m.Vorname, m.Nachname) == norm);
 
         if (konflikt)
         {
-            var anzeige = $"{vorname} {nachname}".Trim();
+            var anzeige = MandantName.Anzeige(vorname, nachname);
             throw new MandantNameConflictException(
                 $"Ein Mandant mit dem Namen „{anzeige}“ ist bereits vorhanden.");
         }
     }
-
-    static string Normalisiere(string vorname, string nachname) =>
-        $"{vorname.Trim().ToLowerInvariant()} {nachname.Trim().ToLowerInvariant()}".Trim();
 }

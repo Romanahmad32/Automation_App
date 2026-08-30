@@ -3,8 +3,10 @@ import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebni
 import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
+import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/repositories/mandanten_repository.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -19,6 +21,7 @@ part 'ablage_state.dart';
 class AblageCubit extends Cubit<AblageState> {
   final UseCase<List<Mandant>, NoParams> _getMandanten;
   final UseCase<List<Akte>, NoParams> _getAkten;
+  final UseCase<List<Fall>, GetFaelleParams> _getFaelle;
   final UseCase<Mandant, CreateMandantRequest> _createMandant;
   final UseCase<AblageErgebnis, LegeDokumentAbParams> _legeDokumentAb;
   final KanzleiSettingsRepository _settingsRepository;
@@ -31,6 +34,7 @@ class AblageCubit extends Cubit<AblageState> {
   AblageCubit(
     this._getMandanten,
     this._getAkten,
+    this._getFaelle,
     this._createMandant,
     this._legeDokumentAb,
     this._settingsRepository,
@@ -73,6 +77,40 @@ class AblageCubit extends Cubit<AblageState> {
         stammordner: stammordner,
         mandanten: mandanten,
         akten: akten,
+      ),
+    );
+  }
+
+  /// Lädt die Fälle **eines** Akten-Ordners nach — die Vorschlagsliste im
+  /// Formular braucht nur die des gewählten. Der Akten-Scan ist flach
+  /// (`FilesystemAktenDatasource.scanAkten`): alle Fälle aller Akten
+  /// mitzulesen kostet bei tausenden Ordnern einen vollständigen
+  /// Baumdurchlauf, für eine Auswahl von einer Handvoll Namen.
+  ///
+  /// Bereits geladene Ordner und ein fehlgeschlagener Scan (Ordner inzwischen
+  /// umbenannt) ändern nichts — dann bleibt nur „neu anlegen".
+  Future<void> faelleLaden(String ordnername) async {
+    if (ordnername.isEmpty) return;
+    Akte? gesucht;
+    for (final akte in state.akten) {
+      if (akte.ordnername == ordnername) gesucht = akte;
+    }
+    if (gesucht == null || gesucht.faelleGeladen) return;
+
+    final result = await _getFaelle(GetFaelleParams(gesucht.pfad));
+    final faelle = switch (result) {
+      Right(value: final f) => f,
+      Left() => const <Fall>[],
+    };
+    emit(
+      state.copyWith(
+        akten: [
+          for (final akte in state.akten)
+            if (akte.ordnername == ordnername)
+              akte.mitFaellen(faelle)
+            else
+              akte,
+        ],
       ),
     );
   }
