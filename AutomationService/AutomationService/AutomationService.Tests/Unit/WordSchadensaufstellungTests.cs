@@ -11,6 +11,7 @@ namespace AutomationService.Tests.Unit;
 /// Die Schadensaufstellung als Word-Tabelle: Aufbau, Gestaltung im Layout des
 /// Excel-Vorbilds der Kanzlei und die manuell korrigierten RVG-Beträge.
 /// </summary>
+[Collection(WordDokumentSammlung.Name)]
 public sealed class WordSchadensaufstellungTests : IDisposable
 {
     private readonly WordVorlagenUmgebung _umgebung = new();

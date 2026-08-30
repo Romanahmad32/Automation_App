@@ -14,6 +14,7 @@ namespace AutomationService.Tests.Unit;
 /// Kästchen-Glyphen und Word-Kontrollkästchen) und der Fall, dass die Vorlage
 /// den Abschnitt gar nicht hat.
 /// </summary>
+[Collection(WordDokumentSammlung.Name)]
 public sealed class WordVorsteuerTests : IDisposable
 {
     private readonly WordVorlagenUmgebung _umgebung = new();

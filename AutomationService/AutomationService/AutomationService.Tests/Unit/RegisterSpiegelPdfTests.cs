@@ -17,6 +17,7 @@ namespace AutomationService.Tests.Unit;
 /// Teilt sich <see cref="RegisterSpiegelUmgebung"/> mit
 /// <see cref="RegisterSpiegelServiceTests"/>.
 /// </summary>
+[Collection(WordDokumentSammlung.Name)]
 public sealed class RegisterSpiegelPdfTests : IDisposable
 {
     readonly RegisterSpiegelUmgebung _umgebung = new();
