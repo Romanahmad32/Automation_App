@@ -38,7 +38,11 @@ public static class AtomareAblage
         ArgumentException.ThrowIfNullOrWhiteSpace(ziel);
 
         var zielOrdner = Path.GetDirectoryName(Path.GetFullPath(ziel));
-        if (!string.IsNullOrEmpty(zielOrdner)) Directory.CreateDirectory(zielOrdner);
+        if (!string.IsNullOrEmpty(zielOrdner))
+        {
+            Directory.CreateDirectory(zielOrdner);
+            AltlastenWegraeumen(zielOrdner, ziel);
+        }
 
         // Das Schreibschutz-Flag setzt der Spiegel selbst (siehe
         // RegisterSpiegelService). Ohne dieses Zuruecknehmen scheitert das
@@ -120,6 +124,42 @@ public static class AtomareAblage
         File.Copy(quelle, zwischenstand, overwrite: true);
         Loesche(quelle);
         return zwischenstand;
+    }
+
+    /// <summary>
+    /// Wirft Zwischenstände früherer Läufe weg, bevor ein neuer entsteht.
+    ///
+    /// Der Weg über eine Zwischendatei wird nur bei einem Laufwerkswechsel
+    /// gegangen, und dann liegt sie im <em>synchronisierten</em> Zielordner.
+    /// Stürzt der Dienst zwischen <c>File.Copy</c> und <c>File.Move</c> ab —
+    /// oder wird er beendet, weil die App zugeht —, bleibt sie dort für immer:
+    /// Der <c>Aufraeumen</c> des Bauordners kennt sie nicht, sie liegt ja
+    /// woanders. Auf dem Handy erscheint sie als „~Sachgebiete-Register
+    /// (App)-a3f9….tmp", eine je Absturz.
+    ///
+    /// Aufgeräumt wird deshalb vor <em>jedem</em> Ersetzen und nicht nur beim
+    /// Laufwerkswechsel: Wer die Zwischendatei einmal erzeugt hat, hat sie im
+    /// Zweifel mehrfach erzeugt, und der Zielordner ist derselbe.
+    ///
+    /// Angefasst wird nur, was unverkennbar von hier stammt: Tilde, derselbe
+    /// Basisname, Endung <c>.tmp</c>. Was gerade in Arbeit ist, lässt sich nicht
+    /// löschen (die Datei ist offen) — der Versuch scheitert still und der
+    /// laufende Vorgang bleibt unberührt.
+    /// </summary>
+    static void AltlastenWegraeumen(string zielordner, string ziel)
+    {
+        try
+        {
+            var muster = $"~{Path.GetFileNameWithoutExtension(ziel)}-*.tmp";
+            foreach (var altlast in Directory.EnumerateFiles(zielordner, muster))
+            {
+                Loesche(altlast);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Aufräumen ist Kür. Der eigentliche Vorgang läuft weiter.
+        }
     }
 
     static void Loesche(string pfad)
