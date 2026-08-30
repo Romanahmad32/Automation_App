@@ -1,5 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,12 +19,15 @@ void main() {
     String? gegner = 'HUK',
     String? rechtsgebietRoh,
     String? versichererName,
+    String? jahr,
+    DateTime? angefragtAm,
   }) => Vorgang(
     referenz: '01/26 C03_HG-E 1427',
-    angefragtAm: DateTime(2026, 1, 5),
+    angefragtAm: angefragtAm ?? DateTime(2026, 1, 5),
     mandantName: 'Mustermann',
     gegner: gegner,
     rechtsgebietRoh: rechtsgebietRoh,
+    jahr: jahr,
     antwort: versichererName == null
         ? null
         : ZentralrufReplyData(versichererName: versichererName),
@@ -98,6 +102,34 @@ void main() {
     /// gebauter Vorgang ist nicht „nie erfasst".
     test('ohne Rohwert zählt das gesetzte Rechtsgebiet', () {
       expect(vorgang().rechtsgebietAnzeige, 'Verkehrsrecht');
+    });
+  });
+
+  /// Der Jahrgang ist die Überschrift, unter der eine Zeile im Register steht.
+  /// Weichen die Seiten ab, sortiert der Bildschirm einen Vorgang unter „2026"
+  /// und die Datei denselben unter „2024" — das Gegenstück ist
+  /// `RegisterZeilenBauTests.Jahrgang_NimmtNurZiffern`.
+  group('Jahrgang', () {
+    test('zweistellig wird zur vierstelligen Überschrift', () {
+      expect(RegisterFilter.jahrgang(vorgang(jahr: '26')), '2026');
+    });
+
+    test('vierstellig bleibt stehen', () {
+      expect(RegisterFilter.jahrgang(vorgang(jahr: '2026')), '2026');
+    });
+
+    /// `int.tryParse` nahm das Vorzeichen an und machte aus „-1" den Jahrgang
+    /// „20-1", während das Backend auf das Datum zurückfiel.
+    test('was keine reine Ziffernfolge ist, fällt auf das Datum zurück', () {
+      for (final jahr in ['-1', '+1', '٢٦', '2o']) {
+        expect(
+          RegisterFilter.jahrgang(
+            vorgang(jahr: jahr, angefragtAm: DateTime(2024, 3, 7)),
+          ),
+          '2024',
+          reason: '„$jahr" ist keine Jahreszahl',
+        );
+      }
     });
   });
 }

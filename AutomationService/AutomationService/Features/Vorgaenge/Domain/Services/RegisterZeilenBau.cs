@@ -84,12 +84,18 @@ public static class RegisterZeilenBau
     /// Kanzleidatei sind vierstellig. Fehlt das Feld, entscheidet das Datum —
     /// in der Vorlagendatei fehlt ab 2025 die Jahresüberschrift ganz, und
     /// genau diese Lücke soll der Export nicht erben.
+    ///
+    /// <c>IsAsciiDigit</c> und nicht <c>IsDigit</c>: Letzteres nimmt auch
+    /// Ziffern anderer Schriften an (etwa ٢٦), aus denen dann ein Jahrgang
+    /// „20٢٦" entstünde, den das Frontend nie erzeugt. Die Zusage lautet,
+    /// dieselbe Antwort zu geben wie <c>RegisterFilter.jahrgang</c> — und Darts
+    /// <c>\d</c> kennt nur 0–9.
     /// </summary>
     public static string Jahrgang(VorgangEntity v)
     {
         var jahr = (v.Jahr ?? string.Empty).Trim();
-        if (jahr.Length == 4 && jahr.All(char.IsDigit)) return jahr;
-        if (jahr.Length == 2 && jahr.All(char.IsDigit)) return $"20{jahr}";
+        if (jahr.Length == 4 && jahr.All(char.IsAsciiDigit)) return jahr;
+        if (jahr.Length == 2 && jahr.All(char.IsAsciiDigit)) return $"20{jahr}";
 
         var datum = v.AbgeschlossenAm ?? v.AngefragtAm;
         return datum.Year.ToString(CultureInfo.InvariantCulture);

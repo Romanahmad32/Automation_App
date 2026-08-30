@@ -71,15 +71,22 @@ class RegisterFilter extends Equatable {
     return gefiltert;
   }
 
+  /// Nur Ziffern, nichts sonst. `int.tryParse` stand hier vorher und nahm auch
+  /// ein Vorzeichen an: Aus dem Jahr „-1" wurde der Jahrgang „20-1", während
+  /// das Backend auf das Datum zurückfiel. Darts `\d` ist ASCII-only und passt
+  /// damit genau zu `char.IsAsciiDigit` drüben.
+  static final RegExp _nurZiffern = RegExp(r'^\d+$');
+
   /// Vierstelliger Jahrgang eines Vorgangs. `Vorgang.jahr` steht zweistellig
   /// („26"), weil es aus dem Zeichen stammt; die Überschriften im Register sind
   /// vierstellig. Ohne das Feld entscheidet das Abschlussdatum. Muss dieselbe
   /// Antwort geben wie `RegisterZeilenBau.Jahrgang` im Backend — sonst zeigt die
-  /// App einen anderen Jahrgang an, als in der Datei steht.
+  /// App einen anderen Jahrgang an, als in der Datei steht; festgehalten in
+  /// `register_paritaet_test.dart`.
   static String jahrgang(Vorgang vorgang) {
     final jahr = (vorgang.jahr ?? '').trim();
-    if (jahr.length == 4 && int.tryParse(jahr) != null) return jahr;
-    if (jahr.length == 2 && int.tryParse(jahr) != null) return '20$jahr';
+    if (jahr.length == 4 && _nurZiffern.hasMatch(jahr)) return jahr;
+    if (jahr.length == 2 && _nurZiffern.hasMatch(jahr)) return '20$jahr';
     return '${(vorgang.abgeschlossenAm ?? vorgang.angefragtAm).year}';
   }
 

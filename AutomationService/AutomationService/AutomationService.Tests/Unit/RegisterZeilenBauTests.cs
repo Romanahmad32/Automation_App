@@ -130,6 +130,26 @@ public sealed class RegisterZeilenBauTests
         RegisterZeilenBau.Jahrgang(Vorgang("01/26 C03", jahr: "26")).Should().Be("2026");
     }
 
+    /// <summary>
+    /// Was <em>keine</em> Jahreszahl ist, fällt auf das Datum zurück — und zwar
+    /// genau das, was auch das Frontend ablehnt. „-1" wurde dort von
+    /// <c>int.tryParse</c> angenommen und ergab den Jahrgang „20-1"; Ziffern
+    /// anderer Schriften nahm hier <c>char.IsDigit</c> an und ergab „20٢٦".
+    /// Beide Seiten zeigten dann verschiedene Jahrgänge auf denselben Vorgang.
+    /// Das Gegenstück steht in <c>register_paritaet_test.dart</c>.
+    /// </summary>
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("+1")]
+    [InlineData("٢٦")]
+    [InlineData("2o")]
+    public void Jahrgang_NimmtNurZiffern(string jahr)
+    {
+        var vorgang = Vorgang("01/26 C03", jahr: jahr, angefragt: new DateTime(2024, 3, 7));
+
+        RegisterZeilenBau.Jahrgang(vorgang).Should().Be("2024");
+    }
+
     [Fact]
     public void Jahrgang_FaelltOhneJahresfeldAufDasDatumZurueck()
     {
