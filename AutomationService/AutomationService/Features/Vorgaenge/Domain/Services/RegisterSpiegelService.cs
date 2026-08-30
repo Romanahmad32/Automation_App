@@ -37,6 +37,16 @@ public sealed class RegisterSpiegelService(
             return RegisterSpiegelErgebnis.Uebersprungen(KeinOrdner, zeilen.Count, letzter?.GeschriebenAm);
 
         var ablage = AblageFuer(einstellungen);
+
+        // Schon beim Öffnen der Seite melden und nicht erst beim Schreiben:
+        // Der Lauf nach dem Vorgangsabschluss meldet nur ins Protokoll, der
+        // Anwalt saehe die Lage sonst nirgends.
+        if (FremdeZieldatei(letzter, ablage))
+        {
+            return RegisterSpiegelErgebnis.Gescheitert(
+                FremdeDatei(ablage), zeilen.Count, letzter?.GeschriebenAm, ablage.Konfliktkopien());
+        }
+
         return new RegisterSpiegelErgebnis(
             Geschrieben: false,
             Grund: null,
@@ -60,6 +70,14 @@ public sealed class RegisterSpiegelService(
             return RegisterSpiegelErgebnis.Uebersprungen(KeinOrdner, zeilen.Count, letzter?.GeschriebenAm);
 
         var ablage = AblageFuer(einstellungen);
+
+        if (FremdeZieldatei(letzter, ablage))
+        {
+            logger.LogWarning("Register-Spiegel: Zieldatei stammt nicht von der App: {Ziel}", ablage.Docx);
+            return RegisterSpiegelErgebnis.Gescheitert(
+                FremdeDatei(ablage), zeilen.Count, letzter?.GeschriebenAm, ablage.Konfliktkopien());
+        }
+
         var nurAbgeschlossene = RegisterSpiegelVorgabe.NurAbgeschlossene(einstellungen.RegisterExportFilter);
         var abdruck = RegisterSpiegelStand.Fingerabdruck(zeilen, nurAbgeschlossene);
 
@@ -96,6 +114,32 @@ public sealed class RegisterSpiegelService(
 
     const string Unveraendert_ =
         "Der Bestand hat sich seit dem letzten Schreiben nicht geändert.";
+
+    static string FremdeDatei(RegisterSpiegelAblage ablage) =>
+        $"Im Ablageordner liegt bereits \"{ablage.Basisname}.docx\", die nicht von der App stammt. "
+        + "Der Spiegel würde sie beim Schreiben ersetzen und lässt sie deshalb unangetastet — bitte "
+        + "die Datei umbenennen oder in den Einstellungen einen anderen Dateinamen wählen.";
+
+    /// <summary>
+    /// Ob am Zielort schon eine Datei liegt, die der Spiegel nicht geschrieben
+    /// hat.
+    ///
+    /// Das ist der Schutz für das gewachsene Kanzleidokument. Der Dateiname ist
+    /// einstellbar, und „so heißen wie immer" ist der naheliegendste Wunsch —
+    /// ohne diese Prüfung wären die 93 Seiten Handarbeit beim nächsten
+    /// Vorgangsabschluss ersetzt, ungefragt und ohne Sicherung.
+    ///
+    /// Erkannt wird das eigene Werk am Stand und <em>nicht</em> am Inhalt der
+    /// Datei: Ein Blick hinein löste bei „Dateien bei Bedarf" einen Download
+    /// aus, und der Spiegel liest den Zielordner grundsätzlich nicht. Der Preis
+    /// ist ein Fehlalarm, wenn die Merkdatei verloren ging (neuer Rechner,
+    /// eingespielte Sicherung) — dann sagt die Meldung, was zu tun ist, und
+    /// eine zu viel geschützte Datei ist die harmlosere Richtung.
+    /// </summary>
+    static bool FremdeZieldatei(RegisterSpiegelStand.Eintrag? letzter, RegisterSpiegelAblage ablage) =>
+        File.Exists(ablage.Docx)
+        && !(letzter is not null
+             && string.Equals(letzter.Ziel, ablage.Docx, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Unverändert heißt: gleicher Fingerabdruck, gleiches Ziel <em>und</em>
