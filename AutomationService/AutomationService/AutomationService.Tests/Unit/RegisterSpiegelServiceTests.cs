@@ -152,6 +152,45 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
         (await File.ReadAllTextAsync(kanzleidatei)).Should().Be("die Handarbeit von sieben Jahren");
     }
 
+    /// <summary>
+    /// Der Fall, in dem der Anwalt den Dateinamen auf den seines gewachsenen
+    /// Dokuments stellt — „die Datei soll heißen wie immer". Ohne diese
+    /// Prüfung waeren die 93 Seiten Handarbeit beim nächsten Abschluss
+    /// ersetzt, ungefragt und ohne Sicherung.
+    /// </summary>
+    [Fact]
+    public async Task Schreibe_LaesstEineFremdeDateiAmZielortUnangetastet()
+    {
+        await File.WriteAllTextAsync(Docx, "die Handarbeit von sieben Jahren");
+        await EinstellungenAnlegen();
+        await VorgangAnlegen("01/26 C03", 1);
+
+        var ergebnis = await Dienst().SchreibeAsync();
+
+        ergebnis.Geschrieben.Should().BeFalse();
+        ergebnis.Fehler.Should().Contain("nicht von der App");
+        (await File.ReadAllTextAsync(Docx)).Should().Be("die Handarbeit von sieben Jahren");
+        File.Exists(Pdf).Should().BeFalse("auch das PDF darf dann nicht entstehen");
+    }
+
+    /// <summary>
+    /// Die Kehrseite: Was der Spiegel selbst geschrieben hat, ersetzt er beim
+    /// nächsten Lauf weiterhin — sonst schriebe er genau einmal.
+    /// </summary>
+    [Fact]
+    public async Task Schreibe_ErsetztDieEigeneFassungWeiterhin()
+    {
+        await EinstellungenAnlegen();
+        await VorgangAnlegen("01/26 C03", 1);
+        await Dienst().SchreibeAsync();
+
+        await VorgangAnlegen("02/26 C03", 2);
+        var zweiter = await Dienst().SchreibeAsync();
+
+        zweiter.Geschrieben.Should().BeTrue();
+        zweiter.Fehler.Should().BeNull();
+    }
+
     [Fact]
     public async Task Schreibe_LaesstKeineZwischenstaendeImAblageordner()
     {
