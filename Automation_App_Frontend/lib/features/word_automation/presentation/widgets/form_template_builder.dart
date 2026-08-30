@@ -38,6 +38,12 @@ class FormTemplateBuilder extends StatelessWidget {
   /// (null) läuft kein Beobachter mit.
   final void Function(Map<String, String>)? onWerteGeaendert;
 
+  /// Erhöhen erzwingt einen Neuaufbau der FormGroup. Nötig, wenn sich **nur**
+  /// die einzusetzenden Werte geändert haben ([erfassteWerte]) — die stehen
+  /// bewusst nicht im Schlüssel, also merkte das Formular sonst nichts davon.
+  /// Genau der Fall beim übernommenen Entwurf.
+  final int aufbauMarke;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
@@ -47,6 +53,7 @@ class FormTemplateBuilder extends StatelessWidget {
     this.initialValueQuellen = const {},
     this.erfassteWerte = const {},
     this.onWerteGeaendert,
+    this.aufbauMarke = 0,
   });
 
   @override
@@ -59,7 +66,8 @@ class FormTemplateBuilder extends StatelessWidget {
     // anderen Vorlage, bei geänderten Feldern und bei neuer Vorbelegung.
     return ReactiveFormBuilder(
       key: ValueKey(
-        '${formTemplate!.id}#$_feldSignatur#$_initialValuesSignature',
+        '${formTemplate!.id}#$aufbauMarke#$_feldSignatur#'
+        '$_initialValuesSignature',
       ),
       form: () => FormGroup(
         Map.fromEntries(

@@ -158,6 +158,10 @@ void main() {
     'lib/features/form_template_setup/domain/entities/field_data.dart':
         'Inhalt der opaken fields-Spalte von FormTemplateDto — das Schema '
         'lebt nur in Dart (FALLSTRICKE.md des Features)',
+    'lib/features/vorgaenge/domain/entities/vorgang_entwurf.dart':
+        'Inhalt des opaken entwurf-Felds von VorgangDto — das Backend reicht '
+        'den angefangenen Ausfuellstand durch, ohne ihn zu kennen, das Schema '
+        'lebt nur in Dart (FALLSTRICKE.md von word_automation)',
   };
 
   test('jede Datei mit json-Zugriffen ist ihrem Backend-DTO zugeordnet', () {

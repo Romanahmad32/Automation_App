@@ -59,6 +59,19 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   gehört deshalb in das zweite Feld — im ersten schaltete das erste getippte Zeichen den nächsten
   Schritt frei. Beim Vorgangswechsel fällt der Entwurf weg, sonst schlüge er die Vorbelegung des
   neuen Vorgangs.
+- **Der angefangene Stand liegt am Vorgang, nicht im Wizard.** `WizardCubit` sichert ihn entprellt
+  (2 s), beim Wechsel zwischen den Eingabeschritten und beim Schließen der Seite über
+  `VorgangCubit.sichereEntwurf` → `PUT api/Vorgaenge/entwurf`. Bewusst **nicht** über den Upsert des
+  ganzen Vorgangs: Der schickte bei jedem Takt den Vorgang aus der Sicht des Wizards mit und
+  überschriebe eine inzwischen eingetroffene Zentralruf-Antwort. Nach der Erzeugung wird nicht mehr
+  gesichert (`_standIstBestaetigt`) — sonst käme der gerade bestätigte Stand als Angebot zurück,
+  während der Rückfluss ihn im selben Atemzug löscht.
+- **Der Entwurf wird angeboten, nie eingesetzt.** `selectVorgang` legt ihn nach
+  `WizardState.entwurfAngebot`, die Leiste (`EntwurfHinweis`) zeigt Zeitpunkt und beide Wege. Erst
+  „Weiterarbeiten" schreibt die Werte in `formDataEntwurf` — **und erhöht `aufbauMarke`**, sonst
+  bliebe die FormGroup stehen (Vorlage und Vorbelegung sind ja unverändert) und der Anwalt sähe auf
+  seinen Klick hin nichts geschehen. Ohne gewählten Vorgang gibt es keinen Ablageort: freie
+  Erfassung hält keinen Entwurf.
 - **Der Schlüssel der `FormGroup` trägt eine Feldsignatur** (`form_template_builder.dart`): Label,
   Typ und Pflichtangabe. Ohne sie überlebt die alte Gruppe eine bearbeitete Vorlage, und das
   Formular zeigt neue Felder über alten Controls — ein auf „nicht erforderlich" gestelltes Feld

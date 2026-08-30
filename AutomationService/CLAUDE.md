@@ -142,7 +142,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   der Rückfall über eine Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter
   `Generated/PdfCache` (`PdfPreviewCache`).
 - **Vorgaenge** — Lebenszyklus des Vorgangs/Auftrags (Liste, Einzelabruf, Upsert, Löschen,
-  Referenzänderung). `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und das
+  Referenzänderung, angefangener Ausfüllstand über `PUT|DELETE api/Vorgaenge/entwurf`).
+  `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und das
   Hochzählen der laufenden Auftragsnummer in **einer** Transaktion, idempotent (§4.8, §7.1).
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
   doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier.

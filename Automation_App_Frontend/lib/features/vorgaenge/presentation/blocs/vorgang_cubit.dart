@@ -1,5 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/antwort_konflikte.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/referenz_vergeben_exception.dart';
@@ -143,6 +144,29 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
 
   /// Speichert einen geänderten Vorgang (Upsert über die Referenz).
   Future<void> aktualisiere(Vorgang vorgang) => _upsert(vorgang);
+
+  /// Hinterlegt den angefangenen Ausfüllstand am Vorgang, [entwurf] `null`
+  /// verwirft ihn. No-op, wenn die Referenz keinen Vorgang trifft.
+  ///
+  /// Läuft über den eigenen Backend-Weg statt über [_upsert]: Der Entwurf wird
+  /// beim Tippen laufend geschrieben und darf dabei nicht den ganzen Vorgang
+  /// aus der Sicht des Wizards zurückschreiben.
+  ///
+  /// Ein Fehlschlag bleibt **still** — anders als beim Speichern eines
+  /// Vorgangs (§7.2). Der Entwurf ist eine Bequemlichkeit, kein Bestand: Der
+  /// nächste Tastendruck versucht es in Sekunden erneut, und eine Snackbar im
+  /// selben Takt wäre die lautere Störung. Was wirklich zählt, geht weiterhin
+  /// über den gemeldeten Weg.
+  Future<void> sichereEntwurf(String referenz, VorgangEntwurf? entwurf) async {
+    final vorhanden = findeZuReferenz(referenz);
+    if (vorhanden == null) return;
+    _ersetzeImState(vorhanden.copyWith(entwurf: () => entwurf));
+    try {
+      await _datasource.setzeEntwurf(vorhanden.referenz, entwurf);
+    } catch (_) {
+      // siehe oben
+    }
+  }
 
   /// Ändert die Referenz eines Vorgangs (z. B. Tippfehler im Kennzeichen).
   /// Die Referenz ist der fachliche Schlüssel — ein Upsert unter der neuen
