@@ -20,6 +20,7 @@ Vorgang vorgangAusJson(Map<String, dynamic> json) {
         DateTime.fromMillisecondsSinceEpoch(0),
     status: VorgangStatus.fromValue(json['status'] as String?),
     rechtsgebiet: Rechtsgebiet.fromValue(json['rechtsgebiet'] as String?),
+    rechtsgebietRoh: json['rechtsgebiet'] as String?,
     laufendeNummer: (json['laufendeNummer'] as num?)?.toInt(),
     jahr: json['jahr'] as String?,
     abteilung: json['abteilung'] as String?,
