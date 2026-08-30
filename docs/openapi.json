@@ -621,7 +621,8 @@
             "in": "query",
             "description": "Auch schreiben, wenn sich nichts ge\u00E4ndert hat. Vorbelegt mit\r\n\u0060true\u0060, weil hinter dem Knopf in aller Regel \u201Edie Datei ist weg\r\noder sieht falsch aus\u0022 steht \u2014 und ein \u201Enichts zu tun\u0022 darauf die\r\nunbrauchbarste aller Antworten w\u00E4re. Der automatische Lauf nach dem\r\nVorgangsabschluss erzwingt nicht.",
             "schema": {
-              "type": "boolean"
+              "type": "boolean",
+              "default": true
             }
           }
         ],
