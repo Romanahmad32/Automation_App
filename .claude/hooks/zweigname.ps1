@@ -54,15 +54,30 @@ try {
     # Aussen stehende Anfuehrungszeichen duerfen sein.
     $q = '["'']?'
 
+    # Der Abstand zwischen Befehl und Zweigname: Leerzeichen und Tabulator,
+    # ausdruecklich kein `\s`. `\s` deckt auch den Zeilenumbruch ab, und dann
+    # liest ein mehrzeiliger Aufruf den Befehl der Folgezeile als Zweignamen.
+    # Das blosse Auflisten in
+    #
+    #     git branch
+    #     echo fertig
+    #
+    # hielt so mit der Meldung an, "echo" trage kein zulaessiges Praefix.
+    # Ein Zweigname steht immer in derselben Zeile wie der Befehl, der ihn
+    # anlegt — deshalb endet der Abstand am Zeilenende.
+    $luecke = '[ \t]+'
+
     # Nur die Formen, mit denen hier tatsaechlich ein Zweigname entsteht.
     # Auflisten und loeschen fallen von allein heraus: Ihre Argumente fangen
-    # mit einem Strich an, ein Zweigname nie.
+    # mit einem Strich an, ein Zweigname nie — und das blosse `git branch`
+    # ohne Argument hat ueber $luecke keinen Namen mehr, den es fangen
+    # koennte.
     $muster = @(
-        "git\s+checkout\s+-[bB]\s+$q($zeichen)$q",
-        "git\s+switch\s+(?:-[cC]|--create|--force-create)\s+$q($zeichen)$q",
+        "git\s+checkout\s+-[bB]$luecke$q($zeichen)$q",
+        "git\s+switch\s+(?:-[cC]|--create|--force-create)$luecke$q($zeichen)$q",
         # Umbenennen, ein- wie zweiargumentig: der letzte Name ist der neue.
-        "git\s+branch\s+(?:-[mM]|--move)\s+(?:$q$zeichen$q\s+)?$q($zeichen)$q",
-        "git\s+branch\s+$q($zeichen)$q"
+        "git\s+branch\s+(?:-[mM]|--move)$luecke(?:$q$zeichen$q$luecke)?$q($zeichen)$q",
+        "git\s+branch$luecke$q($zeichen)$q"
     )
 
     $name = $null
