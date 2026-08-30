@@ -5,6 +5,7 @@ import 'package:automation_app/core/general_widgets/form/german_date_field.dart'
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -92,7 +93,7 @@ class FormTemplateBuilder extends StatelessWidget {
                         ? GermanDateField.formatDate(_defaultDateFor(e.label))
                         : null),
                 validators: [
-                  if (e.required) Validators.required,
+                  if (_istPflicht(e)) Validators.required,
                   if (e.inputType == InputType.date)
                     GermanDateField.validator(),
                 ],
@@ -183,8 +184,15 @@ class FormTemplateBuilder extends StatelessWidget {
     );
   }
 
+  /// Pflicht ist ein Feld nur, wenn es so markiert ist **und** die App seinen
+  /// Platzhalter nicht selbst füllt: Ein app-eigenes Feld (Schadensaufstellung,
+  /// RVG-Werte) ließe sich von Hand nie füllen und sperrte den Knopf dauerhaft
+  /// (#35 Teil 1). Statisch ableitbar, muss also nicht in [_feldSignatur].
+  static bool _istPflicht(FieldData field) =>
+      field.required && !AppEigenePlatzhalter.istAppEigen(field.label);
+
   Widget _buildField(BuildContext context, FieldData field) {
-    final validationMessages = field.required
+    final validationMessages = _istPflicht(field)
         ? {
             ValidationMessage.required: (Object _) =>
                 '${field.label} ist ein Pflichtfeld',
@@ -250,7 +258,7 @@ class FormTemplateBuilder extends StatelessWidget {
   /// vorbelegt wurde — die Herkunft des Werts.
   String? _helperText(FieldData field) {
     final quelle = initialValueQuellen[field.label];
-    final pflicht = field.required ? '* Pflichtfeld' : null;
+    final pflicht = _istPflicht(field) ? '* Pflichtfeld' : null;
     if (quelle == null) return pflicht;
     final vorbelegt = 'Vorbelegt $quelle';
     return pflicht == null ? vorbelegt : '$pflicht · $vorbelegt';

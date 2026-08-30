@@ -32,8 +32,6 @@ void main() {
   /// `vorgang_starten_form_view.dart`, aus der `MandantEntscheidung` heraus-
   /// geschnitten wurde.
   const altlasten = <String, int>{
-    'lib/features/form_template_setup/presentation/pages/form_template_details_page.dart':
-        263,
     'lib/features/mandanten/presentation/pages/mandant_details_page.dart': 279,
   };
 

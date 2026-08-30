@@ -112,6 +112,26 @@ void main() {
     expect(imFeld(tester, 'Versicherer'), 'HUK-COBURG');
   });
 
+  /// #35 Teil 1: Ein app-eigenes Feld (z. B. aus einer alten Vorlage, in der
+  /// {{Schadensaufstellung}} als Pflichtfeld übernommen wurde) füllt die App
+  /// selbst — es darf den Knopf nie sperren und sich nicht als Pflichtfeld
+  /// ausgeben.
+  testWidgets('ein app-eigenes Pflichtfeld sperrt den Knopf nicht', (
+    tester,
+  ) async {
+    await zeige(
+      tester,
+      vorlage([feld('Schadensaufstellung'), feld('Kennzeichen')]),
+    );
+    expect(knopfAktiv(tester), isFalse, reason: 'Kennzeichen fehlt noch');
+    expect(find.textContaining('* Pflichtfeld'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).at(1), 'HG-E 1427');
+    await tester.pump();
+
+    expect(knopfAktiv(tester), isTrue);
+  });
+
   testWidgets('meldet den Tippstand entprellt', (tester) async {
     Map<String, String>? gemeldet;
     await zeige(

@@ -1,4 +1,5 @@
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_chips.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -60,18 +61,9 @@ class TemplatePlaceholdersView extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final placeholder in placeholders)
-                      ActionChip(
-                        avatar: const Icon(Icons.add, size: 18),
-                        label: Text('{{$placeholder}}'),
-                        tooltip: 'Als Eingabefeld übernehmen',
-                        onPressed: () => onPlaceholderSelected(placeholder),
-                      ),
-                  ],
+                PlatzhalterChips(
+                  placeholders: placeholders,
+                  onPlaceholderSelected: onPlaceholderSelected,
                 ),
               ],
             );
