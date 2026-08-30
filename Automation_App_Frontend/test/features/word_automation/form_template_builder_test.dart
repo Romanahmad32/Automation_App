@@ -43,6 +43,7 @@ void main() {
     Map<String, String> vorbelegt = const {},
     Map<String, String> erfasst = const {},
     void Function(Map<String, String>)? onWerte,
+    Set<String>? aktivePlatzhalter,
   }) => tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -52,6 +53,7 @@ void main() {
             initialValues: vorbelegt,
             erfassteWerte: erfasst,
             onWerteGeaendert: onWerte,
+            aktivePlatzhalter: aktivePlatzhalter,
             submitButtonLabel: const Text('Dokument erstellen'),
             onSubmitted: (_) {},
           ),
@@ -110,6 +112,69 @@ void main() {
     );
 
     expect(imFeld(tester, 'Versicherer'), 'HUK-COBURG');
+  });
+
+  /// #35 Teil 2: Die Pflicht gilt je gewählter Word-Datei. Das Feld
+  /// „Schadenshöhe" steht nur in der Auflistungs-Datei — beim HGN-Schreiben
+  /// (dessen Platzhalter es nicht enthalten) darf es den Knopf nicht sperren.
+  testWidgets('ein Feld nur aus der Auflistungs-Datei blockiert das '
+      'HGN-Schreiben nicht', (tester) async {
+    await zeige(
+      tester,
+      vorlage([feld('Kennzeichen'), feld('Schadenshöhe')]),
+      aktivePlatzhalter: {'Kennzeichen'},
+    );
+    expect(find.textContaining('* Pflichtfeld'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).at(0), 'HG-E 1427');
+    await tester.pump();
+
+    expect(knopfAktiv(tester), isTrue);
+  });
+
+  testWidgets('…wird beim Auflistungs-Schreiben aber erzwungen', (
+    tester,
+  ) async {
+    await zeige(
+      tester,
+      vorlage([feld('Kennzeichen'), feld('Schadenshöhe')]),
+      aktivePlatzhalter: {'Kennzeichen', 'Schadenshöhe'},
+    );
+
+    await tester.enterText(find.byType(TextField).at(0), 'HG-E 1427');
+    await tester.pump();
+    expect(knopfAktiv(tester), isFalse, reason: 'Schadenshöhe fehlt noch');
+
+    await tester.enterText(find.byType(TextField).at(1), '2810,87');
+    await tester.pump();
+    expect(knopfAktiv(tester), isTrue);
+  });
+
+  testWidgets('„zahlungsfrist" gegen {{Zahlungsfrist}} gilt als Treffer', (
+    tester,
+  ) async {
+    // Die Backend-Ersetzung arbeitet ohne Groß-/Kleinschreibung — die
+    // Pflichtprüfung muss denselben Maßstab anlegen.
+    await zeige(
+      tester,
+      vorlage([feld('zahlungsfrist')]),
+      aktivePlatzhalter: {'Zahlungsfrist'},
+    );
+
+    expect(knopfAktiv(tester), isFalse, reason: 'Pflichtfeld ist leer');
+  });
+
+  testWidgets('die leere Platzhaltermenge sperrt nichts', (tester) async {
+    // „Solange nichts bekannt ist: nicht sperren" — konnte die Datei nicht
+    // gelesen werden, reicht der Aufrufer die leere Menge herein.
+    await zeige(
+      tester,
+      vorlage([feld('Versicherer')]),
+      aktivePlatzhalter: const {},
+    );
+
+    expect(knopfAktiv(tester), isTrue);
+    expect(find.textContaining('* Pflichtfeld'), findsNothing);
   });
 
   /// #35 Teil 1: Ein app-eigenes Feld (z. B. aus einer alten Vorlage, in der
