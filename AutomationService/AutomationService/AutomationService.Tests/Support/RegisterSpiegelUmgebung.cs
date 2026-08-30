@@ -23,18 +23,30 @@ namespace AutomationService.Tests.Support;
 /// </summary>
 public sealed class RegisterSpiegelUmgebung : IDisposable
 {
-    readonly SqliteConnection _verbindung;
+    /// <summary>
+    /// Hält die In-Memory-Datenbank am Leben. Sie verschwindet, sobald die
+    /// letzte Verbindung zu ihr schliesst — und da jeder Dienst hier seine
+    /// eigene bekommt, muss eine offen bleiben, die niemand sonst anfasst.
+    /// </summary>
+    readonly SqliteConnection _dauerhaft;
+
+    readonly string _verbindungstext;
+
+    /// <summary>Die Contexts der Dienste, damit sie am Ende zugehen.</summary>
+    readonly List<AutomationDbContext> _contexts = [];
 
     public RegisterSpiegelUmgebung()
     {
-        _verbindung = new SqliteConnection("DataSource=:memory:");
-        _verbindung.Open();
-        Db = new AutomationDbContext(new DbContextOptionsBuilder<AutomationDbContext>()
-            .UseSqlite(_verbindung).Options);
+        _verbindungstext = $"DataSource=register-{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+        _dauerhaft = new SqliteConnection(_verbindungstext);
+        _dauerhaft.Open();
+
+        Db = NeuerContext();
         Db.Database.EnsureCreated();
         StandDatei = Path.Combine(Bau, "stand.json");
     }
 
+    /// <summary>Zum Einrichten der Ausgangslage — nicht der Context der Dienste.</summary>
     public AutomationDbContext Db { get; }
 
     public PdfAttrappe Pdf { get; } = new();
@@ -55,16 +67,34 @@ public sealed class RegisterSpiegelUmgebung : IDisposable
     public string PdfPfad => Path.Combine(Ablage, $"{RegisterSpiegelVorgabe.Dateiname}.pdf");
 
     /// <summary>
-    /// Ein frischer Dienst je Aufruf — der Betrieb baut ihn je Anfrage neu, und
-    /// ein zwischen zwei Läufen weitergereichter Zustand würde hier stillschweigend
-    /// etwas prüfen, das es im Dienst nicht gibt.
+    /// Die Schleuse ist im Betrieb ein Singleton — sonst schleust sie nichts.
+    /// Deshalb hält die Umgebung eine und gibt sie jedem Dienst mit.
     /// </summary>
-    public RegisterSpiegelService Dienst() => new(
-        Db,
-        Pdf,
-        new RegisterSpiegelStand(StandDatei),
-        new RegisterSpiegelBauordner(Bau),
-        NullLogger<RegisterSpiegelService>.Instance);
+    public RegisterSpiegelSchleuse Schleuse { get; } = new();
+
+    /// <summary>
+    /// Ein frischer Dienst je Aufruf, mit einem <b>eigenen</b> DbContext — wie
+    /// im Betrieb, wo er je Anfrage neu gebaut wird und der Context am
+    /// Anfrage-Scope hängt.
+    ///
+    /// Der eigene Context ist nicht Ordnungsliebe, sondern Voraussetzung: Zwei
+    /// Läufe über denselben Context scheitern schon an EF Core („A second
+    /// operation was started on this context instance"), lange bevor sie sich
+    /// am Zielort treffen könnten. Die Nebenläufigkeitstests prüften dann eine
+    /// Kollision, die es im Betrieb gar nicht gibt.
+    /// </summary>
+    public RegisterSpiegelService Dienst()
+    {
+        var context = NeuerContext();
+        _contexts.Add(context);
+        return new RegisterSpiegelService(
+            context,
+            Pdf,
+            new RegisterSpiegelStand(StandDatei),
+            new RegisterSpiegelBauordner(Bau),
+            Schleuse,
+            NullLogger<RegisterSpiegelService>.Instance);
+    }
 
     public async Task EinstellungenAnlegen(string? ordner = null, string filter = "alle")
     {
@@ -92,10 +122,24 @@ public sealed class RegisterSpiegelUmgebung : IDisposable
         await Db.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Nimmt der Datenschicht den Boden weg — jeder Zugriff auf die Vorgänge
+    /// scheitert danach. Steht für alles, womit beim Schreiben nicht gerechnet
+    /// wurde; geprüft wird nicht der einzelne Auslöser, sondern dass keiner als
+    /// Ausnahme nach oben durchschlägt.
+    /// </summary>
+    public Task DatenschichtAusfallenLassen() =>
+        Db.Database.ExecuteSqlRawAsync("DROP TABLE Vorgaenge");
+
+    AutomationDbContext NeuerContext() => new(
+        new DbContextOptionsBuilder<AutomationDbContext>().UseSqlite(_verbindungstext).Options);
+
     public void Dispose()
     {
+        foreach (var context in _contexts) context.Dispose();
         Db.Dispose();
-        _verbindung.Dispose();
+        _dauerhaft.Dispose();
+        Schleuse.Dispose();
         // Der Spiegel setzt seine Dateien schreibgeschützt; ohne das Zurücknehmen
         // scheitert das Aufräumen an der eigenen Vorsichtsmassnahme.
         foreach (var datei in Directory.EnumerateFiles(Ablage)) AtomareAblage.SchreibschutzLoesen(datei);

@@ -29,14 +29,14 @@ public sealed class RegisterSpiegelVertragTests : IDisposable
 
     /// <summary>
     /// Bringt die Datenschicht zum Ausfall, nachdem alles eingerichtet ist.
-    /// Jeder Zugriff wirft danach — und zwar aus <c>LadeAsync</c>, also aus dem
+    /// Jeder Zugriff wirft danach — und zwar beim Laden der Vorgänge, also im
     /// allerersten Schritt beider Wege.
     /// </summary>
     async Task DatenschichtFaelltAus()
     {
         await _umgebung.EinstellungenAnlegen();
         await _umgebung.VorgangAnlegen("01/26 C03", 1);
-        _umgebung.Db.Dispose();
+        await _umgebung.DatenschichtAusfallenLassen();
     }
 
     [Fact]

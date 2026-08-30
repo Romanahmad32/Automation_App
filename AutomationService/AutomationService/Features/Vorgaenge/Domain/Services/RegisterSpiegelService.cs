@@ -21,12 +21,14 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 /// <param name="pdf">Wandelt die fertige .docx; fehlt Word, bleibt es bei der .docx.</param>
 /// <param name="stand">Der Fingerabdruck des zuletzt geschriebenen Bestands.</param>
 /// <param name="bauordner">Wo die Dateien entstehen, bevor sie umziehen.</param>
+/// <param name="schleuse">Lässt immer nur einen Schreiblauf durch.</param>
 /// <param name="logger">Protokolliert Lauf und Fehlschlag.</param>
 public sealed class RegisterSpiegelService(
     AutomationDbContext db,
     IPdfConversionService pdf,
     RegisterSpiegelStand stand,
     RegisterSpiegelBauordner bauordner,
+    RegisterSpiegelSchleuse schleuse,
     ILogger<RegisterSpiegelService> logger) : IRegisterSpiegelService
 {
     /// <summary>
@@ -55,7 +57,10 @@ public sealed class RegisterSpiegelService(
     {
         try
         {
-            return await SchreibeInternAsync(erzwingen, cancellationToken);
+            // Nur einer schreibt. Warum das kein Sonderfall ist, steht an
+            // RegisterSpiegelSchleuse.
+            return await schleuse.NacheinanderAsync(
+                () => SchreibeInternAsync(erzwingen, cancellationToken), cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
