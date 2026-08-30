@@ -59,6 +59,48 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   gehört deshalb in das zweite Feld — im ersten schaltete das erste getippte Zeichen den nächsten
   Schritt frei. Beim Vorgangswechsel fällt der Entwurf weg, sonst schlüge er die Vorbelegung des
   neuen Vorgangs.
+- **Der angefangene Stand liegt am Vorgang, nicht im Wizard.** `WizardCubit` sichert ihn entprellt
+  (2 s), beim Wechsel zwischen den Eingabeschritten und beim Schließen der Seite über
+  `VorgangCubit.sichereEntwurf` → `PUT api/Vorgaenge/entwurf`. Bewusst **nicht** über den Upsert des
+  ganzen Vorgangs: Der schickte bei jedem Takt den Vorgang aus der Sicht des Wizards mit und
+  überschriebe eine inzwischen eingetroffene Zentralruf-Antwort. Nach der Erzeugung wird nicht mehr
+  gesichert (`_standIstBestaetigt`) — sonst käme der gerade bestätigte Stand als Angebot zurück,
+  während der Rückfluss ihn im selben Atemzug löscht.
+- **Der Entwurf wird angeboten, nie eingesetzt.** `selectVorgang` legt ihn nach
+  `WizardState.entwurfAngebot`, die Leiste (`EntwurfHinweis`) zeigt Zeitpunkt und beide Wege. Erst
+  „Weiterarbeiten" schreibt die Werte in `formDataEntwurf` — **und erhöht `aufbauMarke`**, sonst
+  bliebe die FormGroup stehen (Vorlage und Vorbelegung sind ja unverändert) und der Anwalt sähe auf
+  seinen Klick hin nichts geschehen. Ohne gewählten Vorgang gibt es keinen Ablageort: freie
+  Erfassung hält keinen Entwurf.
+- **Der Stift am Feld ändert die Vorlage, nicht nur die Anzeige.** `FeldEinstellungDialog` liefert
+  ein geändertes `FieldData` ab, `WizardCubit.aktualisiereFeld` speichert es über `UpdateFormTemplate`.
+  Der Dialog prüft den Namen nach derselben Regel wie der Dienst (`^[\p{L}\p{N} _-]+$`) und gegen die
+  übrigen Feldnamen; zwei gleiche Namen wären in der `FormGroup` ein Feld. Gespeichert wird nur bei
+  echter Änderung (`FieldData` vergleicht sich nicht selbst) — und nur dann lädt die Vorlagenliste
+  neu, sonst setzt das Resync im `TemplateSelector` zurück.
+- **Eine Feldänderung fasst immer auch den erfassten Stand an** (`utils/feld_stand.dart`), weil der
+  nach Feldnamen geschlüsselt ist. Zwei Fälle, die sich leicht verwechseln lassen und beide still
+  danebengehen:
+  - **Umbenennung** → `FeldStand.umgeschluesselt`: Der Wert wandert auf den neuen Namen mit, sonst
+    fände er sich nur unter einem, den die Vorlage nicht mehr kennt. Ein **leerer** Wert fällt dabei
+    weg — er hat nichts zu bewahren, schlüge aber die Vorbelegung.
+  - **Neue Datenquelle** → `FeldStand.ohneFeld`: Der Wert gibt den Platz frei, damit die Vorbelegung
+    greift. Ohne das gibt es **keinen Weg zurück** zur Vorbelegung: Der `FormWertBeobachter` schreibt
+    zwei Sekunden nach dem ersten Tastendruck *alle* Felder mit, auch die unangetasteten, und ab da
+    beschattet der erfasste Stand die Vorbelegung dauerhaft. Geräumt wird nur, wenn die neue Quelle
+    zum gewählten Vorgang **tatsächlich einen Wert hat** (`_weichtDerVorbelegung` fragt denselben
+    `VorgangPrefillMatcher`, aus dem das Formular seine Vorbelegung zieht) — sonst nähme der Dialog
+    die Eingabe weg und setzte nichts an ihre Stelle. Der verdrängte Wert kommt als
+    `FeldAenderung.verdraengterWert` zurück und steht in der Meldung als „Alten Wert zurückholen"
+    (`stelleFeldWertWiederHer`); zurückgeholt wird der **Wert**, nicht die Vorlagenänderung.
+  In beiden Fällen gilt: `aufbauMarke` muss steigen, sobald der erfasste Stand geräumt wird. Setzt
+  der Anwalt die Quelle auf das, was die Namens-Heuristik ohnehin erkannt hatte, ist die Vorbelegung
+  Zeichen für Zeichen dieselbe — und nur sie steht im Schlüssel der `FormGroup`.
+- **Die Hinweiszeile unter dem Feld braucht `helperMaxLines: 2`.** Die Spalte ist 450 px breit, der
+  Stift nimmt ihr weitere ~48 px: „* Pflichtfeld · Vorbelegt aus dem letzten Schreiben" passt in
+  keine Zeile, und mit der Material-Vorgabe wurde daraus ein „…". Aus demselben Grund sagt
+  `PrefillQuelle.gespeichert` nur „aus dem letzten Schreiben"; den Zusatz „zu diesem Vorgang" trägt
+  die Sammelzeile darüber (`VorgangsdatenHinweis`), die Platz hat.
 - **Der Schlüssel der `FormGroup` trägt eine Feldsignatur** (`form_template_builder.dart`): Label,
   Typ und Pflichtangabe. Ohne sie überlebt die alte Gruppe eine bearbeitete Vorlage, und das
   Formular zeigt neue Felder über alten Controls — ein auf „nicht erforderlich" gestelltes Feld

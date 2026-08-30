@@ -38,6 +38,17 @@ class FormTemplateBuilder extends StatelessWidget {
   /// (null) läuft kein Beobachter mit.
   final void Function(Map<String, String>)? onWerteGeaendert;
 
+  /// Erhöhen erzwingt einen Neuaufbau der FormGroup. Nötig, wenn sich **nur**
+  /// die einzusetzenden Werte geändert haben ([erfassteWerte]) — die stehen
+  /// bewusst nicht im Schlüssel, also merkte das Formular sonst nichts davon.
+  /// Genau der Fall beim übernommenen Entwurf.
+  final int aufbauMarke;
+
+  /// Wird mit dem Feld gerufen, dessen Stiftsymbol angeklickt wurde. Ohne
+  /// Rückmeldung (null) zeigt das Formular keine Stifte — die freie Erfassung
+  /// und die Vorschau kommen ohne aus.
+  final void Function(FieldData)? onFeldBearbeiten;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
@@ -47,6 +58,8 @@ class FormTemplateBuilder extends StatelessWidget {
     this.initialValueQuellen = const {},
     this.erfassteWerte = const {},
     this.onWerteGeaendert,
+    this.aufbauMarke = 0,
+    this.onFeldBearbeiten,
   });
 
   @override
@@ -59,7 +72,8 @@ class FormTemplateBuilder extends StatelessWidget {
     // anderen Vorlage, bei geänderten Feldern und bei neuer Vorbelegung.
     return ReactiveFormBuilder(
       key: ValueKey(
-        '${formTemplate!.id}#$_feldSignatur#$_initialValuesSignature',
+        '${formTemplate!.id}#$aufbauMarke#$_feldSignatur#'
+        '$_initialValuesSignature',
       ),
       form: () => FormGroup(
         Map.fromEntries(
@@ -94,7 +108,7 @@ class FormTemplateBuilder extends StatelessWidget {
             spacing: 16,
             children: [
               ...formTemplate!.fields.map((field) {
-                return _buildField(context, field);
+                return _buildZeile(context, field);
               }),
               const SizedBox(height: 8),
               ReactiveFormConsumer(
@@ -144,6 +158,31 @@ class FormTemplateBuilder extends StatelessWidget {
       .map((e) => '${e.label}:${e.inputType.value}:${e.required}')
       .join('|');
 
+  /// Das Feld, bei Bedarf mit dem Stift daneben. Der Stift sitzt **am Feld**
+  /// und nicht in einer Werkzeugleiste: Er soll dort sein, wo der Anwalt gerade
+  /// stutzt („dieses Feld will ich gar nicht ausfüllen müssen").
+  Widget _buildZeile(BuildContext context, FieldData field) {
+    final bearbeiten = onFeldBearbeiten;
+    if (bearbeiten == null) return _buildField(context, field);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildField(context, field)),
+        Padding(
+          // Auf die Höhe des Eingabefelds gerückt, nicht auf die der Zeile:
+          // Unter dem Feld steht oft noch eine Hinweiszeile.
+          padding: const EdgeInsets.only(top: 4, left: 4),
+          child: IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            tooltip: 'Einstellung des Felds „${field.label}"',
+            onPressed: () => bearbeiten(field),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildField(BuildContext context, FieldData field) {
     final validationMessages = field.required
         ? {
@@ -160,6 +199,7 @@ class FormTemplateBuilder extends StatelessWidget {
           formControlName: field.label,
           labelText: field.label,
           helperText: _helperText(field),
+          helperMaxLines: _helperZeilen,
           validationMessages: validationMessages,
         );
       case InputType.integer:
@@ -193,8 +233,18 @@ class FormTemplateBuilder extends StatelessWidget {
     }
   }
 
-  InputDecoration _decoration(FieldData field) =>
-      InputDecoration(helperText: _helperText(field));
+  InputDecoration _decoration(FieldData field) => InputDecoration(
+    helperText: _helperText(field),
+    helperMaxLines: _helperZeilen,
+  );
+
+  /// Die Hinweiszeile darf umbrechen. Das Formular steht in der 450 px breiten
+  /// Spalte des Ausfüllschritts, und der Stift nimmt ihr noch einmal rund 48 px
+  /// ab: „* Pflichtfeld · Vorbelegt aus dem letzten Schreiben" passt dort in
+  /// keine Zeile. Mit der Material-Vorgabe (eine Zeile) wurde daraus ein „…",
+  /// und der Anwalt sah nicht mehr, welchem Bestand er gerade vertraut — genau
+  /// das, wofür die Zeile da ist.
+  static const _helperZeilen = 2;
 
   /// Hinweiszeile unter dem Feld: Pflichtfeld-Markierung und — falls das Feld
   /// vorbelegt wurde — die Herkunft des Werts.
