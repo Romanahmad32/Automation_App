@@ -113,5 +113,52 @@ public sealed class AtomareAblageTests : IDisposable
             .Which.Should().Be("register.docx");
     }
 
+    /// <summary>
+    /// Liegt das Ziel auf einem anderen Laufwerk, kopiert die Ablage zuerst
+    /// neben das Ziel — mitten in den synchronisierten Ordner. Stürzt der Dienst
+    /// zwischen Kopieren und Umbenennen ab, bleibt diese Datei dort für immer:
+    /// Der Bauordner räumt sie nicht weg, sie liegt ja woanders. Auf dem Handy
+    /// erscheint sie als „~Sachgebiete-Register (App)-a3f9….tmp", eine je
+    /// Absturz.
+    ///
+    /// Der Laufwerkswechsel selbst lässt sich hier nicht nachstellen (die CI
+    /// hat ein Laufwerk) — die Altlast, die er hinterlässt, sehr wohl.
+    /// </summary>
+    [Fact]
+    public void Ersetze_RaeumtLiegenGebliebeneZwischenstaendeWeg()
+    {
+        var ziel = Pfad("register.docx");
+        var altlast = Pfad("~register-a3f9c1d2e4b60718.tmp");
+        File.WriteAllText(altlast, "vom Absturz von gestern");
+
+        AtomareAblage.Ersetze(Quelle(), ziel);
+
+        File.Exists(altlast).Should().BeFalse();
+        File.ReadAllText(ziel).Should().Be("neu");
+    }
+
+    /// <summary>
+    /// Aufgeräumt wird nur, was unverkennbar von hier stammt. Der Zielordner
+    /// ist der Ordner des Anwalts, und was dort sonst liegt, geht die Ablage
+    /// nichts an — auch dann nicht, wenn es ähnlich heisst.
+    /// </summary>
+    [Fact]
+    public void Ersetze_LaesstFremdeDateienImZielordnerLiegen()
+    {
+        var ziel = Pfad("register.docx");
+        var fremd = new[]
+        {
+            Pfad("~register-a3f9.docx"),          // andere Endung
+            Pfad("~notizen-a3f9.tmp"),            // anderer Basisname
+            Pfad("register-a3f9.tmp"),            // ohne Tilde
+            Pfad("~register.tmp"),                // ohne Kennung
+        };
+        foreach (var datei in fremd) File.WriteAllText(datei, "gehoert dem Anwalt");
+
+        AtomareAblage.Ersetze(Quelle(), ziel);
+
+        foreach (var datei in fremd) File.Exists(datei).Should().BeTrue(datei);
+    }
+
     public void Dispose() => Directory.Delete(_ordner, recursive: true);
 }
