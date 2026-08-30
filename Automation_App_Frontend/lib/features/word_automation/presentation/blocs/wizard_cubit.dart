@@ -41,10 +41,21 @@ class WizardState extends Equatable {
   /// als auch die RVG-Umsatzsteuer (`applyVat = !vorsteuerabzugsberechtigt`).
   final bool vorsteuerabzugsberechtigt;
 
-  /// Ausgefüllte Formularfelder aus dem ersten Schritt. Wird dort
+  /// **Abgesendete** Formularfelder aus dem ersten Schritt. Wird dort
   /// zwischengespeichert, weil die Dokumenterzeugung bei "mit Auflistung" erst
   /// am Ende des Schadensaufstellungs-Schritts läuft.
   final Map<String, String>? formData;
+
+  /// Der laufende Tippstand desselben Formulars — im Unterschied zu [formData]
+  /// **nicht** bestätigt. Wird entprellt mitgeschrieben, damit ein Neuaufbau
+  /// des Formulars die Eingaben wieder einsetzen kann (die Vorlage wurde
+  /// nebenan bearbeitet, die Liste neu geladen).
+  ///
+  /// Getrennt gehalten, weil [formData] auch eine Freigabe ist: An ihm hängen
+  /// `WizardStepBar._isEnabled` und der Erzeugen-Knopf des
+  /// Schadensaufstellungs-Schritts. Schriebe der Tippstand dorthin, schaltete
+  /// das erste getippte Zeichen den nächsten Schritt frei.
+  final Map<String, String>? formDataEntwurf;
 
   /// Der Vorgang, aus dem das Schreiben erstellt wird (Phase 4). Liefert die
   /// Vorbelegung (Mandant + Antwort + Rechtsgebiet) und nimmt nach der
@@ -65,6 +76,7 @@ class WizardState extends Equatable {
     this.mitAuflistung = false,
     this.vorsteuerabzugsberechtigt = true,
     this.formData,
+    this.formDataEntwurf,
     this.selectedVorgang,
     this.selectedMandant,
   });
@@ -98,6 +110,7 @@ class WizardState extends Equatable {
     bool? mitAuflistung,
     bool? vorsteuerabzugsberechtigt,
     Map<String, String>? Function()? formData,
+    Map<String, String>? Function()? formDataEntwurf,
     Vorgang? Function()? selectedVorgang,
     Mandant? Function()? selectedMandant,
   }) {
@@ -115,6 +128,9 @@ class WizardState extends Equatable {
       vorsteuerabzugsberechtigt:
           vorsteuerabzugsberechtigt ?? this.vorsteuerabzugsberechtigt,
       formData: formData != null ? formData() : this.formData,
+      formDataEntwurf: formDataEntwurf != null
+          ? formDataEntwurf()
+          : this.formDataEntwurf,
       selectedVorgang: selectedVorgang != null
           ? selectedVorgang()
           : this.selectedVorgang,
@@ -133,6 +149,7 @@ class WizardState extends Equatable {
     mitAuflistung,
     vorsteuerabzugsberechtigt,
     formData,
+    formDataEntwurf,
     selectedVorgang,
     selectedMandant,
   ];
@@ -156,6 +173,10 @@ class WizardCubit extends Cubit<WizardState> {
   /// zeigte der nächste Vorgang die Positionen des vorigen — und der
   /// Listener des Schadensaufstellungs-Schritts lud die **eigene** gespeicherte
   /// Aufstellung nie nach, weil er nur bei `damageListing == null` greift.
+  ///
+  /// Aus demselben Grund fällt der Tippstand weg: Er gehört zum vorigen
+  /// Vorgang und hätte beim Neuaufbau des Formulars Vorrang vor der Vorbelegung
+  /// des neuen.
   Future<void> selectVorgang(Vorgang? vorgang) async {
     emit(
       state.copyWith(
@@ -163,6 +184,7 @@ class WizardCubit extends Cubit<WizardState> {
         selectedMandant: () => null,
         damageListing: () => null,
         schadenspositionFehler: const [],
+        formDataEntwurf: () => null,
       ),
     );
     if (vorgang?.mandantId == null) return;
@@ -206,41 +228,75 @@ class WizardCubit extends Cubit<WizardState> {
     emit(state.copyWith(currentStep: step));
   }
 
+  /// Setzt die gewählte Vorlage — und unterscheidet dabei zwei Fälle, die
+  /// vorher denselben Weg gingen:
+  ///
+  /// **Wechsel** (andere Vorlage, oder gar keine mehr): Die Eingaben gehören
+  /// zur vorherigen Vorlage und werden verworfen.
+  ///
+  /// **Aktualisierung** (dieselbe ID, neuer Stand): Sie kommt nicht vom
+  /// Anwalt, sondern vom Abgleich im `TemplateSelector` — der vergleicht die
+  /// Auswahl per Wert mit der neu geladenen Liste und meldet jede andernorts
+  /// bearbeitete Vorlage als Auswahl. Wer also mitten im Ausfüllen ein Feld
+  /// auf „nicht erforderlich" stellt, bekam hier alles gelöscht: Eingaben,
+  /// Schadensaufstellung, sogar den Schritt (denn [WizardState.mitAuflistung]
+  /// fiel auf die Vorgabe zurück und nahm `schadensaufstellung` aus
+  /// [WizardState.steps]). Behalten wird deshalb alles, was weiter gilt.
   void selectFormTemplate(FormTemplate? template) {
-    // Hat die Vorlage nur eine Version mit Auflistung, diese automatisch wählen.
-    final onlyMit =
-        template != null &&
-        template.hasMitAuflistung &&
-        !template.hasOhneAuflistung;
-
-    var next = state.copyWith(
-      selectedFormTemplate: () => template,
-      mitAuflistung: onlyMit,
-      vorsteuerabzugsberechtigt: true,
-      // Eingaben gehören zur vorherigen Vorlage und werden verworfen.
-      damageListing: () => null,
-      schadenspositionFehler: const [],
-      formData: () => null,
-    );
-    if (!next.steps.contains(next.currentStep)) {
-      next = next.copyWith(currentStep: WizardStep.fillOut);
+    if (template != null && template.id == state.selectedFormTemplate?.id) {
+      emit(
+        _mitGueltigemSchritt(
+          state.copyWith(
+            selectedFormTemplate: () => template,
+            mitAuflistung: _fassungFuer(template, state.mitAuflistung),
+          ),
+        ),
+      );
+      return;
     }
-    emit(next);
+
+    emit(
+      _mitGueltigemSchritt(
+        state.copyWith(
+          selectedFormTemplate: () => template,
+          mitAuflistung: template != null && _fassungFuer(template, false),
+          vorsteuerabzugsberechtigt: true,
+          damageListing: () => null,
+          schadenspositionFehler: const [],
+          formData: () => null,
+          formDataEntwurf: () => null,
+        ),
+      ),
+    );
   }
 
   /// Schaltet zwischen Version ohne/mit Auflistung um. Eingaben des
   /// Schadensaufstellungs-Schritts werden beim Wechsel verworfen.
   void setMitAuflistung(bool mitAuflistung) {
-    var next = state.copyWith(
-      mitAuflistung: mitAuflistung,
-      damageListing: () => null,
-      schadenspositionFehler: const [],
+    emit(
+      _mitGueltigemSchritt(
+        state.copyWith(
+          mitAuflistung: mitAuflistung,
+          damageListing: () => null,
+          schadenspositionFehler: const [],
+        ),
+      ),
     );
-    if (!next.steps.contains(next.currentStep)) {
-      next = next.copyWith(currentStep: WizardStep.fillOut);
-    }
-    emit(next);
   }
+
+  /// Welche Fassung nach dem Setzen von [template] gilt: die bisherige, solange
+  /// die Vorlage sie hat — sonst die einzige, die sie hat. Mit `bisher: false`
+  /// ist das die alte Regel „hat sie nur eine Fassung mit Auflistung, nimm sie".
+  static bool _fassungFuer(FormTemplate template, bool bisher) =>
+      template.hasMitAuflistung && (bisher || !template.hasOhneAuflistung);
+
+  /// Sichert zu, dass der aktuelle Schritt in [WizardState.steps] vorkommt —
+  /// die Schrittliste hängt an [WizardState.mitAuflistung] und kann sich mit
+  /// der Vorlage geändert haben.
+  static WizardState _mitGueltigemSchritt(WizardState zustand) =>
+      zustand.steps.contains(zustand.currentStep)
+      ? zustand
+      : zustand.copyWith(currentStep: WizardStep.fillOut);
 
   void setVorsteuerabzugsberechtigt(bool value) {
     emit(state.copyWith(vorsteuerabzugsberechtigt: value));
@@ -261,8 +317,22 @@ class WizardCubit extends Cubit<WizardState> {
     );
   }
 
+  /// Übernimmt den **abgesendeten** Stand des Ausfüll-Formulars. Der Entwurf
+  /// zieht mit, damit ein späterer Neuaufbau nicht auf einen älteren Tippstand
+  /// zurückfällt.
   void setFormData(Map<String, String>? formData) {
-    emit(state.copyWith(formData: () => formData));
+    emit(
+      state.copyWith(
+        formData: () => formData,
+        formDataEntwurf: () => formData ?? state.formDataEntwurf,
+      ),
+    );
+  }
+
+  /// Schreibt den laufenden Tippstand mit (entprellt aus dem Formular). Gibt
+  /// **keine** Freigabe: Dafür ist [setFormData] zuständig.
+  void setFormDataEntwurf(Map<String, String> werte) {
+    emit(state.copyWith(formDataEntwurf: () => werte));
   }
 
   /// Hinterlegt die manuell gewählte Word-Datei dauerhaft am **aktiven Slot**
