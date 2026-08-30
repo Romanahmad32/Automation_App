@@ -1683,6 +1683,199 @@
         }
       }
     },
+    "/api/MandantenImport": {
+      "post": {
+        "tags": [
+          "MandantenImport"
+        ],
+        "parameters": [
+          {
+            "name": "uebernehmen",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MandantenImportDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MandantenImportDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MandantenImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBerichtDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBerichtDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBerichtDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/OrdnerStatus": {
+      "get": {
+        "tags": [
+          "OrdnerStatus"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerStatusDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerStatusDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerStatusDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "OrdnerStatus"
+        ],
+        "summary": "Antwortet mit dem vollst\u00E4ndigen Stand danach \u2014 die Oberfl\u00E4che \u00FCbernimmt\r\nihn, statt nach einer Massenaktion neu zu laden.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetzeOrdnerStatusDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetzeOrdnerStatusDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetzeOrdnerStatusDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerStatusDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerStatusDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerStatusDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Mailbox/config": {
       "get": {
         "tags": [
@@ -3412,6 +3605,241 @@
         "type": "string",
         "format": "binary"
       },
+      "ImportBerichtDto": {
+        "required": [
+          "eintraege",
+          "neu",
+          "ergaenzt",
+          "unveraendert",
+          "abgelehnt",
+          "ordnerZugeordnet",
+          "ohneMandantenbezug",
+          "angewendet"
+        ],
+        "type": "object",
+        "properties": {
+          "eintraege": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportEintragDto"
+            }
+          },
+          "neu": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ergaenzt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unveraendert": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "abgelehnt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ordnerZugeordnet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ohneMandantenbezug": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "angewendet": {
+            "type": "boolean"
+          }
+        },
+        "description": "Was ein Import bewirkt hat oder bewirken w\u00FCrde. Vorschau und \u00DCbernahme\r\nliefern denselben Bericht; nur bool ImportBerichtDto.Angewendet unterscheidet sie.\r\n\r\n\u0060OrdnerZugeordnet\u0060 ist die Zahl der Akten-Ordner, die dadurch an einen\r\nMandanten gehen \u2014 die Zahl, um die der Zuordnungsstapel kleiner wird, und\r\ndamit die einzige, die den Erfolg des Imports beschreibt."
+      },
+      "ImportEintragDto": {
+        "required": [
+          "zeile",
+          "anzeigename",
+          "aktenOrdnernamen",
+          "art",
+          "mandantId",
+          "sicherheit",
+          "quelle",
+          "hinweise"
+        ],
+        "type": "object",
+        "properties": {
+          "zeile": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "anzeigename": {
+            "type": "string"
+          },
+          "aktenOrdnernamen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "art": {
+            "type": "string"
+          },
+          "mandantId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sicherheit": {
+            "type": "string"
+          },
+          "quelle": {
+            "type": "string"
+          },
+          "hinweise": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Das Ergebnis einer einzelnen Zeile der Importdatei. \u0060Art\u0060 ist\r\n\u0060neu\u0060, \u0060ergaenzt\u0060, \u0060unveraendert\u0060 oder \u0060abgelehnt\u0060 \u2014 als\r\nZeichenkette, weil eine Zahl die Dart-Seite an die Deklarationsreihenfolge\r\neines C#-Enums koppeln w\u00FCrde."
+      },
+      "ImportMandantDto": {
+        "required": [
+          "anrede",
+          "vorname",
+          "nachname",
+          "strasseHausnummer",
+          "postleitzahl",
+          "ort",
+          "emailAdresse",
+          "telefonnummer",
+          "notiz",
+          "aktenOrdnernamen",
+          "kennzeichen",
+          "quelle",
+          "sicherheit"
+        ],
+        "type": "object",
+        "properties": {
+          "anrede": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "vorname": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nachname": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "strasseHausnummer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postleitzahl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ort": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "emailAdresse": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "telefonnummer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notiz": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "aktenOrdnernamen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "kennzeichen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "quelle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sicherheit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Ein Mandant in der Importdatei. Alles ist freiwillig au\u00DFer dem Namen: was im\r\nAktenbestand nicht auffindbar war, bleibt leer, statt geraten zu werden."
+      },
       "JsonElement": {},
       "KanzleiSettingsDto": {
         "required": [
@@ -3741,6 +4169,65 @@
           }
         },
         "description": "\u00DCbertragungsformat eines Mandanten. PascalCase-Properties werden als camelCase\r\nserialisiert und passen damit 1:1 zum JSON der Flutter-Entit\u00E4t \u0060Mandant\u0060.\r\nDie in der DB als JSON-Spalte abgelegten Listen werden hier in echte Arrays\r\n\u00FCbersetzt."
+      },
+      "MandantenImportDto": {
+        "required": [
+          "version",
+          "mandanten",
+          "ohneMandantenbezug"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "mandanten": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ImportMandantDto"
+            }
+          },
+          "ohneMandantenbezug": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Eine Importdatei. Der Rumpf der Anfrage ist Zeichen f\u00FCr Zeichen die Datei,\r\ndie au\u00DFerhalb der App entsteht \u2014 kein Umschlag, keine zus\u00E4tzlichen Felder.\r\nNur deshalb kann derselbe Inhalt gepr\u00FCft, \u00FCbernommen und aufgehoben werden,\r\nohne dass jemand ihn dazwischen umformt.\r\n\r\n\u0060Version\u0060 ist die Format-Fassung, derzeit 1; fehlt sie, wird 1\r\nangenommen, eine andere wird abgelehnt statt halb gelesen.\r\n\u0060OhneMandantenbezug\u0060 sind Ordner, die der Erzeuger als \u201Egeh\u00F6rt keinem\r\nMandanten\u0022 erkannt hat (Buchhaltung, Vorlagen, Ablagen). Sie landen als\r\nVermerk in \u0060OrdnerStatus\u0060 und verlassen damit den Zuordnungsstapel,\r\nohne dass jemand sie einzeln durchsehen muss."
+      },
+      "OrdnerStatusDto": {
+        "required": [
+          "ordnername",
+          "status",
+          "gesetztAm"
+        ],
+        "type": "object",
+        "properties": {
+          "ordnername": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "gesetztAm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Ein Ordner, f\u00FCr den entschieden ist, dass er keinem Mandanten geh\u00F6rt."
       },
       "OutlookAnhaengeDto": {
         "required": [
@@ -4119,6 +4606,28 @@
             ]
           }
         }
+      },
+      "SetzeOrdnerStatusDto": {
+        "required": [
+          "ordnernamen",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "ordnernamen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Setzt oder nimmt den Vermerk f\u00FCr mehrere Ordner auf einmal zur\u00FCck.\r\nstring? SetzeOrdnerStatusDto.Status \u0060null\u0060 hei\u00DFt: zur\u00FCck in den Zuordnungsstapel."
       },
       "SignaturBildDto": {
         "required": [
@@ -5128,6 +5637,12 @@
     },
     {
       "name": "Mandanten"
+    },
+    {
+      "name": "MandantenImport"
+    },
+    {
+      "name": "OrdnerStatus"
     },
     {
       "name": "Mailbox"

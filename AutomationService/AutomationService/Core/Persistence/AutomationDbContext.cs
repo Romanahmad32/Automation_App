@@ -25,6 +25,7 @@ public class AutomationDbContext(DbContextOptions<AutomationDbContext> options)
 {
     public DbSet<VorgangEntity> Vorgaenge => Set<VorgangEntity>();
     public DbSet<MandantEntity> Mandanten => Set<MandantEntity>();
+    public DbSet<OrdnerStatusEntity> OrdnerStatus => Set<OrdnerStatusEntity>();
     public DbSet<KanzleiSettingsEntity> KanzleiSettings => Set<KanzleiSettingsEntity>();
     public DbSet<StandardSchadenspositionEntity> StandardSchadenspositionen =>
         Set<StandardSchadenspositionEntity>();

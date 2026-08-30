@@ -32,7 +32,11 @@ void main() {
       );
     });
 
-    test('liest Akten, Fälle und Dokumente', () async {
+    // Der Scan liest die Fälle bewusst *nicht* mit: im Produktivbestand liegen
+    // rund 4000 Akten-Ordner, und ein vollständiger Baumdurchlauf dauert auf
+    // einem Netzlaufwerk Minuten. Was er liefert, ist der Ordner selbst samt
+    // Änderungszeitpunkt — mehr braucht die Zuordnungsliste nicht.
+    test('liest die Akten flach, ohne ihre Fälle', () async {
       final akte = Directory('${tempDir.path}/VUnfallursache Mark')
         ..createSync();
       final fall = Directory('${akte.path}/Unfall v. 12.05.2019')..createSync();
@@ -47,13 +51,9 @@ void main() {
       final mark = akten.firstWhere(
         (a) => a.ordnername == 'VUnfallursache Mark',
       );
-      expect(mark.faelle, hasLength(1));
-      expect(mark.faelle.first.name, 'Unfall v. 12.05.2019');
-      expect(mark.faelle.first.dokumente, hasLength(1));
-      expect(
-        mark.faelle.first.dokumente.first,
-        endsWith('Anspruchsschreiben.docx'),
-      );
+      expect(mark.faelle, isEmpty);
+      expect(mark.faelleGeladen, isFalse);
+      expect(mark.geaendertAm, isNotNull);
     });
 
     test('ignoriert Dateien direkt im Stammordner', () async {
@@ -64,6 +64,28 @@ void main() {
 
       expect(akten, hasLength(1));
       expect(akten.first.ordnername, 'Akte A');
+    });
+  });
+
+  group('scanFaelle', () {
+    test('liest Fälle und Dokumente einer Akte', () async {
+      final akte = Directory('${tempDir.path}/VUnfallursache Mark')
+        ..createSync();
+      final fall = Directory('${akte.path}/Unfall v. 12.05.2019')..createSync();
+      File('${fall.path}/Anspruchsschreiben.docx').writeAsStringSync('x');
+
+      final faelle = await datasource.scanFaelle(akte.path);
+
+      expect(faelle, hasLength(1));
+      expect(faelle.first.name, 'Unfall v. 12.05.2019');
+      expect(faelle.first.dokumente, hasLength(1));
+      expect(faelle.first.dokumente.first, endsWith('Anspruchsschreiben.docx'));
+    });
+
+    // Verknüpft wird über den Ordnernamen, nicht über den Pfad: zwischen Scan
+    // und Aufklappen kann der Ordner im Explorer umbenannt worden sein.
+    test('nicht existierender Ordner liefert leere Liste', () async {
+      expect(await datasource.scanFaelle('${tempDir.path}/weg'), isEmpty);
     });
   });
 

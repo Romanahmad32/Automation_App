@@ -8,7 +8,18 @@ sealed class MandantenOverviewEvent extends Equatable {
 }
 
 /// Lädt Mandantenregister und Akten-Scan neu.
-final class LoadMandantenUebersichtEvent extends MandantenOverviewEvent {}
+final class LoadMandantenUebersichtEvent extends MandantenOverviewEvent {
+  /// Nur das Register neu holen und den vorhandenen Akten-Scan behalten. Für
+  /// alles, was nur die Datenbank ändert (Mandant angelegt oder bearbeitet):
+  /// am Dateisystem hat sich dabei nichts getan, und der Scan ist der teure
+  /// Teil.
+  final bool nurRegister;
+
+  const LoadMandantenUebersichtEvent({this.nurRegister = false});
+
+  @override
+  List<Object> get props => [nurRegister];
+}
 
 /// Aktualisiert den Suchfilter. Leerer String zeigt wieder alle Mandanten.
 final class SearchMandantenEvent extends MandantenOverviewEvent {
@@ -18,6 +29,40 @@ final class SearchMandantenEvent extends MandantenOverviewEvent {
 
   @override
   List<Object> get props => [query];
+}
+
+/// Setzt Suche, Aktentyp- und Zeitfilter des Zuordnungsstapels neu.
+final class SetzeZuordnungFilterEvent extends MandantenOverviewEvent {
+  final ZuordnungFilter filter;
+
+  const SetzeZuordnungFilterEvent(this.filter);
+
+  @override
+  List<Object> get props => [filter];
+}
+
+/// Lädt die Fälle einer Akte nach (beim Aufklappen). Ist bereits geladen,
+/// passiert nichts.
+final class LadeFaelleEvent extends MandantenOverviewEvent {
+  final Akte akte;
+
+  const LadeFaelleEvent(this.akte);
+
+  @override
+  List<Object> get props => [akte];
+}
+
+/// Setzt oder nimmt den Vermerk „ohne Mandantenbezug" zurück — für einen
+/// Ordner oder für den ganzen gerade gefilterten Stapel. [art] `null` heißt:
+/// zurück in den Zuordnungsstapel.
+final class SetzeOrdnerStatusEvent extends MandantenOverviewEvent {
+  final List<String> ordnernamen;
+  final OrdnerStatusArt? art;
+
+  const SetzeOrdnerStatusEvent({required this.ordnernamen, required this.art});
+
+  @override
+  List<Object> get props => [ordnernamen, art ?? ''];
 }
 
 final class DeleteMandantEvent extends MandantenOverviewEvent {

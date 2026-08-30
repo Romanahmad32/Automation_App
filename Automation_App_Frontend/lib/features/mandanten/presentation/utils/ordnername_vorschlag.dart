@@ -1,35 +1,19 @@
-/// Komfort-Heuristik für die manuelle Zuordnung: schlägt aus einem Akten-
-/// Ordnernamen einen Mandantennamen vor, indem ein bekanntes Aktentyp-Präfix
-/// abgestreift wird (z. B. „VUnfallursache Mark" → „Mark"). Nur ein Vorschlag —
-/// der Nutzer bestätigt/korrigiert ihn beim Anlegen.
-///
-/// Die Präfix-Liste deckt die in der Kanzlei beobachteten (uneinheitlichen)
-/// Schreibweisen ab; unbekannte Ordnernamen werden unverändert zurückgegeben.
-const List<String> bekannteAktentypPraefixe = [
-  'VUnvallursache',
-  'VUnfallursache',
-  'VerkUnfursache',
-  'Verkehrsunfallsache',
-  'Bußgeldsache',
-  'Bussgeldsache',
-  'Strafsache',
-  'StrSache',
-  'BSsache',
-  'FamSache',
-  'Familiensache',
-  'Owi',
-];
+import 'package:automation_app/features/mandanten/domain/services/aktentyp_erkennung.dart';
 
-/// Liefert (vorname, nachname) als Vorschlag aus einem Ordnernamen. Splittet den
-/// Rest nach dem Präfix am ersten Leerzeichen in Vor- und Nachname.
+/// Komfort-Heuristik für die manuelle Zuordnung: schlägt aus einem Akten-
+/// Ordnernamen einen Mandantennamen vor, indem das Aktentyp-Präfix abgestreift
+/// wird (z. B. „VUnfallursache Mark" → „Mark"). Nur ein Vorschlag — der Nutzer
+/// bestätigt oder korrigiert ihn beim Anlegen.
+///
+/// Welche Präfixe es gibt, steht in [AktentypErkennung]: dieselbe Tabelle, nach
+/// der die Zuordnungsliste filtert. Unbekannte Ordnernamen werden unverändert
+/// zurückgegeben.
+///
+/// Liefert (vorname, nachname) — der Rest hinter dem Präfix wird am ersten
+/// Leerzeichen geteilt.
 ({String vorname, String nachname}) nameVorschlagAusOrdner(String ordnername) {
-  var rest = ordnername.trim();
-  for (final praefix in bekannteAktentypPraefixe) {
-    if (rest.toLowerCase().startsWith(praefix.toLowerCase())) {
-      rest = rest.substring(praefix.length).trim();
-      break;
-    }
-  }
+  final praefix = AktentypErkennung.erkenne(ordnername).praefix;
+  final rest = ordnername.trim().substring(praefix.length).trim();
   if (rest.isEmpty) return (vorname: '', nachname: '');
 
   final teile = rest.split(RegExp(r'\s+'));

@@ -4,7 +4,11 @@ import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebni
 import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
+import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
+import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 
 /// Schnittstelle des Kundensystems: das lokale Mandantenregister (strukturierte
 /// Daten) plus das dateibasierte Aktensystem (§6.1). Implementierung verknüpft
@@ -19,10 +23,36 @@ abstract class MandantenRepository {
 
   Future<Either<Failure, void>> deleteMandant(int id);
 
-  /// Scannt den in den Einstellungen hinterlegten Stammordner und liefert die
-  /// gefundenen Akten (Ordner) samt Fällen. Leere Liste, wenn kein Stammordner
-  /// gesetzt ist oder er nicht existiert.
+  /// Scannt den in den Einstellungen hinterlegten Stammordner **flach** und
+  /// liefert die gefundenen Akten (Ordner) ohne ihre Fälle — die kommen bei
+  /// Bedarf über [getFaelle] nach. Leere Liste, wenn kein Stammordner gesetzt
+  /// ist oder er nicht existiert.
   Future<Either<Failure, List<Akte>>> getAkten();
+
+  /// Die Fälle einer einzelnen Akte. [aktenPfad] ist der `pfad` der Akte aus
+  /// [getAkten].
+  Future<Either<Failure, List<Fall>>> getFaelle(String aktenPfad);
+
+  /// Die Ordner, für die entschieden ist, dass sie keinem Mandanten gehören.
+  Future<Either<Failure, List<OrdnerStatus>>> getOrdnerStatus();
+
+  /// Setzt [art] für alle [ordnernamen]; `null` nimmt den Vermerk zurück.
+  /// Liefert den vollständigen Stand danach.
+  Future<Either<Failure, List<OrdnerStatus>>> setzeOrdnerStatus({
+    required List<String> ordnernamen,
+    required OrdnerStatusArt? art,
+  });
+
+  /// Liest eine Importdatei von der Platte (§5.1/§6.1). Deutet sie nicht —
+  /// was sie bewirkt, sagt erst [importiereMandanten].
+  Future<Either<Failure, MandantenImportDatei>> liesImportDatei(String pfad);
+
+  /// Prüft die Datei gegen das Register oder übernimmt sie. Ohne [uebernehmen]
+  /// wird nichts geschrieben; der Bericht ist in beiden Fällen derselbe.
+  Future<Either<Failure, ImportBericht>> importiereMandanten({
+    required MandantenImportDatei datei,
+    required bool uebernehmen,
+  });
 
   /// Ordnet einem Mandanten einen vorhandenen Akten-Ordner zu (manuelle
   /// Zuordnung). Gibt den aktualisierten Mandanten zurück.
