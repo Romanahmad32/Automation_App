@@ -7,6 +7,7 @@ import 'package:automation_app/features/settings/presentation/blocs/kanzlei_sett
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_rueckfluss.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
@@ -33,6 +34,9 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
       builder: (context) => MultiBlocProvider(
         providers: [
           BlocProvider(create: (context) => getIt<DocumentBloc>()),
+          // Platzhalter der aktiven Word-Datei — daraus leitet das Formular
+          // die Pflichtfelder je Variante ab (#35 Teil 2).
+          BlocProvider(create: (context) => getIt<AktivePlatzhalterCubit>()),
           BlocProvider(create: (context) => getIt<EditedDocumentBloc>()),
           BlocProvider(create: (context) => getIt<WizardCubit>()),
           BlocProvider(create: (context) => getIt<TemplatePdfPreviewBloc>()),
@@ -76,6 +80,10 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
             context.read<TemplatePdfPreviewBloc>().add(
               LoadPdfPreviewEvent(path),
             );
+            // Sofort mitladen, damit das Ergebnis vor dem Aufbau des
+            // Formulars da ist — nachgeschoben verwürfe der Neuaufbau der
+            // FormGroup die Eingaben (#35 Teil 2).
+            context.read<AktivePlatzhalterCubit>().lade(path);
           },
         ),
         BlocListener<DocumentBloc, DocumentState>(
