@@ -4,8 +4,10 @@ import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebni
 import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
+import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/repositories/mandanten_repository.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
@@ -71,6 +73,7 @@ AblageCubit cubitMit(UseCase<AblageErgebnis, LegeDokumentAbParams> ablage) =>
     AblageCubit(
       _NichtGebraucht<List<Mandant>, NoParams>(),
       _NichtGebraucht<List<Akte>, NoParams>(),
+      _NichtGebraucht<List<Fall>, GetFaelleParams>(),
       _NichtGebraucht<Mandant, CreateMandantRequest>(),
       ablage,
       _NichtGebrauchteSettings(),

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AutomationService.Features.Mandanten.Domain.Persistence;
 
 namespace AutomationService.Features.Mandanten.Presentation.Dtos;
@@ -35,20 +34,7 @@ public sealed record MandantDto(
         e.EmailAdresse,
         e.Telefonnummer,
         e.Notiz,
-        DeserializeList(e.AktenOrdnernamenJson),
-        DeserializeList(e.KennzeichenJson),
+        MandantListen.Lies(e.AktenOrdnernamenJson),
+        MandantListen.Lies(e.KennzeichenJson),
         e.ErstelltAm);
-
-    internal static List<string> DeserializeList(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json)) return [];
-        try
-        {
-            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
-        }
-        catch
-        {
-            return [];
-        }
-    }
 }
