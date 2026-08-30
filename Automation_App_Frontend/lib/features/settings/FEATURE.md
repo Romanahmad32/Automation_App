@@ -1,8 +1,7 @@
 # settings — Kanzleistammdaten und App-Einstellungen
 
-**Zweck:** Der Anwalt hinterlegt hier die Anfragerdaten für die Zentralruf-Anfrage, den
-Postfach-Zugang samt Mail-Signatur, den Akten-Stammordner, laufende Auftragsnummer samt Abteilung,
-die Farbe der Schadensaufstellungs-Titelzeile und das Erscheinungsbild.
+**Zweck:** Der Anwalt hinterlegt hier die Anfragerdaten für die Zentralruf-Anfrage, den Postfach-Zugang samt
+Mail-Signatur, Akten-Stammordner, Auftragsnummer samt Abteilung, Titelzeilen-Farbe und Erscheinungsbild.
 **Anforderung:** `REQUIREMENTS.md` §7.1
 **Einstieg:** `presentation/pages/settings_page.dart`
 **Zustand:** `KanzleiSettingsBloc`
@@ -28,8 +27,9 @@ schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme
 - Fremdabhängigkeiten: `mandanten` liest `aktenStammordner`, `vorgang_starten` liest
   `laufendeAuftragsnummer`/`abteilung`. Beide werten einen Ladefehler als leeren Wert (`Left() => ''`) — ein
   Backend-Fehler sieht dort aus wie „kein Ordner gewählt".
-- Die Reiter „E-Mail" und „Datensicherung" gehören den Features `mailbox` bzw. `backup`;
-  `DefaultTabController(length: 5)` ist beim Ergänzen eines Reiters mitzupflegen.
+- Reiter „Schadensaufstellung"/„E-Mail"/„Datensicherung" gehören `word_automation`/`mailbox`/`backup`;
+  `DefaultTabController(length: 6)` mitpflegen. Die Titelzeilen-Farbe liegt im Schadensaufstellungs-Reiter
+  und speichert dort für sich, sofort beim Auswählen (`SaveTabellenkopfFarbeEvent`).
 - Die **Mail-Signatur** steht im Reiter „E-Mail" (`MailSignaturSektion`) und schreibt über `SaveMailSignaturEvent`
   **für sich**; `…Loaded.gespeichert` sagt, welcher Reiter gespeichert hat. Deshalb setzt `AppSettingsView._save` per
   `copyWith` auf dem geladenen Stand auf — sonst löscht es die Felder der Nachbarreiter mit. Einen **eigenen Knopf**

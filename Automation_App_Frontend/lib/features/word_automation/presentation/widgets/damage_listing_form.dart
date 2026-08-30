@@ -1,6 +1,9 @@
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
+import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/betrag_eingabe.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/schadensposition_hinzufuegen_menue.dart';
 import 'package:flutter/material.dart';
 
 /// Eingabe der Schadensaufstellung im Schadensaufstellungs-Schritt des Wizards:
@@ -21,10 +24,15 @@ class DamageListingForm extends StatefulWidget {
   /// bereits erfassten Positionen erhalten bleiben.
   final DamageListing? initialValue;
 
+  /// Womit eine neu begonnene Aufstellung startet (§4.4): die in den
+  /// Einstellungen konfigurierten Positionen; ohne Konfiguration die Vorgabe.
+  final List<StandardSchadensposition> standardpositionen;
+
   const DamageListingForm({
     super.key,
     required this.onChanged,
     this.initialValue,
+    this.standardpositionen = StandardSchadenspositionen.vorgabe,
   });
 
   @override
@@ -42,25 +50,37 @@ class _DamageListingFormState extends State<DamageListingForm> {
     super.initState();
     final initial = widget.initialValue;
     _gebuehrensatzController = TextEditingController(
-      text: _formatNumber(initial?.gebuehrensatz ?? 1.3),
+      text: betragAlsEingabe(initial?.gebuehrensatz ?? 1.3),
     );
     _geschaeftsgebuehrOverrideController = TextEditingController(
       text: initial?.geschaeftsgebuehrOverride != null
-          ? _formatNumber(initial!.geschaeftsgebuehrOverride!)
+          ? betragAlsEingabe(initial!.geschaeftsgebuehrOverride!)
           : '',
     );
     _auslagenpauschaleOverrideController = TextEditingController(
       text: initial?.auslagenpauschaleOverride != null
-          ? _formatNumber(initial!.auslagenpauschaleOverride!)
+          ? betragAlsEingabe(initial!.auslagenpauschaleOverride!)
           : '',
     );
+    // Ohne gespeicherten Stand stehen die Standardpositionen da (§4.4) —
+    // vorbelegt in der Bezeichnung, im Betrag nur, wenn in den Einstellungen
+    // einer hinterlegt ist. Ein gespeicherter Stand gewinnt: Der Anwalt hat
+    // ihn erfasst, er wird nicht überschrieben.
     _items = initial == null || initial.items.isEmpty
-        ? [DamageItemControllers()]
+        ? [
+            for (final position in widget.standardpositionen)
+              DamageItemControllers(
+                description: position.bezeichnung,
+                amount: position.betrag != null
+                    ? betragAlsEingabe(position.betrag!)
+                    : null,
+              ),
+          ]
         : [
             for (final item in initial.items)
               DamageItemControllers(
                 description: item.description,
-                amount: _formatNumber(item.amount),
+                amount: betragAlsEingabe(item.amount),
               ),
           ];
   }
@@ -142,11 +162,34 @@ class _DamageListingFormState extends State<DamageListingForm> {
           ),
         Align(
           alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text('Position hinzufügen'),
-            onPressed: () {
-              setState(() => _items.add(DamageItemControllers()));
+          child: SchadenspositionHinzufuegenMenue(
+            standardpositionen: widget.standardpositionen,
+            // Erst beim Aufklappen gelesen, direkt aus den Feldern: Ein hier
+            // eingesammelter Satz stünde auf dem Stand des letzten Aufbaus.
+            vorhandeneBezeichnungen: () => {
+              for (final item in _items) item.description.text.trim(),
+            },
+            // Mit _emit(), obwohl die neue Zeile ohne Betrag ohnehin aus der
+            // Aufstellung fällt: Das Löschen daneben meldet auch. Hinge das
+            // Melden daran, dass die Prüfung heute nur Beträge beanstandet,
+            // bliebe die erste Regel über eine Bezeichnung an einer über das
+            // Menü angelegten Zeile stumm — und zwar genau bis der Anwalt
+            // zufällig ihr Betragsfeld anfasst.
+            // Der Betrag kommt mit zurück, wenn zur Position einer
+            // konfiguriert ist — die zurückgeholte Zeile sieht aus wie die
+            // ursprünglich vorbelegte.
+            onGewaehlt: (position) {
+              setState(
+                () => _items.add(
+                  DamageItemControllers(
+                    description: position?.bezeichnung,
+                    amount: position?.betrag != null
+                        ? betragAlsEingabe(position!.betrag!)
+                        : null,
+                  ),
+                ),
+              );
+              _emit();
             },
           ),
         ),
@@ -211,7 +254,7 @@ class _DamageListingFormState extends State<DamageListingForm> {
     for (final item in _items)
       (
         bezeichnung: item.description.text,
-        betrag: _parseAmount(item.amount.text),
+        betrag: betragAusEingabe(item.amount.text),
       ),
   ];
 
@@ -236,40 +279,16 @@ class _DamageListingFormState extends State<DamageListingForm> {
     widget.onChanged(
       DamageListing(
         items: items,
-        gebuehrensatz: _parseAmount(_gebuehrensatzController.text) ?? 1.3,
+        gebuehrensatz: betragAusEingabe(_gebuehrensatzController.text) ?? 1.3,
         // applyVat wird vom Wizard aus der Vorsteuer-Checkbox gesetzt.
-        geschaeftsgebuehrOverride: _parseAmount(
+        geschaeftsgebuehrOverride: betragAusEingabe(
           _geschaeftsgebuehrOverrideController.text,
         ),
-        auslagenpauschaleOverride: _parseAmount(
+        auslagenpauschaleOverride: betragAusEingabe(
           _auslagenpauschaleOverrideController.text,
         ),
       ),
       schadenspositionenFehler(zeilen),
     );
-  }
-
-  /// `-0,0` wird zu `0.0` normalisiert: Es ist numerisch null, gilt also nicht
-  /// als negativ (`-0.0 < 0` ist `false`) — würde aber als `-0.0` im JSON an das
-  /// Backend hinausgehen und der Zusage „kein negativer Betrag" wörtlich
-  /// widersprechen.
-  static double? _parseAmount(String text) {
-    final wert = double.tryParse(
-      text.trim().replaceAll('.', '').replaceAll(',', '.'),
-    );
-    if (wert == 0) return 0.0;
-    return wert;
-  }
-
-  /// Zahl als deutsche Eingabe formatieren (Komma, ohne überflüssige Nullen).
-  static String _formatNumber(double value) {
-    var text = value.toStringAsFixed(2).replaceAll('.', ',');
-    while (text.endsWith('0')) {
-      text = text.substring(0, text.length - 1);
-    }
-    if (text.endsWith(',')) {
-      text = text.substring(0, text.length - 1);
-    }
-    return text;
   }
 }

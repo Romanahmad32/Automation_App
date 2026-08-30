@@ -4,6 +4,7 @@ import 'package:automation_app/features/word_automation/domain/entities/damage_l
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
@@ -71,6 +72,7 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
   Widget build(BuildContext context) {
     final wizardState = context.watch<WizardCubit>().state;
     final documentState = context.watch<DocumentBloc>().state;
+    final standardpositionen = context.watch<StandardpositionenCubit>().state;
     final isGenerating =
         context.watch<EditedDocumentBloc>().state is EditedDocumentLoading;
 
@@ -163,11 +165,18 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                             // Vorgangs wird die Eingabe neu aufgebaut und mit
                             // dessen gespeicherter Aufstellung vorbelegt;
                             // während der Bearbeitung bleibt der State stehen.
+                            // Der zweite Teil kippt genau einmal, wenn die
+                            // konfigurierten Standardpositionen eintreffen:
+                            // Der Schritt ist im IndexedStack von Anfang an
+                            // aufgebaut, das Formular stünde sonst für immer
+                            // auf der Vorgabe aus dem Code.
                             DamageListingForm(
                               key: ValueKey(
                                 'schadensaufstellung#'
-                                '${wizardState.selectedVorgang?.referenz}',
+                                '${wizardState.selectedVorgang?.referenz}#'
+                                '${standardpositionen.geladen}',
                               ),
+                              standardpositionen: standardpositionen.positionen,
                               initialValue:
                                   damageListing ??
                                   wizardState

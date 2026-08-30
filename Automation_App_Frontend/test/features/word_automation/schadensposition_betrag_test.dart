@@ -6,12 +6,15 @@ import 'package:automation_app/features/settings/presentation/blocs/kanzlei_sett
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
 import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart';
+import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
 import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart';
+import 'package:automation_app/features/word_automation/domain/repositories/standard_schadenspositionen_repository.dart';
 import 'package:automation_app/features/word_automation/domain/usecases/calculate_rvg_fees.dart';
 import 'package:automation_app/features/word_automation/domain/usecases/fill_out_template.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_schadensaufstellung.dart';
 import 'package:flutter/material.dart';
@@ -61,6 +64,19 @@ class _FakeCalculateRvgFees
       brutto: 80.34,
     ),
   );
+}
+
+/// Der Cubit wird im Test nie geladen — das Formular startet dann mit der
+/// Vorgabe aus dem Code, wie vor der Konfigurierbarkeit.
+class _NieGeladeneStandardpositionen
+    implements StandardSchadenspositionenRepository {
+  @override
+  Future<List<StandardSchadensposition>> lade() => throw UnimplementedError();
+
+  @override
+  Future<List<StandardSchadensposition>> speichere(
+    List<StandardSchadensposition> positionen,
+  ) => throw UnimplementedError();
 }
 
 class _NieAbgerufeneSettings implements UseCase<KanzleiSettings, NoParams> {
@@ -122,6 +138,10 @@ void main() {
               _NieGespeicherteSettings(),
             ),
           ),
+          BlocProvider(
+            create: (_) =>
+                StandardpositionenCubit(_NieGeladeneStandardpositionen()),
+          ),
         ],
         child: const MaterialApp(
           home: Scaffold(body: WizardStepSchadensaufstellung()),
@@ -144,6 +164,27 @@ void main() {
     await tester.enterText(find.byType(TextField).at(1), betrag);
     await beruhige(tester);
   }
+
+  /// Hängt über das „+"-Menü eine leere Zeile an — sie steht dann hinter den
+  /// Standardpositionen, mit denen das Formular anfängt (§4.4).
+  ///
+  /// `ensureVisible` ist nötig, weil die fünf Standardpositionen das Menü in
+  /// der 450 Pixel breiten Spalte unter den sichtbaren Bereich schieben; ein
+  /// `tap` darauf träfe ins Leere.
+  Future<void> haengeLeereZeileAn(WidgetTester tester) async {
+    await tester.ensureVisible(find.byTooltip('Position hinzufügen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Position hinzufügen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Leere Position'));
+    await tester.pumpAndSettle();
+  }
+
+  /// Die Nummer dieser angehängten Zeile — im Formular von oben gezählt, so wie
+  /// der Anwalt sie sieht, und so wie die Beanstandung sie benennt.
+  final angehaengteZeile = StandardSchadenspositionen.bezeichnungen.length;
+
+  Finder betragsfeld(int zeile) => find.byType(TextField).at(zeile * 2 + 1);
 
   Future<void> erfasse(
     WidgetTester tester, {
@@ -222,14 +263,16 @@ void main() {
     await erfasse(tester, bezeichnung: 'Reparaturkosten', betrag: '500');
     expect(erstellenKnopf(tester).onPressed, isNotNull);
 
-    await tester.tap(find.widgetWithText(TextButton, 'Position hinzufügen'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(3), '-250');
+    await haengeLeereZeileAn(tester);
+    await tester.enterText(betragsfeld(angehaengteZeile), '-250');
     await beruhige(tester);
 
     expect(find.text(negativerBetragHinweis), findsOneWidget);
     expect(
-      find.text('Position 2 ($ohneBezeichnung): $negativerBetragHinweis'),
+      find.text(
+        'Position ${angehaengteZeile + 1} '
+        '($ohneBezeichnung): $negativerBetragHinweis',
+      ),
       findsOneWidget,
     );
     expect(erstellenKnopf(tester).onPressed, isNull);
@@ -244,19 +287,25 @@ void main() {
   ) async {
     await zeigeSchritt(tester);
     await erfasse(tester, bezeichnung: 'Reparaturkosten', betrag: '500');
-    await tester.tap(find.widgetWithText(TextButton, 'Position hinzufügen'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(3), '-250');
+    await haengeLeereZeileAn(tester);
+    await tester.enterText(betragsfeld(angehaengteZeile), '-250');
     await beruhige(tester);
     expect(erstellenKnopf(tester).onPressed, isNull);
 
+    // Die Vorsteuer-Karte steht über der Aufstellung; das Anhängen der Zeile
+    // hat die Spalte nach unten gescrollt.
+    await tester.ensureVisible(find.byType(CheckboxListTile));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Ändern'));
     await beruhige(tester);
 
     expect(
-      find.text('Position 2 ($ohneBezeichnung): $negativerBetragHinweis'),
+      find.text(
+        'Position ${angehaengteZeile + 1} '
+        '($ohneBezeichnung): $negativerBetragHinweis',
+      ),
       findsOneWidget,
     );
     expect(erstellenKnopf(tester).onPressed, isNull);

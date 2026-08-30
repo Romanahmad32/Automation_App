@@ -9,12 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 /// Warum überhaupt ein Test für einen Hook: Er ist die einzige Stelle im Repo,
 /// die einen Befehl anhält, *bevor* er läuft. Ein Wächter, der bei
 /// Alltagsbefehlen anschlägt, wird abgeschaltet — und ist dann kein Wächter
-/// mehr, sondern eine Datei. Genau das ist zweimal passiert: `git branch |
+/// mehr, sondern eine Datei. Genau das ist dreimal passiert: `git branch |
 /// grep master` wurde blockiert, weil `\S+` auch die Pipe fing; danach
 /// blockierte `git branch -a`, weil der Bindestrich in den Zeichenvorrat
-/// gehört (`feature/zwei-namen`), aber nicht an dessen Anfang. Beide Male fand
-/// es ein Mensch, der Befehle von Hand durchprobierte. Das ist die Arbeit, die
-/// hier steht.
+/// gehört (`feature/zwei-namen`), aber nicht an dessen Anfang; zuletzt hielt
+/// ein blosses `git branch` an, dem in einem mehrzeiligen Aufruf ein `echo`
+/// folgte — `\s` deckt auch den Zeilenumbruch ab, also geriet der Befehl der
+/// Folgezeile in die Rolle des Zweignamens. Jedes Mal fand es ein Mensch, der
+/// Befehle von Hand durchprobierte. Das ist die Arbeit, die hier steht.
 ///
 /// Die zweite Hälfte macht einen Kommentar ausführbar: Über `$erlaubt` stand
 /// „Dieselbe Liste wie im CI-Schritt", während der CI-Schritt drei
@@ -85,11 +87,23 @@ void main() {
         (2, 'git switch --create schnellfix'),
         (2, 'git branch -m schnellfix'),
         (2, 'git branch schnellfix'),
+        // Mehrzeilige Aufrufe. Ein Zweigname steht in derselben Zeile wie der
+        // Befehl, der ihn anlegt; fasste der Abstand davor den Zeilenumbruch
+        // mit, rutschte der Folgebefehl in seine Rolle. Die beiden legen
+        // nichts an — sie wurden trotzdem angehalten.
+        (0, 'git branch\necho fertig'),
+        (0, 'git checkout -b\ngit status'),
+        // Gegenprobe: Über mehrere Zeilen hinweg greift der Wächter weiter.
+        (2, 'git status --short\ngit checkout -b schnellfix'),
+        (2, 'git branch schnellfix\ngit push -u origin HEAD'),
       ];
 
       for (final (erwartet, befehl) in faelle) {
         final was = erwartet == 0 ? 'lässt durch' : 'hält an';
-        test('$was: $befehl', () async {
+        // Sonst zöge ein mehrzeiliger Befehl den Testnamen über mehrere
+        // Zeilen und machte die Liste im Protokoll unlesbar.
+        final gezeigt = befehl.replaceAll('\n', ' ⏎ ');
+        test('$was: $gezeigt', () async {
           final prozess = await Process.start('powershell', [
             '-NoProfile',
             '-ExecutionPolicy',

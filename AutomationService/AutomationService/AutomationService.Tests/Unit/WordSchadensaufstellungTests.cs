@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using AutomationService.Features.WordAutomation.Domain.Services;
 using AutomationService.Tests.Support;
 using FluentAssertions;
@@ -190,6 +191,60 @@ public sealed class WordSchadensaufstellungTests : IDisposable
         table.Rows[2].Cells[2].Paragraphs[0].Text.Should().Be("0,00");
         // Kopfzeile + 2 Positionen + Leerzeile + Zwischensumme + Anwaltskosten
         table.Rows[4].Cells[2].Paragraphs[0].Text.Should().Be("2.560,87");
+    }
+
+    /// <summary>
+    /// Jede Zelle trägt ihre Absatzabstände **explizit** kompakt (kein Abstand
+    /// davor/danach, einfacher Zeilenabstand) statt sie von der Vorlage zu
+    /// erben. Der Grund: Mit neuerem Word angelegte Vorlagen bringen als
+    /// Dokument-Standard 8 pt Abstand nach jedem Absatz und 1,08-fachen
+    /// Zeilenabstand mit — jede Tabellenzeile war dann fast doppelt so hoch
+    /// wie ihr Text, und dieselbe Aufstellung sah je nach Vorlage anders aus.
+    /// Geprüft wird das XML, denn genau das entscheidet: Ein explizites
+    /// w:spacing am Absatz schlägt die geerbten docDefaults immer.
+    /// </summary>
+    [Fact]
+    public void GenerateReplacedDocument_SetztKompakteAbsatzabstaendeInJederZelle()
+    {
+        var templatePath = _umgebung.CreateTemplate("AuflistungKompakt", "{{Schadensaufstellung}}");
+
+        var result = _umgebung.CreateService().GenerateReplacedDocument(new WordReplacementRequest
+        {
+            TemplateFilePath = templatePath,
+            ReplacePatterns = new Dictionary<string, string> { ["Dummy"] = "x" },
+            DamageListing = new DamageListing
+            {
+                Items = [new DamageItem { Description = "Reparaturkosten netto nach Gutachten", Amount = 2560.87m }]
+            }
+        });
+
+        using var output = DocX.Load(result.OutputFilePath);
+        var table = output.Tables.Should().ContainSingle().Subject;
+        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+
+        static void AttributSollSein(XElement spacing, XName name, string wert)
+        {
+            var attribut = spacing.Attribute(name);
+            attribut.Should().NotBeNull("w:spacing muss {0} explizit setzen", name.LocalName);
+            attribut!.Value.Should().Be(wert);
+        }
+
+        foreach (var row in table.Rows)
+        {
+            foreach (var cell in row.Cells)
+            {
+                foreach (var paragraph in cell.Paragraphs)
+                {
+                    var spacing = paragraph.Xml.Element(w + "pPr")?.Element(w + "spacing");
+                    spacing.Should().NotBeNull(
+                        "jeder Zellenabsatz muss seine Abstände selbst festlegen, "
+                        + "sonst bestimmt die Vorlage die Zeilenhöhe");
+                    AttributSollSein(spacing!, w + "before", "0");
+                    AttributSollSein(spacing!, w + "after", "0");
+                    AttributSollSein(spacing!, w + "line", "240");
+                }
+            }
+        }
     }
 
     public void Dispose() => _umgebung.Dispose();
