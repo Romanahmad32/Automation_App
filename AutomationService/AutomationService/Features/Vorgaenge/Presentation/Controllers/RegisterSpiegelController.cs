@@ -35,8 +35,8 @@ public class RegisterSpiegelController(IRegisterSpiegelService spiegel) : Contro
     [HttpPost("export")]
     [ProducesResponseType(typeof(RegisterSpiegelDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<RegisterSpiegelDto>> Export(
-        [FromQuery] bool erzwingen,
-        CancellationToken cancellationToken)
+        [FromQuery] bool erzwingen = true,
+        CancellationToken cancellationToken = default)
     {
         var ergebnis = await spiegel.SchreibeAsync(erzwingen, cancellationToken);
         return Ok(RegisterSpiegelDto.From(ergebnis));
