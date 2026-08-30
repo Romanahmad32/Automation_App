@@ -180,6 +180,28 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
             .Which.Should().Contain("LAPTOP-ANWALT");
     }
 
+    /// <summary>
+    /// Die Warnung darf nicht daran hängen, dass gerade geschrieben wurde: Ein
+    /// übersprungener Lauf ist der Normalfall, und die Konfliktkopie daneben
+    /// verschwindet dadurch nicht.
+    /// </summary>
+    [Fact]
+    public async Task Schreibe_MeldetDieKonfliktkopieAuchBeiUnveraendertemBestand()
+    {
+        await EinstellungenAnlegen();
+        await VorgangAnlegen("01/26 C03", 1);
+        await Dienst().SchreibeAsync();
+        await File.WriteAllTextAsync(
+            Path.Combine(_umgebung.Ablage, $"{RegisterSpiegelVorgabe.Dateiname}-LAPTOP-ANWALT.docx"),
+            "unterwegs");
+
+        var zweiter = await Dienst().SchreibeAsync();
+
+        zweiter.Geschrieben.Should().BeFalse("der Bestand hat sich nicht geändert");
+        zweiter.Konfliktkopien.Should().ContainSingle()
+            .Which.Should().Contain("LAPTOP-ANWALT");
+    }
+
     [Fact]
     public async Task Stand_MeldetDenLetztenLaufOhneSelbstZuSchreiben()
     {

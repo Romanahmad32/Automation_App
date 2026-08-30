@@ -66,7 +66,7 @@ public sealed class RegisterSpiegelService(
         if (!erzwingen && Unveraendert(letzter, abdruck, ablage))
         {
             return RegisterSpiegelErgebnis.Uebersprungen(
-                Unveraendert_, zeilen.Count, letzter?.GeschriebenAm);
+                Unveraendert_, zeilen.Count, letzter?.GeschriebenAm, ablage.Konfliktkopien());
         }
 
         try
@@ -77,7 +77,8 @@ public sealed class RegisterSpiegelService(
         catch (ZieldateiGesperrtException ex)
         {
             logger.LogWarning(ex, "Register-Spiegel: Zieldatei gesperrt.");
-            return RegisterSpiegelErgebnis.Gescheitert(ex.Message, zeilen.Count, letzter?.GeschriebenAm);
+            return RegisterSpiegelErgebnis.Gescheitert(
+                ex.Message, zeilen.Count, letzter?.GeschriebenAm, ablage.Konfliktkopien());
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -85,7 +86,8 @@ public sealed class RegisterSpiegelService(
             return RegisterSpiegelErgebnis.Gescheitert(
                 $"Der Register-Ordner \"{ablage.Ordner}\" ist nicht beschreibbar: {ex.Message}",
                 zeilen.Count,
-                letzter?.GeschriebenAm);
+                letzter?.GeschriebenAm,
+                ablage.Konfliktkopien());
         }
     }
 
