@@ -109,6 +109,8 @@ import 'package:automation_app/features/mandanten/domain/entities/mandant.dart'
     as _i258;
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart'
     as _i578;
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart'
+    as _i171;
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart'
     as _i736;
 import 'package:automation_app/features/mandanten/domain/repositories/mandanten_repository.dart'
@@ -119,10 +121,14 @@ import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant
     as _i63;
 import 'package:automation_app/features/mandanten/domain/usecases/get_akten.dart'
     as _i965;
+import 'package:automation_app/features/mandanten/domain/usecases/get_akten_ordnernamen.dart'
+    as _i392;
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart'
     as _i684;
 import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten.dart'
     as _i1060;
+import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart'
+    as _i733;
 import 'package:automation_app/features/mandanten/domain/usecases/get_ordner_status.dart'
     as _i482;
 import 'package:automation_app/features/mandanten/domain/usecases/importiere_mandanten.dart'
@@ -145,6 +151,8 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_i
     as _i54;
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart'
     as _i975;
+import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_suche_cubit/mandanten_suche_cubit.dart'
+    as _i410;
 import 'package:automation_app/features/settings/data/datasources/kanzlei_settings_datasource.dart'
     as _i501;
 import 'package:automation_app/features/settings/data/repositories/kanzlei_settings_repository_impl.dart'
@@ -390,6 +398,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i262.StandardSchadenspositionenRepository>(),
       ),
     );
+    gh.factory<_i223.UseCase<List<String>, _i223.NoParams>>(
+      () => _i392.GetAktenOrdnernamen(gh<_i763.MandantenRepository>()),
+    );
     gh.factory<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(
       () => _i392.UpdateMandant(gh<_i763.MandantenRepository>()),
     );
@@ -530,6 +541,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<
       _i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>
     >(() => _i818.GetTemplatePlaceholders(gh<_i211.FormTemplateRepository>()));
+    gh.factory<_i223.UseCase<_i171.MandantenSeite, _i733.MandantenSeiteParams>>(
+      () => _i733.GetMandantenSeite(gh<_i763.MandantenRepository>()),
+    );
     gh.factory<
       _i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>
     >(() => _i297.UpdateFormTemplate(gh<_i211.FormTemplateRepository>()));
@@ -575,19 +589,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i847.VorgangCubit>(),
       ),
     );
-    gh.factory<_i975.MandantenOverviewBloc>(
-      () => _i975.MandantenOverviewBloc(
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i332.Fall>, _i684.GetFaelleParams>>(),
-        gh<_i223.UseCase<List<_i736.OrdnerStatus>, _i223.NoParams>>(),
-        gh<
-          _i223.UseCase<List<_i736.OrdnerStatus>, _i86.SetzeOrdnerStatusParams>
-        >(),
-        gh<_i223.UseCase<void, _i63.DeleteMandantParams>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i443.VerknuepfeOrdnerParams>>(),
-      ),
-    );
     gh.factory<_i238.ZentralrufReplyBloc>(
       () => _i238.ZentralrufReplyBloc(
         gh<
@@ -596,6 +597,11 @@ extension GetItInjectableX on _i174.GetIt {
             _i311.ZentralrufReplyInput
           >
         >(),
+      ),
+    );
+    gh.factory<_i410.MandantenSucheCubit>(
+      () => _i410.MandantenSucheCubit(
+        gh<_i223.UseCase<_i171.MandantenSeite, _i733.MandantenSeiteParams>>(),
       ),
     );
     gh.factory<_i318.EmailEntwurfCubit>(
@@ -625,6 +631,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i702.TemplatePlaceholdersBloc>(
       () => _i702.TemplatePlaceholdersBloc(
         gh<_i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>>(),
+      ),
+    );
+    gh.factory<_i975.MandantenOverviewBloc>(
+      () => _i975.MandantenOverviewBloc(
+        gh<_i223.UseCase<_i171.MandantenSeite, _i733.MandantenSeiteParams>>(),
+        gh<_i223.UseCase<List<String>, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i332.Fall>, _i684.GetFaelleParams>>(),
+        gh<_i223.UseCase<List<_i736.OrdnerStatus>, _i223.NoParams>>(),
+        gh<
+          _i223.UseCase<List<_i736.OrdnerStatus>, _i86.SetzeOrdnerStatusParams>
+        >(),
+        gh<_i223.UseCase<void, _i63.DeleteMandantParams>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i443.VerknuepfeOrdnerParams>>(),
       ),
     );
     gh.factory<_i993.MandantEditCubit>(

@@ -36,6 +36,10 @@ public sealed record ImportBerichtDto(
 /// <c>neu</c>, <c>ergaenzt</c>, <c>unveraendert</c> oder <c>abgelehnt</c> — als
 /// Zeichenkette, weil eine Zahl die Dart-Seite an die Deklarationsreihenfolge
 /// eines C#-Enums koppeln würde.
+///
+/// <c>MandantId</c> ist nur bei <c>angewendet</c> belegt — in der Vorschau
+/// gibt es den Mandanten noch nicht, und eine vorweggenommene Nummer wäre eine
+/// Zusage, die der Bericht nicht halten kann.
 /// </summary>
 public sealed record ImportEintragDto(
     int Zeile,

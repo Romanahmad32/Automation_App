@@ -19,12 +19,24 @@ public static class MandantImportAbgleich
     /// Übernimmt, was übernehmbar ist, und hängt jede Abweichung an
     /// <paramref name="hinweise"/>. true, wenn sich am Mandanten etwas geändert hat.
     /// </summary>
-    public static bool Uebernimm(MandantEntity ziel, ImportMandant quelle, List<string> hinweise)
+    /// <param name="ziel">Der vorhandene Mandant, der ergänzt wird.</param>
+    /// <param name="quelle">Die Zeile der Importdatei.</param>
+    /// <param name="hinweise">Sammelt, was nicht übernommen wurde.</param>
+    /// <param name="woher">
+    /// Woher der stehenbleibende Wert stammt — „Register" oder „frühere Zeile".
+    /// Ein Mandant kann in derselben Datei zweimal vorkommen; dann widerspricht
+    /// die Datei sich selbst, und „Register" wäre schlicht falsch.
+    /// </param>
+    public static bool Uebernimm(
+        MandantEntity ziel,
+        ImportMandant quelle,
+        List<string> hinweise,
+        string woher = "Register")
     {
         var geaendert = false;
         foreach (var feld in Felder(ziel, quelle))
         {
-            geaendert |= Fuelle(feld, hinweise);
+            geaendert |= Fuelle(feld, hinweise, woher);
         }
 
         return UebernimmKennzeichen(ziel, quelle) || geaendert;
@@ -51,7 +63,7 @@ public static class MandantImportAbgleich
             ? string.Empty
             : anrede ?? string.Empty;
 
-    static bool Fuelle(Feld feld, List<string> hinweise)
+    static bool Fuelle(Feld feld, List<string> hinweise, string woher)
     {
         var neu = feld.Neu.Trim();
         if (neu.Length == 0) return false;
@@ -65,7 +77,7 @@ public static class MandantImportAbgleich
 
         if (string.Equals(alt, neu, StringComparison.OrdinalIgnoreCase)) return false;
 
-        hinweise.Add($"{feld.Name} weicht ab (Register: „{alt}“, Datei: „{neu}“) — nicht geändert.");
+        hinweise.Add($"{feld.Name} weicht ab ({woher}: „{alt}“, Datei: „{neu}“) — nicht geändert.");
         return false;
     }
 

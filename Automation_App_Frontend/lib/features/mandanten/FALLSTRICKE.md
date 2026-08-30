@@ -25,6 +25,45 @@ unbedienbar:
 - **Nur `ListView.builder`.** Weder der Stapel noch die Mandantenliste noch die Liste im
   `ZuordnenDialog` darf über eine `Column` oder ein `ListView(children: [...])` laufen — die bauen
   alle Kinder auf einmal.
+- **Die Mandantenliste kommt seitenweise** — `GET /api/Mandanten/seite`, 50 je Abruf, nachgeladen
+  beim Weiterscrollen. `MandantenOverviewLoaded.mandanten` ist damit **ein Ausschnitt** und nicht
+  mehr der Bestand. Daran hängen zwei Dinge, die man leicht übersieht:
+  - Die **Suche** läuft im Dienst über Name, Ort und Ordnernamen des ganzen Bestands. Im Speicher zu
+    filtern fände nur, was gerade geladen ist — je nach Scrollstand mal den gesuchten Mandanten und
+    mal nicht.
+  - **Was den ganzen Bestand braucht, holt ihn ausdrücklich.** Der Zuordnungsstapel trennt die
+    gescannten Ordner an `GET /api/Mandanten/aktenordner` (alle zugeordneten Ordnernamen) statt an
+    `mandanten`, und der `ZuordnenDialog` sucht über einen eigenen `MandantenSucheCubit`. Beides aus
+    der geladenen Seite abzuleiten sähe richtig aus und wäre es nur, solange das Register kurz ist.
+- Fehlt der Stammordner, liefert `getAkten()` eine leere Liste statt eines Fehlers, und der Bloc
+  verwirft ein `Left` des Scans still — leer ist Absicht, kein Fehlerschlucken. Für den Abruf der
+  zugeordneten Ordner gilt das **nicht**: ohne ihn stünden zugeordnete Ordner als offen im Stapel,
+  deshalb ist sein Fehlschlag beim Erstladen ein Fehler.
+- **Eine gescheiterte Einzelaktion kostet keine Seite.** Zuordnen, Löschen und der Vermerk setzen
+  `MandantenOverviewLoaded.fehler` und lassen den Stand stehen; `MandantenOverviewError` bleibt dem
+  Fall vorbehalten, in dem das Laden selbst fehlgeschlagen ist. Sonst kostete eine
+  fehlgeschlagene Massenaktion den Scan über tausende Ordner, den Filter und den Scrollstand — mehr,
+  als die Aktion wert war.
+
+## Ordnernamen: eine Schreibweise, ein Ordner
+
+Der Ordnername ist der fachliche Schlüssel — für die Zuordnung am Mandanten **und** für den Vermerk.
+Er kommt aus dem Windows-Dateisystem, und dort sind „VUnfallursache Mark" und „Vunfallursache Mark"
+derselbe Ordner; zwei solche nebeneinander gibt es gar nicht. Verglichen wird er deshalb überall
+**ohne Rücksicht auf Groß- und Kleinschreibung**:
+
+| Wo | Wie |
+|---|---|
+| Frontend (Stapel, Filter, Zuordnung) | `OrdnernamenMenge` — die eine Menge mit `enthaelt` |
+| Backend, in C# | `StringComparer.OrdinalIgnoreCase` (`OrdnerStatusRegister`, `MandantenImportLauf`) |
+| Backend, in SQLite | Kollation `NOCASE` auf `OrdnerStatus.Ordnername`; der Unique-Index erbt sie |
+
+Der Import ist der Grund, warum das zählt: Seine Datei entsteht maschinell aus Aktentexten, und ihre
+Schreibweise weicht von der auf der Platte ab. Genau verglichen fiele der zugeordnete Ordner im
+Stapel nie weg, die Mandantenkarte zeigte keine Akte — und der Bericht meldete trotzdem
+„1 Ordner zugeordnet". Schlimmer noch beim Vermerk: Griffe die Rücknahme über die abweichende
+Schreibweise daneben, wäre ein Ordner einem Mandanten zugeordnet **und** als „ohne Mandantenbezug"
+vermerkt. Wer hier eine Stelle auf genauen Vergleich zurückdreht, bekommt genau das zurück.
 
 ## Ordner ohne Mandantenbezug — drei Zustände statt zwei
 
@@ -91,6 +130,12 @@ wo die Akten liegen, und kommt als Datei herein. **Das Format steht in
 - **Zuordnung sticht Vermerk**, in beide Richtungen: ein zugeordneter Ordner verliert sein „ohne
   Mandantenbezug", und ein Ordner in beiden Listen derselben Datei wird zugeordnet, nicht vermerkt.
   Sonst stünde in der Datenbank, ein Ordner gehöre einem Mandanten und zugleich keinem.
+- **Der Bericht zählt nur, was der Lauf wirklich ändert.** Ein Ordner, der den Vermerk schon trägt,
+  zählt nicht noch einmal als „ohne Mandantenbezug" — der Lauf kennt dafür den Ausgangsstand der
+  Vermerke. Und die **Vorschau nennt keine Mandanten-IDs**: Schlüssel vergibt die Datenbank, eine
+  vorweggenommene Nummer wäre eine Zusage, die der Bericht nicht halten kann.
+- **Ein Widerspruch innerhalb der Datei nennt nicht das Register.** Steht derselbe Mandant zweimal
+  darin, lautet der Hinweis „frühere Zeile" — das Register kennt ihn ja noch gar nicht.
 - **Die Voreinstellung des Berichtsfilters ist „zu prüfen", nicht „alle."** Bei viertausend Zeilen
   ist eine vollständige Liste keine Prüfung, sondern nur der Beweis, dass man nicht geprüft hat.
 - **Jede Zeile ist in der Vorschau noch änderbar** (`ImportEintragDialog`), und jede Änderung löst

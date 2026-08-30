@@ -8,6 +8,13 @@ namespace AutomationService.Features.Mandanten.Domain.Services;
 /// EF-Core-Umsetzung der Ordner-Vermerke. Setzen ist ein Upsert je Ordnername,
 /// Zurücknehmen ein Löschen — beides in einem <c>SaveChanges</c>, damit eine
 /// Massenaktion über hunderte Ordner entweder ganz oder gar nicht wirkt.
+///
+/// Ordnernamen werden dabei durchgehend <b>ohne Rücksicht auf Groß- und
+/// Kleinschreibung</b> verglichen — hier in C#, in der Datenbank über die
+/// Kollation <c>NOCASE</c> der Spalte (siehe
+/// <see cref="Persistence.OrdnerStatusEntityConfiguration"/>). Der Name kommt
+/// aus dem Windows-Dateisystem und bezeichnet dort denselben Ordner, wie immer
+/// er geschrieben ist.
 /// </summary>
 public sealed class OrdnerStatusRegister(AutomationDbContext db) : IOrdnerStatusRegister
 {
@@ -34,7 +41,7 @@ public sealed class OrdnerStatusRegister(AutomationDbContext db) : IOrdnerStatus
         var namen = ordnernamen
             .Select(name => name.Trim())
             .Where(name => name.Length > 0)
-            .Distinct(StringComparer.Ordinal)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (namen.Count > 0)
@@ -61,7 +68,10 @@ public sealed class OrdnerStatusRegister(AutomationDbContext db) : IOrdnerStatus
     void Uebernimm(List<string> namen, List<OrdnerStatusEntity> vorhanden, string status)
     {
         var jetzt = DateTime.Now;
-        var bekannt = vorhanden.ToDictionary(o => o.Ordnername, StringComparer.Ordinal);
+        // Die vorhandene Zeile behält ihre Schreibweise: sie stammt aus einem
+        // früheren Lauf und ist so gut wie die neue — ein Wechsel wäre eine
+        // Änderung, die niemand angefordert hat.
+        var bekannt = vorhanden.ToDictionary(o => o.Ordnername, StringComparer.OrdinalIgnoreCase);
 
         foreach (var name in namen)
         {

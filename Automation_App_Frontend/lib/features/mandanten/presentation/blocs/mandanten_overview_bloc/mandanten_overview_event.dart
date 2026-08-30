@@ -21,7 +21,11 @@ final class LoadMandantenUebersichtEvent extends MandantenOverviewEvent {
   List<Object> get props => [nurRegister];
 }
 
-/// Aktualisiert den Suchfilter. Leerer String zeigt wieder alle Mandanten.
+/// Aktualisiert die Mandantensuche. Leerer String zeigt wieder alle.
+///
+/// Die Suche läuft im Dienst über den **ganzen** Bestand, nicht über die schon
+/// geladenen Seiten — sie holt deshalb die erste Seite neu, statt im Speicher
+/// zu filtern.
 final class SearchMandantenEvent extends MandantenOverviewEvent {
   final String query;
 
@@ -29,6 +33,17 @@ final class SearchMandantenEvent extends MandantenOverviewEvent {
 
   @override
   List<Object> get props => [query];
+}
+
+/// Holt die nächste Seite der Mandantenliste — ausgelöst vom Weiterscrollen.
+final class LadeWeitereMandantenEvent extends MandantenOverviewEvent {
+  const LadeWeitereMandantenEvent();
+}
+
+/// Nimmt die Fehlermeldung einer einzelnen Aktion weg. Der geladene Stand
+/// bleibt dabei unberührt — er war nie weg.
+final class FehlerVerwerfenEvent extends MandantenOverviewEvent {
+  const FehlerVerwerfenEvent();
 }
 
 /// Setzt Suche, Aktentyp- und Zeitfilter des Zuordnungsstapels neu.

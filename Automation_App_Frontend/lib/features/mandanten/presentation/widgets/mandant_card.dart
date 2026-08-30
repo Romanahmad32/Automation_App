@@ -10,6 +10,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Aufklappbare Karte eines Mandanten: Stammdaten, Kennzahlen (Akten/Fälle),
 /// Aktionen (bearbeiten/löschen) und die zugeordneten Akten.
+///
+/// Die Karte ist rund (`cardTheme`, Radius 16), die Tippfläche des
+/// `ExpansionTile` darunter ist es nicht: ohne Zutun zeichnet der Hover-Effekt
+/// rechteckig und steht über die Ecken der Karte hinaus. Deshalb schneidet die
+/// Karte ihren Inhalt (`Clip.antiAlias`) **und** die Kachel bekommt dieselbe
+/// Form — auf- und zugeklappt sind dafür zwei Parameter.
 class MandantCard extends StatelessWidget {
   final Mandant mandant;
   final MandantenOverviewLoaded state;
@@ -30,7 +36,10 @@ class MandantCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
+      clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
+        shape: kartenForm,
+        collapsedShape: kartenForm,
         leading: CircleAvatar(
           backgroundColor: scheme.primaryContainer,
           child: Text(
@@ -112,6 +121,14 @@ class MandantCard extends StatelessWidget {
       ),
     );
   }
+
+  /// Dieselbe Rundung wie die Karte, ohne eigene Linie: Das `ExpansionTile`
+  /// zöge im aufgeklappten Zustand sonst seine Vorgabe-Trennlinien quer über
+  /// den Kartenrahmen.
+  static const RoundedRectangleBorder kartenForm = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(16)),
+    side: BorderSide.none,
+  );
 
   /// Beim Aufklappen die Fälle aller Akten des Mandanten nachladen. Der Bloc
   /// verwirft, was schon geladen ist — mehrfaches Auf- und Zuklappen kostet

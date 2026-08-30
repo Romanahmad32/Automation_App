@@ -1,4 +1,5 @@
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -56,7 +57,10 @@ void main() {
   // Die ausdrückliche Entscheidung des Anwalts sticht die Heuristik: ein
   // vermerkter Verkehrsunfall-Ordner steht nicht mehr im Arbeitsvorrat.
   test('ein Vermerk holt den Ordner aus seinem bisherigen Topf', () {
-    const vermerkt = {'VUnfallursache Mark', 'Bußgeldsache Saeed'};
+    final vermerkt = OrdnernamenMenge(const [
+      'VUnfallursache Mark',
+      'Bußgeldsache Saeed',
+    ]);
 
     final zaehler = const ZuordnungFilter().zaehlen(
       bestand,
@@ -74,6 +78,21 @@ void main() {
       ),
       ['VUnfallursache Mark', 'Bußgeldsache Saeed'],
     );
+  });
+
+  // Der Vermerk hängt am Ordnernamen, und der kommt aus dem Dateisystem:
+  // „VUnfallursache Mark" und „vunfallursache mark" sind derselbe Ordner.
+  test('ein Vermerk greift unabhängig von der Schreibweise', () {
+    final vermerkt = OrdnernamenMenge(const ['vunfallursache mark']);
+
+    final zaehler = const ZuordnungFilter().zaehlen(
+      bestand,
+      ohneMandantenbezug: vermerkt,
+      jetzt: jetzt,
+    );
+
+    expect(zaehler[OrdnerAnsicht.ohneBezug], 1);
+    expect(zaehler[OrdnerAnsicht.stapel], 2);
   });
 
   test('das Zeitfenster nimmt Altakten aus dem Stapel', () {

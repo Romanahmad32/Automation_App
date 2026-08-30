@@ -1,9 +1,10 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
-import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
+import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_suche_cubit/mandanten_suche_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/ordnername_vorschlag.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/zuordnen_dialog.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/zuordnen_ergebnis.dart';
@@ -20,9 +21,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class NichtZugeordneterOrdnerKachel extends StatelessWidget {
   final Akte akte;
 
-  /// Auswahl für den Zuordnen-Dialog.
-  final List<Mandant> mandanten;
-
   /// Ob für diesen Ordner schon entschieden ist, dass er keinem Mandanten
   /// gehört. Bestimmt die Richtung der zweiten Aktion.
   final bool vermerkt;
@@ -30,7 +28,6 @@ class NichtZugeordneterOrdnerKachel extends StatelessWidget {
   const NichtZugeordneterOrdnerKachel({
     super.key,
     required this.akte,
-    required this.mandanten,
     this.vermerkt = false,
   });
 
@@ -92,10 +89,14 @@ class NichtZugeordneterOrdnerKachel extends StatelessWidget {
   Future<void> _zuordnen(BuildContext context) async {
     final bloc = context.read<MandantenOverviewBloc>();
     final router = context.router;
+    // Der Dialog sucht im ganzen Register und bekommt dafür seinen eigenen
+    // Cubit: die geladenen Mandanten der Übersicht sind nur ein Ausschnitt.
     final auswahl = await showDialog<ZuordnenErgebnis>(
       context: context,
-      builder: (_) =>
-          ZuordnenDialog(ordnername: akte.ordnername, mandanten: mandanten),
+      builder: (_) => BlocProvider(
+        create: (_) => getIt<MandantenSucheCubit>(),
+        child: ZuordnenDialog(ordnername: akte.ordnername),
+      ),
     );
     if (auswahl == null) return;
 

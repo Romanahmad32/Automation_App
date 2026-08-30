@@ -137,6 +137,9 @@ void main() {
       'MandantenImportDto',
       'ImportMandantDto',
     ],
+    'lib/features/mandanten/domain/entities/mandanten_seite.dart': [
+      'MandantenSeiteDto',
+    ],
     'lib/features/mandanten/domain/entities/ordner_status.dart': [
       'OrdnerStatusDto',
     ],

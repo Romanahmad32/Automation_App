@@ -8,14 +8,29 @@ import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 
 /// Schnittstelle des Kundensystems: das lokale Mandantenregister (strukturierte
 /// Daten) plus das dateibasierte Aktensystem (§6.1). Implementierung verknüpft
 /// beide über den Akten-Ordnernamen.
 abstract class MandantenRepository {
-  /// Alle Mandanten aus dem Register.
+  /// Alle Mandanten aus dem Register. Für die Mandantenliste ist das der
+  /// falsche Abruf — sie nimmt [getMandantenSeite].
   Future<Either<Failure, List<Mandant>>> getMandanten();
+
+  /// Ein Ausschnitt des Registers, neueste zuerst. [suche] läuft über Name,
+  /// Ort und Ordnernamen des **ganzen** Bestands: eine Suche nur über das
+  /// schon Geladene fände je nach Scrollstand mal etwas und mal nicht.
+  Future<Either<Failure, MandantenSeite>> getMandantenSeite({
+    String suche,
+    int ueberspringen,
+    int anzahl,
+  });
+
+  /// Die Namen aller Akten-Ordner, die einem Mandanten zugeordnet sind.
+  /// Vollständig, unabhängig davon, welche Seite der Liste geladen ist.
+  Future<Either<Failure, List<String>>> getAktenOrdnernamen();
 
   Future<Either<Failure, Mandant>> createMandant(CreateMandantRequest request);
 

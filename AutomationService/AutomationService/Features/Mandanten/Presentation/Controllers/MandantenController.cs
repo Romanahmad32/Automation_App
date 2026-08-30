@@ -22,6 +22,41 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
         return Ok(mandanten.Select(MandantDto.From).ToList());
     }
 
+    /// <summary>
+    /// Ein Ausschnitt des Registers für die Mandantenliste. In der Kanzlei
+    /// stehen dort tausende Mandanten; sie alle auf einmal zu holen ist der
+    /// Abruf, den die Liste nicht braucht.
+    ///
+    /// <c>suche</c> läuft über den <b>ganzen</b> Bestand, nicht über den
+    /// gerade geholten Ausschnitt — sonst hinge es am Scrollstand, ob ein
+    /// Mandant gefunden wird.
+    /// </summary>
+    [HttpGet("seite")]
+    [ProducesResponseType(typeof(MandantenSeiteDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MandantenSeiteDto>> GetSeite(
+        CancellationToken cancellationToken,
+        [FromQuery] string? suche = null,
+        [FromQuery] int ueberspringen = 0,
+        [FromQuery] int anzahl = 0)
+    {
+        var seite = await repository.GetSeiteAsync(suche, ueberspringen, anzahl, cancellationToken);
+        return Ok(MandantenSeiteDto.From(seite));
+    }
+
+    /// <summary>
+    /// Die Namen aller zugeordneten Akten-Ordner. Der Zuordnungsstapel teilt
+    /// damit die gescannten Ordner in „zugeordnet" und „offen" — eine Seite
+    /// des Registers reicht dafür nicht, und die Mandanten dafür vollständig
+    /// zu holen wäre genau der Abruf, den <c>seite</c> vermeidet.
+    /// </summary>
+    [HttpGet("aktenordner")]
+    [ProducesResponseType(typeof(IReadOnlyList<string>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetAktenOrdnernamen(
+        CancellationToken cancellationToken)
+    {
+        return Ok(await repository.GetAktenOrdnernamenAsync(cancellationToken));
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(MandantDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

@@ -1540,6 +1540,110 @@
         }
       }
     },
+    "/api/Mandanten/seite": {
+      "get": {
+        "tags": [
+          "Mandanten"
+        ],
+        "summary": "Ein Ausschnitt des Registers f\u00FCr die Mandantenliste. In der Kanzlei\r\nstehen dort tausende Mandanten; sie alle auf einmal zu holen ist der\r\nAbruf, den die Liste nicht braucht.\r\n\r\n\u0060suche\u0060 l\u00E4uft \u00FCber den \u003Cb\u003Eganzen\u003C/b\u003E Bestand, nicht \u00FCber den\r\ngerade geholten Ausschnitt \u2014 sonst hinge es am Scrollstand, ob ein\r\nMandant gefunden wird.",
+        "parameters": [
+          {
+            "name": "suche",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ueberspringen",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "anzahl",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mandanten/aktenordner": {
+      "get": {
+        "tags": [
+          "Mandanten"
+        ],
+        "summary": "Die Namen aller zugeordneten Akten-Ordner. Der Zuordnungsstapel teilt\r\ndamit die gescannten Ordner in \u201Ezugeordnet\u0022 und \u201Eoffen\u0022 \u2014 eine Seite\r\ndes Registers reicht daf\u00FCr nicht, und die Mandanten daf\u00FCr vollst\u00E4ndig\r\nzu holen w\u00E4re genau der Abruf, den \u0060seite\u0060 vermeidet.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Mandanten/{id}": {
       "put": {
         "tags": [
@@ -3733,7 +3837,7 @@
             }
           }
         },
-        "description": "Das Ergebnis einer einzelnen Zeile der Importdatei. \u0060Art\u0060 ist\r\n\u0060neu\u0060, \u0060ergaenzt\u0060, \u0060unveraendert\u0060 oder \u0060abgelehnt\u0060 \u2014 als\r\nZeichenkette, weil eine Zahl die Dart-Seite an die Deklarationsreihenfolge\r\neines C#-Enums koppeln w\u00FCrde."
+        "description": "Das Ergebnis einer einzelnen Zeile der Importdatei. \u0060Art\u0060 ist\r\n\u0060neu\u0060, \u0060ergaenzt\u0060, \u0060unveraendert\u0060 oder \u0060abgelehnt\u0060 \u2014 als\r\nZeichenkette, weil eine Zahl die Dart-Seite an die Deklarationsreihenfolge\r\neines C#-Enums koppeln w\u00FCrde.\r\n\r\n\u0060MandantId\u0060 ist nur bei \u0060angewendet\u0060 belegt \u2014 in der Vorschau\r\ngibt es den Mandanten noch nicht, und eine vorweggenommene Nummer w\u00E4re eine\r\nZusage, die der Bericht nicht halten kann."
       },
       "ImportMandantDto": {
         "required": [
@@ -4207,6 +4311,39 @@
           }
         },
         "description": "Eine Importdatei. Der Rumpf der Anfrage ist Zeichen f\u00FCr Zeichen die Datei,\r\ndie au\u00DFerhalb der App entsteht \u2014 kein Umschlag, keine zus\u00E4tzlichen Felder.\r\nNur deshalb kann derselbe Inhalt gepr\u00FCft, \u00FCbernommen und aufgehoben werden,\r\nohne dass jemand ihn dazwischen umformt.\r\n\r\n\u0060Version\u0060 ist die Format-Fassung, derzeit 1; fehlt sie, wird 1\r\nangenommen, eine andere wird abgelehnt statt halb gelesen.\r\n\u0060OhneMandantenbezug\u0060 sind Ordner, die der Erzeuger als \u201Egeh\u00F6rt keinem\r\nMandanten\u0022 erkannt hat (Buchhaltung, Vorlagen, Ablagen). Sie landen als\r\nVermerk in \u0060OrdnerStatus\u0060 und verlassen damit den Zuordnungsstapel,\r\nohne dass jemand sie einzeln durchsehen muss."
+      },
+      "MandantenSeiteDto": {
+        "required": [
+          "mandanten",
+          "gesamt",
+          "gefiltert"
+        ],
+        "type": "object",
+        "properties": {
+          "mandanten": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MandantDto"
+            }
+          },
+          "gesamt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gefiltert": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Ein Ausschnitt des Registers f\u00FCr die Mandantenliste: die Mandanten dieser\r\nSeite und die beiden Zahlen, die sie einordnen.\r\n\r\n\u0060Gesamt\u0060 ist der ganze Bestand, \u0060Gefiltert\u0060 die Zahl der Treffer\r\nder Suche \u2014 bei leerer Suche sind beide gleich. Aus \u0060Gefiltert\u0060 liest\r\ndie Oberfl\u00E4che, ob es weiterzubl\u00E4ttern gibt; die Zahl der schon geholten\r\nZeilen allein sagt das nicht."
       },
       "OrdnerStatusDto": {
         "required": [

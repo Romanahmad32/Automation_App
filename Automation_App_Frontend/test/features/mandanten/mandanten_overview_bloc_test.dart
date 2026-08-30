@@ -99,7 +99,7 @@ void main() {
       (s) => s is MandantenOverviewLoaded && !s.neuLadend,
     );
 
-    expect(aufbau.getMandanten.aufrufe, 2);
+    expect(aufbau.register.seitenAufrufe, 2);
     expect(aufbau.getAkten.aufrufe, 1);
   });
 
@@ -121,7 +121,7 @@ void main() {
 
       expect(aufbau.getAkten.aufrufe, 1);
       expect(nachher.offeneOrdnerAnzahl, 1);
-      expect(nachher.ohneMandantenbezug, {'Bußgeldsache Saeed'});
+      expect(nachher.ohneMandantenbezug.enthaelt('Bußgeldsache Saeed'), isTrue);
       expect(nachher.ordnerZaehler[OrdnerAnsicht.ohneBezug], 1);
       // Nicht verschwunden, nur einsortiert.
       expect(nachher.nichtZugeordneteAkten, hasLength(2));
@@ -147,7 +147,7 @@ void main() {
     );
     final zurueck = await aufbau.naechster();
 
-    expect(zurueck.ohneMandantenbezug, isEmpty);
+    expect(zurueck.ohneMandantenbezug.isEmpty, isTrue);
     expect(zurueck.offeneOrdnerAnzahl, 2);
   });
 
@@ -166,6 +166,110 @@ void main() {
 
     expect(aufbau.ordnerStatus.setzAufrufe, 1);
     expect(nachher.offeneOrdnerAnzahl, 0);
+  });
+
+  // Paket B: in der Kanzlei stehen tausende Mandanten im Register. Die Liste
+  // holt sie seitenweise — und die Suche trotzdem über den ganzen Bestand.
+  test('die Mandantenliste kommt seitenweise und lädt nach', () async {
+    await aufbau.close();
+    aufbau = MandantenTestaufbau(
+      register: [for (var i = 0; i < 120; i++) mandant(i + 1, 'Nachname $i')],
+    );
+
+    final geladen = await aufbau.laden();
+    expect(geladen.mandanten, hasLength(MandantenOverviewBloc.seitenGroesse));
+    expect(geladen.gesamtMandanten, 120);
+    expect(geladen.gibtWeitereMandanten, isTrue);
+
+    aufbau.bloc.add(const LadeWeitereMandantenEvent());
+    await aufbau.naechster(); // mehrLadend
+    final mehr = await aufbau.naechster();
+
+    expect(mehr.mandanten, hasLength(100));
+    expect(mehr.mandanten.map((m) => m.id).toSet(), hasLength(100));
+  });
+
+  test('die Suche fragt den Dienst und beginnt wieder oben', () async {
+    await aufbau.close();
+    aufbau = MandantenTestaufbau(
+      register: [
+        for (var i = 0; i < 60; i++) mandant(i + 1, 'Nachname $i'),
+        mandant(99, 'Zuletzt'),
+      ],
+    );
+    await aufbau.laden();
+
+    aufbau.bloc.add(const SearchMandantenEvent('Zuletzt'));
+    final gefunden = await aufbau.bloc.stream.firstWhere(
+      (s) => s is MandantenOverviewLoaded && !s.neuLadend,
+    );
+
+    // Der gesuchte Mandant steht hinter der ersten Seite — im Speicher
+    // gefiltert wäre er nicht dabei.
+    final treffer = (gefunden as MandantenOverviewLoaded).mandanten;
+    expect(treffer.single.nachname, 'Zuletzt');
+    expect(gefunden.gefundeneMandanten, 1);
+    expect(gefunden.gesamtMandanten, 61);
+  });
+
+  // Der Zuordnungsstapel hängt nicht mehr an der geladenen Seite: die
+  // zugeordneten Ordner kommen für den ganzen Bestand.
+  test('ein Ordner eines ungeladenen Mandanten bleibt zugeordnet', () async {
+    await aufbau.close();
+    aufbau = MandantenTestaufbau(
+      register: [
+        for (var i = 0; i < 60; i++) mandant(i + 1, 'Nachname $i'),
+        mandant(99, 'Spaet', ordner: ['VUnfallursache Mark']),
+      ],
+      akten: [akte('VUnfallursache Mark'), akte('Bußgeldsache Saeed')],
+    );
+
+    final geladen = await aufbau.laden();
+
+    expect(geladen.mandanten.any((m) => m.id == 99), isFalse);
+    expect(
+      [for (final a in geladen.nichtZugeordneteAkten) a.ordnername],
+      ['Bußgeldsache Saeed'],
+    );
+  });
+
+  // Ordnernamen kommen aus dem Dateisystem: „VUnfallursache Mark" und
+  // „vunfallursache mark" sind derselbe Ordner.
+  test('die Zuordnung greift unabhängig von der Schreibweise', () async {
+    await aufbau.close();
+    aufbau = MandantenTestaufbau(
+      register: [
+        mandant(1, 'Mustermann', ordner: ['vunfallursache mark']),
+      ],
+      akten: [akte('VUnfallursache Mark')],
+    );
+
+    final geladen = await aufbau.laden();
+
+    expect(geladen.nichtZugeordneteAkten, isEmpty);
+    expect(geladen.aktenFuer(geladen.mandanten.single), hasLength(1));
+  });
+
+  // Der Befund aus dem Code Review: eine gescheiterte Massenaktion darf nicht
+  // den Scan über tausende Ordner samt Filter und Scrollstand mitnehmen.
+  test('eine gescheiterte Massenaktion behält den geladenen Stand', () async {
+    final geladen = await aufbau.laden();
+    aufbau.ordnerStatus.fehlerBeimSetzen = 'Dienst nicht erreichbar';
+
+    aufbau.bloc.add(
+      const SetzeOrdnerStatusEvent(
+        ordnernamen: ['VUnfallursache Mark', 'Bußgeldsache Saeed'],
+        art: OrdnerStatusArt.ohneMandantenbezug,
+      ),
+    );
+    final nachher = await aufbau.naechster();
+
+    expect(nachher.fehler, 'Dienst nicht erreichbar');
+    expect(nachher.akten, geladen.akten);
+    expect(nachher.offeneOrdnerAnzahl, 2);
+
+    aufbau.bloc.add(const FehlerVerwerfenEvent());
+    expect((await aufbau.naechster()).fehler, isNull);
   });
 
   test('der Zuordnungsfilter überlebt ein Neuladen', () async {

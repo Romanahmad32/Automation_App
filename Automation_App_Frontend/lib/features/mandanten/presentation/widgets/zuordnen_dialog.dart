@@ -1,43 +1,36 @@
 import 'package:automation_app/core/general_widgets/entity_search_bar.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_suche_cubit/mandanten_suche_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/zuordnen_ergebnis.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Dialog: gefundenen Ordner einem bestehenden Mandanten zuordnen oder einen
 /// neuen anlegen. Liefert ein [ZuordnenErgebnis] über Navigator.pop zurück.
 ///
-/// Die Mandantenliste hat eine eigene Suche und baut nur die sichtbaren
-/// Einträge — sie wächst mit dem Register, und im Dialog ist ohnehin nur Platz
-/// für eine Handvoll Zeilen.
+/// Die Suche fragt den Dienst und läuft damit über das **ganze** Register —
+/// nicht über die Mandanten, die die Übersicht gerade geladen hat. Gezeigt
+/// werden die ersten Treffer; steht die Zahl darüber höher, ist Weitersuchen
+/// der Weg und nicht Scrollen.
 class ZuordnenDialog extends StatefulWidget {
   final String ordnername;
-  final List<Mandant> mandanten;
 
-  const ZuordnenDialog({
-    super.key,
-    required this.ordnername,
-    required this.mandanten,
-  });
+  const ZuordnenDialog({super.key, required this.ordnername});
 
   @override
   State<ZuordnenDialog> createState() => _ZuordnenDialogState();
 }
 
 class _ZuordnenDialogState extends State<ZuordnenDialog> {
-  String _query = '';
-
-  List<Mandant> get _gefiltert {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return widget.mandanten;
-    return widget.mandanten
-        .where((m) => m.anzeigename.toLowerCase().contains(q))
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+    context.read<MandantenSucheCubit>().laden();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gefiltert = _gefiltert;
     return AlertDialog(
       title: const Text('Ordner zuordnen'),
       content: SizedBox(
@@ -55,33 +48,22 @@ class _ZuordnenDialogState extends State<ZuordnenDialog> {
               label: const Text('Neuen Mandanten anlegen'),
             ),
             const SizedBox(height: 12),
-            if (widget.mandanten.isNotEmpty) ...[
-              const Divider(),
-              Text(
-                'oder bestehendem Mandanten zuordnen:',
-                style: theme.textTheme.bodySmall,
-              ),
-              const SizedBox(height: 8),
-              EntitySearchBar(
-                initialQuery: _query,
-                hintText: 'Mandant suchen …',
-                onChanged: (wert) => setState(() => _query = wert),
-              ),
-              const SizedBox(height: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 240),
-                child: gefiltert.isEmpty
-                    ? Text(
-                        'Kein Mandant passt zu „$_query".',
-                        style: theme.textTheme.bodySmall,
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: gefiltert.length,
-                        itemBuilder: (_, i) => _kachel(context, gefiltert[i]),
-                      ),
-              ),
-            ],
+            const Divider(),
+            Text(
+              'oder bestehendem Mandanten zuordnen:',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            EntitySearchBar(
+              initialQuery: '',
+              hintText: 'Mandant suchen …',
+              entprellung: MandantenSucheCubit.verzoegerung,
+              onChanged: context.read<MandantenSucheCubit>().suche,
+            ),
+            const SizedBox(height: 8),
+            BlocBuilder<MandantenSucheCubit, MandantenSucheState>(
+              builder: (context, state) => _treffer(context, state),
+            ),
           ],
         ),
       ),
@@ -89,6 +71,52 @@ class _ZuordnenDialogState extends State<ZuordnenDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Abbrechen'),
+        ),
+      ],
+    );
+  }
+
+  Widget _treffer(BuildContext context, MandantenSucheState state) {
+    final theme = Theme.of(context);
+    if (state.fehler != null) {
+      return Text(
+        state.fehler!,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.error,
+        ),
+      );
+    }
+    if (state.treffer.isEmpty) {
+      return Text(
+        state.laedt
+            ? 'Wird gesucht …'
+            : state.query.isEmpty
+            ? 'Noch kein Mandant gespeichert.'
+            : 'Kein Mandant passt zu „${state.query}".',
+        style: theme.textTheme.bodySmall,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (state.gekuerzt)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              '${state.treffer.length} von ${state.gefunden} Treffern — '
+              'weiter eingrenzen, um den richtigen zu sehen.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 240),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: state.treffer.length,
+            itemBuilder: (_, i) => _kachel(context, state.treffer[i]),
+          ),
         ),
       ],
     );

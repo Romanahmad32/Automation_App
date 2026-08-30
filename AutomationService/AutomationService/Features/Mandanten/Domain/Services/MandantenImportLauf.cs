@@ -23,14 +23,29 @@ public sealed class MandantenImportLauf
     readonly Dictionary<string, MandantEntity> _besitzer =
         new(StringComparer.OrdinalIgnoreCase);
 
+    // Was vor diesem Lauf schon als „ohne Mandantenbezug" vermerkt war. Ohne
+    // dieses Wissen meldete ein zweiter Lauf derselben Datei dieselben Ordner
+    // noch einmal als Neuigkeit — geschrieben wird zwar nichts Zusätzliches,
+    // aber die Zahl im Bericht behauptete eine Wirkung, die es nicht gibt.
+    readonly HashSet<string> _vermerkt;
+
+    // Die Namen, die dieser Lauf selbst angelegt hat. Ein Widerspruch gegen
+    // einen davon kommt aus einer früheren Zeile derselben Datei und nicht aus
+    // dem Register — der Hinweis muss sagen, welches von beidem.
+    readonly HashSet<string> _ausDerDatei = new(StringComparer.Ordinal);
+
     readonly List<ImportEintragBefund> _eintraege = [];
     readonly List<MandantEntity> _neue = [];
     readonly List<string> _zugeordneteOrdner = [];
     readonly List<string> _markierte = [];
     int _naechsteId;
 
-    public MandantenImportLauf(IReadOnlyList<MandantEntity> register)
+    public MandantenImportLauf(
+        IReadOnlyList<MandantEntity> register,
+        IEnumerable<string>? vermerkteOrdner = null)
     {
+        _vermerkt = new HashSet<string>(
+            vermerkteOrdner ?? [], StringComparer.OrdinalIgnoreCase);
         _nachName = new Dictionary<string, MandantEntity>(StringComparer.Ordinal);
         foreach (var mandant in register)
         {
@@ -73,7 +88,8 @@ public sealed class MandantenImportLauf
         var istNeu = !_nachName.TryGetValue(norm, out var ziel);
         ziel ??= Anlegen(quelle, norm);
 
-        var geaendert = istNeu || MandantImportAbgleich.Uebernimm(ziel, quelle, hinweise);
+        var woher = _ausDerDatei.Contains(norm) ? "frühere Zeile" : "Register";
+        var geaendert = istNeu || MandantImportAbgleich.Uebernimm(ziel, quelle, hinweise, woher);
         var zugewiesen = WeiseOrdnerZu(quelle.AktenOrdnernamen, ziel, hinweise);
 
         var art = istNeu
@@ -87,8 +103,9 @@ public sealed class MandantenImportLauf
 
     /// <summary>
     /// Übernimmt die Ordner, die der Erzeuger als „gehört keinem Mandanten"
-    /// gemeldet hat. Ein Ordner, den derselbe Lauf gerade zugeordnet hat, wird
-    /// dabei übergangen — die Zuordnung ist die stärkere Aussage.
+    /// gemeldet hat. Übergangen wird, was diesem Lauf gerade zugeordnet wurde
+    /// oder schon einem Mandanten gehört — die Zuordnung ist die stärkere
+    /// Aussage —, und was den Vermerk bereits trägt: das wäre keine Änderung.
     /// </summary>
     public void MarkiereOhneBezug(IEnumerable<string> ordnernamen)
     {
@@ -96,12 +113,19 @@ public sealed class MandantenImportLauf
         foreach (var name in Bereinige(ordnernamen))
         {
             if (zugeordnet.Contains(name) || _besitzer.ContainsKey(name)) continue;
+            if (_vermerkt.Contains(name)) continue;
             _markierte.Add(name);
         }
     }
 
+    /// <summary>
+    /// Der Bericht. Die IDs neuer Mandanten stehen nur darin, wenn wirklich
+    /// geschrieben wurde: im Prüflauf sind es Vorgriffe auf Schlüssel, die die
+    /// Datenbank noch nicht vergeben hat, und ein Vertrag, der erfundene IDs
+    /// führt, lädt dazu ein, mit ihnen weiterzuarbeiten.
+    /// </summary>
     public MandantenImportBefund Ergebnis(bool angewendet) => new(
-        _eintraege,
+        angewendet ? _eintraege : [.. _eintraege.Select(e => e with { MandantId = null })],
         Neu: _eintraege.Count(e => e.Art == ImportArten.Neu),
         Ergaenzt: _eintraege.Count(e => e.Art == ImportArten.Ergaenzt),
         Unveraendert: _eintraege.Count(e => e.Art == ImportArten.Unveraendert),
@@ -129,6 +153,7 @@ public sealed class MandantenImportLauf
         };
 
         _nachName[norm] = neu;
+        _ausDerDatei.Add(norm);
         _neue.Add(neu);
         return neu;
     }
