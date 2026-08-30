@@ -43,9 +43,25 @@ public sealed record RegisterSpiegelErgebnis(
     DateTime? GeschriebenAm,
     IReadOnlyList<string> Konfliktkopien)
 {
-    public static RegisterSpiegelErgebnis Uebersprungen(string grund, int zeilen, DateTime? zuletzt) =>
-        new(false, grund, null, null, null, null, zeilen, zuletzt, []);
+    /// <summary>
+    /// Es gab nichts zu tun — kein Ablageordner eingestellt, oder der Bestand
+    /// ist unverändert.
+    ///
+    /// <see cref="Konfliktkopien"/> wird durchgereicht und nicht weggelassen:
+    /// Eine Warnung, die nur auf dem Erfolgsweg erscheint, fehlt gerade dann,
+    /// wenn der Anwender sie braucht — ein übersprungener Lauf ist der
+    /// Normalfall, und die Konfliktkopie daneben verschwindet dadurch nicht.
+    /// </summary>
+    public static RegisterSpiegelErgebnis Uebersprungen(
+        string grund, int zeilen, DateTime? zuletzt, IReadOnlyList<string>? konfliktkopien = null) =>
+        new(false, grund, null, null, null, null, zeilen, zuletzt, konfliktkopien ?? []);
 
-    public static RegisterSpiegelErgebnis Gescheitert(string fehler, int zeilen, DateTime? zuletzt) =>
-        new(false, null, fehler, null, null, null, zeilen, zuletzt, []);
+    /// <summary>
+    /// Das Schreiben scheiterte an einer Lage, die der Anwender beheben kann.
+    /// <see cref="Konfliktkopien"/> wird aus demselben Grund durchgereicht wie
+    /// bei <see cref="Uebersprungen"/>.
+    /// </summary>
+    public static RegisterSpiegelErgebnis Gescheitert(
+        string fehler, int zeilen, DateTime? zuletzt, IReadOnlyList<string>? konfliktkopien = null) =>
+        new(false, null, fehler, null, null, null, zeilen, zuletzt, konfliktkopien ?? []);
 }
