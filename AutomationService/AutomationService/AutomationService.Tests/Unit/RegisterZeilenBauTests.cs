@@ -35,6 +35,59 @@ public sealed class RegisterZeilenBauTests
             AngefragtAm = angefragt ?? new DateTime(2026, 1, 5),
         };
 
+    /// <summary>
+    /// Ohne eingetragenen Gegner tritt der Versicherer aus der
+    /// Zentralruf-Antwort an seine Stelle — wie in der Ansicht
+    /// (<c>Vorgang.parteienBezeichnung</c>). Sonst stünde in der Datei
+    /// „Mustermann ./." mit hängendem Trenner, während der Bildschirm daneben
+    /// den Versicherer zeigt.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Aus_NimmtDenVersichererAusDerAntwort_WennKeinGegnerEingetragenIst(string? gegner)
+    {
+        var vorgang = Vorgang("01/26 C03_HG-E 1427");
+        vorgang.Gegner = gegner;
+        vorgang.AntwortJson = """{"versichererName":"HUK-COBURG","kennzeichen":"HG-E 1427"}""";
+
+        var zeile = RegisterZeilenBau.Aus([vorgang], nurAbgeschlossene: false).Should().ContainSingle().Subject;
+
+        zeile.Parteien.Should().Be("Mustermann ./. HUK-COBURG");
+    }
+
+    [Fact]
+    public void Aus_LaesstDemEingetragenenGegnerDenVortritt()
+    {
+        var vorgang = Vorgang("01/26 C03_HG-E 1427");
+        vorgang.AntwortJson = """{"versichererName":"HUK-COBURG"}""";
+
+        var zeile = RegisterZeilenBau.Aus([vorgang], nurAbgeschlossene: false).Should().ContainSingle().Subject;
+
+        zeile.Parteien.Should().Be("Mustermann ./. HUK");
+    }
+
+    /// <summary>
+    /// AntwortJson ist für das Backend ein opakes Feld. Ein kaputter Satz darf
+    /// den Registerauszug nicht verhindern — eine Lücke in einer Zelle ist die
+    /// bessere Antwort als eine Datei, die gar nicht entsteht.
+    /// </summary>
+    [Theory]
+    [InlineData("kein json")]
+    [InlineData("[]")]
+    [InlineData("""{"versichererName":42}""")]
+    public void Aus_KommtMitUnbrauchbaremAntwortJsonAus(string antwortJson)
+    {
+        var vorgang = Vorgang("01/26 C03_HG-E 1427");
+        vorgang.Gegner = null;
+        vorgang.AntwortJson = antwortJson;
+
+        var zeile = RegisterZeilenBau.Aus([vorgang], nurAbgeschlossene: false).Should().ContainSingle().Subject;
+
+        zeile.Parteien.Should().Be("Mustermann ./.");
+    }
+
     [Fact]
     public void Aus_SetztDasSpaltenschemaZusammen()
     {

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
 
 namespace AutomationService.Features.Vorgaenge.Domain.Services;
@@ -91,9 +92,66 @@ public static class RegisterZeilenBau
     static string Parteien(VorgangEntity v)
     {
         var links = (v.MandantName ?? string.Empty).Trim();
-        var rechts = (v.Gegner ?? string.Empty).Trim();
+        var rechts = Gegenseite(v);
         if (links.Length == 0 && rechts.Length == 0) return string.Empty;
         return $"{links} ./. {rechts}".Trim();
+    }
+
+    /// <summary>
+    /// Die Gegenseite. Fehlt der eingetragene Gegner, tritt der Versicherer aus
+    /// der Zentralruf-Antwort an seine Stelle — genauso wie im Frontend
+    /// (<c>Vorgang.parteienBezeichnung</c>). Ohne diesen Rückfall stünde in der
+    /// Datei „Mustermann ./." mit hängendem Trenner, während der Bildschirm
+    /// daneben den Versicherer zeigt — und das in der Spalte, um die es dem
+    /// Register geht.
+    /// </summary>
+    static string Gegenseite(VorgangEntity v)
+    {
+        var eingetragen = (v.Gegner ?? string.Empty).Trim();
+        return eingetragen.Length > 0 ? eingetragen : (AntwortVersicherer(v) ?? string.Empty).Trim();
+    }
+
+    /// <summary>
+    /// Der Versicherername aus der Zentralruf-Antwort, falls eine vorliegt.
+    ///
+    /// <c>AntwortJson</c> ist für das Backend ein <em>opakes</em> Feld:
+    /// Geschrieben hat es das Frontend, der Dienst reicht es nur durch (siehe
+    /// <c>VorgangDto</c>). Deshalb wird hier eine einzelne Eigenschaft gelesen
+    /// statt in einen Typ gewandelt — und ihr Name ohne Rücksicht auf Gross-
+    /// und Kleinschreibung gesucht, weil die Schreibweise im Bestand daran
+    /// hängt, wer den Satz zuletzt geschrieben hat.
+    ///
+    /// Ein unlesbares JSON heisst hier: kein Versicherer. Ein Registerauszug,
+    /// der wegen eines kaputten Feldes gar nicht entsteht, wäre die schlechtere
+    /// Antwort als einer mit einer Lücke in einer Zelle.
+    /// </summary>
+    static string? AntwortVersicherer(VorgangEntity v)
+    {
+        if (string.IsNullOrWhiteSpace(v.AntwortJson)) return null;
+
+        try
+        {
+            using var dokument = JsonDocument.Parse(v.AntwortJson);
+            if (dokument.RootElement.ValueKind != JsonValueKind.Object) return null;
+
+            foreach (var eigenschaft in dokument.RootElement.EnumerateObject())
+            {
+                if (!string.Equals(eigenschaft.Name, "versichererName", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return eigenschaft.Value.ValueKind == JsonValueKind.String
+                    ? eigenschaft.Value.GetString()
+                    : null;
+            }
+
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     static string Sachbestand(VorgangEntity v)

@@ -123,7 +123,7 @@ class RegisterTabelle extends StatelessWidget {
                           nebeneinander: nebeneinander,
                         ),
                       ),
-                      DataCell(Text(vorgang.rechtsgebiet.displayName)),
+                      DataCell(Text(vorgang.rechtsgebietAnzeige)),
                       if (mitStatus)
                         DataCell(VorgangStatusChip(status: vorgang.status)),
                     ],
