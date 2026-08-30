@@ -71,6 +71,34 @@ public sealed class MandantenImportTests : IDisposable
         _aufbau.Db.Mandanten.Should().HaveCount(1);
     }
 
+    // Schluessel vergibt die Datenbank. Eine Vorschau, die schon welche nennt,
+    // laedt dazu ein, mit Nummern weiterzuarbeiten, die es nicht gibt.
+    [Fact]
+    public async Task Die_Vorschau_nennt_keine_Mandanten_Ids()
+    {
+        var zeile = MandantenImportAufbau.Zeile("Mark", "Schmidt");
+
+        var vorschau = await _aufbau.Vorschau([zeile]);
+        vorschau.Eintraege.Single().MandantId.Should().BeNull();
+
+        var uebernommen = await _aufbau.Uebernimm([zeile]);
+        uebernommen.Eintraege.Single().MandantId.Should().NotBeNull();
+    }
+
+    // Steht derselbe Mandant zweimal in der Datei, widerspricht sie sich
+    // selbst — und nicht dem Register, das ihn noch gar nicht kennt.
+    [Fact]
+    public async Task Ein_Widerspruch_innerhalb_der_Datei_nennt_nicht_das_Register()
+    {
+        var befund = await _aufbau.Vorschau([
+            MandantenImportAufbau.Zeile("Mark", "Schmidt", ort: "Bad Homburg"),
+            MandantenImportAufbau.Zeile("Mark", "Schmidt", ort: "Frankfurt"),
+        ]);
+
+        befund.Eintraege[1].Hinweise.Should().ContainSingle()
+            .Which.Should().Contain("frühere Zeile").And.NotContain("Register");
+    }
+
     [Fact]
     public async Task Ein_vorhandener_Mandant_bekommt_seine_zweite_Akte_dazu()
     {

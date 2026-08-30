@@ -26,6 +26,10 @@ public static class ImportArten
 /// <c>AktenOrdnernamen</c> sind die Ordner, die dieser Mandant durch den Import
 /// wirklich bekommt: was schon einem anderen gehört, steht nicht hier, sondern
 /// als Hinweis daneben.
+///
+/// <c>MandantId</c> ist nur belegt, wenn der Import wirklich gelaufen ist
+/// (<c>Angewendet</c>). Im Prüflauf ist sie <c>null</c>: Schlüssel für neue
+/// Mandanten vergibt erst die Datenbank.
 /// </summary>
 public sealed record ImportEintragBefund(
     int Zeile,

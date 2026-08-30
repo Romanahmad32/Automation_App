@@ -28,7 +28,11 @@ public sealed class MandantenImport(AutomationDbContext db, IOrdnerStatusRegiste
             ? await db.Mandanten.AsNoTracking().ToListAsync(cancellationToken)
             : await db.Mandanten.ToListAsync(cancellationToken);
 
-        var lauf = new MandantenImportLauf(register);
+        // Die schon gesetzten Vermerke gehören zum Ausgangsstand: ohne sie
+        // zählte ein zweiter Lauf derselben Datei dieselben Ordner erneut als
+        // „ohne Mandantenbezug" und behauptete eine Wirkung, die es nicht gibt.
+        var vermerkt = await ordnerStatus.GetAllAsync(cancellationToken);
+        var lauf = new MandantenImportLauf(register, vermerkt.Select(o => o.Ordnername));
         for (var zeile = 0; zeile < auftrag.Mandanten.Count; zeile++)
         {
             lauf.Verarbeite(zeile, auftrag.Mandanten[zeile]);

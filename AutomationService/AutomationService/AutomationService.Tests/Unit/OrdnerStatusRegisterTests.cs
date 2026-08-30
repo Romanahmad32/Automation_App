@@ -79,6 +79,35 @@ public sealed class OrdnerStatusRegisterTests : IDisposable
         stand.Should().ContainSingle().Which.Ordnername.Should().Be("Owi Peter");
     }
 
+    // Ordnernamen kommen aus dem Windows-Dateisystem, und das kennt
+    // "VUnfallursache Mark" und "vunfallursache mark" nicht als zwei Ordner.
+    // Binaer verglichen bekaeme derselbe Ordner zwei Zeilen, und das
+    // Zuruecknehmen ueber die andere Schreibweise fuende seine nicht.
+    [Fact]
+    public async Task SetzeAsync_VergleichtOrdnernamenOhneGrossKleinschreibung()
+    {
+        await _register.SetzeAsync(
+            ["VUnfallursache Mark"], OrdnerStatusArten.OhneMandantenbezug);
+
+        var nochmal = await _register.SetzeAsync(
+            ["vunfallursache mark"], OrdnerStatusArten.OhneMandantenbezug);
+
+        nochmal.Should().ContainSingle()
+            .Which.Ordnername.Should().Be("VUnfallursache Mark",
+                "die vorhandene Zeile behaelt ihre Schreibweise");
+    }
+
+    [Fact]
+    public async Task SetzeAsync_NimmtDenVermerkAuchBeiAndererSchreibweiseZurueck()
+    {
+        await _register.SetzeAsync(
+            ["VUnfallursache Mark"], OrdnerStatusArten.OhneMandantenbezug);
+
+        var stand = await _register.SetzeAsync(["VUNFALLURSACHE MARK"], status: null);
+
+        stand.Should().BeEmpty();
+    }
+
     [Fact]
     public async Task SetzeAsync_WeistUnbekanntenStatusAb()
     {

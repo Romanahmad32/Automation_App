@@ -54,8 +54,7 @@ class NichtZugeordneteOrdnerView extends StatelessWidget {
                   itemCount: sichtbar.length,
                   itemBuilder: (_, i) => NichtZugeordneterOrdnerKachel(
                     akte: sichtbar[i],
-                    mandanten: state.mandanten,
-                    vermerkt: vermerkt.contains(sichtbar[i].ordnername),
+                    vermerkt: vermerkt.enthaelt(sichtbar[i].ordnername),
                   ),
                 ),
         ),

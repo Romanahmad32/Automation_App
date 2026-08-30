@@ -1,12 +1,16 @@
 import 'dart:async';
 
+import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/verknuepfe_ordner_mit_mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
@@ -16,40 +20,66 @@ import 'package:injectable/injectable.dart';
 
 part 'mandanten_overview_event.dart';
 part 'mandanten_overview_state.dart';
+part 'mandanten_stand_abruf.dart';
 
 /// Lädt das Mandantenregister und den Akten-Scan und führt beides zusammen:
 /// Mandanten mit ihren zugeordneten Akten sowie die noch nicht zugeordneten
 /// Ordner für die manuelle Zuordnung.
 ///
-/// Der Scan ist flach — die Fälle einer Akte kommen über [LadeFaelleEvent]
-/// nach. Und jede Änderung am Register schreibt den Zustand fort, statt neu zu
-/// scannen: bei rund 4000 Ordnern wäre ein Rescan nach jeder einzelnen
-/// Zuordnung die Seite, die nach jedem Klick stehenbleibt.
+/// Drei Entscheidungen hängen an der Größenordnung — rund 4000 Ordner unter dem
+/// Stammordner und in der Kanzlei ebenso viele Mandanten:
+///
+/// * Der Scan ist flach; die Fälle einer Akte kommen über [LadeFaelleEvent]
+///   nach.
+/// * Die Mandantenliste kommt seitenweise ([seitenGroesse] je Abruf), und die
+///   Suche darüber läuft im Dienst über den ganzen Bestand.
+/// * Jede Änderung am Register schreibt den Zustand fort, statt neu zu scannen:
+///   ein Rescan nach jeder einzelnen Zuordnung wäre die Seite, die nach jedem
+///   Klick stehenbleibt.
+///
+/// Was beim Laden zusammengetragen wird, steht in [MandantenStandAbruf]; was
+/// eine Änderung aus dem Zustand macht, in [MandantenOverviewLoaded] selbst.
 @injectable
 class MandantenOverviewBloc
     extends Bloc<MandantenOverviewEvent, MandantenOverviewState> {
-  final UseCase<List<Mandant>, NoParams> _getMandanten;
-  final UseCase<List<Akte>, NoParams> _getAkten;
+  /// Wie viele Mandanten ein Abruf holt.
+  static const int seitenGroesse = 50;
+
+  /// Wie lange das Suchfeld wartet, bevor es den Bloc fragt. Die Wartezeit
+  /// sitzt im `EntitySearchBar` und nicht als Bloc-Transformer hier: ein
+  /// `restartable`/`droppable` aus `bloc_concurrency` lässt `close()` in der
+  /// Teardown von Widget-Tests hängen.
+  static const Duration sucheVerzoegerung = Duration(milliseconds: 250);
+
+  final MandantenStandAbruf _abruf;
   final UseCase<List<Fall>, GetFaelleParams> _getFaelle;
-  final UseCase<List<OrdnerStatus>, NoParams> _getOrdnerStatus;
   final UseCase<List<OrdnerStatus>, SetzeOrdnerStatusParams> _setzeOrdnerStatus;
   final UseCase<void, DeleteMandantParams> _deleteMandant;
   final UseCase<Mandant, VerknuepfeOrdnerParams> _verknuepfeOrdner;
 
   MandantenOverviewBloc(
-    this._getMandanten,
-    this._getAkten,
+    UseCase<MandantenSeite, MandantenSeiteParams> getMandantenSeite,
+    UseCase<List<String>, NoParams> getAktenOrdnernamen,
+    UseCase<List<Akte>, NoParams> getAkten,
     this._getFaelle,
-    this._getOrdnerStatus,
+    UseCase<List<OrdnerStatus>, NoParams> getOrdnerStatus,
     this._setzeOrdnerStatus,
     this._deleteMandant,
     this._verknuepfeOrdner,
-  ) : super(MandantenOverviewLoading()) {
+  ) : _abruf = MandantenStandAbruf(
+        getSeite: getMandantenSeite,
+        getAktenOrdnernamen: getAktenOrdnernamen,
+        getOrdnerStatus: getOrdnerStatus,
+        getAkten: getAkten,
+      ),
+      super(MandantenOverviewLoading()) {
     on<LoadMandantenUebersichtEvent>(_onLoad);
     on<SearchMandantenEvent>(_onSearch);
+    on<LadeWeitereMandantenEvent>(_onLadeWeitere);
     on<SetzeZuordnungFilterEvent>(_onSetzeFilter);
     on<LadeFaelleEvent>(_onLadeFaelle);
     on<SetzeOrdnerStatusEvent>(_onSetzeOrdnerStatus);
+    on<FehlerVerwerfenEvent>(_onFehlerVerwerfen);
     on<DeleteMandantEvent>(_onDelete);
     on<VerknuepfeOrdnerEvent>(_onVerknuepfe);
   }
@@ -59,67 +89,84 @@ class MandantenOverviewBloc
     Emitter<MandantenOverviewState> emit,
   ) async {
     final vorher = state;
-    if (vorher is MandantenOverviewLoaded) {
+    final alt = vorher is MandantenOverviewLoaded ? vorher : null;
+    if (alt != null) {
       // Den bisherigen Stand stehen lassen und nur „lädt" markieren: ein
       // Spinner statt der Liste würde Scrollstand und Filter verwerfen.
-      emit(vorher.copyWith(neuLadend: true));
+      emit(alt.copyWith(neuLadend: true, fehlerVerwerfen: true));
     } else {
       emit(MandantenOverviewLoading());
     }
 
-    final mandantenResult = await _getMandanten(const NoParams());
-    final List<Mandant> mandanten;
-    switch (mandantenResult) {
-      case Right(value: final m):
-        mandanten = m;
+    final result = await _abruf.lade(alt: alt, nurRegister: event.nurRegister);
+    switch (result) {
+      case Right(value: final stand):
+        emit(stand);
       case Left(value: final failure):
         emit(MandantenOverviewError(failure.message));
-        return;
     }
+  }
 
-    // Die Vermerke liegen in derselben Datenbank wie das Register und kosten
-    // einen Abruf — sie kommen deshalb auch beim reinen Registerlauf mit.
-    // Scheitert er, bleibt der bisherige Stand stehen: ein verlorener Vermerk
-    // würde einen entschiedenen Ordner still zurück in den Stapel werfen.
-    final statusResult = await _getOrdnerStatus(const NoParams());
-    final ordnerStatus = switch (statusResult) {
-      Right(value: final s) => s,
-      Left() =>
-        vorher is MandantenOverviewLoaded
-            ? vorher.ordnerStatus
-            : const <OrdnerStatus>[],
-    };
-
-    if (event.nurRegister && vorher is MandantenOverviewLoaded) {
-      emit(
-        vorher.copyWith(
-          mandanten: mandanten,
-          ordnerStatus: ordnerStatus,
-          neuLadend: false,
-        ),
-      );
-      return;
-    }
-
-    // Der Akten-Scan darf fehlschlagen (z. B. kein Stammordner) ohne die ganze
-    // Seite zu blockieren — dann werden nur keine Akten angezeigt.
-    final aktenResult = await _getAkten(const NoParams());
-    final akten = switch (aktenResult) {
-      Right(value: final a) => a,
-      Left() => const <Akte>[],
-    };
-
+  /// Sucht im Dienst über den ganzen Bestand und beginnt wieder bei der ersten
+  /// Seite. Im Speicher zu filtern fände nur, was gerade geladen ist.
+  Future<void> _onSearch(
+    SearchMandantenEvent event,
+    Emitter<MandantenOverviewState> emit,
+  ) async {
+    final aktuell = state;
+    if (aktuell is! MandantenOverviewLoaded) return;
     emit(
-      MandantenOverviewLoaded(
-        mandanten: mandanten,
-        akten: akten,
-        ordnerStatus: ordnerStatus,
-        query: vorher is MandantenOverviewLoaded ? vorher.query : '',
-        zuordnungFilter: vorher is MandantenOverviewLoaded
-            ? vorher.zuordnungFilter
-            : const ZuordnungFilter(),
+      aktuell.copyWith(
+        query: event.query,
+        neuLadend: true,
+        fehlerVerwerfen: true,
       ),
     );
+
+    final result = await _abruf.seite(
+      suche: event.query,
+      anzahl: seitenGroesse,
+    );
+    final jetzt = state;
+    if (jetzt is! MandantenOverviewLoaded) return;
+    // Zwei Suchen können sich überholen. Die Antwort auf einen Begriff, der
+    // nicht mehr im Feld steht, ist keine Antwort mehr.
+    if (jetzt.query != event.query) return;
+    switch (result) {
+      case Right(value: final seite):
+        emit(jetzt.mitSeite(seite, jetzt.zugeordneteOrdnernamen));
+      case Left(value: final failure):
+        emit(jetzt.copyWith(neuLadend: false, fehler: failure.message));
+    }
+  }
+
+  /// Hängt die nächste Seite an: es kommt etwas dazu, es wird nichts ersetzt.
+  Future<void> _onLadeWeitere(
+    LadeWeitereMandantenEvent event,
+    Emitter<MandantenOverviewState> emit,
+  ) async {
+    final aktuell = state;
+    if (aktuell is! MandantenOverviewLoaded) return;
+    // Der Scroll meldet sich Pixel für Pixel — ohne diese Sperre liefe je
+    // Meldung ein Abruf, und dieselbe Seite käme mehrfach.
+    if (aktuell.mehrLadend || !aktuell.gibtWeitereMandanten) return;
+    emit(aktuell.copyWith(mehrLadend: true));
+
+    final result = await _abruf.seite(
+      suche: aktuell.query,
+      ueberspringen: aktuell.mandanten.length,
+      anzahl: seitenGroesse,
+    );
+    final jetzt = state;
+    if (jetzt is! MandantenOverviewLoaded) return;
+    switch (result) {
+      case Right(value: final seite):
+        emit(
+          jetzt.mitSeite(seite, jetzt.zugeordneteOrdnernamen, anhaengen: true),
+        );
+      case Left(value: final failure):
+        emit(jetzt.copyWith(mehrLadend: false, fehler: failure.message));
+    }
   }
 
   /// Setzt oder nimmt den Vermerk zurück. Der Dienst antwortet mit dem
@@ -133,23 +180,26 @@ class MandantenOverviewBloc
     final result = await _setzeOrdnerStatus(
       SetzeOrdnerStatusParams(ordnernamen: event.ordnernamen, art: event.art),
     );
+    final aktuell = state;
+    if (aktuell is! MandantenOverviewLoaded) return;
     switch (result) {
       case Left(value: final failure):
-        emit(MandantenOverviewError(failure.message));
+        // Nur eine Meldung, nicht die Seite: den Scan über tausende Ordner,
+        // Filter und Scrollstand für eine gescheiterte Aktion wegzuwerfen wäre
+        // teurer als die Aktion selbst.
+        emit(aktuell.copyWith(fehler: failure.message));
       case Right(value: final stand):
-        final aktuell = state;
-        if (aktuell is! MandantenOverviewLoaded) return;
-        emit(aktuell.copyWith(ordnerStatus: stand));
+        emit(aktuell.copyWith(ordnerStatus: stand, fehlerVerwerfen: true));
     }
   }
 
-  void _onSearch(
-    SearchMandantenEvent event,
+  void _onFehlerVerwerfen(
+    FehlerVerwerfenEvent event,
     Emitter<MandantenOverviewState> emit,
   ) {
-    final current = state;
-    if (current is MandantenOverviewLoaded) {
-      emit(current.copyWith(query: event.query));
+    final aktuell = state;
+    if (aktuell is MandantenOverviewLoaded) {
+      emit(aktuell.copyWith(fehlerVerwerfen: true));
     }
   }
 
@@ -194,22 +244,13 @@ class MandantenOverviewBloc
     Emitter<MandantenOverviewState> emit,
   ) async {
     final result = await _deleteMandant(DeleteMandantParams(event.mandantId));
+    final aktuell = state;
+    if (aktuell is! MandantenOverviewLoaded) return;
     switch (result) {
       case Left(value: final failure):
-        emit(MandantenOverviewError(failure.message));
+        emit(aktuell.copyWith(fehler: failure.message));
       case Right():
-        final aktuell = state;
-        if (aktuell is! MandantenOverviewLoaded) return;
-        // Der Mandant fällt raus, seine Ordner rutschen dadurch von selbst
-        // zurück in den Zuordnungsstapel — ohne erneuten Scan.
-        emit(
-          aktuell.copyWith(
-            mandanten: [
-              for (final m in aktuell.mandanten)
-                if (m.id != event.mandantId) m,
-            ],
-          ),
-        );
+        emit(aktuell.ohneMandant(event.mandantId));
     }
   }
 
@@ -223,22 +264,13 @@ class MandantenOverviewBloc
         ordnername: event.ordnername,
       ),
     );
+    final aktuell = state;
+    if (aktuell is! MandantenOverviewLoaded) return;
     switch (result) {
       case Left(value: final failure):
-        emit(MandantenOverviewError(failure.message));
+        emit(aktuell.copyWith(fehler: failure.message));
       case Right(value: final aktualisiert):
-        final aktuell = state;
-        if (aktuell is! MandantenOverviewLoaded) return;
-        // Der Ordner steht jetzt am Mandanten und verschwindet damit aus dem
-        // Stapel: ein Austausch in der Liste genügt, kein Rescan.
-        emit(
-          aktuell.copyWith(
-            mandanten: [
-              for (final m in aktuell.mandanten)
-                if (m.id == aktualisiert.id) aktualisiert else m,
-            ],
-          ),
-        );
+        emit(aktuell.mitZuordnung(aktualisiert, event.ordnername));
     }
   }
 }

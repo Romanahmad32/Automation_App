@@ -116,6 +116,35 @@ public sealed class MandantenImportKonfliktTests : IDisposable
         (await _aufbau.OrdnerStatus.GetAllAsync()).Should().BeEmpty();
     }
 
+    // Dieselbe Invariante, nur mit der Schreibweise der Datei gegen die des
+    // Dateisystems. Griffe der Ruecknahme-Aufruf hier daneben, waere der Ordner
+    // einem Mandanten zugeordnet *und* als bezuglos vermerkt.
+    [Fact]
+    public async Task Eine_Zuordnung_nimmt_den_Vermerk_auch_bei_anderer_Schreibweise_zurueck()
+    {
+        await _aufbau.OrdnerStatus.SetzeAsync(
+            ["VUnfallursache Schmidt"], OrdnerStatusArten.OhneMandantenbezug);
+
+        await _aufbau.Uebernimm([
+            MandantenImportAufbau.Zeile("Mark", "Schmidt", ["vunfallursache schmidt"]),
+        ]);
+
+        (await _aufbau.OrdnerStatus.GetAllAsync()).Should().BeEmpty();
+    }
+
+    // Der zweite Lauf derselben Datei ist der Normalfall, weil der Erzeuger
+    // nachbessert. Er darf keine Wirkung behaupten, die es nicht gibt.
+    [Fact]
+    public async Task Ein_schon_vermerkter_Ordner_zaehlt_im_zweiten_Lauf_nicht_mit()
+    {
+        await _aufbau.Uebernimm([], ohneBezug: ["Vorlagen", "Buchhaltung 2019"]);
+
+        var zweiter = await _aufbau.Uebernimm([], ohneBezug: ["Vorlagen", "buchhaltung 2019"]);
+
+        zweiter.OhneMandantenbezug.Should().Be(0);
+        (await _aufbau.OrdnerStatus.GetAllAsync()).Should().HaveCount(2);
+    }
+
     [Fact]
     public async Task Die_Vorschau_beruehrt_auch_die_Vermerke_nicht()
     {

@@ -3,9 +3,11 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/verknuepfe_ordner_mit_mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
@@ -40,17 +42,70 @@ class ZaehlenderAktenScan implements UseCase<List<Akte>, NoParams> {
   }
 }
 
-class FesteMandanten implements UseCase<List<Mandant>, NoParams> {
-  List<Mandant> mandanten;
-  int aufrufe = 0;
+/// Das Register im Speicher — geteilt von Seitenabruf, Ordnernamen und
+/// Verknüpfen, wie die eine Tabelle im Backend. Die Suche arbeitet über
+/// denselben Bestand wie der Dienst und nicht über den geholten Ausschnitt.
+class MandantenSpeicher {
+  final List<Mandant> mandanten;
+  int seitenAufrufe = 0;
 
-  FesteMandanten(this.mandanten);
+  MandantenSpeicher(this.mandanten);
+
+  List<Mandant> treffer(String suche) {
+    final q = suche.trim().toLowerCase();
+    if (q.isEmpty) return mandanten;
+    return [
+      for (final m in mandanten)
+        if (m.anzeigename.toLowerCase().contains(q) ||
+            m.ort.toLowerCase().contains(q) ||
+            m.aktenOrdnernamen.any((o) => o.toLowerCase().contains(q)))
+          m,
+    ];
+  }
+
+  void ersetze(Mandant neu) {
+    final i = mandanten.indexWhere((m) => m.id == neu.id);
+    if (i >= 0) mandanten[i] = neu;
+  }
+}
+
+/// Antwortet wie `GET /api/Mandanten/seite`: ein Ausschnitt plus die beiden
+/// Zahlen, die ihn einordnen.
+class FesteMandantenSeite
+    implements UseCase<MandantenSeite, MandantenSeiteParams> {
+  final MandantenSpeicher speicher;
+
+  FesteMandantenSeite(this.speicher);
 
   @override
-  Future<Either<Failure, List<Mandant>>> call(NoParams params) async {
-    aufrufe++;
-    return Right(mandanten);
+  Future<Either<Failure, MandantenSeite>> call(
+    MandantenSeiteParams params,
+  ) async {
+    speicher.seitenAufrufe++;
+    final treffer = speicher.treffer(params.suche);
+    final anzahl = params.anzahl > 0
+        ? params.anzahl
+        : MandantenOverviewBloc.seitenGroesse;
+    return Right(
+      MandantenSeite(
+        mandanten: treffer.skip(params.ueberspringen).take(anzahl).toList(),
+        gesamt: speicher.mandanten.length,
+        gefiltert: treffer.length,
+      ),
+    );
   }
+}
+
+/// Die zugeordneten Ordner des **ganzen** Registers — unabhängig davon, welche
+/// Seite gerade geladen ist.
+class FesteAktenOrdnernamen implements UseCase<List<String>, NoParams> {
+  final MandantenSpeicher speicher;
+
+  FesteAktenOrdnernamen(this.speicher);
+
+  @override
+  Future<Either<Failure, List<String>>> call(NoParams params) async =>
+      Right([for (final m in speicher.mandanten) ...m.aktenOrdnernamen]);
 }
 
 class FesteFaelle implements UseCase<List<Fall>, GetFaelleParams> {
@@ -69,20 +124,20 @@ class FesteFaelle implements UseCase<List<Fall>, GetFaelleParams> {
 /// Verknüpft, indem der Ordner am Mandanten hängend zurückkommt — genau das,
 /// was der Bloc in den Zustand fortschreiben soll.
 class FakeVerknuepfen implements UseCase<Mandant, VerknuepfeOrdnerParams> {
-  final List<Mandant> register;
+  final MandantenSpeicher speicher;
 
-  FakeVerknuepfen(this.register);
+  FakeVerknuepfen(this.speicher);
 
   @override
   Future<Either<Failure, Mandant>> call(VerknuepfeOrdnerParams params) async {
-    final alt = register.firstWhere((m) => m.id == params.mandantId);
-    return Right(
-      mandant(
-        alt.id,
-        alt.nachname,
-        ordner: [...alt.aktenOrdnernamen, params.ordnername],
-      ),
+    final alt = speicher.mandanten.firstWhere((m) => m.id == params.mandantId);
+    final neu = mandant(
+      alt.id,
+      alt.nachname,
+      ordner: [...alt.aktenOrdnernamen, params.ordnername],
     );
+    speicher.ersetze(neu);
+    return Right(neu);
   }
 }
 
@@ -91,6 +146,10 @@ class FakeVerknuepfen implements UseCase<Mandant, VerknuepfeOrdnerParams> {
 class OrdnerStatusSpeicher {
   final Map<String, OrdnerStatus> eintraege = {};
   int setzAufrufe = 0;
+
+  /// Scheitert der nächste Schreibversuch? Für den Fall, in dem eine
+  /// Massenaktion nicht durchgeht.
+  String? fehlerBeimSetzen;
 
   List<OrdnerStatus> get stand =>
       eintraege.values.toList()
@@ -120,6 +179,8 @@ class FakeSetzeOrdnerStatus
     SetzeOrdnerStatusParams params,
   ) async {
     speicher.setzAufrufe++;
+    final fehler = speicher.fehlerBeimSetzen;
+    if (fehler != null) return Left(LocalFailure(message: fehler));
     final art = params.art;
     for (final name in params.ordnernamen) {
       if (art == null) {
@@ -144,14 +205,14 @@ class FakeLoeschen implements UseCase<void, DeleteMandantParams> {
 
 /// Bloc samt seinen Attrappen — die Tests prüfen an ihnen die Aufrufzahlen.
 class MandantenTestaufbau {
-  final FesteMandanten getMandanten;
+  final MandantenSpeicher register;
   final ZaehlenderAktenScan getAkten;
   final FesteFaelle getFaelle;
   final OrdnerStatusSpeicher ordnerStatus;
   final MandantenOverviewBloc bloc;
 
   MandantenTestaufbau._(
-    this.getMandanten,
+    this.register,
     this.getAkten,
     this.getFaelle,
     this.ordnerStatus,
@@ -163,23 +224,24 @@ class MandantenTestaufbau {
     List<Akte> akten = const [],
     List<Fall> faelle = const [],
   }) {
-    final mandanten = FesteMandanten([...register]);
+    final speicher = MandantenSpeicher([...register]);
     final scan = ZaehlenderAktenScan(akten);
     final faelleQuelle = FesteFaelle(faelle);
-    final speicher = OrdnerStatusSpeicher();
+    final vermerke = OrdnerStatusSpeicher();
     return MandantenTestaufbau._(
-      mandanten,
+      speicher,
       scan,
       faelleQuelle,
-      speicher,
+      vermerke,
       MandantenOverviewBloc(
-        mandanten,
+        FesteMandantenSeite(speicher),
+        FesteAktenOrdnernamen(speicher),
         scan,
         faelleQuelle,
-        FesteOrdnerStatus(speicher),
-        FakeSetzeOrdnerStatus(speicher),
+        FesteOrdnerStatus(vermerke),
+        FakeSetzeOrdnerStatus(vermerke),
         FakeLoeschen(),
-        FakeVerknuepfen(mandanten.mandanten),
+        FakeVerknuepfen(speicher),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
 import 'package:equatable/equatable.dart';
 
 /// Zeitfenster für „zuletzt geändert". Abgeschlossene Altakten gehören nicht in
@@ -74,8 +75,11 @@ class ZuordnungFilter extends Equatable {
 
   /// In welchen Topf [akte] gehört. Ein gesetzter Vermerk sticht den Aktentyp:
   /// die ausdrückliche Entscheidung des Anwalts geht vor der Heuristik.
-  static OrdnerAnsicht ansichtVon(Akte akte, Set<String> ohneMandantenbezug) {
-    if (ohneMandantenbezug.contains(akte.ordnername)) {
+  static OrdnerAnsicht ansichtVon(
+    Akte akte,
+    OrdnernamenMenge ohneMandantenbezug,
+  ) {
+    if (ohneMandantenbezug.enthaelt(akte.ordnername)) {
       return OrdnerAnsicht.ohneBezug;
     }
     return akte.aktentyp.istUnfallkandidat
@@ -87,14 +91,15 @@ class ZuordnungFilter extends Equatable {
   /// der Zeitfilter prüfbar bleibt.
   List<Akte> anwenden(
     List<Akte> akten, {
-    Set<String> ohneMandantenbezug = const {},
+    OrdnernamenMenge? ohneMandantenbezug,
     DateTime? jetzt,
   }) {
+    final vermerkt = ohneMandantenbezug ?? OrdnernamenMenge(const []);
     final stichtag = _stichtag(jetzt ?? DateTime.now());
     return [
       for (final akte in akten)
         if (_passtBasis(akte, stichtag) &&
-            ansichtVon(akte, ohneMandantenbezug) == ansicht)
+            ansichtVon(akte, vermerkt) == ansicht)
           akte,
     ];
   }
@@ -104,14 +109,15 @@ class ZuordnungFilter extends Equatable {
   /// die Töpfe selbst zählen unabhängig von [ansicht].
   Map<OrdnerAnsicht, int> zaehlen(
     List<Akte> akten, {
-    Set<String> ohneMandantenbezug = const {},
+    OrdnernamenMenge? ohneMandantenbezug,
     DateTime? jetzt,
   }) {
+    final vermerkt = ohneMandantenbezug ?? OrdnernamenMenge(const []);
     final stichtag = _stichtag(jetzt ?? DateTime.now());
     final zaehler = {for (final topf in OrdnerAnsicht.values) topf: 0};
     for (final akte in akten) {
       if (!_passtBasis(akte, stichtag)) continue;
-      final topf = ansichtVon(akte, ohneMandantenbezug);
+      final topf = ansichtVon(akte, vermerkt);
       zaehler[topf] = zaehler[topf]! + 1;
     }
     return zaehler;

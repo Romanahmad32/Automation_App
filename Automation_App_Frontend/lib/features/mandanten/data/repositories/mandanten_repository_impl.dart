@@ -13,6 +13,8 @@ import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/repositories/mandanten_repository.dart';
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
@@ -72,6 +74,34 @@ class MandantenRepositoryImpl implements MandantenRepository {
   Future<Either<Failure, List<Mandant>>> getMandanten() async {
     try {
       return Right(await _datasource.loadMandanten());
+    } catch (e) {
+      return Left(LocalFailure(message: ausnahmeText(e)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, MandantenSeite>> getMandantenSeite({
+    String suche = '',
+    int ueberspringen = 0,
+    int anzahl = 0,
+  }) async {
+    try {
+      return Right(
+        await _datasource.ladeSeite(
+          suche: suche,
+          ueberspringen: ueberspringen,
+          anzahl: anzahl,
+        ),
+      );
+    } catch (e) {
+      return Left(LocalFailure(message: ausnahmeText(e)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<String>>> getAktenOrdnernamen() async {
+    try {
+      return Right(await _datasource.ladeAktenOrdnernamen());
     } catch (e) {
       return Left(LocalFailure(message: ausnahmeText(e)));
     }
@@ -203,7 +233,10 @@ class MandantenRepositoryImpl implements MandantenRepository {
       orElse: () =>
           throw StateError('Mandant mit ID $mandantId nicht gefunden'),
     );
-    if (mandant.aktenOrdnernamen.contains(ordnername)) {
+    // Ohne Rücksicht auf die Schreibweise: der Ordnername kommt aus dem
+    // Dateisystem, und „VUnfallursache Mark" zweimal verschieden geschrieben
+    // stünde sonst zweimal am Mandanten.
+    if (OrdnernamenMenge(mandant.aktenOrdnernamen).enthaelt(ordnername)) {
       return mandant;
     }
     final aktualisiert = mandant.copyWith(
