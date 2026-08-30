@@ -4,9 +4,9 @@
 legt es in der Mandantenakte ab und schließt den Vorgang ab. Größtes Feature (~60 Dateien).
 **Anforderung:** `REQUIREMENTS.md` §4.4, §4.5, §4.6, §4.7, §4.8
 **Einstieg:** `presentation/pages/word_automation_page.dart`
-**Zustand:** in `presentation/blocs/`: `WizardCubit` (Schritt + gesammelte Eingaben),
-`DocumentBloc` (geladene Vorlagendatei), `EditedDocumentBloc` (Erzeugung),
-`TemplatePdfPreviewBloc` + `ResultPdfPreviewBloc` (`pdf_preview_bloc.dart`), `RvgCalculationBloc`, `StandardpositionenCubit`.
+**Zustand:** in `presentation/blocs/`: `WizardCubit` (Schritt + Eingaben), `DocumentBloc` (geladene Vorlagendatei),
+`EditedDocumentBloc` (Erzeugung), `TemplatePdfPreviewBloc` + `ResultPdfPreviewBloc` (`pdf_preview_bloc.dart`),
+`RvgCalculationBloc`, `StandardpositionenCubit`, `AktivePlatzhalterCubit` (Pflichtfelder je Variante, #35).
 Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTemplateOverviewBloc`,
 `VorgangCubit`.
 **Domain:** Entities `DamageListing`, `GeneratedDocument`, `RvgCalculation`, `VorlagenUebersicht`,

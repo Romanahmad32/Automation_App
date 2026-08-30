@@ -1,4 +1,5 @@
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_chips.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,10 +10,18 @@ class TemplatePlaceholdersView extends StatelessWidget {
   final TemplateFileSlot slot;
   final void Function(String placeholder) onPlaceholderSelected;
 
+  /// Die aktuell eingetragenen Feldnamen — für die Chip-Optik „übernommen",
+  /// die Zählzeile und „Alle übernehmen" (#35 Teil 3).
+  final Iterable<String?> vorhandeneNamen;
+
+  final void Function(List<String> placeholders)? onAlleUebernehmen;
+
   const TemplatePlaceholdersView({
     super.key,
     required this.slot,
     required this.onPlaceholderSelected,
+    this.vorhandeneNamen = const [],
+    this.onAlleUebernehmen,
   });
 
   @override
@@ -60,18 +69,11 @@ class TemplatePlaceholdersView extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final placeholder in placeholders)
-                      ActionChip(
-                        avatar: const Icon(Icons.add, size: 18),
-                        label: Text('{{$placeholder}}'),
-                        tooltip: 'Als Eingabefeld übernehmen',
-                        onPressed: () => onPlaceholderSelected(placeholder),
-                      ),
-                  ],
+                PlatzhalterChips(
+                  placeholders: placeholders,
+                  vorhandeneNamen: vorhandeneNamen,
+                  onPlaceholderSelected: onPlaceholderSelected,
+                  onAlleUebernehmen: onAlleUebernehmen,
                 ),
               ],
             );

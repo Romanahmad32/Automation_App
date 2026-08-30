@@ -219,6 +219,8 @@ import 'package:automation_app/features/word_automation/domain/usecases/fill_out
     as _i649;
 import 'package:automation_app/features/word_automation/domain/usecases/get_vorlagen_uebersicht.dart'
     as _i250;
+import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart'
+    as _i167;
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart'
     as _i115;
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart'
@@ -630,6 +632,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i702.TemplatePlaceholdersBloc>(
       () => _i702.TemplatePlaceholdersBloc(
+        gh<_i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>>(),
+      ),
+    );
+    gh.factory<_i167.AktivePlatzhalterCubit>(
+      () => _i167.AktivePlatzhalterCubit(
         gh<_i223.UseCase<List<String>, _i818.GetTemplatePlaceholdersParams>>(),
       ),
     );
