@@ -26,9 +26,8 @@ public sealed class RegisterSpiegelAblage(string ordner, string basisname)
 
     /// <summary>
     /// Dateien im Ablageordner, die wie eine Konfliktkopie des Spiegels
-    /// aussehen: gleicher Anfang, gleiche Endung, anderer Name. So benennt ein
-    /// Synchronisierungsdienst das, was er nicht zusammenführen konnte
-    /// („… (1).docx", „…-RECHNERNAME.docx", „…-Kopie.docx").
+    /// aussehen — welcher Name als solche gilt, entscheidet
+    /// <see cref="KonfliktkopieName"/>.
     ///
     /// Bewusst <b>nicht</b> rekursiv und ohne die Dateien zu öffnen: Steht der
     /// Ordner auf „Dateien bei Bedarf", löste jeder Lesezugriff einen Download
@@ -62,10 +61,7 @@ public sealed class RegisterSpiegelAblage(string ordner, string basisname)
             return false;
         }
 
-        var name = Path.GetFileNameWithoutExtension(pfad);
-        // Gleicher Name heißt: das ist der Spiegel selbst, keine Kopie.
-        return name.StartsWith(Basisname, StringComparison.OrdinalIgnoreCase)
-               && !name.Equals(Basisname, StringComparison.OrdinalIgnoreCase);
+        return KonfliktkopieName.Erkennt(Basisname, Path.GetFileNameWithoutExtension(pfad));
     }
 
     static string Bereinige(string? name)
