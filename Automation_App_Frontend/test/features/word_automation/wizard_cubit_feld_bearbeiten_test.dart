@@ -2,6 +2,8 @@ import 'package:automation_app/features/form_template_setup/domain/entities/feld
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'wizard_doubles.dart';
@@ -41,7 +43,7 @@ void main() {
     final alt = feld('Versicherer');
     wizard.selectFormTemplate(vorlage([alt, feld('Kennzeichen')]));
 
-    final gespeichert = await wizard.aktualisiereFeld(
+    final aenderung = await wizard.aktualisiereFeld(
       alt,
       feld(
         'Versicherer',
@@ -50,7 +52,7 @@ void main() {
       ),
     );
 
-    expect(gespeichert, isTrue);
+    expect(aenderung.gespeichert, isTrue);
     final hinaus = umgebung.updateFormTemplate.gespeicherte.single;
     expect(hinaus.id, 1);
     expect(hinaus.fields.map((f) => f.label), ['Versicherer', 'Kennzeichen']);
@@ -134,12 +136,12 @@ void main() {
     wizard.selectFormTemplate(bestand);
     wizard.setFormData(const {'Versicherer': 'HUK-COBURG'});
 
-    final gespeichert = await wizard.aktualisiereFeld(
+    final aenderung = await wizard.aktualisiereFeld(
       alt,
       feld('Versicherung des Gegners'),
     );
 
-    expect(gespeichert, isFalse);
+    expect(aenderung.gespeichert, isFalse);
     expect(wizard.state.selectedFormTemplate, bestand);
     expect(wizard.state.formData, {'Versicherer': 'HUK-COBURG'});
   });
@@ -147,12 +149,130 @@ void main() {
   test('ohne gewählte Vorlage geht nichts hinaus', () async {
     final wizard = umgebung.wizard;
 
-    final gespeichert = await wizard.aktualisiereFeld(
+    final aenderung = await wizard.aktualisiereFeld(
       feld('Versicherer'),
       feld('Versicherung'),
     );
 
-    expect(gespeichert, isFalse);
+    expect(aenderung.gespeichert, isFalse);
     expect(umgebung.updateFormTemplate.gespeicherte, isEmpty);
+  });
+
+  /// Der Nachtrag aus der Erprobung: Nach dem Wechsel der Datenquelle gab es
+  /// keinen Weg mehr, das Feld aus den Vorgangsdaten zu füllen. Der erfasste
+  /// Stand beschattet die Vorbelegung dauerhaft — er wird deshalb für genau
+  /// dieses Feld beiseitegeräumt.
+  group('die neue Datenquelle füllt das Feld neu', () {
+    const antwort = ZentralrufReplyData(
+      referenz: '84/26 C03_GG-XY 123',
+      versichererName: 'HUK-COBURG',
+    );
+
+    Vorgang vorgang({ZentralrufReplyData? mitAntwort = antwort}) => Vorgang(
+      referenz: '84/26 C03_GG-XY 123',
+      angefragtAm: DateTime(2026, 6, 1),
+      antwort: mitAntwort,
+    );
+
+    test('der getippte Wert weicht der Vorbelegung und wird angeboten', () async {
+      final wizard = umgebung.wizard;
+      await wizard.selectVorgang(vorgang());
+      final alt = feld('Versicherer');
+      wizard.selectFormTemplate(vorlage([alt]));
+      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+      final marke = wizard.state.aufbauMarke;
+
+      final aenderung = await wizard.aktualisiereFeld(
+        alt,
+        feld('Versicherer', quelle: FeldDatenquelle.versichererName),
+      );
+
+      expect(aenderung.verdraengterWert, 'von Hand getippt');
+      // Weg aus dem erfassten Stand: Nur so gewinnt die Vorbelegung im Formular.
+      expect(wizard.state.formDataEntwurf, isEmpty);
+      // Und der Neuaufbau, weil der erfasste Stand nicht im Schlüssel steht.
+      expect(wizard.state.aufbauMarke, marke + 1);
+    });
+
+    /// Sonst nähme der Dialog dem Anwalt die Eingabe weg und setzte nichts an
+    /// ihre Stelle.
+    test('ohne Wert in der neuen Quelle bleibt der getippte stehen', () async {
+      final wizard = umgebung.wizard;
+      await wizard.selectVorgang(vorgang(mitAntwort: null));
+      final alt = feld('Versicherer');
+      wizard.selectFormTemplate(vorlage([alt]));
+      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+
+      final aenderung = await wizard.aktualisiereFeld(
+        alt,
+        feld('Versicherer', quelle: FeldDatenquelle.versichererName),
+      );
+
+      expect(aenderung.verdraengterWert, isNull);
+      expect(wizard.state.formDataEntwurf, {'Versicherer': 'von Hand getippt'});
+    });
+
+    /// Umbenennen, Typ und Pflichthaken sagen nichts darüber, woher der Wert
+    /// kommt — sie dürfen ihn deshalb nicht antasten.
+    test('eine Änderung ohne neue Quelle lässt den Wert in Ruhe', () async {
+      final wizard = umgebung.wizard;
+      await wizard.selectVorgang(vorgang());
+      final alt = feld('Versicherer', quelle: FeldDatenquelle.versichererName);
+      wizard.selectFormTemplate(vorlage([alt]));
+      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+
+      final aenderung = await wizard.aktualisiereFeld(
+        alt,
+        feld(
+          'Versicherung des Gegners',
+          required: false,
+          quelle: FeldDatenquelle.versichererName,
+        ),
+      );
+
+      expect(aenderung.verdraengterWert, isNull);
+      expect(wizard.state.formDataEntwurf, {
+        'Versicherung des Gegners': 'von Hand getippt',
+      });
+    });
+
+    test('„Alten Wert zurückholen" setzt ihn wieder ein', () async {
+      final wizard = umgebung.wizard;
+      await wizard.selectVorgang(vorgang());
+      final alt = feld('Versicherer');
+      wizard.selectFormTemplate(vorlage([alt]));
+      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+      await wizard.aktualisiereFeld(
+        alt,
+        feld('Versicherer', quelle: FeldDatenquelle.versichererName),
+      );
+      final marke = wizard.state.aufbauMarke;
+
+      wizard.stelleFeldWertWiederHer('Versicherer', 'von Hand getippt');
+
+      expect(wizard.state.formDataEntwurf, {'Versicherer': 'von Hand getippt'});
+      expect(wizard.state.aufbauMarke, marke + 1);
+      // Zurückgeholt wird der Wert, nicht die Vorlagenänderung.
+      expect(
+        wizard.state.selectedFormTemplate?.fields.single.datenquelle,
+        FeldDatenquelle.versichererName,
+      );
+    });
+
+    /// Ohne Vorgang gibt es keine Vorbelegung, der die Eingabe weichen könnte.
+    test('ohne Vorgang bleibt der Wert unangetastet', () async {
+      final wizard = umgebung.wizard;
+      final alt = feld('Versicherer');
+      wizard.selectFormTemplate(vorlage([alt]));
+      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+
+      final aenderung = await wizard.aktualisiereFeld(
+        alt,
+        feld('Versicherer', quelle: FeldDatenquelle.versichererName),
+      );
+
+      expect(aenderung.verdraengterWert, isNull);
+      expect(wizard.state.formDataEntwurf, {'Versicherer': 'von Hand getippt'});
+    });
   });
 }

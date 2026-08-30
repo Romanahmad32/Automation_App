@@ -21,6 +21,11 @@ class GermanDateField extends StatelessWidget {
   final String? labelText;
   final String? helperText;
 
+  /// Über wie viele Zeilen [helperText] laufen darf. Ohne Angabe gilt die
+  /// Vorgabe von Material (eine Zeile, danach „…") — in schmalen Spalten ist
+  /// das zu wenig, dort gehören 2 hin.
+  final int? helperMaxLines;
+
   /// Grenzen des Kalender-Dialogs; Standard: ±10 Jahre um heute.
   final DateTime? firstDate;
   final DateTime? lastDate;
@@ -32,6 +37,7 @@ class GermanDateField extends StatelessWidget {
     required this.formControlName,
     this.labelText,
     this.helperText,
+    this.helperMaxLines,
     this.firstDate,
     this.lastDate,
     this.validationMessages,
@@ -51,6 +57,7 @@ class GermanDateField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: labelText,
         helperText: helperText,
+        helperMaxLines: helperMaxLines,
         hintText: 'TT.MM.JJJJ',
         border: const OutlineInputBorder(),
         suffixIcon: IconButton(

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
@@ -9,39 +7,42 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/entwurfs_sicherung.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/feld_stand.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 part 'wizard_state.dart';
 
+/// Was aus einer geänderten Feldeinstellung wurde: ob sie am Bestand ankam,
+/// und welcher erfasste Wert dabei der Vorbelegung gewichen ist (`null` =
+/// keiner). Die Meldung im Ausfüllschritt bietet ihn zum Zurückholen an.
+typedef FeldAenderung = ({bool gespeichert, String? verdraengterWert});
+
 @injectable
 class WizardCubit extends Cubit<WizardState> {
   final UseCase<FormTemplate, UpdateFormTemplateParams> _updateFormTemplate;
   final UseCase<List<Mandant>, NoParams> _getMandanten;
 
-  /// Ablage des Entwurfs. Der app-weite Speicher statt des Repositorys direkt:
-  /// Sonst hielte seine Liste weiter den Vorgang **ohne** den gerade
-  /// gesicherten Stand, und der nächste Einstieg böte einen veralteten an.
+  /// Der app-weite Vorgangsspeicher — hier nur noch, um einen verworfenen
+  /// Entwurf auch am Vorgang wegzuräumen.
   final VorgangCubit _vorgaenge;
 
-  Timer? _sicherung;
-
-  /// Ob der aktuelle Stand bereits **bestätigt** ist (ein Dokument daraus
-  /// erzeugt). Dann wird nichts mehr als Entwurf abgelegt: Der Rückfluss hat
-  /// ihn im selben Atemzug am Vorgang gelöscht, und eine Sicherung danach
-  /// brächte ihn als Angebot zurück, das nichts Neues enthält. Jede weitere
-  /// Eingabe hebt die Marke wieder auf.
-  bool _standIstBestaetigt = false;
+  /// Ablage des angefangenen Stands; hält Zeitgeber und Bestätigt-Marke.
+  final EntwurfsSicherung _entwurf;
 
   /// Wie lange nach der letzten Änderung gewartet wird, bevor der Entwurf zum
-  /// Dienst geht. Das Formular meldet seinen Tippstand bereits entprellt; hier
-  /// bündelt der Takt zusätzlich die Schadenspositionen, die bei jedem Zeichen
-  /// melden.
-  static const entwurfVerzoegerung = Duration(seconds: 2);
+  /// Dienst geht — die Zusage, an der sich Aufrufer und Tests ausrichten.
+  static const entwurfVerzoegerung = EntwurfsSicherung.verzoegerung;
 
-  WizardCubit(this._updateFormTemplate, this._getMandanten, this._vorgaenge)
-    : super(const WizardState());
+  WizardCubit(
+    this._updateFormTemplate,
+    this._getMandanten,
+    VorgangCubit vorgaenge,
+  ) : _vorgaenge = vorgaenge,
+      _entwurf = EntwurfsSicherung(vorgaenge),
+      super(const WizardState());
 
   /// Wählt den Vorgang, aus dem das Schreiben erstellt wird. Die Auswahl wird
   /// sofort übernommen (die Vorbelegung reagiert), der verknüpfte Mandant aus
@@ -59,7 +60,7 @@ class WizardCubit extends Cubit<WizardState> {
   /// des neuen. Ein am neuen Vorgang liegender Entwurf wird **angeboten**
   /// ([WizardState.entwurfAngebot]), nicht eingesetzt.
   Future<void> selectVorgang(Vorgang? vorgang) async {
-    _sicherung?.cancel();
+    _entwurf.beende();
     emit(
       state.copyWith(
         selectedVorgang: () => vorgang,
@@ -126,7 +127,7 @@ class WizardCubit extends Cubit<WizardState> {
         !Vorgang.gleicheReferenz(aktuell.referenz, vorgang.referenz)) {
       return;
     }
-    _standIstBestaetigt = true;
+    _entwurf.markiereBestaetigt();
     emit(state.copyWith(selectedVorgang: () => vorgang));
   }
 
@@ -254,33 +255,18 @@ class WizardCubit extends Cubit<WizardState> {
     _planeSicherung();
   }
 
-  /// Legt den angefangenen Stand sofort am Vorgang ab. Ohne gewählten Vorgang
-  /// fehlt der Ablageort — freie Erfassung hält keinen Entwurf (bewusste
-  /// Abgrenzung des ersten Wurfs).
-  void sichereEntwurfJetzt() {
-    _sicherung?.cancel();
-    final referenz = state.selectedVorgang?.referenz;
-    final werte = state.formDataEntwurf;
-    if (referenz == null || werte == null || _standIstBestaetigt) return;
+  /// Legt den angefangenen Stand sofort am Vorgang ab (Einzelheiten und
+  /// Abbruchgründe in [EntwurfsSicherung.jetzt]).
+  void sichereEntwurfJetzt() => _entwurf.jetzt(
+    referenz: state.selectedVorgang?.referenz,
+    werte: state.formDataEntwurf,
+    aufstellung: state.damageListing,
+  );
 
-    final entwurf = VorgangEntwurf(
-      gespeichertAm: DateTime.now(),
-      feldWerte: werte,
-      schadensaufstellung: state.damageListing,
-    );
-    if (entwurf.istLeer) return;
-    _vorgaenge.sichereEntwurf(referenz, entwurf);
-  }
-
-  void _planeSicherung() {
-    _standIstBestaetigt = false;
-    _sicherung?.cancel();
-    // Ohne Vorgang gibt es keinen Ablageort — dann braucht es auch keinen Takt.
-    // (Und kein Widget-Test der freien Erfassung endet mit einem laufenden
-    // Zeitgeber, den er nicht bestellt hat.)
-    if (state.selectedVorgang == null) return;
-    _sicherung = Timer(entwurfVerzoegerung, sichereEntwurfJetzt);
-  }
+  void _planeSicherung() => _entwurf.plane(
+    sichereEntwurfJetzt,
+    hatVorgang: state.selectedVorgang != null,
+  );
 
   /// Speichert eine im **Ausfüllschritt** geänderte Feldeinstellung direkt an
   /// der Vorlage. Das ist der Griff, der #37 den Auslöser nimmt: Wer bloß ein
@@ -288,17 +274,20 @@ class WizardCubit extends Cubit<WizardState> {
   /// Seite nicht mehr verlassen — und verliert also nicht, was er bis dahin
   /// eingetippt hat.
   ///
-  /// Der erfasste Wert zieht mit: [WizardState.formData] und
-  /// [WizardState.formDataEntwurf] sind nach Feldnamen geschlüsselt, ein
-  /// umbenanntes Feld fände seinen Wert sonst nur unter einem Namen, den die
-  /// Vorlage nicht mehr kennt — derselbe Verlust wie im Ausgangsfall, eine
-  /// Ebene tiefer.
+  /// Bei einer **Umbenennung** zieht der erfasste Wert mit: [WizardState.formData]
+  /// und [WizardState.formDataEntwurf] sind nach Feldnamen geschlüsselt, das
+  /// Feld fände seinen Wert sonst nur unter einem Namen, den die Vorlage nicht
+  /// mehr kennt — derselbe Verlust wie im Ausgangsfall, eine Ebene tiefer.
   ///
-  /// Gibt `true` zurück, wenn gespeichert wurde. Nur dann lohnt das Neuladen
-  /// der Vorlagenliste — und nur dann ist die Änderung wirklich am Bestand.
-  Future<bool> aktualisiereFeld(FieldData alt, FieldData neu) async {
+  /// Wurde die **Datenquelle** geändert und liefert die neue zum gewählten
+  /// Vorgang wirklich etwas, weicht der erfasste Wert dieser Vorbelegung: Wer
+  /// sagt „dieses Feld kommt von dort", meint den Wert von dort. Er kommt als
+  /// [FeldAenderung.verdraengterWert] zurück, damit die Meldung ihn anbieten
+  /// kann — verloren geht hier nichts still.
+  Future<FeldAenderung> aktualisiereFeld(FieldData alt, FieldData neu) async {
+    const gescheitert = (gespeichert: false, verdraengterWert: null);
     final template = state.selectedFormTemplate;
-    if (template == null) return false;
+    if (template == null) return gescheitert;
 
     final felder = [
       for (final feld in template.fields) feld.label == alt.label ? neu : feld,
@@ -306,40 +295,56 @@ class WizardCubit extends Cubit<WizardState> {
     final result = await _updateFormTemplate(
       UpdateFormTemplateParams(template.copyWith(fields: felder)),
     );
-    if (isClosed) return false;
+    if (isClosed) return gescheitert;
     switch (result) {
       case Right(value: final gespeichert):
+        final weicht = FeldStand.weichtDerVorbelegung(
+          alt,
+          neu,
+          vorgang: state.selectedVorgang,
+          mandant: state.selectedMandant,
+        );
+        final stand = FeldStand.nachAenderung(
+          formData: state.formData,
+          formDataEntwurf: state.formDataEntwurf,
+          alt: alt,
+          neu: neu,
+          weicht: weicht,
+        );
         emit(
           state.copyWith(
             selectedFormTemplate: () => gespeichert,
-            formData: () => _umgeschluesselt(state.formData, alt, neu),
-            formDataEntwurf: () =>
-                _umgeschluesselt(state.formDataEntwurf, alt, neu),
+            formData: () => stand.formData,
+            formDataEntwurf: () => stand.formDataEntwurf,
+            // Ohne die Marke bliebe die FormGroup womöglich stehen: Setzt der
+            // Anwalt die Quelle auf das, was die Namens-Heuristik ohnehin
+            // erkannt hatte, ist die Vorbelegung Zeichen für Zeichen dieselbe
+            // — und nur sie steht im Schlüssel, der erfasste Stand nicht.
+            aufbauMarke: weicht ? state.aufbauMarke + 1 : state.aufbauMarke,
           ),
         );
-        return true;
+        return (gespeichert: true, verdraengterWert: stand.verdraengterWert);
       case Left():
-        return false;
+        return gescheitert;
     }
   }
 
-  /// Trägt den erfassten Wert von [alt] auf den Namen von [neu] um.
+  /// Holt einen Wert zurück, den [aktualisiereFeld] der Vorbelegung überlassen
+  /// hat („Alten Wert zurückholen" an der Meldung).
   ///
-  /// Ein **leerer** Wert fällt dabei weg, statt umgeschlüsselt zu werden: Er
-  /// hat nichts zu bewahren, schlüge aber die Vorbelegung. Der Beobachter
-  /// meldet auch leere Felder mit, und im Formular gewinnt der erfasste Stand
-  /// über die Vorbelegung — wer im Dialog gerade eine Datenquelle gesetzt hat,
-  /// sähe ihren Wert deshalb nie.
-  static Map<String, String>? _umgeschluesselt(
-    Map<String, String>? stand,
-    FieldData alt,
-    FieldData neu,
-  ) {
-    if (stand == null) return null;
-    final wert = stand[alt.label];
-    final umgetragen = Map<String, String>.of(stand)..remove(alt.label);
-    if (wert != null && wert.trim().isNotEmpty) umgetragen[neu.label] = wert;
-    return umgetragen;
+  /// Zurückgeholt wird der **Wert**, nicht die Feldeinstellung: Die neue
+  /// Datenquelle bleibt an der Vorlage stehen. Beides zusammen zurückzudrehen
+  /// hieße, eine gespeicherte Vorlagenänderung an einer Meldung aufzuhängen,
+  /// die nach ein paar Sekunden von selbst verschwindet.
+  void stelleFeldWertWiederHer(String label, String wert) {
+    emit(
+      state.copyWith(
+        formDataEntwurf: () => {...?state.formDataEntwurf, label: wert},
+        // Der erfasste Stand steht bewusst nicht im Schlüssel der FormGroup —
+        // ohne die Marke sähe der Anwalt auf seinen Klick hin nichts geschehen.
+        aufbauMarke: state.aufbauMarke + 1,
+      ),
+    );
   }
 
   /// Hinterlegt die manuell gewählte Word-Datei dauerhaft am **aktiven Slot**
@@ -377,7 +382,7 @@ class WizardCubit extends Cubit<WizardState> {
   @override
   Future<void> close() {
     sichereEntwurfJetzt();
-    _sicherung?.cancel();
+    _entwurf.beende();
     return super.close();
   }
 }

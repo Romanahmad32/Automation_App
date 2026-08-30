@@ -199,6 +199,7 @@ class FormTemplateBuilder extends StatelessWidget {
           formControlName: field.label,
           labelText: field.label,
           helperText: _helperText(field),
+          helperMaxLines: _helperZeilen,
           validationMessages: validationMessages,
         );
       case InputType.integer:
@@ -232,8 +233,18 @@ class FormTemplateBuilder extends StatelessWidget {
     }
   }
 
-  InputDecoration _decoration(FieldData field) =>
-      InputDecoration(helperText: _helperText(field));
+  InputDecoration _decoration(FieldData field) => InputDecoration(
+    helperText: _helperText(field),
+    helperMaxLines: _helperZeilen,
+  );
+
+  /// Die Hinweiszeile darf umbrechen. Das Formular steht in der 450 px breiten
+  /// Spalte des Ausfüllschritts, und der Stift nimmt ihr noch einmal rund 48 px
+  /// ab: „* Pflichtfeld · Vorbelegt aus dem letzten Schreiben" passt dort in
+  /// keine Zeile. Mit der Material-Vorgabe (eine Zeile) wurde daraus ein „…",
+  /// und der Anwalt sah nicht mehr, welchem Bestand er gerade vertraut — genau
+  /// das, wofür die Zeile da ist.
+  static const _helperZeilen = 2;
 
   /// Hinweiszeile unter dem Feld: Pflichtfeld-Markierung und — falls das Feld
   /// vorbelegt wurde — die Herkunft des Werts.
