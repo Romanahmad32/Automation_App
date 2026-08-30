@@ -29,12 +29,28 @@ class SynchronisierterOrdner {
   /// Der Vorschlag für den Ablageordner, oder null, wenn kein
   /// synchronisierter Ordner erkennbar ist. Der Ordner wird **nicht** angelegt
   /// — das tut erst das Backend beim ersten Schreiben.
-  static String? vorschlag([Map<String, String>? umgebung]) {
+  ///
+  /// Bewusst asynchron. Die Umgebungsvariable steht sofort zur Verfügung, der
+  /// Ordner dahinter nicht immer: Zeigt sie auf einen OneDrive-Bereich, der
+  /// gerade getrennt ist oder auf „Dateien bei Bedarf" steht, braucht schon das
+  /// blosse Nachsehen spürbar Zeit. Auf dem Zeichen-Thread hiesse das ein
+  /// eingefrorenes Einstellungsformular.
+  ///
+  /// [umgebung] und [existiert] sind da, damit der Test denselben Weg fährt,
+  /// der auch ausgeliefert wird. Vorher hing die Existenzprüfung daran, dass
+  /// *keine* Umgebung übergeben wurde — die Tests liefen also durch einen
+  /// Zweig, den es im Betrieb nie gibt, und der Betriebszweig war ungeprüft.
+  static Future<String?> suche({
+    Map<String, String>? umgebung,
+    Future<bool> Function(String pfad)? existiert,
+  }) async {
     final werte = umgebung ?? Platform.environment;
+    final pruefe = existiert ?? (pfad) => Directory(pfad).exists();
+
     for (final name in umgebungsvariablen) {
       final pfad = (werte[name] ?? '').trim();
       if (pfad.isEmpty) continue;
-      if (umgebung == null && !Directory(pfad).existsSync()) continue;
+      if (!await pruefe(pfad)) continue;
       return '$pfad${Platform.pathSeparator}$unterordner';
     }
     return null;
