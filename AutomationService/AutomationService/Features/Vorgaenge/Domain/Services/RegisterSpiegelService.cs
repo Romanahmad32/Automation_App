@@ -31,6 +31,56 @@ public sealed class RegisterSpiegelService(
 {
     public async Task<RegisterSpiegelErgebnis> StandAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            return await StandInternAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Unerwartet(ex);
+        }
+    }
+
+    public async Task<RegisterSpiegelErgebnis> SchreibeAsync(
+        bool erzwingen = false,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await SchreibeInternAsync(erzwingen, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return Unerwartet(ex);
+        }
+    }
+
+    /// <summary>
+    /// Das Netz unter beiden Wegen. Der Controller sichert zu, dass er immer
+    /// mit 200 und einem Ergebnis antwortet — ohne dieses Netz gilt das nur für
+    /// die Fehlschläge, an die beim Schreiben gedacht wurde.
+    ///
+    /// Daneben gibt es genug andere: ein Ablageordner, den jemand über
+    /// <c>PUT api/Settings/kanzlei</c> auf einen unmöglichen Pfad gestellt hat,
+    /// eine Merkdatei, die als halbe JSON auf der Platte liegt, alles, was
+    /// Xceed beim Bauen der .docx werfen kann. Die kämen als 500 an, und die
+    /// Oberfläche zeigte statt eines Satzes einen Verbindungsfehler — obwohl
+    /// der Dienst läuft und die Lage behebbar ist.
+    ///
+    /// <see cref="OperationCanceledException"/> bleibt ausgenommen: Ein
+    /// abgebrochener Aufruf ist kein Ergebnis, das jemand lesen will.
+    /// </summary>
+    RegisterSpiegelErgebnis Unerwartet(Exception ex)
+    {
+        logger.LogError(ex, "Register-Spiegel: unerwarteter Fehlschlag.");
+        return RegisterSpiegelErgebnis.Gescheitert(
+            $"Der Register-Spiegel ist unerwartet gescheitert: {ex.Message}",
+            zeilen: 0,
+            zuletzt: null);
+    }
+
+    async Task<RegisterSpiegelErgebnis> StandInternAsync(CancellationToken cancellationToken)
+    {
         var (einstellungen, zeilen) = await LadeAsync(cancellationToken);
         var letzter = stand.Lesen();
         if (string.IsNullOrWhiteSpace(einstellungen.RegisterAblageOrdner))
@@ -59,9 +109,9 @@ public sealed class RegisterSpiegelService(
             Konfliktkopien: ablage.Konfliktkopien());
     }
 
-    public async Task<RegisterSpiegelErgebnis> SchreibeAsync(
-        bool erzwingen = false,
-        CancellationToken cancellationToken = default)
+    async Task<RegisterSpiegelErgebnis> SchreibeInternAsync(
+        bool erzwingen,
+        CancellationToken cancellationToken)
     {
         var (einstellungen, zeilen) = await LadeAsync(cancellationToken);
         var letzter = stand.Lesen();
