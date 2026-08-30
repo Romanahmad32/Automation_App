@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Text.Json;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
 
@@ -48,6 +49,21 @@ public static class RegisterZeilenBau
 
         return zeilen;
     }
+
+    /// <summary>
+    /// Derselbe Filter wie in <see cref="Aus"/>, aber als Ausdruck — damit die
+    /// Datenbank die Zeilen <em>zählen</em> kann, statt sie erst alle zu laden
+    /// und bauen zu lassen. Genutzt von <c>StandAsync</c>, das beim Öffnen der
+    /// Registerseite nur die Anzahl braucht.
+    ///
+    /// Steht hier und nicht im Dienst, weil „welche Zeile kommt in die Datei"
+    /// eine fachliche Regel ist und es sie nur einmal geben darf. Dass beide
+    /// Wege dasselbe zählen, hält <c>RegisterSpiegelZeilenzahlTests</c> fest.
+    /// </summary>
+    public static Expression<Func<VorgangEntity, bool>> Dateifilter(bool nurAbgeschlossene) =>
+        nurAbgeschlossene
+            ? v => v.Status == VorgangAbschlussService.StatusVersendet
+            : _ => true;
 
     /// <summary>Muss zum Statuswert des Frontends passen (VorgangStatus.versendet).</summary>
     static bool IstAbgeschlossen(VorgangEntity v) =>

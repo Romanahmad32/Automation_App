@@ -29,6 +29,14 @@ public sealed class RegisterSpiegelService(
     RegisterSpiegelBauordner bauordner,
     ILogger<RegisterSpiegelService> logger) : IRegisterSpiegelService
 {
+    /// <summary>
+    /// Alles rund um die PDF-Fassung — erzeugen, ablegen, die veraltete
+    /// wegräumen. Steht in einer eigenen Klasse, weil daran eine eigene
+    /// Zusicherung hängt: .docx und .pdf im Ablageordner dürfen nie
+    /// Verschiedenes sagen.
+    /// </summary>
+    readonly RegisterSpiegelPdfAblage pdfAblage = new(pdf, logger);
+
     public async Task<RegisterSpiegelErgebnis> StandAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -81,10 +89,10 @@ public sealed class RegisterSpiegelService(
 
     async Task<RegisterSpiegelErgebnis> StandInternAsync(CancellationToken cancellationToken)
     {
-        var (einstellungen, zeilen) = await LadeAsync(cancellationToken);
+        var (einstellungen, zeilen) = await UeberblickAsync(cancellationToken);
         var letzter = stand.Lesen();
         if (string.IsNullOrWhiteSpace(einstellungen.RegisterAblageOrdner))
-            return RegisterSpiegelErgebnis.Uebersprungen(KeinOrdner, zeilen.Count, letzter?.GeschriebenAm);
+            return RegisterSpiegelErgebnis.Uebersprungen(KeinOrdner, zeilen, letzter?.GeschriebenAm);
 
         var ablage = AblageFuer(einstellungen);
 
@@ -94,7 +102,7 @@ public sealed class RegisterSpiegelService(
         if (FremdeZieldatei(letzter, ablage))
         {
             return RegisterSpiegelErgebnis.Gescheitert(
-                FremdeDatei(ablage), zeilen.Count, letzter?.GeschriebenAm, ablage.Konfliktkopien());
+                FremdeDatei(ablage), zeilen, letzter?.GeschriebenAm, ablage.Konfliktkopien());
         }
 
         return new RegisterSpiegelErgebnis(
@@ -104,7 +112,7 @@ public sealed class RegisterSpiegelService(
             DocxPfad: File.Exists(ablage.Docx) ? ablage.Docx : null,
             PdfPfad: File.Exists(ablage.Pdf) ? ablage.Pdf : null,
             PdfFehler: null,
-            Zeilen: zeilen.Count,
+            Zeilen: zeilen,
             GeschriebenAm: letzter?.GeschriebenAm,
             Konfliktkopien: ablage.Konfliktkopien());
     }
@@ -228,12 +236,12 @@ public sealed class RegisterSpiegelService(
 
             // Erst wandeln, dann umziehen: Was scheitert, scheitert damit,
             // bevor der Ablageordner angefasst wird.
-            var pdfFehler = await PdfSchreibenAsync(bauDocx, bauPdf, cancellationToken);
+            var pdfFehler = await pdfAblage.ErzeugeAsync(bauDocx, bauPdf, cancellationToken);
 
             AtomareAblage.Ersetze(bauDocx, ablage.Docx);
             AtomareAblage.SchreibschutzSetzen(ablage.Docx);
 
-            pdfFehler = PdfAblegen(ablage, bauPdf, pdfFehler, letzter);
+            pdfFehler = pdfAblage.Ablegen(ablage, bauPdf, pdfFehler, letzter);
             var pdfPfad = pdfFehler is null ? ablage.Pdf : null;
 
             stand.Schreiben(new RegisterSpiegelStand.Eintrag(
@@ -259,105 +267,12 @@ public sealed class RegisterSpiegelService(
     }
 
     /// <summary>
-    /// Legt die PDF-Fassung ab — oder räumt die alte weg, wenn keine entstand.
-    ///
-    /// Das Wegräumen ist der eigentliche Punkt. Ein PDF von gestern neben einer
-    /// .docx von heute ist schlimmer als gar keins: Es sieht vollständig aus,
-    /// sagt aber etwas anderes als die verbindliche Fassung daneben — und
-    /// unterwegs liest man das PDF, nicht die .docx. Bliebe es liegen, hielte
-    /// der Stand den Lauf zudem für erledigt, und der Spiegel käme aus diesem
-    /// Zustand nie wieder heraus.
+    /// Der volle Bestand — für das Schreiben, das jede Zeile braucht.
     /// </summary>
-    /// <returns>Der Grund, warum kein PDF liegt, oder null.</returns>
-    string? PdfAblegen(
-        RegisterSpiegelAblage ablage,
-        string bauPdf,
-        string? pdfFehler,
-        RegisterSpiegelStand.Eintrag? letzter)
-    {
-        if (pdfFehler is not null)
-        {
-            VeraltetesPdfWegraeumen(ablage, letzter);
-            return pdfFehler;
-        }
-
-        try
-        {
-            AtomareAblage.Ersetze(bauPdf, ablage.Pdf);
-            AtomareAblage.SchreibschutzSetzen(ablage.Pdf);
-            return null;
-        }
-        catch (Exception ex)
-            when (ex is ZieldateiGesperrtException or IOException or UnauthorizedAccessException)
-        {
-            // Die .docx liegt zu diesem Zeitpunkt schon richtig. Den ganzen
-            // Lauf als gescheitert zu melden hiesse, etwas anderes zu sagen,
-            // als auf der Platte steht — gemeldet wird deshalb genau das, was
-            // fehlt.
-            logger.LogWarning(ex, "Register-Spiegel: PDF-Fassung konnte nicht abgelegt werden.");
-            VeraltetesPdfWegraeumen(ablage, letzter);
-            return $"Die PDF-Fassung konnte nicht abgelegt werden ({ex.Message}). "
-                   + "Die Word-Datei ist geschrieben.";
-        }
-    }
-
-    /// <summary>
-    /// Entfernt die PDF-Fassung des vorigen Laufs. Angefasst wird nur, was der
-    /// Spiegel selbst dort abgelegt hat — der Stand führt dasselbe Ziel und
-    /// weiß, dass damals ein PDF entstand. Alles andere im Ordner geht ihn
-    /// nichts an.
-    /// </summary>
-    static void VeraltetesPdfWegraeumen(RegisterSpiegelAblage ablage, RegisterSpiegelStand.Eintrag? letzter)
-    {
-        if (letzter is null
-            || !letzter.PdfGeschrieben
-            || !string.Equals(letzter.Ziel, ablage.Docx, StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        AtomareAblage.SchreibschutzLoesen(ablage.Pdf);
-        try
-        {
-            if (File.Exists(ablage.Pdf)) File.Delete(ablage.Pdf);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Bleibt es liegen, sieht der nächste Lauf den Ordner als verändert
-            // an und schreibt neu — besser, als deswegen den bereits
-            // geschriebenen Spiegel zu verwerfen.
-        }
-    }
-
-    /// <summary>
-    /// Wandelt die .docx und legt das Ergebnis im Bauordner ab. Gibt den Grund
-    /// zurück, wenn es nicht ging — auf einem Rechner ohne Word ist das
-    /// erwartbar und kein Fehlschlag des Spiegels: Die .docx ist die
-    /// verbindliche Fassung, das PDF die bequeme.
-    /// </summary>
-    async Task<string?> PdfSchreibenAsync(string bauDocx, string bauPdf, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var bytes = await pdf.ConvertDocxToPdfAsync(bauDocx);
-            await File.WriteAllBytesAsync(bauPdf, bytes, cancellationToken);
-            return null;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            logger.LogWarning(ex, "Register-Spiegel: PDF-Fassung konnte nicht erzeugt werden.");
-            return "Die PDF-Fassung konnte nicht erzeugt werden "
-                   + $"({ex.Message}). Die Word-Datei ist geschrieben.";
-        }
-    }
-
     async Task<(KanzleiSettingsEntity Einstellungen, IReadOnlyList<RegisterZeile> Zeilen)> LadeAsync(
         CancellationToken cancellationToken)
     {
-        var einstellungen = await db.KanzleiSettings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == KanzleiSettingsEntity.SingletonId, cancellationToken)
-            ?? KanzleiSettingsRepository.CreateDefault();
+        var einstellungen = await EinstellungenAsync(cancellationToken);
 
         var vorgaenge = await db.Vorgaenge.AsNoTracking().ToListAsync(cancellationToken);
         var zeilen = RegisterZeilenBau.Aus(
@@ -366,6 +281,38 @@ public sealed class RegisterSpiegelService(
 
         return (einstellungen, zeilen);
     }
+
+    /// <summary>
+    /// Nur die Anzahl — für <see cref="StandAsync"/>, das beim Öffnen der
+    /// Registerseite läuft und keine einzige Zeile anzeigt.
+    ///
+    /// Vorher lief auch dieser Weg über <see cref="LadeAsync"/>: jeder Vorgang
+    /// aus der Datenbank in den Speicher, jede Zeile gebaut (samt Parsen des
+    /// AntwortJson) und sortiert — um am Ende <c>.Count</c> zu lesen. Bei den
+    /// rund 4000 Akten, um die es in diesem Register geht, ist das der
+    /// Unterschied zwischen einem Tabwechsel und einer Gedenksekunde, und zwar
+    /// bei jedem Öffnen.
+    /// </summary>
+    async Task<(KanzleiSettingsEntity Einstellungen, int Zeilen)> UeberblickAsync(
+        CancellationToken cancellationToken)
+    {
+        var einstellungen = await EinstellungenAsync(cancellationToken);
+
+        var zeilen = await db.Vorgaenge
+            .AsNoTracking()
+            .CountAsync(
+                RegisterZeilenBau.Dateifilter(
+                    RegisterSpiegelVorgabe.NurAbgeschlossene(einstellungen.RegisterExportFilter)),
+                cancellationToken);
+
+        return (einstellungen, zeilen);
+    }
+
+    async Task<KanzleiSettingsEntity> EinstellungenAsync(CancellationToken cancellationToken) =>
+        await db.KanzleiSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == KanzleiSettingsEntity.SingletonId, cancellationToken)
+        ?? KanzleiSettingsRepository.CreateDefault();
 
     static RegisterSpiegelAblage AblageFuer(KanzleiSettingsEntity einstellungen) =>
         new(einstellungen.RegisterAblageOrdner.Trim(), einstellungen.RegisterDateiname);
