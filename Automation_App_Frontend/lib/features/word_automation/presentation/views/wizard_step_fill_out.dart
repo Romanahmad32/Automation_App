@@ -2,19 +2,14 @@ import 'dart:io';
 
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/template_selector.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
-import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
-import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
-import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
-import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/ausfuell_formular.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/generation_overlay.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/pdf_preview_view.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgang_selector.dart';
-import 'package:automation_app/features/word_automation/presentation/widgets/vorgangsdaten_hinweis.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/wizard_options_card.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/word_file_row.dart';
 import 'package:flutter/material.dart';
@@ -151,100 +146,9 @@ class WizardStepFillOut extends StatelessWidget {
                         WordFileRow(loadedPath: loadedPath),
                         const SizedBox(height: 16),
                         if (loadedPath != null)
-                          // Daten des gewählten Vorgangs (Mandant + Antwort +
-                          // Rechtsgebiet) auf die Vorlagenfelder mappen und
-                          // sichtbar vorbelegen (§3 → §4.4). Ohne gewählten
-                          // Vorgang bleibt die Erfassung frei.
-                          Builder(
-                            builder: (context) {
-                              final vorgang = wizardState.selectedVorgang;
-                              final herkunft = vorgang == null
-                                  ? const <String, PrefillWert>{}
-                                  : VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
-                                      selectedTemplate.fields,
-                                      vorgang,
-                                      mandant: wizardState.selectedMandant,
-                                    );
-                              final prefill = herkunft.map(
-                                (label, wert) => MapEntry(label, wert.wert),
-                              );
-                              final quellen = herkunft.map(
-                                (label, wert) =>
-                                    MapEntry(label, wert.quelle.beschreibung),
-                              );
-                              final anzahlGespeichert = herkunft.values
-                                  .where(
-                                    (wert) =>
-                                        wert.quelle ==
-                                        PrefillQuelle.gespeichert,
-                                  )
-                                  .length;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  if (prefill.isNotEmpty)
-                                    VorgangsdatenHinweis(
-                                      anzahlFelder: prefill.length,
-                                      anzahlGespeichert: anzahlGespeichert,
-                                    ),
-                                  FormTemplateBuilder(
-                                    formTemplate: selectedTemplate,
-                                    initialValues: prefill,
-                                    initialValueQuellen: quellen,
-                                    submitButtonLabel: Text(
-                                      wizardState.mitAuflistung
-                                          ? 'Weiter zur Schadensaufstellung'
-                                          : 'Dokument erstellen',
-                                    ),
-                                    onSubmitted: (formData) async {
-                                      final cubit = context.read<WizardCubit>();
-                                      final bloc = context
-                                          .read<EditedDocumentBloc>();
-                                      cubit.setFormData(formData);
-                                      if (cubit.state.mitAuflistung) {
-                                        // Generierung erst am Ende des
-                                        // Schadensaufstellungs-Schritts.
-                                        cubit.goToStep(
-                                          WizardStep.schadensaufstellung,
-                                        );
-                                      } else {
-                                        // Erzeugen ueberschreibt die vorige
-                                        // Fassung — bei Handarbeit in Word
-                                        // vorher fragen.
-                                        if (!await darfNeuErzeugen(
-                                          context,
-                                          bloc.state,
-                                        )) {
-                                          return;
-                                        }
-                                        final datum = ursachendatumAusFormular(
-                                          selectedTemplate.fields,
-                                          formData,
-                                        );
-                                        bloc.add(
-                                          EditDocumentEvent(
-                                            data: formData,
-                                            damageListing: null,
-                                            path: loadedPath,
-                                            vorsteuerabzugsberechtigt: cubit
-                                                .state
-                                                .vorsteuerabzugsberechtigt,
-                                            outputFileName: baueDateiname(
-                                              loadedPath,
-                                              datum,
-                                            ),
-                                            vorgangSchluessel: cubit
-                                                .state
-                                                .selectedVorgang
-                                                ?.referenz,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
+                          AusfuellFormular(
+                            template: selectedTemplate,
+                            wordDateiPfad: loadedPath,
                           ),
                       ] else
                         const Padding(

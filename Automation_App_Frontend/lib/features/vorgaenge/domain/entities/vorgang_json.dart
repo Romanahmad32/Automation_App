@@ -1,5 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
@@ -11,6 +12,7 @@ Vorgang vorgangAusJson(Map<String, dynamic> json) {
   final antwortJson = json['antwort'];
   final feldWerteJson = json['feldWerte'];
   final aufstellungJson = json['schadensaufstellung'];
+  final entwurfJson = json['entwurf'];
   return Vorgang(
     referenz: json['referenz'] as String? ?? '',
     angefragtAm:
@@ -42,6 +44,9 @@ Vorgang vorgangAusJson(Map<String, dynamic> json) {
     schadensaufstellung: aufstellungJson is Map<String, dynamic>
         ? DamageListing.fromJson(aufstellungJson)
         : null,
+    entwurf: entwurfJson is Map<String, dynamic>
+        ? VorgangEntwurf.fromJson(entwurfJson)
+        : null,
     dokumentPfad: json['dokumentPfad'] as String?,
     aktenOrdner: json['aktenOrdner'] as String?,
     abgeschlossenAm: DateTime.tryParse(
@@ -71,6 +76,7 @@ extension VorgangAlsJson on Vorgang {
     'antwort': antwort?.toJson(),
     'feldWerte': feldWerte,
     'schadensaufstellung': schadensaufstellung?.toJson(),
+    'entwurf': entwurf?.toJson(),
     'dokumentPfad': dokumentPfad,
     'aktenOrdner': aktenOrdner,
     'abgeschlossenAm': abgeschlossenAm?.toIso8601String(),

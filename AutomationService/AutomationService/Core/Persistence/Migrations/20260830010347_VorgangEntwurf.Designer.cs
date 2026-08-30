@@ -3,6 +3,7 @@ using System;
 using AutomationService.Core.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutomationService.Core.Persistence.Migrations
 {
     [DbContext(typeof(AutomationDbContext))]
-    partial class AutomationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260830010347_VorgangEntwurf")]
+    partial class VorgangEntwurf
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
@@ -271,27 +274,6 @@ namespace AutomationService.Core.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("KanzleiSettings");
-                });
-
-            modelBuilder.Entity("AutomationService.Features.Settings.Domain.Persistence.StandardSchadenspositionEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("Betrag")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Bezeichnung")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Reihenfolge")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StandardSchadenspositionen");
                 });
 
             modelBuilder.Entity("AutomationService.Features.Versicherer.Domain.Persistence.VersichererEntity", b =>

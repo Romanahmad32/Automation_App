@@ -29,6 +29,17 @@
     und smoke-test.ps1). Die gehoeren in die CI und ins Release, nicht in die
     Schleife waehrend der Arbeit.
 
+    Die Schalter spannen zwei Achsen auf, die sich kombinieren lassen:
+
+        WO    -NurFrontend / -NurBackend   welcher Teilbaum
+        TIEFE -Regeln                      nur die Regeln, nicht das Verhalten
+
+    Sie sind unabhaengig voneinander. `-NurFrontend` ist ausdruecklich *nicht*
+    die schnelle Stufe — er faehrt alle Frontend-Schritte samt Codegenerierung
+    und voller Testsuite und kostet drei bis vier Minuten. Wer waehrend der
+    Arbeit eine Rueckmeldung in unter einer Minute will, nimmt
+    `-Regeln -NurFrontend`.
+
 .PARAMETER Beheben
     Laesst die Formatierer vor ihrer jeweiligen Pruefung *schreibend* laufen.
     Die Formatierung ist der einzige Schritt der Kette, dessen Fehler das
@@ -42,18 +53,37 @@
     Frontend und Backend nebeneinander, Ausgabe je Seite gesammelt. Lohnt erst
     ab deutlich mehr als vier Kernen (siehe oben).
 
+.PARAMETER Regeln
+    Faehrt nur, was die **Regeln** prueft — die Tabelle "Diese Regeln sind
+    ausfuehrbar" aus CLAUDE.md: Dateilaenge, private Typen, Benennung,
+    Schichten, Namespace, HTTP-Vertrag, Doku, Anforderungsverweise,
+    Formatierung. Dazu `flutter analyze`, denn Lints sind dieselbe Sorte Regel
+    und der billigste Fehlerfaenger ueberhaupt.
+
+    Weggelassen wird, was *Verhalten* prueft: die Codegenerierung (15 bis 105 s)
+    samt der Pruefung ihres Stands, und die Fachtests beider Seiten. Der
+    Backend-Build bleibt drin — er traegt EnforceCodeStyleInBuild und
+    TreatWarningsAsErrors, ist also selbst Regeldurchsetzung, und die
+    Architektur-Tests brauchen ihn ohnehin.
+
+    Gedacht fuer die Schleife waehrend der Arbeit, nicht als Tor vor dem PR:
+    Was hier gruen ist, kann in den Fachtests noch fallen.
+
 .EXAMPLE
     ./scripts/check.ps1
     ./scripts/check.ps1 -Beheben
     ./scripts/check.ps1 -NurFrontend
     ./scripts/check.ps1 -Gleichzeitig
+    ./scripts/check.ps1 -Regeln                  # Regeln beider Seiten
+    ./scripts/check.ps1 -Regeln -NurFrontend     # nur die Dart-Regeln
 #>
 [CmdletBinding()]
 param(
     [switch]$NurFrontend,
     [switch]$NurBackend,
     [switch]$Beheben,
-    [switch]$Gleichzeitig
+    [switch]$Gleichzeitig,
+    [switch]$Regeln
 )
 
 Set-StrictMode -Version Latest
@@ -259,9 +289,14 @@ if (-not $NurBackend) {
         @('diff', '--exit-code', '--', 'Automation_App_Frontend/pubspec.lock') `
         -Hilfe 'pub get hat pubspec.lock geaendert: die aufgeloeste Fassung mitcommitten, nicht zurueckwerfen.'
 
-    $frontendSchritte += New-Schritt 'Frontend: Codegenerierung' $frontend $dartBefehl `
-        @('run', 'build_runner', 'build') `
-        -Hilfe 'Fehler in einer Annotation oder in build.yaml — nicht in den generierten Dateien selbst.'
+    # Der teuerste Schritt der Kette und einer, der Verhalten herstellt statt
+    # Regeln zu pruefen — unter -Regeln faellt er weg, und mit ihm die Pruefung
+    # seines Ergebnisses weiter unten.
+    if (-not $Regeln) {
+        $frontendSchritte += New-Schritt 'Frontend: Codegenerierung' $frontend $dartBefehl `
+            @('run', 'build_runner', 'build') `
+            -Hilfe 'Fehler in einer Annotation oder in build.yaml — nicht in den generierten Dateien selbst.'
+    }
 
     # Vor der Pruefung des generierten Stands, nicht danach: `dart format lib`
     # schreibt auch injection.config.dart und app_router.gr.dart. Liefe es
@@ -277,11 +312,18 @@ if (-not $NurBackend) {
     # Die generierten Dateien sind versioniert. Weichen sie nach dem Lauf ab,
     # war der committete Stand veraltet: die Anwendung uebersetzt weiter und
     # bricht erst zur Laufzeit beim DI-Aufloesen oder beim Navigieren.
-    $frontendSchritte += New-Schritt 'Frontend: generierter Stand aktuell' $wurzel 'git' `
-        @('diff', '--exit-code', '--',
-          'Automation_App_Frontend/lib/core/di/injection.config.dart',
-          'Automation_App_Frontend/lib/core/router/app_router.gr.dart') `
-        -Hilfe 'build_runner hat die generierten Dateien geaendert: mit in denselben Commit nehmen.'
+    #
+    # Nur sinnvoll, wenn build_runner eben gelaufen ist. Ohne ihn (-Regeln)
+    # verglichen der Schritt den Arbeitsstand mit sich selbst und meldete
+    # lediglich, dass die Dateien noch nicht committet sind — ein Befund ueber
+    # den Zustand des Arbeitsverzeichnisses, nicht ueber den Code.
+    if (-not $Regeln) {
+        $frontendSchritte += New-Schritt 'Frontend: generierter Stand aktuell' $wurzel 'git' `
+            @('diff', '--exit-code', '--',
+              'Automation_App_Frontend/lib/core/di/injection.config.dart',
+              'Automation_App_Frontend/lib/core/router/app_router.gr.dart') `
+            -Hilfe 'build_runner hat die generierten Dateien geaendert: mit in denselben Commit nehmen.'
+    }
 
     $frontendSchritte += New-Schritt 'Frontend: Formatierung' $frontend $dartBefehl `
         @('format', '--output=none', '--set-exit-if-changed', 'lib', 'test') `
@@ -291,20 +333,62 @@ if (-not $NurBackend) {
     # oben. Ohne den Schalter holen beide es noch einmal nach.
     $frontendSchritte += New-Schritt 'Frontend: Analyse' $frontend $flutterBefehl @('analyze', '--no-pub')
 
-    $frontendSchritte += New-Schritt 'Frontend: Tests' $frontend $flutterBefehl `
-        @('test', '--no-pub', "--concurrency=$testNebenlaeufigkeit") `
-        -Hilfe 'Enthaelt die Architektur-Tests (Schichten, Dateilaenge, private Typen, HTTP-Vertrag).'
+    if ($Regeln) {
+        # Dieselben Tests, nur der Ordner statt der ganzen Suite: Alles unter
+        # test/architecture/ liest Quelltext und Doku und fuehrt nichts von der
+        # Anwendung aus — es prueft Regeln, nicht Verhalten.
+        $frontendSchritte += New-Schritt 'Frontend: Architektur-Tests' $frontend $flutterBefehl `
+            @('test', '--no-pub', "--concurrency=$testNebenlaeufigkeit", 'test/architecture') `
+            -Hilfe 'Schichten, Dateilaenge, private Typen, Benennung, HTTP-Vertrag, Doku, Anforderungsverweise.'
+    }
+    else {
+        $frontendSchritte += New-Schritt 'Frontend: Tests' $frontend $flutterBefehl `
+            @('test', '--no-pub', "--concurrency=$testNebenlaeufigkeit") `
+            -Hilfe 'Enthaelt die Architektur-Tests (Schichten, Dateilaenge, private Typen, HTTP-Vertrag).'
+    }
 }
 
 $backendSchritte = @()
 if (-not $NurFrontend) {
+    # Waechter fuer den Filter weiter unten. `dotnet test --filter` liefert eine
+    # 0, wenn der Filter *nichts* trifft — nachgemessen, samt der Meldung "Kein
+    # Test entspricht dem angegebenen Testfallfilter". Ein umbenannter Ordner
+    # machte -Regeln damit still gruen, ohne eine einzige Regel zu pruefen: die
+    # schlimmste Sorte Pruefung, weil sie Sicherheit behauptet, die sie nicht
+    # hat. Auf der Dart-Seite gibt es das Loch nicht, `flutter test` bricht bei
+    # einem Pfad ohne Entsprechung mit 1 ab.
+    #
+    # Geprueft wird der Ordner, nicht der Namespace — NamespaceKonventionTests
+    # erzwingt "Namespace = Ordnerpfad", der Pfad deckt den Filter also ab.
+    $regelOrdner = Join-Path $backend 'AutomationService.Tests/Architecture'
+    if ($Regeln -and -not (Test-Path -LiteralPath $regelOrdner)) {
+        Write-Host ''
+        Write-Host "Die Regeltests des Backends liegen nicht mehr unter $regelOrdner." -ForegroundColor Red
+        Write-Host ('Der Filter in check.ps1 zeigt damit ins Leere, und -Regeln waere still gruen. ' +
+                    'Ordner und Filter zusammen nachziehen.') -ForegroundColor Red
+        exit 1
+    }
+
     $backendSchritte += New-Schritt 'Backend: Build' $backend 'dotnet' `
         (@('build', 'AutomationService.Tests', '--configuration', 'Release') + $bauArgumente) `
         -Hilfe 'TreatWarningsAsErrors ist an: auch eine neue Analyzer-Warnung bricht hier ab.'
 
-    $backendSchritte += New-Schritt 'Backend: Tests' $backend 'dotnet' `
-        (@('test', 'AutomationService.Tests', '--configuration', 'Release', '--no-build') + $bauArgumente) `
-        -Hilfe 'Enthaelt die Architektur-Tests und den Vertragsexport nach docs/openapi.json.'
+    if ($Regeln) {
+        # Alle Regeltests des Backends liegen im Namespace
+        # AutomationService.Tests.Architecture (Dateilaenge, Slice-Isolation,
+        # Namespace-Konvention, Doku) — ein Ordner, ein Namespace, ein Filter.
+        # Draussen bleibt damit auch der Vertragsexport nach docs/openapi.json:
+        # Der startet den Dienst und ist die teuerste Einzelpruefung der Kette.
+        $backendSchritte += New-Schritt 'Backend: Architektur-Tests' $backend 'dotnet' `
+            (@('test', 'AutomationService.Tests', '--configuration', 'Release', '--no-build',
+               '--filter', 'FullyQualifiedName~AutomationService.Tests.Architecture') + $bauArgumente) `
+            -Hilfe 'Dateilaenge, Slice-Isolation, Namespace = Ordnerpfad, Doku-Steckbriefe.'
+    }
+    else {
+        $backendSchritte += New-Schritt 'Backend: Tests' $backend 'dotnet' `
+            (@('test', 'AutomationService.Tests', '--configuration', 'Release', '--no-build') + $bauArgumente) `
+            -Hilfe 'Enthaelt die Architektur-Tests und den Vertragsexport nach docs/openapi.json.'
+    }
 
     # Nur `whitespace`, nicht das ganze `dotnet format`:
     #

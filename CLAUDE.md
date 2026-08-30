@@ -112,8 +112,10 @@ stehen in den beiden Teilbaum-Dateien.
 ## Prüfkette
 
 ```powershell
-./scripts/check.ps1            # alles (~2:30); -NurFrontend / -NurBackend für Teilläufe
-./scripts/check.ps1 -Beheben   # Formatierer vorher schreibend laufen lassen
+./scripts/check.ps1                       # alles (~2:30) — das Tor vor dem PR
+./scripts/check.ps1 -Regeln -NurFrontend  # die Dart-Regeln (~60 s) — die Arbeitsschleife
+./scripts/check.ps1 -Regeln               # Regeln beider Seiten (~105 s)
+./scripts/check.ps1 -Beheben              # Formatierer vorher schreibend laufen lassen
 ```
 
 Fährt genau die Schritte aus `.github/workflows/ci.yml`, bricht nicht beim ersten Fehler ab und
@@ -121,6 +123,13 @@ fasst am Ende zusammen — mit der Dauer je Schritt, damit sichtbar bleibt, wo d
 **Vor dem Abschließen einer Änderung laufen lassen** — die Einzelbefehle für die Arbeit dazwischen
 stehen in den Teilbaum-Dateien. Wer die Kette schneller machen will, liest zuerst den Kopf von
 `check.ps1`: was schon gemessen und verworfen wurde, steht dort.
+
+Die Schalter spannen **zwei Achsen** auf, die sich kombinieren lassen: `-NurFrontend`/`-NurBackend`
+sagen *welcher Teilbaum*, `-Regeln` sagt *wie tief*. `-NurFrontend` ist ausdrücklich **nicht** die
+schnelle Stufe — er fährt Codegenerierung und die volle Testsuite. `-Regeln` fährt genau die
+Tabelle „Diese Regeln sind ausführbar" (unten) plus `analyze` und lässt weg, was *Verhalten* prüft:
+Codegenerierung und Fachtests. Was dort grün ist, kann in den Fachtests noch fallen — als Tor vor
+dem PR bleibt die volle Kette.
 
 ## Regeln, die nicht verhandelbar sind
 

@@ -6,6 +6,7 @@ import 'package:automation_app/features/mandanten/domain/entities/create_mandant
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart';
@@ -203,9 +204,24 @@ class OhneKanzleiEinstellungen implements UseCase<KanzleiSettings, NoParams> {
 }
 
 /// Vorgangsablage im Speicher: hält den Upsert über die Referenz nach, damit
-/// sichtbar bleibt, ob ein Vorgang entstanden ist.
+/// sichtbar bleibt, ob ein Vorgang entstanden ist. [entwuerfe] zählt mit, was
+/// als angefangener Ausfüllstand abgelegt (bzw. mit `null` verworfen) wurde.
 class VorgangAblageDouble implements VorgangRepository {
   List<Vorgang> vorgaenge = const [];
+  final List<VorgangEntwurf?> entwuerfe = [];
+
+  @override
+  Future<Vorgang?> setzeEntwurf(
+    String referenz,
+    VorgangEntwurf? entwurf,
+  ) async {
+    entwuerfe.add(entwurf);
+    for (final vorhanden in vorgaenge) {
+      if (!Vorgang.gleicheReferenz(vorhanden.referenz, referenz)) continue;
+      return upsertVorgang(vorhanden.copyWith(entwurf: () => entwurf));
+    }
+    return null;
+  }
 
   @override
   Future<List<Vorgang>> loadVorgaenge() async => vorgaenge;
