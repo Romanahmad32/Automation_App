@@ -3,6 +3,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/form
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
@@ -33,6 +34,31 @@ class AusfuellFormular extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Erst die Platzhalter der Datei, dann das Formular: Die FormGroup soll
+    // mit fertigem Wissen entstehen — käme die Menge nachträglich, baute der
+    // Schlüssel das Formular neu und verwürfe die Eingaben (#35 Teil 2).
+    final platzhalterStand = context.watch<AktivePlatzhalterCubit>().state;
+    final wirdNochGelesen =
+        platzhalterStand.pfad != wordDateiPfad ||
+        (platzhalterStand.platzhalter == null &&
+            !platzhalterStand.fehlgeschlagen);
+    if (wirdNochGelesen) {
+      return const Row(
+        spacing: 10,
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          Text('Platzhalter werden gelesen …'),
+        ],
+      );
+    }
+    // Ließ sich die Datei nicht lesen, ist nichts bekannt — dann sperrt kein
+    // Pflichtfeld (leere Menge), statt womöglich falsch zu blockieren.
+    final aktivePlatzhalter = platzhalterStand.platzhalter ?? const <String>{};
+
     final wizardState = context.watch<WizardCubit>().state;
     final vorgang = wizardState.selectedVorgang;
     final herkunft = vorgang == null
@@ -75,6 +101,7 @@ class AusfuellFormular extends StatelessWidget {
           // Formulars, den eine nebenan bearbeitete Vorlage auslöst.
           erfassteWerte: wizardState.formDataEntwurf ?? const {},
           aufbauMarke: wizardState.aufbauMarke,
+          aktivePlatzhalter: aktivePlatzhalter,
           onWerteGeaendert: (werte) =>
               context.read<WizardCubit>().setFormDataEntwurf(werte),
           onFeldBearbeiten: (feld) => _feldBearbeiten(context, feld),
