@@ -807,6 +807,142 @@
         }
       }
     },
+    "/api/Vorgaenge/entwurf": {
+      "put": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "summary": "Hinterlegt den angefangenen Ausf\u00FCllstand des Word-Assistenten am Vorgang\r\n(\u00A74.4). Eigener Weg statt eines Upsert des ganzen Vorgangs: Der Entwurf\r\nwird beim Tippen laufend geschrieben, und ein Upsert w\u00FCrde dabei jedes\r\nMal alle \u00FCbrigen Spalten aus der Sicht des Aufrufers \u00FCberschreiben \u2014 auch\r\neine inzwischen eingetroffene Zentralruf-Antwort.",
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "summary": "Verwirft den angefangenen Ausf\u00FCllstand \u2014 vom Anwalt ausgel\u00F6st (\u201EVerwerfen\u0022)\r\noder nachdem aus ihm ein best\u00E4tigter Stand geworden ist. Die best\u00E4tigten\r\nWerte (\u0060FeldWerte\u0060) bleiben davon unber\u00FChrt.",
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Vorgaenge/abschliessen": {
       "post": {
         "tags": [
@@ -4331,6 +4467,7 @@
           "antwort",
           "feldWerte",
           "schadensaufstellung",
+          "entwurf",
           "dokumentPfad",
           "aktenOrdner",
           "abgeschlossenAm"
@@ -4449,6 +4586,16 @@
             ]
           },
           "schadensaufstellung": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "entwurf": {
             "oneOf": [
               {
                 "type": "null"

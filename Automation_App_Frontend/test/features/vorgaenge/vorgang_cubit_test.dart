@@ -1,4 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_json.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/referenz_vergeben_exception.dart';
@@ -41,6 +42,18 @@ class _FakeVorgaengeDatasource implements VorgangRepository {
     vorgaenge = vorgaenge
         .where((v) => !Vorgang.gleicheReferenz(v.referenz, referenz))
         .toList();
+  }
+
+  @override
+  Future<Vorgang?> setzeEntwurf(
+    String referenz,
+    VorgangEntwurf? entwurf,
+  ) async {
+    for (final vorhanden in vorgaenge) {
+      if (!Vorgang.gleicheReferenz(vorhanden.referenz, referenz)) continue;
+      return upsertVorgang(vorhanden.copyWith(entwurf: () => entwurf));
+    }
+    return null;
   }
 
   @override

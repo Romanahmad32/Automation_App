@@ -1,4 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_json.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/referenz_vergeben_exception.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart';
@@ -47,6 +48,32 @@ class ApiVorgaengeDatasource implements VorgangRepository {
       // Kein Treffer im Backend erfüllt den No-op-Vertrag (z. B. beim
       // Wiederholen eines Löschversuchs, der doch schon durchging).
       if (e.response?.statusCode != 404) rethrow;
+    }
+  }
+
+  @override
+  Future<Vorgang?> setzeEntwurf(
+    String referenz,
+    VorgangEntwurf? entwurf,
+  ) async {
+    try {
+      final antwort = entwurf == null
+          ? await _dio.delete(
+              '/api/Vorgaenge/entwurf',
+              queryParameters: {'referenz': referenz},
+            )
+          : await _dio.put(
+              '/api/Vorgaenge/entwurf',
+              queryParameters: {'referenz': referenz},
+              data: entwurf.toJson(),
+              options: Options(contentType: Headers.jsonContentType),
+            );
+      return vorgangAusJson(antwort.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      // Der Vorgang ist im Dienst nicht (mehr) bekannt — dann gibt es auch
+      // nichts, woran ein Entwurf hinge.
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 

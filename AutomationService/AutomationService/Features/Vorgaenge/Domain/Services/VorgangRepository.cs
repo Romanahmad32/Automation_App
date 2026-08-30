@@ -88,6 +88,20 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         return true;
     }
 
+    public async Task<VorgangEntity?> SetzeEntwurfAsync(
+        string referenz,
+        string? entwurfJson,
+        CancellationToken cancellationToken = default)
+    {
+        var bereinigt = referenz.Trim();
+        var vorgang = await db.Vorgaenge.FirstOrDefaultAsync(v => v.Referenz == bereinigt, cancellationToken);
+        if (vorgang is null) return null;
+
+        vorgang.EntwurfJson = string.IsNullOrWhiteSpace(entwurfJson) ? null : entwurfJson;
+        await db.SaveChangesAsync(cancellationToken);
+        return vorgang;
+    }
+
     public async Task<ReferenzAenderung> RenameReferenzAsync(
         string von,
         string nach,
@@ -173,6 +187,7 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         target.AntwortJson = source.AntwortJson;
         target.FeldWerteJson = source.FeldWerteJson;
         target.SchadensaufstellungJson = source.SchadensaufstellungJson;
+        target.EntwurfJson = source.EntwurfJson;
         target.DokumentPfad = source.DokumentPfad;
         target.AktenOrdner = source.AktenOrdner;
         target.AbgeschlossenAm = source.AbgeschlossenAm;

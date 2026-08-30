@@ -158,7 +158,7 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 ## Vorhandene Bausteine (`lib/core/general_widgets/`)
 
-- `form/` — `GeneralTextField`, `GermanDateField`, `FormSection`
+- `form/` — `GeneralTextField`, `GermanDateField`, `FormSection`, `FormWertBeobachter`
 - `buttons/` — `CustomRectangularButton`; `buttons/dropdowns/` — `SearchableDropdown`
   (+ `SearchableDropdownEntry`), `ReactiveSearchableDropdown`, `TemplateSelector`
 - `drawer/` — `AppShellPage`, `AppSidebar`, `SidebarItem`, `SidebarFooter`, `SidebarThemeToggle`,

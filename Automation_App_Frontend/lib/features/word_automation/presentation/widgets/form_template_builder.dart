@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
@@ -24,6 +25,30 @@ class FormTemplateBuilder extends StatelessWidget {
   /// sofort (Punkt 7 des Verbesserungsplans).
   final Map<String, String> initialValueQuellen;
 
+  /// Bereits getippte, noch nicht abgesendete Werte. Sie haben Vorrang vor
+  /// [initialValues]: Was der Anwalt selbst eingetragen hat, darf eine
+  /// Vorbelegung nicht überschreiben.
+  ///
+  /// Anders als [initialValues] steckt dieser Stand **nicht** im Schlüssel der
+  /// FormGroup — sonst setzte sich das Formular beim Tippen selbst zurück. Er
+  /// wirkt nur, wenn die Gruppe ohnehin neu gebaut wird.
+  final Map<String, String> erfassteWerte;
+
+  /// Wird entprellt mit dem vollständigen Tippstand gerufen. Ohne Rückmeldung
+  /// (null) läuft kein Beobachter mit.
+  final void Function(Map<String, String>)? onWerteGeaendert;
+
+  /// Erhöhen erzwingt einen Neuaufbau der FormGroup. Nötig, wenn sich **nur**
+  /// die einzusetzenden Werte geändert haben ([erfassteWerte]) — die stehen
+  /// bewusst nicht im Schlüssel, also merkte das Formular sonst nichts davon.
+  /// Genau der Fall beim übernommenen Entwurf.
+  final int aufbauMarke;
+
+  /// Wird mit dem Feld gerufen, dessen Stiftsymbol angeklickt wurde. Ohne
+  /// Rückmeldung (null) zeigt das Formular keine Stifte — die freie Erfassung
+  /// und die Vorschau kommen ohne aus.
+  final void Function(FieldData)? onFeldBearbeiten;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
@@ -31,6 +56,10 @@ class FormTemplateBuilder extends StatelessWidget {
     this.onSubmitted,
     this.initialValues = const {},
     this.initialValueQuellen = const {},
+    this.erfassteWerte = const {},
+    this.onWerteGeaendert,
+    this.aufbauMarke = 0,
+    this.onFeldBearbeiten,
   });
 
   @override
@@ -39,20 +68,25 @@ class FormTemplateBuilder extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Use a unique key for the form group based on the template ID to ensure
-    // it resets when the template changes (or when new prefill values arrive).
+    // Der Schlüssel bestimmt, wann die FormGroup neu gebaut wird: bei einer
+    // anderen Vorlage, bei geänderten Feldern und bei neuer Vorbelegung.
     return ReactiveFormBuilder(
-      key: ValueKey('${formTemplate!.id}#$_initialValuesSignature'),
+      key: ValueKey(
+        '${formTemplate!.id}#$aufbauMarke#$_feldSignatur#'
+        '$_initialValuesSignature',
+      ),
       form: () => FormGroup(
         Map.fromEntries(
           formTemplate!.fields.map(
             (e) => MapEntry(
               e.label,
               FormControl<String>(
-                // Vorgangsdaten (Zentralruf-Antwort) haben Vorrang; sonst
-                // Datumsfelder mit heutigem Datum vorbelegen – sichtbar und
-                // änderbar, statt es beim Erzeugen unsichtbar einzusetzen.
+                // Selbst Getipptes zuerst, dann die Vorgangsdaten
+                // (Zentralruf-Antwort); sonst Datumsfelder mit heutigem Datum
+                // vorbelegen – sichtbar und änderbar, statt es beim Erzeugen
+                // unsichtbar einzusetzen.
                 value:
+                    erfassteWerte[e.label] ??
                     initialValues[e.label] ??
                     (e.inputType == InputType.date
                         ? GermanDateField.formatDate(_defaultDateFor(e.label))
@@ -68,13 +102,13 @@ class FormTemplateBuilder extends StatelessWidget {
         ),
       ),
       builder: (context, formGroup, child) {
-        return Padding(
+        final inhalt = Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             spacing: 16,
             children: [
               ...formTemplate!.fields.map((field) {
-                return _buildField(context, field);
+                return _buildZeile(context, field);
               }),
               const SizedBox(height: 8),
               ReactiveFormConsumer(
@@ -96,6 +130,13 @@ class FormTemplateBuilder extends StatelessWidget {
             ],
           ),
         );
+        final melden = onWerteGeaendert;
+        if (melden == null) return inhalt;
+        return FormWertBeobachter(
+          formGroup: formGroup,
+          onWerteGeaendert: melden,
+          child: inhalt,
+        );
       },
     );
   }
@@ -105,6 +146,42 @@ class FormTemplateBuilder extends StatelessWidget {
   String get _initialValuesSignature =>
       (initialValues.entries.map((e) => '${e.key}=${e.value}').toList()..sort())
           .join('|');
+
+  /// Signatur dessen, was die FormGroup aus den Feldern macht: Name, Typ und
+  /// Pflichtangabe. Fehlte sie im Schlüssel, überlebte die alte Gruppe eine
+  /// bearbeitete Vorlage — und dann zeigte das Formular zwar die neuen Felder,
+  /// arbeitete aber mit den alten Controls: Ein auf „nicht erforderlich"
+  /// gestelltes Feld blieb still ein Pflichtfeld (der Knopf ohne erkennbaren
+  /// Grund gesperrt), ein umbenanntes ließ `formControlName` ins Leere greifen
+  /// (`FormControlNotFoundException`, roter Bildschirm).
+  String get _feldSignatur => formTemplate!.fields
+      .map((e) => '${e.label}:${e.inputType.value}:${e.required}')
+      .join('|');
+
+  /// Das Feld, bei Bedarf mit dem Stift daneben. Der Stift sitzt **am Feld**
+  /// und nicht in einer Werkzeugleiste: Er soll dort sein, wo der Anwalt gerade
+  /// stutzt („dieses Feld will ich gar nicht ausfüllen müssen").
+  Widget _buildZeile(BuildContext context, FieldData field) {
+    final bearbeiten = onFeldBearbeiten;
+    if (bearbeiten == null) return _buildField(context, field);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildField(context, field)),
+        Padding(
+          // Auf die Höhe des Eingabefelds gerückt, nicht auf die der Zeile:
+          // Unter dem Feld steht oft noch eine Hinweiszeile.
+          padding: const EdgeInsets.only(top: 4, left: 4),
+          child: IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            tooltip: 'Einstellung des Felds „${field.label}"',
+            onPressed: () => bearbeiten(field),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildField(BuildContext context, FieldData field) {
     final validationMessages = field.required
@@ -122,6 +199,7 @@ class FormTemplateBuilder extends StatelessWidget {
           formControlName: field.label,
           labelText: field.label,
           helperText: _helperText(field),
+          helperMaxLines: _helperZeilen,
           validationMessages: validationMessages,
         );
       case InputType.integer:
@@ -155,8 +233,18 @@ class FormTemplateBuilder extends StatelessWidget {
     }
   }
 
-  InputDecoration _decoration(FieldData field) =>
-      InputDecoration(helperText: _helperText(field));
+  InputDecoration _decoration(FieldData field) => InputDecoration(
+    helperText: _helperText(field),
+    helperMaxLines: _helperZeilen,
+  );
+
+  /// Die Hinweiszeile darf umbrechen. Das Formular steht in der 450 px breiten
+  /// Spalte des Ausfüllschritts, und der Stift nimmt ihr noch einmal rund 48 px
+  /// ab: „* Pflichtfeld · Vorbelegt aus dem letzten Schreiben" passt dort in
+  /// keine Zeile. Mit der Material-Vorgabe (eine Zeile) wurde daraus ein „…",
+  /// und der Anwalt sah nicht mehr, welchem Bestand er gerade vertraut — genau
+  /// das, wofür die Zeile da ist.
+  static const _helperZeilen = 2;
 
   /// Hinweiszeile unter dem Feld: Pflichtfeld-Markierung und — falls das Feld
   /// vorbelegt wurde — die Herkunft des Werts.
