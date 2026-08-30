@@ -1,4 +1,6 @@
+import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
+import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
@@ -6,6 +8,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/wizar
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/entwurf_hinweis.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/feld_einstellung_dialog.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgangsdaten_hinweis.dart';
 import 'package:flutter/material.dart';
@@ -74,6 +77,7 @@ class AusfuellFormular extends StatelessWidget {
           aufbauMarke: wizardState.aufbauMarke,
           onWerteGeaendert: (werte) =>
               context.read<WizardCubit>().setFormDataEntwurf(werte),
+          onFeldBearbeiten: (feld) => _feldBearbeiten(context, feld),
           submitButtonLabel: Text(
             wizardState.mitAuflistung
                 ? 'Weiter zur Schadensaufstellung'
@@ -84,6 +88,53 @@ class AusfuellFormular extends StatelessWidget {
       ],
     );
   }
+
+  /// Der Stift am Feld: Einstellung im Dialog ändern, Vorlage sofort speichern,
+  /// Formular stehen lassen (§5.3 aus dem Ausfüllschritt heraus).
+  ///
+  /// Die Vorlagenliste wird nur bei echter Änderung neu geladen — sie ist
+  /// derselbe `@lazySingleton`, an dem der `TemplateSelector` hängt, und jedes
+  /// Neuladen stößt dort ein Resync an.
+  Future<void> _feldBearbeiten(BuildContext context, FieldData feld) async {
+    final cubit = context.read<WizardCubit>();
+    final vorlagen = context.read<FormTemplateOverviewBloc>();
+    final melder = ScaffoldMessenger.of(context);
+
+    final geaendert = await FeldEinstellungDialog.zeige(
+      context,
+      feld: feld,
+      belegteNamen: [
+        for (final anderes in template.fields)
+          if (anderes.label != feld.label) anderes.label,
+      ],
+    );
+    if (geaendert == null || _unveraendert(feld, geaendert)) return;
+
+    if (await cubit.aktualisiereFeld(feld, geaendert)) {
+      if (!vorlagen.isClosed) vorlagen.add(LoadFormTemplatesEvent());
+      return;
+    }
+    melder.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Die Feldeinstellung konnte nicht gespeichert werden. Die Vorlage '
+          'bleibt unverändert.',
+        ),
+      ),
+    );
+  }
+
+  /// Ob der Dialog nichts geändert hat — dann bleibt der Dienst außen vor.
+  ///
+  /// Von Hand verglichen, weil [FieldData] sich nicht selbst vergleicht. Das zu
+  /// ändern, zöge die Gleichheit von [FormTemplate] mit (`fields` steht in
+  /// seinen `props`) und damit die Emit-Unterdrückung des Wizards — eine
+  /// größere Änderung als die Frage hier wert ist.
+  static bool _unveraendert(FieldData a, FieldData b) =>
+      a.label == b.label &&
+      a.inputType == b.inputType &&
+      a.required == b.required &&
+      a.datenquelle == b.datenquelle;
 
   Future<void> _absenden(
     BuildContext context,

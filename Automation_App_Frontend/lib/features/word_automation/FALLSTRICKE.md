@@ -72,6 +72,16 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   bliebe die FormGroup stehen (Vorlage und Vorbelegung sind ja unverändert) und der Anwalt sähe auf
   seinen Klick hin nichts geschehen. Ohne gewählten Vorgang gibt es keinen Ablageort: freie
   Erfassung hält keinen Entwurf.
+- **Der Stift am Feld ändert die Vorlage, nicht nur die Anzeige.** `FeldEinstellungDialog` liefert
+  ein geändertes `FieldData` ab, `WizardCubit.aktualisiereFeld` speichert es über `UpdateFormTemplate`
+  und schlüsselt dabei `formData` und `formDataEntwurf` um — beide sind nach Feldnamen geschlüsselt,
+  ein umbenanntes Feld fände seinen Wert sonst nur unter einem Namen, den die Vorlage nicht mehr
+  kennt. Ein **leerer** Wert fällt weg statt mitzugehen: Der Beobachter meldet auch leere Felder,
+  im Formular gewinnt der erfasste Stand über die Vorbelegung — die gerade gewählte Datenquelle
+  bliebe sonst unsichtbar. Der Dialog prüft den Namen nach derselben Regel wie der Dienst
+  (`^[\p{L}\p{N} _-]+$`) und gegen die übrigen Feldnamen; zwei gleiche Namen wären in der `FormGroup`
+  ein Feld. Gespeichert wird nur bei echter Änderung (`FieldData` vergleicht sich nicht selbst) —
+  und nur dann lädt die Vorlagenliste neu, sonst setzt das Resync im `TemplateSelector` zurück.
 - **Der Schlüssel der `FormGroup` trägt eine Feldsignatur** (`form_template_builder.dart`): Label,
   Typ und Pflichtangabe. Ohne sie überlebt die alte Gruppe eine bearbeitete Vorlage, und das
   Formular zeigt neue Felder über alten Controls — ein auf „nicht erforderlich" gestelltes Feld
