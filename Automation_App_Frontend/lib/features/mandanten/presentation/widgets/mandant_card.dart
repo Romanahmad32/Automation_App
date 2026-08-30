@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
+import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/akte_block.dart';
@@ -20,6 +21,7 @@ class MandantCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final akten = state.aktenFuer(mandant);
+    final faelleGeladen = state.faelleGeladenFuer(mandant);
     final fallAnzahl = akten.fold<int>(0, (sum, a) => sum + a.faelle.length);
     final adresse = [
       mandant.strasseHausnummer,
@@ -43,6 +45,10 @@ class MandantCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        // Die Fälle einer Akte kostet jede für sich eine Verzeichnisauflistung.
+        // Deshalb erst beim Aufklappen — bei tausenden Akten wäre das im Scan
+        // ein vollständiger Baumdurchlauf.
+        onExpansionChanged: (offen) => _faelleLaden(context, offen, akten),
         children: [
           Row(
             children: [
@@ -54,7 +60,9 @@ class MandantCard extends StatelessWidget {
               const SizedBox(width: 8),
               MandantInfoChip(
                 icon: Icons.description_outlined,
-                label: '$fallAnzahl ${fallAnzahl == 1 ? 'Fall' : 'Fälle'}',
+                label: faelleGeladen
+                    ? '$fallAnzahl ${fallAnzahl == 1 ? 'Fall' : 'Fälle'}'
+                    : 'Fälle werden geladen …',
               ),
               const Spacer(),
               IconButton(
@@ -105,6 +113,17 @@ class MandantCard extends StatelessWidget {
     );
   }
 
+  /// Beim Aufklappen die Fälle aller Akten des Mandanten nachladen. Der Bloc
+  /// verwirft, was schon geladen ist — mehrfaches Auf- und Zuklappen kostet
+  /// deshalb keinen zweiten Scan.
+  void _faelleLaden(BuildContext context, bool offen, List<Akte> akten) {
+    if (!offen) return;
+    final bloc = context.read<MandantenOverviewBloc>();
+    for (final akte in akten) {
+      bloc.add(LadeFaelleEvent(akte));
+    }
+  }
+
   /// Titel „Anrede Vorname Nachname"; ohne Namen ein Platzhalter.
   String _titel(Mandant m) {
     if (m.anzeigename.isEmpty) return '(ohne Namen)';
@@ -124,8 +143,9 @@ class MandantCard extends StatelessWidget {
     final didChange = await context.router.push<bool>(
       MandantDetailsRoute(mandant: mandant),
     );
+    // Bearbeiten ändert nur das Register — der Akten-Scan bleibt gültig.
     if (didChange == true) {
-      bloc.add(LoadMandantenUebersichtEvent());
+      bloc.add(const LoadMandantenUebersichtEvent(nurRegister: true));
     }
   }
 

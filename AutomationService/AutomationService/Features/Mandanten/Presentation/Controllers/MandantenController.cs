@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AutomationService.Features.Mandanten.Domain.Persistence;
 using AutomationService.Features.Mandanten.Domain.Services;
 using AutomationService.Features.Mandanten.Presentation.Dtos;
@@ -83,8 +82,8 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
         EmailAdresse = dto.EmailAdresse,
         Telefonnummer = dto.Telefonnummer,
         Notiz = dto.Notiz,
-        AktenOrdnernamenJson = JsonSerializer.Serialize(dto.AktenOrdnernamen),
-        KennzeichenJson = JsonSerializer.Serialize(dto.Kennzeichen),
+        AktenOrdnernamenJson = MandantListen.Schreib(dto.AktenOrdnernamen),
+        KennzeichenJson = MandantListen.Schreib(dto.Kennzeichen),
     };
 
     static MandantEntity ToEntity(MandantDto dto) => new()
@@ -99,7 +98,7 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
         EmailAdresse = dto.EmailAdresse,
         Telefonnummer = dto.Telefonnummer,
         Notiz = dto.Notiz,
-        AktenOrdnernamenJson = JsonSerializer.Serialize(dto.AktenOrdnernamen),
-        KennzeichenJson = JsonSerializer.Serialize(dto.Kennzeichen),
+        AktenOrdnernamenJson = MandantListen.Schreib(dto.AktenOrdnernamen),
+        KennzeichenJson = MandantListen.Schreib(dto.Kennzeichen),
     };
 }

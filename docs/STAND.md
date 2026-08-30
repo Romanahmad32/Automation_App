@@ -62,6 +62,19 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   färbt die Vorschau live.
 - `MandantErkennung` schlägt beim Tippen passende Registereinträge vor (Kennzeichen,
   Nachname, „Meinten Sie …?"-Banner) — ein Vorschlag, die Übernahme bleibt ein Klick.
+- Der **Zuordnungsstapel** (eigene Seite unter Mandanten) ist auf den Produktivbestand von rund
+  4000 Akten-Ordnern ausgelegt: flacher Scan mit Nachladen der Fälle, `ListView.builder`, Suche,
+  Zeitfenster und drei Töpfe (Verkehrsunfall / andere Sachgebiete / „ohne Mandantenbezug").
+  Der dritte ist ein gespeicherter Status (`OrdnerStatus`, `api/OrdnerStatus`), einzeln oder als
+  Massenaktion setzbar und jederzeit zurücknehmbar — kein Löschen und kein Ausblenden.
+- Weil viertausend Ordner auch gefiltert viertausend Entscheidungen bleiben, kann die Zuordnung
+  **von außen kommen**: ein Programm auf dem Kanzleirechner liest Ordner und Schreiben und schreibt
+  eine JSON-Datei, die App prüft sie und zeigt das Ergebnis, bevor etwas geschrieben wird; einzelne
+  Zeilen lassen sich in der Vorschau berichtigen oder weglassen
+  (`POST /api/MandantenImport`, Format in [`docs/MANDANTEN_IMPORT.md`](MANDANTEN_IMPORT.md)).
+  Vorschau und Übernahme sind derselbe Aufruf; ergänzt wird nur, überschrieben nie, und ein zweiter
+  Lauf derselben Datei ändert nichts. Der Auftrag für den Erzeuger der Datei ist in der App
+  kopierbar.
 - Der Backend-Slice `Versicherer` lernt Kontaktdaten aus jeder Antwort und füllt damit
   Lücken in `missingFields`, mit Herkunftshinweis.
 - Zuordnung Antwort → Vorgang fällt notfalls auf Gegner-Kennzeichen + Unfalldatum zurück

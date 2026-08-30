@@ -2,11 +2,18 @@ import 'package:automation_app/core/general_classes/exceptions/custom_exceptions
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/import_datei_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/mandanten_import_datasource.dart';
 import 'package:automation_app/features/mandanten/data/datasources/mandant_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/ordner_status_datasource.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
+import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
+import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
+import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/repositories/mandanten_repository.dart';
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -15,13 +22,51 @@ import 'package:injectable/injectable.dart';
 class MandantenRepositoryImpl implements MandantenRepository {
   final MandantDatasource _datasource;
   final FilesystemAktenDatasource _aktenDatasource;
+  final OrdnerStatusDatasource _ordnerStatusDatasource;
+  final ImportDateiDatasource _importDateiDatasource;
+  final MandantenImportDatasource _importDatasource;
   final KanzleiSettingsRepository _settingsRepository;
 
   MandantenRepositoryImpl(
     this._datasource,
     this._aktenDatasource,
+    this._ordnerStatusDatasource,
+    this._importDateiDatasource,
+    this._importDatasource,
     this._settingsRepository,
   );
+
+  @override
+  Future<Either<Failure, MandantenImportDatei>> liesImportDatei(
+    String pfad,
+  ) async {
+    try {
+      return Right(await _importDateiDatasource.lies(pfad));
+    } on MandantException catch (e) {
+      return Left(LocalFailure(message: e.message));
+    } catch (e) {
+      return Left(LocalFailure(message: ausnahmeText(e)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ImportBericht>> importiereMandanten({
+    required MandantenImportDatei datei,
+    required bool uebernehmen,
+  }) async {
+    try {
+      return Right(
+        await _importDatasource.importiere(
+          datei: datei,
+          uebernehmen: uebernehmen,
+        ),
+      );
+    } on MandantException catch (e) {
+      return Left(LocalFailure(message: e.message));
+    } catch (e) {
+      return Left(LocalFailure(message: ausnahmeText(e)));
+    }
+  }
 
   @override
   Future<Either<Failure, List<Mandant>>> getMandanten() async {
@@ -71,6 +116,41 @@ class MandantenRepositoryImpl implements MandantenRepository {
     try {
       final stammordner = await _ladeStammordner();
       return Right(await _aktenDatasource.scanAkten(stammordner));
+    } catch (e) {
+      return Left(LocalFailure(message: ausnahmeText(e)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Fall>>> getFaelle(String aktenPfad) async {
+    try {
+      return Right(await _aktenDatasource.scanFaelle(aktenPfad));
+    } catch (e) {
+      return Left(LocalFailure(message: ausnahmeText(e)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<OrdnerStatus>>> getOrdnerStatus() async {
+    try {
+      return Right(await _ordnerStatusDatasource.ladeOrdnerStatus());
+    } catch (e) {
+      return Left(LocalFailure(message: ausnahmeText(e)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<OrdnerStatus>>> setzeOrdnerStatus({
+    required List<String> ordnernamen,
+    required OrdnerStatusArt? art,
+  }) async {
+    try {
+      return Right(
+        await _ordnerStatusDatasource.setzeOrdnerStatus(
+          ordnernamen: ordnernamen,
+          art: art,
+        ),
+      );
     } catch (e) {
       return Left(LocalFailure(message: ausnahmeText(e)));
     }

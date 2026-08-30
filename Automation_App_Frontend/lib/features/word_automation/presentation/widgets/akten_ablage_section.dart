@@ -137,6 +137,13 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
       _gewaehlterFall = null;
       _neuerFall = true;
     });
+    _faelleNachladen();
+  }
+
+  /// Die vorhandenen Fälle des gewählten Akten-Ordners nachholen — der
+  /// Akten-Scan liefert sie nicht mehr mit (siehe `AblageCubit.faelleLaden`).
+  void _faelleNachladen() {
+    context.read<AblageCubit>().faelleLaden(_aktenOrdner());
   }
 
   void _onAkteDropdownChanged(String? value) {
@@ -153,6 +160,7 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
       _gewaehlterFall = null;
       _neuerFall = true;
     });
+    _faelleNachladen();
   }
 
   void _onFallDropdownChanged(String? value) {

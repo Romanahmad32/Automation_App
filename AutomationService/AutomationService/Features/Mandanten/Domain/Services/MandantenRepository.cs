@@ -74,7 +74,7 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
     /// </summary>
     async Task EnsureNameUniqueAsync(string vorname, string nachname, int? eigeneId, CancellationToken ct)
     {
-        var norm = Normalisiere(vorname, nachname);
+        var norm = MandantName.Normalisiere(vorname, nachname);
         if (norm.Length == 0) return;
 
         // In-Memory normalisieren, weil SQLite Trim/Lower nicht identisch abbildet.
@@ -83,16 +83,13 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
             .ToListAsync(ct);
 
         var konflikt = alle.Any(m =>
-            m.Id != eigeneId && Normalisiere(m.Vorname, m.Nachname) == norm);
+            m.Id != eigeneId && MandantName.Normalisiere(m.Vorname, m.Nachname) == norm);
 
         if (konflikt)
         {
-            var anzeige = $"{vorname} {nachname}".Trim();
+            var anzeige = MandantName.Anzeige(vorname, nachname);
             throw new MandantNameConflictException(
                 $"Ein Mandant mit dem Namen „{anzeige}“ ist bereits vorhanden.");
         }
     }
-
-    static string Normalisiere(string vorname, string nachname) =>
-        $"{vorname.Trim().ToLowerInvariant()} {nachname.Trim().ToLowerInvariant()}".Trim();
 }
