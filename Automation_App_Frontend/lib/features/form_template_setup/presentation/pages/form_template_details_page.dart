@@ -6,12 +6,14 @@ import 'package:automation_app/features/form_template_setup/domain/entities/fiel
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_uebernahme.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_action_buttons.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/initial_template_form.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_fehler_melder.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slot_card.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slots.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_name_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -46,10 +48,6 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
   String? _wordFilePathOhne;
   String? _wordFilePathMit;
   int _nextFieldIndex = 0;
-
-  // Zuletzt je Slot angezeigte Fehlermeldung, um Snackbar-Wiederholungen
-  // bei jedem Rebuild zu vermeiden.
-  final Map<TemplateFileSlot, String?> _lastErrorShown = {};
 
   // Helper getter to determine the current mode
   bool get isEditing => widget.formTemplate != null;
@@ -92,7 +90,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     });
   }
 
-  void _addNewField({String? initialLabel}) {
+  void _addNewField({String? initialLabel, bool required = false}) {
     setState(() {
       final fieldKey = 'field_${_nextFieldIndex++}';
       formGroup.addAll({
@@ -108,22 +106,36 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
           order: fields.length,
           controlKey: fieldKey,
           platzhalter: initialLabel,
+          required: required,
         ),
       );
     });
   }
 
+  /// „Alle übernehmen" (#35 Teil 3): Die Chips liefern bereits nur, was
+  /// übernehmbar ist ([PlatzhalterUebernahme.uebernehmbare]). Die Felder
+  /// entstehen als Pflichtfelder — gefahrlos, weil die Pflicht beim Ausfüllen
+  /// je gewählter Word-Datei abgeleitet wird (Teil 2) und ein Feld ohne
+  /// Platzhalter dort nichts sperrt.
+  void _alleUebernehmen(List<String> placeholders) {
+    for (final placeholder in placeholders) {
+      _addNewField(initialLabel: placeholder, required: true);
+    }
+  }
+
   /// Übernimmt einen erkannten Platzhalter als Eingabefeld — außer es gibt
-  /// bereits ein Feld mit demselben Namen.
+  /// bereits ein Feld mit demselben Namen oder die App füllt ihn selbst
+  /// ([PlatzhalterUebernahme] entscheidet, auch als zweite Sperre neben dem
+  /// nicht klickbaren Chip).
   void _addFieldFromPlaceholder(String placeholder) {
-    final alreadyExists = fields.any((field) {
-      final label = formGroup.control(field.label).value as String?;
-      return label?.trim().toLowerCase() == placeholder.toLowerCase();
-    });
-    if (alreadyExists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Das Feld "$placeholder" existiert bereits.')),
-      );
+    final grund = PlatzhalterUebernahme.ablehnungsgrund(
+      placeholder,
+      fields.map((field) => formGroup.control(field.label).value as String?),
+    );
+    if (grund != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(grund)));
       return;
     }
     _addNewField(initialLabel: placeholder);
@@ -183,23 +195,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(),
-      // Fehler beim Lesen der Word-Datei (z. B. Datei in Word geöffnet) auch
-      // als Snackbar melden, nicht nur als Inline-Text in der Platzhalter-Box.
-      body: BlocListener<TemplatePlaceholdersBloc, TemplatePlaceholdersState>(
-        listener: (context, state) {
-          for (final slot in TemplateFileSlot.values) {
-            final result = state.forSlot(slot);
-            final message = result is SlotPlaceholdersError
-                ? result.message
-                : null;
-            if (message != null && _lastErrorShown[slot] != message) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(message)));
-            }
-            _lastErrorShown[slot] = message;
-          }
-        },
+      body: PlatzhalterFehlerMelder(
         child: BlocConsumer<FormTemplateDataBloc, FormTemplateDataState>(
           listener: (context, state) {
             if (state is FormTemplateDataSuccess) {
@@ -237,31 +233,14 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
 
                     const TemplateNameCard(),
 
-                    TemplateFileSlotCard(
-                      slot: TemplateFileSlot.ohneAuflistung,
-                      path: _wordFilePathOhne,
-                      title: 'Vorlage ohne Auflistung (HGN)',
-                      subtitle:
-                          'Standardbrief mit Haftung dem Grunde nach – ohne '
-                          'Schadensaufstellung.',
-                      onPick: () => _pickFile(TemplateFileSlot.ohneAuflistung),
-                      onRemove: () =>
-                          _removeFile(TemplateFileSlot.ohneAuflistung),
+                    TemplateFileSlots(
+                      pfadOhneAuflistung: _wordFilePathOhne,
+                      pfadMitAuflistung: _wordFilePathMit,
+                      fields: fields,
+                      onPick: _pickFile,
+                      onRemove: _removeFile,
                       onPlaceholderSelected: _addFieldFromPlaceholder,
-                    ),
-
-                    TemplateFileSlotCard(
-                      slot: TemplateFileSlot.mitAuflistung,
-                      path: _wordFilePathMit,
-                      title: 'Vorlage mit Auflistung (Schadensaufstellung)',
-                      subtitle:
-                          'Enthält {{Schadensaufstellung}}; beim Ausfüllen wird '
-                          'ein zusätzlicher Schritt für die Schadenspositionen '
-                          'und die RVG-Kostenberechnung angezeigt.',
-                      onPick: () => _pickFile(TemplateFileSlot.mitAuflistung),
-                      onRemove: () =>
-                          _removeFile(TemplateFileSlot.mitAuflistung),
-                      onPlaceholderSelected: _addFieldFromPlaceholder,
+                      onAlleUebernehmen: _alleUebernehmen,
                     ),
 
                     TemplateFieldsCard(

@@ -91,12 +91,13 @@ class FeldDatenquelleErkennung {
     required int order,
     required String controlKey,
     String? platzhalter,
+    bool required = false,
   }) {
     final vorschlag = erkenne(platzhalter ?? '');
     return FieldData(
       order: order,
       label: controlKey,
-      required: false,
+      required: required,
       inputType: vorschlag.inputType,
       datenquelle: vorschlag.quelle,
     );
