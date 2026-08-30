@@ -1,9 +1,6 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
-import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
-import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
-import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
@@ -15,7 +12,6 @@ import 'package:automation_app/features/word_automation/domain/usecases/fill_out
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
-import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_schadensaufstellung.dart';
 import 'package:flutter/material.dart';
