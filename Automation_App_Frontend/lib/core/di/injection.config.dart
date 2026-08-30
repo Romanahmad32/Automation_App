@@ -155,6 +155,8 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_per
     as _i30;
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart'
     as _i851;
+import 'package:automation_app/features/word_automation/data/datasources/standard_schadenspositionen_datasource.dart'
+    as _i50;
 import 'package:automation_app/features/word_automation/data/datasources/word_automation_datasource.dart'
     as _i287;
 import 'package:automation_app/features/word_automation/data/repositories/word_automation_repository_impl.dart'
@@ -167,6 +169,8 @@ import 'package:automation_app/features/word_automation/domain/entities/rvg_calc
     as _i279;
 import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart'
     as _i382;
+import 'package:automation_app/features/word_automation/domain/repositories/standard_schadenspositionen_repository.dart'
+    as _i262;
 import 'package:automation_app/features/word_automation/domain/repositories/word_automation_repository.dart'
     as _i770;
 import 'package:automation_app/features/word_automation/domain/usecases/arbeitsordner_aufraeumen.dart'
@@ -189,6 +193,8 @@ import 'package:automation_app/features/word_automation/presentation/blocs/pdf_p
     as _i263;
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart'
     as _i1026;
+import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart'
+    as _i123;
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart'
     as _i915;
 import 'package:automation_app/features/zentralruf_reply/data/datasources/zentralruf_reply_datasource.dart'
@@ -276,6 +282,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i615.ZentralrufDatasource>(
       () => _i615.ApiZentralrufDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i262.StandardSchadenspositionenRepository>(
+      () => _i50.ApiStandardSchadenspositionenDatasource(gh<_i361.Dio>()),
+    );
     gh.lazySingleton<_i912.RegisterWordExporter>(
       () => _i912.NichtVerfuegbarerRegisterWordExporter(),
     );
@@ -321,6 +330,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i1049.ThemeBloc>(
       () => _i1049.ThemeBloc(gh<_i1039.ThemePreferencesDatasource>()),
+    );
+    gh.factory<_i123.StandardpositionenCubit>(
+      () => _i123.StandardpositionenCubit(
+        gh<_i262.StandardSchadenspositionenRepository>(),
+      ),
     );
     gh.factory<_i777.ZentralrufRepository>(
       () => _i248.ZentralrufRepositoryImpl(gh<_i615.ZentralrufDatasource>()),

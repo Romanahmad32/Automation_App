@@ -176,6 +176,25 @@ Es existieren zwei Arten von Word-Vorlagen; der Nutzer wählt pro Schreiben aus
 2. **[M] Vorlage ohne Auflistung:** Enthält stattdessen eine **HGN-Sektion** (Haftung dem Grunde
    nach).
 
+Zur Vorlage mit Auflistung:
+
+- **[M] Standardpositionen:** Eine neu begonnene Schadensaufstellung steht bereits mit den fünf
+  üblichen Positionen da — in dieser Reihenfolge und in diesem Wortlaut: „Reparaturkosten netto
+  nach Gutachten", „Wertminderung nach Gutachten", „Unkostenpauschale", „Abschleppkosten /
+  Standgeldkosten", „Sachverständigenkosten". Die Beträge bleiben ab Werk leer; sie trägt der
+  Anwalt ein.
+- **[M]** In den Einstellungen (Reiter „Schadensaufstellung") legt der Anwalt
+  Bezeichnungen **und** Beträge der Standardpositionen selbst fest; eine kleine Vorschau zeigt
+  dort, wie die Tabelle damit startet. Ein hinterlegter Betrag wird nur vorbelegt und bleibt im
+  Assistenten änderbar; „Zurücksetzen" führt auf die fünf üblichen Positionen zurück.
+- **[M]** Jede dieser Positionen ist änderbar und löschbar, weitere lassen sich ergänzen. Auch eine
+  gelöschte Standardposition kommt ohne Abtippen zurück. Die letzte verbliebene Zeile bleibt
+  stehen — sonst stünde die Aufstellung ohne Eingabefeld da; ihr Text lässt sich leeren.
+- **[M]** Eine Position ohne Betrag erscheint nicht im erzeugten Dokument — eine nicht gebrauchte
+  Standardposition muss deshalb nicht gelöscht werden.
+- **[M]** Eine zum Vorgang bereits gespeicherte Aufstellung hat Vorrang: Sie wird unverändert
+  angezeigt, die Standardpositionen treten nicht an ihre Stelle.
+
 Gemeinsam:
 
 - **[M]** Platzhalter werden mit den erfassten Mandanten-, Unfall- und Versicherungsdaten befüllt.

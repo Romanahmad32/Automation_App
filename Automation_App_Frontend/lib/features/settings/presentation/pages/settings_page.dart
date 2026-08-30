@@ -9,6 +9,8 @@ import 'package:automation_app/features/settings/presentation/blocs/kanzlei_sett
 import 'package:automation_app/features/settings/presentation/views/app_settings_view.dart';
 import 'package:automation_app/features/settings/presentation/views/appearance_settings_view.dart';
 import 'package:automation_app/features/settings/presentation/views/ueber_settings_view.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/views/standardpositionen_settings_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -30,6 +32,10 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
             create: (context) =>
                 getIt<MailboxConfigBloc>()..add(const LoadMailboxConfigEvent()),
           ),
+          // Reiter „Schadensaufstellung" (Feature word_automation).
+          BlocProvider(
+            create: (context) => getIt<StandardpositionenCubit>()..laden(),
+          ),
         ],
         child: this,
       ),
@@ -39,7 +45,7 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         appBar: const SeitenAppBar(
           titel: 'Einstellungen',
@@ -49,6 +55,10 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
           bottom: TabBar(
             tabs: [
               Tab(icon: Icon(Icons.business), text: 'Kanzlei'),
+              Tab(
+                icon: Icon(Icons.table_rows_outlined),
+                text: 'Schadensaufstellung',
+              ),
               Tab(icon: Icon(Icons.mail_outline), text: 'E-Mail'),
               Tab(icon: Icon(Icons.palette_outlined), text: 'Darstellung'),
               Tab(icon: Icon(Icons.backup_outlined), text: 'Datensicherung'),
@@ -59,6 +69,7 @@ class SettingsPage extends StatelessWidget implements AutoRouteWrapper {
         body: const TabBarView(
           children: [
             AppSettingsView(),
+            StandardpositionenSettingsView(),
             MailboxAccessView(),
             AppearanceSettingsView(),
             DataBackupView(),

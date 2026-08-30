@@ -136,6 +136,8 @@ void main() {
       'VersichererDto',
     ],
     'lib/features/vorgaenge/domain/entities/vorgang_json.dart': ['VorgangDto'],
+    'lib/features/word_automation/domain/entities/standard_schadenspositionen.dart':
+        ['StandardSchadenspositionDto'],
     'lib/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart':
         ['ArbeitsordnerAufgeraeumtDto', 'ArbeitsordnerDto'],
     'lib/features/word_automation/domain/entities/damage_listing.dart': [

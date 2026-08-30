@@ -26,6 +26,8 @@ public class AutomationDbContext(DbContextOptions<AutomationDbContext> options)
     public DbSet<VorgangEntity> Vorgaenge => Set<VorgangEntity>();
     public DbSet<MandantEntity> Mandanten => Set<MandantEntity>();
     public DbSet<KanzleiSettingsEntity> KanzleiSettings => Set<KanzleiSettingsEntity>();
+    public DbSet<StandardSchadenspositionEntity> StandardSchadenspositionen =>
+        Set<StandardSchadenspositionEntity>();
     public DbSet<FormTemplateEntity> FormTemplates => Set<FormTemplateEntity>();
     public DbSet<ReceivedReplyEntity> ReceivedReplies => Set<ReceivedReplyEntity>();
     public DbSet<VersichererEntity> Versicherer => Set<VersichererEntity>();

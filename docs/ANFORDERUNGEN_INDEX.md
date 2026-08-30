@@ -68,7 +68,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 | 4.1 | Mandantendaten erfassen; Stammdaten bekannter Mandanten übernehmen |
 | 4.2 | Zentralruf-Anfrage: Formular vorbefüllen, Captcha bleibt beim Anwalt, Aufbau der Referenz |
 | 4.3 | Zentralruf-Antwort verarbeiten: Auslesen, Zuordnen, manueller Weg und Postfach-Überwachung, bestätigte Übernahme, Negativ-Antwort |
-| 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, keine unbefüllten Platzhalter |
+| 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, Standardpositionen der Schadensaufstellung, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |
 | 4.6 | Ablage in der Akte; Ablageort am Vorgang festhalten |
 | 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, Textvorlagen, Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
