@@ -8,9 +8,9 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 `presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart`,
 `presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`
 **Domain:** `FormTemplate`, `FieldData`, `InputType`, `FeldDatenquelle`,
-`CreateFormTemplateRequest`; Dienst `FeldDatenquelleErkennung` (+ `DatenquelleVorschlag`);
-`GetFormTemplates`, `CreateFormTemplate`, `UpdateFormTemplate`, `DeleteFormTemplate`,
-`GetTemplatePlaceholders`
+`CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung` (+ `DatenquelleVorschlag`),
+`AppEigenePlatzhalter`, `PlatzhalterUebernahme`; `GetFormTemplates`, `CreateFormTemplate`,
+`UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
 **Backend:** `Features/FormTemplates/` · `GET /api/FormTemplates`, `POST /api/FormTemplates`,
 `PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
 `Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
