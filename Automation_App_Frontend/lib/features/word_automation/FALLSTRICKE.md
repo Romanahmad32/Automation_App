@@ -46,3 +46,22 @@ sechzig Dateien das größte der App, entsprechend viel davon.
 - `linkWordFileToTemplate` merkt sich die gewählte .docx am aktiven Vorlagen-Slot; die
   Vorlagenliste nur bei echter Neuverknüpfung neu laden, sonst setzt das Resync im
   `TemplateSelector` die Auswahl zurück.
+- **`selectFormTemplate` bekommt zwei verschiedene Dinge auf demselben Weg gemeldet.** Der
+  `TemplateSelector` gleicht die Auswahl per Wert mit der neu geladenen Liste ab und meldet jede
+  andernorts *bearbeitete* Vorlage als Auswahl — gleiche ID, neuer Stand. Nur ein Wechsel der ID
+  (oder `null` = gelöscht) verwirft den Eingabestand; eine Aktualisierung behält Eingaben,
+  Aufstellung, Fassung und Schritt. Vorher kostete ein umgestellter Haken in der Vorlage alles,
+  inklusive des Schritts: `mitAuflistung` fiel auf die Vorgabe zurück und nahm die
+  Schadensaufstellung aus `steps`.
+- **`formData` ist die Freigabe, `formDataEntwurf` der Tippstand.** An `formData` hängen
+  `WizardStepBar._isEnabled` und der Erzeugen-Knopf des Schadensaufstellungs-Schritts, es entsteht
+  also erst beim Absenden. Der laufend mitgeschriebene Stand (`FormWertBeobachter`, 2 s entprellt)
+  gehört deshalb in das zweite Feld — im ersten schaltete das erste getippte Zeichen den nächsten
+  Schritt frei. Beim Vorgangswechsel fällt der Entwurf weg, sonst schlüge er die Vorbelegung des
+  neuen Vorgangs.
+- **Der Schlüssel der `FormGroup` trägt eine Feldsignatur** (`form_template_builder.dart`): Label,
+  Typ und Pflichtangabe. Ohne sie überlebt die alte Gruppe eine bearbeitete Vorlage, und das
+  Formular zeigt neue Felder über alten Controls — ein auf „nicht erforderlich" gestelltes Feld
+  bleibt still Pflichtfeld, ein umbenanntes wirft `FormControlNotFoundException`. Der bereits
+  getippte Stand (`erfassteWerte`) steht bewusst **nicht** im Schlüssel: sonst setzte sich das
+  Formular beim Tippen selbst zurück.
