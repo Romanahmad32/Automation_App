@@ -30,4 +30,41 @@ void main() {
 
     expect(grund, isNull);
   });
+
+  group('„Alle übernehmen" (uebernehmbare)', () {
+    test('erzeugt kein Feld für {{Schadensaufstellung}} und die '
+        'RVG-Platzhalter', () {
+      final ergebnis = PlatzhalterUebernahme.uebernehmbare(const [
+        'Kennzeichen',
+        'Schadensaufstellung',
+        'RvgBrutto',
+        'Unfalldatum',
+      ], const []);
+
+      expect(ergebnis, ['Kennzeichen', 'Unfalldatum']);
+    });
+
+    test('überspringt Namensgleiche und Doppelte, hält die '
+        'Dokumentreihenfolge', () {
+      final ergebnis = PlatzhalterUebernahme.uebernehmbare(
+        const ['Frist', 'Kennzeichen', 'frist', 'Unfalldatum'],
+        const ['kennzeichen '],
+      );
+
+      expect(ergebnis, ['Frist', 'Unfalldatum']);
+    });
+  });
+
+  test('istUebernommen vergleicht ohne Groß-/Kleinschreibung', () {
+    expect(
+      PlatzhalterUebernahme.istUebernommen('Kennzeichen', const [
+        ' kennzeichen',
+      ]),
+      isTrue,
+    );
+    expect(
+      PlatzhalterUebernahme.istUebernommen('Frist', const ['Kennzeichen']),
+      isFalse,
+    );
+  });
 }

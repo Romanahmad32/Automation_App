@@ -197,6 +197,38 @@ void main() {
     expect(knopfAktiv(tester), isTrue);
   });
 
+  /// #35 Teil 3: Statt eines kommentarlos toten Knopfs sagt eine Zeile,
+  /// welche Pflichtfelder fehlen, und springt beim Anklicken ins Feld.
+  testWidgets('nennt die fehlenden Pflichtfelder und springt beim Klick', (
+    tester,
+  ) async {
+    await zeige(
+      tester,
+      vorlage([feld('Unfalldatum'), feld('Versicherer'), feld('Ort')]),
+    );
+    await tester.enterText(find.byType(TextField).at(2), 'Bad Homburg');
+    await tester.pump();
+
+    expect(find.text('2 Pflichtfelder fehlen:'), findsOneWidget);
+    expect(find.text('Versicherer'), findsWidgets);
+
+    await tester.tap(find.text('Unfalldatum').last);
+    await tester.pump();
+    final control =
+        tester
+                .widget<ReactiveForm>(find.byType(ReactiveForm).first)
+                .formGroup
+                .control('Unfalldatum')
+            as FormControl<String>;
+    expect(control.hasFocus, isTrue);
+
+    await tester.enterText(find.byType(TextField).at(0), '01.01.2026');
+    await tester.enterText(find.byType(TextField).at(1), 'HUK-COBURG');
+    await tester.pump();
+    expect(find.textContaining('Pflichtfeld fehl'), findsNothing);
+    expect(knopfAktiv(tester), isTrue);
+  });
+
   testWidgets('meldet den Tippstand entprellt', (tester) async {
     Map<String, String>? gemeldet;
     await zeige(

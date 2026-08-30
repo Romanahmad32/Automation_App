@@ -7,15 +7,19 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Future<List<String>> zeigeUndKlickeAlle(
     WidgetTester tester,
-    List<String> placeholders,
-  ) async {
+    List<String> placeholders, {
+    List<String> vorhandeneNamen = const [],
+    void Function(List<String>)? onAlleUebernehmen,
+  }) async {
     final uebernommen = <String>[];
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: PlatzhalterChips(
             placeholders: placeholders,
+            vorhandeneNamen: vorhandeneNamen,
             onPlaceholderSelected: uebernommen.add,
+            onAlleUebernehmen: onAlleUebernehmen,
           ),
         ),
       ),
@@ -36,6 +40,47 @@ void main() {
     ]);
 
     expect(uebernommen, ['Kennzeichen']);
+  });
+
+  testWidgets('ein übernommener Chip ist nicht mehr klickbar und die '
+      'Zählzeile zählt nur Übernehmbares', (tester) async {
+    final uebernommen = await zeigeUndKlickeAlle(
+      tester,
+      ['Kennzeichen', 'Frist', 'Schadensaufstellung'],
+      vorhandeneNamen: ['kennzeichen'],
+    );
+
+    expect(uebernommen, ['Frist']);
+    // Schadensaufstellung ist app-eigen und zählt nicht mit.
+    expect(find.text('1 von 2 übernommen'), findsOneWidget);
+  });
+
+  testWidgets('„Alle übernehmen" liefert nur Übernehmbares in '
+      'Dokumentreihenfolge', (tester) async {
+    List<String>? geliefert;
+    await zeigeUndKlickeAlle(
+      tester,
+      ['Frist', 'Schadensaufstellung', 'Kennzeichen', 'frist'],
+      vorhandeneNamen: ['Kennzeichen'],
+      onAlleUebernehmen: (platzhalter) => geliefert = platzhalter,
+    );
+
+    await tester.tap(find.text('Alle übernehmen'));
+    expect(geliefert, ['Frist']);
+  });
+
+  testWidgets('nichts mehr zu übernehmen: der Knopf ist stumm', (tester) async {
+    var gerufen = false;
+    await zeigeUndKlickeAlle(
+      tester,
+      ['Kennzeichen'],
+      vorhandeneNamen: ['Kennzeichen'],
+      onAlleUebernehmen: (_) => gerufen = true,
+    );
+
+    await tester.tap(find.text('Alle übernehmen'));
+    expect(gerufen, isFalse);
+    expect(find.text('1 von 1 übernommen'), findsOneWidget);
   });
 
   testWidgets('der app-eigene Chip erklärt sich im Tooltip', (tester) async {

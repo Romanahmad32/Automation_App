@@ -13,7 +13,7 @@ import 'package:automation_app/features/form_template_setup/presentation/widgets
 import 'package:automation_app/features/form_template_setup/presentation/widgets/initial_template_form.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_fehler_melder.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slot_card.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slots.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_name_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,7 +90,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     });
   }
 
-  void _addNewField({String? initialLabel}) {
+  void _addNewField({String? initialLabel, bool required = false}) {
     setState(() {
       final fieldKey = 'field_${_nextFieldIndex++}';
       formGroup.addAll({
@@ -106,9 +106,21 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
           order: fields.length,
           controlKey: fieldKey,
           platzhalter: initialLabel,
+          required: required,
         ),
       );
     });
+  }
+
+  /// „Alle übernehmen" (#35 Teil 3): Die Chips liefern bereits nur, was
+  /// übernehmbar ist ([PlatzhalterUebernahme.uebernehmbare]). Die Felder
+  /// entstehen als Pflichtfelder — gefahrlos, weil die Pflicht beim Ausfüllen
+  /// je gewählter Word-Datei abgeleitet wird (Teil 2) und ein Feld ohne
+  /// Platzhalter dort nichts sperrt.
+  void _alleUebernehmen(List<String> placeholders) {
+    for (final placeholder in placeholders) {
+      _addNewField(initialLabel: placeholder, required: true);
+    }
   }
 
   /// Übernimmt einen erkannten Platzhalter als Eingabefeld — außer es gibt
@@ -221,31 +233,14 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
 
                     const TemplateNameCard(),
 
-                    TemplateFileSlotCard(
-                      slot: TemplateFileSlot.ohneAuflistung,
-                      path: _wordFilePathOhne,
-                      title: 'Vorlage ohne Auflistung (HGN)',
-                      subtitle:
-                          'Standardbrief mit Haftung dem Grunde nach – ohne '
-                          'Schadensaufstellung.',
-                      onPick: () => _pickFile(TemplateFileSlot.ohneAuflistung),
-                      onRemove: () =>
-                          _removeFile(TemplateFileSlot.ohneAuflistung),
+                    TemplateFileSlots(
+                      pfadOhneAuflistung: _wordFilePathOhne,
+                      pfadMitAuflistung: _wordFilePathMit,
+                      fields: fields,
+                      onPick: _pickFile,
+                      onRemove: _removeFile,
                       onPlaceholderSelected: _addFieldFromPlaceholder,
-                    ),
-
-                    TemplateFileSlotCard(
-                      slot: TemplateFileSlot.mitAuflistung,
-                      path: _wordFilePathMit,
-                      title: 'Vorlage mit Auflistung (Schadensaufstellung)',
-                      subtitle:
-                          'Enthält {{Schadensaufstellung}}; beim Ausfüllen wird '
-                          'ein zusätzlicher Schritt für die Schadenspositionen '
-                          'und die RVG-Kostenberechnung angezeigt.',
-                      onPick: () => _pickFile(TemplateFileSlot.mitAuflistung),
-                      onRemove: () =>
-                          _removeFile(TemplateFileSlot.mitAuflistung),
-                      onPlaceholderSelected: _addFieldFromPlaceholder,
+                      onAlleUebernehmen: _alleUebernehmen,
                     ),
 
                     TemplateFieldsCard(

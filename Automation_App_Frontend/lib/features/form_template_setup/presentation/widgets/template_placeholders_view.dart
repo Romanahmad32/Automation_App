@@ -10,10 +10,18 @@ class TemplatePlaceholdersView extends StatelessWidget {
   final TemplateFileSlot slot;
   final void Function(String placeholder) onPlaceholderSelected;
 
+  /// Die aktuell eingetragenen Feldnamen — für die Chip-Optik „übernommen",
+  /// die Zählzeile und „Alle übernehmen" (#35 Teil 3).
+  final Iterable<String?> vorhandeneNamen;
+
+  final void Function(List<String> placeholders)? onAlleUebernehmen;
+
   const TemplatePlaceholdersView({
     super.key,
     required this.slot,
     required this.onPlaceholderSelected,
+    this.vorhandeneNamen = const [],
+    this.onAlleUebernehmen,
   });
 
   @override
@@ -63,7 +71,9 @@ class TemplatePlaceholdersView extends StatelessWidget {
                 ),
                 PlatzhalterChips(
                   placeholders: placeholders,
+                  vorhandeneNamen: vorhandeneNamen,
                   onPlaceholderSelected: onPlaceholderSelected,
+                  onAlleUebernehmen: onAlleUebernehmen,
                 ),
               ],
             );

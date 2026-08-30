@@ -7,6 +7,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/form
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/pflichtfelder_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -126,6 +127,15 @@ class FormTemplateBuilder extends StatelessWidget {
                 return _buildZeile(context, field);
               }),
               const SizedBox(height: 8),
+              // Sagt, welche leeren Pflichtfelder den Knopf sperren, und
+              // springt beim Anklicken hin — statt eines kommentarlos toten
+              // Knopfs (#35 Teil 3).
+              PflichtfelderHinweis(
+                pflichtFelder: [
+                  for (final field in formTemplate!.fields)
+                    if (_istPflicht(field)) field.label,
+                ],
+              ),
               ReactiveFormConsumer(
                 builder: (context, formGroup, child) {
                   return CustomRectangularButton(
