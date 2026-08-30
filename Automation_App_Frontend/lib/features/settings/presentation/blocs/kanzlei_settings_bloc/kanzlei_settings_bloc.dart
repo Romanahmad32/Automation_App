@@ -21,6 +21,7 @@ class KanzleiSettingsBloc
     on<LoadKanzleiSettingsEvent>(_onLoad);
     on<SaveKanzleiSettingsEvent>(_onSave);
     on<SaveMailSignaturEvent>(_onSaveSignatur);
+    on<SaveTabellenkopfFarbeEvent>(_onSaveTabellenkopfFarbe);
   }
 
   Future<void> _onLoad(
@@ -55,6 +56,23 @@ class KanzleiSettingsBloc
     return _speichere(
       aktuell.settings.copyWith(mailSignatur: event.signatur),
       KanzleiSettingsBereich.signatur,
+      emit,
+    );
+  }
+
+  /// Die Titelzeilen-Farbe steht im Reiter „Schadensaufstellung" und wird dort
+  /// einzeln gespeichert — hineinkopiert in den zuletzt geladenen Stand, damit
+  /// die Kanzleidaten und die Signatur daneben unberührt bleiben.
+  Future<void> _onSaveTabellenkopfFarbe(
+    SaveTabellenkopfFarbeEvent event,
+    Emitter<KanzleiSettingsState> emit,
+  ) async {
+    final aktuell = state;
+    if (aktuell is! KanzleiSettingsLoaded) return;
+
+    return _speichere(
+      aktuell.settings.copyWith(tabellenkopfFarbeHex: event.farbeHex),
+      KanzleiSettingsBereich.schadensaufstellung,
       emit,
     );
   }

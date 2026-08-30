@@ -52,6 +52,14 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   `schadensaufstellung`) und werden beim Wiedereinstieg als Vorbelegung angeboten; sie
   gewinnen gegen die Heuristiken. Ausdrücklich gebundene Felder fließen in die
   Vorgangsfelder zurück (`VorgangRueckfluss`).
+- Ohne gespeicherten Stand startet die Schadensaufstellung mit den Standardpositionen (§4.4):
+  ab Werk die fünf üblichen (`StandardSchadenspositionen`), vorbelegt in der Bezeichnung und leer
+  im Betrag; das „+"-Menü holt eine gelöschte davon zurück. Positionen ohne Betrag fallen beim
+  Übernehmen heraus. Bezeichnungen **und** Beträge sind im Einstellungs-Reiter
+  „Schadensaufstellung" konfigurierbar (mit Tabellen-Vorschau, `StandardpositionenEditor`);
+  gespeichert im Backend (`GET`/`PUT api/Settings/schadenspositionen`, leere Liste = Vorgabe).
+  Die Titelzeilen-Farbe der Tabelle liegt im selben Reiter, speichert sofort beim Auswählen und
+  färbt die Vorschau live.
 - `MandantErkennung` schlägt beim Tippen passende Registereinträge vor (Kennzeichen,
   Nachname, „Meinten Sie …?"-Banner) — ein Vorschlag, die Übernahme bleibt ein Klick.
 - Der Backend-Slice `Versicherer` lernt Kontaktdaten aus jeder Antwort und füllt damit

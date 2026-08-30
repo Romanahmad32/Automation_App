@@ -5,7 +5,6 @@ import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
-import 'package:automation_app/features/settings/presentation/widgets/tabellenkopf_farbe_field.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -119,15 +118,6 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               ],
             ),
           ],
-        ),
-        FormSection(
-          icon: Icons.table_chart,
-          title: 'Schadensaufstellung (Word-Dokumente)',
-          subtitle:
-              'Farbe der Titelzeile der Schadensaufstellungs-Tabelle. '
-              'Die Zebra-Streifen der Positionszeilen werden daraus '
-              'abgeleitet.',
-          children: const [TabellenkopfFarbeField()],
         ),
         FormSection(
           icon: Icons.folder_special,

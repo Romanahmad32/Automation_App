@@ -90,7 +90,7 @@ zusammenzuziehen, um unter das Budget zu kommen, hat schon einmal lesbare Doku u
 | `mandanten` | Mandantenregister (Datenbank) + Akten/Fälle (Dateisystem) |
 | `versicherer` | lesender Zugriff auf die Versicherer-Wissensbasis; benutzt aus `zentralruf_reply` |
 | `vorgaenge` | Lebenszyklus der Vorgänge + Sachgebiete-/Auftragsregister |
-| `settings` | Kanzleidaten, Aktenstammordner, Auftragsnummer/Abteilung, Mail-Signatur, Erscheinungsbild; hängt die Reiter aus `mailbox` und `backup` ein |
+| `settings` | Kanzleidaten, Aktenstammordner, Auftragsnummer/Abteilung, Mail-Signatur, Erscheinungsbild; hängt die Reiter aus `mailbox`, `backup` und `word_automation` (Standardpositionen) ein |
 | `backup` | Sicherung und Wiederherstellung; aufgerufen aus den Einstellungen |
 | `dev_simulation` | Demo-Vorgang + Simulationsmenü, nur in `kDebugMode` sichtbar |
 

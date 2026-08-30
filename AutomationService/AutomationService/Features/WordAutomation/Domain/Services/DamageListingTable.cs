@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Xml.Linq;
 using AutomationService.Features.WordAutomation.Domain.Exceptions;
 using Xceed.Document.NET;
 using Xceed.Words.NET;
@@ -176,7 +177,55 @@ public static class DamageListingTable
                 .Append(calculation.Brutto.ToString("N2", culture)), markerFormatting)
             .Alignment = Alignment.right;
 
+        foreach (var row in table.Rows)
+        {
+            foreach (var cell in row.Cells)
+            {
+                foreach (var paragraph in cell.Paragraphs)
+                    SetzeKompakteAbsatzabstaende(paragraph);
+            }
+        }
+
         return table;
+    }
+
+    private static readonly XNamespace W =
+        "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+
+    /// <summary>
+    /// Setzt die Absatzabstände der Zelle explizit auf kompakt: kein Abstand
+    /// davor/danach, einfacher Zeilenabstand (w:line 240 = 1,0).
+    ///
+    /// Ohne das erben die Zellen die Dokument-Standards der jeweiligen Vorlage —
+    /// und die sind bei mit neuerem Word angelegten Vorlagen 8 pt Abstand nach
+    /// jedem Absatz plus 1,08-facher Zeilenabstand (w:after 160, w:line 278).
+    /// Jede Tabellenzeile war dann fast doppelt so hoch wie ihr Text, und
+    /// dieselbe Aufstellung sah je nach Vorlage unterschiedlich hoch aus.
+    /// Direkt am XML statt über die DocX-Absatz-API, weil diese eine 0 als
+    /// „Attribut entfernen" behandelt — entfernt gilt aber wieder der geerbte
+    /// Standard, also genau die 8 pt, die hier wegsollen.
+    /// </summary>
+    private static void SetzeKompakteAbsatzabstaende(Paragraph paragraph)
+    {
+        var pPr = paragraph.Xml.Element(W + "pPr");
+        if (pPr is null)
+        {
+            // w:pPr muss das erste Kindelement des Absatzes sein (OOXML-Schema).
+            pPr = new XElement(W + "pPr");
+            paragraph.Xml.AddFirst(pPr);
+        }
+
+        var spacing = pPr.Element(W + "spacing");
+        if (spacing is null)
+        {
+            spacing = new XElement(W + "spacing");
+            pPr.Add(spacing);
+        }
+
+        spacing.SetAttributeValue(W + "before", "0");
+        spacing.SetAttributeValue(W + "after", "0");
+        spacing.SetAttributeValue(W + "line", "240");
+        spacing.SetAttributeValue(W + "lineRule", "auto");
     }
 
     /// <summary>Wendet Schriftart und -größe einer Vorlagen-Formatierung auf zuletzt angehängten Text an.</summary>

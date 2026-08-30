@@ -32,6 +32,17 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   `schadensaufstellungIstErzeugbar` ist die einzige Stelle, die über den Knopf entscheidet. Der
   Grund: Eine Zeile ohne Bezeichnung wandert nicht in die Aufstellung. Wer die Beanstandungen aus
   ihr ableitet, übersieht genau die Zeile mit `-250` und leerer Bezeichnung — Feld rot, Knopf frei.
+- **Die Standardpositionen (§4.4) gehören diesem Feature, ihr Editor hängt aber in den
+  Einstellungen**: `StandardpositionenSettingsView` (Reiter „Schadensaufstellung") wird von
+  `settings_page.dart` nur eingehängt — wie die Reiter aus `mailbox` und `backup`. Der
+  `StandardpositionenCubit` ist `@injectable`, also je Seite eine eigene Instanz: Eine Änderung in
+  den Einstellungen erreicht eine bereits offene Word-Automation-Seite nicht. Im Wizard kippt der
+  `ValueKey` des `DamageListingForm` genau einmal von `false` auf `true`, wenn die konfigurierten
+  Positionen eintreffen — der Schritt ist im `IndexedStack` von Anfang an aufgebaut, ohne den
+  Neuaufbau bliebe die Vorgabe aus dem Code stehen. Im selben Reiter liegt auch die
+  Titelzeilen-Farbe der Tabelle (`TabellenkopfFarbeField` aus `settings`): Sie speichert **sofort
+  beim Auswählen** für sich (`SaveTabellenkopfFarbeEvent`, auf dem geladenen Stand), und die
+  Vorschau folgt dem Farbfeld live — auch einem noch ungespeicherten Wert.
 - Die Geldgrenzen der Backend-DTOs (`DamageItemDto.Amount`, `RvgCalculationRequestDto.Gegenstandswert`)
   brauchen ihre **Nachkommastellen**: `[Range(0, …)]` bindet `RangeAttribute(int, int)`, rundet den
   Betrag vor dem Vergleich und lässt `-0,49` durch; jenseits von `int.MaxValue` wird aus 400 ein 500.

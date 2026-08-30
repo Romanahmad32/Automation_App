@@ -6,19 +6,19 @@ legt es in der Mandantenakte ab und schließt den Vorgang ab. Größtes Feature 
 **Einstieg:** `presentation/pages/word_automation_page.dart`
 **Zustand:** in `presentation/blocs/`: `WizardCubit` (Schritt + gesammelte Eingaben),
 `DocumentBloc` (geladene Vorlagendatei), `EditedDocumentBloc` (Erzeugung),
-`TemplatePdfPreviewBloc` + `ResultPdfPreviewBloc` (`pdf_preview_bloc.dart`), `RvgCalculationBloc`.
+`TemplatePdfPreviewBloc` + `ResultPdfPreviewBloc` (`pdf_preview_bloc.dart`), `RvgCalculationBloc`, `StandardpositionenCubit`.
 Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTemplateOverviewBloc`,
 `VorgangCubit`.
 **Domain:** Entities `DamageListing`, `GeneratedDocument`, `RvgCalculation`, `VorlagenUebersicht`,
-`ArbeitsordnerAufraeumung`, `AblageFormat`; UseCases `FillOutTemplate`, `ConvertDocxToPdf`,
-`ErzeugePdfFassung`, `CalculateRvgFees`, `GetVorlagenUebersicht`, `ArbeitsordnerAufraeumen`.
+`ArbeitsordnerAufraeumung`, `AblageFormat`, `StandardSchadenspositionen`; UseCases `FillOutTemplate`,
+`ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateRvgFees`, `GetVorlagenUebersicht`, `ArbeitsordnerAufraeumen`.
 **Backend:** `Features/WordAutomation/`, `Features/PdfConversion/` ·
 `GET /api/WordAutomation/vorlagen`, `POST /api/WordAutomation/replaced-document`,
 `POST /api/WordAutomation/rvg-calculation`, `POST /api/WordAutomation/arbeitsordner/aufraeumen`,
 `POST /api/PdfConversion/convert-from-path`; über `VorgangCubit` zusätzlich `PUT /api/Vorgaenge`
-und `POST /api/Vorgaenge/abschliessen`
+und `POST /api/Vorgaenge/abschliessen`; Standardpositionen über `GET`/`PUT /api/Settings/schadenspositionen`
 **Tests:** `test/features/word_automation/` (Formularextraktion, `WizardCubit`,
-`EditedDocumentBloc`, Dokument-Export, Betrag einer Schadensposition)
+`EditedDocumentBloc`, Dokument-Export, Betrag einer Schadensposition, Standardpositionen samt Editor)
 
 **Fallstricke**
 
