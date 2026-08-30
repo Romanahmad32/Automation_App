@@ -35,7 +35,6 @@ class RegisterPage extends StatefulWidget {
 }
 
 class RegisterPageState extends State<RegisterPage> {
-  final RegisterSpiegelCubit _spiegel = getIt<RegisterSpiegelCubit>();
   RegisterFilter _filter = RegisterFilter.alle;
 
   /// Ob gerade geschrieben wird. Bewusst hier und nicht im Cubit: Dessen
@@ -44,23 +43,25 @@ class RegisterPageState extends State<RegisterPage> {
   /// PDF-Erzeugung Sekunden braucht.
   bool _schreibtGerade = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _spiegel.ladeStand();
-  }
-
-  Future<void> _schreiben() async {
-    setState(() => _schreibtGerade = true);
-    try {
-      await _spiegel.exportiere();
-    } finally {
-      if (mounted) setState(() => _schreibtGerade = false);
-    }
-  }
-
+  /// Der [RegisterSpiegelCubit] ist als `factory` registriert — jeder Aufruf
+  /// von `getIt` liefert eine **neue** Instanz, und niemand schließt sie.
+  /// Deshalb hängt er am [BlocProvider] und nicht an einem Feld dieser Klasse:
+  /// Der Provider schließt ihn beim Verlassen der Seite mit. Vorher blieb bei
+  /// jedem Öffnen des Registers ein Cubit samt Stream offen zurück.
+  ///
+  /// Der [VorgangCubit] weiter unten hängt dagegen zu Recht direkt an `getIt` —
+  /// er ist ein `lazySingleton` und gehört der App, nicht dieser Seite.
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => getIt<RegisterSpiegelCubit>()..ladeStand(),
+      child: Builder(builder: _geruest),
+    );
+  }
+
+  /// Eigener Baumschritt unter dem Provider: Der [BuildContext] aus [build]
+  /// steht noch darüber und fände den Cubit nicht.
+  Widget _geruest(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -75,7 +76,7 @@ class RegisterPageState extends State<RegisterPage> {
                 'eingestellten Ablageordner. Nach jedem Abschluss geschieht '
                 'das automatisch.',
             child: OutlinedButton.icon(
-              onPressed: _schreibtGerade ? null : _schreiben,
+              onPressed: _schreibtGerade ? null : () => _schreiben(context),
               icon: _schreibtGerade
                   ? const SizedBox(
                       width: 16,
@@ -96,6 +97,16 @@ class RegisterPageState extends State<RegisterPage> {
         },
       ),
     );
+  }
+
+  Future<void> _schreiben(BuildContext context) async {
+    final spiegel = context.read<RegisterSpiegelCubit>();
+    setState(() => _schreibtGerade = true);
+    try {
+      await spiegel.exportiere();
+    } finally {
+      if (mounted) setState(() => _schreibtGerade = false);
+    }
   }
 
   Widget _inhalt(ThemeData theme, List<Vorgang> vorgaenge) {
@@ -135,7 +146,6 @@ class RegisterPageState extends State<RegisterPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
           child: BlocBuilder<RegisterSpiegelCubit, RegisterSpiegelErgebnis>(
-            bloc: _spiegel,
             builder: (context, stand) => RegisterSpiegelLeiste(stand: stand),
           ),
         ),
