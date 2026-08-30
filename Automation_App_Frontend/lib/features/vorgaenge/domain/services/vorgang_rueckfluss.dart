@@ -16,6 +16,8 @@ import 'package:automation_app/features/word_automation/domain/entities/damage_l
 ///   bestätigte Wert gewinnt. Heuristisch gemappte Felder werden bewusst nicht
 ///   zurückgeschrieben (lieber gar nicht als falsch, §1.3); das aus der
 ///   Referenz abgeleitete Gegner-Kennzeichen bleibt ebenfalls unberührt.
+/// * Ein offener [Vorgang.entwurf] fällt dabei weg: Bestätigt schlägt
+///   angefangen, und was hier ankommt, ist bestätigt.
 class VorgangRueckfluss {
   const VorgangRueckfluss._();
 
@@ -38,6 +40,11 @@ class VorgangRueckfluss {
     return vorgang.copyWith(
       feldWerte: Map.unmodifiable(formData),
       schadensaufstellung: schadensaufstellung,
+      // Aus dem Entwurf ist ein bestätigter Stand geworden — er hat sich
+      // erledigt. Bliebe er stehen, böte die Leiste beim nächsten Einstieg
+      // einen älteren Stand gegen die gerade bestätigten Werte an, und der
+      // Anwalt müsste raten, welcher der neuere ist.
+      entwurf: () => null,
       unfallDatum: wert(FeldDatenquelle.unfalldatum),
       unfallort: wert(FeldDatenquelle.unfallort),
       unfalluhrzeit: wert(FeldDatenquelle.unfalluhrzeit),

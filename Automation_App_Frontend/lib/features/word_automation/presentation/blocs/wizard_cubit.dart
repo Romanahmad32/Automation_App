@@ -1,166 +1,45 @@
+import 'dart:async';
+
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-/// Schritte des Ausfüll-Wizards. Der Schritt [schadensaufstellung] existiert
-/// nur, wenn der Nutzer "mit Auflistung" gewählt hat (siehe [WizardState.steps]);
-/// die Enum-Indizes sind zugleich die festen Positionen im IndexedStack der Seite.
-enum WizardStep { fillOut, schadensaufstellung, review, save }
-
-/// Reine UI-Orchestrierung des Wizards:
-/// Vorlage wählen & ausfüllen → (Schadensaufstellung) → Begutachten → Speichern.
-/// Die eigentliche Arbeit (Dateiauswahl, Generierung, PDF) bleibt in den
-/// bestehenden Blocs; hier liegen aktueller Schritt und gesammelte Eingaben.
-class WizardState extends Equatable {
-  final WizardStep currentStep;
-  final FormTemplate? selectedFormTemplate;
-  final DamageListing? damageListing;
-
-  /// Was das Schadensaufstellungs-Formular an seinen Zeilen beanstandet — je
-  /// Eintrag ein fertiger Satz. Leer = nichts zu beanstanden.
-  ///
-  /// Steht hier und nicht im Formular, weil der Schritt daran den Knopf
-  /// „Dokument erstellen" sperrt. Wird **zusammen** mit [damageListing] gesetzt
-  /// ([setDamageListing]): Die Beanstandungen betreffen auch Zeilen, die es
-  /// nicht in die Aufstellung schaffen, lassen sich also nicht aus ihr ableiten.
-  final List<String> schadenspositionFehler;
-
-  /// Ob der Nutzer die Version **mit** Auflistung (Schadensaufstellung) gewählt
-  /// hat. Nur möglich, wenn die Vorlage eine entsprechende Datei hinterlegt hat.
-  /// Steuert die geladene Word-Datei und die sichtbaren Wizard-Schritte.
-  final bool mitAuflistung;
-
-  /// Ob der Mandant vorsteuerabzugsberechtigt ist. Steuert sowohl das
-  /// Ankreuzen im Dokument ("☒ ist / ☐ ist nicht vorsteuerabzugsberechtigt")
-  /// als auch die RVG-Umsatzsteuer (`applyVat = !vorsteuerabzugsberechtigt`).
-  final bool vorsteuerabzugsberechtigt;
-
-  /// **Abgesendete** Formularfelder aus dem ersten Schritt. Wird dort
-  /// zwischengespeichert, weil die Dokumenterzeugung bei "mit Auflistung" erst
-  /// am Ende des Schadensaufstellungs-Schritts läuft.
-  final Map<String, String>? formData;
-
-  /// Der laufende Tippstand desselben Formulars — im Unterschied zu [formData]
-  /// **nicht** bestätigt. Wird entprellt mitgeschrieben, damit ein Neuaufbau
-  /// des Formulars die Eingaben wieder einsetzen kann (die Vorlage wurde
-  /// nebenan bearbeitet, die Liste neu geladen).
-  ///
-  /// Getrennt gehalten, weil [formData] auch eine Freigabe ist: An ihm hängen
-  /// `WizardStepBar._isEnabled` und der Erzeugen-Knopf des
-  /// Schadensaufstellungs-Schritts. Schriebe der Tippstand dorthin, schaltete
-  /// das erste getippte Zeichen den nächsten Schritt frei.
-  final Map<String, String>? formDataEntwurf;
-
-  /// Der Vorgang, aus dem das Schreiben erstellt wird (Phase 4). Liefert die
-  /// Vorbelegung (Mandant + Antwort + Rechtsgebiet) und nimmt nach der
-  /// Erzeugung Dokumentpfad und Status entgegen. Null = freie Erfassung ohne
-  /// Vorgangsbezug.
-  final Vorgang? selectedVorgang;
-
-  /// Der zum [selectedVorgang] aufgelöste Registereintrag (für die
-  /// Mandanten-Vorbelegung). Null, solange nicht aufgelöst oder kein Mandant
-  /// verknüpft ist.
-  final Mandant? selectedMandant;
-
-  const WizardState({
-    this.currentStep = WizardStep.fillOut,
-    this.selectedFormTemplate,
-    this.damageListing,
-    this.schadenspositionFehler = const [],
-    this.mitAuflistung = false,
-    this.vorsteuerabzugsberechtigt = true,
-    this.formData,
-    this.formDataEntwurf,
-    this.selectedVorgang,
-    this.selectedMandant,
-  });
-
-  /// Ob aus der erfassten Schadensaufstellung ein Dokument entstehen darf:
-  /// mindestens eine Position, und keine Zeile beanstandet.
-  ///
-  /// Ein einziger Ausdruck statt zweier Bedingungen im Schritt — die musste
-  /// jemand von Hand gleichlaufend halten, und „hat Positionen" behauptete dabei
-  /// eine Gültigkeit, die es nicht prüfte.
-  bool get schadensaufstellungIstErzeugbar =>
-      (damageListing?.items.isNotEmpty ?? false) &&
-      schadenspositionFehler.isEmpty;
-
-  /// Pfad der aktuell relevanten Word-Datei (je nach [mitAuflistung]).
-  String? get activeWordFilePath => mitAuflistung
-      ? selectedFormTemplate?.wordFilePathMitAuflistung
-      : selectedFormTemplate?.wordFilePathOhneAuflistung;
-
-  /// Die für die aktuelle Auswahl sichtbaren Schritte — Single Source of Truth
-  /// für Schrittleiste und Navigation.
-  List<WizardStep> get steps => mitAuflistung
-      ? WizardStep.values
-      : const [WizardStep.fillOut, WizardStep.review, WizardStep.save];
-
-  WizardState copyWith({
-    WizardStep? currentStep,
-    FormTemplate? Function()? selectedFormTemplate,
-    DamageListing? Function()? damageListing,
-    List<String>? schadenspositionFehler,
-    bool? mitAuflistung,
-    bool? vorsteuerabzugsberechtigt,
-    Map<String, String>? Function()? formData,
-    Map<String, String>? Function()? formDataEntwurf,
-    Vorgang? Function()? selectedVorgang,
-    Mandant? Function()? selectedMandant,
-  }) {
-    return WizardState(
-      currentStep: currentStep ?? this.currentStep,
-      selectedFormTemplate: selectedFormTemplate != null
-          ? selectedFormTemplate()
-          : this.selectedFormTemplate,
-      damageListing: damageListing != null
-          ? damageListing()
-          : this.damageListing,
-      schadenspositionFehler:
-          schadenspositionFehler ?? this.schadenspositionFehler,
-      mitAuflistung: mitAuflistung ?? this.mitAuflistung,
-      vorsteuerabzugsberechtigt:
-          vorsteuerabzugsberechtigt ?? this.vorsteuerabzugsberechtigt,
-      formData: formData != null ? formData() : this.formData,
-      formDataEntwurf: formDataEntwurf != null
-          ? formDataEntwurf()
-          : this.formDataEntwurf,
-      selectedVorgang: selectedVorgang != null
-          ? selectedVorgang()
-          : this.selectedVorgang,
-      selectedMandant: selectedMandant != null
-          ? selectedMandant()
-          : this.selectedMandant,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-    currentStep,
-    selectedFormTemplate,
-    damageListing,
-    schadenspositionFehler,
-    mitAuflistung,
-    vorsteuerabzugsberechtigt,
-    formData,
-    formDataEntwurf,
-    selectedVorgang,
-    selectedMandant,
-  ];
-}
+part 'wizard_state.dart';
 
 @injectable
 class WizardCubit extends Cubit<WizardState> {
   final UseCase<FormTemplate, UpdateFormTemplateParams> _updateFormTemplate;
   final UseCase<List<Mandant>, NoParams> _getMandanten;
 
-  WizardCubit(this._updateFormTemplate, this._getMandanten)
+  /// Ablage des Entwurfs. Der app-weite Speicher statt des Repositorys direkt:
+  /// Sonst hielte seine Liste weiter den Vorgang **ohne** den gerade
+  /// gesicherten Stand, und der nächste Einstieg böte einen veralteten an.
+  final VorgangCubit _vorgaenge;
+
+  Timer? _sicherung;
+
+  /// Ob der aktuelle Stand bereits **bestätigt** ist (ein Dokument daraus
+  /// erzeugt). Dann wird nichts mehr als Entwurf abgelegt: Der Rückfluss hat
+  /// ihn im selben Atemzug am Vorgang gelöscht, und eine Sicherung danach
+  /// brächte ihn als Angebot zurück, das nichts Neues enthält. Jede weitere
+  /// Eingabe hebt die Marke wieder auf.
+  bool _standIstBestaetigt = false;
+
+  /// Wie lange nach der letzten Änderung gewartet wird, bevor der Entwurf zum
+  /// Dienst geht. Das Formular meldet seinen Tippstand bereits entprellt; hier
+  /// bündelt der Takt zusätzlich die Schadenspositionen, die bei jedem Zeichen
+  /// melden.
+  static const entwurfVerzoegerung = Duration(seconds: 2);
+
+  WizardCubit(this._updateFormTemplate, this._getMandanten, this._vorgaenge)
     : super(const WizardState());
 
   /// Wählt den Vorgang, aus dem das Schreiben erstellt wird. Die Auswahl wird
@@ -176,8 +55,10 @@ class WizardCubit extends Cubit<WizardState> {
   ///
   /// Aus demselben Grund fällt der Tippstand weg: Er gehört zum vorigen
   /// Vorgang und hätte beim Neuaufbau des Formulars Vorrang vor der Vorbelegung
-  /// des neuen.
+  /// des neuen. Ein am neuen Vorgang liegender Entwurf wird **angeboten**
+  /// ([WizardState.entwurfAngebot]), nicht eingesetzt.
   Future<void> selectVorgang(Vorgang? vorgang) async {
+    _sicherung?.cancel();
     emit(
       state.copyWith(
         selectedVorgang: () => vorgang,
@@ -185,6 +66,7 @@ class WizardCubit extends Cubit<WizardState> {
         damageListing: () => null,
         schadenspositionFehler: const [],
         formDataEntwurf: () => null,
+        entwurfAngebot: () => vorgang?.entwurf,
       ),
     );
     if (vorgang?.mandantId == null) return;
@@ -208,6 +90,31 @@ class WizardCubit extends Cubit<WizardState> {
     }
   }
 
+  /// Übernimmt den angebotenen Entwurf in die Eingabe: Werte und Aufstellung
+  /// werden gesetzt, die Leiste verschwindet, und [WizardState.aufbauMarke]
+  /// zwingt das Formular zum Neuaufbau — ohne sie hätte der Anwalt auf
+  /// „Weiterarbeiten" gedrückt und nichts passieren sehen.
+  void uebernimmEntwurf() {
+    final angebot = state.entwurfAngebot;
+    if (angebot == null) return;
+    emit(
+      state.copyWith(
+        formDataEntwurf: () => angebot.feldWerte,
+        damageListing: () => angebot.schadensaufstellung,
+        entwurfAngebot: () => null,
+        aufbauMarke: state.aufbauMarke + 1,
+      ),
+    );
+  }
+
+  /// Verwirft den angebotenen Entwurf — auch am Vorgang, sonst stünde er beim
+  /// nächsten Einstieg wieder da.
+  void verwirfEntwurf() {
+    final referenz = state.selectedVorgang?.referenz;
+    emit(state.copyWith(entwurfAngebot: () => null));
+    if (referenz != null) _vorgaenge.sichereEntwurf(referenz, null);
+  }
+
   /// Ersetzt den gewählten Vorgang durch seinen aktualisierten Stand (z. B.
   /// nach dem Rückfluss der Wizard-Eingaben in den Vorgang), ohne den
   /// Mandanten neu zu laden. No-op, wenn inzwischen ein anderer Vorgang
@@ -218,6 +125,7 @@ class WizardCubit extends Cubit<WizardState> {
         !Vorgang.gleicheReferenz(aktuell.referenz, vorgang.referenz)) {
       return;
     }
+    _standIstBestaetigt = true;
     emit(state.copyWith(selectedVorgang: () => vorgang));
   }
 
@@ -226,6 +134,13 @@ class WizardCubit extends Cubit<WizardState> {
       return;
     }
     emit(state.copyWith(currentStep: step));
+    // Einen Eingabeschritt zu verlassen ist der Punkt, an dem der Anwalt mit
+    // dem Bisherigen fertig ist — hier wird nicht auf den Takt gewartet. Der
+    // Sprung ins Begutachten ist keiner: Dorthin kommt man nur über ein
+    // erzeugtes Dokument, und dann ist der Stand bestätigt statt angefangen.
+    if (step == WizardStep.fillOut || step == WizardStep.schadensaufstellung) {
+      sichereEntwurfJetzt();
+    }
   }
 
   /// Setzt die gewählte Vorlage — und unterscheidet dabei zwei Fälle, die
@@ -315,6 +230,7 @@ class WizardCubit extends Cubit<WizardState> {
         schadenspositionFehler: fehler,
       ),
     );
+    _planeSicherung();
   }
 
   /// Übernimmt den **abgesendeten** Stand des Ausfüll-Formulars. Der Entwurf
@@ -327,12 +243,42 @@ class WizardCubit extends Cubit<WizardState> {
         formDataEntwurf: () => formData ?? state.formDataEntwurf,
       ),
     );
+    _planeSicherung();
   }
 
   /// Schreibt den laufenden Tippstand mit (entprellt aus dem Formular). Gibt
   /// **keine** Freigabe: Dafür ist [setFormData] zuständig.
   void setFormDataEntwurf(Map<String, String> werte) {
     emit(state.copyWith(formDataEntwurf: () => werte));
+    _planeSicherung();
+  }
+
+  /// Legt den angefangenen Stand sofort am Vorgang ab. Ohne gewählten Vorgang
+  /// fehlt der Ablageort — freie Erfassung hält keinen Entwurf (bewusste
+  /// Abgrenzung des ersten Wurfs).
+  void sichereEntwurfJetzt() {
+    _sicherung?.cancel();
+    final referenz = state.selectedVorgang?.referenz;
+    final werte = state.formDataEntwurf;
+    if (referenz == null || werte == null || _standIstBestaetigt) return;
+
+    final entwurf = VorgangEntwurf(
+      gespeichertAm: DateTime.now(),
+      feldWerte: werte,
+      schadensaufstellung: state.damageListing,
+    );
+    if (entwurf.istLeer) return;
+    _vorgaenge.sichereEntwurf(referenz, entwurf);
+  }
+
+  void _planeSicherung() {
+    _standIstBestaetigt = false;
+    _sicherung?.cancel();
+    // Ohne Vorgang gibt es keinen Ablageort — dann braucht es auch keinen Takt.
+    // (Und kein Widget-Test der freien Erfassung endet mit einem laufenden
+    // Zeitgeber, den er nicht bestellt hat.)
+    if (state.selectedVorgang == null) return;
+    _sicherung = Timer(entwurfVerzoegerung, sichereEntwurfJetzt);
   }
 
   /// Hinterlegt die manuell gewählte Word-Datei dauerhaft am **aktiven Slot**
@@ -361,5 +307,16 @@ class WizardCubit extends Cubit<WizardState> {
       case Left():
         return false;
     }
+  }
+
+  /// Beim Verlassen der Seite noch einmal sichern — das schließt die Lücke der
+  /// letzten Sekunden, die der Takt sonst kostet. Der Empfänger
+  /// ([VorgangCubit]) lebt weiter, seine Ablage läuft also auch dann noch, wenn
+  /// dieser Cubit schon geschlossen ist.
+  @override
+  Future<void> close() {
+    sichereEntwurfJetzt();
+    _sicherung?.cancel();
+    return super.close();
   }
 }

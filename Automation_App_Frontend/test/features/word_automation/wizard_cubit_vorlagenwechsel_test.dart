@@ -1,26 +1,11 @@
-import 'package:automation_app/core/general_classes/failures/failure.dart';
-import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
-import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
-import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _FakeUpdateFormTemplate
-    implements UseCase<FormTemplate, UpdateFormTemplateParams> {
-  @override
-  Future<Either<Failure, FormTemplate>> call(UpdateFormTemplateParams params) =>
-      throw UnimplementedError();
-}
-
-class _FakeGetMandanten implements UseCase<List<Mandant>, NoParams> {
-  @override
-  Future<Either<Failure, List<Mandant>>> call(NoParams params) async =>
-      Right(const []);
-}
+import 'wizard_doubles.dart';
 
 /// Der gemeldete Fall (#37): Mitten im Ausfüllen fällt auf, dass ein Feld der
 /// Vorlage noch umbenannt oder auf „nicht erforderlich" gestellt werden muss.
@@ -49,8 +34,20 @@ void main() {
     wordFilePathMitAuflistung: mit,
   );
 
-  WizardCubit cubit() =>
-      WizardCubit(_FakeUpdateFormTemplate(), _FakeGetMandanten());
+  final offen = <WizardUmgebung>[];
+
+  tearDown(() async {
+    for (final umgebung in offen) {
+      await umgebung.schliesse();
+    }
+    offen.clear();
+  });
+
+  WizardCubit cubit() {
+    final umgebung = WizardUmgebung();
+    offen.add(umgebung);
+    return umgebung.wizard;
+  }
 
   const aufstellung = DamageListing(
     items: [DamageItem(description: 'Reparaturkosten', amount: 500)],
@@ -78,7 +75,6 @@ void main() {
     expect(wizard.state.mitAuflistung, isTrue);
     expect(wizard.state.vorsteuerabzugsberechtigt, isFalse);
     expect(wizard.state.currentStep, WizardStep.schadensaufstellung);
-    await wizard.close();
   });
 
   test('eine andere Vorlage verwirft den Eingabestand', () async {
@@ -99,7 +95,6 @@ void main() {
     expect(wizard.state.mitAuflistung, isFalse);
     expect(wizard.state.vorsteuerabzugsberechtigt, isTrue);
     expect(wizard.state.currentStep, WizardStep.fillOut);
-    await wizard.close();
   });
 
   /// Der Selector meldet `null`, wenn die gewählte Vorlage in der frischen
@@ -114,7 +109,6 @@ void main() {
     expect(wizard.state.selectedFormTemplate, isNull);
     expect(wizard.state.formData, isNull);
     expect(wizard.state.formDataEntwurf, isNull);
-    await wizard.close();
   });
 
   test('Tippstand ist keine Freigabe des nächsten Schritts', () async {
@@ -126,7 +120,6 @@ void main() {
     // aufstellung hängen an formData — der bloße Tippstand schaltet nicht frei.
     expect(wizard.state.formData, isNull);
     expect(wizard.state.formDataEntwurf, {'Versicherer': 'HUK'});
-    await wizard.close();
   });
 
   /// Verliert die aktualisierte Vorlage die gerade benutzte Fassung, fällt der
@@ -144,7 +137,6 @@ void main() {
     expect(wizard.state.mitAuflistung, isFalse);
     expect(wizard.state.currentStep, WizardStep.fillOut);
     expect(wizard.state.formData, {'Versicherer': 'HUK-COBURG'});
-    await wizard.close();
   });
 
   test('nur eine Fassung mit Auflistung wird weiterhin vorgewählt', () async {
@@ -154,6 +146,5 @@ void main() {
 
     expect(wizard.state.mitAuflistung, isTrue);
     expect(wizard.state.steps, contains(WizardStep.schadensaufstellung));
-    await wizard.close();
   });
 }

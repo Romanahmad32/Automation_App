@@ -35,6 +35,20 @@ public interface IVorgangRepository
     Task<bool> DeleteAsync(string referenz, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Setzt den angefangenen Ausfüllstand (<see cref="VorgangEntity.EntwurfJson"/>)
+    /// oder löscht ihn (<paramref name="entwurfJson"/> = null). Bewusst ein
+    /// eigener Weg statt eines Upsert: Der Entwurf wird beim Tippen laufend
+    /// geschrieben, und ein Upsert des ganzen Vorgangs würde dabei jedes Mal
+    /// alle übrigen Spalten aus der Sicht des Aufrufers überschreiben — auch
+    /// eine Zentralruf-Antwort, die inzwischen eingetroffen ist. Null, wenn
+    /// kein Vorgang zur Referenz existiert.
+    /// </summary>
+    Task<VorgangEntity?> SetzeEntwurfAsync(
+        string referenz,
+        string? entwurfJson,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Benennt den Vorgang von <paramref name="von"/> auf <paramref name="nach"/> um
     /// (Referenz korrigieren, z. B. Tippfehler). Die Referenz-Bestandteile
     /// (Nr/Jahr/Abteilung/Kennzeichen) werden dabei neu aus der Zielreferenz
