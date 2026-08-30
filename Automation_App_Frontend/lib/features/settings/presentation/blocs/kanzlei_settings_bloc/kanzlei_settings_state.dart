@@ -5,7 +5,7 @@ part of 'kanzlei_settings_bloc.dart';
 /// Kanzleidaten und Signatur hängen am selben Einstellungssatz, stehen aber in
 /// verschiedenen Reitern — die Signatur beim E-Mail-Zugang, wo sie hingehört.
 /// Ohne diese Unterscheidung meldete das eine Formular den Erfolg des anderen.
-enum KanzleiSettingsBereich { kanzlei, signatur }
+enum KanzleiSettingsBereich { kanzlei, signatur, schadensaufstellung }
 
 sealed class KanzleiSettingsState extends Equatable {
   const KanzleiSettingsState();

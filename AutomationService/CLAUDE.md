@@ -147,7 +147,9 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
   doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier.
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu
-  `POST api/Settings/auftragsnummer/erhoehe` für die laufende Auftragsnummer.
+  `POST api/Settings/auftragsnummer/erhoehe` für die laufende Auftragsnummer und die
+  Standardpositionen der Schadensaufstellung (§4.4, `GET`/`PUT api/Settings/schadenspositionen`;
+  leere Tabelle heißt „nicht konfiguriert" und liefert die Vorgabe, Speichern der leeren Liste setzt zurück).
 - **FormTemplates** — benutzerdefinierte Formularvorlagen (Feldbeschreibung zu einer Word-Vorlage),
   CRUD mit Namenskonflikt-Prüfung.
 - **Backup** — Export/Import einer Sicherung. `SicherungsArchiv` ist ein ZIP aus `automation.db`

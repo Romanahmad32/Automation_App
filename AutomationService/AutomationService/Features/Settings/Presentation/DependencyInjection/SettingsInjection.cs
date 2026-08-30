@@ -8,6 +8,7 @@ public static class SettingsInjection
     {
         // Scoped wie der DbContext, von dem das Repository abhängt.
         services.AddScoped<IKanzleiSettingsRepository, KanzleiSettingsRepository>();
+        services.AddScoped<IStandardSchadenspositionenRepository, StandardSchadenspositionenRepository>();
         return services;
     }
 }

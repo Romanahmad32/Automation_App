@@ -11,6 +11,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/docum
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_fill_out.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_review.dart';
@@ -39,6 +40,10 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
           BlocProvider(create: (context) => getIt<RvgCalculationBloc>()),
           // Steuert die Akten-Ablage im Speicherschritt (§6.1).
           BlocProvider(create: (context) => getIt<AblageCubit>()),
+          // Konfigurierte Standardpositionen der Schadensaufstellung (§4.4).
+          BlocProvider(
+            create: (context) => getIt<StandardpositionenCubit>()..laden(),
+          ),
           // Liefert die Titelzeilen-Farbe der Schadensaufstellung aus den
           // Einstellungen für Vorschau und Dokumenterzeugung.
           BlocProvider(

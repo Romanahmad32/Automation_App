@@ -32,3 +32,16 @@ final class SaveMailSignaturEvent extends KanzleiSettingsEvent {
   @override
   List<Object?> get props => [signatur];
 }
+
+/// Speichert **nur** die Titelzeilen-Farbe der Schadensaufstellung — aus dem
+/// Einstellungs-Reiter „Schadensaufstellung", derselbe Zuschnitt wie bei der
+/// Signatur: Das Feld liegt in einem anderen Reiter als die Kanzleidaten.
+final class SaveTabellenkopfFarbeEvent extends KanzleiSettingsEvent {
+  /// Farbwert als "RRGGBB", ohne '#'.
+  final String farbeHex;
+
+  const SaveTabellenkopfFarbeEvent(this.farbeHex);
+
+  @override
+  List<Object?> get props => [farbeHex];
+}

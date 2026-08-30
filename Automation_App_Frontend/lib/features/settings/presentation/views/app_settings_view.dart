@@ -50,13 +50,9 @@ class _AppSettingsViewState extends State<AppSettingsView>
       value: KanzleiSettings.defaultAbteilung,
       validators: [Validators.required],
     ),
-    'tabellenkopfFarbeHex': FormControl<String>(
-      value: KanzleiSettings.defaultTabellenkopfFarbeHex,
-      validators: [
-        Validators.required,
-        Validators.pattern(r'^#?[0-9a-fA-F]{6}$'),
-      ],
-    ),
+    // Die Titelzeilen-Farbe der Schadensaufstellung liegt im Reiter
+    // "Schadensaufstellung" (StandardpositionenSettingsView) und speichert
+    // dort für sich (SaveTabellenkopfFarbeEvent).
     'aktenStammordner': FormControl<String>(),
   });
 
@@ -81,7 +77,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'telefonnummer': settings.telefonnummer,
       'laufendeAuftragsnummer': settings.laufendeAuftragsnummer.toString(),
       'abteilung': settings.abteilung,
-      'tabellenkopfFarbeHex': settings.tabellenkopfFarbeHex,
       'aktenStammordner': settings.aktenStammordner,
     });
   }
@@ -115,9 +110,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
               int.tryParse(read('laufendeAuftragsnummer')) ??
               KanzleiSettings.defaultLaufendeAuftragsnummer,
           abteilung: read('abteilung'),
-          tabellenkopfFarbeHex: read(
-            'tabellenkopfFarbeHex',
-          ).replaceFirst('#', '').toUpperCase(),
           aktenStammordner: read('aktenStammordner'),
         ),
       ),
