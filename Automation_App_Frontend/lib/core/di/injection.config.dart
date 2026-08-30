@@ -542,16 +542,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
       ),
     );
-    gh.factory<_i915.WizardCubit>(
-      () => _i915.WizardCubit(
-        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-      ),
-    );
     gh.factory<_i347.FormTemplateDataBloc>(
       () => _i347.FormTemplateDataBloc(
         gh<_i223.UseCase<void, _i22.CreateFormTemplateRequest>>(),
         gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
+      ),
+    );
+    gh.factory<_i915.WizardCubit>(
+      () => _i915.WizardCubit(
+        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i847.VorgangCubit>(),
       ),
     );
     gh.factory<_i975.MandantenOverviewBloc>(

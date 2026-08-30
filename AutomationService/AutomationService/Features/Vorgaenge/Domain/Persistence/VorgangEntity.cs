@@ -51,6 +51,15 @@ public class VorgangEntity
     /// </summary>
     public string? SchadensaufstellungJson { get; set; }
 
+    /// <summary>
+    /// Ein <b>angefangener</b> Ausfüllstand des Word-Assistenten (Zeitpunkt,
+    /// Formularwerte, Schadensaufstellung) als opakes JSON — getrennt von
+    /// <see cref="FeldWerteJson"/>, das nur bestätigte Werte trägt. Bestätigt
+    /// bleibt bestätigt; ein Entwurf ist ein Angebot, das der Anwalt beim
+    /// Wiedereinstieg annehmen oder verwerfen kann. Null, wenn keiner offen ist.
+    /// </summary>
+    public string? EntwurfJson { get; set; }
+
     public string? DokumentPfad { get; set; }
     public string? AktenOrdner { get; set; }
     public DateTime? AbgeschlossenAm { get; set; }

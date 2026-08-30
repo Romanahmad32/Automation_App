@@ -1,4 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/referenz_vergeben_exception.dart';
 
 /// Persistenz-Port der vorgaenge-Domäne. Liegt jetzt im Backend (SQLite); die
@@ -16,6 +17,16 @@ abstract class VorgangRepository {
 
   /// Löscht den Vorgang zur Referenz (No-op, wenn keiner passt).
   Future<void> deleteVorgang(String referenz);
+
+  /// Hinterlegt den angefangenen Ausfüllstand am Vorgang — [entwurf] `null`
+  /// verwirft ihn. Eigener Weg statt [upsertVorgang]: Der Entwurf wird beim
+  /// Tippen laufend geschrieben, und ein Upsert schickte dabei jedes Mal den
+  /// ganzen Vorgang aus der Sicht des Clients mit. Käme währenddessen eine
+  /// Zentralruf-Antwort herein, wäre sie danach überschrieben.
+  ///
+  /// Liefert den gespeicherten Stand; null, wenn kein Vorgang zur Referenz
+  /// existiert.
+  Future<Vorgang?> setzeEntwurf(String referenz, VorgangEntwurf? entwurf);
 
   /// Schließt den Vorgang zur Referenz atomar im Backend ab (§4.8):
   /// Status „versendet" und Hochzählen der laufenden Auftragsnummer passieren
