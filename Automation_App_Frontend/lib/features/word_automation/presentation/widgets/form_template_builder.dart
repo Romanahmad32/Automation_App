@@ -44,6 +44,11 @@ class FormTemplateBuilder extends StatelessWidget {
   /// Genau der Fall beim übernommenen Entwurf.
   final int aufbauMarke;
 
+  /// Wird mit dem Feld gerufen, dessen Stiftsymbol angeklickt wurde. Ohne
+  /// Rückmeldung (null) zeigt das Formular keine Stifte — die freie Erfassung
+  /// und die Vorschau kommen ohne aus.
+  final void Function(FieldData)? onFeldBearbeiten;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
@@ -54,6 +59,7 @@ class FormTemplateBuilder extends StatelessWidget {
     this.erfassteWerte = const {},
     this.onWerteGeaendert,
     this.aufbauMarke = 0,
+    this.onFeldBearbeiten,
   });
 
   @override
@@ -102,7 +108,7 @@ class FormTemplateBuilder extends StatelessWidget {
             spacing: 16,
             children: [
               ...formTemplate!.fields.map((field) {
-                return _buildField(context, field);
+                return _buildZeile(context, field);
               }),
               const SizedBox(height: 8),
               ReactiveFormConsumer(
@@ -151,6 +157,31 @@ class FormTemplateBuilder extends StatelessWidget {
   String get _feldSignatur => formTemplate!.fields
       .map((e) => '${e.label}:${e.inputType.value}:${e.required}')
       .join('|');
+
+  /// Das Feld, bei Bedarf mit dem Stift daneben. Der Stift sitzt **am Feld**
+  /// und nicht in einer Werkzeugleiste: Er soll dort sein, wo der Anwalt gerade
+  /// stutzt („dieses Feld will ich gar nicht ausfüllen müssen").
+  Widget _buildZeile(BuildContext context, FieldData field) {
+    final bearbeiten = onFeldBearbeiten;
+    if (bearbeiten == null) return _buildField(context, field);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildField(context, field)),
+        Padding(
+          // Auf die Höhe des Eingabefelds gerückt, nicht auf die der Zeile:
+          // Unter dem Feld steht oft noch eine Hinweiszeile.
+          padding: const EdgeInsets.only(top: 4, left: 4),
+          child: IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            tooltip: 'Einstellung des Felds „${field.label}"',
+            onPressed: () => bearbeiten(field),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildField(BuildContext context, FieldData field) {
     final validationMessages = field.required

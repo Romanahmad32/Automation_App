@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -279,6 +280,66 @@ class WizardCubit extends Cubit<WizardState> {
     // Zeitgeber, den er nicht bestellt hat.)
     if (state.selectedVorgang == null) return;
     _sicherung = Timer(entwurfVerzoegerung, sichereEntwurfJetzt);
+  }
+
+  /// Speichert eine im **Ausfüllschritt** geänderte Feldeinstellung direkt an
+  /// der Vorlage. Das ist der Griff, der #37 den Auslöser nimmt: Wer bloß ein
+  /// Feld umbenennen oder auf „nicht erforderlich" stellen will, muss dafür die
+  /// Seite nicht mehr verlassen — und verliert also nicht, was er bis dahin
+  /// eingetippt hat.
+  ///
+  /// Der erfasste Wert zieht mit: [WizardState.formData] und
+  /// [WizardState.formDataEntwurf] sind nach Feldnamen geschlüsselt, ein
+  /// umbenanntes Feld fände seinen Wert sonst nur unter einem Namen, den die
+  /// Vorlage nicht mehr kennt — derselbe Verlust wie im Ausgangsfall, eine
+  /// Ebene tiefer.
+  ///
+  /// Gibt `true` zurück, wenn gespeichert wurde. Nur dann lohnt das Neuladen
+  /// der Vorlagenliste — und nur dann ist die Änderung wirklich am Bestand.
+  Future<bool> aktualisiereFeld(FieldData alt, FieldData neu) async {
+    final template = state.selectedFormTemplate;
+    if (template == null) return false;
+
+    final felder = [
+      for (final feld in template.fields) feld.label == alt.label ? neu : feld,
+    ];
+    final result = await _updateFormTemplate(
+      UpdateFormTemplateParams(template.copyWith(fields: felder)),
+    );
+    if (isClosed) return false;
+    switch (result) {
+      case Right(value: final gespeichert):
+        emit(
+          state.copyWith(
+            selectedFormTemplate: () => gespeichert,
+            formData: () => _umgeschluesselt(state.formData, alt, neu),
+            formDataEntwurf: () =>
+                _umgeschluesselt(state.formDataEntwurf, alt, neu),
+          ),
+        );
+        return true;
+      case Left():
+        return false;
+    }
+  }
+
+  /// Trägt den erfassten Wert von [alt] auf den Namen von [neu] um.
+  ///
+  /// Ein **leerer** Wert fällt dabei weg, statt umgeschlüsselt zu werden: Er
+  /// hat nichts zu bewahren, schlüge aber die Vorbelegung. Der Beobachter
+  /// meldet auch leere Felder mit, und im Formular gewinnt der erfasste Stand
+  /// über die Vorbelegung — wer im Dialog gerade eine Datenquelle gesetzt hat,
+  /// sähe ihren Wert deshalb nie.
+  static Map<String, String>? _umgeschluesselt(
+    Map<String, String>? stand,
+    FieldData alt,
+    FieldData neu,
+  ) {
+    if (stand == null) return null;
+    final wert = stand[alt.label];
+    final umgetragen = Map<String, String>.of(stand)..remove(alt.label);
+    if (wert != null && wert.trim().isNotEmpty) umgetragen[neu.label] = wert;
+    return umgetragen;
   }
 
   /// Hinterlegt die manuell gewählte Word-Datei dauerhaft am **aktiven Slot**

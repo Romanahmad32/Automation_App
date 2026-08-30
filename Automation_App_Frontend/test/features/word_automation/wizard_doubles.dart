@@ -9,13 +9,28 @@ import 'package:automation_app/features/word_automation/presentation/blocs/wizar
 
 import '../vorgang_starten/vorgang_starten_doubles.dart';
 
-/// Die Vorlage speichert nur [WizardCubit.linkWordFileToTemplate] — wer das
-/// nicht prüft, kommt hier nie an.
+/// Der Dienst, der die Vorlage speichert. Zwei Wege des Wizards kommen hier an:
+/// [WizardCubit.linkWordFileToTemplate] und [WizardCubit.aktualisiereFeld].
+///
+/// [gespeicherte] hält fest, was hinausging — und antwortet mit genau dem, was
+/// hereinkam, wie der Dienst es auch tut.
 class FakeUpdateFormTemplate
     implements UseCase<FormTemplate, UpdateFormTemplateParams> {
+  final List<FormTemplate> gespeicherte = [];
+
+  /// Auf `true` gesetzt, schlägt jedes Speichern fehl. Dann darf am Wizard
+  /// nichts hängenbleiben, was der Bestand nicht trägt.
+  bool schlaegtFehl = false;
+
   @override
-  Future<Either<Failure, FormTemplate>> call(UpdateFormTemplateParams params) =>
-      throw UnimplementedError();
+  Future<Either<Failure, FormTemplate>> call(
+    UpdateFormTemplateParams params,
+  ) async {
+    gespeicherte.add(params.formTemplate);
+    return schlaegtFehl
+        ? Left(ServerFailure(message: 'Dienst nicht erreichbar'))
+        : Right(params.formTemplate);
+  }
 }
 
 /// Das Mandantenregister, aus dem `selectVorgang` den verknüpften Mandanten
@@ -38,15 +53,17 @@ class FakeGetMandanten implements UseCase<List<Mandant>, NoParams> {
 /// app-weiten [VorgangCubit]; ihn in jeder Testdatei neu zusammenzusetzen
 /// hieße, dieselben vier Zeilen viermal zu pflegen.
 ///
-/// [ablage] hält fest, was als Entwurf hinausging (`ablage.entwuerfe`).
+/// [ablage] hält fest, was als Entwurf hinausging (`ablage.entwuerfe`),
+/// [updateFormTemplate], was an Vorlagen gespeichert wurde.
 class WizardUmgebung {
   final VorgangAblageDouble ablage = VorgangAblageDouble();
   final VorgangPersistenzFehlerCubit fehler = VorgangPersistenzFehlerCubit();
+  final FakeUpdateFormTemplate updateFormTemplate = FakeUpdateFormTemplate();
   final FakeGetMandanten getMandanten;
 
   late final VorgangCubit vorgaenge = VorgangCubit(ablage, fehler);
   late final WizardCubit wizard = WizardCubit(
-    FakeUpdateFormTemplate(),
+    updateFormTemplate,
     getMandanten,
     vorgaenge,
   );
