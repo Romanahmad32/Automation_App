@@ -57,12 +57,27 @@ public sealed class RegisterSpiegelStand(string dateiPfad)
         DateTime GeschriebenAm,
         bool PdfGeschrieben = false);
 
+    /// <summary>
+    /// Der Stand ist ein Singleton, und <c>StandAsync</c> liest ihn, während
+    /// ein Schreiblauf ihn setzen kann — beim Öffnen der Registerseite mitten
+    /// im Export nach einem Vorgangsabschluss.
+    ///
+    /// <c>File.WriteAllText</c> ist kein unteilbarer Schritt: Ein Leser kann
+    /// die halbe Datei erwischen. Das wäre für sich genommen harmlos, weil
+    /// unlesbar hier „neu schreiben" heisst — nur zeigt die Seite dann „noch
+    /// nie geschrieben" neben einem Spiegel, der eine Sekunde alt ist.
+    /// </summary>
+    readonly Lock schloss = new();
+
     public Eintrag? Lesen()
     {
         try
         {
-            if (!File.Exists(dateiPfad)) return null;
-            return JsonSerializer.Deserialize<Eintrag>(File.ReadAllText(dateiPfad));
+            lock (schloss)
+            {
+                if (!File.Exists(dateiPfad)) return null;
+                return JsonSerializer.Deserialize<Eintrag>(File.ReadAllText(dateiPfad));
+            }
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
         {
@@ -78,7 +93,10 @@ public sealed class RegisterSpiegelStand(string dateiPfad)
         {
             var ordner = Path.GetDirectoryName(dateiPfad);
             if (!string.IsNullOrEmpty(ordner)) Directory.CreateDirectory(ordner);
-            File.WriteAllText(dateiPfad, JsonSerializer.Serialize(eintrag));
+            lock (schloss)
+            {
+                File.WriteAllText(dateiPfad, JsonSerializer.Serialize(eintrag));
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

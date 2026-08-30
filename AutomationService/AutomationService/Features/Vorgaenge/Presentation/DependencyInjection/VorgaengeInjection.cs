@@ -18,6 +18,10 @@ public static class VorgaengeInjection
             Path.Combine(AppDataPaths.EnsureAppDataDirectory(), "RegisterBau")));
         services.AddSingleton(_ => new RegisterSpiegelStand(
             Path.Combine(AppDataPaths.EnsureAppDataDirectory(), "register-spiegel.stand.json")));
+
+        // Die Schleuse muss Singleton sein, sonst schleust sie nichts: Zwei
+        // Anfragen bekaemen je ihre eigene und liefen wieder gleichzeitig.
+        services.AddSingleton<RegisterSpiegelSchleuse>();
         services.AddScoped<IRegisterSpiegelService, RegisterSpiegelService>();
 
         return services;
