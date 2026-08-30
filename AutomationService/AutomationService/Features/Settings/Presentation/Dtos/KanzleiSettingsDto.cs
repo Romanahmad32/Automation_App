@@ -20,7 +20,11 @@ public sealed record KanzleiSettingsDto(
     string TabellenkopfFarbeHex,
     string AktenStammordner,
     string MailSignatur,
-    string MailSignaturHtml)
+    string MailSignaturHtml,
+    string RegisterAblageOrdner,
+    string RegisterDateiname,
+    bool RegisterNachAbschlussSchreiben,
+    string RegisterExportFilter)
 {
     public static KanzleiSettingsDto From(KanzleiSettingsEntity e) => new(
         e.Personentyp,
@@ -35,7 +39,11 @@ public sealed record KanzleiSettingsDto(
         e.TabellenkopfFarbeHex,
         e.AktenStammordner,
         e.MailSignatur,
-        e.MailSignaturHtml);
+        e.MailSignaturHtml,
+        e.RegisterAblageOrdner,
+        e.RegisterDateiname,
+        e.RegisterNachAbschlussSchreiben,
+        e.RegisterExportFilter);
 
     public KanzleiSettingsEntity ToEntity() => new()
     {
@@ -53,5 +61,9 @@ public sealed record KanzleiSettingsDto(
         AktenStammordner = AktenStammordner,
         MailSignatur = MailSignatur,
         MailSignaturHtml = MailSignaturHtml,
+        RegisterAblageOrdner = RegisterAblageOrdner,
+        RegisterDateiname = RegisterDateiname,
+        RegisterNachAbschlussSchreiben = RegisterNachAbschlussSchreiben,
+        RegisterExportFilter = RegisterExportFilter,
     };
 }

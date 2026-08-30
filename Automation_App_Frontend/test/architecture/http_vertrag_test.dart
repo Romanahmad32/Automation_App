@@ -135,6 +135,9 @@ void main() {
     'lib/features/versicherer/domain/entities/versicherer.dart': [
       'VersichererDto',
     ],
+    'lib/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart': [
+      'RegisterSpiegelDto',
+    ],
     'lib/features/vorgaenge/domain/entities/vorgang_json.dart': ['VorgangDto'],
     'lib/features/word_automation/domain/entities/standard_schadenspositionen.dart':
         ['StandardSchadenspositionDto'],

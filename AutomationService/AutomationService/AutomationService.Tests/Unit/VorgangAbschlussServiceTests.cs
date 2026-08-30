@@ -2,9 +2,11 @@ using AutomationService.Core.Persistence;
 using AutomationService.Features.Settings.Domain.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Services;
+using AutomationService.Tests.Support;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace AutomationService.Tests.Unit;
@@ -19,6 +21,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
     private readonly SqliteConnection _connection;
     private readonly AutomationDbContext _db;
     private readonly VorgangAbschlussService _service;
+    private readonly RegisterSpiegelAttrappe _spiegel = new();
 
     public VorgangAbschlussServiceTests()
     {
@@ -29,7 +32,10 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
             .Options;
         _db = new AutomationDbContext(options);
         _db.Database.EnsureCreated();
-        _service = new VorgangAbschlussService(_db);
+        _service = new VorgangAbschlussService(
+            _db,
+            _spiegel,
+            NullLogger<VorgangAbschlussService>.Instance);
     }
 
     private async Task<VorgangEntity> LegeVorgangAn(string referenz, string status = "abgelegt")
@@ -46,11 +52,12 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
         return vorgang;
     }
 
-    private async Task LegeSettingsAn(int laufendeNummer)
+    private async Task LegeSettingsAn(int laufendeNummer, bool spiegelSchreiben = false)
     {
         _db.KanzleiSettings.Add(new KanzleiSettingsEntity
         {
             LaufendeAuftragsnummer = laufendeNummer,
+            RegisterNachAbschlussSchreiben = spiegelSchreiben,
         });
         await _db.SaveChangesAsync();
     }
@@ -114,6 +121,49 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
 
         ergebnis.Should().NotBeNull();
         ergebnis!.Status.Should().Be(VorgangAbschlussService.StatusVersendet);
+    }
+
+    [Fact]
+    public async Task Abschliessen_ZiehtDenRegisterSpiegelNach()
+    {
+        await LegeSettingsAn(84, spiegelSchreiben: true);
+        await LegeVorgangAn("84/26 C03_GG-XY 123");
+
+        await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
+
+        _spiegel.Aufrufe.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Abschliessen_LaesstDenSpiegelWeg_WennDerSchalterAusIst()
+    {
+        await LegeSettingsAn(84, spiegelSchreiben: false);
+        await LegeVorgangAn("84/26 C03_GG-XY 123");
+
+        await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
+
+        _spiegel.Aufrufe.Should().Be(0);
+    }
+
+    /// <summary>
+    /// Die eigentliche Zusicherung der Reihenfolge (§6.2, #40): Der Spiegel
+    /// läuft nach dem Commit. Ein gesperrter Ablageordner, ein fehlendes Word
+    /// oder ein volles Laufwerk dürfen einen abgeschlossenen Auftrag nicht
+    /// wieder aufmachen — der Spiegel ist eine Kopie, die Datenbank ist das
+    /// Register.
+    /// </summary>
+    [Fact]
+    public async Task Abschliessen_BleibtBestehen_WennDerSpiegelScheitert()
+    {
+        await LegeSettingsAn(84, spiegelSchreiben: true);
+        await LegeVorgangAn("84/26 C03_GG-XY 123");
+        _spiegel.Wirft = new IOException("Der Ablageordner ist nicht erreichbar.");
+
+        var ergebnis = await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
+
+        ergebnis.Should().NotBeNull();
+        ergebnis!.Status.Should().Be(VorgangAbschlussService.StatusVersendet);
+        (await _db.KanzleiSettings.SingleAsync()).LaufendeAuftragsnummer.Should().Be(85);
     }
 
     public void Dispose()

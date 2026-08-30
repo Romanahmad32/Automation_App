@@ -82,6 +82,10 @@ public sealed class KanzleiSettingsRepository(AutomationDbContext db)
         target.AktenStammordner = source.AktenStammordner;
         target.MailSignatur = source.MailSignatur;
         target.MailSignaturHtml = source.MailSignaturHtml;
+        target.RegisterAblageOrdner = source.RegisterAblageOrdner;
+        target.RegisterDateiname = source.RegisterDateiname;
+        target.RegisterNachAbschlussSchreiben = source.RegisterNachAbschlussSchreiben;
+        target.RegisterExportFilter = source.RegisterExportFilter;
     }
 
     /// <summary>
@@ -96,5 +100,8 @@ public sealed class KanzleiSettingsRepository(AutomationDbContext db)
         Abteilung = "C03",
         LaufendeAuftragsnummer = 1,
         TabellenkopfFarbeHex = "D9D9D9",
+        RegisterDateiname = RegisterSpiegelVorgabe.Dateiname,
+        RegisterNachAbschlussSchreiben = true,
+        RegisterExportFilter = RegisterSpiegelVorgabe.FilterAlle,
     };
 }

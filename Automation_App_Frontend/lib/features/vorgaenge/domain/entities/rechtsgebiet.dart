@@ -1,12 +1,21 @@
 /// Rechtsgebiet eines Vorgangs — die Sachgebiete-Spalte des Auftragsregisters
 /// (mehrseitige Word-Tabelle). Verkehrsrecht ist der fachliche Schwerpunkt der
 /// Kanzlei und damit der Standardwert.
+///
+/// Der Satz deckt die Sachgebiete ab, die im gewachsenen Register der Kanzlei
+/// tatsaechlich vorkommen. Verkehrsstrafrecht, Zivilrecht und Vertragsrecht
+/// sind spaeter dazugekommen (#40): sie stehen dort seit Jahren, fehlten hier
+/// aber — ohne sie faellt rund ein Sechstel des Bestands auf [sonstiges]
+/// zurueck, und zwar still, weil [fromValue] bewusst tolerant ist.
 enum Rechtsgebiet {
   verkehrsrecht(name: 'Verkehrsrecht', value: 'verkehrsrecht'),
+  verkehrsstrafrecht(name: 'Verkehrsstrafrecht', value: 'verkehrsstrafrecht'),
   arbeitsrecht(name: 'Arbeitsrecht', value: 'arbeitsrecht'),
   strafrecht(name: 'Strafrecht', value: 'strafrecht'),
   familienrecht(name: 'Familienrecht', value: 'familienrecht'),
   verwaltungsrecht(name: 'Verwaltungsrecht', value: 'verwaltungsrecht'),
+  zivilrecht(name: 'Zivilrecht', value: 'zivilrecht'),
+  vertragsrecht(name: 'Vertragsrecht', value: 'vertragsrecht'),
   sonstiges(name: 'Sonstiges', value: 'sonstiges');
 
   final String name;

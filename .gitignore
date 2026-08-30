@@ -17,6 +17,14 @@
 # Sinn, sondern fertig ausgefuellte echte Mandantenschreiben (Name, Anschrift,
 # Kennzeichen, Versicherungsschein-Nr. des Mandanten und der Gegenseite).
 Beispiele/*.docx
+# Aus demselben Grund alles Weitere, was unter Beispiele/ landet und kein
+# neutraler Mustertext ist: die .eml traegt den vollstaendigen Signaturblock
+# der Kanzlei samt IBAN und Steuernummer, die gespeicherte Ausbauliste die
+# interne Planung mitsamt Auszuegen daraus. Versioniert sind unter Beispiele/
+# nur die beiden .txt-Dateien, die schon erfasst sind.
+Beispiele/*.eml
+Beispiele/*.html
+Beispiele/*_files/
 # Auch die PARAMETRISIERTEN Fassungen bleiben lokal. Das Ersetzen trifft nur
 # den Fliesstext: Kopf- und Fusszeile tragen weiterhin Briefkopf, Steuernummer
 # und Bankverbindung der Kanzlei, und der Schriftsatztext selbst ist ihre

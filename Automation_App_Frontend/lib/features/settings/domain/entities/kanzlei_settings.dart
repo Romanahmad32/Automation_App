@@ -17,6 +17,18 @@ class KanzleiSettings extends Equatable {
   /// Startwert der laufenden Auftragsnummer.
   static const int defaultLaufendeAuftragsnummer = 1;
 
+  /// Basisname der Register-Spiegeldateien ohne Endung (§6.2). Der Zusatz
+  /// „(App)" ist kein Schmuck: Die Datei landet in aller Regel in demselben
+  /// synchronisierten Ordner wie das gewachsene Kanzleidokument und muss auf
+  /// den ersten Blick von ihm zu unterscheiden sein.
+  static const String defaultRegisterDateiname = 'Sachgebiete-Register (App)';
+
+  /// Alle Vorgänge kommen in die Spiegeldatei.
+  static const String registerFilterAlle = 'alle';
+
+  /// Nur abgeschlossene (versendete) Vorgänge kommen in die Spiegeldatei.
+  static const String registerFilterAbgeschlossen = 'abgeschlossen';
+
   /// Die Anfragertypen exakt so, wie sie das Dropdown des Zentralruf-Formulars
   /// anbietet — das Backend wählt die Option über diesen Beschriftungstext aus.
   static const List<String> gueltigePersonentypen = [
@@ -63,6 +75,27 @@ class KanzleiSettings extends Equatable {
   /// Outlook ungenutzt — dort setzt Outlook seine eigene ein.
   final String mailSignatur;
 
+  /// Zielordner des Register-Spiegels (§6.2). Gedacht ist ein Ordner im
+  /// synchronisierten Bereich (OneDrive), damit das Register unterwegs lesbar
+  /// ist — gespeichert wird aber ein ganz gewöhnlicher Pfad: Die App kennt
+  /// keine Cloud, sie legt eine Datei ab und der Client synchronisiert.
+  /// Leer heißt: kein Spiegel.
+  final String registerAblageOrdner;
+
+  /// Basisname der Spiegeldateien ohne Endung; daraus entstehen `.docx` und
+  /// `.pdf`. Bewusst nicht der Name des gewachsenen Kanzleidokuments — das
+  /// bleibt unangetastet liegen.
+  final String registerDateiname;
+
+  /// Ob der Spiegel nach jedem Vorgangsabschluss neu geschrieben wird.
+  final bool registerNachAbschlussSchreiben;
+
+  /// Was in die Datei kommt: [registerFilterAlle] oder
+  /// [registerFilterAbgeschlossen]. Bewusst eine Einstellung und nicht der
+  /// Filter der Ansicht — sonst hinge der Inhalt der Datei davon ab, was
+  /// gerade am Bildschirm eingestellt war.
+  final String registerExportFilter;
+
   /// Die formatierte Fassung derselben Signatur (§4.7): Schrift, Farben, Logo.
   /// Die App **reicht sie nur durch** — übernommen und geändert wird sie im
   /// Dienst (`POST api/EmailVersand/signaturen/uebernehmen`), weil dabei auch
@@ -84,6 +117,10 @@ class KanzleiSettings extends Equatable {
     this.aktenStammordner = '',
     this.mailSignatur = '',
     this.mailSignaturHtml = '',
+    this.registerAblageOrdner = '',
+    this.registerDateiname = defaultRegisterDateiname,
+    this.registerNachAbschlussSchreiben = true,
+    this.registerExportFilter = registerFilterAlle,
   });
 
   static const KanzleiSettings empty = KanzleiSettings();
@@ -102,6 +139,10 @@ class KanzleiSettings extends Equatable {
     String? aktenStammordner,
     String? mailSignatur,
     String? mailSignaturHtml,
+    String? registerAblageOrdner,
+    String? registerDateiname,
+    bool? registerNachAbschlussSchreiben,
+    String? registerExportFilter,
   }) {
     return KanzleiSettings(
       personentyp: personentyp ?? this.personentyp,
@@ -118,6 +159,11 @@ class KanzleiSettings extends Equatable {
       aktenStammordner: aktenStammordner ?? this.aktenStammordner,
       mailSignatur: mailSignatur ?? this.mailSignatur,
       mailSignaturHtml: mailSignaturHtml ?? this.mailSignaturHtml,
+      registerAblageOrdner: registerAblageOrdner ?? this.registerAblageOrdner,
+      registerDateiname: registerDateiname ?? this.registerDateiname,
+      registerNachAbschlussSchreiben:
+          registerNachAbschlussSchreiben ?? this.registerNachAbschlussSchreiben,
+      registerExportFilter: registerExportFilter ?? this.registerExportFilter,
     );
   }
 
@@ -145,6 +191,13 @@ class KanzleiSettings extends Equatable {
       aktenStammordner: json['aktenStammordner'] as String? ?? '',
       mailSignatur: json['mailSignatur'] as String? ?? '',
       mailSignaturHtml: json['mailSignaturHtml'] as String? ?? '',
+      registerAblageOrdner: json['registerAblageOrdner'] as String? ?? '',
+      registerDateiname:
+          json['registerDateiname'] as String? ?? defaultRegisterDateiname,
+      registerNachAbschlussSchreiben:
+          json['registerNachAbschlussSchreiben'] as bool? ?? true,
+      registerExportFilter:
+          json['registerExportFilter'] as String? ?? registerFilterAlle,
     );
   }
 
@@ -162,6 +215,10 @@ class KanzleiSettings extends Equatable {
     'aktenStammordner': aktenStammordner,
     'mailSignatur': mailSignatur,
     'mailSignaturHtml': mailSignaturHtml,
+    'registerAblageOrdner': registerAblageOrdner,
+    'registerDateiname': registerDateiname,
+    'registerNachAbschlussSchreiben': registerNachAbschlussSchreiben,
+    'registerExportFilter': registerExportFilter,
   };
 
   @override
@@ -179,5 +236,9 @@ class KanzleiSettings extends Equatable {
     aktenStammordner,
     mailSignatur,
     mailSignaturHtml,
+    registerAblageOrdner,
+    registerDateiname,
+    registerNachAbschlussSchreiben,
+    registerExportFilter,
   ];
 }

@@ -104,6 +104,13 @@ public sealed class KanzleiSettingsRepositoryTests : IDisposable
             {
                 feld.SetValue(entity, Zahlwert);
             }
+            else if (feld.PropertyType == typeof(bool))
+            {
+                // true, weil der Standardwert eines bool-Feldes false ist — der
+                // Wert muss sich vom Ausgangszustand unterscheiden, sonst ginge
+                // ein in CopyInto vergessenes Schaltfeld hier durch.
+                feld.SetValue(entity, true);
+            }
             else
             {
                 throw new NotSupportedException(
