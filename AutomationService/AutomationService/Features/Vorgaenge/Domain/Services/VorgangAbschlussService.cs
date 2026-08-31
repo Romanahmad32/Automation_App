@@ -1,4 +1,5 @@
 using AutomationService.Core.Persistence;
+using AutomationService.Features.Backup.Domain.Services;
 using AutomationService.Features.Settings.Domain.Persistence;
 using AutomationService.Features.Settings.Domain.Services;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
@@ -16,13 +17,22 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 /// Ein gesperrter Ablageordner, ein fehlendes Word oder ein voll gelaufenes
 /// Laufwerk dürfen einen abgeschlossenen Auftrag nicht wieder aufmachen. Der
 /// Spiegel ist eine Kopie; die Datenbank ist das Register.
+///
+/// Ebenfalls danach, aber <em>ohne</em> darauf zu warten: die automatische
+/// Sicherung (§7.2, #39). Sie ist die zweite Nebensache an derselben Stelle —
+/// nur eine, die spürbar dauert (Datenbank kopieren, Vorlagen packen, in einen
+/// synchronisierten Ordner schreiben). Der Anwalt würde das als zähen
+/// „Abschließen"-Knopf erleben, und der Abschluss steht zu diesem Zeitpunkt
+/// ohnehin fest. Der Fehlschlag wird gemerkt und beim nächsten Start gezeigt.
 /// </summary>
 /// <param name="db">Vorgänge und Einstellungen in einer Transaktion.</param>
 /// <param name="spiegel">Schreibt die Word-/PDF-Fassung; wirft nicht.</param>
+/// <param name="sicherung">Legt den Stand im synchronisierten Ordner ab; wirft nicht.</param>
 /// <param name="logger">Hält fest, wenn der Spiegel nicht geschrieben werden konnte.</param>
 public sealed class VorgangAbschlussService(
     AutomationDbContext db,
     IRegisterSpiegelService spiegel,
+    IAutomatischeSicherung sicherung,
     ILogger<VorgangAbschlussService> logger) : IVorgangAbschlussService
 {
     /// <summary>Persistierter Statuswert; muss zum Flutter-Enum VorgangStatus passen.</summary>
@@ -57,8 +67,30 @@ public sealed class VorgangAbschlussService(
             await SpiegelNachziehenAsync(cancellationToken);
         }
 
+        StosseSicherungAn();
         return vorgang;
     }
+
+    /// <summary>
+    /// Startet die automatische Sicherung und lässt sie laufen.
+    ///
+    /// Bewusst ohne <c>await</c> und bewusst ohne den Abbruch-Token des
+    /// Requests: Die Antwort geht sofort hinaus, und mit ihr wäre der Token
+    /// abgebrochen — die Sicherung stürbe genau in dem Moment, für den sie da
+    /// ist. Der Dienst dahinter ist ein Singleton und hängt nicht am Scope
+    /// dieses Requests; er meldet Fehlschläge selbst und wirft nicht.
+    /// </summary>
+    void StosseSicherungAn() => _ = Task.Run(async () =>
+    {
+        try
+        {
+            await sicherung.SchreibeAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Automatische Sicherung nach Abschluss fehlgeschlagen.");
+        }
+    });
 
     /// <summary>
     /// Zieht den Register-Spiegel nach. Der Aufruf ist doppelt abgesichert: Der

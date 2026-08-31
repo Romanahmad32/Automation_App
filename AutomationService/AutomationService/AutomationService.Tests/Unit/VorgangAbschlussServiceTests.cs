@@ -22,6 +22,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
     private readonly AutomationDbContext _db;
     private readonly VorgangAbschlussService _service;
     private readonly RegisterSpiegelAttrappe _spiegel = new();
+    private readonly AutomatischeSicherungAttrappe _sicherung = new();
 
     public VorgangAbschlussServiceTests()
     {
@@ -35,6 +36,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
         _service = new VorgangAbschlussService(
             _db,
             _spiegel,
+            _sicherung,
             NullLogger<VorgangAbschlussService>.Instance);
     }
 
@@ -132,6 +134,23 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
         await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
 
         _spiegel.Aufrufe.Should().Be(1);
+    }
+
+    /// <summary>
+    /// Nach dem Abschluss geht der Stand in den synchronisierten Ordner (#39).
+    /// Der Abschluss wartet dabei ausdrücklich <em>nicht</em> — deshalb wird auf
+    /// die Attrappe gewartet und nicht bloss ihr Zähler gelesen.
+    /// </summary>
+    [Fact]
+    public async Task Abschliessen_StoesstDieAutomatischeSicherungAn()
+    {
+        await LegeSettingsAn(84);
+        await LegeVorgangAn("84/26 C03_GG-XY 123");
+
+        await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
+
+        await _sicherung.Angestossen.WaitAsync(TimeSpan.FromSeconds(5));
+        _sicherung.Aufrufe.Should().Be(1);
     }
 
     [Fact]
