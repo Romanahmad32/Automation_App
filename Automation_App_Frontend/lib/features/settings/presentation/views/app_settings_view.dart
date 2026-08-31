@@ -54,6 +54,9 @@ class _AppSettingsViewState extends State<AppSettingsView>
     // "Schadensaufstellung" (StandardpositionenSettingsView) und speichert
     // dort für sich (SaveTabellenkopfFarbeEvent).
     'aktenStammordner': FormControl<String>(),
+    // Vorlagenordner (#33), ohne Validator: Leer heißt App-Ordner des
+    // Backends unter %APPDATA% — der Stand vor dieser Einstellung.
+    'vorlagenOrdner': FormControl<String>(),
     // Register-Spiegel (§6.2). Der Ablageordner ist bewusst ohne Validator:
     // Er darf leer bleiben — dann wird keine Datei geschrieben.
     'registerAblageOrdner': FormControl<String>(),
@@ -88,6 +91,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'laufendeAuftragsnummer': settings.laufendeAuftragsnummer.toString(),
       'abteilung': settings.abteilung,
       'aktenStammordner': settings.aktenStammordner,
+      'vorlagenOrdner': settings.vorlagenOrdner,
       'registerAblageOrdner': settings.registerAblageOrdner,
       'registerDateiname': settings.registerDateiname,
       'registerNachAbschlussSchreiben': settings.registerNachAbschlussSchreiben,
@@ -125,6 +129,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
               KanzleiSettings.defaultLaufendeAuftragsnummer,
           abteilung: read('abteilung'),
           aktenStammordner: read('aktenStammordner'),
+          vorlagenOrdner: read('vorlagenOrdner'),
           registerAblageOrdner: read('registerAblageOrdner'),
           // Leerer Name heißt Vorgabe: Ein Spiegel ohne Dateinamen wäre eine
           // Datei, die nur ".docx" heißt.
