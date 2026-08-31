@@ -1,4 +1,4 @@
-import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
+import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
@@ -10,6 +10,11 @@ import 'package:flutter/material.dart';
 /// abgeschlossenen — bei ein paar hundert Zeilen ist „alles zeigen" ohne
 /// Einschränkung keine Ansicht mehr.
 ///
+/// Die Rechtsgebiets-Auswahl kommt aus dem Sachgebietskatalog (§7.1) plus dem,
+/// was nur im Bestand vorkommt ([RegisterFilter.rechtsgebiete]) — der Bestand
+/// bleibt also auch filterbar, wenn der Katalog nicht lädt; [katalogFehlt]
+/// macht das dann sichtbar statt still.
+///
 /// Die Auswahl wirkt nur auf den Bildschirm. Was in der Spiegeldatei landet,
 /// steht in den Einstellungen; der Hinweis darauf steht in der
 /// `RegisterSpiegelLeiste` darunter, damit niemand vom Bildschirm auf die Datei
@@ -19,16 +24,29 @@ class RegisterFilterLeiste extends StatelessWidget {
   final List<Vorgang> alle;
   final ValueChanged<RegisterFilter> onGeaendert;
 
+  /// Die Rechtsgebiete des Katalogs in Katalogreihenfolge; leer, solange der
+  /// Katalog lädt oder nicht erreichbar ist.
+  final List<String> katalog;
+
+  /// Ob der Katalog nicht geladen werden konnte — dann filtert die Leiste nur
+  /// über die Bestandswerte und sagt das dazu ([onKatalogErneut] lädt nach).
+  final bool katalogFehlt;
+  final VoidCallback? onKatalogErneut;
+
   const RegisterFilterLeiste({
     super.key,
     required this.filter,
     required this.alle,
     required this.onGeaendert,
+    this.katalog = const [],
+    this.katalogFehlt = false,
+    this.onKatalogErneut,
   });
 
   @override
   Widget build(BuildContext context) {
     final jahre = RegisterFilter.jahrgaenge(alle);
+    final rechtsgebiete = RegisterFilter.rechtsgebiete(alle, katalog: katalog);
 
     return Wrap(
       spacing: 8,
@@ -54,12 +72,12 @@ class RegisterFilterLeiste extends StatelessWidget {
             filter.mit(status: status, statusLoeschen: status == null),
           ),
         ),
-        _auswahl<Rechtsgebiet>(
+        _auswahl<String>(
           context,
           hinweis: 'Rechtsgebiet',
           wert: filter.rechtsgebiet,
-          werte: Rechtsgebiet.values,
-          beschriftung: (gebiet) => gebiet.displayName,
+          werte: rechtsgebiete,
+          beschriftung: (gebiet) => gebiet,
           onGewaehlt: (gebiet) => onGeaendert(
             filter.mit(
               rechtsgebiet: gebiet,
@@ -67,6 +85,26 @@ class RegisterFilterLeiste extends StatelessWidget {
             ),
           ),
         ),
+        if (katalogFehlt)
+          SizedBox(
+            width: 420,
+            child: Row(
+              children: [
+                const Expanded(
+                  child: FehlerHinweis(
+                    nachricht:
+                        'Sachgebietskatalog nicht geladen — die Auswahl zeigt '
+                        'nur, was im Bestand vorkommt.',
+                  ),
+                ),
+                if (onKatalogErneut != null)
+                  TextButton(
+                    onPressed: onKatalogErneut,
+                    child: const Text('Erneut versuchen'),
+                  ),
+              ],
+            ),
+          ),
         if (!filter.istLeer)
           TextButton.icon(
             onPressed: () => onGeaendert(RegisterFilter.alle),
@@ -78,8 +116,8 @@ class RegisterFilterLeiste extends StatelessWidget {
   }
 
   /// Ein Auswahlfeld, dessen erster Eintrag „alle" ist. Bewusst kein Chip je
-  /// Wert: Status und Rechtsgebiet haben zusammen vierzehn Ausprägungen, und
-  /// vierzehn Chips wären die Leiste selbst, nicht mehr ihr Inhalt.
+  /// Wert: Status und Rechtsgebiet haben zusammen über zwanzig Ausprägungen,
+  /// und so viele Chips wären die Leiste selbst, nicht mehr ihr Inhalt.
   Widget _auswahl<T>(
     BuildContext context, {
     required String hinweis,

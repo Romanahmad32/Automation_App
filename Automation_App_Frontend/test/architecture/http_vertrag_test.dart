@@ -143,6 +143,9 @@ void main() {
     'lib/features/mandanten/domain/entities/ordner_status.dart': [
       'OrdnerStatusDto',
     ],
+    'lib/features/sachgebiete/domain/entities/sachgebiet.dart': [
+      'SachgebietDto',
+    ],
     'lib/features/settings/domain/entities/kanzlei_settings.dart': [
       'KanzleiSettingsDto',
     ],
