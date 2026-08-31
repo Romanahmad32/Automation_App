@@ -36,7 +36,8 @@ public sealed class KanzleiSettingsDtoTests
         RegisterAblageOrdner: @"C:\OneDrive\Kanzlei-Register",
         RegisterDateiname: RegisterSpiegelVorgabe.Dateiname,
         RegisterNachAbschlussSchreiben: true,
-        RegisterExportFilter: filter);
+        RegisterExportFilter: filter,
+        VorlagenOrdner: @"C:\Kanzlei\Vorlagen");
 
     [Theory]
     [InlineData("abgeschlossen")]

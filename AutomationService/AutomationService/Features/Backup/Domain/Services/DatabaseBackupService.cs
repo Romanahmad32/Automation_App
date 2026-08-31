@@ -16,11 +16,14 @@ namespace AutomationService.Features.Backup.Domain.Services;
 /// funktionieren weiter; dann bleiben die Vorlagen unberuehrt.
 ///
 /// Bewusst ohne DI-Kontext (nur Pfade + Logger), damit der Dienst die Dateien
-/// direkt und ohne Scope-Komplikationen austauschen kann.
+/// direkt und ohne Scope-Komplikationen austauschen kann. Der Vorlagenordner
+/// kommt als Funktion statt als fester Wert: er ist eine Einstellung (#33) und
+/// wird je Operation genau einmal aufgeloest — beim Import zwingend, bevor die
+/// Datenbank getauscht wird, sonst laese man den Ordner aus der fremden DB.
 /// </summary>
 public sealed class DatabaseBackupService(
     string databaseFilePath,
-    string vorlagenVerzeichnis,
+    Func<string> vorlagenVerzeichnis,
     ILogger<DatabaseBackupService> logger) : IDatabaseBackupService
 {
     // Export und Import serialisieren: die Dateien werden nie gleichzeitig getauscht.
@@ -29,12 +32,13 @@ public sealed class DatabaseBackupService(
     public async Task<string> CreateBackupFileAsync(CancellationToken cancellationToken = default)
     {
         var zielPfad = Path.Combine(Path.GetTempPath(), $"automation-backup-{Guid.NewGuid():N}.zip");
+        var vorlagenOrdner = vorlagenVerzeichnis();
 
         await Gate.WaitAsync(cancellationToken);
         try
         {
             await SicherungsArchiv.ErstelleAsync(
-                databaseFilePath, vorlagenVerzeichnis, zielPfad, cancellationToken);
+                databaseFilePath, vorlagenOrdner, zielPfad, cancellationToken);
         }
         finally
         {
@@ -52,6 +56,10 @@ public sealed class DatabaseBackupService(
         Directory.CreateDirectory(arbeitsordner);
         var hochgeladen = Path.Combine(arbeitsordner, "sicherung");
 
+        // Vor dem Datenbanktausch aufloesen: der Ordner ist eine Einstellung
+        // und muss aus der EIGENEN Datenbank kommen, nicht aus der eingespielten.
+        var vorlagenOrdner = vorlagenVerzeichnis();
+
         await Gate.WaitAsync(cancellationToken);
         try
         {
@@ -63,12 +71,12 @@ public sealed class DatabaseBackupService(
             var (datenbankQuelle, vorlagenQuelle) = ZerlegeSicherung(hochgeladen, arbeitsordner);
 
             await ValidiereSicherungAsync(datenbankQuelle, cancellationToken);
-            await SichereAktuellenStandAsync(cancellationToken);
+            await SichereAktuellenStandAsync(vorlagenOrdner, cancellationToken);
 
             ErsetzeDatenbankdatei(datenbankQuelle);
             if (vorlagenQuelle is not null)
             {
-                StelleVorlagenWiederHer(vorlagenQuelle);
+                StelleVorlagenWiederHer(vorlagenQuelle, vorlagenOrdner);
             }
 
             await MigriereAufAktuellesSchemaAsync(cancellationToken);
@@ -146,7 +154,7 @@ public sealed class DatabaseBackupService(
     /// die App fremde Daten über die eigenen legt; wer sich dabei vergreift, soll
     /// zurückkönnen.
     /// </summary>
-    async Task SichereAktuellenStandAsync(CancellationToken ct)
+    async Task SichereAktuellenStandAsync(string vorlagenOrdner, CancellationToken ct)
     {
         if (!File.Exists(databaseFilePath))
         {
@@ -156,7 +164,7 @@ public sealed class DatabaseBackupService(
         var bakPfad = Path.Combine(
             Path.GetDirectoryName(databaseFilePath)!,
             $"automation-vor-import-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
-        await SicherungsArchiv.ErstelleAsync(databaseFilePath, vorlagenVerzeichnis, bakPfad, ct);
+        await SicherungsArchiv.ErstelleAsync(databaseFilePath, vorlagenOrdner, bakPfad, ct);
         logger.LogInformation("Vor-Import-Sicherung abgelegt: {Pfad}", bakPfad);
     }
 
@@ -176,13 +184,13 @@ public sealed class DatabaseBackupService(
     /// die Sicherung bildet einen Stand ab, und die Datenbank verweist auf genau
     /// diese Dateien. Zusätzliche Vorlagen des Anwenders bleiben liegen.
     /// </summary>
-    void StelleVorlagenWiederHer(string quellVerzeichnis)
+    void StelleVorlagenWiederHer(string quellVerzeichnis, string vorlagenOrdner)
     {
-        Directory.CreateDirectory(vorlagenVerzeichnis);
+        Directory.CreateDirectory(vorlagenOrdner);
         var anzahl = 0;
         foreach (var vorlage in Directory.EnumerateFiles(quellVerzeichnis, "*.docx"))
         {
-            File.Copy(vorlage, Path.Combine(vorlagenVerzeichnis, Path.GetFileName(vorlage)), overwrite: true);
+            File.Copy(vorlage, Path.Combine(vorlagenOrdner, Path.GetFileName(vorlage)), overwrite: true);
             anzahl++;
         }
 

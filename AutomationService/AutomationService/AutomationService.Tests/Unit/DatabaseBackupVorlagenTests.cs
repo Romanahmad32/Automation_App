@@ -31,7 +31,7 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         _dbPath = Path.Combine(_dir, "automation.db");
         _vorlagen = Path.Combine(_dir, "Vorlagen");
         Directory.CreateDirectory(_vorlagen);
-        _service = new DatabaseBackupService(_dbPath, _vorlagen, NullLogger<DatabaseBackupService>.Instance);
+        _service = new DatabaseBackupService(_dbPath, () => _vorlagen, NullLogger<DatabaseBackupService>.Instance);
     }
 
     [Fact]
