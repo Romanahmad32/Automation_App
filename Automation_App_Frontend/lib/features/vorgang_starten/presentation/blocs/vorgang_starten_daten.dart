@@ -53,8 +53,7 @@ class VorgangStartenDaten {
     this.polizeiVorgangsnummer = '',
   });
 
-  bool get istVerkehrsunfall =>
-      RechtsgebietWert.istVerkehrsrecht(rechtsgebiet);
+  bool get istVerkehrsunfall => RechtsgebietWert.istVerkehrsrecht(rechtsgebiet);
 
   /// Anzeigename „Vorname Nachname"; leer, wenn keine Namensteile erfasst sind.
   String get mandantName => '$vorname $nachname'.trim();
