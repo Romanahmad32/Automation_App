@@ -1,5 +1,6 @@
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_state.dart';
+import 'package:automation_app/features/backup/presentation/widgets/sicherungs_stand_zeile.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -130,6 +131,7 @@ class _DataBackupBodyState extends State<DataBackupBody> {
                   ),
                   const SizedBox(height: 16),
                   DataBackupStatus(state: state),
+                  const SicherungsStandZeile(),
                 ],
               ),
             ),

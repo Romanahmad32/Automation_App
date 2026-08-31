@@ -239,7 +239,6 @@ void main() {
   // Namentlich, damit die Luecke sichtbar bleibt, statt sich hinter einem
   // Gedankenstrich zu verstecken — diese Liste soll leer werden.
   const ohneTests = {
-    'backup': 'Sicherung/Wiederherstellung, bisher nur von Hand geprueft',
     'dev_simulation': 'nur in kDebugMode sichtbar, nicht im Auslieferstand',
   };
 

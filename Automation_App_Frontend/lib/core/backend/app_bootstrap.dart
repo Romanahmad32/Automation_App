@@ -5,14 +5,20 @@ import 'package:automation_app/core/backend/backend_launcher.dart';
 import 'package:automation_app/core/backend/backend_start_fehler_screen.dart';
 import 'package:automation_app/core/backend/backend_start_screen.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/features/backup/presentation/widgets/arbeitsplatz_uebergabe_gate.dart';
 import 'package:flutter/material.dart';
 
 /// Startvorgang der Anwendung: erst den lokalen Dienst, dann die Dependency
-/// Injection, dann die Oberfläche.
+/// Injection, dann die Arbeitsplatz-Übergabe, dann die Oberfläche.
 ///
 /// Bewusst als Widget und nicht als `await` vor `runApp`: sonst stünde während
 /// des Dienststarts ein leeres Fenster da. So sieht der Anwender ab der ersten
 /// Sekunde, dass etwas passiert — und im Fehlerfall, was.
+///
+/// Die Übergabe (§7.2) liegt hinter der DI und **vor** der Anwendung: Sie
+/// braucht den Dienst, um zu fragen, und die Frage muss beantwortet sein, bevor
+/// die erste Ansicht Daten lädt. Gibt es nichts zu entscheiden — der Normalfall
+/// —, reicht [ArbeitsplatzUebergabeGate] unverändert durch.
 class AppBootstrap extends StatefulWidget {
   const AppBootstrap({required this.anwendungBauen, super.key});
 
@@ -76,6 +82,6 @@ class _AppBootstrapState extends State<AppBootstrap> {
       );
     }
     if (!_bereit) return const BackendStartScreen();
-    return widget.anwendungBauen();
+    return ArbeitsplatzUebergabeGate(anwendungBauen: widget.anwendungBauen);
   }
 }
