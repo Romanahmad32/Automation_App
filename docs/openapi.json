@@ -4073,7 +4073,8 @@
           "registerDateiname",
           "registerNachAbschlussSchreiben",
           "registerExportFilter",
-          "vorlagenOrdner"
+          "vorlagenOrdner",
+          "sicherungsAblageOrdner"
         ],
         "type": "object",
         "properties": {
@@ -4134,6 +4135,9 @@
             "type": "string"
           },
           "vorlagenOrdner": {
+            "type": "string"
+          },
+          "sicherungsAblageOrdner": {
             "type": "string"
           }
         },
