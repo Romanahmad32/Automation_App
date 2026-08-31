@@ -63,13 +63,18 @@ public sealed class VorlagenVerzeichnis(string pfad, ILogger<VorlagenVerzeichnis
         return kopiert;
     }
 
-    /// <summary>Alle Vorlagen im Ordner, neueste zuerst.</summary>
+    /// <summary>
+    /// Alle Vorlagen im Ordner, neueste zuerst. Word-Sperrdateien (~$…docx)
+    /// bleiben draussen: in einem Ordner, in dem der Anwalt seine Vorlagen
+    /// bearbeitet, sind sie der Normalfall — und keine waehlbare Vorlage.
+    /// </summary>
     public IReadOnlyList<VorlagenDatei> Auflisten()
     {
         return
         [
             .. new DirectoryInfo(Pfad)
                 .GetFiles("*.docx")
+                .Where(datei => !datei.Name.StartsWith("~$", StringComparison.Ordinal))
                 .OrderByDescending(datei => datei.LastWriteTime)
                 .Select(datei => new VorlagenDatei(datei.Name, datei.FullName, datei.LastWriteTime))
         ];

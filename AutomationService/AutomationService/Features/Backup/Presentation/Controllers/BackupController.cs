@@ -43,12 +43,16 @@ public class BackupController(IDatabaseBackupService backupService) : Controller
         try
         {
             await using var stream = datei.OpenReadStream();
-            await backupService.ImportBackupAsync(stream, cancellationToken);
-            return Ok(new
+            var ergebnis = await backupService.ImportBackupAsync(stream, cancellationToken);
+            var message = "Sicherung eingespielt. Bitte die App neu starten, damit alle "
+                + "Ansichten die wiederhergestellten Daten laden.";
+            if (ergebnis.UebersprungeneVorlagen.Count > 0)
             {
-                message = "Sicherung eingespielt. Bitte die App neu starten, damit alle "
-                    + "Ansichten die wiederhergestellten Daten laden.",
-            });
+                message += " Nicht ersetzt, weil lokal eine abweichende Fassung liegt: "
+                    + string.Join(", ", ergebnis.UebersprungeneVorlagen) + ".";
+            }
+
+            return Ok(new { message });
         }
         catch (InvalidBackupException ex)
         {

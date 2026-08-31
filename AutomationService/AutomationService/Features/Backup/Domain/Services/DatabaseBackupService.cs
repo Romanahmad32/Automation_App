@@ -1,5 +1,6 @@
 using System.Globalization;
 using AutomationService.Core.Persistence;
+using AutomationService.Features.Settings.Domain.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -49,7 +50,8 @@ public sealed class DatabaseBackupService(
         return zielPfad;
     }
 
-    public async Task ImportBackupAsync(Stream sicherung, CancellationToken cancellationToken = default)
+    public async Task<SicherungsImportErgebnis> ImportBackupAsync(
+        Stream sicherung, CancellationToken cancellationToken = default)
     {
         var arbeitsordner = Path.Combine(
             Path.GetTempPath(), $"automation-import-{Guid.NewGuid():N}");
@@ -73,15 +75,26 @@ public sealed class DatabaseBackupService(
             await ValidiereSicherungAsync(datenbankQuelle, cancellationToken);
             await SichereAktuellenStandAsync(vorlagenOrdner, cancellationToken);
 
+            // Vor dem Tausch aus der EIGENEN Datenbank lesen: die Pfadfelder
+            // dieses Rechners sollen den Import ueberleben.
+            var lokaleEinstellungen = await LeseLokaleEinstellungenAsync(cancellationToken);
+
             ErsetzeDatenbankdatei(datenbankQuelle);
-            if (vorlagenQuelle is not null)
+            IReadOnlyList<string> uebersprungen = vorlagenQuelle is null
+                ? []
+                : VorlagenWiederherstellung.StelleWiederHer(vorlagenQuelle, vorlagenOrdner);
+            if (uebersprungen.Count > 0)
             {
-                StelleVorlagenWiederHer(vorlagenQuelle, vorlagenOrdner);
+                logger.LogInformation(
+                    "{Anzahl} Vorlage(n) nicht ersetzt (lokal abweichender Inhalt): {Namen}",
+                    uebersprungen.Count, string.Join(", ", uebersprungen));
             }
 
             await MigriereAufAktuellesSchemaAsync(cancellationToken);
+            await SchuetzeMaschinenPfadeAsync(lokaleEinstellungen, cancellationToken);
 
             logger.LogInformation("Sicherung eingespielt und migriert.");
+            return new SicherungsImportErgebnis(uebersprungen);
         }
         finally
         {
@@ -179,33 +192,57 @@ public sealed class DatabaseBackupService(
         File.Copy(quelle, databaseFilePath, overwrite: true);
     }
 
-    /// <summary>
-    /// Spielt die Vorlagen aus der Sicherung ein. Gleichnamige werden ersetzt:
-    /// die Sicherung bildet einen Stand ab, und die Datenbank verweist auf genau
-    /// diese Dateien. Zusätzliche Vorlagen des Anwenders bleiben liegen.
-    /// </summary>
-    void StelleVorlagenWiederHer(string quellVerzeichnis, string vorlagenOrdner)
-    {
-        Directory.CreateDirectory(vorlagenOrdner);
-        var anzahl = 0;
-        foreach (var vorlage in Directory.EnumerateFiles(quellVerzeichnis, "*.docx"))
-        {
-            File.Copy(vorlage, Path.Combine(vorlagenOrdner, Path.GetFileName(vorlage)), overwrite: true);
-            anzahl++;
-        }
-
-        logger.LogInformation("{Anzahl} Vorlage(n) aus der Sicherung übernommen.", anzahl);
-    }
-
     /// <summary>Hebt die (ggf. ältere) eingespielte DB auf den aktuellen Schemastand.</summary>
     async Task MigriereAufAktuellesSchemaAsync(CancellationToken ct)
+    {
+        await using var context = OeffneKontext();
+        await context.Database.MigrateAsync(ct);
+        await context.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", ct);
+    }
+
+    /// <summary>Der Einstellungssatz dieses Rechners — oder null, wenn es (noch) keinen gibt.</summary>
+    async Task<KanzleiSettingsEntity?> LeseLokaleEinstellungenAsync(CancellationToken ct)
+    {
+        if (!File.Exists(databaseFilePath))
+        {
+            return null;
+        }
+
+        await using var context = OeffneKontext();
+        return await context.KanzleiSettings.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == KanzleiSettingsEntity.SingletonId, ct);
+    }
+
+    /// <summary>
+    /// Setzt nach dem Import die maschinenabhängigen Pfadfelder auf die Werte
+    /// dieses Rechners zurück: ein Ordnerpfad des anderen Rechners zeigt hier
+    /// ins Leere. Gab es lokal keinen Einstellungssatz, werden die Felder
+    /// geleert — fremde Maschinenpfade dürfen den Import nicht überleben.
+    /// Läuft nach der Migration, weil eine ältere Sicherung die Spalte
+    /// VorlagenOrdner erst danach hat.
+    /// </summary>
+    async Task SchuetzeMaschinenPfadeAsync(KanzleiSettingsEntity? lokal, CancellationToken ct)
+    {
+        await using var context = OeffneKontext();
+        var eingespielt = await context.KanzleiSettings
+            .FirstOrDefaultAsync(s => s.Id == KanzleiSettingsEntity.SingletonId, ct);
+        if (eingespielt is null)
+        {
+            return;
+        }
+
+        eingespielt.AktenStammordner = lokal?.AktenStammordner ?? string.Empty;
+        eingespielt.RegisterAblageOrdner = lokal?.RegisterAblageOrdner ?? string.Empty;
+        eingespielt.VorlagenOrdner = lokal?.VorlagenOrdner ?? string.Empty;
+        await context.SaveChangesAsync(ct);
+    }
+
+    AutomationDbContext OeffneKontext()
     {
         var options = new DbContextOptionsBuilder<AutomationDbContext>()
             .UseSqlite($"Data Source={databaseFilePath}")
             .Options;
-        await using var context = new AutomationDbContext(options);
-        await context.Database.MigrateAsync(ct);
-        await context.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", ct);
+        return new AutomationDbContext(options);
     }
 
     static void TryDelete(string pfad)
