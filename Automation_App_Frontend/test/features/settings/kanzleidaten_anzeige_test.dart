@@ -29,6 +29,7 @@ void main() {
     ort: 'Bad Homburg',
     emailAdresse: 'kanzlei@example.de',
     abteilung: 'VU',
+    vorlagenOrdner: r'C:\Kanzlei\Vorlagen',
   );
 
   /// Der Wert, der beim Speichern gelesen wird — nicht irgendein Text auf dem
@@ -71,6 +72,7 @@ void main() {
 
     expect(imFeld(tester, 'name'), gespeichert.name);
     expect(imFeld(tester, 'ort'), gespeichert.ort);
+    expect(imFeld(tester, 'vorlagenOrdner'), gespeichert.vorlagenOrdner);
   });
 
   testWidgets('zeigt sie auch, wenn der Bloc schon geladen war', (

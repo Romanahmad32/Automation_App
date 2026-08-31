@@ -3812,7 +3812,7 @@
             ]
           }
         },
-        "description": "\u00DCbertragungsformat einer Formularvorlage. Die Feldliste wird als opakes JSON\r\n(JsonElement FormTemplateDto.Fields) verlustfrei durchgereicht \u2014 das Backend muss das\r\nFieldData-Schema nicht doppelt pflegen."
+        "description": "\u00DCbertragungsformat einer Formularvorlage. Die Feldliste wird als opakes JSON\r\n(JsonElement FormTemplateDto.Fields) verlustfrei durchgereicht \u2014 das Backend muss das\r\nFieldData-Schema nicht doppelt pflegen. Die Word-Pfade gehen aufgel\u00F6st\r\n(absolut) hinaus, obwohl sie relativ gespeichert sein k\u00F6nnen (#33): das\r\nFrontend \u00F6ffnet die Dateien direkt und kennt den Vorlagenordner nicht."
       },
       "IFormFile": {
         "type": "string",
@@ -4072,7 +4072,8 @@
           "registerAblageOrdner",
           "registerDateiname",
           "registerNachAbschlussSchreiben",
-          "registerExportFilter"
+          "registerExportFilter",
+          "vorlagenOrdner"
         ],
         "type": "object",
         "properties": {
@@ -4130,6 +4131,9 @@
             "type": "boolean"
           },
           "registerExportFilter": {
+            "type": "string"
+          },
+          "vorlagenOrdner": {
             "type": "string"
           }
         },

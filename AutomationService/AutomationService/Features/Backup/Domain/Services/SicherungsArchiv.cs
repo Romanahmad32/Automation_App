@@ -7,7 +7,10 @@ namespace AutomationService.Features.Backup.Domain.Services;
 /// Aufbau einer Sicherungsdatei: ein ZIP mit der Datenbank und den Word-Vorlagen.
 ///
 ///     automation.db          — die Datenbank (per VACUUM INTO, WAL-sicher)
-///     Vorlagen/*.docx        — die Vorlagen aus %APPDATA%\AutomationService\Vorlagen
+///     Vorlagen/**/*.docx     — die Vorlagen aus dem eingestellten Vorlagenordner,
+///                              samt Unterordnern; Word-Sperrdateien (~$*.docx)
+///                              bleiben draussen — in einem Ordner, in dem jemand
+///                              Vorlagen bearbeitet, sind die der Normalfall
 ///
 /// Bis dahin war die Sicherung eine blanke .db-Datei. Das war eine Luecke: die
 /// Datenbank verweist mit absoluten Pfaden auf .docx-Dateien, die nicht
@@ -59,11 +62,19 @@ public static class SicherungsArchiv
                 return;
             }
 
-            foreach (var vorlage in Directory.EnumerateFiles(vorlagenVerzeichnis, "*.docx"))
+            foreach (var vorlage in Directory.EnumerateFiles(
+                vorlagenVerzeichnis, "*.docx", SearchOption.AllDirectories))
             {
+                if (IstSperrdatei(vorlage))
+                {
+                    continue;
+                }
+
+                var relativ = Path.GetRelativePath(vorlagenVerzeichnis, vorlage)
+                    .Replace(Path.DirectorySeparatorChar, '/');
                 archiv.CreateEntryFromFile(
                     vorlage,
-                    $"{VorlagenOrdner}/{Path.GetFileName(vorlage)}",
+                    $"{VorlagenOrdner}/{relativ}",
                     CompressionLevel.Optimal);
             }
         }
@@ -72,6 +83,10 @@ public static class SicherungsArchiv
             TryDelete(temporaereKopie);
         }
     }
+
+    /// <summary>Word-Sperrdatei (~$…): entsteht, solange eine Vorlage offen ist.</summary>
+    public static bool IstSperrdatei(string pfad) =>
+        Path.GetFileName(pfad).StartsWith("~$", StringComparison.Ordinal);
 
     public static void Entpacke(string archivPfad, string zielVerzeichnis)
     {

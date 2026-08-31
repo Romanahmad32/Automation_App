@@ -6,6 +6,7 @@ import 'package:automation_app/core/general_widgets/form/general_text_field.dart
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/widgets/register_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
+import 'package:automation_app/features/settings/presentation/widgets/vorlagen_ordner_feld.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -130,6 +131,17 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'Stammordner ist nur das manuelle Speichern '
               'möglich.',
           children: const [StammordnerField()],
+        ),
+        FormSection(
+          icon: Icons.description_outlined,
+          title: 'Vorlagen',
+          subtitle:
+              'Ordner, in dem die Word-Vorlagen liegen. Er wird bei jeder '
+              'Sicherung mitgenommen; Vorlagenpfade werden relativ zu ihm '
+              'gespeichert, damit dieselbe Sicherung auch auf einem zweiten '
+              'Rechner funktioniert. Leer heißt: die App verwaltet die '
+              'Vorlagen selbst (AppData).',
+          children: const [VorlagenOrdnerFeld()],
         ),
         FormSection(
           icon: Icons.cloud_sync_outlined,
