@@ -1,7 +1,7 @@
 # settings — Kanzleistammdaten und App-Einstellungen
 
 **Zweck:** Der Anwalt hinterlegt hier die Anfragerdaten für die Zentralruf-Anfrage, den Postfach-Zugang samt
-Mail-Signatur, Akten-Stammordner, Auftragsnummer samt Abteilung, Titelzeilen-Farbe und Erscheinungsbild.
+Mail-Signatur, Akten-Stammordner, Vorlagenordner (#33), Register-Ablage, Auftragsnummer samt Abteilung und Erscheinungsbild.
 **Anforderung:** `REQUIREMENTS.md` §7.1
 **Einstieg:** `presentation/pages/settings_page.dart`
 **Zustand:** `KanzleiSettingsBloc`
