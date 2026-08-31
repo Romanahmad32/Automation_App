@@ -160,12 +160,14 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
     {
         await LegeDatenbankAn();
         await SchreibeOrdnerEinstellungen(
-            akten: @"D:\Fremd\Akten", register: @"D:\Fremd\Register", vorlagen: @"D:\Fremd\Vorlagen");
+            akten: @"D:\Fremd\Akten", register: @"D:\Fremd\Register",
+            vorlagen: @"D:\Fremd\Vorlagen", sicherungen: @"D:\Fremd\Sicherungen");
         var sicherung = await _service.CreateBackupFileAsync();
 
         // Der lokale Rechner hat eigene Pfade — die muessen den Import ueberleben.
         await SchreibeOrdnerEinstellungen(
-            akten: @"C:\Lokal\Akten", register: @"C:\Lokal\Register", vorlagen: @"C:\Lokal\Vorlagen");
+            akten: @"C:\Lokal\Akten", register: @"C:\Lokal\Register",
+            vorlagen: @"C:\Lokal\Vorlagen", sicherungen: @"C:\Lokal\Sicherungen");
 
         await Importiere(sicherung);
 
@@ -173,6 +175,8 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         settings.AktenStammordner.Should().Be(@"C:\Lokal\Akten");
         settings.RegisterAblageOrdner.Should().Be(@"C:\Lokal\Register");
         settings.VorlagenOrdner.Should().Be(@"C:\Lokal\Vorlagen");
+        settings.SicherungsAblageOrdner.Should().Be(@"C:\Lokal\Sicherungen",
+            "sonst legt dieser Rechner seine Sicherungen woanders ab, als er sein Angebot liest");
     }
 
     private async Task<SicherungsImportErgebnis> Importiere(string sicherung)
@@ -187,7 +191,8 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         return ergebnis;
     }
 
-    private async Task SchreibeOrdnerEinstellungen(string akten, string register, string vorlagen)
+    private async Task SchreibeOrdnerEinstellungen(
+        string akten, string register, string vorlagen, string sicherungen)
     {
         await using var db = OeffneKontext();
         var settings = await db.KanzleiSettings
@@ -201,6 +206,7 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         settings.AktenStammordner = akten;
         settings.RegisterAblageOrdner = register;
         settings.VorlagenOrdner = vorlagen;
+        settings.SicherungsAblageOrdner = sicherungen;
         await db.SaveChangesAsync();
         SqliteConnection.ClearAllPools();
     }
