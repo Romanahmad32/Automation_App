@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AutomationService.Core.Ablage;
+using AutomationService.Core.Lifetime;
 
 namespace AutomationService.Features.Backup.Domain.Services;
 
@@ -81,6 +82,30 @@ public static class ArbeitsplatzAkte
             .Select(gruppe => gruppe.MaxBy(eintrag => eintrag.ZuletztGearbeitet)!)
             .ToList();
     }
+
+    /// <summary>
+    /// Hält fest, dass hier gerade gearbeitet wird, ohne den gesicherten Stand
+    /// anzurühren. Beides gehört zusammen und darf sich doch nicht vermischen:
+    /// Wer die App nur kurz öffnet, hat gearbeitet — gesichert hat er nichts.
+    /// </summary>
+    public static void MerkeArbeitsbeginn(string ordner)
+    {
+        var bisher = LiesEigene(ordner);
+        Schreibe(ordner, new ArbeitsplatzEintrag(
+            DieserRechner,
+            DateTime.Now,
+            bisher?.GesichertAm,
+            bisher?.Sicherung,
+            Programmfassung.Aktuell));
+    }
+
+    /// <summary>
+    /// Hält fest, dass der Stand dieses Rechners als Archiv abgelegt wurde —
+    /// der Zeitpunkt, an dem sich das Übernahme-Angebot der anderen entscheidet.
+    /// </summary>
+    public static void MerkeSicherung(string ordner, DateTime zeitpunkt, string datei) =>
+        Schreibe(ordner, new ArbeitsplatzEintrag(
+            DieserRechner, zeitpunkt, zeitpunkt, datei, Programmfassung.Aktuell));
 
     /// <summary>
     /// Schreibt die Akte dieses Rechners. Der Ordner wird angelegt, falls er

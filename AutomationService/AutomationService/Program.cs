@@ -41,6 +41,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Beim Beenden schreibt der ArbeitsplatzDienst die automatische Sicherung
+// (#39) — VACUUM INTO, ZIP, und das Ganze in einen Ordner, der auf „Dateien bei
+// Bedarf" stehen kann. Die Vorgabe des Hosts ist dafuer knapp bemessen; ein
+// abgeschnittener Lauf hinterliesse keine Sicherung, und zwar wortlos.
+builder.Services.Configure<HostOptions>(options =>
+    options.ShutdownTimeout = TimeSpan.FromSeconds(60));
+
 builder.Services.AddLifetimeServices(builder.Configuration);
 builder.Services.AddPersistenceServices();
 builder.Services.AddWordServices(builder.Configuration);

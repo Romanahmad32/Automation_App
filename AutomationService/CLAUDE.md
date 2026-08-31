@@ -155,13 +155,25 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
 - **Backup** — Export/Import einer Sicherung. `SicherungsArchiv` ist ein ZIP aus `automation.db`
   (per `VACUUM INTO`, WAL-sicher) und `Vorlagen/*.docx`; ältere blanke `.db`-Sicherungen bleiben
   einspielbar. Der Import validiert, sichert den alten Stand daneben und hebt auf den Schemastand.
+  Dazu die **Arbeitsplatz-Übergabe** (§7.2, #39): `AutomatischeSicherung` legt den Stand beim Beenden
+  (`ArbeitsplatzDienst.StopAsync`) und nach jedem Vorgangsabschluss als
+  `automation-<Rechner>-<Zeit>.zip` in den eingestellten Ablageordner, daneben je Rechner eine
+  `arbeitsplatz-<Rechner>.json` (`ArbeitsplatzAkte`) — daraus entsteht das Übernahme-Angebot am
+  zweiten Arbeitsplatz. Fehlschläge merkt `LetzteSicherungAkte` lokal, weil beim Beenden niemand
+  mehr zusieht.
 
 ## Core/ — querschnittlich, kein Slice
 
 `Core/Lifetime` — Health-Endpunkt (`MapHealthEndpoint`: 503 `startet`, bis `ApplicationReadiness`
-meldet, dann 200 `bereit`) und `ParentProcessWatchdog`. Der Wächter wird **nur** registriert, wenn
+meldet, dann 200 `bereit`), `Programmfassung` (die Assembly-Fassung für Health-Antwort und
+Arbeitsplatz-Akte) und `ParentProcessWatchdog`. Der Wächter wird **nur** registriert, wenn
 `--parent-pid` übergeben wurde; ohne das Argument (`dotnet run`) läuft der Dienst eigenständig.
 Kein `UseHttpsRedirection`: der Dienst spricht bewusst nur lokales HTTP.
+
+`Core/Ablage` — `AtomareAblage`: legt eine fertig gebaute Datei so an ihren Zielort, dass ein
+Beobachter des Ordners sie nie halbfertig sieht (bauen, dann umbenennen). Der Grund ist immer
+derselbe: Ein Synchronisierungsdienst reagiert auf Dateiänderungen, nicht auf „fertig geschrieben".
+Nutzer sind der Register-Spiegel und die automatische Sicherung.
 
 ## Persistenz
 
