@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
+import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -6,14 +7,14 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Baut die Referenz `Nr/Jahr Abteilung[_Kennzeichen]` aus den Formularwerten.
 /// Außerhalb von Verkehrsrecht (kein Gegner-Kennzeichen) entfällt der
 /// Kennzeichen-Teil.
-String baueReferenz(FormGroup form, Rechtsgebiet rechtsgebiet) {
+String baueReferenz(FormGroup form, String rechtsgebiet) {
   String valueOf(String c) => (form.control(c).value as String?)?.trim() ?? '';
   final nummer = valueOf('auftragsnummer');
   final jahrEingabe = int.tryParse(valueOf('auftragsjahr')) ?? 0;
   final jahr = jahrEingabe == 0 ? DateTime.now().year % 100 : jahrEingabe;
-  final abteilung = valueOf('abteilung');
+  final abteilung = AbteilungKuerzel.normalisiere(valueOf('abteilung'));
   final basis = '$nummer/${jahr.toString().padLeft(2, '0')} $abteilung';
-  if (rechtsgebiet != Rechtsgebiet.verkehrsrecht) return basis;
+  if (!RechtsgebietWert.istVerkehrsrecht(rechtsgebiet)) return basis;
   final kennzeichen = valueOf('kennzeichenGegner').toUpperCase();
   return kennzeichen.isEmpty ? basis : '${basis}_$kennzeichen';
 }
@@ -22,13 +23,13 @@ String baueReferenz(FormGroup form, Rechtsgebiet rechtsgebiet) {
 /// Control-Namen).
 VorgangStartenDaten leseVorgangDaten(
   FormGroup form,
-  Rechtsgebiet rechtsgebiet,
+  String rechtsgebiet,
 ) {
   String v(String c) => (form.control(c).value as String?)?.trim() ?? '';
   return VorgangStartenDaten(
     auftragsnummer: int.tryParse(v('auftragsnummer')) ?? 0,
     auftragsjahr: int.tryParse(v('auftragsjahr')) ?? 0,
-    abteilung: v('abteilung'),
+    abteilung: AbteilungKuerzel.normalisiere(v('abteilung')),
     rechtsgebiet: rechtsgebiet,
     referenz: v('referenz'),
     vorname: v('mandantVorname'),

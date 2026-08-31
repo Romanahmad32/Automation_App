@@ -153,6 +153,12 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_o
     as _i975;
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_suche_cubit/mandanten_suche_cubit.dart'
     as _i410;
+import 'package:automation_app/features/sachgebiete/data/datasources/sachgebiet_datasource.dart'
+    as _i460;
+import 'package:automation_app/features/sachgebiete/domain/repositories/sachgebiet_repository.dart'
+    as _i1069;
+import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_cubit.dart'
+    as _i310;
 import 'package:automation_app/features/settings/data/datasources/kanzlei_settings_datasource.dart'
     as _i501;
 import 'package:automation_app/features/settings/data/repositories/kanzlei_settings_repository_impl.dart'
@@ -322,11 +328,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i395.MandantDatasource>(
       () => _i395.ApiMandantDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i1069.SachgebietRepository>(
+      () => _i460.ApiSachgebietDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i764.OrdnerStatusDatasource>(
       () => _i764.ApiOrdnerStatusDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i501.KanzleiSettingsDatasource>(
       () => _i501.ApiKanzleiSettingsDatasource(gh<_i361.Dio>()),
+    );
+    gh.lazySingleton<_i310.SachgebietCubit>(
+      () => _i310.SachgebietCubit(gh<_i1069.SachgebietRepository>()),
     );
     gh.factory<_i285.BackupRepository>(
       () => _i182.ApiBackupDatasource(gh<_i361.Dio>()),

@@ -1,33 +1,22 @@
-/// Rechtsgebiet eines Vorgangs — die Sachgebiete-Spalte des Auftragsregisters
-/// (mehrseitige Word-Tabelle). Verkehrsrecht ist der fachliche Schwerpunkt der
-/// Kanzlei und damit der Standardwert.
+/// Das Rechtsgebiet eines Vorgangs — die Sachgebiete-Spalte des
+/// Auftragsregisters — ist ein **freier String**: gespeichert wird, was der
+/// Anwalt gewählt hat, und die Auswahl kommt seit #70 aus dem
+/// Sachgebietskatalog (§7.1, `GET /api/Sachgebiete`) statt aus einem Enum.
 ///
-/// Der Satz deckt die Sachgebiete ab, die im gewachsenen Register der Kanzlei
-/// tatsaechlich vorkommen. Verkehrsstrafrecht, Zivilrecht und Vertragsrecht
-/// sind spaeter dazugekommen (#40): sie stehen dort seit Jahren, fehlten hier
-/// aber — ohne sie faellt rund ein Sechstel des Bestands still auf
-/// [verkehrsrecht] zurueck, weil [fromValue] bewusst tolerant ist.
-enum Rechtsgebiet {
-  verkehrsrecht(name: 'Verkehrsrecht', value: 'verkehrsrecht'),
-  verkehrsstrafrecht(name: 'Verkehrsstrafrecht', value: 'verkehrsstrafrecht'),
-  arbeitsrecht(name: 'Arbeitsrecht', value: 'arbeitsrecht'),
-  strafrecht(name: 'Strafrecht', value: 'strafrecht'),
-  familienrecht(name: 'Familienrecht', value: 'familienrecht'),
-  verwaltungsrecht(name: 'Verwaltungsrecht', value: 'verwaltungsrecht'),
-  zivilrecht(name: 'Zivilrecht', value: 'zivilrecht'),
-  vertragsrecht(name: 'Vertragsrecht', value: 'vertragsrecht'),
-  sonstiges(name: 'Sonstiges', value: 'sonstiges');
-
-  final String name;
-
-  /// Stabiler Schlüssel für die Persistenz. Bewusst getrennt von [toString],
-  /// damit Änderungen an Debug-Ausgaben das Dateiformat nie beeinflussen
-  /// (gleiche Konvention wie InputType).
-  final String value;
-
-  const Rechtsgebiet({required this.name, required this.value});
-
-  String get displayName => name;
+/// Das frühere Enum ist bewusst weg: Sein fester Wertesatz war die Quelle des
+/// Fehlers, den der Katalog beseitigt (vier Katalog-Sachgebiete waren nicht
+/// wählbar, `fromValue` bog Unbekanntes still auf Verkehrsrecht um). Übrig
+/// bleiben die Regeln über dem String — Anzeige, Vergleich, Verkehrsrecht als
+/// fachlicher Schwerpunkt.
+///
+/// Altbestand: Das Enum speicherte Kleinschreibungs-Schlüssel
+/// (`verkehrsrecht`); der Katalog liefert Anzeigenamen (`Verkehrsrecht`).
+/// Beide bleiben unverändert gespeichert und treffen sich in [normalisiert] —
+/// **keine Datenmigration**.
+abstract final class RechtsgebietWert {
+  /// Der fachliche Schwerpunkt der Kanzlei und darum der Standardwert
+  /// bei der Neuanlage.
+  static const String verkehrsrecht = 'Verkehrsrecht';
 
   /// Platzhalter, wenn am Vorgang kein Rechtsgebiet steht. Muss zu
   /// `RechtsgebietAnzeige.Unbekannt` im Backend passen.
@@ -37,26 +26,24 @@ enum Rechtsgebiet {
   ///
   /// Muss dieselbe Antwort geben wie `RechtsgebietAnzeige.Fuer` im Backend,
   /// sonst zeigt die Ansicht ein anderes Sachgebiet an, als in der
-  /// Register-Datei steht. Deshalb liest sie den gespeicherten Wert und geht
-  /// **nicht** über [fromValue]: Dessen Toleranz ist für die Bearbeitung
-  /// gedacht — ein fremder Persistenzstand soll den Vorgang nicht unlesbar
-  /// machen. Als Registerzeile wäre sie eine Behauptung: Ein nie erfasstes
-  /// Sachgebiet steht in einem Sachgebiete-Register als [unbekannt] und nicht
-  /// als „Verkehrsrecht".
+  /// Register-Datei steht. Ein nie erfasstes Sachgebiet steht in einem
+  /// Sachgebiete-Register als [unbekannt] und nicht als „Verkehrsrecht".
   static String anzeige(String? gespeichert) {
     final roh = (gespeichert ?? '').trim();
     if (roh.isEmpty) return unbekannt;
     return roh[0].toUpperCase() + roh.substring(1);
   }
 
-  /// Liest ein [Rechtsgebiet] aus seinem persistierten [value]. Unbekannte oder
-  /// fehlende Werte fallen tolerant auf [Rechtsgebiet.verkehrsrecht] zurück:
-  /// ein älterer/fremder Persistenzstand soll den Vorgang nicht unlesbar machen.
-  /// Für die **Anzeige** im Register ist deshalb [anzeige] zuständig.
-  static Rechtsgebiet fromValue(String? input) {
-    for (final gebiet in Rechtsgebiet.values) {
-      if (gebiet.value == input) return gebiet;
-    }
-    return Rechtsgebiet.verkehrsrecht;
-  }
+  /// Vergleichsform: getrimmt und kleingeschrieben. Hier treffen sich der
+  /// Altbestand (`verkehrsrecht`) und die Katalognamen (`Verkehrsrecht`) —
+  /// Filter und Fachregeln vergleichen nie die Rohwerte direkt.
+  static String normalisiert(String? wert) => (wert ?? '').trim().toLowerCase();
+
+  /// Ob zwei gespeicherte/gewählte Werte dasselbe Rechtsgebiet meinen.
+  static bool gleich(String? a, String? b) =>
+      normalisiert(a) == normalisiert(b);
+
+  /// Ob der Wert Verkehrsrecht ist — schaltet die Unfall-/Zentralruf-Teile
+  /// des Vorgangs frei (Pflichtfelder, Kennzeichen in der Referenz, §4.2).
+  static bool istVerkehrsrecht(String? wert) => gleich(wert, verkehrsrecht);
 }

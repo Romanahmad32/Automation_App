@@ -3,6 +3,7 @@ import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
+import 'package:automation_app/features/sachgebiete/presentation/widgets/abteilung_auswahl.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/widgets/register_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
@@ -89,35 +90,20 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'automatisch vorbelegt und beim Abschluss eines '
               'Vorgangs um eins hochgezählt.',
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: _field(
-                    'laufendeAuftragsnummer',
-                    'Laufende Auftragsnummer',
-                    keyboardType: TextInputType.number,
-                    validationMessages: {
-                      ValidationMessage.required: (_) => 'Pflichtfeld',
-                      ValidationMessage.number: (_) =>
-                          'Bitte eine Zahl eingeben',
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: _field(
-                    'abteilung',
-                    'Abteilung (z. B. C03)',
-                    validationMessages: {
-                      ValidationMessage.required: (_) => 'Pflichtfeld',
-                    },
-                  ),
-                ),
-              ],
+            _field(
+              'laufendeAuftragsnummer',
+              'Laufende Auftragsnummer',
+              keyboardType: TextInputType.number,
+              validationMessages: {
+                ValidationMessage.required: (_) => 'Pflichtfeld',
+                ValidationMessage.number: (_) => 'Bitte eine Zahl eingeben',
+              },
             ),
+            // Die Abteilung ist eine Auswahl aus dem Sachgebietskatalog
+            // (§7.1): Hauptsachgebiet als Pflicht, Nebensachgebiet optional
+            // (Überschneidung wie C05/3). Schreibt weiterhin in dasselbe
+            // FormControl 'abteilung'.
+            const AbteilungAuswahl(),
           ],
         ),
         FormSection(

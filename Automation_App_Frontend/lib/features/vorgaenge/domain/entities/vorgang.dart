@@ -20,19 +20,13 @@ class Vorgang extends Equatable {
   final String referenz;
   final DateTime angefragtAm;
   final VorgangStatus status;
-  final Rechtsgebiet rechtsgebiet;
 
-  /// Das Rechtsgebiet so, wie es gespeichert ist — vor der toleranten Abbildung
-  /// durch [Rechtsgebiet.fromValue]. Nur die Anzeige im Register braucht das:
-  /// Ein **leerer** Wert heisst „nie erfasst" und steht dort als
-  /// [Rechtsgebiet.unbekannt], waehrend [rechtsgebiet] fuers Bearbeiten und
-  /// Filtern weiterhin einen brauchbaren Wert liefert.
-  ///
-  /// Wird beim Bauen aus [rechtsgebiet] vorbelegt, wenn nichts uebergeben ist —
-  /// sonst waere ein von Hand gebauter Vorgang nicht gleich seinem eigenen
-  /// JSON-Rundlauf, und „nie erfasst" liesse sich nicht von „im Code gesetzt"
-  /// unterscheiden.
-  final String rechtsgebietRoh;
+  /// Das Rechtsgebiet **wortgetreu wie gespeichert** — ein freier String, seit
+  /// die Auswahl aus dem Sachgebietskatalog kommt (§7.1, #70). Ein leerer Wert
+  /// heisst „nie erfasst" und steht im Register als [RechtsgebietWert.unbekannt].
+  /// Vergleiche laufen über [RechtsgebietWert.gleich], nie über `==` — der
+  /// Altbestand ist kleingeschrieben, der Katalog liefert Anzeigenamen.
+  final String rechtsgebiet;
 
   /// Bestandteile der Referenz, beim Anlegen aus [referenz] geparst.
   final int? laufendeNummer;
@@ -90,12 +84,11 @@ class Vorgang extends Equatable {
 
   final DateTime? abgeschlossenAm;
 
-  Vorgang({
+  const Vorgang({
     required this.referenz,
     required this.angefragtAm,
     this.status = VorgangStatus.angefragt,
-    this.rechtsgebiet = Rechtsgebiet.verkehrsrecht,
-    String? rechtsgebietRoh,
+    this.rechtsgebiet = RechtsgebietWert.verkehrsrecht,
     this.laufendeNummer,
     this.jahr,
     this.abteilung,
@@ -115,14 +108,14 @@ class Vorgang extends Equatable {
     this.dokumentPfad,
     this.aktenOrdner,
     this.abgeschlossenAm,
-  }) : rechtsgebietRoh = rechtsgebietRoh ?? rechtsgebiet.value;
+  });
 
   /// Legt einen Vorgang aus einer gestarteten Zentralruf-Anfrage an: parst die
   /// Referenz in ihre Bestandteile und setzt den Status auf „angefragt".
   factory Vorgang.ausAnfrage({
     required String referenz,
     required DateTime angefragtAm,
-    Rechtsgebiet rechtsgebiet = Rechtsgebiet.verkehrsrecht,
+    String rechtsgebiet = RechtsgebietWert.verkehrsrecht,
     int? mandantId,
     String? mandantName,
     String? unfallDatum,
@@ -163,7 +156,7 @@ class Vorgang extends Equatable {
   /// Was in der vierten Registerspalte steht. Muss dieselbe Antwort geben wie
   /// `RechtsgebietAnzeige.Fuer` im Backend — sonst zeigt der Bildschirm ein
   /// anderes Sachgebiet an, als in der Register-Datei steht.
-  String get rechtsgebietAnzeige => Rechtsgebiet.anzeige(rechtsgebietRoh);
+  String get rechtsgebietAnzeige => RechtsgebietWert.anzeige(rechtsgebiet);
 
   /// Bezeichnung „Mandant ./. Gegner" für die Registerspalte 3.
   ///
@@ -214,7 +207,7 @@ class Vorgang extends Equatable {
   /// `??` bliebe er stehen.
   Vorgang copyWith({
     VorgangStatus? status,
-    Rechtsgebiet? rechtsgebiet,
+    String? rechtsgebiet,
     int? mandantId,
     String? mandantName,
     String? gegner,
@@ -236,9 +229,6 @@ class Vorgang extends Equatable {
       angefragtAm: angefragtAm,
       status: status ?? this.status,
       rechtsgebiet: rechtsgebiet ?? this.rechtsgebiet,
-      // Wird das Rechtsgebiet geaendert, zieht der Rohwert mit — sonst zeigte
-      // das Register weiter den Stand von vor der Aenderung.
-      rechtsgebietRoh: rechtsgebiet?.value ?? rechtsgebietRoh,
       laufendeNummer: laufendeNummer,
       jahr: jahr,
       abteilung: abteilung,
@@ -310,7 +300,6 @@ class Vorgang extends Equatable {
     angefragtAm,
     status,
     rechtsgebiet,
-    rechtsgebietRoh,
     laufendeNummer,
     jahr,
     abteilung,

@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
+import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/settings/presentation/widgets/kanzlei_settings_form_body.dart';
@@ -123,7 +124,9 @@ class _AppSettingsViewState extends State<AppSettingsView>
           laufendeAuftragsnummer:
               int.tryParse(read('laufendeAuftragsnummer')) ??
               KanzleiSettings.defaultLaufendeAuftragsnummer,
-          abteilung: read('abteilung'),
+          // Kürzel ohne Leerzeichen (§7.1): 'C 03o' zerlegte die Referenz
+          // auf beiden Seiten still.
+          abteilung: AbteilungKuerzel.normalisiere(read('abteilung')),
           aktenStammordner: read('aktenStammordner'),
           registerAblageOrdner: read('registerAblageOrdner'),
           // Leerer Name heißt Vorgabe: Ein Spiegel ohne Dateinamen wäre eine

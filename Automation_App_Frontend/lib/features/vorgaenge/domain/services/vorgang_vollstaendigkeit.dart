@@ -28,7 +28,7 @@ class VorgangVollstaendigkeit {
     }
 
     // Die Unfall-/Versichererangaben braucht nur das Verkehrsunfall-Schreiben.
-    if (vorgang.rechtsgebiet != Rechtsgebiet.verkehrsrecht) return fehlt;
+    if (!RechtsgebietWert.istVerkehrsrecht(vorgang.rechtsgebiet)) return fehlt;
 
     if (leer(vorgang.unfallDatum) && leer(vorgang.antwort?.unfallDatum)) {
       fehlt.add('Unfalldatum');
