@@ -2,6 +2,7 @@ using AutomationService.Features.EmailVersand.Domain.Persistence;
 using AutomationService.Features.FormTemplates.Domain.Persistence;
 using AutomationService.Features.MailboxMonitor.Domain.Persistence;
 using AutomationService.Features.Mandanten.Domain.Persistence;
+using AutomationService.Features.Sachgebiete.Domain.Persistence;
 using AutomationService.Features.Settings.Domain.Persistence;
 using AutomationService.Features.Versicherer.Domain.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
@@ -32,6 +33,7 @@ public class AutomationDbContext(DbContextOptions<AutomationDbContext> options)
     public DbSet<FormTemplateEntity> FormTemplates => Set<FormTemplateEntity>();
     public DbSet<ReceivedReplyEntity> ReceivedReplies => Set<ReceivedReplyEntity>();
     public DbSet<VersichererEntity> Versicherer => Set<VersichererEntity>();
+    public DbSet<SachgebietEntity> Sachgebiete => Set<SachgebietEntity>();
     public DbSet<VersandEintragEntity> Versandprotokoll => Set<VersandEintragEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -1447,6 +1447,44 @@
         }
       }
     },
+    "/api/Sachgebiete": {
+      "get": {
+        "tags": [
+          "Sachgebiete"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SachgebietDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SachgebietDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SachgebietDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/PdfConversion/convert": {
       "post": {
         "tags": [
@@ -4902,6 +4940,48 @@
           }
         }
       },
+      "SachgebietDto": {
+        "required": [
+          "id",
+          "kuerzel",
+          "name",
+          "rechtsgebietVorschlag",
+          "sortierung",
+          "aktiv"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "kuerzel": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rechtsgebietVorschlag": {
+            "type": "string"
+          },
+          "sortierung": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "aktiv": {
+            "type": "boolean"
+          }
+        },
+        "description": "Ein Katalogeintrag, wie ihn die Auswahllisten der Oberfl\u00E4che abrufen."
+      },
       "SetzeOrdnerStatusDto": {
         "required": [
           "ordnernamen",
@@ -5929,6 +6009,9 @@
     },
     {
       "name": "Settings"
+    },
+    {
+      "name": "Sachgebiete"
     },
     {
       "name": "PdfConversion"

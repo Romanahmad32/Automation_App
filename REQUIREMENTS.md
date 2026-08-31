@@ -440,6 +440,34 @@ Konfigurierbar sein müssen mindestens:
     kann für den einzelnen Vorgang überschrieben werden.
   - **Hochzählen:** Nach dem Auftragsabschluss (siehe 4.8) wird sie um eins erhöht — automatisch
     oder erst nach Bestätigung; welche Variante gilt, ist hier einstellbar.
+- **[M] Sachgebietskatalog:** Die Abteilungskürzel der Kanzlei mit ihrem Sachgebiet liegen als
+  Stammdaten in der App vor. Sie speisen die Auswahl der Abteilung (siehe 4.2) und des
+  Rechtsgebiets (siehe 6.2) — beide Auswahlen bieten den vollen Katalog an, nicht nur die im
+  Bestand vorkommenden Werte. Der Katalog (aus dem Kopf des Kanzlei-Registers, unverändert):
+
+  | Kürzel | Sachgebiet | Kürzel | Sachgebiet |
+  |---|---|---|---|
+  | `C01`  | Zivilrecht (allgemein)   | `C05`  | Strafrecht |
+  | `C01a` | Arbeitsrecht             | `C06`  | Verwaltungsrecht |
+  | `C02`  | Familienrecht            | `C06a` | Ausländer- und Asylrecht |
+  | `C03`  | Verkehrsrecht            | `C06s` | Sozialrecht |
+  | `C03o` | Ordnungswidrigkeitssache | `C07`  | Sonstiges |
+  | `C04`  | Verkehrsstrafrecht       | `C07m` | Markenrecht |
+
+  Jeder Katalogeintrag **trägt ein Kürzel** — Einträge ohne Kürzel sind nicht erlaubt.
+  Vertragsrecht kommt in der Sachgebietsspalte des gewachsenen Registers vor, hatte aber nie eine
+  eigene Abteilung (die Zeilen liefen unter `C01`) und steht deshalb **nicht** im Katalog:
+  Bestehende Werte bleiben wortgetreu erhalten und sichtbar; ein eigenes Kürzel kann es später
+  über die Pflege (siehe unten) bekommen.
+  - **[M] Überschneidungen:** Eine Abteilung kann neben dem Hauptsachgebiet ein Nebensachgebiet
+    tragen, geschrieben als `Hauptkürzel/Nebenteil` (`C05/3` = Strafrecht mit Verkehrsbezug). Der
+    Nebenteil ist das Kürzel des Nebensachgebiets ohne das Präfix `C0` (`C03` → `3`, `C03o` →
+    `3o`, `C01a` → `1a`); die Rückabbildung setzt `C0` wieder davor. Beim Filtern zählt ein
+    Vorgang zu einem Sachgebiet, sobald es als Haupt- **oder** Nebensachgebiet auftritt.
+  - **[M] Normalisierung:** Kürzel werden ohne Leerzeichen geführt und beim Einlesen normalisiert
+    (`C 03o` → `C03o`), denn das Referenzformat (siehe 4.2) trennt die Abteilung am Leerzeichen.
+  - **[S] Pflegbar:** Kürzel und Sachgebiete sind in der App änderbar und erweiterbar — die
+    Kanzlei pflegt ihren Katalog selbst. Bis dahin genügt der eingebaute Katalog.
 - **[M] Stammordner des Aktensystems** und **[S] Namensmuster der Unterordner** (siehe 6.1).
 - **[M] Mail-Textvorlagen** für den Versand (siehe 4.7). Die Empfänger wählt der Anwalt je Mail,
   sie sind keine Einstellung.
