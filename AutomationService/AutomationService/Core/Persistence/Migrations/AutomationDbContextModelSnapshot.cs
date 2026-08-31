@@ -442,6 +442,10 @@ namespace AutomationService.Core.Persistence.Migrations
                     b.Property<bool>("RegisterNachAbschlussSchreiben")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SicherungsAblageOrdner")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("StrasseHausnummer")
                         .IsRequired()
                         .HasColumnType("TEXT");

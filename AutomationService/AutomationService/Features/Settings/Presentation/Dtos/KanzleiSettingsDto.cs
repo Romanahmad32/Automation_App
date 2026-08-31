@@ -26,7 +26,8 @@ public sealed record KanzleiSettingsDto(
     string RegisterDateiname,
     bool RegisterNachAbschlussSchreiben,
     string RegisterExportFilter,
-    string VorlagenOrdner)
+    string VorlagenOrdner,
+    string SicherungsAblageOrdner)
 {
     public static KanzleiSettingsDto From(KanzleiSettingsEntity e) => new(
         e.Personentyp,
@@ -46,7 +47,8 @@ public sealed record KanzleiSettingsDto(
         e.RegisterDateiname,
         e.RegisterNachAbschlussSchreiben,
         e.RegisterExportFilter,
-        e.VorlagenOrdner);
+        e.VorlagenOrdner,
+        e.SicherungsAblageOrdner);
 
     public KanzleiSettingsEntity ToEntity() => new()
     {
@@ -69,6 +71,7 @@ public sealed record KanzleiSettingsDto(
         RegisterNachAbschlussSchreiben = RegisterNachAbschlussSchreiben,
         RegisterExportFilter = GespeicherterFilter(RegisterExportFilter),
         VorlagenOrdner = VorlagenOrdner,
+        SicherungsAblageOrdner = SicherungsAblageOrdner,
     };
 
     /// <summary>

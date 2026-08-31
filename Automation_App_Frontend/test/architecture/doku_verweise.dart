@@ -70,6 +70,9 @@ const Map<String, String> verweisAusnahmen = {
   'mailbox_config.json':
       'Laufzeitdatei unter %APPDATA%, entsteht erst im Betrieb (docs/RELEASE.md '
       'listet sie als Pfad, den ein Update unberuehrt laesst)',
+  'letzte-sicherung.json':
+      'Laufzeitdatei unter %APPDATA%, wie mailbox_config.json: Ergebnis des '
+      'letzten automatischen Sicherungslaufs (#39), entsteht erst im Betrieb',
 };
 
 /// Vereinheitlicht Pfadtrenner zu `/`, damit Vergleiche und Meldungen auf

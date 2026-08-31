@@ -66,8 +66,9 @@ dieselben Feldnamen, `grep -h "Backend:" lib/features/*/FEATURE.md` beantwortet 
 featureübergreifende Fragen in einem Zugriff.
 
 **Was über den Feature-Rand hinausgeht, steht in [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md)**:
-vier Ketten laufen quer durch mehrere Features (Vorbelegung, Antwortübernahme, Abschluss,
-Kanzleidaten), und der Steckbrief eines einzelnen Features sagt nicht, dass es Teil einer ist. Wer
+fünf Ketten laufen quer durch mehrere Features (Vorbelegung, Antwortübernahme, Abschluss,
+Kanzleidaten, Arbeitsplatzwechsel), und der Steckbrief eines Features sagt nicht, dass es Teil
+einer ist. Wer
 eine Kette an einer Stelle ändert und die andere stehen lässt, bricht sie — kein Test fängt das.
 
 Der Steckbrief hat ein Budget (40 Zeilen, keine über 130 Zeichen) — es hält ihn zum Einstieg

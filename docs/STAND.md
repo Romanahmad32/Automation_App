@@ -40,7 +40,13 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Mail-Textvorlagen je Empfängertyp
   (§4.7/§5.3); dafür ist `EmailEntwurfErzeuger` die vorgesehene Stelle.
 - **Sicherung** — das `backup`-Feature schreibt Datenbank und Vorlagen als ZIP
-  (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`).
+  (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`). Ist in den Einstellungen eine
+  **Sicherungsablage** gewählt (gedacht: ein OneDrive-Ordner), sichert die App zusätzlich beim
+  Beenden und nach jedem Vorgangsabschluss von selbst dorthin — und der **zweite Arbeitsplatz**
+  bietet diesen Stand beim Öffnen zur Übernahme an, nach Rückfrage und mit sichtbarem Vergleich
+  beider Stände. Die Kette steht in `docs/DATENFLUESSE.md`. **Bewusst nicht gebaut:** ein
+  Zusammenführen zweier gleichzeitig bearbeiteter Stände — übergeben wird eine Datei, nicht
+  verschmolzen.
 - **Postfachantworten** liegen in derselben Datenbank (`DbReceivedReplyStore`, Tabelle
   `ReceivedReplies`). Jeder Treffer wird nach bestem Wissen über die Referenz einem Vorgang
   zugeordnet (`VorgangId`/`Zugeordnet`), **ohne** den Vorgang zu verändern — die Übernahme

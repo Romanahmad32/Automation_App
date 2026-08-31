@@ -218,8 +218,14 @@ public sealed class DatabaseBackupService(
     /// dieses Rechners zurück: ein Ordnerpfad des anderen Rechners zeigt hier
     /// ins Leere. Gab es lokal keinen Einstellungssatz, werden die Felder
     /// geleert — fremde Maschinenpfade dürfen den Import nicht überleben.
-    /// Läuft nach der Migration, weil eine ältere Sicherung die Spalte
-    /// VorlagenOrdner erst danach hat.
+    /// Läuft nach der Migration, weil eine ältere Sicherung die Spalten
+    /// VorlagenOrdner und SicherungsAblageOrdner erst danach hat.
+    ///
+    /// Die Sicherungsablage steht ausdrücklich mit auf der Liste (#39): Zwar
+    /// zeigen beide Rechner auf <em>denselben</em> synchronisierten Ordner, aber
+    /// unter verschiedenen Pfaden. Würde der fremde Pfad übernommen, legte
+    /// dieser Rechner seine Sicherungen woanders ab, als er sein Angebot liest —
+    /// die Übergabe wäre nach dem ersten Einspielen still kaputt.
     /// </summary>
     async Task SchuetzeMaschinenPfadeAsync(KanzleiSettingsEntity? lokal, CancellationToken ct)
     {
@@ -234,6 +240,7 @@ public sealed class DatabaseBackupService(
         eingespielt.AktenStammordner = lokal?.AktenStammordner ?? string.Empty;
         eingespielt.RegisterAblageOrdner = lokal?.RegisterAblageOrdner ?? string.Empty;
         eingespielt.VorlagenOrdner = lokal?.VorlagenOrdner ?? string.Empty;
+        eingespielt.SicherungsAblageOrdner = lokal?.SicherungsAblageOrdner ?? string.Empty;
         await context.SaveChangesAsync(ct);
     }
 

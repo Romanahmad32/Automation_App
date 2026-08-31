@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Reflection;
 
 namespace AutomationService.Core.Lifetime;
 
@@ -47,9 +46,7 @@ public static class LifetimeInjection
     public static void MapHealthEndpoint(this WebApplication app)
     {
         var readiness = app.Services.GetRequiredService<ApplicationReadiness>();
-        var version = Assembly.GetExecutingAssembly()
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-            ?? "unbekannt";
+        var version = Programmfassung.Aktuell;
 
         app.MapGet("/health", () => readiness.IstBereit
             ? Results.Ok(new HealthAntwort("bereit", version))

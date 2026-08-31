@@ -27,7 +27,11 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
                 configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     // Tests sollen kein Word starten — Warmup nur in der echten App.
-                    ["PdfConversion:WarmupOnStartup"] = "false"
+                    ["PdfConversion:WarmupOnStartup"] = "false",
+                    // Und keine Sicherung in den OneDrive-Ordner des Anwalts
+                    // schreiben: Dieser Host faehrt denselben Program.cs gegen
+                    // dieselbe Datenbank unter %APPDATA%.
+                    ["Backup:AutomatischeSicherung"] = "false",
                 });
             });
         });
