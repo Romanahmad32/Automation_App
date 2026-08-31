@@ -34,9 +34,7 @@ Verdrahtung über je eine `Add…Services`-Erweiterungsmethode, aufgerufen aus `
 Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName`: `WordAutomation`,
 `PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`. Ohne Options-Klasse direkt gelesen:
 `Urls`, `Cors:AllowedOrigins` (`Program.cs`), `LegacyImport:*` (`LegacyJsonImportService`) und
-`Backup:AutomatischeSicherung` (`BackupInjection`) — der Not-Aus für die automatische Sicherung;
-Integrationstests setzen ihn auf `false`, sonst legte jeder Testlauf eine echte Sicherung im
-synchronisierten Ordner des Anwalts ab.
+`Backup:AutomatischeSicherung` (`BackupInjection`, Not-Aus — Integrationstests setzen ihn `false`).
 
 ### Die Slices
 
@@ -158,25 +156,17 @@ synchronisierten Ordner des Anwalts ab.
 - **Backup** — Export/Import einer Sicherung. `SicherungsArchiv` ist ein ZIP aus `automation.db`
   (per `VACUUM INTO`, WAL-sicher) und `Vorlagen/*.docx`; ältere blanke `.db`-Sicherungen bleiben
   einspielbar. Der Import validiert, sichert den alten Stand daneben und hebt auf den Schemastand.
-  Dazu die **Arbeitsplatz-Übergabe** (§7.2, #39): `AutomatischeSicherung` legt den Stand beim Beenden
-  (`ArbeitsplatzDienst.StopAsync`) und nach jedem Vorgangsabschluss als
-  `automation-<Rechner>-<Zeit>.zip` in den eingestellten Ablageordner, daneben je Rechner eine
-  `arbeitsplatz-<Rechner>.json` (`ArbeitsplatzAkte`) — daraus entsteht das Übernahme-Angebot am
-  zweiten Arbeitsplatz. Fehlschläge merkt `LetzteSicherungAkte` lokal, weil beim Beenden niemand
-  mehr zusieht.
+  Dazu die **Arbeitsplatz-Übergabe** (§7.2, `AutomatischeSicherung`/`ArbeitsplatzAkte`/
+  `ArbeitsplatzUebergabe`, `api/Backup/uebergabe`); die Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 
 ## Core/ — querschnittlich, kein Slice
 
 `Core/Lifetime` — Health-Endpunkt (`MapHealthEndpoint`: 503 `startet`, bis `ApplicationReadiness`
-meldet, dann 200 `bereit`), `Programmfassung` (die Assembly-Fassung für Health-Antwort und
-Arbeitsplatz-Akte) und `ParentProcessWatchdog`. Der Wächter wird **nur** registriert, wenn
-`--parent-pid` übergeben wurde; ohne das Argument (`dotnet run`) läuft der Dienst eigenständig.
-Kein `UseHttpsRedirection`: der Dienst spricht bewusst nur lokales HTTP.
-
-`Core/Ablage` — `AtomareAblage`: legt eine fertig gebaute Datei so an ihren Zielort, dass ein
-Beobachter des Ordners sie nie halbfertig sieht (bauen, dann umbenennen). Der Grund ist immer
-derselbe: Ein Synchronisierungsdienst reagiert auf Dateiänderungen, nicht auf „fertig geschrieben".
-Nutzer sind der Register-Spiegel und die automatische Sicherung.
+meldet, dann 200 `bereit`), `Programmfassung` und `ParentProcessWatchdog`. Der Wächter wird **nur**
+registriert, wenn `--parent-pid` übergeben wurde; ohne das Argument (`dotnet run`) läuft der Dienst
+eigenständig. Kein `UseHttpsRedirection`: der Dienst spricht bewusst nur lokales HTTP.
+`Core/Ablage` — `AtomareAblage` legt eine fertige Datei so ab, dass ein Beobachter des Ordners sie
+nie halbfertig sieht (woanders bauen, dann umbenennen): Register-Spiegel und automatische Sicherung.
 
 ## Persistenz
 
@@ -201,15 +191,10 @@ Health, WordAutomation-Controller, HTTP-Vertrag), `Support/` (Helfer: `RepoWurze
 `FakeHostEnvironment`, `WordVorlagenUmgebung`), `Architecture/` (ausführbare Regeln; Grundlage sind
 `CsQuelldateien`/`Quelldatei`, die Pfad, Namespace und `using`s der handgeschriebenen Quellen lesen).
 
-| Regel | Erzwungen von |
-|---|---|
-| ≤ 250 Anweisungszeilen und ≤ 450 Zeilen je Datei (`bin/`, `obj/`, `Migrations/` ausgenommen) | `Architecture/DateilaengeTests.cs` |
-| Jede Quelldatei deklariert einen Namespace; Namespace == Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
-| Domain ohne eigene Presentation und ohne ASP.NET MVC; kein Zugriff auf fremde Presentation; nur die Schichten Domain/Presentation | `Architecture/SliceIsolationTests.cs` |
-| HTTP-Vertrag == `docs/openapi.json` | `Integration/OpenApiVertragTests.cs` |
-| Watchdog nur mit `--parent-pid` | `Unit/LifetimeInjectionTests.cs` |
-| Jeder Slice und jede `Add…Services`-Methode steht in dieser Datei | `Architecture/DokumentationTests.cs` |
-| Anforderungsverweise (`§4.8`, nie `Req. …`) gegen `docs/ANFORDERUNGEN_INDEX.md` | `Architecture/DokumentationTests.cs` |
+Welche Regel welcher Test erzwingt, steht **einmal** in der Wurzel-`CLAUDE.md` („Diese Regeln sind
+ausführbar") — Dateilänge, Namespace, Schnittregeln, HTTP-Vertrag, Doku und Anforderungsverweise mit
+ihren `Architecture/`- und `Integration/`-Klassen. Nur hier zuhause und dort nicht aufgeführt:
+`Unit/LifetimeInjectionTests.cs` — der Watchdog wird ausschließlich mit `--parent-pid` registriert.
 
 Schlägt eine dieser Regeln fehl, ist die Antwort **nie**, die Regel zu lockern oder das Limit
 hochzusetzen. Eine begründete Ausnahme gehört namentlich in den jeweiligen Test.

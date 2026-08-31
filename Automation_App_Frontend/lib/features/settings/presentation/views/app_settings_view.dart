@@ -67,6 +67,9 @@ class _AppSettingsViewState extends State<AppSettingsView>
     'registerExportFilter': FormControl<String>(
       value: KanzleiSettings.registerFilterAlle,
     ),
+    // Sicherungsablage (§7.2, #39), ebenfalls ohne Validator: Leer heißt keine
+    // automatische Sicherung — der Ordner schaltet die Funktion ein.
+    'sicherungsAblageOrdner': FormControl<String>(),
   });
 
   @override
@@ -96,6 +99,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'registerDateiname': settings.registerDateiname,
       'registerNachAbschlussSchreiben': settings.registerNachAbschlussSchreiben,
       'registerExportFilter': settings.registerExportFilter,
+      'sicherungsAblageOrdner': settings.sicherungsAblageOrdner,
     });
   }
 
@@ -141,6 +145,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
           registerExportFilter: read('registerExportFilter').isEmpty
               ? KanzleiSettings.registerFilterAlle
               : read('registerExportFilter'),
+          sicherungsAblageOrdner: read('sicherungsAblageOrdner'),
         ),
       ),
     );

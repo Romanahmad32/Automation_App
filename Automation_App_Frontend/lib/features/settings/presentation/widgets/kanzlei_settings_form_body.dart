@@ -5,6 +5,7 @@ import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/widgets/register_ablage_felder.dart';
+import 'package:automation_app/features/settings/presentation/widgets/sicherungs_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
 import 'package:automation_app/features/settings/presentation/widgets/vorlagen_ordner_feld.dart';
 import 'package:flutter/material.dart';
@@ -154,6 +155,17 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'legt nur eine Datei ab. Gepflegt wird das Register weiterhin '
               'ausschließlich hier in der App; die Datei dort ist ein Spiegel.',
           children: const [RegisterAblageFelder()],
+        ),
+        FormSection(
+          icon: Icons.backup_outlined,
+          title: 'Sicherungsablage',
+          subtitle:
+              'Beim Beenden legt die App den gesamten Stand als Sicherung in '
+              'diesen Ordner. Liegt er im synchronisierten Bereich (z. B. '
+              'OneDrive), bietet der zweite Rechner ihn beim Öffnen zur '
+              'Übernahme an — die App fragt dabei nach, bevor sie etwas '
+              'ersetzt. Leer heißt: nur Sichern auf Knopfdruck.',
+          children: const [SicherungsAblageFelder()],
         ),
         ReactiveFormConsumer(
           builder: (context, form, child) => SpeichernButton(
