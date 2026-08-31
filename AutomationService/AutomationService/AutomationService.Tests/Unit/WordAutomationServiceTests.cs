@@ -11,6 +11,7 @@ namespace AutomationService.Tests.Unit;
 /// Ausgabedatei benennen. Die beiden Vorlagen-Sonderfälle stehen in
 /// <see cref="WordSchadensaufstellungTests"/> und <see cref="WordVorsteuerTests"/>.
 /// </summary>
+[Collection(WordDokumentSammlung.Name)]
 public sealed class WordAutomationServiceTests : IDisposable
 {
     private readonly WordVorlagenUmgebung _umgebung = new();

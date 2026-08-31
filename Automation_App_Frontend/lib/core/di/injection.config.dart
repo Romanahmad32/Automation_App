@@ -175,12 +175,16 @@ import 'package:automation_app/features/versicherer/domain/repositories/versiche
     as _i9;
 import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart'
     as _i782;
+import 'package:automation_app/features/vorgaenge/data/datasources/register_spiegel_datasource.dart'
+    as _i412;
 import 'package:automation_app/features/vorgaenge/data/datasources/vorgaenge_datasource.dart'
     as _i933;
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart'
+    as _i738;
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart'
     as _i487;
-import 'package:automation_app/features/vorgaenge/domain/services/register_word_exporter.dart'
-    as _i912;
+import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart'
+    as _i242;
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart'
     as _i847;
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart'
@@ -291,6 +295,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i829.MailboxDatasource>(
       () => _i829.ApiMailboxDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i738.RegisterSpiegelRepository>(
+      () => _i412.ApiRegisterSpiegelDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i67.EmailVersandRepository>(
       () => _i715.ApiEmailVersandDatasource(gh<_i361.Dio>()),
     );
@@ -330,11 +337,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i262.StandardSchadenspositionenRepository>(
       () => _i50.ApiStandardSchadenspositionenDatasource(gh<_i361.Dio>()),
     );
-    gh.lazySingleton<_i912.RegisterWordExporter>(
-      () => _i912.NichtVerfuegbarerRegisterWordExporter(),
-    );
     gh.factory<_i287.WordAutomationDatasource>(
       () => _i287.ApiWordAutomationDatasource(gh<_i361.Dio>()),
+    );
+    gh.factory<_i242.RegisterSpiegelCubit>(
+      () => _i242.RegisterSpiegelCubit(gh<_i738.RegisterSpiegelRepository>()),
     );
     gh.factory<_i651.WordTemplateDatasource>(
       () => _i651.ApiWordTemplateDatasource(gh<_i361.Dio>()),

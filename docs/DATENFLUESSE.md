@@ -53,15 +53,43 @@ Backend den Versicherer erst **beim Parsen** lernt, lädt die Oberfläche danach
 
 ```
 word_automation ──▶ vorgaenge ──▶ settings
+                        └──▶ Register-Spiegel (Datei im Ablageordner)
 ```
 
 `wizard_step_save.dart` schließt den Vorgang ab; im Backend erledigt `VorgangAbschlussService`
 Status, Abschlusszeitpunkt und das Hochzählen der laufenden Auftragsnummer in **einer**
-Transaktion, idempotent (§4.8, §7.1).
+Transaktion, idempotent (§4.8, §7.1). Danach — und ausdrücklich erst danach — schreibt
+`RegisterSpiegelService` das Sachgebiete-Register als Word- und PDF-Datei neu (§6.2).
 
 **Die Naht:** Die Auftragsnummer gehört fachlich zu `settings`, wird aber hier weitergezählt. Sie
 von außen zu setzen (`POST api/Settings/auftragsnummer/erhoehe`) und den Abschluss zu trennen,
 zerlegt genau die Transaktion, die dieser Dienst zusammenhält.
+
+**Die zweite Naht — der Register-Spiegel:** Er hängt hinten an, und diese Reihenfolge ist die
+eigentliche Zusicherung. Ein gesperrter Ablageordner (das Register ist in Word offen), ein
+fehlendes Word oder ein volles Laufwerk dürfen einen abgeschlossenen Auftrag nicht wieder
+aufmachen — der Spiegel ist eine Kopie, die Datenbank ist das Register. Deshalb meldet
+`RegisterSpiegelService` erwartbare Fehlschläge als *Ergebnis* statt als Ausnahme, und der
+Abschlussdienst schluckt zusätzlich, was trotzdem herauskäme.
+
+Drei Eigenheiten hängen daran, alle drei an der Cloud und keine davon in der Cloud:
+
+- **Gebaut wird woanders, umgezogen wird am Ende.** Ein Synchronisierungsdienst reagiert auf
+  Dateiänderungen, nicht auf „fertig geschrieben" — würde die `.docx` direkt im synchronisierten
+  Ordner entstehen, begänne er sie halbfertig hochzuladen. `AtomareAblage` baut im
+  `RegisterSpiegelBauordner` und benennt zuletzt um; das ist auf demselben Laufwerk ein einziger,
+  unteilbarer Schritt.
+- **Unverändert heißt: nicht anfassen.** Das abgelöste Kanzleidokument steht bei Revision 5341.
+  Ein Spiegel, der bei jedem Abschluss stumpf neu schreibt, erzeugt dasselbe in Neu — nur im
+  Versionsverlauf der Cloud. `RegisterSpiegelStand` vergleicht einen Fingerabdruck über die Zeilen.
+- **Zwei Originale sind der eigentliche Feind.** Die Datei trägt deshalb einen Hinweis im Text
+  („gepflegt wird in der App"), bekommt Schreibschutz, und `RegisterSpiegelAblage` sucht bei jedem
+  Lauf nach Konfliktkopien daneben. Der Hinweis im Dokument ist der einzige dieser drei Schutze,
+  der auch auf dem Handy ankommt.
+
+Was in die Datei kommt, entscheidet die Einstellung `registerExportFilter` — **nicht** der Filter
+auf der Registerseite. Der wirkt nur auf den Bildschirm; sonst hinge der Inhalt einer Datei, die
+andere lesen, davon ab, was zuletzt jemand eingestellt hatte.
 
 ## 4. Kanzleidaten
 

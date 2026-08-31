@@ -2,20 +2,23 @@
 
 **Zweck:** Der Vorgang bündelt je Auftrag Mandant, Referenz, Zentralruf-Antwort und Dokument und
 führt ihn durch Angefragt → Beantwortet → Erstellt → Abgelegt → Versendet. Zwei Tabs: „Vorgänge
-verwalten" (Pflege, Tab 7) und das Sachgebiete-Register der abgeschlossenen Vorgänge (Tab 6).
+verwalten" (Pflege, Tab 7) und das Sachgebiete-Register aller Vorgänge (Tab 6), das zusätzlich als
+Word- und PDF-Datei in einen einstellbaren Ordner geht (§6.2).
 **Anforderung:** `REQUIREMENTS.md` §3, §4.8, §6.2
 **Einstieg:** `presentation/blocs/vorgang_cubit.dart`
 **Zustand:** `VorgangCubit` (`presentation/blocs/vorgang_cubit.dart`, `@lazySingleton` — der
 app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashboard lesen) ·
-`VorgangPersistenzFehlerCubit` · `VorgangNavigationSignal` (beide `presentation/blocs/`) ·
+`VorgangPersistenzFehlerCubit` · `VorgangNavigationSignal` · `RegisterSpiegelCubit` ·
 `LetzteVersaendeCubit` aus **email_versand** für die Versandzeile der Liste
-**Domain:** Entities `Vorgang`, `VorgangEntwurf`, `VorgangStatus`, `ReferenzTeile`, `Rechtsgebiet`; Port
-`VorgangRepository`; Dienste `AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`,
-`VorgangVollstaendigkeit`, `VorgangWartezeit`, `RegisterWordExporter`, `MandantAnschrift`. Keine UseCase-Klassen.
+**Domain:** Entities `Vorgang`, `VorgangEntwurf`, `VorgangStatus`, `ReferenzTeile`, `Rechtsgebiet`,
+`RegisterSpiegelErgebnis`; Ports `VorgangRepository`, `RegisterSpiegelRepository`; Dienste
+`AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`, `VorgangVollstaendigkeit`,
+`VorgangWartezeit`, `RegisterFilter`, `MandantAnschrift`. Keine UseCases.
 **Backend:** `Features/Vorgaenge/` · `GET|PUT /api/Vorgaenge`, `PUT|DELETE /api/Vorgaenge/entwurf`,
-`DELETE /api/Vorgaenge?referenz=`, `POST …/abschliessen?referenz=`, `POST …/referenz?von=&nach=`
+`DELETE /api/Vorgaenge?referenz=`, `POST …/abschliessen|referenz|register/export`, `GET …/register/stand`
 **Tests:** `test/features/vorgaenge/` — u. a. `vorgang_cubit_test.dart`, `vorgang_test.dart`,
-`antwort_konflikte_test.dart`, `register_tabelle_test.dart`
+`antwort_konflikte_test.dart`, `register_tabelle_test.dart`, `register_filter_test.dart`,
+`register_spiegel_cubit_test.dart`
 
 **Fallstricke**
 
@@ -28,12 +31,9 @@ app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashb
   `AbgeschlossenAm` und das Hochzählen von `KanzleiSettings.LaufendeAuftragsnummer` laufen dort in
   einer Transaktion (idempotent). `copyWith(status: versendet)` + Upsert sieht gleich aus, zählt
   aber nicht hoch. Der Knopf sitzt im Word-Assistenten (Schritt 3), nicht in „Vorgänge verwalten".
-- Das Register ist kein eigener Bestand: `RegisterPage` filtert `status == versendet`. Die laufende
-  Nummer der Zeile stammt aus der geparsten Referenz (`ReferenzTeile`), nicht aus dem Zähler — der
-  Abschluss zählt für den *nächsten* Vorgang hoch.
-- `RegisterWordExporter` hat nur die Platzhalter-Umsetzung `NichtVerfuegbarerRegisterWordExporter`
-  (`verfuegbar == false`, `exportiere` wirft). Der Export-Knopf ist deaktiviert — und sein
-  `onPressed` ist auch im Zweig `verfuegbar == true` ein leerer Callback: die Handlung fehlt noch.
+- Das Register ist kein eigener Bestand: `RegisterPage` leitet es aus den Vorgängen ab. Der Filter
+  dort wirkt **nur auf die Ansicht**, die Datei folgt einer Einstellung — und die laufende Nummer
+  kommt aus der Referenz, nicht aus dem Zähler. Alles drei in **`FALLSTRICKE.md`** daneben.
 - `Vorgang.copyWith` verknüpft jedes Feld mit `??`: nicht auf null zurücksetzbar (Absicht — eine
   erneute Anfrage darf erfasste Antwortdaten nicht verlieren). Ausnahme: `entwurf` (Rückgabe-Aufruf).
 - `VorgangVersandZeile` liest den Versandstand aus **email_versand** (ein Abruf für alle Zeilen,

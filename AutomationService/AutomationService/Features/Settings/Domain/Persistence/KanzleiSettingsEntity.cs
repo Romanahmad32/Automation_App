@@ -41,4 +41,38 @@ public class KanzleiSettingsEntity
     /// angesprochen. Leer heisst: Die Mail geht als reiner Text hinaus.
     /// </summary>
     public string MailSignaturHtml { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Zielordner des Register-Spiegels (§6.2, #40). Gedacht ist ein Ordner im
+    /// synchronisierten Bereich (OneDrive), damit das Register unterwegs lesbar
+    /// ist — gespeichert wird aber ein ganz gewoehnlicher Pfad: die App kennt
+    /// keine Cloud, sie legt eine Datei ab und der Client synchronisiert.
+    /// Leer heisst: kein Spiegel, der Export laeuft nur auf Knopfdruck.
+    /// </summary>
+    public string RegisterAblageOrdner { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Basisname der Spiegeldateien ohne Endung; daraus entstehen
+    /// "&lt;Name&gt;.docx" und "&lt;Name&gt;.pdf". Bewusst einstellbar und
+    /// bewusst nicht der Name des gewachsenen Kanzleidokuments: Das bleibt
+    /// unangetastet liegen, bis der Altbestand-Import nachweislich sauber
+    /// durchgelaufen ist.
+    /// </summary>
+    public string RegisterDateiname { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Ob der Spiegel nach jedem Vorgangsabschluss neu geschrieben wird. Der
+    /// Schreibvorgang liegt hinter dem Commit des Abschlusses und kann ihn
+    /// nicht umwerfen (siehe VorgangAbschlussService).
+    /// </summary>
+    public bool RegisterNachAbschlussSchreiben { get; set; }
+
+    /// <summary>
+    /// Welche Vorgaenge in die Datei kommen: <c>alle</c> oder nur
+    /// <c>abgeschlossen</c>. Bewusst eine Einstellung und nicht der Filter der
+    /// Ansicht — sonst haenge der Inhalt der Datei davon ab, was gerade am
+    /// Bildschirm eingestellt war, und zwei Schreibvorgaenge ergaeben zwei
+    /// verschiedene Register unter demselben Namen.
+    /// </summary>
+    public string RegisterExportFilter { get; set; } = string.Empty;
 }
