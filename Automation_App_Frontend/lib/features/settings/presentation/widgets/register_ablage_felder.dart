@@ -2,6 +2,7 @@ import 'package:automation_app/core/general_widgets/form/general_text_field.dart
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/domain/services/synchronisierter_ordner.dart';
 import 'package:automation_app/features/settings/presentation/widgets/ordner_auswahl_feld.dart';
+import 'package:automation_app/features/settings/presentation/widgets/synchronisierter_ordner_vorschlag.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -29,7 +30,10 @@ class RegisterAblageFelder extends StatelessWidget {
             'im synchronisierten Bereich macht das Register unterwegs lesbar.',
       ),
       const SizedBox(height: 8),
-      const RegisterAblageVorschlag(),
+      const SynchronisierterOrdnerVorschlag(
+        formControlName: 'registerAblageOrdner',
+        unterordner: SynchronisierterOrdner.registerUnterordner,
+      ),
       const SizedBox(height: 16),
       const GeneralTextField<String>(
         formControlName: 'registerDateiname',
@@ -91,73 +95,4 @@ class RegisterAblageFelder extends StatelessWidget {
       ),
     ],
   );
-}
-
-/// Bietet den erkannten synchronisierten Ordner mit einem Klick an. Erscheint
-/// nur, solange nichts eingetragen ist und ein solcher Ordner gefunden wurde.
-///
-/// Zustandsbehaftet wegen einer Kleinigkeit mit spürbaren Folgen: Die Suche
-/// sieht auf der Platte nach, ob der Ordner aus der Umgebungsvariablen wirklich
-/// existiert. Im `build` stand sie damit bei **jedem** Neuzeichnen des
-/// Formulars — bei jedem Tastendruck im Feld daneben — und bei einem getrennten
-/// oder auf „Dateien bei Bedarf" gestellten OneDrive dauert schon das
-/// Nachsehen. Jetzt läuft sie einmal beim Aufbauen, und zwar nebenläufig.
-class RegisterAblageVorschlag extends StatefulWidget {
-  const RegisterAblageVorschlag({super.key});
-
-  @override
-  State<RegisterAblageVorschlag> createState() =>
-      RegisterAblageVorschlagState();
-}
-
-class RegisterAblageVorschlagState extends State<RegisterAblageVorschlag> {
-  late final Future<String?> _gesucht = SynchronisierterOrdner.suche();
-
-  @override
-  Widget build(BuildContext context) => FutureBuilder<String?>(
-    future: _gesucht,
-    builder: (context, ergebnis) {
-      final vorschlag = ergebnis.data;
-      // Solange gesucht wird, steht hier nichts: Ein Platzhalter für einen
-      // Knopf, den es vielleicht gar nicht gibt, liesse das Formular springen.
-      if (vorschlag == null) return const SizedBox.shrink();
-      return _knopf(vorschlag);
-    },
-  );
-
-  Widget _knopf(String vorschlag) {
-    return ReactiveValueListenableBuilder<String>(
-      formControlName: 'registerAblageOrdner',
-      builder: (context, control, _) {
-        if ((control.value ?? '').trim().isNotEmpty) {
-          return const SizedBox.shrink();
-        }
-        final theme = Theme.of(context);
-        // Der Pfad steht bewusst unter dem Knopf und nicht in seiner
-        // Beschriftung: Ein Benutzerprofil mit langem Namen macht daraus sonst
-        // eine Zeile, die aus dem Formular herausläuft.
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextButton.icon(
-              onPressed: () => control.value = vorschlag,
-              icon: const Icon(Icons.cloud_sync_outlined, size: 18),
-              label: const Text('Erkannten OneDrive-Ordner übernehmen'),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Text(
-                vorschlag,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
