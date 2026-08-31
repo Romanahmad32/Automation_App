@@ -54,6 +54,16 @@ class _AppSettingsViewState extends State<AppSettingsView>
     // "Schadensaufstellung" (StandardpositionenSettingsView) und speichert
     // dort für sich (SaveTabellenkopfFarbeEvent).
     'aktenStammordner': FormControl<String>(),
+    // Register-Spiegel (§6.2). Der Ablageordner ist bewusst ohne Validator:
+    // Er darf leer bleiben — dann wird keine Datei geschrieben.
+    'registerAblageOrdner': FormControl<String>(),
+    'registerDateiname': FormControl<String>(
+      value: KanzleiSettings.defaultRegisterDateiname,
+    ),
+    'registerNachAbschlussSchreiben': FormControl<bool>(value: true),
+    'registerExportFilter': FormControl<String>(
+      value: KanzleiSettings.registerFilterAlle,
+    ),
   });
 
   @override
@@ -78,6 +88,10 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'laufendeAuftragsnummer': settings.laufendeAuftragsnummer.toString(),
       'abteilung': settings.abteilung,
       'aktenStammordner': settings.aktenStammordner,
+      'registerAblageOrdner': settings.registerAblageOrdner,
+      'registerDateiname': settings.registerDateiname,
+      'registerNachAbschlussSchreiben': settings.registerNachAbschlussSchreiben,
+      'registerExportFilter': settings.registerExportFilter,
     });
   }
 
@@ -111,6 +125,17 @@ class _AppSettingsViewState extends State<AppSettingsView>
               KanzleiSettings.defaultLaufendeAuftragsnummer,
           abteilung: read('abteilung'),
           aktenStammordner: read('aktenStammordner'),
+          registerAblageOrdner: read('registerAblageOrdner'),
+          // Leerer Name heißt Vorgabe: Ein Spiegel ohne Dateinamen wäre eine
+          // Datei, die nur ".docx" heißt.
+          registerDateiname: read('registerDateiname').isEmpty
+              ? KanzleiSettings.defaultRegisterDateiname
+              : read('registerDateiname'),
+          registerNachAbschlussSchreiben:
+              (value['registerNachAbschlussSchreiben'] as bool?) ?? true,
+          registerExportFilter: read('registerExportFilter').isEmpty
+              ? KanzleiSettings.registerFilterAlle
+              : read('registerExportFilter'),
         ),
       ),
     );

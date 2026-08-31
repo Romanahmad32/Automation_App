@@ -22,6 +22,18 @@ class Vorgang extends Equatable {
   final VorgangStatus status;
   final Rechtsgebiet rechtsgebiet;
 
+  /// Das Rechtsgebiet so, wie es gespeichert ist — vor der toleranten Abbildung
+  /// durch [Rechtsgebiet.fromValue]. Nur die Anzeige im Register braucht das:
+  /// Ein **leerer** Wert heisst „nie erfasst" und steht dort als
+  /// [Rechtsgebiet.unbekannt], waehrend [rechtsgebiet] fuers Bearbeiten und
+  /// Filtern weiterhin einen brauchbaren Wert liefert.
+  ///
+  /// Wird beim Bauen aus [rechtsgebiet] vorbelegt, wenn nichts uebergeben ist —
+  /// sonst waere ein von Hand gebauter Vorgang nicht gleich seinem eigenen
+  /// JSON-Rundlauf, und „nie erfasst" liesse sich nicht von „im Code gesetzt"
+  /// unterscheiden.
+  final String rechtsgebietRoh;
+
   /// Bestandteile der Referenz, beim Anlegen aus [referenz] geparst.
   final int? laufendeNummer;
   final String? jahr;
@@ -78,11 +90,12 @@ class Vorgang extends Equatable {
 
   final DateTime? abgeschlossenAm;
 
-  const Vorgang({
+  Vorgang({
     required this.referenz,
     required this.angefragtAm,
     this.status = VorgangStatus.angefragt,
     this.rechtsgebiet = Rechtsgebiet.verkehrsrecht,
+    String? rechtsgebietRoh,
     this.laufendeNummer,
     this.jahr,
     this.abteilung,
@@ -102,7 +115,7 @@ class Vorgang extends Equatable {
     this.dokumentPfad,
     this.aktenOrdner,
     this.abgeschlossenAm,
-  });
+  }) : rechtsgebietRoh = rechtsgebietRoh ?? rechtsgebiet.value;
 
   /// Legt einen Vorgang aus einer gestarteten Zentralruf-Anfrage an: parst die
   /// Referenz in ihre Bestandteile und setzt den Status auf „angefragt".
@@ -147,10 +160,25 @@ class Vorgang extends Equatable {
     return referenz;
   }
 
+  /// Was in der vierten Registerspalte steht. Muss dieselbe Antwort geben wie
+  /// `RechtsgebietAnzeige.Fuer` im Backend — sonst zeigt der Bildschirm ein
+  /// anderes Sachgebiet an, als in der Register-Datei steht.
+  String get rechtsgebietAnzeige => Rechtsgebiet.anzeige(rechtsgebietRoh);
+
   /// Bezeichnung „Mandant ./. Gegner" für die Registerspalte 3.
+  ///
+  /// Fehlt der eingetragene Gegner, tritt der Versicherer aus der
+  /// Zentralruf-Antwort an seine Stelle. Muss dieselbe Antwort geben wie
+  /// `RegisterZeilenBau.Gegenseite` im Backend — sonst zeigt der Bildschirm
+  /// eine andere Gegenseite, als in der Register-Datei steht. Ein *leer*
+  /// eingetragener Gegner zählt dabei wie gar keiner: Sonst hinge die
+  /// Antwort daran, ob das Feld einmal angetippt wurde.
   String get parteienBezeichnung {
     final links = (mandantName ?? '').trim();
-    final rechts = (gegner ?? antwort?.versichererName ?? '').trim();
+    final eingetragen = (gegner ?? '').trim();
+    final rechts = eingetragen.isNotEmpty
+        ? eingetragen
+        : (antwort?.versichererName ?? '').trim();
     if (links.isEmpty && rechts.isEmpty) return '';
     return '$links ./. $rechts'.trim();
   }
@@ -208,6 +236,9 @@ class Vorgang extends Equatable {
       angefragtAm: angefragtAm,
       status: status ?? this.status,
       rechtsgebiet: rechtsgebiet ?? this.rechtsgebiet,
+      // Wird das Rechtsgebiet geaendert, zieht der Rohwert mit — sonst zeigte
+      // das Register weiter den Stand von vor der Aenderung.
+      rechtsgebietRoh: rechtsgebiet?.value ?? rechtsgebietRoh,
       laufendeNummer: laufendeNummer,
       jahr: jahr,
       abteilung: abteilung,
@@ -279,6 +310,7 @@ class Vorgang extends Equatable {
     angefragtAm,
     status,
     rechtsgebiet,
+    rechtsgebietRoh,
     laufendeNummer,
     jahr,
     abteilung,

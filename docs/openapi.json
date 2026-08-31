@@ -609,6 +609,77 @@
         }
       }
     },
+    "/api/Vorgaenge/register/export": {
+      "post": {
+        "tags": [
+          "RegisterSpiegel"
+        ],
+        "summary": "Schreibt den Spiegel neu \u2014 der Weg f\u00FCr den Knopf auf der Registerseite.",
+        "parameters": [
+          {
+            "name": "erzwingen",
+            "in": "query",
+            "description": "Auch schreiben, wenn sich nichts ge\u00E4ndert hat. Vorbelegt mit\r\n\u0060true\u0060, weil hinter dem Knopf in aller Regel \u201Edie Datei ist weg\r\noder sieht falsch aus\u0022 steht \u2014 und ein \u201Enichts zu tun\u0022 darauf die\r\nunbrauchbarste aller Antworten w\u00E4re. Der automatische Lauf nach dem\r\nVorgangsabschluss erzwingt nicht.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterSpiegelDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterSpiegelDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterSpiegelDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vorgaenge/register/stand": {
+      "get": {
+        "tags": [
+          "RegisterSpiegel"
+        ],
+        "summary": "Was der letzte Lauf hinterlassen hat, ohne selbst zu schreiben \u2014 damit\r\ndie Registerseite beim \u00D6ffnen sagen kann, ob der Spiegel aktuell ist und\r\nob eine Konfliktkopie neben ihm liegt.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterSpiegelDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterSpiegelDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterSpiegelDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Vorgaenge": {
       "get": {
         "tags": [
@@ -3959,7 +4030,11 @@
           "tabellenkopfFarbeHex",
           "aktenStammordner",
           "mailSignatur",
-          "mailSignaturHtml"
+          "mailSignaturHtml",
+          "registerAblageOrdner",
+          "registerDateiname",
+          "registerNachAbschlussSchreiben",
+          "registerExportFilter"
         ],
         "type": "object",
         "properties": {
@@ -4005,6 +4080,18 @@
             "type": "string"
           },
           "mailSignaturHtml": {
+            "type": "string"
+          },
+          "registerAblageOrdner": {
+            "type": "string"
+          },
+          "registerDateiname": {
+            "type": "string"
+          },
+          "registerNachAbschlussSchreiben": {
+            "type": "boolean"
+          },
+          "registerExportFilter": {
             "type": "string"
           }
         },
@@ -4547,6 +4634,77 @@
           }
         },
         "description": "Ein vom Monitor erfasster Antwort-Treffer, wie ihn die Oberfl\u00E4che abruft."
+      },
+      "RegisterSpiegelDto": {
+        "required": [
+          "geschrieben",
+          "grund",
+          "fehler",
+          "docxPfad",
+          "pdfPfad",
+          "pdfFehler",
+          "zeilen",
+          "geschriebenAm",
+          "konfliktkopien"
+        ],
+        "type": "object",
+        "properties": {
+          "geschrieben": {
+            "type": "boolean"
+          },
+          "grund": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fehler": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "docxPfad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pdfPfad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pdfFehler": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "zeilen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "geschriebenAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "konfliktkopien": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "\u00DCbertragungsformat f\u00FCr den Zustand des Register-Spiegels (\u00A76.2).\r\n\r\nDie Oberfl\u00E4che zeigt daraus einen einzigen Satz an: geschrieben, \u00FCbersprungen\r\noder gescheitert \u2014 und im letzten Fall den Klartext, der sagt, was zu tun\r\nist. IReadOnlyList\u0026lt;string\u0026gt; RegisterSpiegelDto.Konfliktkopien ist der Sonderfall, der eine eigene\r\nWarnung verdient: Er hei\u00DFt, dass jemand den Spiegel unterwegs bearbeitet hat\r\nund es ab jetzt zwei Register g\u00E4be."
       },
       "ReplacedDocumentResponseDto": {
         "required": [
@@ -5759,6 +5917,9 @@
     },
     {
       "name": "WordAutomation"
+    },
+    {
+      "name": "RegisterSpiegel"
     },
     {
       "name": "Vorgaenge"

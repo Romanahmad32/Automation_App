@@ -1,0 +1,104 @@
+import 'dart:io';
+
+import 'package:automation_app/features/settings/domain/services/synchronisierter_ordner.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// Prüft den Vorschlag für die Register-Ablage (§6.2).
+///
+/// Der Punkt dieser Klasse ist, was sie **nicht** tut: Sie meldet sich bei
+/// keiner Cloud an und kennt kein Konto. Sie liest die Umgebungsvariablen, die
+/// der OneDrive-Client selbst setzt, und schlägt einen ganz gewöhnlichen
+/// Ordnerpfad vor.
+///
+/// Die Existenzprüfung wird hier eingesetzt statt umgangen. Vorher hing sie
+/// daran, dass keine Umgebung übergeben wurde — die Tests fuhren damit einen
+/// Zweig, den es im Betrieb nie gibt, und „der Ordner steht in der Variable,
+/// liegt aber nicht auf der Platte" war ungeprüft.
+void main() {
+  String pfad(String basis) =>
+      '$basis${Platform.pathSeparator}${SynchronisierterOrdner.unterordner}';
+
+  /// Alle Ordner liegen da. Die Prüfung merkt sich, wonach gefragt wurde.
+  Future<bool> Function(String) alleDa(List<String> gefragt) => (pfad) async {
+    gefragt.add(pfad);
+    return true;
+  };
+
+  test('schlägt einen Unterordner im synchronisierten Bereich vor', () async {
+    final vorschlag = await SynchronisierterOrdner.suche(
+      umgebung: {'OneDrive': r'C:\Users\anwalt\OneDrive'},
+      existiert: alleDa([]),
+    );
+
+    expect(vorschlag, pfad(r'C:\Users\anwalt\OneDrive'));
+  });
+
+  /// Wer beides eingerichtet hat, meint mit „meinem OneDrive" das der Kanzlei.
+  test('nimmt das Geschäftskonto vor dem privaten', () async {
+    final vorschlag = await SynchronisierterOrdner.suche(
+      umgebung: {
+        'OneDrive': r'C:\Users\anwalt\OneDrive',
+        'OneDriveConsumer': r'C:\Users\anwalt\OneDrive-privat',
+        'OneDriveCommercial': r'C:\Users\anwalt\OneDrive - Kanzlei',
+      },
+      existiert: alleDa([]),
+    );
+
+    expect(vorschlag, pfad(r'C:\Users\anwalt\OneDrive - Kanzlei'));
+  });
+
+  test('überspringt leere Variablen, ohne nach ihnen zu sehen', () async {
+    final gefragt = <String>[];
+
+    final vorschlag = await SynchronisierterOrdner.suche(
+      umgebung: {
+        'OneDriveCommercial': '   ',
+        'OneDrive': r'C:\Users\anwalt\OneDrive',
+      },
+      existiert: alleDa(gefragt),
+    );
+
+    expect(vorschlag, pfad(r'C:\Users\anwalt\OneDrive'));
+    expect(gefragt, [r'C:\Users\anwalt\OneDrive']);
+  });
+
+  /// Der Betriebszweig, der vorher nie lief: Die Variable ist gesetzt, der
+  /// Ordner dahinter aber nicht da — ein Konto, das eingerichtet, aber nie
+  /// synchronisiert wurde. Dann gilt die nächste Variable.
+  test('überspringt einen Pfad, der nicht auf der Platte liegt', () async {
+    final vorschlag = await SynchronisierterOrdner.suche(
+      umgebung: {
+        'OneDriveCommercial': r'C:\Users\anwalt\OneDrive - Kanzlei',
+        'OneDrive': r'C:\Users\anwalt\OneDrive',
+      },
+      existiert: (pfad) async => !pfad.contains('Kanzlei'),
+    );
+
+    expect(vorschlag, pfad(r'C:\Users\anwalt\OneDrive'));
+  });
+
+  /// Ohne erkannten Ordner erscheint der Vorschlag gar nicht — die App drängt
+  /// niemanden in die Cloud, sie spart nur das Suchen im Ordnerdialog.
+  test(
+    'liefert nichts, wenn kein synchronisierter Ordner erkennbar ist',
+    () async {
+      expect(
+        await SynchronisierterOrdner.suche(
+          umgebung: const {},
+          existiert: alleDa([]),
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test('liefert nichts, wenn keiner der Pfade auf der Platte liegt', () async {
+    expect(
+      await SynchronisierterOrdner.suche(
+        umgebung: {'OneDrive': r'C:\Users\anwalt\OneDrive'},
+        existiert: (_) async => false,
+      ),
+      isNull,
+    );
+  });
+}

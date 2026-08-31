@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Hinweis auf der Registerseite, solange noch kein Vorgang abgeschlossen —
-/// und damit noch keine Registerzeile entstanden — ist.
+/// Hinweis auf der Registerseite, solange überhaupt kein Vorgang erfasst ist.
+///
+/// Seit das Register alle Vorgänge führt (§6.2) heißt „leer" wörtlich leer —
+/// vorher stand hier auch dann etwas, wenn Vorgänge liefen, aber noch keiner
+/// abgeschlossen war.
 class RegisterLeerHinweis extends StatelessWidget {
   const RegisterLeerHinweis({super.key});
 
@@ -21,9 +24,9 @@ class RegisterLeerHinweis extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Noch keine abgeschlossenen Vorgänge. Sobald ein Vorgang im '
-              'Word-Schritt abgeschlossen wird, erscheint er hier als '
-              'Registerzeile.',
+              'Noch keine Vorgänge erfasst. Sobald ein Vorgang angelegt wird, '
+              'erscheint er hier als Registerzeile — die laufende Nummer '
+              'bekommt er beim Abschluss.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),

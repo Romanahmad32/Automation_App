@@ -282,6 +282,21 @@ namespace AutomationService.Core.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("RegisterAblageOrdner")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RegisterDateiname")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RegisterExportFilter")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("RegisterNachAbschlussSchreiben")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("StrasseHausnummer")
                         .IsRequired()
                         .HasColumnType("TEXT");
