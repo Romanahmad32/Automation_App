@@ -1,5 +1,8 @@
+using System.IO.Compression;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Domain.Services;
+using AutomationService.Features.Settings.Domain.Persistence;
+using AutomationService.Features.Settings.Domain.Services;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -9,13 +12,16 @@ using Xunit;
 namespace AutomationService.Tests.Unit;
 
 /// <summary>
-/// Prüft, dass die Sicherung die Word-Vorlagen mitnimmt.
+/// Prüft, dass die Sicherung die Word-Vorlagen mitnimmt — und sie beim
+/// Einspielen <em>schonend</em> wiederherstellt (#33): Fehlendes kommt zurück
+/// (samt Unterordnern), Identisches wird still übersprungen, lokal
+/// Abweichendes bleibt liegen und wird gemeldet. Die frühere Erwartung
+/// „gleichnamige werden ersetzt" ist mit #33 ausdrücklich umgestellt: der
+/// lokale Stand könnte der neuere sein, still überschreiben wäre genau der
+/// Datenverlust, vor dem die Sicherung schützen soll.
 ///
-/// Der Grund ist kein Ordnungssinn: die Datenbank speichert zu jeder
-/// Formularvorlage <em>absolute</em> Pfade auf .docx-Dateien. Eine Sicherung
-/// ohne diese Dateien ergibt nach dem Einspielen auf einem anderen Rechner
-/// Formularvorlagen, die auf nichts zeigen — und das merkt der Anwalt erst,
-/// wenn ein Anspruchsschreiben erzeugt werden soll.
+/// Dazu die zweite Zusage von #33: maschinenabhängige Ordnerpfade in den
+/// Einstellungen überleben den Import mit den Werten <em>dieses</em> Rechners.
 /// </summary>
 public sealed class DatabaseBackupVorlagenTests : IDisposable
 {
@@ -35,25 +41,82 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
     }
 
     [Fact]
-    public async Task Sicherung_enthaelt_die_Vorlagen_und_stellt_sie_wieder_her()
+    public async Task Fehlende_Vorlage_wird_aus_der_Sicherung_wiederhergestellt()
+    {
+        await LegeDatenbankAn();
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "Fassung des Anwalts");
+
+        var sicherung = await _service.CreateBackupFileAsync();
+        File.Delete(Path.Combine(_vorlagen, "Anspruch.docx"));
+
+        var ergebnis = await Importiere(sicherung);
+
+        ergebnis.UebersprungeneVorlagen.Should().BeEmpty();
+        var inhalt = await File.ReadAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"));
+        inhalt.Should().Be("Fassung des Anwalts");
+    }
+
+    [Fact]
+    public async Task Abweichende_lokale_Vorlage_bleibt_liegen_und_wird_gemeldet()
     {
         await LegeDatenbankAn();
         await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "Fassung des Anwalts");
 
         var sicherung = await _service.CreateBackupFileAsync();
 
-        // Vorlage nach der Sicherung veraendern — wie ein Update, das
-        // ueberschreibt, oder ein versehentliches Speichern.
-        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "kaputt");
+        // Nach der Sicherung weiterbearbeitet — der lokale Stand ist der neuere.
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "weiterbearbeitet");
 
-        await using (var stream = File.OpenRead(sicherung))
+        var ergebnis = await Importiere(sicherung);
+
+        ergebnis.UebersprungeneVorlagen.Should().ContainSingle().Which.Should().Be("Anspruch.docx");
+        var inhalt = await File.ReadAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"));
+        inhalt.Should().Be("weiterbearbeitet", "still ueberschreiben waere Datenverlust");
+    }
+
+    [Fact]
+    public async Task Identische_Vorlage_wird_still_uebersprungen()
+    {
+        await LegeDatenbankAn();
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "unveraendert");
+
+        var sicherung = await _service.CreateBackupFileAsync();
+        var ergebnis = await Importiere(sicherung);
+
+        ergebnis.UebersprungeneVorlagen.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Unterordner_werden_rekursiv_gepackt_und_wiederhergestellt()
+    {
+        await LegeDatenbankAn();
+        Directory.CreateDirectory(Path.Combine(_vorlagen, "Unfall"));
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Unfall", "Anspruch.docx"), "im Unterordner");
+
+        var sicherung = await _service.CreateBackupFileAsync();
+        Directory.Delete(Path.Combine(_vorlagen, "Unfall"), recursive: true);
+
+        await Importiere(sicherung);
+
+        var inhalt = await File.ReadAllTextAsync(Path.Combine(_vorlagen, "Unfall", "Anspruch.docx"));
+        inhalt.Should().Be("im Unterordner");
+    }
+
+    [Fact]
+    public async Task Word_Sperrdateien_landen_nicht_im_Archiv()
+    {
+        await LegeDatenbankAn();
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "echt");
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "~$Anspruch.docx"), "Sperrdatei");
+
+        var sicherung = await _service.CreateBackupFileAsync();
+
+        using (var archiv = ZipFile.OpenRead(sicherung))
         {
-            await _service.ImportBackupAsync(stream);
+            archiv.Entries.Select(e => e.FullName).Should().NotContain(n => n.Contains("~$"));
         }
 
         File.Delete(sicherung);
-        var inhalt = await File.ReadAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"));
-        inhalt.Should().Be("Fassung des Anwalts");
     }
 
     [Fact]
@@ -65,12 +128,8 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         // Nach der Sicherung angelegt: gehoert dem Anwender, nicht der Sicherung.
         await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Eigene.docx"), "neu");
 
-        await using (var stream = File.OpenRead(sicherung))
-        {
-            await _service.ImportBackupAsync(stream);
-        }
+        await Importiere(sicherung);
 
-        File.Delete(sicherung);
         File.Exists(Path.Combine(_vorlagen, "Eigene.docx")).Should().BeTrue(
             "ein Import soll nicht loeschen, was er nicht kennt");
     }
@@ -96,12 +155,74 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
             "eine Sicherung ohne Vorlagen darf die vorhandenen nicht loeschen");
     }
 
-    private async Task LegeDatenbankAn()
+    [Fact]
+    public async Task Wiederherstellen_ueberschreibt_die_eingestellten_Ordnerpfade_nicht()
+    {
+        await LegeDatenbankAn();
+        await SchreibeOrdnerEinstellungen(
+            akten: @"D:\Fremd\Akten", register: @"D:\Fremd\Register", vorlagen: @"D:\Fremd\Vorlagen");
+        var sicherung = await _service.CreateBackupFileAsync();
+
+        // Der lokale Rechner hat eigene Pfade — die muessen den Import ueberleben.
+        await SchreibeOrdnerEinstellungen(
+            akten: @"C:\Lokal\Akten", register: @"C:\Lokal\Register", vorlagen: @"C:\Lokal\Vorlagen");
+
+        await Importiere(sicherung);
+
+        var settings = await LiesEinstellungen();
+        settings.AktenStammordner.Should().Be(@"C:\Lokal\Akten");
+        settings.RegisterAblageOrdner.Should().Be(@"C:\Lokal\Register");
+        settings.VorlagenOrdner.Should().Be(@"C:\Lokal\Vorlagen");
+    }
+
+    private async Task<SicherungsImportErgebnis> Importiere(string sicherung)
+    {
+        SicherungsImportErgebnis ergebnis;
+        await using (var stream = File.OpenRead(sicherung))
+        {
+            ergebnis = await _service.ImportBackupAsync(stream);
+        }
+
+        File.Delete(sicherung);
+        return ergebnis;
+    }
+
+    private async Task SchreibeOrdnerEinstellungen(string akten, string register, string vorlagen)
+    {
+        await using var db = OeffneKontext();
+        var settings = await db.KanzleiSettings
+            .FirstOrDefaultAsync(s => s.Id == KanzleiSettingsEntity.SingletonId);
+        if (settings is null)
+        {
+            settings = KanzleiSettingsRepository.CreateDefault();
+            db.KanzleiSettings.Add(settings);
+        }
+
+        settings.AktenStammordner = akten;
+        settings.RegisterAblageOrdner = register;
+        settings.VorlagenOrdner = vorlagen;
+        await db.SaveChangesAsync();
+        SqliteConnection.ClearAllPools();
+    }
+
+    private async Task<KanzleiSettingsEntity> LiesEinstellungen()
+    {
+        await using var db = OeffneKontext();
+        return await db.KanzleiSettings.AsNoTracking()
+            .SingleAsync(s => s.Id == KanzleiSettingsEntity.SingletonId);
+    }
+
+    private AutomationDbContext OeffneKontext()
     {
         var options = new DbContextOptionsBuilder<AutomationDbContext>()
             .UseSqlite($"Data Source={_dbPath}")
             .Options;
-        await using (var db = new AutomationDbContext(options))
+        return new AutomationDbContext(options);
+    }
+
+    private async Task LegeDatenbankAn()
+    {
+        await using (var db = OeffneKontext())
         {
             await db.Database.MigrateAsync();
         }
