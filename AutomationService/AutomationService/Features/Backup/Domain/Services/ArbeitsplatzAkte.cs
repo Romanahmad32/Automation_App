@@ -108,6 +108,19 @@ public static class ArbeitsplatzAkte
             DieserRechner, zeitpunkt, zeitpunkt, datei, Programmfassung.Aktuell));
 
     /// <summary>
+    /// Hält fest, dass dieser Rechner den Stand eines anderen übernommen hat:
+    /// gearbeitet wird <em>jetzt</em>, der Stand ist aber der von damals.
+    ///
+    /// Genau diese Trennung verhindert die Endlosschleife: Ohne den übernommenen
+    /// <paramref name="gesichertAm"/> böte jeder Start dasselbe Archiv erneut
+    /// an; mit dem Zeitpunkt von jetzt sähe der andere Arbeitsplatz einen
+    /// vermeintlich neueren Stand und böte ihn zurück.
+    /// </summary>
+    public static void MerkeUebernahme(string ordner, DateTime gesichertAm, string datei) =>
+        Schreibe(ordner, new ArbeitsplatzEintrag(
+            DieserRechner, DateTime.Now, gesichertAm, datei, Programmfassung.Aktuell));
+
+    /// <summary>
     /// Schreibt die Akte dieses Rechners. Der Ordner wird angelegt, falls er
     /// fehlt — beim ersten Mal existiert er noch nicht.
     /// </summary>

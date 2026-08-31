@@ -57,8 +57,8 @@ public sealed class AutomatischeSicherung(
 
     public async Task<LetzteSicherung?> SchreibeAsync(CancellationToken cancellationToken = default)
     {
-        var ordner = ablageOrdner();
-        if (ordner.Length == 0)
+        var ordner = Ablageordner();
+        if (ordner is null || ordner.Length == 0)
         {
             return null;
         }
@@ -106,8 +106,8 @@ public sealed class AutomatischeSicherung(
 
     public void MerkeArbeitsbeginn()
     {
-        var ordner = ablageOrdner();
-        if (ordner.Length == 0)
+        var ordner = Ablageordner();
+        if (ordner is null || ordner.Length == 0)
         {
             return;
         }
@@ -122,6 +122,29 @@ public sealed class AutomatischeSicherung(
             // der beim Start nicht erreichbar ist, darf den Start nicht kosten
             // — auffallen wird es spaetestens, wenn die Sicherung scheitert.
             logger.LogWarning(ex, "Arbeitsplatz-Eintrag in {Ordner} nicht geschrieben.", ordner);
+        }
+    }
+
+    /// <summary>
+    /// Der eingestellte Ordner, oder <c>null</c>, wenn er sich nicht lesen ließ.
+    ///
+    /// Das Lesen geht über einen Scope in den Dienstcontainer, und dieser Lauf
+    /// hängt am Herunterfahren — der Container kann darunter schon weg sein.
+    /// Ein Fehlschlag <em>hier</em> wird deshalb nicht als misslungene Sicherung
+    /// gemerkt: Wer die Einstellung nicht lesen kann, weiß nicht einmal, ob
+    /// überhaupt gesichert werden sollte, und eine Meldung darüber wäre beim
+    /// nächsten Start schlicht falsch.
+    /// </summary>
+    string? Ablageordner()
+    {
+        try
+        {
+            return ablageOrdner();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Die Sicherungsablage konnte nicht gelesen werden.");
+            return null;
         }
     }
 

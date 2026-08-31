@@ -39,7 +39,9 @@ public class MandantenImportEndpunktTests : IClassFixture<WebApplicationFactory<
             {
                 configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["PdfConversion:WarmupOnStartup"] = "false"
+                    ["PdfConversion:WarmupOnStartup"] = "false",
+                    // Keine echte Sicherung in den Ablageordner des Anwalts.
+                    ["Backup:AutomatischeSicherung"] = "false",
                 });
             });
         });

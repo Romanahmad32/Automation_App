@@ -33,7 +33,10 @@ Verdrahtung über je eine `Add…Services`-Erweiterungsmethode, aufgerufen aus `
 
 Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName`: `WordAutomation`,
 `PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`. Ohne Options-Klasse direkt gelesen:
-`Urls`, `Cors:AllowedOrigins` (`Program.cs`) und `LegacyImport:*` (`LegacyJsonImportService`).
+`Urls`, `Cors:AllowedOrigins` (`Program.cs`), `LegacyImport:*` (`LegacyJsonImportService`) und
+`Backup:AutomatischeSicherung` (`BackupInjection`) — der Not-Aus für die automatische Sicherung;
+Integrationstests setzen ihn auf `false`, sonst legte jeder Testlauf eine echte Sicherung im
+synchronisierten Ordner des Anwalts ab.
 
 ### Die Slices
 
