@@ -119,6 +119,32 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         File.Delete(sicherung);
     }
 
+    /// <summary>
+    /// Die Sicherung wandert mit #39 in einen Cloud-Ordner. Zugangsdaten haben
+    /// dort nichts verloren — das Postfach-Passwort (DPAPI) und der
+    /// MSAL-Tokencache liegen neben der Datenbank und sind ohnehin benutzer- und
+    /// maschinengebunden verschluesselt, auf dem zweiten Rechner also wertlos.
+    /// Der Schnitt ist eng: Datenbank plus Vorlagen, sonst nichts.
+    /// </summary>
+    [Fact]
+    public async Task Im_Archiv_liegen_nur_die_Datenbank_und_die_Vorlagen()
+    {
+        await LegeDatenbankAn();
+        await File.WriteAllTextAsync(Path.Combine(_dir, "mailbox_config.json"), "Zugang");
+        await File.WriteAllTextAsync(Path.Combine(_dir, "msal_token_cache.bin"), "Token");
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "Vorlage");
+
+        var sicherung = await _service.CreateBackupFileAsync();
+
+        using (var archiv = ZipFile.OpenRead(sicherung))
+        {
+            archiv.Entries.Select(e => e.FullName).Should().BeEquivalentTo(
+                [SicherungsArchiv.DatenbankEintrag, $"{SicherungsArchiv.VorlagenOrdner}/Anspruch.docx"]);
+        }
+
+        File.Delete(sicherung);
+    }
+
     [Fact]
     public async Task Zusaetzliche_Vorlagen_des_Anwenders_bleiben_beim_Einspielen_liegen()
     {
@@ -160,12 +186,14 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
     {
         await LegeDatenbankAn();
         await SchreibeOrdnerEinstellungen(
-            akten: @"D:\Fremd\Akten", register: @"D:\Fremd\Register", vorlagen: @"D:\Fremd\Vorlagen");
+            akten: @"D:\Fremd\Akten", register: @"D:\Fremd\Register",
+            vorlagen: @"D:\Fremd\Vorlagen", sicherungen: @"D:\Fremd\Sicherungen");
         var sicherung = await _service.CreateBackupFileAsync();
 
         // Der lokale Rechner hat eigene Pfade — die muessen den Import ueberleben.
         await SchreibeOrdnerEinstellungen(
-            akten: @"C:\Lokal\Akten", register: @"C:\Lokal\Register", vorlagen: @"C:\Lokal\Vorlagen");
+            akten: @"C:\Lokal\Akten", register: @"C:\Lokal\Register",
+            vorlagen: @"C:\Lokal\Vorlagen", sicherungen: @"C:\Lokal\Sicherungen");
 
         await Importiere(sicherung);
 
@@ -173,6 +201,8 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         settings.AktenStammordner.Should().Be(@"C:\Lokal\Akten");
         settings.RegisterAblageOrdner.Should().Be(@"C:\Lokal\Register");
         settings.VorlagenOrdner.Should().Be(@"C:\Lokal\Vorlagen");
+        settings.SicherungsAblageOrdner.Should().Be(@"C:\Lokal\Sicherungen",
+            "sonst legt dieser Rechner seine Sicherungen woanders ab, als er sein Angebot liest");
     }
 
     private async Task<SicherungsImportErgebnis> Importiere(string sicherung)
@@ -187,7 +217,8 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         return ergebnis;
     }
 
-    private async Task SchreibeOrdnerEinstellungen(string akten, string register, string vorlagen)
+    private async Task SchreibeOrdnerEinstellungen(
+        string akten, string register, string vorlagen, string sicherungen)
     {
         await using var db = OeffneKontext();
         var settings = await db.KanzleiSettings
@@ -201,6 +232,7 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         settings.AktenStammordner = akten;
         settings.RegisterAblageOrdner = register;
         settings.VorlagenOrdner = vorlagen;
+        settings.SicherungsAblageOrdner = sicherungen;
         await db.SaveChangesAsync();
         SqliteConnection.ClearAllPools();
     }

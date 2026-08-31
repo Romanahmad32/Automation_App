@@ -85,6 +85,15 @@ void main() {
   // zu fuellen repariert den Bestand; sie vollstaendig zu halten repariert
   // ihn dauerhaft.
   const gespiegelteDtos = <String, List<String>>{
+    'lib/features/backup/domain/entities/letzte_sicherung.dart': [
+      'LetzteSicherungDto',
+    ],
+    'lib/features/backup/domain/entities/uebergabe_angebot.dart': [
+      'UebergabeAngebotDto',
+    ],
+    'lib/features/backup/domain/entities/uebergabe_stand.dart': [
+      'UebergabeStandDto',
+    ],
     'lib/features/email_versand/domain/entities/email_entwurf_ergebnis.dart': [
       'EntwurfErgebnisDto',
     ],

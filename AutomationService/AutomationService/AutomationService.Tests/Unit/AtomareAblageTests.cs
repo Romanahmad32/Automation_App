@@ -1,4 +1,4 @@
-using AutomationService.Features.Vorgaenge.Domain.Services;
+using AutomationService.Core.Ablage;
 using AutomationService.Features.WordAutomation.Domain.Exceptions;
 using FluentAssertions;
 using Xunit;

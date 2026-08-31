@@ -1,7 +1,10 @@
 import 'dart:io';
 
 /// Findet den synchronisierten Ordner des angemeldeten Benutzers — den
-/// wahrscheinlichsten Ablageort für den Register-Spiegel (§6.2).
+/// wahrscheinlichsten Ablageort für den Register-Spiegel (§6.2) und für die
+/// automatische Sicherung, über die der Stand an den zweiten Arbeitsplatz geht
+/// (§7.2). Beide legen dieselbe Art Datei ab, nur zu verschiedenen Zwecken;
+/// welcher Unterordner vorgeschlagen wird, sagt der Aufrufer.
 ///
 /// Wichtig ist, was hier **nicht** passiert: Die App spricht mit keiner Cloud,
 /// meldet sich nirgends an und kennt kein Konto. Sie liest lediglich die
@@ -24,7 +27,13 @@ class SynchronisierterOrdner {
 
   /// Unterordner, der unter dem gefundenen Pfad vorgeschlagen wird, damit der
   /// Spiegel nicht in der Wurzel der Synchronisierung landet.
-  static const String unterordner = 'Kanzlei-Register';
+  static const String registerUnterordner = 'Kanzlei-Register';
+
+  /// Dasselbe für die Sicherungsablage (§7.2). Bewusst ein eigener Ordner: Der
+  /// Register-Spiegel ist zum Lesen da und wird unterwegs geöffnet, die
+  /// Sicherungen sind Archive, die niemand anfassen soll — in einem Ordner
+  /// nebeneinander lüde das zum Aufräumen der falschen Dateien ein.
+  static const String sicherungenUnterordner = 'Kanzlei-Sicherungen';
 
   /// Der Vorschlag für den Ablageordner, oder null, wenn kein
   /// synchronisierter Ordner erkennbar ist. Der Ordner wird **nicht** angelegt
@@ -41,6 +50,7 @@ class SynchronisierterOrdner {
   /// *keine* Umgebung übergeben wurde — die Tests liefen also durch einen
   /// Zweig, den es im Betrieb nie gibt, und der Betriebszweig war ungeprüft.
   static Future<String?> suche({
+    String unterordner = registerUnterordner,
     Map<String, String>? umgebung,
     Future<bool> Function(String pfad)? existiert,
   }) async {
