@@ -1,6 +1,6 @@
 using AutomationService.Features.WordAutomation.Domain.Exceptions;
 
-namespace AutomationService.Features.Vorgaenge.Domain.Services;
+namespace AutomationService.Core.Ablage;
 
 /// <summary>
 /// Legt eine fertig gebaute Datei so an ihren Zielort, dass ein Beobachter des
@@ -18,8 +18,11 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 /// Kopiervorgang und damit wieder teilbar. Dann wird zuerst neben das Ziel
 /// kopiert und erst von dort umbenannt.
 ///
-/// Liegt vorerst im Vorgaenge-Slice, weil der Register-Spiegel der einzige
-/// Nutzer ist; sobald ein zweiter dazukommt, gehört sie nach Core.
+/// Lag zunächst im Vorgaenge-Slice, weil der Register-Spiegel der einzige Nutzer
+/// war. Mit der automatischen Sicherung in den synchronisierten Ordner (#39) gibt
+/// es einen zweiten — und für den wäre der Weg über einen fremden Slice eine
+/// Kopplung ohne Grund. Deshalb steht sie jetzt hier: Sie weiß nichts von
+/// Registern und nichts von Sicherungen, sie legt eine fertige Datei ab.
 /// </summary>
 public static class AtomareAblage
 {
