@@ -11,7 +11,7 @@
         <PackageReference Include="DocX" Version="5.2.0" />
         <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
         <PackageReference Include="MailKit" Version="4.17.0" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
         <!-- Explizit gepinnt, und zwar dauerhaft: Microsoft.AspNetCore.OpenApi
              fordert nur Microsoft.OpenApi ab 2.0.0 (offen nach oben), und von
              einem solchen Bereich nimmt NuGet die NIEDRIGSTE Fassung. Ohne
@@ -26,19 +26,19 @@
              generiertem Code, ist also nicht zu beheben. Deshalb ignoriert
              .github/dependabot.yml Major-Spruenge dieses Pakets. Beides
              aufheben, wenn das Projekt auf .NET 11 geht. -->
-        <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+        <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
-        <PackageReference Include="Microsoft.Identity.Client" Version="4.87.0" />
-        <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.87.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.88.0" />
+        <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.88.0" />
         <PackageReference Include="Microsoft.Office.Interop.Excel" Version="16.0.18925.20022" />
         <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
-        <PackageReference Include="Microsoft.Playwright" Version="1.61.0" />
+        <PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
         <PackageReference Include="MimeKit" Version="4.17.0" />
-        <PackageReference Include="Scalar.AspNetCore" Version="2.16.18" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.17.2" />
         <!-- Explizit gepinnt, um die von Microsoft.Data.Sqlite transitiv gezogene
              SQLitePCLRaw 2.1.11 zu übersteuern (Sicherheitslücke GHSA-2m69-gcr7-jv3q
              in der gebündelten e_sqlite3-Native). Nicht entfernen, bis EF Core eine
@@ -48,7 +48,7 @@
         <!-- Windows-DPAPI fuer das auf Platte abgelegte Postfach-Passwort
              (PasswortSchutz). Kam bisher nur transitiv ueber MSAL herein —
              explizit, weil der Code den Typ direkt benutzt. -->
-        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.7.0" />
     </ItemGroup>
 
     <ItemGroup>
