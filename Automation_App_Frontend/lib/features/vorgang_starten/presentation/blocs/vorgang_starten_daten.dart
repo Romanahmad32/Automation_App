@@ -10,7 +10,7 @@ class VorgangStartenDaten {
   final int auftragsnummer;
   final int auftragsjahr;
   final String abteilung;
-  final Rechtsgebiet rechtsgebiet;
+  final String rechtsgebiet;
 
   /// Die in der Vorschau angezeigte (ggf. manuell bearbeitete) Referenz.
   final String referenz;
@@ -53,7 +53,7 @@ class VorgangStartenDaten {
     this.polizeiVorgangsnummer = '',
   });
 
-  bool get istVerkehrsunfall => rechtsgebiet == Rechtsgebiet.verkehrsrecht;
+  bool get istVerkehrsunfall => RechtsgebietWert.istVerkehrsrecht(rechtsgebiet);
 
   /// Anzeigename „Vorname Nachname"; leer, wenn keine Namensteile erfasst sind.
   String get mandantName => '$vorname $nachname'.trim();

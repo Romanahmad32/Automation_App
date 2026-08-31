@@ -49,7 +49,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
   /// ohne bereits erfasste Felder zu verlieren.
   Future<void> registriereAnfrage(
     String referenz, {
-    Rechtsgebiet rechtsgebiet = Rechtsgebiet.verkehrsrecht,
+    String rechtsgebiet = RechtsgebietWert.verkehrsrecht,
     int? mandantId,
     String? mandantName,
     String? unfallDatum,

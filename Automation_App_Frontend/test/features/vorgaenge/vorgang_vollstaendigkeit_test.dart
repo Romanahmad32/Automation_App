@@ -1,4 +1,3 @@
-import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_vollstaendigkeit.dart';
@@ -101,7 +100,7 @@ void main() {
     final vorgang = Vorgang(
       referenz: '12/26 C03_STRAF',
       angefragtAm: DateTime(2026, 4, 8),
-      rechtsgebiet: Rechtsgebiet.strafrecht,
+      rechtsgebiet: 'Strafrecht',
     );
 
     expect(VorgangVollstaendigkeit.fehlendeDatenFuerSchreiben(vorgang), [

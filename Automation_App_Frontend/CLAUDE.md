@@ -88,6 +88,7 @@ zusammenzuziehen, um unter das Budget zu kommen, hat schon einmal lesbare Doku u
 | `email_versand` | Mail zum Vorgang verfassen: senden oder als Entwurf in Outlook öffnen; Signatur-Import |
 | `form_template_setup` | Feldbeschreibungen zu einer Word-Vorlage |
 | `mandanten` | Mandantenregister (Datenbank) + Akten/Fälle (Dateisystem) |
+| `sachgebiete` | Sachgebietskatalog (§7.1) als Quelle der Rechtsgebiets- und Abteilungs-Auswahl; kein eigener Tab |
 | `versicherer` | lesender Zugriff auf die Versicherer-Wissensbasis; benutzt aus `zentralruf_reply` |
 | `vorgaenge` | Lebenszyklus der Vorgänge + Sachgebiete-/Auftragsregister |
 | `settings` | Kanzleidaten, Aktenstammordner, Auftragsnummer/Abteilung, Mail-Signatur, Erscheinungsbild; hängt die Reiter aus `mailbox`, `backup` und `word_automation` (Standardpositionen) ein |

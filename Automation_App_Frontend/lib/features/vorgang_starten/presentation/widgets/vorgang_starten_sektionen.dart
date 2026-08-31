@@ -1,5 +1,4 @@
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/auftrag_section.dart';
@@ -17,9 +16,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Weiter-Aktionen. Hält selbst keinen State; alle Werte/Callbacks kommen aus der
 /// View. Unfall-/Unfallhergang-Teile erscheinen nur bei Verkehrsrecht.
 class VorgangStartenSektionen extends StatelessWidget {
-  final Rechtsgebiet rechtsgebiet;
+  final String rechtsgebiet;
   final bool istVerkehrsunfall;
-  final ValueChanged<Rechtsgebiet> onRechtsgebietChanged;
+  final ValueChanged<String> onRechtsgebietChanged;
   final bool referenzManuallyEdited;
   final VoidCallback onReferenzReset;
   final List<Mandant> mandanten;

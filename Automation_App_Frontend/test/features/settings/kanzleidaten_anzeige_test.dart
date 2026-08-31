@@ -6,6 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
+import 'package:automation_app/core/di/injection.dart';
+
+import '../sachgebiete/sachgebiet_test_katalog.dart';
 import 'kanzlei_settings_doubles.dart';
 
 /// Die gespeicherten Kanzleidaten müssen im Formular stehen, **wann immer** es
@@ -40,6 +43,9 @@ void main() {
       .value;
 
   Future<void> zeige(WidgetTester tester, {required bool schonGeladen}) async {
+    // Die Abteilungs-Auswahl im Formular zieht den Sachgebietskatalog.
+    registriereSachgebietKatalog();
+    addTearDown(() => getIt.reset());
     final bloc = KanzleiSettingsBloc(
       FesterSettingsAbruf(gespeichert),
       DurchreichendesSpeichern(),
