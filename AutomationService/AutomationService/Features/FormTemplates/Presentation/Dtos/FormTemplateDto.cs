@@ -1,12 +1,15 @@
 using System.Text.Json;
 using AutomationService.Features.FormTemplates.Domain.Persistence;
+using AutomationService.Features.FormTemplates.Domain.Services;
 
 namespace AutomationService.Features.FormTemplates.Presentation.Dtos;
 
 /// <summary>
 /// Übertragungsformat einer Formularvorlage. Die Feldliste wird als opakes JSON
 /// (<see cref="Fields"/>) verlustfrei durchgereicht — das Backend muss das
-/// FieldData-Schema nicht doppelt pflegen.
+/// FieldData-Schema nicht doppelt pflegen. Die Word-Pfade gehen aufgelöst
+/// (absolut) hinaus, obwohl sie relativ gespeichert sein können (#33): das
+/// Frontend öffnet die Dateien direkt und kennt den Vorlagenordner nicht.
 /// </summary>
 public sealed record FormTemplateDto(
     int Id,
@@ -15,12 +18,12 @@ public sealed record FormTemplateDto(
     string? WordFilePathOhneAuflistung,
     string? WordFilePathMitAuflistung)
 {
-    public static FormTemplateDto From(FormTemplateEntity e) => new(
+    public static FormTemplateDto From(FormTemplateEntity e, string vorlagenOrdner) => new(
         e.Id,
         e.TemplateName,
         ParseFields(e.FieldsJson),
-        e.WordFilePathOhneAuflistung,
-        e.WordFilePathMitAuflistung);
+        VorlagenPfad.LoeseAuf(vorlagenOrdner, e.WordFilePathOhneAuflistung),
+        VorlagenPfad.LoeseAuf(vorlagenOrdner, e.WordFilePathMitAuflistung));
 
     public FormTemplateEntity ToEntity() => new()
     {
