@@ -95,7 +95,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Aktenstammordner, Versand, Postfach-Zugang, Darstellung, Sicherung |
+| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand, Postfach-Zugang, Darstellung, Sicherung |
 | 7.2 | Datensicherung und Datenintegrität: Schutz vor Datenverlust, Sichern/Wiederherstellen, robuste Wiederherstellung, dauerhafte Kennungen, Änderungsstand |
 | 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[K]**, siehe 8) |
 

@@ -28,8 +28,8 @@ vorgesehen — er umginge die Schnittregeln.
 Verdrahtung über je eine `Add…Services`-Erweiterungsmethode, aufgerufen aus `Program.cs`:
 `AddLifetimeServices`, `AddPersistenceServices`, `AddWordServices`, `AddPdfConversionServices`,
 `AddZentralrufServices`, `AddMailboxServices`, `AddSettingsServices`, `AddMandantenServices`,
-`AddVersichererServices`, `AddVorgaengeServices`, `AddFormTemplatesServices`, `AddBackupServices`,
-`AddDevSimulationServices`, `AddEmailVersandServices`.
+`AddVersichererServices`, `AddSachgebieteServices`, `AddVorgaengeServices`, `AddFormTemplatesServices`,
+`AddBackupServices`, `AddDevSimulationServices`, `AddEmailVersandServices`.
 
 Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName`: `WordAutomation`,
 `PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`. Ohne Options-Klasse direkt gelesen:
@@ -132,13 +132,13 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   pusht über `MailboxHub` — für die App nicht von einem IMAP-Treffer unterscheidbar. Hinter
   `Simulation:Enabled` (nur in `appsettings.Development.json` true), sonst 404. Einzige zugelassene
   Ausnahme der Slice-Isolation (darf `MailboxMonitor.Presentation` verwenden).
-- **Versicherer** — Wissensbasis über Versicherer (`VersichererWissen`, Tabelle `Versicherer`), aus
-  jeder übernommenen Zentralruf-Antwort gefüllt und aktualisiert. Schließt `missingFields`-Lücken
-  späterer Antworten; nach außen nur lesend.
-- **PdfConversion** — docx→PDF für die Vorschau in der App. Standard-Engine ist Word-COM per
-  Late Binding (`WordInteropPdfConversionService`, eigener STA-Thread + Warmup), FreeSpire.Doc ist
-  der Rückfall über eine Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter
-  `Generated/PdfCache` (`PdfPreviewCache`).
+- **Versicherer** — Wissensbasis über Versicherer (`VersichererWissen`, Tabelle `Versicherer`), aus jeder übernommenen
+  Zentralruf-Antwort gefüllt und aktualisiert. Schließt `missingFields`-Lücken späterer Antworten; nach außen nur lesend.
+- **Sachgebiete** — der Sachgebietskatalog als Stammdaten (§7.1): zwölf Kürzel mit Sachgebiet und Rechtsgebiet-Vorschlag,
+  geseedet per `HasData`, gelesen über `GET api/Sachgebiete` (`SachgebietKatalog`); nur lesend, Pflege in der App ist [S].
+- **PdfConversion** — docx→PDF für die Vorschau in der App. Standard-Engine ist Word-COM per Late Binding
+  (`WordInteropPdfConversionService`, eigener STA-Thread + Warmup), FreeSpire.Doc ist der Rückfall über eine
+  Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter `Generated/PdfCache` (`PdfPreviewCache`).
 - **Vorgaenge** — Lebenszyklus des Vorgangs/Auftrags (Liste, Einzelabruf, Upsert, Löschen,
   Referenzänderung, angefangener Ausfüllstand über `PUT|DELETE api/Vorgaenge/entwurf`).
   `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und das
