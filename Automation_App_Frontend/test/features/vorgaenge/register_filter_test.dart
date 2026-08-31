@@ -15,7 +15,7 @@ void main() {
     int? nummer = 1,
     String? jahr = '26',
     VorgangStatus status = VorgangStatus.versendet,
-    Rechtsgebiet rechtsgebiet = Rechtsgebiet.verkehrsrecht,
+    String rechtsgebiet = RechtsgebietWert.verkehrsrecht,
     DateTime? angefragtAm,
     DateTime? abgeschlossenAm,
   }) => Vorgang(
@@ -100,16 +100,14 @@ void main() {
       expect(gefiltert.single.referenz, 'a');
     });
 
-    test('filtert nach Rechtsgebiet — auch nach den neu ergänzten', () {
-      final gefiltert =
-          const RegisterFilter(
-            rechtsgebiet: Rechtsgebiet.verkehrsstrafrecht,
-          ).anwenden([
+    // Der Filter trägt den Katalognamen, der Altbestand ist kleingeschrieben
+    // gespeichert — beide müssen sich treffen (RechtsgebietWert.gleich).
+    test('filtert nach Rechtsgebiet — auch über den kleingeschriebenen '
+        'Altbestand', () {
+      final gefiltert = const RegisterFilter(rechtsgebiet: 'Verkehrsstrafrecht')
+          .anwenden([
             vorgang(referenz: 'a'),
-            vorgang(
-              referenz: 'b',
-              rechtsgebiet: Rechtsgebiet.verkehrsstrafrecht,
-            ),
+            vorgang(referenz: 'b', rechtsgebiet: 'verkehrsstrafrecht'),
           ]);
 
       expect(gefiltert.single.referenz, 'b');
@@ -132,6 +130,33 @@ void main() {
       ]);
 
       expect(sortiert.map((v) => v.referenz), ['neun', 'offen']);
+    });
+  });
+
+  group('rechtsgebiete', () {
+    /// Die Auswahl der Filterleiste: der Katalog (§7.1) vollständig und in
+    /// seiner Reihenfolge — dahinter, was nur im Bestand vorkommt (etwa
+    /// Vertragsrecht ohne Katalogeintrag). Ohne die Bestandswerte wäre der
+    /// alte Fehler zurück: Zeilen, nach denen niemand filtern kann.
+    test('vereint Katalog und Bestand, ohne zu doppeln', () {
+      final werte = RegisterFilter.rechtsgebiete(
+        [
+          vorgang(referenz: 'a', rechtsgebiet: 'verkehrsrecht'),
+          vorgang(referenz: 'b', rechtsgebiet: 'vertragsrecht'),
+          vorgang(referenz: 'c', rechtsgebiet: ''),
+        ],
+        katalog: const ['Verkehrsrecht', 'Strafrecht'],
+      );
+
+      expect(werte, ['Verkehrsrecht', 'Strafrecht', 'Vertragsrecht']);
+    });
+
+    test('ohne Katalog bleiben die Bestandswerte filterbar', () {
+      final werte = RegisterFilter.rechtsgebiete([
+        vorgang(referenz: 'a', rechtsgebiet: 'verkehrsrecht'),
+      ]);
+
+      expect(werte, ['Verkehrsrecht']);
     });
   });
 

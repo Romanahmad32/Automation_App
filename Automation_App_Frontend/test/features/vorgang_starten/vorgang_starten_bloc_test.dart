@@ -41,7 +41,7 @@ const _verkehrsunfall = VorgangStartenDaten(
   auftragsnummer: 84,
   auftragsjahr: 26,
   abteilung: 'C03',
-  rechtsgebiet: Rechtsgebiet.verkehrsrecht,
+  rechtsgebiet: RechtsgebietWert.verkehrsrecht,
   referenz: '84/26 C03_GG-XY 123',
   vorname: 'Max',
   nachname: 'Müller',
@@ -83,7 +83,7 @@ void main() {
       expect(vorgang.status, VorgangStatus.angefragt);
       expect(vorgang.mandantId, 7);
       expect(vorgang.mandantName, 'Max Müller');
-      expect(vorgang.rechtsgebiet, Rechtsgebiet.verkehrsrecht);
+      expect(vorgang.rechtsgebiet, RechtsgebietWert.verkehrsrecht);
       expect(vorgang.unfallort, 'Am Ulmenrück, Frankfurt');
       expect(datasource.vorgaenge, hasLength(1));
 
@@ -108,7 +108,7 @@ void main() {
       auftragsnummer: 84,
       auftragsjahr: 26,
       abteilung: 'C03',
-      rechtsgebiet: Rechtsgebiet.verkehrsrecht,
+      rechtsgebiet: RechtsgebietWert.verkehrsrecht,
       referenz: '84/26 C03_GG-XY 123',
       vorname: 'Max',
       nachname: 'Müller',
@@ -266,7 +266,7 @@ void main() {
         auftragsnummer: 90,
         auftragsjahr: 26,
         abteilung: 'C03',
-        rechtsgebiet: Rechtsgebiet.arbeitsrecht,
+        rechtsgebiet: 'Arbeitsrecht',
         referenz: '90/26 C03',
       );
 
@@ -282,7 +282,7 @@ void main() {
       final vorgang = vorgaenge.state.single;
       expect(vorgang.referenz, '90/26 C03');
       expect(vorgang.mandantId, isNull);
-      expect(vorgang.rechtsgebiet, Rechtsgebiet.arbeitsrecht);
+      expect(vorgang.rechtsgebiet, 'Arbeitsrecht');
       // Unfallfelder bleiben außerhalb von Verkehrsrecht leer.
       expect(vorgang.unfallort, isNull);
 

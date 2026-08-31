@@ -28,7 +28,7 @@ class VorgangVerwaltungTile extends StatelessWidget {
       'Az. ${vorgang.aktenzeichen}',
       if ((vorgang.unfallDatum ?? '').trim().isNotEmpty)
         'Unfall v. ${vorgang.unfallDatum!.trim()}',
-      vorgang.rechtsgebiet.displayName,
+      vorgang.rechtsgebietAnzeige,
     ];
     return teile.join('  ·  ');
   }

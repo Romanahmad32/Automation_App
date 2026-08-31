@@ -1,4 +1,3 @@
-import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
@@ -19,8 +18,9 @@ Vorgang vorgangAusJson(Map<String, dynamic> json) {
         DateTime.tryParse(json['angefragtAm'] as String? ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0),
     status: VorgangStatus.fromValue(json['status'] as String?),
-    rechtsgebiet: Rechtsgebiet.fromValue(json['rechtsgebiet'] as String?),
-    rechtsgebietRoh: json['rechtsgebiet'] as String?,
+    // Wortgetreu, ohne Umbiegen: Ein unbekannter oder leerer gespeicherter
+    // Wert bleibt erhalten und wird beim Zurückschreiben nicht verändert.
+    rechtsgebiet: json['rechtsgebiet'] as String? ?? '',
     laufendeNummer: (json['laufendeNummer'] as num?)?.toInt(),
     jahr: json['jahr'] as String?,
     abteilung: json['abteilung'] as String?,
@@ -61,7 +61,7 @@ extension VorgangAlsJson on Vorgang {
     'referenz': referenz,
     'angefragtAm': angefragtAm.toIso8601String(),
     'status': status.value,
-    'rechtsgebiet': rechtsgebiet.value,
+    'rechtsgebiet': rechtsgebiet,
     'laufendeNummer': laufendeNummer,
     'jahr': jahr,
     'abteilung': abteilung,
