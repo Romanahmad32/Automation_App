@@ -15,6 +15,7 @@ import 'package:automation_app/features/form_template_setup/presentation/widgets
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slots.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_name_card.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_hineinholen_angebot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -146,8 +147,13 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
       type: FileType.custom,
       allowedExtensions: ['docx'],
     );
-    final path = result?.files.firstOrNull?.path;
+    var path = result?.files.firstOrNull?.path;
     if (path == null || !mounted) {
+      return;
+    }
+    // Außerhalb des Vorlagenordners gewählte Dateien hineinholen (#33).
+    path = await VorlagenHineinholenAngebot.bieteAn(context, path);
+    if (!mounted) {
       return;
     }
     setState(() {

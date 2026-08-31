@@ -41,8 +41,12 @@ passierte.
   Erzeugung fehl; die Karte warnt nur, sie blockiert das Speichern nicht. Der Chip zu diesem
   Platzhalter wird trotzdem angeboten — als Eingabefeld übernehmen wäre falsch, die Tabelle setzt
   ihn selbst ein.
-- Der Word-Pfad wird absolut gespeichert und auch aus `word_automation` überschrieben
-  (`WizardCubit.linkWordFileToTemplate`). `fields` liegt im Backend als opakes JSON — das Schema
+- Der Word-Pfad läuft im Frontend absolut und wird auch aus `word_automation` überschrieben
+  (`WizardCubit.linkWordFileToTemplate`). Gespeichert wird er seit #33 im **Backend** relativ zum
+  eingestellten Vorlagenordner, sofern die Datei darin liegt (`FormTemplatesController`) — das
+  Frontend rechnet nie um. Eine Datei außerhalb bietet `_pickFile` zum Hineinkopieren an
+  (`VorlagenHineinholen`); abgelehnt bleibt sie absolut verknüpft und fehlt in der Sicherung.
+  `fields` liegt im Backend als opakes JSON — das Schema
   lebt nur in Dart, ein unbekannter `inputType` wirft beim Laden (`InputType.fromValue`). Tot:
   `FormTemplateField` (gemeint ist `FieldData`) und `getFormTemplateByName`.
 
