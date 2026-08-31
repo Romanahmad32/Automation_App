@@ -61,7 +61,7 @@ builder.Services.AddVersichererServices();
 builder.Services.AddSachgebieteServices();
 builder.Services.AddVorgaengeServices();
 builder.Services.AddFormTemplatesServices();
-builder.Services.AddBackupServices();
+builder.Services.AddBackupServices(builder.Configuration);
 builder.Services.AddDevSimulationServices(builder.Configuration);
 
 var app = builder.Build();

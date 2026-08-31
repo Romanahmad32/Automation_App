@@ -24,7 +24,9 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
                     ["WordAutomation:TemplatesDirectory"] = "Templates",
                     ["WordAutomation:OutputDirectory"] = "Generated",
                     // Tests sollen kein Word starten — Warmup nur in der echten App.
-                    ["PdfConversion:WarmupOnStartup"] = "false"
+                    ["PdfConversion:WarmupOnStartup"] = "false",
+                    // Keine echte Sicherung in den Ablageordner des Anwalts.
+                    ["Backup:AutomatischeSicherung"] = "false",
                 });
             });
         });

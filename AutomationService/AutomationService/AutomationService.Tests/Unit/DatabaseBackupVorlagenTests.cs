@@ -119,6 +119,32 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         File.Delete(sicherung);
     }
 
+    /// <summary>
+    /// Die Sicherung wandert mit #39 in einen Cloud-Ordner. Zugangsdaten haben
+    /// dort nichts verloren — das Postfach-Passwort (DPAPI) und der
+    /// MSAL-Tokencache liegen neben der Datenbank und sind ohnehin benutzer- und
+    /// maschinengebunden verschluesselt, auf dem zweiten Rechner also wertlos.
+    /// Der Schnitt ist eng: Datenbank plus Vorlagen, sonst nichts.
+    /// </summary>
+    [Fact]
+    public async Task Im_Archiv_liegen_nur_die_Datenbank_und_die_Vorlagen()
+    {
+        await LegeDatenbankAn();
+        await File.WriteAllTextAsync(Path.Combine(_dir, "mailbox_config.json"), "Zugang");
+        await File.WriteAllTextAsync(Path.Combine(_dir, "msal_token_cache.bin"), "Token");
+        await File.WriteAllTextAsync(Path.Combine(_vorlagen, "Anspruch.docx"), "Vorlage");
+
+        var sicherung = await _service.CreateBackupFileAsync();
+
+        using (var archiv = ZipFile.OpenRead(sicherung))
+        {
+            archiv.Entries.Select(e => e.FullName).Should().BeEquivalentTo(
+                [SicherungsArchiv.DatenbankEintrag, $"{SicherungsArchiv.VorlagenOrdner}/Anspruch.docx"]);
+        }
+
+        File.Delete(sicherung);
+    }
+
     [Fact]
     public async Task Zusaetzliche_Vorlagen_des_Anwenders_bleiben_beim_Einspielen_liegen()
     {
