@@ -18,8 +18,9 @@ Arbeit, die es nicht mehr gibt.
 
 ## `hooks/` — greifen von selbst
 
-- `dart-format.ps1` formatiert jede geschriebene `.dart`-Datei. Für Dart prüft die CI keine
-  Formatierung; ohne diesen Hook sammelt sich Rauschen in den Diffs und verdeckt die Änderung.
+- `dart-format.ps1` formatiert jede geschriebene `.dart`-Datei. Die CI prüft Dart-Formatierung
+  zwar auch (`dart format --set-exit-if-changed`), aber erst nach dem Commit; ohne diesen Hook
+  sammelt sich bis dahin Rauschen in den Diffs und verdeckt die Änderung.
 - `zweigname.ps1` hält das Anlegen oder Umbenennen eines Zweigs an, dessen Name kein `feature/`-,
   `bugfix/`- oder `dependabot/`-Präfix trägt.
 
