@@ -5,9 +5,10 @@ import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_n
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_status_chip.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_versand_zeile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_warte_hinweis.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/zeichen_text.dart';
 import 'package:flutter/material.dart';
 
-/// Eine Zeile in der Vorgänge-Verwaltung: Referenz, Parteien und Status, der
+/// Eine Zeile in der Vorgänge-Verwaltung: Zeichen, Parteien und Status, der
 /// statusabhängige „Nächster Schritt"-Sprung ([VorgangNaechsterSchritt]) samt
 /// Warte-Hinweis bei lange offenen Anfragen sowie Aktionen zum Bearbeiten und
 /// Löschen.
@@ -25,7 +26,10 @@ class VorgangVerwaltungTile extends StatelessWidget {
 
   String _untertitel() {
     final teile = <String>[
-      'Az. ${vorgang.aktenzeichen}',
+      // Die volle Referenz steht hier als Nebenzeile — oben trägt die Kachel
+      // das Zeichen. Nur, wenn sie sich davon unterscheidet: sonst stünde
+      // dieselbe Zeichenkette zweimal untereinander.
+      if (vorgang.referenz != vorgang.zeichen) vorgang.referenz,
       if ((vorgang.unfallDatum ?? '').trim().isNotEmpty)
         'Unfall v. ${vorgang.unfallDatum!.trim()}',
       vorgang.rechtsgebiet.displayName,
@@ -50,8 +54,8 @@ class VorgangVerwaltungTile extends StatelessWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text(
-                          vorgang.referenz,
+                        child: ZeichenText(
+                          vorgang,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),

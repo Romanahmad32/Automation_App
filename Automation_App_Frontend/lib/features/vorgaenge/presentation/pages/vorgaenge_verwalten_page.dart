@@ -42,7 +42,7 @@ class VorgaengeVerwaltenPage extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Vorgang löschen?'),
         content: Text(
-          'Der Vorgang „${vorgang.referenz}" wird endgültig gelöscht. '
+          'Der Vorgang „${vorgang.zeichen}" wird endgültig gelöscht. '
           'Dies kann nicht rückgängig gemacht werden.',
         ),
         actions: [

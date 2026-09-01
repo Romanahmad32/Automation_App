@@ -156,7 +156,7 @@ class VorgangPrefillMatcher {
             ? vorgang.referenz
             : antwort?.referenz;
       case FeldDatenquelle.aktenzeichen:
-        return vorgang.aktenzeichen;
+        return vorgang.zeichen;
       case FeldDatenquelle.rechtsgebiet:
         return vorgang.rechtsgebiet.displayName;
     }

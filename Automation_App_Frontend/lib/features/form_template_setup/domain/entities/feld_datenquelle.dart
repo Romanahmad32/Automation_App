@@ -79,7 +79,10 @@ enum FeldDatenquelle {
     value: 'polizeiVorgangsnummer',
   ),
   referenz(name: 'Referenz (vollständig)', value: 'referenz'),
-  aktenzeichen(name: 'Aktenzeichen (ohne Kennzeichen)', value: 'aktenzeichen'),
+  // Der `value` bleibt „aktenzeichen": er ist der Persistenzschlüssel der
+  // bereits angelegten Vorlagen. Nur der angezeigte Begriff wechselt auf
+  // „Zeichen" (§4.2).
+  aktenzeichen(name: 'Zeichen (ohne Kennzeichen)', value: 'aktenzeichen'),
   rechtsgebiet(name: 'Rechtsgebiet', value: 'rechtsgebiet');
 
   final String name;

@@ -3,9 +3,10 @@ import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_f
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_naechster_schritt.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_status_chip.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_warte_hinweis.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/zeichen_text.dart';
 import 'package:flutter/material.dart';
 
-/// Eine Zeile der Karte „Offene Vorgänge": Referenz, Parteien und Status, dazu
+/// Eine Zeile der Karte „Offene Vorgänge": Zeichen, Parteien und Status, dazu
 /// die bestehenden Hinweise auf lange Wartezeit bzw. fehlende Daten und der
 /// statusabhängige Sprung zur Weiterbearbeitung ([VorgangNaechsterSchritt]).
 /// Bewusst schlanker als die [VorgangVerwaltungTile] der Vorgangsverwaltung —
@@ -19,6 +20,12 @@ class DashboardVorgangZeile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final parteien = vorgang.parteienBezeichnung;
+    // Oben steht das Zeichen; die volle Referenz rutscht in die Nebenzeile —
+    // und entfällt dort, wenn sie sich vom Zeichen gar nicht unterscheidet.
+    final untertitel = [
+      if (parteien.isNotEmpty) parteien,
+      if (vorgang.referenz != vorgang.zeichen) vorgang.referenz,
+    ].join('  ·  ');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -31,8 +38,8 @@ class DashboardVorgangZeile extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        vorgang.referenz,
+                      child: ZeichenText(
+                        vorgang,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -45,9 +52,7 @@ class DashboardVorgangZeile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  parteien.isEmpty
-                      ? 'Az. ${vorgang.aktenzeichen}'
-                      : '$parteien  ·  Az. ${vorgang.aktenzeichen}',
+                  untertitel,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.outline,
                   ),

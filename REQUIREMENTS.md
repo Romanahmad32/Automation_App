@@ -78,24 +78,23 @@ Der **Vorgang** ist die zentrale Einheit der App und die Bezugsgröße für die 
 Vorgang steht für einen bearbeiteten Mandatsauftrag und bündelt an einer Stelle alle Daten, die im
 Lauf seiner Bearbeitung entstehen.
 
-- **[M] Bündelung statt Verstreuung:** Ein Vorgang verknüpft **Mandant ↔ Referenz/Aktenzeichen ↔
-  Antwort der Versicherung ↔ erstellte Dokumente ↔ Ablageort ↔ Versand**. Was in einem Schritt
-  erfasst wurde, steht in allen folgenden zur Verfügung.
-- **[M] Zuordnung über die Referenz:** Die Referenz/das Aktenzeichen identifiziert den Vorgang
-  eindeutig. Über sie wird eine eingehende Zentralruf-Antwort dem richtigen Vorgang zugeordnet
-  (siehe 4.3).
+- **[M] Bündelung statt Verstreuung:** Ein Vorgang verknüpft **Mandant ↔ Zeichen ↔ Antwort der
+  Versicherung ↔ erstellte Dokumente ↔ Ablageort ↔ Versand**. Was in einem Schritt erfasst
+  wurde, steht in allen folgenden zur Verfügung.
+- **[M] Zuordnung über die Referenz:** Die Referenz identifiziert den Vorgang eindeutig. Über
+  sie wird eine eingehende Zentralruf-Antwort dem richtigen Vorgang zugeordnet (siehe 4.3).
 - **[M] Nachvollziehbarer Lebenszyklus:** Jeder Vorgang hat einen ablesbaren Bearbeitungsstand:
   *Anfrage gestellt → Antwort eingegangen → Schreiben erstellt → abgelegt → abgeschlossen.*
 - **[M] Mehrere Schreiben je Vorgang:** Ein Vorgang bleibt nach dem ersten Anspruchsschreiben offen
-  und kann weitere Schreiben tragen (siehe 4.9). Aktenzeichen, Akte und Auftragsnummer bleiben
-  dabei dieselben.
+  und kann weitere Schreiben tragen (siehe 4.9). Zeichen, Akte und Auftragsnummer bleiben dabei
+  dieselben.
 - **[M] Rechtsgebiet:** Jeder Vorgang ist einem Rechtsgebiet zugeordnet (Verkehrsrecht als
   Schwerpunkt). Das Rechtsgebiet trägt die Einordnung im Sachgebiete-Register (siehe 6.2).
 - **[S] Übersicht als Startpunkt:** Beim Start zeigt die App die Vorgänge **nach Bearbeitungsstand
   gruppiert** — was auf eine Antwort wartet, wofür ein Schreiben fällig ist, was fertig, aber noch
   nicht abgeschlossen ist. Von dort führt ein Klick direkt in den nächsten Arbeitsschritt.
-- **[S] Wiederauffindbarkeit:** Vorgänge sind über Mandant, Kennzeichen, Aktenzeichen und
-  Versicherer auffindbar — auch abgeschlossene.
+- **[S] Wiederauffindbarkeit:** Vorgänge sind über Mandant, Kennzeichen, Zeichen und Versicherer
+  auffindbar — auch abgeschlossene.
 
 ## 4. Kernworkflow: Anspruchsschreiben Verkehrsunfall
 
@@ -120,7 +119,7 @@ dabei erfassten Daten gehören zu **einem Vorgang** (siehe 3).
 - **[M] Captcha-Anforderung:** Ein eventuelles Captcha muss der Anwalt selbst lösen können. Die
   Automatisierung muss daher sichtbar und eingreifbar sein (sichtbares Browserfenster). Eine
   offizielle API-Schnittstelle für Anwälte wäre zulässig, falls verfügbar (siehe 9).
-- **[M] Referenzformat:** Als Referenz/Aktenzeichen wird eingetragen:
+- **[M] Referenzformat:** Als Referenz wird eingetragen:
 
   ```
   [Laufende Auftragsnummer]/[Jahr] [Abteilung]_[Kennzeichen]
@@ -128,6 +127,13 @@ dabei erfassten Daten gehören zu **einem Vorgang** (siehe 3).
   ```
 
   Kfz-Kennzeichen werden durchgängig mit Bindestrich geschrieben (`HG-E 1427`).
+- **[M] Zeichen und Referenz sind zweierlei.** Der vordere Teil ohne Kennzeichen — `84/26 C03` —
+  heißt **Zeichen**. Er ist der Bezeichner der Kanzlei und steht in den Briefen, im Register, im
+  Mailbetreff, im Dateinamen und überall in der Oberfläche. Die volle **Referenz** mit angehängtem
+  Kennzeichen trägt allein die maschinelle Zuordnung der Zentralruf-Antwort (siehe 4.3) und
+  erscheint nur, wo sie genau diese Aufgabe erfüllt: im Zentralruf-Formular, beim Zuordnen einer
+  Antwort und als Nebenzeile am Vorgang. Der Begriff heißt **Zeichen** — nicht Aktenzeichen, nicht
+  Referenz; zwei Wörter für dieselbe Sache wären eines zu viel.
 - **[M]** Die laufende Auftragsnummer und die Kanzleidaten kommen aus den Einstellungen und werden
   nicht pro Vorgang eingetippt (siehe 7.1).
 
@@ -248,7 +254,7 @@ Gemeinsam:
   geht **nichts** hinaus, und der Grund steht im Klartext vor dem Anwalt. Eine Mail, der
   ausgerechnet das Anspruchsschreiben fehlt, wäre schlimmer als eine, die gar nicht erst hinausging.
 - **[M] Betreff und Mailtext aus Vorlage:** Betreff und Anschreiben stammen aus einer vom Anwalt
-  pflegbaren Textvorlage mit Platzhaltern (z. B. Aktenzeichen, Mandantenname, Schadennummer) — je
+  pflegbaren Textvorlage mit Platzhaltern (z. B. Zeichen, Mandantenname, Schadennummer) — je
   Empfängertyp eine eigene Vorlage. Ausgangsbestand ist die in der Kanzlei bereits verwendete
   Mailvorlage — sie wird einmalig übernommen, nicht nachgebaut. Solange diese Verwaltung nicht
   steht, belegt die App Anrede, Betreff und Bezugssatz aus den Vorgangsdaten vor; vor dem
@@ -333,7 +339,7 @@ Gemeinsam:
 ### 4.9 Folgekorrespondenz
 
 - **[M]** Zu einem offenen Vorgang lassen sich **weitere Schreiben** erstellen (Mahnung, Erinnerung,
-  Korrektur des ersten Schreibens). Aktenzeichen, Akte und Auftragsnummer bleiben unverändert; alle
+  Korrektur des ersten Schreibens). Zeichen, Akte und Auftragsnummer bleiben unverändert; alle
   Schreiben landen im selben Unterordner.
 - **[M]** Für ein Folgeschreiben stehen alle Daten des Vorgangs erneut vorbelegt bereit —
   einschließlich der Werte, die der Anwalt beim vorherigen Schreiben ergänzt oder korrigiert hat.
@@ -420,7 +426,7 @@ Register ohne manuelles Nachtragen aktuell zu halten.
 - **[M] Automatische Aufnahme:** Ein abgeschlossener Vorgang (siehe 4.8) erscheint als neue Zeile.
 - **[M] Spaltenschema je Zeile:**
   - laufende Nummer
-  - Aktenzeichen + Abteilung
+  - Zeichen (laufende Nr./Jahr samt Abteilung)
   - „Name ./. Gegner" samt Sachbestand/Datum
   - Rechtsgebiet
 - **[M] In-App-Ansicht:** Die Registerdaten sind in der App im exakten Spaltenschema einsehbar.
