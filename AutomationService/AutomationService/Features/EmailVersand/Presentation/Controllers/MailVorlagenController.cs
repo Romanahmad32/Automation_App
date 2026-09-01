@@ -1,0 +1,78 @@
+using AutomationService.Features.EmailVersand.Domain.Services;
+using AutomationService.Features.EmailVersand.Presentation.Dtos;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AutomationService.Features.EmailVersand.Presentation.Controllers;
+
+/// <summary>
+/// CRUD über die Mail-Textvorlagen (§4.7, §5.3) — der Bestand, aus dem der
+/// Anwalt beim Verfassen wählt und den er in den Einstellungen pflegt.
+/// Doppelte Namen ergeben 409, unbekannte Ids 404.
+///
+/// Eigener Controller statt eines weiteren Zweigs im
+/// <see cref="EmailVersandController"/>: Der versendet, dieser verwaltet — und
+/// der andere ist schon lang genug.
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+public class MailVorlagenController(IMailVorlagenRepository repository) : ControllerBase
+{
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<MailVorlageDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<MailVorlageDto>>> GetAll(
+        CancellationToken cancellationToken)
+    {
+        var vorlagen = await repository.GetAllAsync(cancellationToken);
+        return Ok(vorlagen.Select(MailVorlageDto.From).ToList());
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(MailVorlageDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<MailVorlageDto>> Create(
+        [FromBody] SpeichereMailVorlageDto dto,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var angelegt = await repository.CreateAsync(dto.ToEntity(), cancellationToken);
+            return CreatedAtAction(nameof(GetAll), MailVorlageDto.From(angelegt));
+        }
+        catch (MailVorlageNameConflictException exception)
+        {
+            return Conflict(exception.Message);
+        }
+    }
+
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof(MailVorlageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<MailVorlageDto>> Update(
+        int id,
+        [FromBody] MailVorlageDto dto,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var geaendert = await repository.UpdateAsync(
+                (dto with { Id = id }).ToEntity(), cancellationToken);
+            return geaendert is null
+                ? NotFound($"Mail-Vorlage mit ID {id} nicht gefunden")
+                : Ok(MailVorlageDto.From(geaendert));
+        }
+        catch (MailVorlageNameConflictException exception)
+        {
+            return Conflict(exception.Message);
+        }
+    }
+
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        var entfernt = await repository.DeleteAsync(id, cancellationToken);
+        return entfernt ? NoContent() : NotFound($"Mail-Vorlage mit ID {id} nicht gefunden");
+    }
+}
