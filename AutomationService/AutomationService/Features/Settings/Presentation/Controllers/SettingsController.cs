@@ -83,7 +83,9 @@ public class SettingsController(
         // Betrag — auch nicht als Vorbelegung.
         if (dtos.Any(dto => dto.Betrag < 0))
         {
-            return BadRequest("Ein vorbelegter Betrag darf nicht negativ sein.");
+            return Problem(
+                detail: "Ein vorbelegter Betrag darf nicht negativ sein.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var saved = await schadenspositionen.SaveAsync(

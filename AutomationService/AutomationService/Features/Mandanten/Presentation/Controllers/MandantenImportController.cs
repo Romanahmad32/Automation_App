@@ -31,9 +31,10 @@ public class MandantenImportController(IMandantenImport import) : ControllerBase
         var version = datei.Version ?? UnterstuetzteVersion;
         if (version != UnterstuetzteVersion)
         {
-            return BadRequest(
-                $"Importformat der Fassung {version} kann nicht gelesen werden — " +
-                $"erwartet wird {UnterstuetzteVersion}.");
+            return Problem(
+                detail: $"Importformat der Fassung {version} kann nicht gelesen werden — " +
+                    $"erwartet wird {UnterstuetzteVersion}.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var auftrag = new MandantenImportAuftrag(
