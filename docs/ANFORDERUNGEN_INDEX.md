@@ -71,7 +71,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 | 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, Standardpositionen der Schadensaufstellung, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |
 | 4.6 | Ablage in der Akte; Ablageort am Vorgang festhalten |
-| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, Textvorlagen, Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
+| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, gewählte Textvorlage mit Platzhaltern, Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
 | 4.8 | Auftragsabschluss als eigener Schritt: erledigt, Auftragsnummer weiterzählen, Registereintrag |
 | 4.9 | Folgekorrespondenz zu einem offenen Vorgang |
 | 4.10 | Erstkontakt über die Kanzlei-Website (durchgehend **[K]**) |
@@ -80,7 +80,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, mehrere Kennzeichen/Akten, Duplikatschutz |
+| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, mehrere Kennzeichen/Akten, Duplikatschutz, persönliche Grußformel |
 | 5.2 | Versicherer-Wissensbasis aus Zentralruf-Antworten; Lücken aus früherem Wissen füllen |
 | 5.3 | Vorlagenverwaltung durch den Anwalt selbst: Word-Vorlagen, Felder, Mail-Textvorlagen |
 
