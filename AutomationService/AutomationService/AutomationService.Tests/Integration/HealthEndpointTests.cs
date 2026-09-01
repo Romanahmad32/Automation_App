@@ -28,9 +28,10 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
                 {
                     // Tests sollen kein Word starten — Warmup nur in der echten App.
                     ["PdfConversion:WarmupOnStartup"] = "false",
-                    // Und keine Sicherung in den OneDrive-Ordner des Anwalts
-                    // schreiben: Dieser Host faehrt denselben Program.cs gegen
-                    // dieselbe Datenbank unter %APPDATA%.
+                    // Und keine automatische Sicherung anstossen — die
+                    // Datenbank selbst liegt dank TestAppDataUmgebung schon in
+                    // einem Temp-Verzeichnis, dieser Schalter ist nur der
+                    // zusaetzliche Not-Aus.
                     ["Backup:AutomatischeSicherung"] = "false",
                 });
             });
