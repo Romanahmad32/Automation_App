@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
@@ -128,42 +129,18 @@ class FormTemplateRow extends StatelessWidget {
     }
   }
 
-  void _showDeleteDialog(BuildContext context, int templateId) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          icon: Icon(
-            Icons.warning_rounded,
-            size: 40,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          title: const Text('Löschen bestätigen'),
-          content: const Text(
-            'Soll die Vorlage wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Abbrechen'),
-            ),
-            FilledButton(
-              // UX: Destructive action clearly marked with error colors
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
-              ),
-              onPressed: () {
-                context.read<FormTemplateOverviewBloc>().add(
-                  DeleteFormTemplateEvent(templateId: templateId),
-                );
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Löschen'),
-            ),
-          ],
-        );
-      },
+  Future<void> _showDeleteDialog(BuildContext context, int templateId) async {
+    final bloc = context.read<FormTemplateOverviewBloc>();
+    final bestaetigt = await bestaetigen(
+      context,
+      icon: Icons.warning_rounded,
+      titel: 'Löschen bestätigen',
+      text:
+          'Soll die Vorlage wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.',
+      bestaetigung: 'Löschen',
+      destruktiv: true,
     );
+    if (!bestaetigt) return;
+    bloc.add(DeleteFormTemplateEvent(templateId: templateId));
   }
 }
