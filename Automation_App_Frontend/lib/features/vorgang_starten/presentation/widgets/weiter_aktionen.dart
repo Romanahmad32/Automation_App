@@ -1,3 +1,4 @@
+import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:flutter/material.dart';
 
 /// Panel, das nach dem Speichern eines Vorgangs erscheint (§3): bietet an,
@@ -35,7 +36,8 @@ class WeiterAktionen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Vorgang $referenz gespeichert. Direkt weiterarbeiten?',
+                    'Vorgang ${ReferenzTeile.zeichenAus(referenz)} gespeichert. '
+                    'Direkt weiterarbeiten?',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.onSecondaryContainer,
                     ),

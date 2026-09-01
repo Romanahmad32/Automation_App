@@ -68,7 +68,7 @@ class _VorgangSelectorState extends State<VorgangSelector> {
 
   String _label(Vorgang vorgang) {
     final teile = <String>[
-      vorgang.referenz,
+      vorgang.zeichen,
       if ((vorgang.mandantName ?? '').trim().isNotEmpty) vorgang.mandantName!,
     ];
     return '${teile.join(' · ')}  (${vorgang.status.displayName})';

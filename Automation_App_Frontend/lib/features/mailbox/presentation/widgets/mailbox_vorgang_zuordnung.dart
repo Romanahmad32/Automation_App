@@ -71,7 +71,7 @@ class MailboxVorgangZuordnung extends StatelessWidget {
     final theme = Theme.of(context);
     final akzent = theme.colorScheme.primary;
     final untertitel = [
-      ziel.aktenzeichen,
+      ziel.zeichen,
       if (ziel.parteienBezeichnung.isNotEmpty) ziel.parteienBezeichnung,
     ].join(' · ');
 

@@ -102,7 +102,7 @@ public static class RegisterZeilenBau
     }
 
     /// <summary>
-    /// Spalte 2. Wie der Getter <c>Vorgang.aktenzeichen</c> im Frontend: aus
+    /// Spalte 2. Wie der Getter <c>Vorgang.zeichen</c> im Frontend: aus
     /// den Bestandteilen zusammengesetzt, sonst die volle Referenz — die trägt
     /// zusätzlich das Kennzeichen und ist als Notnagel lesbar.
     /// </summary>

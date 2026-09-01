@@ -199,7 +199,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
         return (
           vorgang: null,
           fehler:
-              'Der Vorgang „${vorgang.referenz}" ist im Speicher des '
+              'Der Vorgang „${vorgang.zeichen}" ist im Speicher des '
               'Hintergrunddienstes nicht vorhanden; die Referenz kann nicht '
               'geändert werden.',
         );

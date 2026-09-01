@@ -42,7 +42,7 @@ class VorgaengeVerwaltenPage extends StatelessWidget {
       context,
       titel: 'Vorgang löschen?',
       text:
-          'Der Vorgang „${vorgang.referenz}" wird endgültig gelöscht. '
+          'Der Vorgang „${vorgang.zeichen}" wird endgültig gelöscht. '
           'Dies kann nicht rückgängig gemacht werden.',
       bestaetigung: 'Löschen',
       destruktiv: true,

@@ -1,5 +1,6 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/datum_format.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -51,10 +52,11 @@ class DemoVorgangButton extends StatelessWidget {
     );
 
     if (!context.mounted) return;
+    final zeichen = ReferenzTeile.zeichenAus(referenz);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Demo-Vorgang „$referenz" angelegt (Status: Angefragt). Nächste '
+          'Demo-Vorgang „$zeichen" angelegt (Status: Angefragt). Nächste '
           'Schritte über das Simulations-Menü des Vorgangs.',
         ),
         duration: const Duration(seconds: 4),
