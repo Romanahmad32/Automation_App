@@ -140,19 +140,26 @@ $unterschrift''';
   /// „Sehr geehrter Herr Müller" nur, wenn ausschließlich der Mandant
   /// angeschrieben wird. Sobald die Versicherung mitliest, gilt die neutrale
   /// Form — eine an zwei Empfänger gerichtete Mail kann nur eine Anrede haben.
-  String anredeFuer(List<String> empfaenger) {
+  String anredeFuer(List<String> empfaenger) =>
+      nurAnDenMandanten(empfaenger) && mandant != null
+      ? mandant!.briefanrede
+      : 'Sehr geehrte Damen und Herren';
+
+  /// Ob im Feld „An" ausschließlich der Mandant steht.
+  ///
+  /// Öffentlich, weil daran zwei Dinge hängen: die Anrede oben **und** die
+  /// persönliche Grußformel in einer Mail-Textvorlage (§4.7). Ein persönlicher
+  /// Gruß, den die gegnerische Versicherung mitliest, wäre keiner.
+  bool nurAnDenMandanten(List<String> empfaenger) {
     final adressen = empfaenger
         .map((adresse) => adresse.trim().toLowerCase())
         .where((adresse) => adresse.isNotEmpty)
         .toSet();
     final mandantAdresse = mandant?.emailAdresse.trim().toLowerCase() ?? '';
 
-    final nurMandant =
-        mandantAdresse.isNotEmpty &&
+    return mandantAdresse.isNotEmpty &&
         adressen.isNotEmpty &&
         adressen.every((adresse) => adresse == mandantAdresse);
-
-    return nurMandant ? mandant!.briefanrede : 'Sehr geehrte Damen und Herren';
   }
 
   /// Ein vollständiger Entwurf für den Einstieg: Vorschläge als Empfänger,

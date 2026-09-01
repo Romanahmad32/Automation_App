@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
+import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
@@ -561,6 +562,72 @@ void main() {
 
     expect(gebaut.cubit.state.entwurf.anhangNamen, isEmpty);
     await gebaut.cubit.close();
+  });
+
+  group('gewählte Textvorlage (§4.7)', () {
+    const vorlage = MailVorlage(
+      id: 1,
+      name: 'Anschreiben an den Mandanten',
+      betreff:
+          'Ihre Verkehrsunfallsache {{MandantName}} ./. {{VersichererName}}',
+      text: '{{Anrede}},\n{{Grussformel}},\n\nvielen Dank für Ihr Vertrauen.',
+    );
+
+    final mitGruss = mandant.copyWith(
+      persoenlicheGrussformel: 'Salamu aleikum',
+    );
+
+    test('ersetzt Betreff und Text und füllt die Platzhalter', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      gebaut.cubit.waehleVorlage(vorlage);
+
+      final entwurf = gebaut.cubit.state.entwurf;
+      expect(
+        entwurf.betreff,
+        'Ihre Verkehrsunfallsache Klaus Müller ./. HUK-COBURG',
+      );
+      expect(entwurf.text, startsWith('Sehr geehrte Damen und Herren,\n'));
+      expect(gebaut.cubit.state.gewaehlteVorlageId, 1);
+      await gebaut.cubit.close();
+    });
+
+    test('der Text gilt danach als selbst geschrieben', () async {
+      // Sonst zöge die automatische Anrede ihn beim nächsten Empfänger wieder
+      // nach — und die eben gewählte Vorlage wäre wieder weg.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      gebaut.cubit.waehleVorlage(vorlage);
+      final nachDerWahl = gebaut.cubit.state.entwurf.text;
+      gebaut.cubit.empfaengerHinzufuegen('kanzlei@example.de');
+
+      expect(gebaut.cubit.state.textSelbstGeschrieben, isTrue);
+      expect(gebaut.cubit.state.entwurf.text, nachDerWahl);
+      await gebaut.cubit.close();
+    });
+
+    test('die Grußformel geht nur an den Mandanten allein', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      // Vorbelegt stehen Mandant und Versicherung gemeinsam im Feld „An".
+      gebaut.cubit.waehleVorlage(vorlage);
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        isNot(contains('Salamu aleikum')),
+      );
+
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+      gebaut.cubit.waehleVorlage(vorlage);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,\nSalamu aleikum,\n'),
+      );
+      await gebaut.cubit.close();
+    });
   });
 
   test('ein abgebrochener Dialog lässt starte() still auslaufen', () async {

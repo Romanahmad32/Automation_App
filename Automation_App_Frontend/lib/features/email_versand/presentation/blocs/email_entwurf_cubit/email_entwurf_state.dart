@@ -85,6 +85,11 @@ class EmailEntwurfState extends Equatable {
   /// eines Empfängers, was er schon getippt hat.
   final bool textSelbstGeschrieben;
 
+  /// Die Nummer der gewählten Mail-Textvorlage (§4.7); 0 heisst „keine".
+  /// Steht hier, damit die Auswahlliste zeigt, welche gerade gilt — der Text
+  /// allein verrät es nicht mehr, sobald der Anwalt darin geschrieben hat.
+  final int gewaehlteVorlageId;
+
   const EmailEntwurfState({
     this.entwurf = const EmailEntwurf(),
     this.vorschlaege = const [],
@@ -102,6 +107,7 @@ class EmailEntwurfState extends Equatable {
     this.offenKopie = '',
     this.versandVersucht = false,
     this.textSelbstGeschrieben = false,
+    this.gewaehlteVorlageId = 0,
   });
 
   /// Was der Mail noch fehlt, je Feld (§4.7).
@@ -172,6 +178,7 @@ class EmailEntwurfState extends Equatable {
     String? offenKopie,
     bool? versandVersucht,
     bool? textSelbstGeschrieben,
+    int? gewaehlteVorlageId,
   }) {
     return EmailEntwurfState(
       entwurf: entwurf ?? this.entwurf,
@@ -191,6 +198,7 @@ class EmailEntwurfState extends Equatable {
       versandVersucht: versandVersucht ?? this.versandVersucht,
       textSelbstGeschrieben:
           textSelbstGeschrieben ?? this.textSelbstGeschrieben,
+      gewaehlteVorlageId: gewaehlteVorlageId ?? this.gewaehlteVorlageId,
     );
   }
 
@@ -212,5 +220,6 @@ class EmailEntwurfState extends Equatable {
     offenKopie,
     versandVersucht,
     textSelbstGeschrieben,
+    gewaehlteVorlageId,
   ];
 }

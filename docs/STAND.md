@@ -36,9 +36,13 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   holen. Eine **Vorschau** zeigt jederzeit, was hinausgeht.
   Die **Signatur** für den Direktversand wird einmal aus Outlook übernommen
   (Einstellungen → E-Mail-Signatur). Hängen an einer erfassten Postfach-Antwort Dateien, stehen
-  sie beim Verfassen zum Anklicken bereit (§4.3). **Noch offen:** die pflegbaren
-  Mail-Textvorlagen je Empfängertyp
-  (§4.7/§5.3); dafür ist `EmailEntwurfErzeuger` die vorgesehene Stelle.
+  sie beim Verfassen zum Anklicken bereit (§4.3). **Mail-Textvorlagen** sind pflegbar
+  (Einstellungen → E-Mail); die gewählte ersetzt Betreff und Text, ihre `{{Platzhalter}}` füllt
+  `MailVorlagenFueller` aus dem Vorgang — mit `{{Anrede}}` und `{{Grussformel}}` als eigenen
+  Namen und der Regel, dass eine Zeile ohne gefüllten Platzhalter ganz entfällt. Gewählt wird von
+  Hand: Standardmäßig gehen Mandant und Versicherung eine gemeinsame Mail, und dort passt ein
+  Mandantenanschreiben nicht hinein (§4.7/§5.3). Ausgangsbestand ist die Outlook-Vorlage der
+  Kanzlei.
 - **Sicherung** — das `backup`-Feature schreibt Datenbank und Vorlagen als ZIP
   (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`). Ist in den Einstellungen eine
   **Sicherungsablage** gewählt (gedacht: ein OneDrive-Ordner), sichert die App zusätzlich beim

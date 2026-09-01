@@ -39,7 +39,7 @@ public static class MailVorlagenVorgabe
 
     public const string MandantenanschreibenBetreff =
         "Ihre Verkehrsunfallsache {{MandantName}} ./. {{VersichererName}} · "
-        + "Unser Zeichen: {{Aktenzeichen}}";
+        + "Unser Zeichen: {{Referenz}}";
 
     /// <summary>
     /// Der Vorlagentext, dessen Zeilen mit LF enden — <b>unabhängig davon, wie

@@ -5,7 +5,9 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
+import 'package:automation_app/features/email_versand/domain/services/mail_vorlagen_fueller.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/entwurf_quellen.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/outlook_anhaenge_griff.dart';
@@ -98,6 +100,42 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     if (isClosed) return;
     emit(
       state.copyWith(bereitschaft: auskuenfte.$1, outlookStand: auskuenfte.$2),
+    );
+  }
+
+  /// Übernimmt eine gewählte Mail-Textvorlage (§4.7): Betreff und Text kommen
+  /// aus ihr, die `{{Platzhalter}}` füllt [MailVorlagenFueller] aus Vorgang
+  /// und Mandant.
+  ///
+  /// Danach gilt der Text als selbst geschrieben — die automatische Anrede
+  /// zieht ihn nicht mehr nach. Sie täte es beim nächsten Empfänger, den der
+  /// Anwalt hinzufügt, und die eben gewählte Vorlage wäre wieder weg.
+  ///
+  /// **Die Anrede der Vorlage richtet sich nach dem Feld „An" in diesem
+  /// Augenblick.** Wer die Vorlage wählt und danach die Versicherung
+  /// hinzunimmt, hat eine Mandantenanrede vor einem Mitleser stehen — das
+  /// sieht er im Text und ändert es; die App schreibt ihm nicht hinein.
+  void waehleVorlage(MailVorlage vorlage) {
+    final erzeuger = _erzeuger;
+    if (erzeuger == null) return;
+
+    final empfaenger = state.entwurf.an;
+    final gefuellt = MailVorlagenFueller(
+      anrede: erzeuger.anredeFuer(empfaenger),
+      nurAnDenMandanten: erzeuger.nurAnDenMandanten(empfaenger),
+      vorgang: erzeuger.vorgang,
+      mandant: erzeuger.mandant,
+    ).fuelleVorlage(vorlage);
+
+    emit(
+      state.copyWith(
+        entwurf: state.entwurf.copyWith(
+          betreff: gefuellt.betreff,
+          text: gefuellt.text,
+        ),
+        textSelbstGeschrieben: true,
+        gewaehlteVorlageId: vorlage.id,
+      ),
     );
   }
 
