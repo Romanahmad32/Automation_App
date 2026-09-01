@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:automation_app/core/general_classes/failures/als_either.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/word_automation/data/datasources/word_automation_datasource.dart';
@@ -19,13 +20,8 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
   WordAutomationRepositoryImpl(this.datasource);
 
   @override
-  Future<Either<Failure, VorlagenUebersicht>> getVorlagenUebersicht() async {
-    try {
-      return Right(await datasource.getVorlagenUebersicht());
-    } catch (e) {
-      return Left(ServerFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, VorlagenUebersicht>> getVorlagenUebersicht() =>
+      alsEither(() => datasource.getVorlagenUebersicht());
 
   @override
   Future<Either<Failure, GeneratedDocument>> fillOutTemplate(
@@ -35,56 +31,34 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
     bool? vorsteuerabzugsberechtigt,
     String? outputFileName,
     String? vorgangSchluessel,
-  }) async {
-    try {
-      final result = await datasource.fillOutTemplate(
-        path,
-        values,
-        damageListing: damageListing,
-        vorsteuerabzugsberechtigt: vorsteuerabzugsberechtigt,
-        outputFileName: outputFileName,
-        vorgangSchluessel: vorgangSchluessel,
-      );
-      return Right(result);
-    } catch (e) {
-      return Left(ServerFailure(message: ausnahmeText(e)));
-    }
-  }
+  }) => alsEither(
+    () => datasource.fillOutTemplate(
+      path,
+      values,
+      damageListing: damageListing,
+      vorsteuerabzugsberechtigt: vorsteuerabzugsberechtigt,
+      outputFileName: outputFileName,
+      vorgangSchluessel: vorgangSchluessel,
+    ),
+  );
 
   @override
   Future<Either<Failure, ArbeitsordnerAufraeumung>> arbeitsordnerAufraeumen(
     String vorgangSchluessel,
-  ) async {
-    try {
-      return Right(await datasource.arbeitsordnerAufraeumen(vorgangSchluessel));
-    } catch (e) {
-      return Left(ServerFailure(message: ausnahmeText(e)));
-    }
-  }
+  ) => alsEither(() => datasource.arbeitsordnerAufraeumen(vorgangSchluessel));
 
   @override
-  Future<Either<Failure, Uint8List>> convertDocxToPdf(
-    String docxFilePath,
-  ) async {
-    try {
-      final result = await datasource.convertDocxToPdf(docxFilePath);
-      return Right(result);
-    } catch (e) {
-      return Left(ServerFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, Uint8List>> convertDocxToPdf(String docxFilePath) =>
+      alsEither(() => datasource.convertDocxToPdf(docxFilePath));
 
   @override
-  Future<Either<Failure, String>> erzeugePdfFassung(String docxFilePath) async {
-    try {
-      final bytes = await datasource.convertDocxToPdf(docxFilePath);
-      final ziel = _pdfPfadNeben(docxFilePath);
-      await File(ziel).writeAsBytes(bytes, flush: true);
-      return Right(ziel);
-    } catch (e) {
-      return Left(ServerFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, String>> erzeugePdfFassung(String docxFilePath) =>
+      alsEither(() async {
+        final bytes = await datasource.convertDocxToPdf(docxFilePath);
+        final ziel = _pdfPfadNeben(docxFilePath);
+        await File(ziel).writeAsBytes(bytes, flush: true);
+        return ziel;
+      });
 
   /// Derselbe Pfad mit `.pdf` statt der bisherigen Endung — gleicher Ordner,
   /// gleicher Name. So gehören Word- und PDF-Fassung in der Akte sichtbar
@@ -104,18 +78,13 @@ class WordAutomationRepositoryImpl implements WordAutomationRepository {
     bool applyVat, {
     double? geschaeftsgebuehrOverride,
     double? auslagenpauschaleOverride,
-  }) async {
-    try {
-      final result = await datasource.calculateRvgFees(
-        gegenstandswert,
-        gebuehrensatz,
-        applyVat,
-        geschaeftsgebuehrOverride: geschaeftsgebuehrOverride,
-        auslagenpauschaleOverride: auslagenpauschaleOverride,
-      );
-      return Right(result);
-    } catch (e) {
-      return Left(ServerFailure(message: ausnahmeText(e)));
-    }
-  }
+  }) => alsEither(
+    () => datasource.calculateRvgFees(
+      gegenstandswert,
+      gebuehrensatz,
+      applyVat,
+      geschaeftsgebuehrOverride: geschaeftsgebuehrOverride,
+      auslagenpauschaleOverride: auslagenpauschaleOverride,
+    ),
+  );
 }

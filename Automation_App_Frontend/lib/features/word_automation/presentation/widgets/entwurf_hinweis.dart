@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:flutter/material.dart';
@@ -27,16 +28,15 @@ class EntwurfHinweis extends StatelessWidget {
   /// sein Datum, sonst hieße „von 14:32 Uhr" auch bei einem drei Wochen alten
   /// Entwurf, er sei von eben.
   static String beschriftung(DateTime zeitpunkt, DateTime jetzt) {
-    final stunde = zeitpunkt.hour.toString().padLeft(2, '0');
-    final minute = zeitpunkt.minute.toString().padLeft(2, '0');
+    final uhrzeit = deutscheUhrzeit(zeitpunkt);
     final vonHeute =
         zeitpunkt.year == jetzt.year &&
         zeitpunkt.month == jetzt.month &&
         zeitpunkt.day == jetzt.day;
     return vonHeute
-        ? 'Angefangener Stand von $stunde:$minute Uhr'
+        ? 'Angefangener Stand von $uhrzeit Uhr'
         : 'Angefangener Stand vom ${GermanDateField.formatDate(zeitpunkt)}, '
-              '$stunde:$minute Uhr';
+              '$uhrzeit Uhr';
   }
 
   @override

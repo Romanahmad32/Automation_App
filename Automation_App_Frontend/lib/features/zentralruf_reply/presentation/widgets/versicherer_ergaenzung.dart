@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/versicherer/domain/entities/versicherer.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_feld.dart';
@@ -45,10 +46,7 @@ class VersichererErgaenzung {
     if (werte.isEmpty) return leer;
 
     final stand = bekannt.zuletztAktualisiertAm;
-    final standTeil = stand == null
-        ? ''
-        : ' (Stand ${stand.day.toString().padLeft(2, '0')}.'
-              '${stand.month.toString().padLeft(2, '0')}.${stand.year})';
+    final standTeil = stand == null ? '' : ' (Stand ${deutschesDatum(stand)})';
     return VersichererErgaenzung(
       werte: werte,
       hinweis: 'ergänzt aus früheren Antworten$standTeil',

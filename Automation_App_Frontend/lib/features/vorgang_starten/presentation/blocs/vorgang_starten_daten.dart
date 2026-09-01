@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
@@ -65,9 +66,7 @@ class VorgangStartenDaten {
   String? get unfallDatumText {
     final tag = unfalltag;
     if (tag == null) return null;
-    final t = tag.day.toString().padLeft(2, '0');
-    final m = tag.month.toString().padLeft(2, '0');
-    return '$t.$m.${tag.year}';
+    return deutschesDatum(tag);
   }
 
   /// Leeren String zu null normalisieren (für optionale Persistenzfelder).
