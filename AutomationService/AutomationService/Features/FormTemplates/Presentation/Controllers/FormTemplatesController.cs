@@ -39,17 +39,10 @@ public class FormTemplatesController(
         [FromBody] CreateFormTemplateDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var ordner = VorlagenOrdnerVorgabe.Ermittle(db);
-            var created = await repository.CreateAsync(
-                RelativiertePfade(dto.ToEntity(), ordner), cancellationToken);
-            return CreatedAtAction(nameof(GetAll), FormTemplateDto.From(created, ordner));
-        }
-        catch (FormTemplateNameConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var ordner = VorlagenOrdnerVorgabe.Ermittle(db);
+        var created = await repository.CreateAsync(
+            RelativiertePfade(dto.ToEntity(), ordner), cancellationToken);
+        return CreatedAtAction(nameof(GetAll), FormTemplateDto.From(created, ordner));
     }
 
     [HttpPut("{id:int}")]
@@ -61,19 +54,12 @@ public class FormTemplatesController(
         [FromBody] FormTemplateDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var ordner = VorlagenOrdnerVorgabe.Ermittle(db);
-            var updated = await repository.UpdateAsync(
-                RelativiertePfade((dto with { Id = id }).ToEntity(), ordner), cancellationToken);
-            return updated is null
-                ? NotFound($"Vorlage mit ID {id} nicht gefunden")
-                : Ok(FormTemplateDto.From(updated, ordner));
-        }
-        catch (FormTemplateNameConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var ordner = VorlagenOrdnerVorgabe.Ermittle(db);
+        var updated = await repository.UpdateAsync(
+            RelativiertePfade((dto with { Id = id }).ToEntity(), ordner), cancellationToken);
+        return updated is null
+            ? Problem(detail: $"Vorlage mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound)
+            : Ok(FormTemplateDto.From(updated, ordner));
     }
 
     static FormTemplateEntity RelativiertePfade(FormTemplateEntity entity, string ordner)
@@ -89,6 +75,8 @@ public class FormTemplatesController(
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var removed = await repository.DeleteAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound($"Vorlage mit ID {id} nicht gefunden");
+        return removed
+            ? NoContent()
+            : Problem(detail: $"Vorlage mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound);
     }
 }

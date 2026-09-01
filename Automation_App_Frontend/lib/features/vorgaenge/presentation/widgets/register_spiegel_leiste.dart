@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:flutter/material.dart';
 
@@ -58,10 +59,7 @@ class RegisterSpiegelLeiste extends StatelessWidget {
     final zeitpunkt = stand.geschriebenAm;
     final zusatz = zeitpunkt == null
         ? ''
-        : ' · ${zeitpunkt.day.toString().padLeft(2, '0')}.'
-              '${zeitpunkt.month.toString().padLeft(2, '0')}.${zeitpunkt.year} '
-              '${zeitpunkt.hour.toString().padLeft(2, '0')}:'
-              '${zeitpunkt.minute.toString().padLeft(2, '0')}';
+        : ' · ${deutschesDatumMitUhrzeit(zeitpunkt)}';
 
     return _zeile(
       theme,

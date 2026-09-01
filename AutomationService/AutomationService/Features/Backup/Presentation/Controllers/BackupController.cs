@@ -46,22 +46,17 @@ public class BackupController(
     {
         if (datei is null || datei.Length == 0)
         {
-            return BadRequest("Keine Sicherungsdatei übermittelt.");
+            return Problem(
+                detail: "Keine Sicherungsdatei übermittelt.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
-        try
-        {
-            await using var stream = datei.OpenReadStream();
-            var ergebnis = await backupService.ImportBackupAsync(stream, cancellationToken);
-            var message = "Sicherung eingespielt. Bitte die App neu starten, damit alle "
-                + "Ansichten die wiederhergestellten Daten laden."
-                + Vorlagenhinweis(ergebnis.UebersprungeneVorlagen);
-            return Ok(new { message });
-        }
-        catch (InvalidBackupException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        await using var stream = datei.OpenReadStream();
+        var ergebnis = await backupService.ImportBackupAsync(stream, cancellationToken);
+        var message = "Sicherung eingespielt. Bitte die App neu starten, damit alle "
+            + "Ansichten die wiederhergestellten Daten laden."
+            + Vorlagenhinweis(ergebnis.UebersprungeneVorlagen);
+        return Ok(new { message });
     }
 
     /// <summary>
@@ -85,25 +80,18 @@ public class BackupController(
     public async Task<ActionResult<UebernahmeErgebnisDto>> Uebernehmen(
         CancellationToken cancellationToken)
     {
-        try
+        var ergebnis = await uebergabe.UebernehmenAsync(cancellationToken);
+        if (ergebnis.Rechnername is null)
         {
-            var ergebnis = await uebergabe.UebernehmenAsync(cancellationToken);
-            if (ergebnis.Rechnername is null)
-            {
-                return Ok(new UebernahmeErgebnisDto(
-                    false, null, "Es liegt kein neuerer Stand zur Übernahme bereit."));
-            }
-
             return Ok(new UebernahmeErgebnisDto(
-                true,
-                ergebnis.Rechnername,
-                $"Stand von {ergebnis.Rechnername} übernommen."
-                + Vorlagenhinweis(ergebnis.UebersprungeneVorlagen)));
+                false, null, "Es liegt kein neuerer Stand zur Übernahme bereit."));
         }
-        catch (InvalidBackupException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return Ok(new UebernahmeErgebnisDto(
+            true,
+            ergebnis.Rechnername,
+            $"Stand von {ergebnis.Rechnername} übernommen."
+            + Vorlagenhinweis(ergebnis.UebersprungeneVorlagen)));
     }
 
     /// <summary>

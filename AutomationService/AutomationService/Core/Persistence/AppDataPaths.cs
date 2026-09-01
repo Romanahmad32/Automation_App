@@ -9,12 +9,24 @@ namespace AutomationService.Core.Persistence;
 /// </summary>
 public static class AppDataPaths
 {
+    /// <summary>
+    /// Nur für Tests: lenkt jeden Pfad dieser Klasse in ein anderes
+    /// Wurzelverzeichnis um, statt in %APPDATA%\AutomationService. Bleibt im
+    /// ausgelieferten Programm null — dort gilt immer der echte Ordner.
+    /// Gesetzt wird sie genau einmal, bevor ein Test läuft (siehe
+    /// <c>AutomationService.Tests.Support.TestAppDataUmgebung</c>), nie aus
+    /// Produktionscode heraus.
+    /// </summary>
+    public static string? WurzelFuerTests { get; set; }
+
     /// <summary>Verzeichnis %APPDATA%\AutomationService (wird angelegt, falls nötig).</summary>
     public static string EnsureAppDataDirectory()
     {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "AutomationService");
+        var directory = WurzelFuerTests is { Length: > 0 }
+            ? WurzelFuerTests
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "AutomationService");
         Directory.CreateDirectory(directory);
         return directory;
     }
