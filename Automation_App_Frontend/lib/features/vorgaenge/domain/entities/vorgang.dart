@@ -166,6 +166,16 @@ class Vorgang extends Equatable {
     return referenz;
   }
 
+  /// Die volle [referenz] als Nebenzeile unter dem [zeichen] — oder `null`,
+  /// wenn sie dort nichts hinzufügt.
+  ///
+  /// Beides steht auf Vorgangskachel und Startseite untereinander: oben das
+  /// Zeichen, darunter die Referenz, deren Kennzeichen die Zentralruf-Zuordnung
+  /// trägt. Lässt sich die Referenz nicht zerlegen (freihändig eingetragen),
+  /// *ist* das Zeichen die Referenz — dann stünde dieselbe Zeichenkette zweimal
+  /// untereinander, und die Nebenzeile entfällt.
+  String? get referenzZusatz => referenz == zeichen ? null : referenz;
+
   /// Was in der vierten Registerspalte steht. Muss dieselbe Antwort geben wie
   /// `RechtsgebietAnzeige.Fuer` im Backend — sonst zeigt der Bildschirm ein
   /// anderes Sachgebiet an, als in der Register-Datei steht.

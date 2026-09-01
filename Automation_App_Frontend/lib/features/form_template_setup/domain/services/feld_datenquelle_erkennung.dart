@@ -183,7 +183,7 @@ class FeldDatenquelleErkennung {
     // will die volle Zeichenkette samt Kennzeichen — die braucht sonst nur
     // der Zentralruf (§4.2).
     if (hat('aktenzeichen') || name == 'zeichen') {
-      return FeldDatenquelle.aktenzeichen;
+      return FeldDatenquelle.zeichen;
     }
     if (hat('referenz')) return FeldDatenquelle.referenz;
     if (hat('versicher') || hat('gegner') || hat('empfaenger')) {
