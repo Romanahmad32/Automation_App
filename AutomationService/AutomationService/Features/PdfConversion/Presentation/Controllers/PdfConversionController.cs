@@ -13,7 +13,9 @@ public class PdfConversionController(IPdfConversionService pdfService, ILogger<P
     public async Task<IActionResult> ConvertDocxToPdf(IFormFile docxFile)
     {
         if (docxFile == null || docxFile.Length == 0)
-            return BadRequest("No file provided.");
+        {
+            return Problem(detail: "Keine Datei übermittelt.", statusCode: StatusCodes.Status400BadRequest);
+        }
 
         try
         {
@@ -25,15 +27,12 @@ public class PdfConversionController(IPdfConversionService pdfService, ILogger<P
 
             return File(pdfBytes, "application/pdf", $"{Path.GetFileNameWithoutExtension(docxFile.FileName)}.pdf");
         }
-        catch (PdfConversionUnavailableException ex)
+        catch (Exception ex) when (ex is not PdfConversionUnavailableException)
         {
-            logger.LogError(ex, "PDF conversion unavailable.");
-            return StatusCode(503, ex.Message);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error converting DOCX to PDF.");
-            return StatusCode(500, "Conversion failed.");
+            logger.LogError(ex, "Fehler bei der Umwandlung von DOCX nach PDF.");
+            return Problem(
+                detail: "Die Umwandlung nach PDF ist fehlgeschlagen.",
+                statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -41,7 +40,11 @@ public class PdfConversionController(IPdfConversionService pdfService, ILogger<P
     public async Task<IActionResult> ConvertDocxToPdfFromPath([FromBody] ConvertFromPathRequest request)
     {
         if (string.IsNullOrWhiteSpace(request?.DocxFilePath))
-            return BadRequest("DocX file path is required.");
+        {
+            return Problem(
+                detail: "Der Pfad zur DOCX-Datei fehlt.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
 
         try
         {
@@ -52,18 +55,17 @@ public class PdfConversionController(IPdfConversionService pdfService, ILogger<P
         }
         catch (FileNotFoundException ex)
         {
-            logger.LogError(ex, "DOCX file not found.");
-            return NotFound($"File not found: {ex.Message}");
+            logger.LogError(ex, "DOCX-Datei nicht gefunden.");
+            return Problem(
+                detail: $"Datei nicht gefunden: {ex.Message}",
+                statusCode: StatusCodes.Status404NotFound);
         }
-        catch (PdfConversionUnavailableException ex)
+        catch (Exception ex) when (ex is not PdfConversionUnavailableException)
         {
-            logger.LogError(ex, "PDF conversion unavailable.");
-            return StatusCode(503, ex.Message);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error converting DOCX to PDF.");
-            return StatusCode(500, "Conversion failed.");
+            logger.LogError(ex, "Fehler bei der Umwandlung von DOCX nach PDF.");
+            return Problem(
+                detail: "Die Umwandlung nach PDF ist fehlgeschlagen.",
+                statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 }
