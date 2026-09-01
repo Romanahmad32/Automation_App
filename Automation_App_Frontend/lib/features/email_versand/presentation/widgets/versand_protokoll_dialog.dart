@@ -3,6 +3,7 @@ import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_eintrag_zeile.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:flutter/material.dart';
 
 /// Alles, was zu einem Vorgang hinausgegangen ist (§4.7) — der jüngste
@@ -56,7 +57,7 @@ class _VersandProtokollDialogState extends State<VersandProtokollDialog> {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: Text('Versand zu ${widget.referenz}'),
+      title: Text('Versand zu ${ReferenzTeile.zeichenAus(widget.referenz)}'),
       content: SizedBox(width: 520, child: _inhalt(theme)),
       actions: [
         FilledButton(

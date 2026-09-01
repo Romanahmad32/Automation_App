@@ -96,7 +96,7 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   automatisch erhöht. Die geforderte Einstellung „automatisch oder erst nach Bestätigung" gibt es
   weder in `KanzleiSettings` noch im Backend.
 - **Word-Export des Sachgebiete-/Auftragsregisters (§6.2)** — die In-App-Ansicht gibt es im
-  genauen Spaltenschema (laufende Nr | Aktenzeichen Abteilung | Name ./. Gegner + Sachbestand
+  genauen Spaltenschema (laufende Nr | Zeichen | Name ./. Gegner + Sachbestand
   v. Datum | Rechtsgebiet), der Export steht hinter einem Platzhalter
   (`NichtVerfuegbarerRegisterWordExporter`, `verfuegbar == false`).
 

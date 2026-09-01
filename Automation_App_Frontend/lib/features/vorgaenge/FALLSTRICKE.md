@@ -2,6 +2,24 @@
 
 Was aus dem Steckbrief (`FEATURE.md`) herausfiel, weil es mehr als eine Zeile braucht.
 
+## Zeichen und Referenz: zwei Namen, zwei Aufgaben
+
+`Vorgang.referenz` ist der **Schlüssel** — `216/26 C03_EU-FE 1111`, mit angehängtem Kennzeichen.
+Er steht in Suchen, im Zentralruf-Formular, in HTTP-Parametern und in Widget-Keys.
+`Vorgang.zeichen` ist der **Name** — `216/26 C03` — und das, was der Anwalt sagt und schreibt.
+
+**In der Oberfläche steht das Zeichen** (§4.2), über `ZeichenText` bzw. `vorgang.zeichen`; wo nur
+eine Zeichenkette vorliegt, über `ReferenzTeile.zeichenAus(referenz)`. Die volle Referenz erscheint
+nur, wo das Kennzeichen die Frage beantwortet: im Zentralruf-Formular, beim Zuordnen einer Antwort
+und als Nebenzeile auf der Vorgangskachel. `test/architecture/zeichen_anzeige_test.dart` hält das
+fest und führt die Ausnahmen namentlich.
+
+Der Rückfall zählt: Lässt sich die Referenz nicht zerlegen (freihändig eingetragen), *ist* das
+Zeichen die volle Referenz. Deshalb prüfen Kachel und Dashboard vor der Nebenzeile auf
+Ungleichheit — sonst stünde dieselbe Zeichenkette zweimal untereinander. Dieselbe Antwort muss
+`RegisterZeilenBau.Zeichen` im Backend geben, sonst zeigt der Bildschirm ein anderes Zeichen als
+die Register-Datei.
+
 ## Das Register führt alle Vorgänge — die Datei nicht unbedingt
 
 Bis #40 zeigte `RegisterPage` nur `status == versendet`. Jetzt steht dort **jeder** Vorgang, und
