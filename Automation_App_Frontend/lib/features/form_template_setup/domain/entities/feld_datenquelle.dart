@@ -79,7 +79,11 @@ enum FeldDatenquelle {
     value: 'polizeiVorgangsnummer',
   ),
   referenz(name: 'Referenz (vollständig)', value: 'referenz'),
-  aktenzeichen(name: 'Aktenzeichen (ohne Kennzeichen)', value: 'aktenzeichen'),
+  zeichen(
+    name: 'Zeichen (ohne Kennzeichen)',
+    value: 'zeichen',
+    frueher: 'aktenzeichen',
+  ),
   rechtsgebiet(name: 'Rechtsgebiet', value: 'rechtsgebiet');
 
   final String name;
@@ -88,19 +92,34 @@ enum FeldDatenquelle {
   /// Konvention wie [InputType]/[Rechtsgebiet]).
   final String value;
 
-  const FeldDatenquelle({required this.name, required this.value});
+  /// Ein früherer [value] derselben Quelle, der in bereits gespeicherten
+  /// Vorlagen steht und weiterhin gelesen werden muss.
+  ///
+  /// Gibt es, weil [fromValue] unbekannte Werte still auf [keine] fallen lässt
+  /// — ein umbenannter Schlüssel bräche also keinen Test und keine Meldung,
+  /// sondern nur die Vorbelegung in jeder Bestandsvorlage, und das merkt erst
+  /// der Anwalt am fehlenden Wert im Brief. Wer hier umbenennt, trägt den alten
+  /// Wert hier ein; `feld_datenquelle_test.dart` hält beide Wege fest.
+  final String? frueher;
+
+  const FeldDatenquelle({
+    required this.name,
+    required this.value,
+    this.frueher,
+  });
 
   String get displayName => name;
 
   /// True für alles außer [keine] — also wenn eine feste Quelle gewählt wurde.
   bool get istGesetzt => this != FeldDatenquelle.keine;
 
-  /// Liest eine [FeldDatenquelle] aus ihrem persistierten [value]. Unbekannte
-  /// oder fehlende Werte fallen tolerant auf [keine] zurück, damit ein
-  /// älterer/fremder Persistenzstand das Feld nicht unlesbar macht.
+  /// Liest eine [FeldDatenquelle] aus ihrem persistierten [value] — oder aus
+  /// einem [frueher] geschriebenen. Unbekannte oder fehlende Werte fallen
+  /// tolerant auf [keine] zurück, damit ein älterer/fremder Persistenzstand das
+  /// Feld nicht unlesbar macht.
   static FeldDatenquelle fromValue(String? input) {
     for (final quelle in FeldDatenquelle.values) {
-      if (quelle.value == input) return quelle;
+      if (quelle.value == input || quelle.frueher == input) return quelle;
     }
     return FeldDatenquelle.keine;
   }

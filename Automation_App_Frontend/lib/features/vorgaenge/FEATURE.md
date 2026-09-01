@@ -1,6 +1,6 @@
 # vorgaenge — Lebenszyklus und Sachgebiete-Register
 
-**Zweck:** Der Vorgang bündelt je Auftrag Mandant, Referenz, Zentralruf-Antwort und Dokument und
+**Zweck:** Der Vorgang bündelt je Auftrag Mandant, Zeichen, Zentralruf-Antwort und Dokument und
 führt ihn durch Angefragt → Beantwortet → Erstellt → Abgelegt → Versendet. Zwei Tabs: „Vorgänge
 verwalten" (Pflege, Tab 7) und das Sachgebiete-Register aller Vorgänge (Tab 6), das zusätzlich als
 Word- und PDF-Datei in einen einstellbaren Ordner geht (§6.2).
@@ -24,9 +24,9 @@ app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashb
 
 - `ladeErneut()` überschreibt einen nicht leeren Zustand bewusst nicht (`if (state.isEmpty …)`) —
   Nachladen wirkt nur beim Start. Im Backend geänderte Vorgänge kommen darüber nicht herein.
-- Die Referenz ist der fachliche Schlüssel: Sie ändert man nie per `upsertVorgang` (das legt einen
-  zweiten Vorgang an), sondern über `aendereReferenz` → `POST /api/Vorgaenge/referenz` (409 =
-  Zielreferenz vergeben).
+- Die Referenz ist der Schlüssel, das **Zeichen** der angezeigte Name (`ZeichenText`, §4.2; beides
+  in **`FALLSTRICKE.md`**). Die Referenz ändert man nie per `upsertVorgang` (das legt einen zweiten
+  Vorgang an), sondern über `aendereReferenz` → `POST /api/Vorgaenge/referenz` (409 = vergeben).
 - „Abschließen" nur über `VorgangCubit.abschliessen` → `POST …/abschliessen`: Status „versendet",
   `AbgeschlossenAm` und das Hochzählen von `KanzleiSettings.LaufendeAuftragsnummer` laufen dort in
   einer Transaktion (idempotent). `copyWith(status: versendet)` + Upsert sieht gleich aus, zählt

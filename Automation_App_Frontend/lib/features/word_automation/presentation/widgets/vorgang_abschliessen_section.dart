@@ -131,7 +131,7 @@ class _VorgangAbschliessenSectionState
             ),
             const SizedBox(height: 4),
             Text(
-              '${aktuell.referenz} · Status: ${aktuell.status.displayName}',
+              '${aktuell.zeichen} · Status: ${aktuell.status.displayName}',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,

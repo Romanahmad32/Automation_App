@@ -21,6 +21,10 @@ passierte.
   Geschädigten}}` meint den Ort des Unfalls. Andersherum fischte das „ort" der Mandantengruppe
   den Namen ab, und das Schreiben trüge still den Wohnort. Wörter wie „unfallort", „unfalltag"
   oder „polizei" benennen nie eine Stammdatenangabe — nur deshalb dürfen sie vorne stehen.
+- **„Zeichen" und „Aktenzeichen" meinen dasselbe, „Referenz" nicht.** Die ersten beiden liefern
+  `216/26 C03` — den Bezeichner, der in den Brief gehört. Nur wer sein Feld „Referenz" nennt,
+  bekommt die volle Zeichenkette samt Kennzeichen; die trägt allein die Zentralruf-Zuordnung
+  (§4.2). „Ihr Zeichen" bleibt ungebunden: das meint die Gegenseite, nicht die eigene Kanzlei.
 - Nennt ein Name zwei einzeln gespeicherte Angaben (`{{VersicherungPlzOrt}}`,
   `{{MandantVornameNachname}}`), bindet die Erkennung ihn **nicht**, und `FeldNameHinweis` sagt
   unter dem Feld, warum. Grund: Solche Namen lieferten früher still nur die erste der beiden

@@ -178,9 +178,14 @@ class FeldDatenquelleErkennung {
     // Ein Kennzeichen ohne Mandantenbezug ist das des Gegners — Referenz und
     // Antwort kennen nur dieses.
     if (hat('kennzeichen')) return FeldDatenquelle.kennzeichenGegner;
-    if (hat('referenz') || hat('aktenzeichen') || name == 'zeichen') {
-      return FeldDatenquelle.referenz;
+    // „Zeichen" und „Aktenzeichen" meinen dasselbe und stehen im Brief ohne
+    // Kennzeichen („216/26 C03"). Nur wer ausdrücklich „Referenz" schreibt,
+    // will die volle Zeichenkette samt Kennzeichen — die braucht sonst nur
+    // der Zentralruf (§4.2).
+    if (hat('aktenzeichen') || name == 'zeichen') {
+      return FeldDatenquelle.zeichen;
     }
+    if (hat('referenz')) return FeldDatenquelle.referenz;
     if (hat('versicher') || hat('gegner') || hat('empfaenger')) {
       return _versichererfeld(name);
     }

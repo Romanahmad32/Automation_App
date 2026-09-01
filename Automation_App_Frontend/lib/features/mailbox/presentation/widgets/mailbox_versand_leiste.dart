@@ -36,7 +36,7 @@ class MailboxVersandLeiste extends StatelessWidget {
           if (vorgang != null)
             Flexible(
               child: Text(
-                'Bezug: ${vorgang.referenz}',
+                'Bezug: ${vorgang.zeichen}',
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,

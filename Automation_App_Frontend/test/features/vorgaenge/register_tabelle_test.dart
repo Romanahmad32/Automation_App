@@ -43,6 +43,18 @@ void main() {
     expect(await tabellenBreite(tester, 1600), 1600);
   });
 
+  testWidgets('Spalte 2 heißt „Zeichen" und trägt es ohne Kennzeichen', (
+    tester,
+  ) async {
+    await tabellenBreite(tester, 1600);
+
+    expect(find.text('Zeichen'), findsOneWidget);
+    expect(find.text('215/26 C03'), findsOneWidget);
+    // Das Kennzeichen gehört zur Referenz, nicht ins Register: Die Spalte muss
+    // dasselbe zeigen wie `RegisterZeilenBau.Zeichen` in der Kanzleidatei.
+    expect(find.text('215/26 C03_HG-E 1427'), findsNothing);
+  });
+
   testWidgets('wächst mit der verfügbaren Breite mit', (tester) async {
     final schmal = await tabellenBreite(tester, 1200);
     final breit = await tabellenBreite(tester, 1600);
