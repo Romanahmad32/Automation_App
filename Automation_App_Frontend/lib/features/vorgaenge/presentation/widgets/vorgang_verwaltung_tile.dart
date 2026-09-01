@@ -26,10 +26,9 @@ class VorgangVerwaltungTile extends StatelessWidget {
 
   String _untertitel() {
     final teile = <String>[
-      // Die volle Referenz steht hier als Nebenzeile — oben trägt die Kachel
-      // das Zeichen. Nur, wenn sie sich davon unterscheidet: sonst stünde
-      // dieselbe Zeichenkette zweimal untereinander.
-      if (vorgang.referenz != vorgang.zeichen) vorgang.referenz,
+      // Oben trägt die Kachel das Zeichen; die volle Referenz steht hier
+      // als Nebenzeile — sofern sie etwas hinzufügt.
+      ?vorgang.referenzZusatz,
       if ((vorgang.unfallDatum ?? '').trim().isNotEmpty)
         'Unfall v. ${vorgang.unfallDatum!.trim()}',
       vorgang.rechtsgebiet.displayName,

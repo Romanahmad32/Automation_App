@@ -98,12 +98,12 @@ void main() {
       expect(quelle('Sachgebiet'), FeldDatenquelle.rechtsgebiet);
       // „Aktenzeichen" ist dasselbe wie „Zeichen" und steht im Brief ohne
       // Kennzeichen. Die volle Referenz bekommt nur, wer sie beim Namen nennt.
-      expect(quelle('Aktenzeichen'), FeldDatenquelle.aktenzeichen);
+      expect(quelle('Aktenzeichen'), FeldDatenquelle.zeichen);
       expect(quelle('Referenz'), FeldDatenquelle.referenz);
     });
 
     test('„Zeichen" bindet nur allein stehend', () {
-      expect(quelle('Zeichen'), FeldDatenquelle.aktenzeichen);
+      expect(quelle('Zeichen'), FeldDatenquelle.zeichen);
       // „Ihr Zeichen" meint das Zeichen der Gegenseite, nicht das eigene.
       expect(quelle('Ihr Zeichen'), FeldDatenquelle.keine);
     });

@@ -20,11 +20,10 @@ class DashboardVorgangZeile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final parteien = vorgang.parteienBezeichnung;
-    // Oben steht das Zeichen; die volle Referenz rutscht in die Nebenzeile —
-    // und entfällt dort, wenn sie sich vom Zeichen gar nicht unterscheidet.
+    // Oben steht das Zeichen; die volle Referenz rutscht in die Nebenzeile.
     final untertitel = [
       if (parteien.isNotEmpty) parteien,
-      if (vorgang.referenz != vorgang.zeichen) vorgang.referenz,
+      ?vorgang.referenzZusatz,
     ].join('  ·  ');
 
     return Padding(
