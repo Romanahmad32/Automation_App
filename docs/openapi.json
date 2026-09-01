@@ -3559,6 +3559,7 @@
           "emailAdresse",
           "telefonnummer",
           "notiz",
+          "persoenlicheGrussformel",
           "aktenOrdnernamen",
           "kennzeichen"
         ],
@@ -3589,6 +3590,9 @@
             "type": "string"
           },
           "notiz": {
+            "type": "string"
+          },
+          "persoenlicheGrussformel": {
             "type": "string"
           },
           "aktenOrdnernamen": {
@@ -4475,6 +4479,7 @@
           "emailAdresse",
           "telefonnummer",
           "notiz",
+          "persoenlicheGrussformel",
           "aktenOrdnernamen",
           "kennzeichen",
           "erstelltAm"
@@ -4514,6 +4519,9 @@
             "type": "string"
           },
           "notiz": {
+            "type": "string"
+          },
+          "persoenlicheGrussformel": {
             "type": "string"
           },
           "aktenOrdnernamen": {

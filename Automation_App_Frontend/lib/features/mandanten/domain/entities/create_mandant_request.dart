@@ -14,6 +14,10 @@ class CreateMandantRequest extends Equatable {
   final String telefonnummer;
   final String notiz;
 
+  /// Persönlicher Zusatzgruß für Mails an diesen Mandanten (§5.1); leer heißt
+  /// kein Zusatzgruß.
+  final String persoenlicheGrussformel;
+
   /// Optional: ein bereits vorhandener Akten-Ordner, der dem neuen Mandanten
   /// direkt zugeordnet wird (manuelle Zuordnung beim Anlegen).
   final List<String> aktenOrdnernamen;
@@ -31,6 +35,7 @@ class CreateMandantRequest extends Equatable {
     this.emailAdresse = '',
     this.telefonnummer = '',
     this.notiz = '',
+    this.persoenlicheGrussformel = '',
     this.aktenOrdnernamen = const [],
     this.kennzeichen = const [],
   });
@@ -46,6 +51,7 @@ class CreateMandantRequest extends Equatable {
     emailAdresse,
     telefonnummer,
     notiz,
+    persoenlicheGrussformel,
     aktenOrdnernamen,
     kennzeichen,
   ];
@@ -60,6 +66,7 @@ class CreateMandantRequest extends Equatable {
     'emailAdresse': emailAdresse,
     'telefonnummer': telefonnummer,
     'notiz': notiz,
+    'persoenlicheGrussformel': persoenlicheGrussformel,
     'aktenOrdnernamen': aktenOrdnernamen,
     'kennzeichen': kennzeichen,
   };
