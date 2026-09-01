@@ -11,9 +11,12 @@ import 'package:automation_app/features/zentralruf_reply/domain/entities/zentral
 /// die App schon kennt, einen Betreff aus Aktenzeichen und Parteien und einen
 /// Textrumpf mit passender Anrede. Der Anwalt vervollständigt nur noch.
 ///
-/// **Dies ist die Stelle, an der später die pflegbaren Mail-Textvorlagen
-/// einsetzen** (§4.7, §5.3): Betreff und Text kommen dann aus der Vorlage des
-/// jeweiligen Empfängertyps statt aus diesen Methoden — alles andere bleibt.
+/// **Das ist die Vorbelegung, nicht die Vorlage.** Wählt der Anwalt eine
+/// Mail-Textvorlage (§4.7, §5.3), ersetzt `MailVorlagenFueller` Betreff und
+/// Text; diese Methoden bleiben der Rückfall und werden nicht abgeschafft —
+/// ohne Vorlage im Bestand sind sie das Einzige, was dasteht. Zwei Auskünfte
+/// von hier gelten aber auch dort weiter, weil sie an den Empfängern hängen
+/// und nicht am Vorgang: [anredeFuer] und [nurAnDenMandanten].
 class EmailEntwurfErzeuger {
   final Vorgang? vorgang;
   final Mandant? mandant;
