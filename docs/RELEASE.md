@@ -393,6 +393,14 @@ das sichtbar: nach `flutter pub get` darf sich die Datei nicht ändern. Tut sie 
 ist die aufgelöste Fassung die richtige und gehört in den Commit — nicht
 zurückgeworfen.
 
+## CI-Caching
+
+`ci.yml` und `release.yml` cachen das Flutter-SDK (`subosito/flutter-action`
+mit `cache: true`), den pub-Cache und die NuGet-Pakete (beide über
+`actions/cache`, Schlüssel aus `pubspec.lock` bzw. den `.csproj`-Dateien,
+`Directory.Build.props` und `global.json`). Ohne Verhaltensänderung — ein
+Treffer spart nur den erneuten Download, ein Fehltreffer baut wie bisher neu.
+
 ## Offen
 
 - **Code-Signing.** Ohne Zertifikat warnt SmartScreen bei jeder Installation.
