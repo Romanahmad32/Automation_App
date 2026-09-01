@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
@@ -78,12 +79,9 @@ class NichtZugeordneterOrdnerKachel extends StatelessWidget {
   String _untertitel() {
     final geaendert = akte.geaendertAm;
     final typ = akte.aktentyp.bezeichnung;
-    return geaendert == null ? typ : '$typ · geändert am ${_datum(geaendert)}';
-  }
-
-  String _datum(DateTime wert) {
-    String zwei(int n) => n.toString().padLeft(2, '0');
-    return '${zwei(wert.day)}.${zwei(wert.month)}.${wert.year}';
+    return geaendert == null
+        ? typ
+        : '$typ · geändert am ${deutschesDatum(geaendert)}';
   }
 
   Future<void> _zuordnen(BuildContext context) async {

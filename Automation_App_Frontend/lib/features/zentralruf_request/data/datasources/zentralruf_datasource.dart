@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart';
 import 'package:dio/dio.dart';
@@ -25,10 +26,7 @@ class ApiZentralrufDatasource implements ZentralrufDatasource {
           'auftragsjahr': request.auftragsjahr,
           'abteilung': request.abteilung,
           'kennzeichenSchaediger': request.kennzeichenSchaediger,
-          'schadentag':
-              '${request.schadentag.year.toString().padLeft(4, '0')}-'
-              '${request.schadentag.month.toString().padLeft(2, '0')}-'
-              '${request.schadentag.day.toString().padLeft(2, '0')}',
+          'schadentag': isoDatum(request.schadentag),
           if (request.referenz?.trim().isNotEmpty ?? false)
             'referenz': request.referenz!.trim(),
           if (request.geschaedigter case final geschaedigter?)
