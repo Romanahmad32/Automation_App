@@ -1,3 +1,5 @@
+import 'package:automation_app/core/general_classes/failures/failure.dart';
+import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 
@@ -36,8 +38,10 @@ class BackupDouble implements BackupRepository {
   Future<void> quittiereSicherungsfehler() async => quittungen++;
 
   @override
-  Future<List<int>> exportDatenbank() async => const [];
+  Future<Either<Failure, String>> exportiereNach(String zielPfad) async =>
+      Right('');
 
   @override
-  Future<String> importDatenbank(String dateipfad) async => '';
+  Future<Either<Failure, String>> importiere(String dateipfad) async =>
+      Right('');
 }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AutomationService.Core.Persistence;
 using Microsoft.Extensions.Options;
 
 namespace AutomationService.Features.MailboxMonitor.Domain.Services;
@@ -36,10 +37,7 @@ public sealed class MailboxConfigStore : IMailboxConfigSource, IDisposable
         _seed = seed.Value;
         _logger = logger;
 
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "AutomationService");
-        _filePath = Path.Combine(directory, "mailbox_config.json");
+        _filePath = Path.Combine(AppDataPaths.EnsureAppDataDirectory(), "mailbox_config.json");
 
         _current = LoadOrSeed();
     }

@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:flutter/foundation.dart';
@@ -40,13 +41,11 @@ class DemoVorgangButton extends StatelessWidget {
     final referenz = '$nummer/$jahr C03_$kennzeichen';
 
     final unfall = jetzt.subtract(const Duration(days: 14));
-    String zweistellig(int wert) => wert.toString().padLeft(2, '0');
 
     await cubit.registriereAnfrage(
       referenz,
       mandantName: 'Mustermann, Max (Demo)',
-      unfallDatum:
-          '${zweistellig(unfall.day)}.${zweistellig(unfall.month)}.${unfall.year}',
+      unfallDatum: deutschesDatum(unfall),
       geschaedigtenKennzeichen: 'HG-E 1427',
       unfallort: 'Frankfurt am Main',
       unfalluhrzeit: '14:30',

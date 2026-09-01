@@ -1,12 +1,25 @@
 import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
-import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
-/// HTTP-Zugriff auf die Datensicherung des Backends (`api/Backup`) — die
-/// data-seitige Umsetzung des [BackupRepository]-Ports.
-@Injectable(as: BackupRepository)
-class ApiBackupDatasource implements BackupRepository {
+/// Der HTTP-Vertrag der Datensicherung (`api/Backup`), roh: wirft bei einem
+/// Fehler die [DioException] weiter. Die Übersetzung in `Either<Failure, T>`
+/// und der Dateizugriff (Export schreiben, Import lesen) liegen in
+/// `BackupRepositoryImpl` — diese Datasource spricht nur HTTP.
+abstract class BackupDatasource {
+  Future<List<int>> exportDatenbank();
+
+  Future<String> importDatenbank(String dateipfad);
+
+  Future<UebergabeStand> uebergabeStand();
+
+  Future<String> uebernehmeStand();
+
+  Future<void> quittiereSicherungsfehler();
+}
+
+@Injectable(as: BackupDatasource)
+class ApiBackupDatasource implements BackupDatasource {
   final Dio _dio;
 
   ApiBackupDatasource(this._dio);

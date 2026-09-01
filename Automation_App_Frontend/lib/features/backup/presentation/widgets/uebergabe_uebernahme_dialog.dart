@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/backup/domain/entities/uebergabe_angebot.dart';
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 import 'package:automation_app/features/backup/presentation/utils/sicherungs_zeitpunkt.dart';
@@ -18,11 +19,10 @@ abstract final class UebergabeUebernahmeDialog {
     BuildContext context,
     UebergabeAngebot angebot,
   ) async {
-    final bestaetigt = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Stand von ${angebot.rechnername} übernehmen?'),
-        content: Text(
+    final bestaetigt = await bestaetigen(
+      context,
+      titel: 'Stand von ${angebot.rechnername} übernehmen?',
+      text:
           'Dort wurde ${SicherungsZeitpunkt.beschreibe(angebot.zuletztGearbeitet)} '
           'gearbeitet; der Stand ist von '
           '${SicherungsZeitpunkt.beschreibe(angebot.gesichertAm)}.\n\n'
@@ -30,20 +30,9 @@ abstract final class UebergabeUebernahmeDialog {
           'ersetzt. Der bisherige Stand wird zuvor automatisch als '
           'Sicherungskopie abgelegt. Nach dem Übernehmen die App bitte neu '
           'starten.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Übernehmen'),
-          ),
-        ],
-      ),
+      bestaetigung: 'Übernehmen',
     );
-    if (bestaetigt != true) return null;
+    if (!bestaetigt) return null;
 
     try {
       return await getIt<BackupRepository>().uebernehmeStand();

@@ -298,7 +298,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(CheckboxListTile));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TextButton, 'Ändern'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Ändern'));
     await beruhige(tester);
 
     expect(

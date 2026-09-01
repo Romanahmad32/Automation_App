@@ -187,8 +187,8 @@ Das Testprojekt liegt *innerhalb* des Web-Projektordners (`AutomationService.Tes
 ab, es mitzuziehen — **nicht entfernen**.
 
 Gliederung: `Unit/` (Fachlogik ohne Host), `Integration/` (über `WebApplicationFactory<Program>`:
-Health, WordAutomation-Controller, HTTP-Vertrag), `Support/` (Helfer: `RepoWurzel`,
-`FakeHostEnvironment`, `WordVorlagenUmgebung`), `Architecture/` (ausführbare Regeln; Grundlage sind
+Health, WordAutomation-Controller, HTTP-Vertrag), `Support/` (Helfer: `RepoWurzel`, `FakeHostEnvironment`,
+`WordVorlagenUmgebung`, `TestAppDataUmgebung`), `Architecture/` (ausführbare Regeln; Grundlage sind
 `CsQuelldateien`/`Quelldatei`, die Pfad, Namespace und `using`s der handgeschriebenen Quellen lesen).
 
 Welche Regel welcher Test erzwingt, steht **einmal** in der Wurzel-`CLAUDE.md` („Diese Regeln sind

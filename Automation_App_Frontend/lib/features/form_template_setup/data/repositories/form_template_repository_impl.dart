@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/failures/als_either.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/form_template_setup/data/datasources/form_template_datasource.dart';
@@ -20,69 +21,49 @@ class FormTemplateRepositoryImpl implements FormTemplateRepository {
   @override
   Future<Either<Failure, void>> createFormTemplate(
     CreateFormTemplateRequest template,
-  ) async {
-    try {
-      await _datasource.createFormTemplate(template);
-      return Right(null);
-    } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
-    }
-  }
+  ) => alsEither(
+    () => _datasource.createFormTemplate(template),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, void>> deleteFormTemplate(int id) async {
-    try {
-      await _datasource.deleteFormTemplate(id);
-      return Right(null);
-    } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
-    }
-  }
+  Future<Either<Failure, void>> deleteFormTemplate(int id) => alsEither(
+    () => _datasource.deleteFormTemplate(id),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, FormTemplate>> getFormTemplateByName(
-    String name,
-  ) async {
-    try {
-      final template = await _datasource.loadFormTemplateByName(name);
-      return Right(template);
-    } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
-    }
-  }
+  Future<Either<Failure, FormTemplate>> getFormTemplateByName(String name) =>
+      alsEither(
+        () => _datasource.loadFormTemplateByName(name),
+        uebersetzen: _localFailure,
+      );
 
   @override
-  Future<Either<Failure, List<FormTemplate>>> getFormTemplates() async {
-    try {
-      final templates = await _datasource.loadFormTemplates();
-      return Right(templates);
-    } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
-    }
-  }
+  Future<Either<Failure, List<FormTemplate>>> getFormTemplates() => alsEither(
+    () => _datasource.loadFormTemplates(),
+    uebersetzen: _localFailure,
+  );
 
   @override
   Future<Either<Failure, FormTemplate>> updateFormTemplate(
     FormTemplate template,
-  ) async {
-    try {
-      final updatedTemplate = await _datasource.updateFormTemplate(template);
-      return Right(updatedTemplate);
-    } catch (e) {
-      return Left(LocalFailure(message: e.toString()));
-    }
-  }
+  ) => alsEither(
+    () => _datasource.updateFormTemplate(template),
+    uebersetzen: _localFailure,
+  );
 
   @override
   Future<Either<Failure, List<String>>> getTemplatePlaceholders(
     String wordFilePath,
-  ) async {
-    try {
-      final placeholders = await _remoteWordTemplateDatasource
-          .getTemplatePlaceholders(wordFilePath);
-      return Right(placeholders);
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
+  ) => alsEither(
+    () => _remoteWordTemplateDatasource.getTemplatePlaceholders(wordFilePath),
+    uebersetzen: (fehler) => ServerFailure(message: fehler.toString()),
+  );
+
+  /// Das volle `toString()` der Ausnahme, ungekürzt — anders als
+  /// `ausnahmeText` bleibt das technische Präfix (z. B.
+  /// `FormTemplateException: `) hier bewusst erhalten (bestehendes Verhalten).
+  Failure _localFailure(Object fehler) =>
+      LocalFailure(message: fehler.toString());
 }

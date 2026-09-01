@@ -39,7 +39,9 @@ public class SimulationController(
         if (!options.Value.Enabled) return NotFound();
         if (string.IsNullOrWhiteSpace(dto.Referenz))
         {
-            return BadRequest("Die Referenz darf nicht leer sein.");
+            return Problem(
+                detail: "Die Referenz darf nicht leer sein.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var referenz = dto.Referenz.Trim();

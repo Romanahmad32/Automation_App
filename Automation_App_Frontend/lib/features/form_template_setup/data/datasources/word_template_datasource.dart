@@ -1,3 +1,4 @@
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
@@ -27,22 +28,9 @@ class ApiWordTemplateDatasource implements WordTemplateDatasource {
           const [];
     } on DioException catch (e) {
       throw Exception(
-        _serverMessage(e) ??
+        backendFehlertext(e) ??
             'Die Platzhalter der Word-Datei konnten nicht gelesen werden',
       );
     }
-  }
-
-  /// Liest eine vom Backend gelieferte Fehlermeldung aus der Response
-  /// (z. B. "Vorlage nicht gefunden: …").
-  String? _serverMessage(DioException e) {
-    final data = e.response?.data;
-    if (data is Map<String, dynamic>) {
-      final message = data['message'] ?? data['title'];
-      if (message is String && message.isNotEmpty) {
-        return message;
-      }
-    }
-    return null;
   }
 }
