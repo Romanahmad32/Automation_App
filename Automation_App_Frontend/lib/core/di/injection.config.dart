@@ -33,12 +33,18 @@ import 'package:automation_app/features/dev_simulation/domain/repositories/simul
     as _i602;
 import 'package:automation_app/features/email_versand/data/datasources/email_versand_datasource.dart'
     as _i715;
+import 'package:automation_app/features/email_versand/data/datasources/mail_vorlagen_datasource.dart'
+    as _i229;
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart'
     as _i67;
+import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart'
+    as _i435;
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart'
     as _i318;
 import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart'
     as _i161;
+import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart'
+    as _i103;
 import 'package:automation_app/features/form_template_setup/data/datasources/form_template_datasource.dart'
     as _i308;
 import 'package:automation_app/features/form_template_setup/data/datasources/word_template_datasource.dart'
@@ -325,6 +331,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i764.OrdnerStatusDatasource>(
       () => _i764.ApiOrdnerStatusDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i435.MailVorlagenRepository>(
+      () => _i229.ApiMailVorlagenDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i501.KanzleiSettingsDatasource>(
       () => _i501.ApiKanzleiSettingsDatasource(gh<_i361.Dio>()),
     );
@@ -415,6 +424,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i777.ZentralrufRepository>(
       () => _i248.ZentralrufRepositoryImpl(gh<_i615.ZentralrufDatasource>()),
+    );
+    gh.lazySingleton<_i103.MailVorlagenCubit>(
+      () => _i103.MailVorlagenCubit(gh<_i435.MailVorlagenRepository>()),
     );
     gh.factory<
       _i223.UseCase<_i578.MandantenImportDatei, _i675.LiesImportDateiParams>
