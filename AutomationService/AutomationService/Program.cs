@@ -1,3 +1,4 @@
+using AutomationService.Core.ErrorHandling;
 using AutomationService.Core.Lifetime;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Presentation.DependencyInjection;
@@ -22,6 +23,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+// Einheitliches Fehlerformat (RFC 7807) fuer alle Fehlerantworten -- die
+// sieben Fach-Ausnahmen der Slices bildet FachExceptionHandler ab.
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<FachExceptionHandler>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
@@ -76,6 +81,7 @@ if (app.Environment.IsDevelopment())
 // Kein UseHttpsRedirection: Der Dienst spricht bewusst nur lokales HTTP (localhost:5143);
 // ohne konfigurierten HTTPS-Endpunkt erzeugte die Middleware nur die Warnung
 // "Failed to determine the https port for redirect".
+app.UseExceptionHandler();
 app.UseCors(CorsPolicyName);
 app.MapHealthEndpoint();
 app.MapControllers();
