@@ -83,6 +83,24 @@ class VorgangPrefillMatcher {
     return result;
   }
 
+  /// Löst einen Platzhalternamen gegen die Daten des Vorgangs auf — dieselbe
+  /// Kette wie beim Ausfüllen einer Formularvorlage: **Name → Datenquelle →
+  /// Wert**.
+  ///
+  /// Für die Mail-Textvorlagen (§4.7), die dieselbe Schreibweise `{{Name}}`
+  /// benutzen. Sie hier mitzubenutzen statt daneben eine zweite Ersetzung zu
+  /// bauen ist der ganze Punkt: Zwei Kataloge liefen auseinander, und der
+  /// Anwalt müsste sich merken, welcher wo gilt.
+  static String? wertFuerNamen(
+    String name,
+    Vorgang vorgang, {
+    Mandant? mandant,
+  }) => _ausDatenquelle(
+    FeldDatenquelleErkennung.quelleFuer(name),
+    vorgang,
+    mandant,
+  );
+
   /// Löst eine [FeldDatenquelle] gegen die Daten des Vorgangs (Mandant +
   /// Zentralruf-Antwort + Vorgangsfelder) auf.
   static String? _ausDatenquelle(

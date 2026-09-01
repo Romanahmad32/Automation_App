@@ -10,8 +10,8 @@ für alle Stellen; er öffnet `EmailVersandDialog`.
 ein eigener Entwurf; der Griff nach Outlook liegt im Mixin `OutlookAnhaengeGriff` daneben.
 **Domain:** Entities `EmailEntwurf`, `EmailEmpfaengerVorschlag`, `EmpfaengerArt`, `EmailVersandBereitschaft`,
 `EmailVersandErgebnis`, `OutlookAnhaenge`, `OutlookStand`, `VersandPruefung`, `VersandEintrag`, `MailVorlage`;
-Dienste `EmailEntwurfErzeuger` (Vorbelegung), `VersandVoraussetzungen`, `MailPlatzhalter`; Schnittstellen
-`EmailVersandRepository`, `MailVorlagenRepository`. Keine UseCases.
+Dienste `EmailEntwurfErzeuger` (Vorbelegung), `VersandVoraussetzungen`, `MailVorlagenFueller` (die `{{…}}`);
+Schnittstellen `EmailVersandRepository`, `MailVorlagenRepository`. Keine UseCases.
 **Backend:** `Features/EmailVersand/` · `bereitschaft` · `senden` · `entwurf`
 (+ `entwurf/vorwaermen`) · `outlook/anhaenge` · `outlook/stand` · `protokoll` (+ `/letzte`) ·
 `signaturen` (+ `/stand`, `/uebernehmen`, `/format`, `/bild`) · `api/MailVorlagen` (CRUD)

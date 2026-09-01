@@ -7,9 +7,25 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
 
 ## Vorbelegung und Anrede
 
-- `EmailEntwurfErzeuger` ist **die** Stelle für die späteren pflegbaren Mail-Textvorlagen
-  (§4.7, §5.3): Betreff und Text kommen dann aus der Vorlage statt aus `betreff`/`textFuer`.
-  Nichts anderswo verdoppeln.
+- `EmailEntwurfErzeuger` belegt vor, **solange keine Vorlage gewählt ist** (§4.7). Wird eine
+  gewählt, ersetzt `MailVorlagenFueller` Betreff und Text — die Vorbelegung bleibt der Rückfall
+  und wird nicht abgeschafft: Ohne Vorlage im Bestand ist sie das Einzige, was dasteht.
+- **Die Vorlage errät die App nicht.** Standardmäßig gehen Mandant und Versicherung eine
+  gemeinsame Mail (§4.7); ein Mandantenanschreiben passt dort nicht hinein, und automatisch
+  gesetzt stünde es vor der Gegenseite. `MailVorlagenAuswahl` blendet sich ganz aus, solange der
+  Bestand leer ist — ein leeres Auswahlfeld sähe aus wie eine Einstellung, die es nicht gibt.
+- **Anrede und Grußformel sind Platzhalter der Vorlage**, keine Vorspann-Zeilen: So bestimmt
+  jede Vorlage selbst, ob und wie angeredet wird. Ein Platzhalter ohne Wert nimmt **seine ganze
+  Zeile** mit (`MailVorlagenFueller`), und wo dadurch zwei Leerzeilen aufeinanderträfen, bleibt
+  eine — sonst hätte jede Mail an einen Mandanten ohne Grußformel eine Lücke unter der Anrede.
+- Beide Werte hängen am Feld „An" **im Augenblick der Wahl**: `nurAnDenMandanten` entscheidet über
+  den Zusatzgruß (§5.1), `anredeFuer` über die Anrede. Wer danach die Versicherung hinzunimmt, hat
+  eine Mandantenanrede vor einem Mitleser stehen — sichtbar im Text, und die App schreibt ihm
+  nicht hinein. Nachziehen ginge nicht, ohne das zu überschreiben, was er inzwischen getippt hat.
+- Alle übrigen Platzhalter laufen über `VorgangPrefillMatcher.wertFuerNamen` — **dieselbe** Kette
+  wie beim Ausfüllen einer Word-Vorlage. Deshalb gilt dort auch deren Eigenheit: `{{Aktenzeichen}}`
+  liefert wie `{{Referenz}}` die **volle** Referenz mit Kennzeichen. Im Ausgangsbestand steht
+  darum `{{Referenz}}`.
 - Die Anrede folgt dem Empfängerkreis: „Sehr geehrter Herr Müller" nur, wenn **ausschließlich**
   der Mandant angeschrieben wird; der Bezugssatz nur bei Anhängen (`mitSchreiben`). Nach
   `setzeText` zieht beides nicht mehr nach (`textSelbstGeschrieben`).

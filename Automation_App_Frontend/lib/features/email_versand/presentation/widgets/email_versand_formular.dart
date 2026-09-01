@@ -8,6 +8,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/email
 import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_bilder.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_vorschau.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/mail_vorlagen_auswahl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -133,6 +134,7 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               aktiv: aktiv,
             ),
             const SizedBox(height: 16),
+            const MailVorlagenAuswahl(),
             TextField(
               controller: _betreff,
               enabled: aktiv,

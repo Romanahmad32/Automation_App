@@ -48,7 +48,7 @@ namespace AutomationService.Core.Persistence.Migrations
                         new
                         {
                             Id = 1,
-                            Betreff = "Ihre Verkehrsunfallsache {{MandantName}} ./. {{VersichererName}} · Unser Zeichen: {{Aktenzeichen}}",
+                            Betreff = "Ihre Verkehrsunfallsache {{MandantName}} ./. {{VersichererName}} · Unser Zeichen: {{Referenz}}",
                             Name = "Anschreiben an den Mandanten",
                             Text = "{{Anrede}},\n{{Grussformel}},\n\nich bedanke mich höflichst für das mir entgegengebrachte Vertrauen und die Übertragung des Mandats in vorbezeichneter Angelegenheit.\n\nIn der Anlage überlasse ich Ihnen zur Kenntnisnahme meinen Schriftsatz an die gegnerische Haftpflichtversicherung, welche ich unter Fristsetzung aufgefordert habe, ihre Haftung dem Grunde nach anzuerkennen und Schadensersatz nach Gutachten zu leisten. Die Einzelheiten möchten Sie bitte meinem Schriftsatz entnehmen.\n\nNunmehr bleibt die Stellungnahme der gegnerischen Haftpflichtversicherung abzuwarten. Sobald mir das Gutachten vorliegt, werde ich den Schadensersatzanspruch beziffern.\n\nFür Rückfragen stehe ich Ihnen gerne zur Verfügung. Sobald mir neue Informationen vorliegen, werde ich selbstverständlich wieder berichten.\n\nMit freundlichen Grüßen"
                         });

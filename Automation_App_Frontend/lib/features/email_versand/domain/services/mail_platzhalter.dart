@@ -30,7 +30,13 @@ class MailPlatzhalter {
     grussformel,
     'MandantName',
     'VersichererName',
-    'Aktenzeichen',
+    'Referenz',
     'Unfalldatum',
   ];
+
+  /// `{{Referenz}}` und nicht `{{Aktenzeichen}}`: Der gemeinsame Katalog
+  /// (`FeldDatenquelleErkennung`) löst **beide** Namen auf die vollständige
+  /// Referenz auf — `84/26 C03_GG-XY 123`, mit Kennzeichen. Wer hier
+  /// „Aktenzeichen" anböte, verspräche die kurze Form und lieferte die lange.
+  static const String referenz = 'Referenz';
 }
