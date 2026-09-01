@@ -1,4 +1,4 @@
-import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
+import 'package:automation_app/core/general_classes/failures/als_either.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
@@ -39,190 +39,124 @@ class MandantenRepositoryImpl implements MandantenRepository {
   );
 
   @override
-  Future<Either<Failure, MandantenImportDatei>> liesImportDatei(
-    String pfad,
-  ) async {
-    try {
-      return Right(await _importDateiDatasource.lies(pfad));
-    } on MandantException catch (e) {
-      return Left(LocalFailure(message: e.message));
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, MandantenImportDatei>> liesImportDatei(String pfad) =>
+      alsEither(
+        () => _importDateiDatasource.lies(pfad),
+        uebersetzen: _localFailure,
+      );
 
   @override
   Future<Either<Failure, ImportBericht>> importiereMandanten({
     required MandantenImportDatei datei,
     required bool uebernehmen,
-  }) async {
-    try {
-      return Right(
-        await _importDatasource.importiere(
-          datei: datei,
-          uebernehmen: uebernehmen,
-        ),
-      );
-    } on MandantException catch (e) {
-      return Left(LocalFailure(message: e.message));
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  }) => alsEither(
+    () => _importDatasource.importiere(datei: datei, uebernehmen: uebernehmen),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, List<Mandant>>> getMandanten() async {
-    try {
-      return Right(await _datasource.loadMandanten());
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, List<Mandant>>> getMandanten() =>
+      alsEither(() => _datasource.loadMandanten(), uebersetzen: _localFailure);
 
   @override
   Future<Either<Failure, MandantenSeite>> getMandantenSeite({
     String suche = '',
     int ueberspringen = 0,
     int anzahl = 0,
-  }) async {
-    try {
-      return Right(
-        await _datasource.ladeSeite(
-          suche: suche,
-          ueberspringen: ueberspringen,
-          anzahl: anzahl,
-        ),
-      );
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  }) => alsEither(
+    () => _datasource.ladeSeite(
+      suche: suche,
+      ueberspringen: ueberspringen,
+      anzahl: anzahl,
+    ),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, List<String>>> getAktenOrdnernamen() async {
-    try {
-      return Right(await _datasource.ladeAktenOrdnernamen());
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, List<String>>> getAktenOrdnernamen() => alsEither(
+    () => _datasource.ladeAktenOrdnernamen(),
+    uebersetzen: _localFailure,
+  );
 
   @override
   Future<Either<Failure, Mandant>> createMandant(
     CreateMandantRequest request,
-  ) async {
-    try {
-      return Right(await _datasource.createMandant(request));
-    } on MandantException catch (e) {
-      return Left(LocalFailure(message: e.message));
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  ) => alsEither(
+    () => _datasource.createMandant(request),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, Mandant>> updateMandant(Mandant mandant) async {
-    try {
-      return Right(await _datasource.updateMandant(mandant));
-    } on MandantException catch (e) {
-      return Left(LocalFailure(message: e.message));
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, Mandant>> updateMandant(Mandant mandant) => alsEither(
+    () => _datasource.updateMandant(mandant),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, void>> deleteMandant(int id) async {
-    try {
-      await _datasource.deleteMandant(id);
-      return Right(null);
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, void>> deleteMandant(int id) => alsEither(
+    () => _datasource.deleteMandant(id),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, List<Akte>>> getAkten() async {
-    try {
-      final stammordner = await _ladeStammordner();
-      return Right(await _aktenDatasource.scanAkten(stammordner));
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, List<Akte>>> getAkten() => alsEither(() async {
+    final stammordner = await _ladeStammordner();
+    return _aktenDatasource.scanAkten(stammordner);
+  }, uebersetzen: _localFailure);
 
   @override
-  Future<Either<Failure, List<Fall>>> getFaelle(String aktenPfad) async {
-    try {
-      return Right(await _aktenDatasource.scanFaelle(aktenPfad));
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, List<Fall>>> getFaelle(String aktenPfad) => alsEither(
+    () => _aktenDatasource.scanFaelle(aktenPfad),
+    uebersetzen: _localFailure,
+  );
 
   @override
-  Future<Either<Failure, List<OrdnerStatus>>> getOrdnerStatus() async {
-    try {
-      return Right(await _ordnerStatusDatasource.ladeOrdnerStatus());
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  Future<Either<Failure, List<OrdnerStatus>>> getOrdnerStatus() => alsEither(
+    () => _ordnerStatusDatasource.ladeOrdnerStatus(),
+    uebersetzen: _localFailure,
+  );
 
   @override
   Future<Either<Failure, List<OrdnerStatus>>> setzeOrdnerStatus({
     required List<String> ordnernamen,
     required OrdnerStatusArt? art,
-  }) async {
-    try {
-      return Right(
-        await _ordnerStatusDatasource.setzeOrdnerStatus(
-          ordnernamen: ordnernamen,
-          art: art,
-        ),
-      );
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  }) => alsEither(
+    () => _ordnerStatusDatasource.setzeOrdnerStatus(
+      ordnernamen: ordnernamen,
+      art: art,
+    ),
+    uebersetzen: _localFailure,
+  );
 
   @override
   Future<Either<Failure, Mandant>> verknuepfeOrdner({
     required int mandantId,
     required String ordnername,
-  }) async {
-    try {
-      final aktualisiert = await _verknuepfe(mandantId, ordnername);
-      return Right(aktualisiert);
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
-    }
-  }
+  }) => alsEither(
+    () => _verknuepfe(mandantId, ordnername),
+    uebersetzen: _localFailure,
+  );
 
   @override
   Future<Either<Failure, AblageErgebnis>> legeDokumentAb(
     LegeDokumentAbParams params,
-  ) async {
-    try {
-      final stammordner = await _ladeStammordner();
-      final ergebnis = await _aktenDatasource.legeDokumentAb(
-        stammordner: stammordner,
-        ordnername: params.aktenOrdnername,
-        unterordnerName: params.unterordnerName,
-        quelldateiPfade: params.quelldateiPfade,
-        strategie: params.strategie,
-      );
-      // Register und Dateisystem in Einklang halten: den (ggf. neu angelegten)
-      // Akten-Ordner dem Mandanten zuordnen. Bei einer offenen Rückfrage liegt
-      // noch nichts in der Akte — dann auch nichts zu verknüpfen.
-      if (!ergebnis.konflikt) {
-        await _verknuepfe(params.mandantId, params.aktenOrdnername);
-      }
-      return Right(ergebnis);
-    } catch (e) {
-      return Left(LocalFailure(message: ausnahmeText(e)));
+  ) => alsEither(() async {
+    final stammordner = await _ladeStammordner();
+    final ergebnis = await _aktenDatasource.legeDokumentAb(
+      stammordner: stammordner,
+      ordnername: params.aktenOrdnername,
+      unterordnerName: params.unterordnerName,
+      quelldateiPfade: params.quelldateiPfade,
+      strategie: params.strategie,
+    );
+    // Register und Dateisystem in Einklang halten: den (ggf. neu angelegten)
+    // Akten-Ordner dem Mandanten zuordnen. Bei einer offenen Rückfrage liegt
+    // noch nichts in der Akte — dann auch nichts zu verknüpfen.
+    if (!ergebnis.konflikt) {
+      await _verknuepfe(params.mandantId, params.aktenOrdnername);
     }
-  }
+    return ergebnis;
+  }, uebersetzen: _localFailure);
 
   /// Fügt [ordnername] zu den Akten des Mandanten hinzu (idempotent) und
   /// speichert. Gibt den aktualisierten Mandanten zurück.
@@ -252,4 +186,11 @@ class MandantenRepositoryImpl implements MandantenRepository {
       Left() => '',
     };
   }
+
+  /// Alle Ausnahmen dieses Repositories landen als [LocalFailure] — die
+  /// Datasources sprechen kein HTTP, sondern Dateisystem und lokale
+  /// Datenbank. `ausnahmeText` liefert für `MandantException` denselben
+  /// Klartext wie ihr `message`-Feld (siehe deren `toString()`).
+  Failure _localFailure(Object fehler) =>
+      LocalFailure(message: ausnahmeText(fehler));
 }
