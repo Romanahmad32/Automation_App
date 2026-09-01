@@ -51,6 +51,10 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   `ReceivedReplies`). Jeder Treffer wird nach bestem Wissen über die Referenz einem Vorgang
   zugeordnet (`VorgangId`/`Zugeordnet`), **ohne** den Vorgang zu verändern — die Übernahme
   bleibt der bestätigte Schritt im Frontend.
+- **Word-Export des Sachgebiete-/Auftragsregisters (§6.2)** — die App ist das führende Register
+  und schreibt ihren Stand als frische Word- **und** PDF-Tabelle in einen Ordner aus den
+  Einstellungen (`RegisterSpiegelService`, `POST api/Vorgaenge/register/export`,
+  `GET …/register/stand`); die Kette steht in `docs/DATENFLUESSE.md`.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
@@ -95,12 +99,3 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 - **Bestätigung vor dem Hochzählen (§7.1)** — die Auftragsnummer wird nach dem Abschluss immer
   automatisch erhöht. Die geforderte Einstellung „automatisch oder erst nach Bestätigung" gibt es
   weder in `KanzleiSettings` noch im Backend.
-- **Word-Export des Sachgebiete-/Auftragsregisters (§6.2)** — die In-App-Ansicht gibt es im
-  genauen Spaltenschema (laufende Nr | Aktenzeichen Abteilung | Name ./. Gegner + Sachbestand
-  v. Datum | Rechtsgebiet), der Export steht hinter einem Platzhalter
-  (`NichtVerfuegbarerRegisterWordExporter`, `verfuegbar == false`).
-
-  **Die Anforderung hat sich geändert:** nach §6.2 ist inzwischen die App das führende
-  Register und exportiert dasselbe Spaltenschema als frische Word-/PDF-Tabelle. Sie muss
-  **nicht** mehr in das bestehende mehrseitige Dokument der Kanzlei anhängen — der Platzhalter
-  wartet also nicht länger darauf, dass diese Vorlage beschafft wird.
