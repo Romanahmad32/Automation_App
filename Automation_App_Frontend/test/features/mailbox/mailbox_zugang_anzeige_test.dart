@@ -10,7 +10,10 @@ import 'package:automation_app/features/email_versand/domain/entities/outlook_si
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
+import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
@@ -132,6 +135,23 @@ class StummerVersanddienst implements EmailVersandRepository {
   Future<SignaturStand> verwirfSignaturFormat() async => const SignaturStand();
 }
 
+/// Ebenfalls unten in derselben Maske: die Verwaltung der Mail-Textvorlagen
+/// (§4.7). Sie holt den Bestand beim Aufgehen; hier bleibt er leer.
+class StummerVorlagenDienst implements MailVorlagenRepository {
+  @override
+  Future<List<MailVorlage>> ladeVorlagen() async => const [];
+
+  @override
+  Future<MailVorlage> lege(MailVorlage vorlage) => throw UnimplementedError();
+
+  @override
+  Future<MailVorlage> aktualisiere(MailVorlage vorlage) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> loesche(int id) => throw UnimplementedError();
+}
+
 void main() {
   const gespeichert = MailboxConfig(
     enabled: true,
@@ -143,10 +163,12 @@ void main() {
     subjectFilter: 'Zentralruf',
   );
 
-  setUp(
-    () =>
-        getIt.registerSingleton<EmailVersandRepository>(StummerVersanddienst()),
-  );
+  setUp(() {
+    getIt.registerSingleton<EmailVersandRepository>(StummerVersanddienst());
+    getIt.registerLazySingleton<MailVorlagenCubit>(
+      () => MailVorlagenCubit(StummerVorlagenDienst()),
+    );
+  });
 
   tearDown(() => getIt.reset());
 

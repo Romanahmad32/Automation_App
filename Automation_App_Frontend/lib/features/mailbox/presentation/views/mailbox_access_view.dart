@@ -11,6 +11,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_ima
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_server_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_microsoft_signin_section.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_signatur_sektion.dart';
+import 'package:automation_app/features/settings/presentation/widgets/mail_vorlagen_sektion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -255,6 +256,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
                         ),
                         const MailboxFilterSection(),
                         MailSignaturSektion(controller: _signatur),
+                        const MailVorlagenSektion(),
                         SpeichernButton(
                           speichert: isSaving,
                           onSpeichern: signInPending ? null : _save,

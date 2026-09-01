@@ -73,66 +73,56 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
 - **EmailVersand** — versendet die fertig verfasste Mail zum Vorgang (§4.7, `POST api/EmailVersand/senden`,
   `GET api/EmailVersand/bereitschaft`). Sendet per SMTP über **denselben** Zugang, den auch der
   `MailboxMonitor` nutzt (`SmtpZugang.Aus` leitet den Postausgang aus dem Posteingang ab;
-  `EmailVersand:SmtpHost` in appsettings überschreibt). Alles oder nichts: Zugang, Anhänge und
-  Adressen werden geprüft, **bevor** verbunden wird (`AnhangPruefung`, `EmailNachrichtBauer`) —
-  ein Fehler heißt, dass nichts hinausgegangen ist. Danach trägt `GesendetOrdnerAblage` die
-  Nachricht per IMAP in "Gesendet" nach, außer der Anbieter tut es selbst (Gmail).
-  Was nach außen wirkt, hängt an drei Nähten, damit der ganze Weg ausführbar prüfbar ist statt nur
-  lesbar (`VersandwegTests`): `ISmtpUebergabe` (Einlieferung), `IGesendetOrdnerAblage` (Kopie) und
-  `IMailboxConfigSource` (der Zugang — der `MailboxConfigStore` dahinter liest im Konstruktor aus
-  `%APPDATA%`, ein Test an der Klasse läse also das echte Postfach des Rechners).
-  Zweiter Weg statt Versand: `POST api/EmailVersand/entwurf` öffnet die Nachricht als Entwurf in
-  Outlook, sonst als `.eml` (`EntwurfDatei`); `EntwurfOeffner` entscheidet. `OutlookVerbindung` hält
-  dafür COM per **Late Binding** (wie bei Word, kein PIA) auf einem **dauerhaften** STA-Thread und
-  lässt die Instanz leben — sonst kostet jeder Entwurf den Outlook-Kaltstart;
-  `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt. **Jeder
-  Einzelgriff wird wieder losgelassen** (`ComFreigabe`, wie beim Word-Interop), die Instanz beim
-  Herunterfahren auf ihrem STA-Thread — sonst bleibt outlook.exe als Prozess stehen.
-  `GET api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht
-  (`OutlookAuswahl`, ein Ordner **je Nachricht** nach EntryID, damit der zweite Griff dieselben
-  Pfade liefert statt "… (2).pdf") — der Ersatz für das Ziehen von Anhang zu Anhang, das Windows
-  nicht hergibt: Outlook reicht Anhänge als *virtuelle* Dateien durch, nicht als Pfade. Zurück geht
-  ein `OutlookAnhaenge` mit Betreff, Absender und der Angabe, ob aus offenem Fenster oder Liste
-  gelesen wurde — welche Nachricht gemeint war, entscheidet Outlook, nicht der Anwalt, und ohne
-  diese Angabe sieht ein Griff in die falsche Mail aus wie ein richtiger. `OutlookErreicht` trennt
-  "Outlook schweigt" von "nichts ausgewählt". `DELETE` darauf wirft eine
-  geholte Datei wieder weg (nur dieser Ordner, die Antwort-Anhänge daneben bleiben).
-  **Alle drei Outlook-Wege** (Entwurf, Anhang-Griff, Signatur-Übernahme) brauchen das *klassische*
-  Outlook; das neue (Store-App) meldet keine COM-Schnittstelle an und legt seine Signaturen nicht als
-  Dateien ab — alle drei täten dann wortlos nichts. `OutlookErkennung` sieht deshalb **beim Start**
-  einmal nach (Singleton *und* `IHostedService`, sonst baut der Container sie erst beim ersten
-  Klick), `GET api/EmailVersand/outlook/stand` liefert den Grund im Klartext an die Oberfläche. Der
-  Direktversand über SMTP ist davon unberührt.
-  **Versandprotokoll** (§4.7): `VersandProtokoll` hält je Vorgang fest, was hinausging — Zeitpunkt,
-  Weg, Empfänger, Anhangnamen wie versendet, ob die Kopie in „Gesendet" landete, und die
-  Message-ID als eigentlichen Nachweis. Geschrieben wird **nach** erfolgreicher Einlieferung, nie
-  davor, und ein Fehlschlag dabei hält den Versand nicht auf (die Mail ist ja beim Empfänger).
-  Adressiert über die *Referenz* des Vorgangs statt über einen Fremdschlüssel — die Slice darf
-  `Vorgaenge` nicht kennen. `VersandProtokollController` (`api/EmailVersand/protokoll`, `/letzte`)
-  liest; die Outlook-Übergabe steht darin als `OutlookEntwurf` und **nicht** als Versand (§4.8).
-  `AnhangAblage`
-  räumt alle Zwischenlager nach 14 Tagen ab (`AnhangAufraeumService` beim Start) — dieselbe Regel
-  wie beim Arbeitsordner. Im Outlook-Entwurf setzt Outlook seine eigene Signatur — deshalb hängt
-  `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an.
-  **Signatur** (§4.7): `GET signaturen` listet die in Outlook eingerichteten,
-  `POST signaturen/uebernehmen` liest eine davon ein — Nur-Text-Fassung (`.txt`) **und** formatierte
-  (`.htm` samt Bildern, `OutlookSignaturHtml`: Rumpf schneiden, Bildverweise auf den blanken
-  Dateinamen kürzen). Die Bilder liegen in `SignaturAblage`
-  (`%APPDATA%\AutomationService\Signatur`), das HTML in `KanzleiSettings.MailSignaturHtml`;
-  `GET signaturen/stand` meldet beides zurück, `GET signaturen/bild?dateiname=` liefert ein
-  einzelnes Bild für die Vorschau der App, `DELETE signaturen/format` wirft die Formatierung
-  weg. Beim Versand baut `MailRumpf` daraus HTML **und** Text und hängt die Bilder als
-  `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`,
-  `SignaturHtmlFilter`) — Word schreibt jedes Bild **zweimal** (VML für Outlook, `<img>` für alle
-  übrigen); nur eins davon zu entfernen hiesse: abgewählt und trotzdem sichtbar. Das eine Muster
-  für alle drei Fälle steht samt Begründung an `BildVerweis`. Die Bilder zählen über `zusatzBytes`
-  in `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
-  **Mail-Textvorlagen** (§4.7, §5.3): `MailVorlagenController` (`api/MailVorlagen`, CRUD) über
-  `MailVorlagenRepository` — Name eindeutig, sonst 409. Der Ausgangsbestand ist das echte
-  Kanzlei-Anschreiben (`MailVorlagenVorgabe`, per `HasData` geseedet). Sein Text **endet vor der
-  Signatur** und trägt `{{Anrede}}`/`{{Grussformel}}` als Platzhalter; die Zeilenenden werden auf
-  LF normalisiert, weil ein Seed sonst je nach Auscheckung des Rechners ein anderer ist und EF
-  „pending model changes" meldet.
+  `EmailVersand:SmtpHost` in appsettings überschreibt). Alles oder nichts: Zugang, Anhänge und Adressen
+  werden geprüft, **bevor** verbunden wird (`AnhangPruefung`, `EmailNachrichtBauer`) — ein Fehler heißt,
+  dass nichts hinausgegangen ist. Danach trägt `GesendetOrdnerAblage` die Nachricht per IMAP in "Gesendet"
+  nach, außer der Anbieter tut es selbst (Gmail). Was nach außen wirkt, hängt an drei Nähten, damit der
+  ganze Weg ausführbar prüfbar ist statt nur lesbar (`VersandwegTests`): `ISmtpUebergabe` (Einlieferung),
+  `IGesendetOrdnerAblage` (Kopie) und `IMailboxConfigSource` (der Zugang — der `MailboxConfigStore` dahinter
+  liest im Konstruktor aus `%APPDATA%`, ein Test an der Klasse läse also das echte Postfach des Rechners).
+  Zweiter Weg statt Versand: `POST api/EmailVersand/entwurf` öffnet die Nachricht als Entwurf in Outlook,
+  sonst als `.eml` (`EntwurfDatei`); `EntwurfOeffner` entscheidet. `OutlookVerbindung` hält dafür COM per
+  **Late Binding** (wie bei Word, kein PIA) auf einem **dauerhaften** STA-Thread und lässt die Instanz leben
+  — sonst kostet jeder Entwurf den Outlook-Kaltstart; `POST api/EmailVersand/entwurf/vorwaermen` bezahlt
+  ihn, während der Anwalt tippt. **Jeder Einzelgriff wird wieder losgelassen** (`ComFreigabe`, wie beim
+  Word-Interop), die Instanz beim Herunterfahren auf ihrem STA-Thread — sonst bleibt outlook.exe als Prozess
+  stehen. `GET api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht
+  (`OutlookAuswahl`, ein Ordner **je Nachricht** nach EntryID, damit der zweite Griff dieselben Pfade
+  liefert statt "… (2).pdf") — der Ersatz für das Ziehen von Anhang zu Anhang, das Windows nicht hergibt:
+  Outlook reicht Anhänge als *virtuelle* Dateien durch, nicht als Pfade. Zurück geht ein `OutlookAnhaenge`
+  mit Betreff, Absender und der Angabe, ob aus offenem Fenster oder Liste gelesen wurde — welche Nachricht
+  gemeint war, entscheidet Outlook, nicht der Anwalt, und ohne diese Angabe sieht ein Griff in die falsche
+  Mail aus wie ein richtiger. `OutlookErreicht` trennt "Outlook schweigt" von "nichts ausgewählt". `DELETE`
+  darauf wirft eine geholte Datei wieder weg (nur dieser Ordner, die Antwort-Anhänge daneben bleiben).
+  **Alle drei Outlook-Wege** (Entwurf, Anhang-Griff, Signatur-Übernahme) brauchen das *klassische* Outlook;
+  das neue (Store-App) meldet keine COM-Schnittstelle an und legt seine Signaturen nicht als Dateien ab —
+  alle drei täten dann wortlos nichts. `OutlookErkennung` sieht deshalb **beim Start** einmal nach
+  (Singleton *und* `IHostedService`, sonst baut der Container sie erst beim ersten Klick), `GET
+  api/EmailVersand/outlook/stand` liefert den Grund im Klartext an die Oberfläche. Der Direktversand über
+  SMTP ist davon unberührt. **Versandprotokoll** (§4.7): `VersandProtokoll` hält je Vorgang fest, was
+  hinausging — Zeitpunkt, Weg, Empfänger, Anhangnamen wie versendet, ob die Kopie in „Gesendet" landete, und
+  die Message-ID als eigentlichen Nachweis. Geschrieben wird **nach** erfolgreicher Einlieferung, nie davor,
+  und ein Fehlschlag dabei hält den Versand nicht auf (die Mail ist ja beim Empfänger). Adressiert über die
+  *Referenz* des Vorgangs statt über einen Fremdschlüssel — die Slice darf `Vorgaenge` nicht kennen.
+  `VersandProtokollController` (`api/EmailVersand/protokoll`, `/letzte`) liest; die Outlook-Übergabe steht
+  darin als `OutlookEntwurf` und **nicht** als Versand (§4.8). `AnhangAblage` räumt alle Zwischenlager nach
+  14 Tagen ab (`AnhangAufraeumService` beim Start) — dieselbe Regel wie beim Arbeitsordner. Im
+  Outlook-Entwurf setzt Outlook seine eigene Signatur — deshalb hängt `KanzleiSignatur` die aus den
+  Einstellungen **nur** beim Direktversand an. **Signatur** (§4.7): `GET signaturen` listet die in Outlook
+  eingerichteten, `POST signaturen/uebernehmen` liest eine davon ein — Nur-Text-Fassung (`.txt`) **und**
+  formatierte (`.htm` samt Bildern, `OutlookSignaturHtml`: Rumpf schneiden, Bildverweise auf den blanken
+  Dateinamen kürzen). Die Bilder liegen in `SignaturAblage` (`%APPDATA%\AutomationService\Signatur`), das
+  HTML in `KanzleiSettings.MailSignaturHtml`; `GET signaturen/stand` meldet beides zurück, `GET
+  signaturen/bild?dateiname=` liefert ein einzelnes Bild für die Vorschau der App, `DELETE
+  signaturen/format` wirft die Formatierung weg. Beim Versand baut `MailRumpf` daraus HTML **und** Text und
+  hängt die Bilder als `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`,
+  `SignaturHtmlFilter`) — Word schreibt jedes Bild **zweimal** (VML für Outlook, `<img>` für alle übrigen);
+  nur eins davon zu entfernen hiesse: abgewählt und trotzdem sichtbar. Das eine Muster für alle drei Fälle
+  steht samt Begründung an `BildVerweis`. Die Bilder zählen über `zusatzBytes` in `AnhangPruefung` zur
+  Größengrenze, denn sie gehen im selben Umschlag hinaus. **Mail-Textvorlagen** (§4.7, §5.3):
+  `MailVorlagenController` (`api/MailVorlagen`, CRUD) über `MailVorlagenRepository`, Name eindeutig (409).
+  Ausgangsbestand ist das echte Kanzlei-Anschreiben; was daran bewusst vom Original abweicht und warum sein
+  Zeilenende erzwungen LF ist, steht an `MailVorlagenVorgabe`.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und

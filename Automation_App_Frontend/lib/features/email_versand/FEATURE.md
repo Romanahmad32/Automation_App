@@ -8,13 +8,13 @@ wird über das Postfach der Kanzlei.
 für alle Stellen; er öffnet `EmailVersandDialog`.
 **Zustand:** `EmailEntwurfCubit` (`presentation/blocs/email_entwurf_cubit/`) — Factory, je Dialog
 ein eigener Entwurf; der Griff nach Outlook liegt im Mixin `OutlookAnhaengeGriff` daneben.
-**Domain:** Entities `EmailEntwurf`, `EmailEmpfaengerVorschlag`, `EmpfaengerArt`,
-`EmailVersandBereitschaft`, `EmailVersandErgebnis`, `OutlookAnhaenge`, `OutlookStand`,
-`VersandPruefung`, `VersandEintrag`; Dienste `EmailEntwurfErzeuger` (Vorbelegung),
-`VersandVoraussetzungen` (Prüfung je Feld); Schnittstelle `EmailVersandRepository`. Keine UseCases.
+**Domain:** Entities `EmailEntwurf`, `EmailEmpfaengerVorschlag`, `EmpfaengerArt`, `EmailVersandBereitschaft`,
+`EmailVersandErgebnis`, `OutlookAnhaenge`, `OutlookStand`, `VersandPruefung`, `VersandEintrag`, `MailVorlage`;
+Dienste `EmailEntwurfErzeuger` (Vorbelegung), `VersandVoraussetzungen`, `MailPlatzhalter`; Schnittstellen
+`EmailVersandRepository`, `MailVorlagenRepository`. Keine UseCases.
 **Backend:** `Features/EmailVersand/` · `bereitschaft` · `senden` · `entwurf`
 (+ `entwurf/vorwaermen`) · `outlook/anhaenge` · `outlook/stand` · `protokoll` (+ `/letzte`) ·
-`signaturen` (+ `/stand`, `/uebernehmen`, `/format`, `/bild`)
+`signaturen` (+ `/stand`, `/uebernehmen`, `/format`, `/bild`) · `api/MailVorlagen` (CRUD)
 **Tests:** `test/features/email_versand/`
 
 **Fallstricke**
