@@ -18,6 +18,16 @@ public class MandantEntity
     public string EmailAdresse { get; set; } = string.Empty;
     public string Telefonnummer { get; set; } = string.Empty;
     public string Notiz { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Frei geschriebener persönlicher Zusatzgruß, der in Mails an diesen
+    /// Mandanten unter der Anrede steht (§5.1, §4.7). Leer heißt: kein
+    /// Zusatzgruß. Bewusst freier Text und keine Religionszugehörigkeit —
+    /// die wäre ein besonderes personenbezogenes Datum (Art. 9 DSGVO) und für
+    /// diesen Zweck unnötig.
+    /// </summary>
+    public string PersoenlicheGrussformel { get; set; } = string.Empty;
+
     public DateTime ErstelltAm { get; set; }
 
     /// <summary>JSON-Array der zugeordneten Akten-Ordnernamen (relativ zum Stammordner).</summary>

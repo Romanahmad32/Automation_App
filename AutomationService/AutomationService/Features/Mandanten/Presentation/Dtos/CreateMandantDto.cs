@@ -14,5 +14,6 @@ public sealed record CreateMandantDto(
     string EmailAdresse,
     string Telefonnummer,
     string Notiz,
+    string PersoenlicheGrussformel,
     IReadOnlyList<string> AktenOrdnernamen,
     IReadOnlyList<string> Kennzeichen);
