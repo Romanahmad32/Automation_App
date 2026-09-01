@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
 import 'package:flutter/material.dart';
@@ -110,29 +111,17 @@ class ImportZusammenfassung extends StatelessWidget {
 
   Future<void> _fragen(BuildContext context) async {
     final cubit = context.read<MandantenImportCubit>();
-    final bestaetigt = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Import übernehmen?'),
-        content: Text(
+    final bestaetigt = await bestaetigen(
+      context,
+      titel: 'Import übernehmen?',
+      text:
           '${bericht.neu} Mandanten werden angelegt, ${bericht.ergaenzt} '
           'ergänzt und ${bericht.ordnerZugeordnet} Ordner zugeordnet.\n\n'
           'Vorhandene Angaben werden dabei nicht überschrieben, nur leere '
           'Felder gefüllt. Abgelehnte Zeilen bleiben liegen.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Übernehmen'),
-          ),
-        ],
-      ),
+      bestaetigung: 'Übernehmen',
     );
-    if (bestaetigt != true) return;
+    if (!bestaetigt) return;
     await cubit.uebernehmen();
   }
 }
