@@ -248,11 +248,29 @@ Gemeinsam:
   geht **nichts** hinaus, und der Grund steht im Klartext vor dem Anwalt. Eine Mail, der
   ausgerechnet das Anspruchsschreiben fehlt, wäre schlimmer als eine, die gar nicht erst hinausging.
 - **[M] Betreff und Mailtext aus Vorlage:** Betreff und Anschreiben stammen aus einer vom Anwalt
-  pflegbaren Textvorlage mit Platzhaltern (z. B. Aktenzeichen, Mandantenname, Schadennummer) — je
-  Empfängertyp eine eigene Vorlage. Ausgangsbestand ist die in der Kanzlei bereits verwendete
-  Mailvorlage — sie wird einmalig übernommen, nicht nachgebaut. Solange diese Verwaltung nicht
-  steht, belegt die App Anrede, Betreff und Bezugssatz aus den Vorgangsdaten vor; vor dem
-  Absenden ist alles änderbar.
+  pflegbaren Textvorlage mit Platzhaltern (z. B. Aktenzeichen, Mandantenname, Schadennummer).
+  Ausgangsbestand ist die in der Kanzlei bereits verwendete Mailvorlage — sie wird einmalig
+  übernommen, nicht nachgebaut. Ist keine Vorlage gewählt, belegt die App Anrede, Betreff und
+  Bezugssatz aus den Vorgangsdaten vor; vor dem Absenden ist alles änderbar. *Geändert am
+  01.09.2026: Bis dahin stand hier „je Empfängertyp eine eigene Vorlage" — siehe den nächsten
+  Punkt.*
+- **[M] Die Vorlage wählt der Anwalt, die App errät sie nicht:** Beim Verfassen steht die Liste der
+  Vorlagen zur Auswahl; die gewählte ersetzt Betreff und Text des Entwurfs. Eine Bindung an den
+  Empfängertyp wäre hier eine Falle: Standardmäßig gehen Mandant und Versicherung **eine
+  gemeinsame** Mail (siehe oben), ein Mandantenanschreiben passt dort aber nicht hinein. Wer die
+  Mandantenvorlage nimmt, nimmt die Versicherung aus dem Feld „An" — diese Entscheidung trifft
+  der Anwalt. *Ergänzt am 01.09.2026.*
+- **[M] Anrede und Gruß stehen in der Vorlage:** Auch die Anrede ist ein Platzhalter im
+  Vorlagentext. So bestimmt jede Vorlage selbst, ob und wie angeredet wird — die eine an
+  zwei Empfänger, die andere persönlich an den Mandanten. Ein Platzhalter, für den es nichts
+  einzusetzen gibt, lässt seine Zeile **ganz** entfallen, statt eine leere zurückzulassen; eine
+  Vorlage darf also Zeilen enthalten, die nur manchmal erscheinen. *Ergänzt am 01.09.2026.*
+- **[S] Persönliche Grußformel des Mandanten:** Ist am Mandanten eine persönliche Grußformel
+  hinterlegt (siehe 5.1), setzt der Platzhalter dafür sie ein — üblich als eigene Zeile unter der
+  Anrede. Sie erscheint **nur**, wenn ausschließlich der Mandant angeschrieben wird; steht eine
+  weitere Adresse im Feld „An", bleibt der Platzhalter leer und seine Zeile entfällt. Ein
+  persönlicher Gruß, den die gegnerische Versicherung mitliest, wäre keiner. *Ergänzt am
+  01.09.2026: Beobachtung aus der Kanzlei vom 25.08.2026.*
 - **[S] Auch außerhalb des Schreibens:** Derselbe Entwurf lässt sich aus dem Postfach heraus
   öffnen — mit dem Vorgang der ausgewählten Antwort vorbelegt, sonst als leeres Anschreiben.
   Damit bleibt eine Nachfrage an die Versicherung in der App, ohne den Umweg über den
@@ -370,6 +388,12 @@ werden — fachlich der Einstieg **vor** 4.1.
   Parteienbezeichnung „Mandant ./. Gegner" im Register (siehe 6.2).
 - **[S] Duplikatschutz:** Tippt der Anwalt Daten ein, die zu einem bekannten Mandanten passen,
   weist die App darauf hin und bietet die Übernahme an — als Vorschlag, nicht als Automatik.
+- **[S] Persönliche Grußformel:** Zu einem Mandanten lässt sich eine frei geschriebene
+  persönliche Grußformel hinterlegen (z. B. „Salamu aleikum"), die in Mails an ihn unter der
+  Anrede erscheint (siehe 4.7). Leer heißt: kein Zusatzgruß; mehr als eine gibt es nicht.
+  **Bewusst ein freies Textfeld und keine Religionszugehörigkeit:** Die wäre ein besonderes
+  personenbezogenes Datum (Art. 9 DSGVO) und für diesen Zweck unnötig — das freie Feld erreicht
+  dasselbe, ohne jemanden zu kategorisieren. *Ergänzt am 01.09.2026.*
 
 ### 5.2 Versicherer
 
