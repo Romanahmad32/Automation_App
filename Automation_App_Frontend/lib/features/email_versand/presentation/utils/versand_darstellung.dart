@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 
 /// Wie ein Versandeintrag in einer Zeile steht (§4.7).
@@ -8,11 +9,8 @@ import 'package:automation_app/features/email_versand/domain/entities/versand_ei
 /// nur stehen, wo die App die Einlieferung wirklich gesehen hat.
 abstract final class VersandDarstellung {
   /// „28.08.2026 um 14:12" — dieselbe Schreibweise wie im Postfach.
-  static String zeitpunkt(DateTime wann) {
-    String zwei(int wert) => wert.toString().padLeft(2, '0');
-    return '${zwei(wann.day)}.${zwei(wann.month)}.${wann.year} um '
-        '${zwei(wann.hour)}:${zwei(wann.minute)}';
-  }
+  static String zeitpunkt(DateTime wann) =>
+      '${deutschesDatum(wann)} um ${deutscheUhrzeit(wann)}';
 
   /// Was mit der Mail geschah — im Perfekt, wie der Anwalt es erzählen würde.
   static String tat(VersandWeg weg) => switch (weg) {
