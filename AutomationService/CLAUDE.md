@@ -127,6 +127,12 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   übrigen); nur eins davon zu entfernen hiesse: abgewählt und trotzdem sichtbar. Das eine Muster
   für alle drei Fälle steht samt Begründung an `BildVerweis`. Die Bilder zählen über `zusatzBytes`
   in `AnhangPruefung` zur Größengrenze, denn sie gehen im selben Umschlag hinaus.
+  **Mail-Textvorlagen** (§4.7, §5.3): `MailVorlagenController` (`api/MailVorlagen`, CRUD) über
+  `MailVorlagenRepository` — Name eindeutig, sonst 409. Der Ausgangsbestand ist das echte
+  Kanzlei-Anschreiben (`MailVorlagenVorgabe`, per `HasData` geseedet). Sein Text **endet vor der
+  Signatur** und trägt `{{Anrede}}`/`{{Grussformel}}` als Platzhalter; die Zeilenenden werden auf
+  LF normalisiert, weil ein Seed sonst je nach Auscheckung des Rechners ein anderer ist und EF
+  „pending model changes" meldet.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und
