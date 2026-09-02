@@ -53,6 +53,15 @@ passierte.
   Erzeugung fehl; die Karte warnt nur, sie blockiert das Speichern nicht. Der Chip zu diesem
   Platzhalter wird trotzdem angeboten — als Eingabefeld übernehmen wäre falsch, die Tabelle setzt
   ihn selbst ein.
+- **Zuordnen heißt umbenennen, nicht die `.docx` anfassen** (#36): `PlatzhalterZuordnung` schlägt
+  zu einem Namen ohne Gegenstück Kandidaten der anderen Seite vor — gleich nach
+  `FeldDatenquelleErkennung.normalisiere` (`Versicherungsschein-Nr` ↔ `{{VersicherungsscheinNr}}`,
+  der stille Killer: das Backend ersetzt nur `IgnoreCase`) oder ineinander steckend
+  (`Unfalldatum` ↔ `{{Verkehrsunfalldatum}}`, ab fünf Zeichen). Vorgeschlagen wird nur, was **kein**
+  Feld wegnimmt: Ein Feld, das schon irgendwo ankommt, steht als Befund da statt als Angebot —
+  es umzubenennen tauschte nur den einen Waisen gegen den anderen. Genau das ist der Produktivfall,
+  in dem die beiden Word-Dateien dieselbe Angabe verschieden nennen; dort hilft nur Word.
+  `{{VersScheinNr}}` erkennt keine Regel — deshalb hat der Dialog die aufklappbare Handauswahl.
 - Der Word-Pfad läuft im Frontend absolut und wird auch aus `word_automation` überschrieben
   (`WizardCubit.linkWordFileToTemplate`). Gespeichert wird er seit #33 im **Backend** relativ zum
   eingestellten Vorlagenordner, sofern die Datei darin liegt (`FormTemplatesController`) — das
