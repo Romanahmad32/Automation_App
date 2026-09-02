@@ -14,6 +14,21 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
   gemeinsame Mail (§4.7); ein Mandantenanschreiben passt dort nicht hinein, und automatisch
   gesetzt stünde es vor der Gegenseite. `MailVorlagenAuswahl` blendet sich ganz aus, solange der
   Bestand leer ist — ein leeres Auswahlfeld sähe aus wie eine Einstellung, die es nicht gibt.
+- **Betreff und Text sind abgeleitet, nicht eingefügt.** Solange eine Vorlage gewählt ist und der
+  Anwalt nicht selbst getippt hat (`textSelbstGeschrieben`), erzeugt `_abgeleitet` sie bei jeder
+  Änderung neu — Empfänger dazu, Gruß gewechselt, Vorlage getauscht. Erst `setzeText` löst die
+  Bindung. Wer hier eine einmalige Einfügung daraus macht, bricht genau die Zusage, dass die
+  Anrede dem Empfängerkreis folgt.
+  **Der Betreff ist die Ausnahme:** Er entsteht nur bei einer *ausdrücklichen* Handlung neu
+  (Vorlage oder Gruß gewählt, `betreffAuch: true`). Ein hinzugefügter Empfänger ist keine Ansage,
+  die Betreffzeile neu zu schreiben — so war es vor den Vorlagen schon.
+- **„Keine Vorlage" ist ein echter Eintrag** mit `null` als Wert, kein Sonderfall daneben. Deshalb
+  nimmt `copyWith` die Vorlage als **Funktion** (`gewaehlteVorlage: () => null`), wie `fehler`:
+  Mit `?? this.` liesse sie sich nie zurücknehmen.
+- Der **Zusatzgruß** wird je Mail gewählt (`setzeZusatzgruss`), vorbelegt aus dem Mandanten. Der
+  Wert liegt im Zustand, die **Regel** bleibt im `MailVorlagenFueller`: `nurAnDenMandanten`
+  entscheidet, ob er eingesetzt wird. `grussMoeglich` steht daneben im Zustand, damit die Chips
+  und der erzeugte Text dieselbe Rechnung benutzen — zwei davon liefen auseinander.
 - **Anrede und Grußformel sind Platzhalter der Vorlage**, keine Vorspann-Zeilen: So bestimmt
   jede Vorlage selbst, ob und wie angeredet wird. Ein Platzhalter ohne Wert nimmt **seine ganze
   Zeile** mit (`MailVorlagenFueller`), und wo dadurch zwei Leerzeilen aufeinanderträfen, bleibt

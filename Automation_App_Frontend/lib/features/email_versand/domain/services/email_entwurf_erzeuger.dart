@@ -126,11 +126,21 @@ class EmailEntwurfErzeuger {
   /// wird dieser persönlich angesprochen. Der Bezugssatz („übersende ich
   /// Ihnen anbei …") steht nur bei [mitSchreiben] — ohne Anhang wäre er
   /// schlicht falsch.
-  String textFuer(List<String> empfaenger, {required bool mitSchreiben}) {
+  /// [zusatzgruss] ist der beim Verfassen gewählte persönliche Gruß (§4.7).
+  /// Er steht als eigene Zeile unter der Anrede; ist er leer, entfällt die
+  /// Zeile **ganz** — dieselbe Regel wie beim Platzhalter in einer Vorlage,
+  /// damit die Vorbelegung nicht anders aussieht als eine Vorlage.
+  String textFuer(
+    List<String> empfaenger, {
+    required bool mitSchreiben,
+    String zusatzgruss = '',
+  }) {
     final unterschrift = kanzlei.name.trim();
     final bezug = mitSchreiben ? _bezugssatz : '';
+    final gruss = zusatzgruss.trim();
+    final grusszeile = gruss.isEmpty ? '' : '\n$gruss,';
     return '''
-${anredeFuer(empfaenger)},
+${anredeFuer(empfaenger)},$grusszeile
 
 $bezug
 
@@ -167,13 +177,17 @@ $unterschrift''';
 
   /// Ein vollständiger Entwurf für den Einstieg: Vorschläge als Empfänger,
   /// Betreff, Text und die mitgegebenen Anhänge.
-  EmailEntwurf entwurfMit(List<String> anhangPfade) {
+  EmailEntwurf entwurfMit(List<String> anhangPfade, {String zusatzgruss = ''}) {
     final adressen = vorschlaege.map((vorschlag) => vorschlag.adresse).toList();
     final mitSchreiben = anhangPfade.isNotEmpty;
     return EmailEntwurf(
       an: adressen,
       betreff: betreffFuer(mitSchreiben: mitSchreiben),
-      text: textFuer(adressen, mitSchreiben: mitSchreiben),
+      text: textFuer(
+        adressen,
+        mitSchreiben: mitSchreiben,
+        zusatzgruss: zusatzgruss,
+      ),
       anhangPfade: anhangPfade,
       // Ohne Vorgang bleibt sie leer — dann wird auch nichts protokolliert.
       vorgangReferenz: vorgang?.referenz ?? '',

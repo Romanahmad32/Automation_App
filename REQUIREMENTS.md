@@ -265,12 +265,26 @@ Gemeinsam:
   zwei Empfänger, die andere persönlich an den Mandanten. Ein Platzhalter, für den es nichts
   einzusetzen gibt, lässt seine Zeile **ganz** entfallen, statt eine leere zurückzulassen; eine
   Vorlage darf also Zeilen enthalten, die nur manchmal erscheinen. *Ergänzt am 01.09.2026.*
-- **[S] Persönliche Grußformel des Mandanten:** Ist am Mandanten eine persönliche Grußformel
-  hinterlegt (siehe 5.1), setzt der Platzhalter dafür sie ein — üblich als eigene Zeile unter der
-  Anrede. Sie erscheint **nur**, wenn ausschließlich der Mandant angeschrieben wird; steht eine
-  weitere Adresse im Feld „An", bleibt der Platzhalter leer und seine Zeile entfällt. Ein
-  persönlicher Gruß, den die gegnerische Versicherung mitliest, wäre keiner. *Ergänzt am
-  01.09.2026: Beobachtung aus der Kanzlei vom 25.08.2026.*
+- **[S] Persönlicher Zusatzgruß, gewählt je Mail:** Beim Verfassen wählt der Anwalt den
+  persönlichen Gruß aus einer kurzen Liste — oder keinen. Der Platzhalter dafür setzt ihn ein,
+  üblich als eigene Zeile unter der Anrede; ohne Wahl entfällt die Zeile. Vorbelegt ist, was am
+  Mandanten hinterlegt ist (siehe 5.1): Der Regelfall soll ohne Klick stimmen, die Ausnahme ohne
+  Umweg über die Stammdaten möglich sein. Die Liste pflegt der Anwalt selbst (siehe 7.1).
+  *Geändert am 02.09.2026: Bis dahin kam der Gruß allein aus dem Mandanten und war beim Schreiben
+  nicht änderbar.*
+- **[S] Der Zusatzgruß geht nur an den Mandanten allein:** Sobald eine weitere Adresse im Feld
+  „An" steht, geht er **nicht** mit, und die App sagt an der Auswahl, warum — sie lässt ihn nicht
+  wortlos verschwinden. Ein persönlicher Gruß, den die gegnerische Versicherung mitliest, wäre
+  keiner. *Ergänzt am 01.09.2026: Beobachtung aus der Kanzlei vom 25.08.2026.*
+- **[S] Sichtbar, was die Platzhalter ergeben:** Zu einer gewählten Vorlage zeigt die App auf
+  Wunsch, welche Platzhalter darin stehen, was jeweils eingesetzt wurde und was leer blieb — und
+  den Vorlagentext, wie er hinterlegt ist. **Beiläufig, nicht im Vordergrund:** zugeklappt, bis
+  jemand nachsieht. Ohne diese Auskunft ist ein fertig gefüllter Text nicht mehr auf die Vorlage
+  zurückzuführen, aus der er stammt, und ein falsch belegter Platzhalter sieht aus wie ein
+  Tippfehler. *Ergänzt am 02.09.2026.*
+- **[M] Vorlage wieder abwählen:** „Keine Vorlage" steht in der Auswahl gleichberechtigt neben den
+  Vorlagen und führt zur Vorbelegung aus den Vorgangsdaten zurück. Eine Wahl, die sich nicht
+  zurücknehmen lässt, zwingt zum Schließen und Neuöffnen des Entwurfs. *Ergänzt am 02.09.2026.*
 - **[S] Auch außerhalb des Schreibens:** Derselbe Entwurf lässt sich aus dem Postfach heraus
   öffnen — mit dem Vorgang der ausgewählten Antwort vorbelegt, sonst als leeres Anschreiben.
   Damit bleibt eine Nachfrage an die Versicherung in der App, ohne den Umweg über den
@@ -389,8 +403,9 @@ werden — fachlich der Einstieg **vor** 4.1.
 - **[S] Duplikatschutz:** Tippt der Anwalt Daten ein, die zu einem bekannten Mandanten passen,
   weist die App darauf hin und bietet die Übernahme an — als Vorschlag, nicht als Automatik.
 - **[S] Persönliche Grußformel:** Zu einem Mandanten lässt sich eine frei geschriebene
-  persönliche Grußformel hinterlegen (z. B. „Salamu aleikum"), die in Mails an ihn unter der
-  Anrede erscheint (siehe 4.7). Leer heißt: kein Zusatzgruß; mehr als eine gibt es nicht.
+  persönliche Grußformel hinterlegen (z. B. „Salamu aleikum"). Sie ist die **Vorbelegung** für
+  Mails an ihn; gewählt wird beim Verfassen (siehe 4.7). Leer heißt: kein Zusatzgruß; mehr als
+  eine gibt es nicht.
   **Bewusst ein freies Textfeld und keine Religionszugehörigkeit:** Die wäre ein besonderes
   personenbezogenes Datum (Art. 9 DSGVO) und für diesen Zweck unnötig — das freie Feld erreicht
   dasselbe, ohne jemanden zu kategorisieren. *Ergänzt am 01.09.2026.*
@@ -495,6 +510,9 @@ Konfigurierbar sein müssen mindestens:
 - **[M] Stammordner des Aktensystems** und **[S] Namensmuster der Unterordner** (siehe 6.1).
 - **[M] Mail-Textvorlagen** für den Versand (siehe 4.7). Die Empfänger wählt der Anwalt je Mail,
   sie sind keine Einstellung.
+- **[S] Persönliche Grußformeln**, aus denen beim Verfassen gewählt wird (siehe 4.7) — anlegen,
+  ändern, entfernen. Es ist eine Liste von **Textbausteinen**, kein Merkmal von Personen: Sie
+  hängt an keinem Mandanten und ordnet niemanden ein. *Ergänzt am 02.09.2026.*
 - **[S] Postfach-Zugang** für die automatische Überwachung (siehe 4.3): Postfach-Adresse,
   Zugangsdaten und Betreff-Filter. Ohne hinterlegten Zugang bleibt die Überwachung inaktiv.
 - **[S] Darstellungsoptionen für erzeugte Dokumente** (z. B. Farbe der Tabellen-Titelzeile der

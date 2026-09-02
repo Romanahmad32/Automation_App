@@ -33,14 +33,20 @@ import 'package:automation_app/features/dev_simulation/domain/repositories/simul
     as _i602;
 import 'package:automation_app/features/email_versand/data/datasources/email_versand_datasource.dart'
     as _i715;
+import 'package:automation_app/features/email_versand/data/datasources/grussformeln_datasource.dart'
+    as _i328;
 import 'package:automation_app/features/email_versand/data/datasources/mail_vorlagen_datasource.dart'
     as _i229;
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart'
     as _i67;
+import 'package:automation_app/features/email_versand/domain/repositories/grussformeln_repository.dart'
+    as _i388;
 import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart'
     as _i435;
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart'
     as _i318;
+import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart'
+    as _i1058;
 import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart'
     as _i161;
 import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart'
@@ -340,6 +346,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i285.BackupRepository>(
       () => _i182.ApiBackupDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i388.GrussformelnRepository>(
+      () => _i328.ApiGrussformelnDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i615.ZentralrufDatasource>(
       () => _i615.ApiZentralrufDatasource(gh<_i361.Dio>()),
     );
@@ -449,6 +458,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(
       () => _i706.GetKanzleiSettings(gh<_i849.KanzleiSettingsRepository>()),
+    );
+    gh.lazySingleton<_i1058.GrussformelnCubit>(
+      () => _i1058.GrussformelnCubit(gh<_i388.GrussformelnRepository>()),
     );
     gh.factory<_i431.MailboxInboxCubit>(
       () => _i431.MailboxInboxCubit(

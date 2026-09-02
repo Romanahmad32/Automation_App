@@ -10,9 +10,12 @@ import 'package:automation_app/features/email_versand/domain/entities/outlook_si
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
+import 'package:automation_app/features/email_versand/domain/entities/grussformel.dart';
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/grussformeln_repository.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
@@ -135,6 +138,24 @@ class StummerVersanddienst implements EmailVersandRepository {
   Future<SignaturStand> verwirfSignaturFormat() async => const SignaturStand();
 }
 
+/// Daneben die Verwaltung der persoenlichen Gruesse (§4.7, §7.1) — auch sie
+/// holt beim Aufgehen; hier bleibt der Bestand leer.
+class StummerGrussDienst implements GrussformelnRepository {
+  @override
+  Future<List<Grussformel>> ladeGrussformeln() async => const [];
+
+  @override
+  Future<Grussformel> lege(Grussformel grussformel) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Grussformel> aktualisiere(Grussformel grussformel) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> loesche(int id) => throw UnimplementedError();
+}
+
 /// Ebenfalls unten in derselben Maske: die Verwaltung der Mail-Textvorlagen
 /// (§4.7). Sie holt den Bestand beim Aufgehen; hier bleibt er leer.
 class StummerVorlagenDienst implements MailVorlagenRepository {
@@ -167,6 +188,9 @@ void main() {
     getIt.registerSingleton<EmailVersandRepository>(StummerVersanddienst());
     getIt.registerLazySingleton<MailVorlagenCubit>(
       () => MailVorlagenCubit(StummerVorlagenDienst()),
+    );
+    getIt.registerLazySingleton<GrussformelnCubit>(
+      () => GrussformelnCubit(StummerGrussDienst()),
     );
   });
 

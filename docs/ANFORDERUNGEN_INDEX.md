@@ -71,7 +71,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 | 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, Standardpositionen der Schadensaufstellung, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |
 | 4.6 | Ablage in der Akte; Ablageort am Vorgang festhalten |
-| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, gewählte Textvorlage mit Platzhaltern, Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
+| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, gewählte Textvorlage mit Platzhaltern, Zusatzgruß je Mail, Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
 | 4.8 | Auftragsabschluss als eigener Schritt: erledigt, Auftragsnummer weiterzählen, Registereintrag |
 | 4.9 | Folgekorrespondenz zu einem offenen Vorgang |
 | 4.10 | Erstkontakt über die Kanzlei-Website (durchgehend **[K]**) |
@@ -95,7 +95,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand, Postfach-Zugang, Darstellung, Sicherung |
+| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand samt Mail-Textvorlagen und Grussformeln, Postfach-Zugang, Darstellung, Sicherung |
 | 7.2 | Datensicherung und Datenintegrität: Schutz vor Datenverlust, Sichern/Wiederherstellen, robuste Wiederherstellung, dauerhafte Kennungen, Änderungsstand |
 | 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[K]**, siehe 8) |
 

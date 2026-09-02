@@ -1,4 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
+import 'package:automation_app/features/email_versand/domain/entities/platzhalter_befund.dart';
 import 'package:automation_app/features/email_versand/domain/services/mail_platzhalter.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -25,13 +26,20 @@ class MailVorlagenFueller {
   /// weil sie davon abhängt, wer im Feld „An" steht.
   final String anrede;
 
-  /// Ob ausschliesslich der Mandant angeschrieben wird. Nur dann geht sein
-  /// persönlicher Gruß mit.
+  /// Ob ausschliesslich der Mandant angeschrieben wird. Nur dann geht der
+  /// persönliche Gruß mit.
   final bool nurAnDenMandanten;
+
+  /// Der beim Verfassen gewählte Zusatzgruß (§4.7) — vorbelegt aus dem
+  /// Mandanten, änderbar je Mail. Der Wert kommt von aussen, die **Regel**
+  /// bleibt hier: [nurAnDenMandanten] entscheidet, ob er überhaupt eingesetzt
+  /// wird.
+  final String grussformel;
 
   const MailVorlagenFueller({
     required this.anrede,
     required this.nurAnDenMandanten,
+    this.grussformel = '',
     this.vorgang,
     this.mandant,
   });
@@ -92,12 +100,46 @@ class MailVorlagenFueller {
     return ersetzt.trimRight();
   }
 
+  /// Was die Platzhalter dieser Vorlage ergeben — in der Reihenfolge ihres
+  /// ersten Auftretens, jeder Name nur einmal. Grundlage der Übersicht im
+  /// Versanddialog; **leere Befunde bleiben in der Liste**, denn gerade sie
+  /// erklären, warum eine Zeile fehlt.
+  List<PlatzhalterBefund> befunde(MailVorlage vorlage) {
+    final gesehen = <String>{};
+    final gefunden = <PlatzhalterBefund>[];
+
+    for (final quelle in [vorlage.betreff, vorlage.text]) {
+      for (final treffer in MailPlatzhalter.muster.allMatches(quelle)) {
+        final name = treffer.group(1)!.trim();
+        if (!gesehen.add(FeldDatenquelleErkennung.normalisiere(name))) continue;
+
+        final wert = _wertFuer(name)?.trim() ?? '';
+        gefunden.add(
+          PlatzhalterBefund(
+            name: name,
+            wert: wert,
+            herkunft: wert.isEmpty ? '' : _herkunftFuer(name),
+          ),
+        );
+      }
+    }
+    return gefunden;
+  }
+
+  /// Woher der Wert kam, im Klartext. Bewusst grob: Die Übersicht soll den
+  /// Wert einordnen, nicht die Datenquelle des Vorlagen-Editors nachbauen.
+  String _herkunftFuer(String name) {
+    final gesucht = FeldDatenquelleErkennung.normalisiere(name);
+    if (gesucht == _anredeSchluessel) return 'aus Anrede und Empfängern';
+    if (gesucht == _grussformelSchluessel) return 'beim Verfassen gewählt';
+    return 'aus dem Vorgang';
+  }
+
   String? _wertFuer(String name) {
     final gesucht = FeldDatenquelleErkennung.normalisiere(name);
     if (gesucht == _anredeSchluessel) return anrede;
     if (gesucht == _grussformelSchluessel) {
-      if (!nurAnDenMandanten) return '';
-      return mandant?.persoenlicheGrussformel;
+      return nurAnDenMandanten ? grussformel : '';
     }
 
     final zumVorgang = vorgang;

@@ -40,6 +40,7 @@ public static class EmailVersandInjection
         services.AddScoped<IEntwurfOeffner, EntwurfOeffner>();
         services.AddScoped<IEmailVersender, SmtpEmailVersender>();
         services.AddScoped<IMailVorlagenRepository, MailVorlagenRepository>();
+        services.AddScoped<IGrussformelnRepository, GrussformelnRepository>();
         return services;
     }
 }
