@@ -3,6 +3,7 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
+import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_anhaenge.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_pruefung.dart';
@@ -85,10 +86,22 @@ class EmailEntwurfState extends Equatable {
   /// eines Empfängers, was er schon getippt hat.
   final bool textSelbstGeschrieben;
 
-  /// Die Nummer der gewählten Mail-Textvorlage (§4.7); 0 heisst „keine".
-  /// Steht hier, damit die Auswahlliste zeigt, welche gerade gilt — der Text
-  /// allein verrät es nicht mehr, sobald der Anwalt darin geschrieben hat.
-  final int gewaehlteVorlageId;
+  /// Die gewählte Mail-Textvorlage (§4.7); null heisst „keine" und führt zur
+  /// Vorbelegung aus den Vorgangsdaten zurück. Steht hier ganz und nicht nur
+  /// als Nummer, weil Betreff und Text bei jeder Änderung an Empfängern oder
+  /// Zusatzgruß neu daraus abgeleitet werden — und weil die
+  /// Platzhalter-Übersicht sie braucht.
+  final MailVorlage? gewaehlteVorlage;
+
+  /// Der beim Verfassen gewählte persönliche Zusatzgruß (§4.7), vorbelegt aus
+  /// dem Mandanten (§5.1). Leer heisst: keiner.
+  final String zusatzgruss;
+
+  /// Ob ausschliesslich der Mandant angeschrieben wird — nur dann geht der
+  /// Zusatzgruß mit. Steht im Zustand statt in der Oberfläche, weil dieselbe
+  /// Regel den Text erzeugt und die Chips sperrt; zwei Rechnungen davon liefen
+  /// auseinander.
+  final bool grussMoeglich;
 
   const EmailEntwurfState({
     this.entwurf = const EmailEntwurf(),
@@ -107,7 +120,9 @@ class EmailEntwurfState extends Equatable {
     this.offenKopie = '',
     this.versandVersucht = false,
     this.textSelbstGeschrieben = false,
-    this.gewaehlteVorlageId = 0,
+    this.gewaehlteVorlage,
+    this.zusatzgruss = '',
+    this.grussMoeglich = false,
   });
 
   /// Was der Mail noch fehlt, je Feld (§4.7).
@@ -178,7 +193,9 @@ class EmailEntwurfState extends Equatable {
     String? offenKopie,
     bool? versandVersucht,
     bool? textSelbstGeschrieben,
-    int? gewaehlteVorlageId,
+    MailVorlage? Function()? gewaehlteVorlage,
+    String? zusatzgruss,
+    bool? grussMoeglich,
   }) {
     return EmailEntwurfState(
       entwurf: entwurf ?? this.entwurf,
@@ -198,7 +215,13 @@ class EmailEntwurfState extends Equatable {
       versandVersucht: versandVersucht ?? this.versandVersucht,
       textSelbstGeschrieben:
           textSelbstGeschrieben ?? this.textSelbstGeschrieben,
-      gewaehlteVorlageId: gewaehlteVorlageId ?? this.gewaehlteVorlageId,
+      // Wie bei `fehler` als Funktion: Die Vorlage muss sich auf null setzen
+      // lassen („keine Vorlage"), und mit `?? this.` ginge das nie.
+      gewaehlteVorlage: gewaehlteVorlage != null
+          ? gewaehlteVorlage()
+          : this.gewaehlteVorlage,
+      zusatzgruss: zusatzgruss ?? this.zusatzgruss,
+      grussMoeglich: grussMoeglich ?? this.grussMoeglich,
     );
   }
 
@@ -220,6 +243,8 @@ class EmailEntwurfState extends Equatable {
     offenKopie,
     versandVersucht,
     textSelbstGeschrieben,
-    gewaehlteVorlageId,
+    gewaehlteVorlage,
+    zusatzgruss,
+    grussMoeglich,
   ];
 }

@@ -9,12 +9,12 @@ für alle Stellen; er öffnet `EmailVersandDialog`.
 **Zustand:** `EmailEntwurfCubit` (`presentation/blocs/email_entwurf_cubit/`) — Factory, je Dialog
 ein eigener Entwurf; der Griff nach Outlook liegt im Mixin `OutlookAnhaengeGriff` daneben.
 **Domain:** Entities `EmailEntwurf`, `EmailEmpfaengerVorschlag`, `EmpfaengerArt`, `EmailVersandBereitschaft`,
-`EmailVersandErgebnis`, `OutlookAnhaenge`, `OutlookStand`, `VersandPruefung`, `VersandEintrag`, `MailVorlage`;
-Dienste `EmailEntwurfErzeuger` (Vorbelegung), `VersandVoraussetzungen`, `MailVorlagenFueller` (die `{{…}}`);
-Schnittstellen `EmailVersandRepository`, `MailVorlagenRepository`. Keine UseCases.
+`EmailVersandErgebnis`, `OutlookAnhaenge`, `OutlookStand`, `VersandPruefung`, `VersandEintrag`, `MailVorlage`,
+`Grussformel`, `PlatzhalterBefund`; Dienste `EmailEntwurfErzeuger`, `VersandVoraussetzungen`, `MailVorlagenFueller`;
+Schnittstellen `EmailVersandRepository`, `MailVorlagenRepository`, `GrussformelnRepository`. Keine UseCases.
 **Backend:** `Features/EmailVersand/` · `bereitschaft` · `senden` · `entwurf`
 (+ `entwurf/vorwaermen`) · `outlook/anhaenge` · `outlook/stand` · `protokoll` (+ `/letzte`) ·
-`signaturen` (+ `/stand`, `/uebernehmen`, `/format`, `/bild`) · `api/MailVorlagen` (CRUD)
+`signaturen` (+ `/stand`, `/uebernehmen`, `/format`, `/bild`) · `api/MailVorlagen`, `api/Grussformeln` (CRUD)
 **Tests:** `test/features/email_versand/`
 
 **Fallstricke**

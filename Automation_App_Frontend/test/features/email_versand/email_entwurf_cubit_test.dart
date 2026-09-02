@@ -589,24 +589,42 @@ void main() {
         'Ihre Verkehrsunfallsache Klaus Müller ./. HUK-COBURG',
       );
       expect(entwurf.text, startsWith('Sehr geehrte Damen und Herren,\n'));
-      expect(gebaut.cubit.state.gewaehlteVorlageId, 1);
+      expect(gebaut.cubit.state.gewaehlteVorlage, vorlage);
       await gebaut.cubit.close();
     });
 
-    test('der Text gilt danach als selbst geschrieben', () async {
-      // Sonst zöge die automatische Anrede ihn beim nächsten Empfänger wieder
-      // nach — und die eben gewählte Vorlage wäre wieder weg.
-      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
-      await gebaut.cubit.starte(vorgang: vorgang);
+    test(
+      'der Text bleibt abgeleitet, bis der Anwalt selbst schreibt',
+      () async {
+        // Die Vorlage ist keine einmalige Einfuegung, sondern eine Ableitung:
+        // Anrede und Gruss haengen an den Empfaengern, also muss der Text ihnen
+        // folgen. Erst getippter Text loest die Bindung — sonst verloere der
+        // Anwalt beim naechsten Empfaenger, was er geschrieben hat.
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+        await gebaut.cubit.starte(vorgang: vorgang);
 
-      gebaut.cubit.waehleVorlage(vorlage);
-      final nachDerWahl = gebaut.cubit.state.entwurf.text;
-      gebaut.cubit.empfaengerHinzufuegen('kanzlei@example.de');
+        gebaut.cubit.waehleVorlage(vorlage);
+        expect(gebaut.cubit.state.textSelbstGeschrieben, isFalse);
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrte Damen und Herren,'),
+        );
 
-      expect(gebaut.cubit.state.textSelbstGeschrieben, isTrue);
-      expect(gebaut.cubit.state.entwurf.text, nachDerWahl);
-      await gebaut.cubit.close();
-    });
+        gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrter Herr Müller,'),
+          reason: 'die Anrede folgt dem Empfaengerkreis weiter',
+        );
+
+        gebaut.cubit.setzeText('Von Hand geschrieben.');
+        gebaut.cubit.empfaengerHinzufuegen('schaden@huk.de');
+
+        expect(gebaut.cubit.state.textSelbstGeschrieben, isTrue);
+        expect(gebaut.cubit.state.entwurf.text, 'Von Hand geschrieben.');
+        await gebaut.cubit.close();
+      },
+    );
 
     test('die Grußformel geht nur an den Mandanten allein', () async {
       final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
@@ -615,19 +633,68 @@ void main() {
       // Vorbelegt stehen Mandant und Versicherung gemeinsam im Feld „An".
       gebaut.cubit.waehleVorlage(vorlage);
       expect(
+        gebaut.cubit.state.zusatzgruss,
+        'Salamu aleikum',
+        reason: 'aus dem Mandanten vorbelegt',
+      );
+      expect(gebaut.cubit.state.grussMoeglich, isFalse);
+      expect(
         gebaut.cubit.state.entwurf.text,
         isNot(contains('Salamu aleikum')),
       );
 
       gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
-      gebaut.cubit.waehleVorlage(vorlage);
 
+      expect(gebaut.cubit.state.grussMoeglich, isTrue);
       expect(
         gebaut.cubit.state.entwurf.text,
         startsWith('Sehr geehrter Herr Müller,\nSalamu aleikum,\n'),
+        reason: 'der Text zieht nach, ohne dass die Vorlage neu gewaehlt wird',
       );
       await gebaut.cubit.close();
     });
+
+    test('„keine Vorlage" führt zur Vorbelegung zurück', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      final vorbelegt = gebaut.cubit.state.entwurf.text;
+
+      gebaut.cubit.waehleVorlage(vorlage);
+      expect(gebaut.cubit.state.entwurf.text, isNot(vorbelegt));
+
+      gebaut.cubit.waehleVorlage(null);
+
+      expect(gebaut.cubit.state.gewaehlteVorlage, isNull);
+      expect(gebaut.cubit.state.entwurf.text, vorbelegt);
+      await gebaut.cubit.close();
+    });
+
+    test(
+      'ein gewählter Zusatzgruß steht ohne Vorlage unter der Anrede',
+      () async {
+        // Die Chips sollen auch dann wirken, wenn nur die Vorbelegung dasteht —
+        // sonst waere der Gruss an eine Vorlage gebunden.
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+        await gebaut.cubit.starte(vorgang: vorgang);
+        gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+        gebaut.cubit.setzeZusatzgruss('Sat Sri Akal');
+
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrter Herr Müller,\nSat Sri Akal,\n'),
+        );
+
+        gebaut.cubit.setzeZusatzgruss('');
+
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrter Herr Müller,\n\n'),
+          reason: 'ohne Gruss bleibt keine Leerzeile stehen',
+        );
+        await gebaut.cubit.close();
+      },
+    );
   });
 
   test('ein abgebrochener Dialog lässt starte() still auslaufen', () async {

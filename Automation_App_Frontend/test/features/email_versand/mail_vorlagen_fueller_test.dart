@@ -54,6 +54,9 @@ void main() {
     return MailVorlagenFueller(
       anrede: erzeuger.anredeFuer(empfaenger),
       nurAnDenMandanten: erzeuger.nurAnDenMandanten(empfaenger),
+      // Der gewaehlte Zusatzgruss (§4.7); vorbelegt ist, was am Mandanten
+      // steht — so baut ihn auch der Cubit.
+      grussformel: mandant.persoenlicheGrussformel,
       vorgang: vorgang,
       mandant: mandant,
     );

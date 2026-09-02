@@ -41,22 +41,21 @@ class MailVorlagenAuswahlFeld extends StatelessWidget {
 
         return BlocBuilder<EmailEntwurfCubit, EmailEntwurfState>(
           buildWhen: (vorher, jetzt) =>
-              vorher.gewaehlteVorlageId != jetzt.gewaehlteVorlageId ||
+              vorher.gewaehlteVorlage != jetzt.gewaehlteVorlage ||
               vorher.beschaeftigt != jetzt.beschaeftigt,
           builder: (context, entwurf) {
+            // Der Eintrag „keine" trägt `null` als Wert — dieselbe Bedeutung
+            // wie im Zustand, damit das Abwählen kein Sonderfall ist.
             final gewaehlt = bestand.vorlagen
-                .where((vorlage) => vorlage.id == entwurf.gewaehlteVorlageId)
+                .where((vorlage) => vorlage.id == entwurf.gewaehlteVorlage?.id)
                 .firstOrNull;
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: DropdownButtonFormField<MailVorlage>(
+              child: DropdownButtonFormField<MailVorlage?>(
                 // Der Schluessel haengt an der Wahl: `initialValue` saet ein
-                // FormField nur beim ersten Aufbau. Ohne ihn zeigte das Feld
-                // weiter die alte Vorlage, sobald der Zustand von woanders
-                // umgestellt wird — heute schreibt nur dieses Feld ihn, und
-                // genau darauf soll sich die naechste Stelle nicht verlassen.
-                key: ValueKey(entwurf.gewaehlteVorlageId),
+                // FormField nur beim ersten Aufbau.
+                key: ValueKey(entwurf.gewaehlteVorlage?.id ?? 0),
                 initialValue: gewaehlt,
                 isExpanded: true,
                 decoration: const InputDecoration(
@@ -67,8 +66,11 @@ class MailVorlagenAuswahlFeld extends StatelessWidget {
                   isDense: true,
                 ),
                 items: [
+                  const DropdownMenuItem<MailVorlage?>(
+                    child: Text('Keine Vorlage (Vorbelegung aus dem Vorgang)'),
+                  ),
                   for (final vorlage in bestand.vorlagen)
-                    DropdownMenuItem(
+                    DropdownMenuItem<MailVorlage?>(
                       value: vorlage,
                       child: Text(
                         vorlage.name,
@@ -78,12 +80,7 @@ class MailVorlagenAuswahlFeld extends StatelessWidget {
                 ],
                 onChanged: entwurf.beschaeftigt
                     ? null
-                    : (vorlage) {
-                        if (vorlage == null) return;
-                        context.read<EmailEntwurfCubit>().waehleVorlage(
-                          vorlage,
-                        );
-                      },
+                    : context.read<EmailEntwurfCubit>().waehleVorlage,
               ),
             );
           },

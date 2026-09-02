@@ -41,8 +41,11 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   `MailVorlagenFueller` aus dem Vorgang — mit `{{Anrede}}` und `{{Grussformel}}` als eigenen
   Namen und der Regel, dass eine Zeile ohne gefüllten Platzhalter ganz entfällt. Gewählt wird von
   Hand: Standardmäßig gehen Mandant und Versicherung eine gemeinsame Mail, und dort passt ein
-  Mandantenanschreiben nicht hinein (§4.7/§5.3). Ausgangsbestand ist die Outlook-Vorlage der
-  Kanzlei.
+  Mandantenanschreiben nicht hinein (§4.7/§5.3); „keine Vorlage" führt zur Vorbelegung zurück.
+  Ausgangsbestand ist die Outlook-Vorlage der Kanzlei. Den **Zusatzgruß** wählt der Anwalt je Mail
+  aus einer in den Einstellungen gepflegten Liste (Chips über dem Betreff), vorbelegt aus dem
+  Mandanten; steht noch jemand anderes im Feld „An", ist die Wahl gesperrt und sagt warum. Ein
+  zugeklappter Bereich zeigt auf Wunsch, was die Platzhalter ergeben haben und was leer blieb.
 - **Sicherung** — das `backup`-Feature schreibt Datenbank und Vorlagen als ZIP
   (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`). Ist in den Einstellungen eine
   **Sicherungsablage** gewählt (gedacht: ein OneDrive-Ordner), sichert die App zusätzlich beim

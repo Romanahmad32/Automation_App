@@ -79,10 +79,16 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     // ist der Cubit zu, und ein `emit` darauf wirft. Nach jedem `await` deshalb
     // erst fragen, ob es den Entwurf überhaupt noch gibt.
     if (isClosed) return;
+    // Vorbelegt aus dem Mandanten (§5.1), aenderbar je Mail (§4.7): Der
+    // Regelfall soll ohne Klick stimmen.
+    final gruss = erzeuger.mandant?.persoenlicheGrussformel.trim() ?? '';
+    final entwurf = erzeuger.entwurfMit(anhangPfade, zusatzgruss: gruss);
     emit(
       state.copyWith(
-        entwurf: erzeuger.entwurfMit(anhangPfade),
+        entwurf: entwurf,
         vorschlaege: erzeuger.vorschlaege,
+        zusatzgruss: gruss,
+        grussMoeglich: erzeuger.nurAnDenMandanten(entwurf.alleEmpfaenger),
       ),
     );
 
@@ -103,39 +109,75 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     );
   }
 
-  /// Übernimmt eine gewählte Mail-Textvorlage (§4.7): Betreff und Text kommen
-  /// aus ihr, die `{{Platzhalter}}` füllt [MailVorlagenFueller] aus Vorgang
-  /// und Mandant.
+  /// Übernimmt eine gewählte Mail-Textvorlage (§4.7) — oder **keine**:
+  /// [vorlage] null führt zur Vorbelegung aus den Vorgangsdaten zurück. Eine
+  /// Wahl, die sich nicht zurücknehmen lässt, zwänge zum Schliessen und
+  /// Neuöffnen des Entwurfs.
   ///
-  /// Danach gilt der Text als selbst geschrieben — die automatische Anrede
-  /// zieht ihn nicht mehr nach. Sie täte es beim nächsten Empfänger, den der
-  /// Anwalt hinzufügt, und die eben gewählte Vorlage wäre wieder weg.
-  ///
-  /// **Die Anrede der Vorlage richtet sich nach dem Feld „An" in diesem
-  /// Augenblick.** Wer die Vorlage wählt und danach die Versicherung
-  /// hinzunimmt, hat eine Mandantenanrede vor einem Mitleser stehen — das
-  /// sieht er im Text und ändert es; die App schreibt ihm nicht hinein.
-  void waehleVorlage(MailVorlage vorlage) {
-    final erzeuger = _erzeuger;
-    if (erzeuger == null) return;
+  /// Betreff und Text sind danach **abgeleitet**, nicht getippt: Sie werden
+  /// nachgezogen, wenn sich Empfänger oder Zusatzgruß ändern. Erst wenn der
+  /// Anwalt selbst in den Text schreibt ([setzeText]), hört das auf.
+  void waehleVorlage(MailVorlage? vorlage) {
+    emit(state.copyWith(gewaehlteVorlage: () => vorlage));
+    _leiteAb(betreffAuch: true);
+  }
 
-    final empfaenger = state.entwurf.an;
-    final gefuellt = MailVorlagenFueller(
+  /// Der beim Verfassen gewählte Zusatzgruß (§4.7); leer heisst keiner.
+  void setzeZusatzgruss(String gruss) {
+    emit(state.copyWith(zusatzgruss: gruss));
+    _leiteAb(betreffAuch: true);
+  }
+
+  /// Leitet Betreff und Text aus dem ab, was gerade gilt: gewählte Vorlage,
+  /// Empfänger, Zusatzgruß. [betreffAuch] trennt die **ausdrückliche**
+  /// Handlung (Vorlage oder Gruß gewählt — dann darf auch der Betreff neu
+  /// entstehen) von der beiläufigen (ein Empfänger kam dazu — dann bleibt der
+  /// Betreff stehen, wie es hier schon immer war).
+  void _leiteAb({required bool betreffAuch}) {
+    if (state.textSelbstGeschrieben) return;
+    final abgeleitet = _abgeleitet(state.entwurf, betreffAuch: betreffAuch);
+    emit(state.copyWith(entwurf: abgeleitet));
+  }
+
+  /// Der Entwurf mit abgeleitetem Text — und auf Wunsch abgeleitetem Betreff.
+  EmailEntwurf _abgeleitet(EmailEntwurf entwurf, {required bool betreffAuch}) {
+    final erzeuger = _erzeuger;
+    if (erzeuger == null) return entwurf;
+
+    final empfaenger = entwurf.alleEmpfaenger;
+    final nurMandant = erzeuger.nurAnDenMandanten(empfaenger);
+    final gruss = nurMandant ? state.zusatzgruss : '';
+    final vorlage = state.gewaehlteVorlage;
+
+    if (vorlage == null) {
+      return entwurf.copyWith(
+        text: erzeuger.textFuer(
+          empfaenger,
+          mitSchreiben: entwurf.anhangPfade.isNotEmpty,
+          zusatzgruss: gruss,
+        ),
+      );
+    }
+
+    final gefuellt = fuellerFuer(empfaenger).fuelleVorlage(vorlage);
+    return entwurf.copyWith(
+      betreff: betreffAuch ? gefuellt.betreff : entwurf.betreff,
+      text: gefuellt.text,
+    );
+  }
+
+  /// Der Füller zum aktuellen Stand. Öffentlich, weil die
+  /// Platzhalter-Übersicht im Dialog dieselben Werte zeigen muss, die in den
+  /// Text gehen — eine zweite Rechnung daneben liefe auseinander.
+  MailVorlagenFueller fuellerFuer(List<String> empfaenger) {
+    final erzeuger = _erzeuger!;
+    final nurMandant = erzeuger.nurAnDenMandanten(empfaenger);
+    return MailVorlagenFueller(
       anrede: erzeuger.anredeFuer(empfaenger),
-      nurAnDenMandanten: erzeuger.nurAnDenMandanten(empfaenger),
+      nurAnDenMandanten: nurMandant,
+      grussformel: nurMandant ? state.zusatzgruss : '',
       vorgang: erzeuger.vorgang,
       mandant: erzeuger.mandant,
-    ).fuelleVorlage(vorlage);
-
-    emit(
-      state.copyWith(
-        entwurf: state.entwurf.copyWith(
-          betreff: gefuellt.betreff,
-          text: gefuellt.text,
-        ),
-        textSelbstGeschrieben: true,
-        gewaehlteVorlageId: vorlage.id,
-      ),
     );
   }
 
@@ -259,22 +301,22 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     }
   }
 
-  /// Übernimmt den geänderten Entwurf und zieht Anrede und Bezugssatz nach,
-  /// solange der Anwalt den Text noch nicht selbst angefasst hat.
+  /// Übernimmt den geänderten Entwurf und zieht den Text nach, solange der
+  /// Anwalt ihn noch nicht selbst angefasst hat — mit Vorlage durch die
+  /// Vorlage, ohne durch die Vorbelegung.
+  ///
+  /// Der **Betreff bleibt stehen**: Ein hinzugefügter Empfänger ist keine
+  /// Ansage, die Betreffzeile neu zu schreiben.
   void _setzeEntwurf(EmailEntwurf entwurf) {
-    final erzeuger = _erzeuger;
-    final angepasst = state.textSelbstGeschrieben || erzeuger == null
+    final angepasst = state.textSelbstGeschrieben
         ? entwurf
-        : entwurf.copyWith(
-            text: erzeuger.textFuer(
-              entwurf.alleEmpfaenger,
-              mitSchreiben: entwurf.anhangPfade.isNotEmpty,
-            ),
-          );
+        : _abgeleitet(entwurf, betreffAuch: false);
     emit(
       state.copyWith(
         entwurf: angepasst,
         anhangBytes: AnhangDarstellung.summe(angepasst.anhangPfade),
+        grussMoeglich:
+            _erzeuger?.nurAnDenMandanten(angepasst.alleEmpfaenger) ?? false,
         fehler: () => null,
       ),
     );

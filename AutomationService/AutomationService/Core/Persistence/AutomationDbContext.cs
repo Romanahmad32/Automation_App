@@ -36,6 +36,7 @@ public class AutomationDbContext(DbContextOptions<AutomationDbContext> options)
     public DbSet<SachgebietEntity> Sachgebiete => Set<SachgebietEntity>();
     public DbSet<VersandEintragEntity> Versandprotokoll => Set<VersandEintragEntity>();
     public DbSet<MailVorlageEntity> MailVorlagen => Set<MailVorlageEntity>();
+    public DbSet<GrussformelEntity> Grussformeln => Set<GrussformelEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
