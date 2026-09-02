@@ -22,6 +22,9 @@ class TemplateFieldsCard extends StatelessWidget {
   final void Function(int index, bool? value) onRequiredChanged;
   final void Function(int index) onDelete;
 
+  /// Klick auf das Kennzeichen „in keiner Datei" einer Zeile (#36).
+  final void Function(int index)? onZuordnen;
+
   const TemplateFieldsCard({
     super.key,
     required this.fields,
@@ -32,6 +35,7 @@ class TemplateFieldsCard extends StatelessWidget {
     required this.onDatenquelleChanged,
     required this.onRequiredChanged,
     required this.onDelete,
+    this.onZuordnen,
   });
 
   @override
@@ -95,6 +99,9 @@ class TemplateFieldsCard extends StatelessWidget {
                       onDatenquelleChanged(index, newValue),
                   onRequiredChanged: (value) => onRequiredChanged(index, value),
                   onDelete: () => onDelete(index),
+                  onZuordnen: onZuordnen == null
+                      ? null
+                      : () => onZuordnen!(index),
                 );
               },
             ),
