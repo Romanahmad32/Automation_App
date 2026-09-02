@@ -10,10 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Die Platzhalter einer Mail-Textvorlage (§4.7).
 ///
-/// Der Fall, der diese Datei trägt: Der persönliche Gruß des Mandanten (§5.1)
-/// steht in der Vorlage unter der Anrede — aber nur, wenn ausschliesslich er
-/// angeschrieben wird, und ohne hinterlegten Gruß darf dort keine Lücke
-/// bleiben.
+/// Der Fall, der diese Datei trägt: Der Zusatzgruß (§5.1) steht in der Vorlage
+/// unter der Anrede — überall, wo `{{Zusatzgruß}}` steht, und ohne gewählten
+/// Gruß darf dort keine Lücke bleiben. Was dabei übersprungen wurde, muss
+/// auffindbar bleiben: Die entfallene Zeile ist im Ergebnis nicht zu sehen.
 void main() {
   Mandant mandantMit(String grussformel) => Mandant(
     id: 7,
@@ -42,9 +42,10 @@ void main() {
 
   const kanzlei = KanzleiSettings(name: 'Rechtsanwalt Max Muster');
 
-  /// Der Füller so, wie der Cubit ihn baut: Anrede und Empfängerkreis kommen
-  /// aus dem `EmailEntwurfErzeuger`, damit hier dieselbe Regel gilt wie im
-  /// Dialog.
+  /// Der Füller so, wie der Cubit ihn baut: Die Anrede kommt aus dem
+  /// `EmailEntwurfErzeuger`, damit hier dieselbe Regel gilt wie im Dialog.
+  /// Der Zusatzgruß geht **ohne** Rücksicht auf die Empfänger mit — genau das
+  /// ist die Änderung vom 02.09.2026.
   MailVorlagenFueller fuellerFuer(Mandant mandant, List<String> empfaenger) {
     final erzeuger = EmailEntwurfErzeuger(
       kanzlei: kanzlei,
@@ -53,10 +54,9 @@ void main() {
     );
     return MailVorlagenFueller(
       anrede: erzeuger.anredeFuer(empfaenger),
-      nurAnDenMandanten: erzeuger.nurAnDenMandanten(empfaenger),
       // Der gewaehlte Zusatzgruss (§4.7); vorbelegt ist, was am Mandanten
       // steht — so baut ihn auch der Cubit.
-      grussformel: mandant.persoenlicheGrussformel,
+      zusatzgruss: mandant.persoenlicheGrussformel,
       vorgang: vorgang,
       mandant: mandant,
     );
@@ -64,11 +64,11 @@ void main() {
 
   const anschreiben =
       '{{Anrede}},\n'
-      '{{Grussformel}},\n'
+      '{{Zusatzgruß}},\n'
       '\n'
       'ich bedanke mich höflichst für das mir entgegengebrachte Vertrauen.';
 
-  group('persönliche Grußformel', () {
+  group('Zusatzgruß', () {
     test('steht unter der Anrede, wenn nur der Mandant angeschrieben wird', () {
       final text = fuellerFuer(mandantMit('Salamu aleikum'), const [
         'k.mueller@example.de',
@@ -77,7 +77,7 @@ void main() {
       expect(text, startsWith('Sehr geehrter Herr Müller,\nSalamu aleikum,\n'));
     });
 
-    test('ohne hinterlegte Formel entsteht keine Leerzeile', () {
+    test('ohne gewählten Gruß entsteht keine Leerzeile', () {
       final text = fuellerFuer(mandantMit(''), const [
         'k.mueller@example.de',
       ]).fuelleText(anschreiben);
@@ -91,22 +91,79 @@ void main() {
       expect(text, isNot(contains('\n\n\n')));
     });
 
-    test('geht nie mit, sobald die Versicherung mitliest', () {
+    test('geht auch mit, wenn die Versicherung mitliest', () {
+      // Geaendert am 02.09.2026: Bis dahin sperrte der Empfaengerkreis den
+      // Gruss. Die Vorlagenwahl ist die Entscheidung — wer eine Vorlage mit
+      // {{Zusatzgruss}} nimmt, will ihn. Die Anrede bleibt davon unberuehrt:
+      // Eine Mail an zwei Empfaenger kann nur eine haben.
       final text = fuellerFuer(mandantMit('Salamu aleikum'), const [
         'k.mueller@example.de',
         'schaden@huk.de',
       ]).fuelleText(anschreiben);
 
-      expect(text, isNot(contains('Salamu aleikum')));
+      expect(text, contains('Salamu aleikum'));
       expect(text, startsWith('Sehr geehrte Damen und Herren,\n'));
     });
 
-    test('auch mit ß geschrieben meint der Platzhalter dieselbe Angabe', () {
+    test('auch mit ss geschrieben meint der Platzhalter dieselbe Angabe', () {
       final text = fuellerFuer(mandantMit('Sat Sri Akal'), const [
         'k.mueller@example.de',
-      ]).fuelleText('{{Grußformel}}');
+      ]).fuelleText('{{Zusatzgruss}}');
 
       expect(text, 'Sat Sri Akal');
+    });
+  });
+
+  group('die Gegenüberstellung zeigt, was die Mail enthält', () {
+    /// Eine Vorlage mit leer bleibender Gruss-Zeile und einer Leerzeile am
+    /// Ende — genau die Stellen, an denen `fuelleText` mehr tut als ersetzen.
+    const mitLuecke = MailVorlage(
+      id: 2,
+      name: 'Mit Luecke',
+      betreff: 'Zu {{Referenz}}',
+      text:
+          '{{Anrede}},\n'
+          '{{Zusatzgruss}},\n'
+          '\n'
+          'Text der Mail.\n'
+          '\n',
+    );
+
+    test('Zeile für Zeile dasselbe wie der gefüllte Text', () {
+      // Die Gegenueberstellung rechnete selbst und kannte dabei nur das
+      // Ersetzen: nicht das Zusammenziehen doppelter Leerzeilen, nicht das
+      // Abschneiden am Ende. Sie zeigte Zeilen, die in der Mail nicht stehen —
+      // ausgerechnet im Dialog, dessen Zweck es ist, zu zeigen, was daraus
+      // wurde.
+      final fueller = fuellerFuer(mandantMit(''), const []);
+
+      final gezeigt = [
+        for (final zeile in fueller.gegenueberstellung(mitLuecke))
+          if (zeile.nummer > 0 && zeile.ergebnis != null) zeile.ergebnis!,
+      ];
+
+      expect(gezeigt.join('\n'), fueller.fuelleText(mitLuecke.text));
+    });
+
+    test('die Gruss-Zeile entfällt, ihr Absatzabstand bleibt einer', () {
+      final zeilen = fuellerFuer(
+        mandantMit(''),
+        const [],
+      ).gegenueberstellung(mitLuecke);
+
+      expect(zeilen[2].ergebnis, isNull, reason: 'der Gruss fehlt');
+      expect(
+        zeilen[3].ergebnis,
+        '',
+        reason: 'eine Leerzeile trennt die Absätze — zwei wären zu viel',
+      );
+      expect(zeilen[4].ergebnis, 'Text der Mail.');
+      expect(
+        zeilen[5].ergebnis,
+        isNull,
+        reason: 'Leerzeilen am Ende gehen mit — die Mail endet mit Text',
+      );
+      expect(zeilen[6].ergebnis, isNull);
     });
   });
 
@@ -154,6 +211,201 @@ void main() {
         betreff,
         isEmpty,
         reason: 'eine erfundene Betreffzeile wäre schlimmer',
+      );
+    });
+  });
+
+  group('Befunde: was übersprungen wurde, bleibt auffindbar (§4.7)', () {
+    /// Die Vorlage aus dem Ausgangsbestand, verkürzt: Der Zusatzgruß steht in
+    /// Zeile 2, und ohne Wahl nimmt er sie mit.
+    const vorlage = MailVorlage(
+      id: 1,
+      name: 'Anschreiben',
+      betreff: 'Ihre Sache {{MandantName}} · {{PolizeiVorgangsnummer}}',
+      text:
+          '{{Anrede}},\n'
+          '{{Zusatzgruß}},\n'
+          '\n'
+          'Unser Zeichen: {{Referenz}}',
+    );
+
+    test('ein leerer Befund nennt seine Zeile und dass sie entfällt', () {
+      final befunde = fuellerFuer(mandantMit(''), const [
+        'k.mueller@example.de',
+      ]).befunde(vorlage);
+
+      final gruss = befunde.firstWhere((befund) => befund.name == 'Zusatzgruß');
+      expect(gruss.istLeer, isTrue);
+      expect(gruss.zeile, 2, reason: 'die zweite Zeile des Nachrichtentexts');
+      expect(gruss.imBetreff, isFalse);
+      expect(gruss.zeileEntfaellt, isTrue);
+      expect(gruss.folge, 'bleibt leer — Zeile 2 entfällt');
+    });
+
+    test('ein leerer Platzhalter im Betreff sagt das statt einer Zeile', () {
+      final befunde = fuellerFuer(mandantMit(''), const []).befunde(vorlage);
+
+      final polizei = befunde.firstWhere(
+        (befund) => befund.name == 'PolizeiVorgangsnummer',
+      );
+      expect(polizei.imBetreff, isTrue);
+      expect(polizei.zeile, 0);
+      expect(
+        polizei.zeileEntfaellt,
+        isFalse,
+        reason: '{{MandantName}} haelt die Betreffzeile am Leben',
+      );
+      expect(polizei.folge, 'bleibt leer — fällt aus dem Betreff');
+    });
+
+    test('ein gefüllter Befund nennt seine Herkunft und bleibt ohne Folge', () {
+      final befunde = fuellerFuer(mandantMit('Sat Sri Akal'), const [
+        'k.mueller@example.de',
+      ]).befunde(vorlage);
+
+      final gruss = befunde.firstWhere((befund) => befund.name == 'Zusatzgruß');
+      expect(gruss.wert, 'Sat Sri Akal');
+      expect(gruss.herkunft, 'beim Verfassen gewählt');
+      expect(gruss.folge, isEmpty);
+      expect(gruss.zeileEntfaellt, isFalse);
+    });
+
+    test('jeder Name steht nur einmal, in der Reihenfolge des Auftretens', () {
+      final befunde = fuellerFuer(mandantMit(''), const []).befunde(
+        const MailVorlage(
+          id: 2,
+          name: 'Doppelt',
+          betreff: '{{MandantName}}',
+          text: 'Zeile eins {{Referenz}}\n{{MandantName}} noch einmal',
+        ),
+      );
+
+      expect(
+        befunde.map((befund) => befund.name),
+        ['MandantName', 'Referenz'],
+        reason: 'der Betreff zaehlt zuerst, Dubletten entfallen',
+      );
+      expect(befunde.first.zeile, 0, reason: 'aus dem Betreff');
+      expect(befunde.last.zeile, 1);
+    });
+  });
+
+  group('die Beugung folgt der gewählten Anredeart (§4.7)', () {
+    /// Der Füller mit einer je Mail gewählten Anredeart — so baut ihn
+    /// `EntwurfAbleitung`: Die Anredezeile und die Wortformen im Text ziehen
+    /// beide aus **derselben** Angabe, damit sie nicht auseinanderlaufen.
+    MailVorlagenFueller mitAnredeart(
+      Anrede geschlecht, {
+      List<String> empfaenger = const [],
+    }) {
+      final mandant = mandantMit('');
+      final erzeuger = EmailEntwurfErzeuger(
+        kanzlei: kanzlei,
+        vorgang: vorgang,
+        mandant: mandant,
+      );
+      return MailVorlagenFueller(
+        anrede: erzeuger.anredeFuer(empfaenger, geschlecht: geschlecht),
+        geschlecht: erzeuger.geschlechtFuer(geschlecht),
+        vorgang: vorgang,
+        mandant: mandant,
+      );
+    }
+
+    const mitBeugung =
+        'in der Schadensache vertrete ich {{Mandant/Mandantin}} '
+        '{{MandantName}}.\n'
+        'Als {{Geschädigter/Geschädigte}} hat {{er/sie}} Anspruch.';
+
+    test('weiblich setzt überall die weibliche Form', () {
+      final text = mitAnredeart(Anrede.frau).fuelleText(mitBeugung);
+
+      expect(text, contains('vertrete ich Mandantin Klaus Müller.'));
+      expect(text, contains('Als Geschädigte hat sie Anspruch.'));
+    });
+
+    test('männlich setzt überall die männliche Form', () {
+      final text = mitAnredeart(Anrede.herr).fuelleText(mitBeugung);
+
+      expect(text, contains('vertrete ich Mandant Klaus Müller.'));
+      expect(text, contains('Als Geschädigter hat er Anspruch.'));
+    });
+
+    test('ohne Angabe gilt die errechnete neutrale Form', () {
+      final text = mitAnredeart(Anrede.keine).fuelleText(mitBeugung);
+
+      expect(
+        text,
+        contains('Als Geschädigte(r) hat er/sie Anspruch.'),
+        reason:
+            'gemeinsamer Wortstamm in Klammern, sonst beide mit Schrägstrich '
+            '— nie falsch gebeugt, und wo es geht in der kurzen Schreibweise '
+            '(geändert am 02.09.2026 auf ausdrücklichen Auftrag)',
+      );
+    });
+
+    test('die Beugung gilt auch im Betreff', () {
+      final betreff = mitAnredeart(
+        Anrede.frau,
+      ).fuelleBetreff('Ansprüche {{unseres/unserer}} {{Mandant/Mandantin}}');
+
+      expect(betreff, 'Ansprüche unserer Mandantin');
+    });
+
+    test('die Beugung hängt am Mandanten, nicht am Empfängerkreis', () {
+      // Der häufigste Fall überhaupt: Die Mail geht an die Versicherung,
+      // beginnt darum neutral — und schreibt im Text trotzdem von „unserer
+      // Mandantin". Genau deshalb sind Anredeart und „neutral anreden" zwei
+      // getrennte Angaben.
+      final fueller = mitAnredeart(
+        Anrede.frau,
+        empfaenger: const ['schaden@huk.de'],
+      );
+
+      final text = fueller.fuelleText(
+        '{{Anrede}},\n\n{{unser/unsere}} {{Mandant/Mandantin}} macht '
+        'Ansprüche geltend.',
+      );
+
+      expect(text, contains('Sehr geehrte Damen und Herren,'));
+      expect(text, contains('unsere Mandantin macht Ansprüche geltend.'));
+    });
+
+    test('ein Befund nennt Beugung als Herkunft', () {
+      final befunde = mitAnredeart(Anrede.frau).befunde(
+        const MailVorlage(
+          id: 3,
+          name: 'Gebeugt',
+          text: '{{Mandant/Mandantin}} meldet sich.',
+        ),
+      );
+
+      final befund = befunde.single;
+      expect(befund.wert, 'Mandantin');
+      expect(befund.herkunft, 'nach der gewählten Anredeart');
+      expect(befund.bezeichnung, 'Beugung nach der Anredeart');
+    });
+
+    test('eine unvollständige Beugung wird erklärt, nicht verschwiegen', () {
+      // Vor dieser Schreibweise verlor `{{Mandant/}}` seine Zeile
+      // stillschweigend: Der Schrägstrich fällt beim Normalisieren weg, und
+      // „mandant" traf keine Datenquelle. Jetzt steht der Grund daneben.
+      final befunde = mitAnredeart(Anrede.frau).befunde(
+        const MailVorlage(
+          id: 4,
+          name: 'Halb',
+          text: '{{Mandant/}} meldet sich.',
+        ),
+      );
+
+      final befund = befunde.single;
+      expect(befund.istLeer, isTrue);
+      expect(befund.zeileEntfaellt, isTrue);
+      expect(befund.fehlstelle, contains('Beugung unvollständig'));
+      expect(
+        befund.fehlstelle,
+        contains('{{Mandant/Mandantin}}'),
+        reason: 'die Erklärung nennt die Schreibweise, die gemeint war',
       );
     });
   });

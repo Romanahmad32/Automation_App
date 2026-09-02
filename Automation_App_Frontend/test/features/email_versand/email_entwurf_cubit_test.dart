@@ -1,5 +1,7 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/email_versand/domain/entities/anrede_neutral_grund.dart';
+import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
@@ -10,9 +12,12 @@ import 'package:automation_app/features/email_versand/domain/entities/outlook_si
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/anredebausteine_repository.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/anrede_auswahl.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
@@ -100,6 +105,10 @@ class _FakeVersandRepository implements EmailVersandRepository {
   Future<SignaturStand> ladeSignaturStand() async => const SignaturStand();
 
   @override
+  Future<SignaturStand> leseSignatur(String name) async =>
+      const SignaturStand();
+
+  @override
   Future<SignaturStand> uebernimmSignatur(String name) async =>
       const SignaturStand();
 
@@ -149,12 +158,60 @@ class _FakeGetMandanten implements UseCase<List<Mandant>, NoParams> {
   }
 }
 
+/// Der Schreibweg ins Mandantenregister. Merkt sich, was ankam, und kann
+/// scheitern — beides braucht der Nachtrag der Anredeart (§4.7, §5.1).
+class _FakeUpdateMandant implements UseCase<Mandant, Mandant> {
+  final bool scheitert;
+
+  Mandant? geschrieben;
+
+  _FakeUpdateMandant({this.scheitert = false});
+
+  @override
+  Future<Either<Failure, Mandant>> call(Mandant params) async {
+    geschrieben = params;
+    return scheitert
+        ? Left(LocalFailure(message: 'Datenbank gesperrt'))
+        : Right(params);
+  }
+}
+
 class _FakeVersichererRepository implements VersichererRepository {
   @override
   Future<List<Versicherer>> ladeVersicherer() async => const [];
 }
 
+/// Der Anredebestand. Ein echter Cubit mit gefaelschtem Repository: Der
+/// Entwurf liest daraus die Vorgabe, und genau die soll geprueft werden.
+class _FakeAnredebausteine implements AnredebausteineRepository {
+  final List<Anredebaustein> bestand;
+
+  _FakeAnredebausteine(this.bestand);
+
+  @override
+  Future<List<Anredebaustein>> ladeAnredebausteine() async => bestand;
+
+  @override
+  Future<Anredebaustein> lege(Anredebaustein baustein) async => baustein;
+
+  @override
+  Future<Anredebaustein> aktualisiere(Anredebaustein baustein) async =>
+      baustein;
+
+  @override
+  Future<void> loesche(int id) async {}
+}
+
 void main() {
+  /// Der Ausgangsbestand des Dienstes: „Sehr geehrter" reproduziert genau die
+  /// Anrede, die die App vor dem 02.09.2026 fest erzeugt hat.
+  const sehrGeehrt = Anredebaustein(
+    id: 1,
+    maennlich: 'Sehr geehrter',
+    weiblich: 'Sehr geehrte',
+    neutral: 'Sehr geehrte',
+  );
+
   final mandant = Mandant(
     id: 7,
     anrede: Anrede.herr,
@@ -179,19 +236,30 @@ void main() {
     ),
   );
 
-  ({EmailEntwurfCubit cubit, _FakeGetMandanten register}) baue(
+  ({
+    EmailEntwurfCubit cubit,
+    _FakeGetMandanten register,
+    _FakeUpdateMandant schreiber,
+  })
+  baue(
     _FakeVersandRepository repository, {
     List<Mandant> mandanten = const [],
+    List<Anredebaustein> anreden = const [sehrGeehrt],
+    bool schreibenScheitert = false,
   }) {
     final register = _FakeGetMandanten(mandanten);
+    final schreiber = _FakeUpdateMandant(scheitert: schreibenScheitert);
     return (
       cubit: EmailEntwurfCubit(
         repository,
         _FakeGetKanzleiSettings(),
         register,
         VersichererCubit(_FakeVersichererRepository()),
+        AnredebausteineCubit(_FakeAnredebausteine(anreden)),
+        schreiber,
       ),
       register: register,
+      schreiber: schreiber,
     );
   }
 
@@ -570,7 +638,16 @@ void main() {
       name: 'Anschreiben an den Mandanten',
       betreff:
           'Ihre Verkehrsunfallsache {{MandantName}} ./. {{VersichererName}}',
-      text: '{{Anrede}},\n{{Grussformel}},\n\nvielen Dank für Ihr Vertrauen.',
+      text: '{{Anrede}},\n{{Zusatzgruß}},\n\nvielen Dank für Ihr Vertrauen.',
+    );
+
+    /// Eine Vorlage **ohne** Stelle für den Gruß — die gemeinsame Mail an
+    /// Mandant und Versicherung.
+    const ohneGrussStelle = MailVorlage(
+      id: 2,
+      name: 'Anspruchsschreiben an die Versicherung',
+      betreff: 'Schadensache {{MandantName}}',
+      text: '{{Anrede}},\n\nanbei das Anspruchsschreiben.',
     );
 
     final mitGruss = mandant.copyWith(
@@ -626,30 +703,67 @@ void main() {
       },
     );
 
-    test('die Grußformel geht nur an den Mandanten allein', () async {
+    test(
+      'der Zusatzgruß geht mit, auch wenn die Gegenseite mitliest',
+      () async {
+        // Geaendert am 02.09.2026: Bis dahin sperrte der Empfaengerkreis ihn.
+        // Die Vorlagenwahl ist die Entscheidung — hier steht der Platzhalter,
+        // also geht der Gruss mit, und der Mitleser ist nur ein Hinweis.
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
+        await gebaut.cubit.starte(vorgang: vorgang);
+
+        // Vorbelegt stehen Mandant und Versicherung gemeinsam im Feld „An".
+        gebaut.cubit.waehleVorlage(vorlage);
+        expect(
+          gebaut.cubit.state.zusatzgruss,
+          'Salamu aleikum',
+          reason: 'aus dem Mandanten vorbelegt',
+        );
+        expect(gebaut.cubit.state.grussMoeglich, isTrue);
+        expect(gebaut.cubit.state.mitleserImAn, isTrue);
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrte Damen und Herren,\nSalamu aleikum,\n'),
+          reason: 'die Anrede folgt den Empfaengern, der Gruss der Vorlage',
+        );
+
+        gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+        expect(gebaut.cubit.state.mitleserImAn, isFalse);
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrter Herr Müller,\nSalamu aleikum,\n'),
+          reason:
+              'der Text zieht nach, ohne dass die Vorlage neu gewaehlt wird',
+        );
+        await gebaut.cubit.close();
+      },
+    );
+
+    test('ohne Platzhalter in der Vorlage ist die Wahl gesperrt', () async {
+      // Sichtbar gesperrt statt still weggelassen: Die Chips haengen an
+      // `grussMoeglich`, und das haengt allein an der Vorlage.
       final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
       await gebaut.cubit.starte(vorgang: vorgang);
 
-      // Vorbelegt stehen Mandant und Versicherung gemeinsam im Feld „An".
-      gebaut.cubit.waehleVorlage(vorlage);
+      expect(
+        gebaut.cubit.state.grussMoeglich,
+        isTrue,
+        reason: 'ohne Vorlage gilt die Vorbelegung, und die hat eine Stelle',
+      );
+
+      gebaut.cubit.waehleVorlage(ohneGrussStelle);
+
+      expect(gebaut.cubit.state.grussMoeglich, isFalse);
       expect(
         gebaut.cubit.state.zusatzgruss,
         'Salamu aleikum',
-        reason: 'aus dem Mandanten vorbelegt',
+        reason: 'die Wahl bleibt stehen — sie gilt wieder nach dem Abwaehlen',
       );
-      expect(gebaut.cubit.state.grussMoeglich, isFalse);
       expect(
         gebaut.cubit.state.entwurf.text,
         isNot(contains('Salamu aleikum')),
-      );
-
-      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
-
-      expect(gebaut.cubit.state.grussMoeglich, isTrue);
-      expect(
-        gebaut.cubit.state.entwurf.text,
-        startsWith('Sehr geehrter Herr Müller,\nSalamu aleikum,\n'),
-        reason: 'der Text zieht nach, ohne dass die Vorlage neu gewaehlt wird',
+        reason: 'die Vorlage hat keine Stelle dafuer',
       );
       await gebaut.cubit.close();
     });
@@ -697,6 +811,478 @@ void main() {
     );
   });
 
+  group('ein Vorgang ohne Mandanten im Register (§4.7)', () {
+    test('die gewählte Anredeart steht in der Zeile, auch ohne Nachnamen', () {
+      // Der Bericht aus der Kanzlei (03.09.2026): „Mir gefaellt das Damen und
+      // Herren nicht — wenn man Herr auswaehlt, soll auch Herr stehen." Ohne
+      // Registermandanten zeigten alle Chips dieselbe Zeile, und ein Klick auf
+      // die Anredeart bewegte nichts.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: const []);
+      return gebaut.cubit.starte(vorgang: vorgang).then((_) {
+        expect(gebaut.cubit.state.mandantBekannt, isFalse);
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrte Damen und Herren,'),
+          reason: 'ohne Anredeart bleibt es dabei — geraten wird nicht',
+        );
+
+        gebaut.cubit.waehleGeschlecht(Anrede.herr);
+
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrter Herr,'),
+        );
+        expect(
+          gebaut.cubit.anredeVorschau(sehrGeehrt),
+          'Sehr geehrter Herr',
+          reason: 'auf dem Chip steht, was in der Mail steht',
+        );
+        expect(
+          gebaut.cubit.anredeNeutralGrund,
+          isNull,
+          reason: 'die Zeile ist nicht mehr neutral, also nichts zu erklaeren',
+        );
+        expect(
+          gebaut.cubit.anredeartWirkung.anredezeile,
+          isTrue,
+          reason: 'und der Satz darueber sagt, dass sie jetzt wirkt',
+        );
+        return gebaut.cubit.close();
+      });
+    });
+
+    test('„Keine Angabe" ist der Weg zurück zu Damen und Herren', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: const []);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+      expect(gebaut.cubit.state.entwurf.text, startsWith('Sehr geehrte Frau,'));
+
+      gebaut.cubit.waehleGeschlecht(Anrede.keine);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Damen und Herren,'),
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('ein anderer Anfang wirkt ebenso', () async {
+      const gutenTag = Anredebaustein(
+        id: 2,
+        maennlich: 'Guten Tag',
+        weiblich: 'Guten Tag',
+        neutral: 'Guten Tag',
+      );
+      final gebaut = baue(_FakeVersandRepository(), mandanten: const []);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleGeschlecht(Anrede.herr);
+
+      gebaut.cubit.waehleAnrede(gutenTag);
+
+      expect(gebaut.cubit.state.entwurf.text, startsWith('Guten Tag Herr,'));
+      await gebaut.cubit.close();
+    });
+  });
+
+  group('der Dialog lädt noch (§4.7)', () {
+    const vorlage = MailVorlage(
+      id: 4,
+      name: 'Kurz',
+      betreff: 'Zu {{Referenz}}',
+      text: '{{Anrede}},\n\nkurz und gut.',
+    );
+
+    test('ohne Erzeuger gibt es keinen Füller — statt eines Nullfehlers', () {
+      // `PlatzhalterUebersicht` fragt im build danach, und zwar sobald eine
+      // Vorlage gewaehlt ist. Bis zum 02.09.2026 stand hier `_ableitung!`:
+      // Wer im Ladefenster eine Vorlage waehlte, bekam den Nullfehler mitten
+      // im Aufbau des Dialogs.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+
+      gebaut.cubit.waehleVorlage(vorlage);
+
+      expect(gebaut.cubit.fuellerFuer(const []), isNull);
+      expect(gebaut.cubit.state.gewaehlteVorlage, vorlage);
+      gebaut.cubit.close();
+    });
+
+    test(
+      'eine im Ladefenster gewählte Vorlage wirkt, sobald er steht',
+      () async {
+        // Sonst blieb die Wahl wirkungslos, bis der Anwalt etwas anderes
+        // anfasste: `_leiteAb` hatte sie verworfen, weil der Erzeuger fehlte.
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+
+        final laeuft = gebaut.cubit.starte(vorgang: vorgang);
+        gebaut.cubit.waehleVorlage(vorlage);
+        await laeuft;
+
+        expect(gebaut.cubit.state.entwurf.text, contains('kurz und gut.'));
+        expect(
+          gebaut.cubit.state.entwurf.betreff,
+          contains('84/26 C03_GG-XY 123'),
+        );
+        expect(gebaut.cubit.fuellerFuer(const []), isNotNull);
+        await gebaut.cubit.close();
+      },
+    );
+  });
+
+  group('gewählte Anrede (§4.7, §7.1)', () {
+    const gutenTag = Anredebaustein(
+      id: 2,
+      maennlich: 'Guten Tag',
+      weiblich: 'Guten Tag',
+      neutral: 'Guten Tag',
+    );
+
+    test('der erste des Bestands gilt ohne Klick', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      expect(gebaut.cubit.state.anredebaustein, sehrGeehrt);
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Damen und Herren,'),
+        reason: 'vorbelegt stehen Mandant und Versicherung gemeinsam im „An"',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('ohne Bestand bleibt die feste Briefanrede', () async {
+      // Der Rueckfall ist der Punkt: Die Umstellung von „fest" auf „waehlbar"
+      // darf keine Mail ohne Anrede hinterlassen.
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant],
+        anreden: const [],
+      );
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+      expect(gebaut.cubit.state.anredebaustein, isNull);
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,'),
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('ein anderer Anfang schreibt den Text neu', () async {
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant],
+        anreden: const [sehrGeehrt, gutenTag],
+      );
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,'),
+      );
+
+      gebaut.cubit.waehleAnrede(gutenTag);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Guten Tag Herr Müller,'),
+        reason: 'die Beugung folgt dem Mandanten, nicht dem Baustein',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('neutral ist vorausgewählt, sobald jemand mitliest', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      expect(gebaut.cubit.state.anredePersoenlichMoeglich, isFalse);
+      expect(gebaut.cubit.state.anredeGehtNeutral, isTrue);
+
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+      expect(gebaut.cubit.state.anredePersoenlichMoeglich, isTrue);
+      expect(
+        gebaut.cubit.state.anredeGehtNeutral,
+        isFalse,
+        reason: 'ohne eigene Wahl entscheidet der Empfaengerkreis',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('der Anwalt darf trotz Mitleser namentlich anreden', () async {
+      // Hinweis statt Sperre (§4.7): Die App weist darauf hin und entscheidet
+      // nicht.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      gebaut.cubit.setzeAnredeNeutral(false);
+
+      expect(gebaut.cubit.state.anredeGehtNeutral, isFalse);
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,'),
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('null gibt die Entscheidung an den Empfängerkreis zurück', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.setzeAnredeNeutral(false);
+      expect(gebaut.cubit.state.anredeGehtNeutral, isFalse);
+
+      gebaut.cubit.setzeAnredeNeutral(null);
+
+      expect(
+        gebaut.cubit.state.anredeGehtNeutral,
+        isTrue,
+        reason: 'die Versicherung steht weiter im Feld „An"',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('die Vorschau zeigt, was auf dem Chip stehen soll', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+      expect(
+        gebaut.cubit.anredeVorschau(gutenTag),
+        'Guten Tag Herr Müller',
+        reason: 'derselbe Weg wie der erzeugte Text',
+      );
+      await gebaut.cubit.close();
+    });
+  });
+
+  group('gewählter Vorgang (§4.7)', () {
+    final zweiterMandant = Mandant(
+      id: 9,
+      anrede: Anrede.frau,
+      vorname: 'Petra',
+      nachname: 'Schmitt',
+      emailAdresse: 'p.schmitt@example.de',
+      persoenlicheGrussformel: 'Sat Sri Akal',
+      erstelltAm: DateTime(2026, 2, 1),
+    );
+
+    final zweiterVorgang = Vorgang(
+      referenz: '85/26 C03_HG-E 1427',
+      angefragtAm: DateTime(2026, 7, 1),
+      laufendeNummer: 85,
+      jahr: '26',
+      abteilung: 'C03',
+      mandantId: 9,
+      mandantName: 'Petra Schmitt',
+      gegner: 'Allianz',
+    );
+
+    test('ohne Vorgang steht kein Vorgang im Zustand', () async {
+      final gebaut = baue(_FakeVersandRepository());
+      await gebaut.cubit.starte();
+
+      expect(gebaut.cubit.state.vorgang, isNull);
+      expect(gebaut.cubit.state.entwurf.vorgangReferenz, isEmpty);
+      await gebaut.cubit.close();
+    });
+
+    test('nachträglich gewählt belegt er Empfänger und Betreff', () async {
+      // Der Fall aus dem Postfach: Die Antwort liess sich keinem Vorgang
+      // zuordnen, der Anwalt traegt ihn im Dialog nach (§4.3).
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant, zweiterMandant],
+      );
+      await gebaut.cubit.starte();
+      expect(gebaut.cubit.state.entwurf.an, isEmpty);
+
+      await gebaut.cubit.waehleVorgang(zweiterVorgang);
+
+      expect(gebaut.cubit.state.vorgang, zweiterVorgang);
+      expect(gebaut.cubit.state.entwurf.an, contains('p.schmitt@example.de'));
+      expect(gebaut.cubit.state.entwurf.betreff, contains('Petra Schmitt'));
+      expect(
+        gebaut.cubit.state.entwurf.vorgangReferenz,
+        '85/26 C03_HG-E 1427',
+        reason: 'erst damit wird der Versand protokolliert',
+      );
+      expect(gebaut.cubit.state.wechseltVorgang, isFalse);
+      await gebaut.cubit.close();
+    });
+
+    test('beim Wechsel bleibt, was der Anwalt eingetragen hat', () async {
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant, zweiterMandant],
+      );
+      await gebaut.cubit.starte(
+        vorgang: vorgang,
+        anhangPfade: [r'C:\Akte\Anspruchsschreiben.pdf'],
+      );
+      gebaut.cubit.empfaengerHinzufuegen('sachbearbeiter@example.de');
+
+      await gebaut.cubit.waehleVorgang(zweiterVorgang);
+
+      final entwurf = gebaut.cubit.state.entwurf;
+      expect(
+        entwurf.an,
+        contains('sachbearbeiter@example.de'),
+        reason: 'getippte Adressen gehoeren dem Anwalt',
+      );
+      expect(
+        entwurf.an,
+        isNot(contains('k.mueller@example.de')),
+        reason: 'die Vorbelegung des alten Vorgangs geht mit ihm',
+      );
+      expect(entwurf.anhangPfade, [
+        r'C:\Akte\Anspruchsschreiben.pdf',
+      ], reason: 'die Anhaenge haengen nicht am Vorgang');
+      await gebaut.cubit.close();
+    });
+
+    test('der Zusatzgruß folgt dem neuen Mandanten', () async {
+      // Ein Gruss, der fuer jemand anderen gedacht war, darf den Wechsel nicht
+      // ueberleben (§5.1).
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [
+          mandant.copyWith(persoenlicheGrussformel: 'Salamu aleikum'),
+          zweiterMandant,
+        ],
+      );
+      await gebaut.cubit.starte(vorgang: vorgang);
+      expect(gebaut.cubit.state.zusatzgruss, 'Salamu aleikum');
+
+      await gebaut.cubit.waehleVorgang(zweiterVorgang);
+
+      expect(gebaut.cubit.state.zusatzgruss, 'Sat Sri Akal');
+      await gebaut.cubit.close();
+    });
+
+    test('selbst geschriebener Text überlebt den Wechsel', () async {
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant, zweiterMandant],
+      );
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.setzeText('Von Hand geschrieben.');
+
+      await gebaut.cubit.waehleVorgang(zweiterVorgang);
+
+      expect(gebaut.cubit.state.entwurf.text, 'Von Hand geschrieben.');
+      await gebaut.cubit.close();
+    });
+
+    test('„kein Vorgang" führt zum leeren Anschreiben zurück', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      await gebaut.cubit.waehleVorgang(null);
+
+      expect(gebaut.cubit.state.vorgang, isNull);
+      expect(gebaut.cubit.state.entwurf.vorgangReferenz, isEmpty);
+      expect(
+        gebaut.cubit.state.entwurf.an,
+        isEmpty,
+        reason: 'die Vorbelegung des alten Vorgangs geht mit ihm',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test(
+      'die Entscheidung „neutral anreden" überlebt den Wechsel nicht',
+      () async {
+        // Wie der Gruss und die Anredeart: Sie galt fuer **diesen**
+        // Empfaengerkreis. Blieb sie stehen, wurde der naechste Mandant
+        // namentlich angeredet, obwohl die Mail an die Versicherung ging.
+        final gebaut = baue(
+          _FakeVersandRepository(),
+          mandanten: [mandant, zweiterMandant],
+        );
+        await gebaut.cubit.starte(vorgang: vorgang);
+        gebaut.cubit.setzeAnredeNeutral(false);
+        expect(gebaut.cubit.state.anredeNeutral, isFalse);
+
+        await gebaut.cubit.waehleVorgang(zweiterVorgang);
+
+        expect(
+          gebaut.cubit.state.anredeNeutral,
+          isNull,
+          reason: 'null heisst wieder „wie der Empfaengerkreis es ergibt"',
+        );
+        await gebaut.cubit.close();
+      },
+    );
+
+    test('wer in Kopie steht, zählt nach dem Wechsel mit', () async {
+      // Der Wechsel rechnete die beiden Flags aus der `an`-Liste allein. Wer
+      // in **Kopie** stand, fiel dabei heraus — die Flags widersprachen der
+      // Anredezeile, die `EntwurfAbleitung` aus `alleEmpfaenger` baut.
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant, zweiterMandant],
+      );
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.kopieHinzufuegen('kanzlei@example.de');
+
+      await gebaut.cubit.waehleVorgang(zweiterVorgang);
+
+      expect(
+        gebaut.cubit.state.entwurf.an,
+        ['p.schmitt@example.de'],
+        reason:
+            'nur der neue Mandant — der zweite Vorgang schlaegt sonst nichts vor',
+      );
+      expect(gebaut.cubit.state.mitleserImAn, isTrue);
+      expect(gebaut.cubit.state.anredePersoenlichMoeglich, isFalse);
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Damen und Herren,'),
+        reason: 'Flags und Anredezeile muessen dasselbe sagen',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('eine getippte Adresse überlebt auch den zweiten Wechsel', () async {
+      // Der Fall aus dem Postfach: zuerst tippen, dann den Vorgang zuordnen,
+      // spaeter weiterwechseln. Zaehlte die Adresse ab der Zuordnung als
+      // Vorbelegung — der Vorgang schlaegt sie ja auch vor —, verschwand sie
+      // beim naechsten Wechsel doch noch.
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant, zweiterMandant],
+      );
+      await gebaut.cubit.starte();
+      gebaut.cubit.empfaengerHinzufuegen('k.mueller@example.de');
+
+      await gebaut.cubit.waehleVorgang(vorgang);
+      await gebaut.cubit.waehleVorgang(zweiterVorgang);
+
+      expect(
+        gebaut.cubit.state.entwurf.an,
+        contains('k.mueller@example.de'),
+        reason: 'getippt bleibt getippt, auch wenn ein Vorgang sie vorschlaegt',
+      );
+      expect(
+        gebaut.cubit.state.entwurf.an,
+        isNot(contains('schaden@huk.de')),
+        reason: 'die echte Vorbelegung geht mit ihrem Vorgang',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('derselbe Vorgang noch einmal gewählt ändert nichts', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      final vorher = gebaut.cubit.state;
+
+      await gebaut.cubit.waehleVorgang(vorgang);
+
+      expect(gebaut.cubit.state, vorher);
+      await gebaut.cubit.close();
+    });
+  });
+
   test('ein abgebrochener Dialog lässt starte() still auslaufen', () async {
     // „Abbrechen", bevor die Bereitschaft da ist: Navigator.pop schließt den
     // BlocProvider und damit den Cubit, während starte() noch wartet. Der
@@ -720,5 +1306,641 @@ void main() {
 
     // Die Mail ging hinaus — nur zu melden ist es niemandem mehr.
     await expectLater(laeuft, completion(isTrue));
+  });
+
+  group('gewählte Anredeart (§4.7)', () {
+    /// Eine Vorlage, die beides braucht: die Anredezeile und zwei gebeugte
+    /// Wörter im Text.
+    const gebeugt = MailVorlage(
+      id: 9,
+      name: 'Gebeugt',
+      betreff: 'Ansprüche {{unseres/unserer}} {{Mandant/Mandantin}}',
+      text:
+          '{{Anrede}},\n'
+          '\n'
+          '{{unser/unsere}} {{Mandant/Mandantin}} macht Ansprüche geltend.',
+    );
+
+    test('vorbelegt ist, was das Mandantenregister sagt (§5.1)', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      expect(gebaut.cubit.state.mandantAnrede, Anrede.herr);
+      expect(
+        gebaut.cubit.state.anredeGeschlecht,
+        isNull,
+        reason: 'gewählt ist zunächst nichts — die Vorgabe stimmt schon',
+      );
+      expect(gebaut.cubit.state.geschlecht, Anrede.herr);
+      await gebaut.cubit.close();
+    });
+
+    test('der Satz sagt, worauf die Anredeart jetzt wirkt', () async {
+      // Die drei Lagen einer echten Sitzung, in der Reihenfolge, in der sie
+      // vorkommen: Mail an die Versicherung ohne Vorlage — dann mit einer
+      // gebeugten Vorlage — dann nur noch an den Mandanten.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      expect(
+        gebaut.cubit.anredeartWirkung.wirkt,
+        isFalse,
+        reason: 'genau der Klick, der bisher wortlos nichts tat',
+      );
+      expect(gebaut.cubit.anredeartWirkung.hinweis, contains('nirgends'));
+
+      gebaut.cubit.waehleVorlage(gebeugt);
+
+      expect(gebaut.cubit.anredeartWirkung.woerter, 3);
+      expect(gebaut.cubit.anredeartWirkung.anredezeile, isFalse);
+      expect(
+        gebaut.cubit.anredeartWirkung.hinweis,
+        contains('die Anrede ist neutral'),
+      );
+
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+      expect(gebaut.cubit.anredeartWirkung.anredezeile, isTrue);
+      expect(
+        gebaut.cubit.anredeartWirkung.hinweis,
+        'Wirkt auf die Anrede und auf 3 gebeugte Wörter in der Vorlage.',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test(
+      'eine Vorlage ohne {{Anrede}} nimmt der Anredeart die Zeile',
+      () async {
+        const ohneAnrede = MailVorlage(
+          id: 10,
+          name: 'Ohne Anrede',
+          betreff: 'Ansprüche {{unseres/unserer}} {{Mandant/Mandantin}}',
+          text: 'Hier fehlt die Anredezeile.',
+        );
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+        await gebaut.cubit.starte(vorgang: vorgang);
+        gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+        gebaut.cubit.waehleVorlage(ohneAnrede);
+
+        final wirkung = gebaut.cubit.anredeartWirkung;
+
+        expect(wirkung.anredezeile, isFalse);
+        expect(wirkung.ohneAnredezeile, isTrue);
+        expect(
+          wirkung.hinweis,
+          isNot(contains('neutral')),
+          reason: 'es gibt keine Anrede, die neutral sein könnte',
+        );
+        expect(AnredeChips.hinweisFuer(gebaut.cubit.state), isNotNull);
+        await gebaut.cubit.close();
+      },
+    );
+
+    test('die gewählte Art beugt den Vorlagentext', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleVorlage(gebeugt);
+
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        contains('unsere Mandantin macht Ansprüche geltend.'),
+      );
+      expect(
+        gebaut.cubit.state.entwurf.betreff,
+        'Ansprüche unserer Mandantin',
+        reason: 'die Wahl ist eine ausdrückliche Handlung — der Betreff auch',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('die Beugung im Text hängt nicht am Empfängerkreis', () async {
+      // Der häufigste Fall: Mandant und Versicherung stehen gemeinsam im
+      // Feld „An", die Anrede fällt darum neutral aus — und der Text spricht
+      // trotzdem von „unserer Mandantin". Wären beide Angaben eine, ginge
+      // genau diese Mail falsch hinaus.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleVorlage(gebeugt);
+
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Damen und Herren,'),
+      );
+      expect(gebaut.cubit.state.entwurf.text, contains('unsere Mandantin'));
+      await gebaut.cubit.close();
+    });
+
+    test('sie beugt auch die Anredezeile', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleVorlage(gebeugt);
+      gebaut.cubit.setzeAnredeNeutral(false);
+
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Frau Müller,'),
+        reason: 'ein Anfang, drei Formen — die Wahl entscheidet, welche gilt',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('„keine Angabe" setzt die errechnete neutrale Form', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleVorlage(gebeugt);
+
+      gebaut.cubit.waehleGeschlecht(Anrede.keine);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        contains('unser(e) Mandant(in) macht'),
+        reason:
+            'gemeinsamer Wortstamm in Klammern (geändert am 02.09.2026 auf '
+            'ausdrücklichen Auftrag)',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('eine gewählte Art macht die namentliche Anrede möglich', () async {
+      // Am Register stand „keine Angabe" — dann war eine namentliche Anrede
+      // unmöglich und der Umschalter „neutral" stand fest. Sagt der Anwalt
+      // beim Verfassen, wen er anschreibt, muss beides nachziehen.
+      final ohneAngabe = Mandant(
+        id: 7,
+        anrede: Anrede.keine,
+        vorname: 'Klaus',
+        nachname: 'Müller',
+        emailAdresse: 'k.mueller@example.de',
+        erstelltAm: DateTime(2026, 1, 1),
+      );
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [ohneAngabe]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+      expect(gebaut.cubit.state.anredePersoenlichMoeglich, isFalse);
+
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(gebaut.cubit.state.anredePersoenlichMoeglich, isTrue);
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Frau Müller,'),
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('die Wahl gilt nur für diese Mail, das Register bleibt', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(
+        gebaut.cubit.state.mandantAnrede,
+        Anrede.herr,
+        reason:
+            'in die Stammdaten wird nichts zurückgeschrieben (§1.3) — die '
+            'Chipreihe zeigt daran, dass die Wahl abweicht',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('der Vorgangswechsel nimmt die Wahl mit dem Mandanten', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      await gebaut.cubit.waehleVorgang(null);
+
+      expect(
+        gebaut.cubit.state.anredeGeschlecht,
+        isNull,
+        reason:
+            'sonst redet die nächste Mail jemand anderen in der Beugung des '
+            'Vorgängers an — wie beim Zusatzgruß',
+      );
+      expect(gebaut.cubit.state.mandantAnrede, Anrede.keine);
+      await gebaut.cubit.close();
+    });
+  });
+
+  group('die Anredeart im Register nachtragen (§4.7, §5.1)', () {
+    /// Ein Mandant ohne hinterlegte Anredeart — der Fall, den der Nachtrag
+    /// behebt. Ohne ihn steht die Wahl bei jeder Mail an ihn wieder aus.
+    final ohneAngabe = Mandant(
+      id: 7,
+      anrede: Anrede.keine,
+      vorname: 'Klaus',
+      nachname: 'Müller',
+      emailAdresse: 'k.mueller@example.de',
+      erstelltAm: DateTime(2026, 1, 1),
+    );
+
+    const gebeugt = MailVorlage(
+      id: 9,
+      name: 'Gebeugt',
+      text: '{{unser/unsere}} {{Mandant/Mandantin}} macht Ansprüche geltend.',
+    );
+
+    test(
+      'schreibt die Wahl ins Register und braucht sie danach nicht',
+      () async {
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [ohneAngabe]);
+        await gebaut.cubit.starte(vorgang: vorgang);
+        gebaut.cubit.waehleGeschlecht(Anrede.frau);
+        expect(gebaut.cubit.state.anredeartNachtragbar, isTrue);
+
+        await gebaut.cubit.merkeAnredeart();
+
+        expect(gebaut.schreiber.geschrieben?.anrede, Anrede.frau);
+        expect(gebaut.cubit.state.mandantAnrede, Anrede.frau);
+        expect(
+          gebaut.cubit.state.anredeGeschlecht,
+          isNull,
+          reason:
+              'es gibt nichts mehr zu übersteuern — und der Knopf verschwindet '
+              'damit von selbst',
+        );
+        expect(gebaut.cubit.state.anredeartNachtragbar, isFalse);
+        await gebaut.cubit.close();
+      },
+    );
+
+    test(
+      'der Erzeuger zieht nach, sonst beugt die nächste Ableitung falsch',
+      () async {
+        // Der Nachtrag setzt `anredeGeschlecht` auf null zurück. Ab da fragt die
+        // Ableitung den Mandanten am Erzeuger — steht dort weiter „keine
+        // Angabe", fällt der Text auf die neutrale Form zurück, obwohl im
+        // Register nun „Frau" steht.
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [ohneAngabe]);
+        await gebaut.cubit.starte(vorgang: vorgang);
+        gebaut.cubit.waehleVorlage(gebeugt);
+        gebaut.cubit.waehleGeschlecht(Anrede.frau);
+        await gebaut.cubit.merkeAnredeart();
+
+        gebaut.cubit.waehleVorlage(gebeugt);
+
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          contains('unsere Mandantin macht Ansprüche geltend.'),
+        );
+        await gebaut.cubit.close();
+      },
+    );
+
+    test('eine hinterlegte Anredeart wird nicht überschrieben', () async {
+      // `mandant` trägt „Herr". Eine Wahl „Frau" gilt für diese Mail — die
+      // Stammdaten gehören ins Register, nicht in den Versanddialog (§1.3).
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      await gebaut.cubit.merkeAnredeart();
+
+      expect(gebaut.schreiber.geschrieben, isNull);
+      expect(gebaut.cubit.state.mandantAnrede, Anrede.herr);
+      expect(gebaut.cubit.state.anredeGeschlecht, Anrede.frau);
+      await gebaut.cubit.close();
+    });
+
+    test('misslingt das Schreiben, bleibt die Wahl für diese Mail', () async {
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [ohneAngabe],
+        schreibenScheitert: true,
+      );
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      await gebaut.cubit.merkeAnredeart();
+
+      expect(gebaut.cubit.state.fehler, contains('nicht hinterlegen'));
+      expect(
+        gebaut.cubit.state.anredeGeschlecht,
+        Anrede.frau,
+        reason:
+            'der Entwurf ist fertig — ein Registerfehler darf ihn nicht '
+            'anfassen',
+      );
+      expect(gebaut.cubit.state.mandantAnrede, Anrede.keine);
+      await gebaut.cubit.close();
+    });
+
+    test('ohne Mandanten am Vorgang gibt es nichts nachzutragen', () async {
+      final gebaut = baue(_FakeVersandRepository());
+      await gebaut.cubit.starte();
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(gebaut.cubit.state.mandantBekannt, isFalse);
+      expect(gebaut.cubit.state.anredeartNachtragbar, isFalse);
+      await gebaut.cubit.close();
+    });
+  });
+
+  group('Chips im von Hand bearbeiteten Text (§4.7)', () {
+    const gutenTag = Anredebaustein(
+      id: 2,
+      maennlich: 'Guten Tag',
+      weiblich: 'Guten Tag',
+      neutral: 'Guten Tag',
+    );
+
+    final mitGruss = Mandant(
+      id: 7,
+      anrede: Anrede.herr,
+      vorname: 'Klaus',
+      nachname: 'Müller',
+      emailAdresse: 'k.mueller@example.de',
+      persoenlicheGrussformel: 'Salamu aleikum',
+      erstelltAm: DateTime(2026, 1, 1),
+    );
+
+    /// Ein Entwurf, in dem der Anwalt selbst geschrieben hat — der Zustand,
+    /// in dem die Chips vorher still leer liefen.
+    Future<({EmailEntwurfCubit cubit, _FakeUpdateMandant schreiber})>
+    mitHandarbeit({Mandant? mandant}) async {
+      final gebaut = baue(
+        _FakeVersandRepository(),
+        mandanten: [mandant ?? mitGruss],
+      );
+      await gebaut.cubit.starte(vorgang: vorgang);
+      // Nur den Mandanten anschreiben, damit namentlich angeredet wird.
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+      gebaut.cubit.setzeAnredeNeutral(false);
+      final vorher = gebaut.cubit.state.entwurf.text;
+      gebaut.cubit.setzeText('$vorher\n\nUnd das habe ich selbst getippt.');
+      return (cubit: gebaut.cubit, schreiber: gebaut.schreiber);
+    }
+
+    test('die Anredeart tauscht die Anredezeile, der Rest bleibt', () async {
+      final gebaut = await mitHandarbeit();
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,'),
+      );
+
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Frau Müller,'),
+      );
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        contains('Und das habe ich selbst getippt.'),
+        reason: 'genau das darf der Klick nicht kosten',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('ein anderer Anredeanfang wirkt ebenso', () async {
+      final gebaut = await mitHandarbeit();
+
+      gebaut.cubit.waehleAnrede(gutenTag);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Guten Tag Herr Müller,'),
+      );
+      expect(
+        gebaut.cubit.state.textSelbstGeschrieben,
+        isTrue,
+        reason: 'der Text bleibt Handarbeit — getauscht wurde nur eine Stelle',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('ein anderer Zusatzgruß wird an seiner Stelle getauscht', () async {
+      final gebaut = await mitHandarbeit();
+      expect(gebaut.cubit.state.entwurf.text, contains('Salamu aleikum,'));
+
+      gebaut.cubit.setzeZusatzgruss('Grüß Gott');
+
+      expect(gebaut.cubit.state.entwurf.text, contains('Grüß Gott,'));
+      expect(gebaut.cubit.state.entwurf.text, isNot(contains('Salamu')));
+      await gebaut.cubit.close();
+    });
+
+    test('kein Gruß mehr nimmt seine Zeile mit', () async {
+      final gebaut = await mitHandarbeit();
+
+      gebaut.cubit.setzeZusatzgruss('');
+
+      expect(gebaut.cubit.state.entwurf.text, isNot(contains('Salamu')));
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,\n\n'),
+        reason: 'sonst bliebe das Komma des Grusses allein auf seiner Zeile',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('eine andere Vorlage schreibt den Text nicht um', () async {
+      final gebaut = await mitHandarbeit();
+      final vorher = gebaut.cubit.state.entwurf.text;
+
+      gebaut.cubit.waehleVorlage(
+        const MailVorlage(id: 3, name: 'Andere', text: 'Ganz anderer Text.'),
+      );
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        vorher,
+        reason:
+            'die Vorlage schreibt den **ganzen** Text — das waere der Verlust '
+            'der Handarbeit, und dafuer gibt es erzeugeTextNeu',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('erzeugeTextNeu gibt den Text der Ableitung zurück', () async {
+      final gebaut = await mitHandarbeit();
+      gebaut.cubit.waehleVorlage(
+        const MailVorlage(id: 3, name: 'Andere', text: 'Ganz anderer Text.'),
+      );
+
+      gebaut.cubit.erzeugeTextNeu();
+
+      expect(gebaut.cubit.state.entwurf.text, 'Ganz anderer Text.');
+      expect(gebaut.cubit.state.textSelbstGeschrieben, isFalse);
+      await gebaut.cubit.close();
+    });
+
+    test('auch wer zuerst tippt, kann danach noch umschalten', () async {
+      // Der Ablauf, in dem der Nachtrag tot war: **kein** Klick vorher.
+      // `starte` schrieb die Merker nicht mit, `TextNachtrag` suchte nach der
+      // leeren Zeichenkette und stieg sofort aus — der Chip tat nichts, und
+      // der Hinweis daneben versprach das Gegenteil.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      final vorher = gebaut.cubit.state.entwurf.text;
+      expect(vorher, startsWith('Sehr geehrte Damen und Herren,'));
+      gebaut.cubit.setzeText('$vorher\n\nUnd das habe ich selbst getippt.');
+
+      gebaut.cubit.setzeAnredeNeutral(false);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,'),
+      );
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        contains('Und das habe ich selbst getippt.'),
+      );
+      await gebaut.cubit.close();
+    });
+
+    test('und den Zusatzgruß ebenso', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.setzeText(
+        '${gebaut.cubit.state.entwurf.text}\n\nSelbst getippt.',
+      );
+
+      gebaut.cubit.setzeZusatzgruss('Grüß Gott');
+
+      expect(gebaut.cubit.state.entwurf.text, contains('Grüß Gott,'));
+      expect(gebaut.cubit.state.entwurf.text, isNot(contains('Salamu')));
+      await gebaut.cubit.close();
+    });
+
+    test('ein hinzugefügter Empfänger zieht den Merker mit', () async {
+      // Zwischen Ableitung und Handarbeit: Der abgeleitete Text bekam eine
+      // **neue** Anredezeile, der Merker blieb auf der alten stehen. Der
+      // naechste Klick suchte danach und fand nichts.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,'),
+      );
+
+      gebaut.cubit.empfaengerHinzufuegen('schaden@huk.de');
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Damen und Herren,'),
+      );
+      gebaut.cubit.setzeText(
+        '${gebaut.cubit.state.entwurf.text}\n\nSelbst getippt.',
+      );
+
+      gebaut.cubit.setzeAnredeNeutral(false);
+
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrter Herr Müller,'),
+      );
+      expect(gebaut.cubit.state.entwurf.text, contains('Selbst getippt.'));
+      await gebaut.cubit.close();
+    });
+
+    test('ohne Handarbeit tut erzeugeTextNeu nichts', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mitGruss]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      final vorher = gebaut.cubit.state;
+
+      gebaut.cubit.erzeugeTextNeu();
+
+      expect(gebaut.cubit.state, vorher);
+      await gebaut.cubit.close();
+    });
+  });
+
+  group('die neutrale Anrede erklärt sich (§4.7)', () {
+    /// Ein Mandant, bei dem im Register keine Anredeart steht — der Fall, in
+    /// dem „Sehr geehrte Damen und Herren" erschien, ohne dass jemand diese
+    /// Anrede angelegt hatte.
+    final ohneAnredeart = Mandant(
+      id: 7,
+      vorname: 'Klaus',
+      nachname: 'Müller',
+      emailAdresse: 'k.mueller@example.de',
+      erstelltAm: DateTime(2026, 1, 1),
+    );
+
+    test('der Grund nennt den Mitleser und verschwindet mit ihm', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      expect(gebaut.cubit.anredeNeutralGrund, AnredeNeutralGrund.mitleser);
+
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+      expect(
+        gebaut.cubit.anredeNeutralGrund,
+        isNull,
+        reason:
+            'jetzt ist die Anrede namentlich, und es gibt nichts zu '
+            'erklären',
+      );
+      await gebaut.cubit.close();
+    });
+
+    test(
+      'der Umschalter bleibt schaltbar, wenn die Gegenseite mitliest',
+      () async {
+        // Der Mangel: Angeboten wurde er nur, wenn die namentliche Anrede schon
+        // galt — also nie bei der häufigsten Mail dieser Kanzlei.
+        final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+        await gebaut.cubit.starte(vorgang: vorgang);
+
+        expect(gebaut.cubit.state.anredePersoenlichMoeglich, isFalse);
+        expect(gebaut.cubit.anredeNamentlichMachbar, isTrue);
+        await gebaut.cubit.close();
+      },
+    );
+
+    test('die Lücke im Register wird benannt und ist behebbar', () async {
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [ohneAnredeart]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+      expect(
+        gebaut.cubit.anredeNeutralGrund,
+        AnredeNeutralGrund.keineAnredeart,
+      );
+
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+      expect(gebaut.cubit.anredeNeutralGrund, isNull);
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        startsWith('Sehr geehrte Frau Müller,'),
+      );
+      await gebaut.cubit.close();
+    });
+
+    test(
+      'auch ohne Anredebestand folgt die Anrede der gewählten Art',
+      () async {
+        // Der behobene Fehler: Ohne Bestand lief die Zeile über
+        // `Mandant.briefanrede` und las nur das Register — die Wahl für diese
+        // Mail fiel unter den Tisch.
+        final gebaut = baue(
+          _FakeVersandRepository(),
+          mandanten: [ohneAnredeart],
+          anreden: const [],
+        );
+        await gebaut.cubit.starte(vorgang: vorgang);
+        gebaut.cubit.empfaengerEntfernen('schaden@huk.de');
+
+        expect(gebaut.cubit.state.anredebaustein, isNull);
+
+        gebaut.cubit.waehleGeschlecht(Anrede.frau);
+
+        expect(
+          gebaut.cubit.state.entwurf.text,
+          startsWith('Sehr geehrte Frau Müller,'),
+        );
+        await gebaut.cubit.close();
+      },
+    );
   });
 }

@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 ///
 /// Ein leerer Befund wird **ausgeschrieben**, nicht weggelassen — gerade er
 /// erklärt, warum im Text eine Zeile fehlt.
+///
+/// Diese Zeile steht in der **vollständigen** Liste, die zugeklappt bleibt.
+/// Was leer geblieben ist, steht zusätzlich offen darüber und ausführlicher
+/// (`PlatzhalterFehlstelleZeile`) — dort mit dem Grund, hier mit dem Wert.
 class PlatzhalterZeile extends StatelessWidget {
   final PlatzhalterBefund befund;
 
@@ -36,11 +40,12 @@ class PlatzhalterZeile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  befund.istLeer
-                      ? 'bleibt leer — die Zeile entfällt'
-                      : befund.wert,
+                  befund.istLeer ? befund.folge : befund.wert,
                   style: befund.istLeer
-                      ? gedaempft?.copyWith(fontStyle: FontStyle.italic)
+                      ? theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                          fontStyle: FontStyle.italic,
+                        )
                       : theme.textTheme.bodySmall,
                 ),
                 if (befund.herkunft.isNotEmpty)

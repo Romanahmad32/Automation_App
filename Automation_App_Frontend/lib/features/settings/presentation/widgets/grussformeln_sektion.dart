@@ -7,12 +7,12 @@ import 'package:automation_app/features/settings/presentation/widgets/grussforme
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Die Verwaltung der persönlichen Grußformeln (§4.7, §7.1) — im Reiter
+/// Die Verwaltung der Zusatzgrüße (§4.7, §7.1) — im Reiter
 /// „E-Mail", neben den Textvorlagen, in die sie eingesetzt werden.
 ///
 /// **Eine Liste von Textbausteinen, kein Merkmal von Personen.** Sie hängt an
 /// keinem Mandanten und ordnet niemanden ein; gewählt wird sie je Mail beim
-/// Verfassen.
+/// Verfassen. Wie viele es gibt, bestimmt der Anwalt.
 class GrussformelnSektion extends StatelessWidget {
   const GrussformelnSektion({super.key});
 
@@ -48,10 +48,11 @@ class GrussformelnSektionInhalt extends StatelessWidget {
 
         return FormSection(
           icon: Icons.waving_hand_outlined,
-          title: 'Persönliche Grußformeln',
+          title: 'Zusatzgrüße',
           subtitle:
-              'Zur Auswahl beim Verfassen, wenn die Mail nur an den Mandanten '
-              'geht. Textbausteine — sie hängen an keinem Mandanten.',
+              'Zur Auswahl beim Verfassen — eingesetzt überall, wo eine '
+              'Textvorlage den Platzhalter {{Zusatzgruß}} trägt. '
+              'Textbausteine: sie hängen an keinem Mandanten.',
           trailing: stand.laedt
               ? const SizedBox(
                   width: 18,

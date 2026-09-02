@@ -81,6 +81,10 @@ class StoerrischerVersandDienst implements EmailVersandRepository {
   Future<SignaturStand> ladeSignaturStand() async => const SignaturStand();
 
   @override
+  Future<SignaturStand> leseSignatur(String name) async =>
+      const SignaturStand();
+
+  @override
   Future<SignaturStand> uebernimmSignatur(String name) async =>
       const SignaturStand();
 
@@ -96,6 +100,24 @@ class KanzleiAbruf implements UseCase<KanzleiSettings, NoParams> {
   @override
   Future<Either<Failure, KanzleiSettings>> call(NoParams params) async =>
       ergebnis;
+}
+
+/// Der Schreibweg ins Register. Er merkt sich, **was** geschrieben wurde:
+/// Dass nur die Anredeart wechselt und der Rest des Mandanten stehen bleibt,
+/// ist die Zusage von `merkeAnredeart`.
+class MandantSchreiber implements UseCase<Mandant, Mandant> {
+  final Failure? scheitertMit;
+
+  Mandant? geschrieben;
+
+  MandantSchreiber({this.scheitertMit});
+
+  @override
+  Future<Either<Failure, Mandant>> call(Mandant params) async {
+    geschrieben = params;
+    final fehler = scheitertMit;
+    return fehler != null ? Left(fehler) : Right(params);
+  }
 }
 
 class MandantenAbruf implements UseCase<List<Mandant>, NoParams> {
@@ -133,12 +155,14 @@ void main() {
     Object? dienstWirft,
     Either<Failure, KanzleiSettings>? kanzlei,
     MandantenAbruf? mandanten,
+    MandantSchreiber? schreiber,
   }) => EntwurfQuellen(
     StoerrischerVersandDienst(wirft: dienstWirft),
     KanzleiAbruf(
       kanzlei ?? Right(const KanzleiSettings(name: 'Rechtsanwalt Max Muster')),
     ),
     mandanten ?? MandantenAbruf(Right([mandant])),
+    schreiber ?? MandantSchreiber(),
   );
 
   test('ohne Kanzleidaten bleibt der leere Satz — nicht ein Fehler', () async {
@@ -201,5 +225,40 @@ void main() {
     // „unbekannt" heißt steuerbar: Es wird nichts behauptet und kein Knopf
     // weggenommen, solange der Dienst nicht geantwortet hat.
     expect(stand.steuerbar, isTrue);
+  });
+
+  group('die Anredeart im Register nachtragen (§4.7, §5.1)', () {
+    test('schreibt nur die Anredeart, der Rest bleibt stehen', () async {
+      final schreiber = MandantSchreiber();
+
+      final gemerkt = await quellen(
+        schreiber: schreiber,
+      ).merkeAnredeart(mandant, Anrede.frau);
+
+      expect(gemerkt?.anrede, Anrede.frau);
+      expect(
+        schreiber.geschrieben,
+        mandant.copyWith(anrede: Anrede.frau),
+        reason:
+            'ein Nachtrag aus dem Versanddialog darf keine anderen Stammdaten '
+            'anfassen',
+      );
+    });
+
+    test('misslingt es, kommt null zurück — und nichts fliegt', () async {
+      final gemerkt = await quellen(
+        schreiber: MandantSchreiber(
+          scheitertMit: LocalFailure(message: 'Datenbank gesperrt'),
+        ),
+      ).merkeAnredeart(mandant, Anrede.frau);
+
+      expect(
+        gemerkt,
+        isNull,
+        reason:
+            'der Entwurf ist fertig — ein Registerfehler darf ihn nicht '
+            'anfassen, nur melden',
+      );
+    });
   });
 }

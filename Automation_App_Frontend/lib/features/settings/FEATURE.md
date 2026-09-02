@@ -33,8 +33,8 @@ schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme
   `…Loaded.gespeichert` sagt, welcher Reiter gespeichert hat. Deshalb setzt `AppSettingsView._save` per `copyWith` auf dem
   geladenen Stand auf — sonst löscht es die Felder der Nachbarreiter mit. Einen **eigenen Knopf** hat sie trotzdem nicht: Den
   einen der Seite ruft `MailboxAccessView._save`, er schreibt beides (`speichereWennGeaendert`) — zwei Knöpfe „Speichern"
-  untereinander sahen aus wie zwei Formulare. Direkt darunter stehen `MailVorlagenSektion` und `GrussformelnSektion` — beide
-  gehören `email_versand`, nicht dem Einstellungssatz: jeder Eintrag ist ein eigener Satz im Bestand und wird sofort geschrieben.
-- `mailSignaturHtml` wird **nur durchgereicht**: Übernommen und verworfen wird die formatierte Signatur im Dienst (`POST/DELETE
-  api/EmailVersand/signaturen/…`), weil dabei Bilder abzulegen sind. Nach einer Übernahme lädt `MailSignaturSektion` die
-  Einstellungen neu — sonst schriebe das nächste Speichern die alte Fassung zurück.
+  untereinander sahen aus wie zwei Formulare. Darunter `MailVorlagenSektion`, `AnredebausteineSektion` und
+  `GrussformelnSektion` — alle gehören `email_versand`: jeder Eintrag ist ein eigener Satz im Bestand, sofort geschrieben.
+- `mailSignaturHtml` wird **nur durchgereicht**: gelesen, übernommen und verworfen wird sie im Dienst (`GET/POST/DELETE
+  api/EmailVersand/signaturen/…`). Der Import **schreibt nicht** — er füllt das Feld und merkt den Namen vor, erst
+  `speichereWennGeaendert` übernimmt; Entfernen nimmt Text **und** Formatierung. Warum, steht bei `email_versand`.

@@ -48,14 +48,8 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
 
         var ordner = Ordner();
         var abgelegt = new List<SignaturBild>();
-        foreach (var (name, inhalt) in bilder)
+        foreach (var (sicher, inhalt) in Brauchbare(bilder))
         {
-            var sicher = SichererName(name);
-            if (sicher is null || inhalt.Length == 0 || inhalt.Length > MaxBildBytes)
-            {
-                continue;
-            }
-
             try
             {
                 File.WriteAllBytes(Path.Combine(ordner, sicher), inhalt);
@@ -68,6 +62,37 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
         }
 
         return abgelegt;
+    }
+
+    /// <summary>
+    /// Welche Bilder eine Übernahme ablegen <b>würde</b> — dieselbe Auswahl wie
+    /// <see cref="Ersetze"/>, nur ohne zu schreiben.
+    ///
+    /// Für die Vorschau vor dem Speichern (§4.7): Sie soll aufzählen, was
+    /// hinterher wirklich dasteht, und nicht ein Bild versprechen, das die
+    /// Übernahme dann übergeht. Deshalb entscheidet <see cref="Brauchbare"/>
+    /// für beide — zwei Filter nebeneinander liefen auseinander.
+    /// </summary>
+    public IReadOnlyList<SignaturBild> Vorschau(IReadOnlyDictionary<string, byte[]> bilder) =>
+        [.. Brauchbare(bilder).Select(paar => new SignaturBild(paar.Name, paar.Inhalt.Length))];
+
+    /// <summary>
+    /// Die Bilder, die abgelegt werden dürfen, mit ihrem auf den blanken Namen
+    /// gekürzten Dateinamen. Leere und übergroße fallen heraus.
+    /// </summary>
+    private static IEnumerable<(string Name, byte[] Inhalt)> Brauchbare(
+        IReadOnlyDictionary<string, byte[]> bilder)
+    {
+        foreach (var (name, inhalt) in bilder)
+        {
+            var sicher = SichererName(name);
+            if (sicher is null || inhalt.Length == 0 || inhalt.Length > MaxBildBytes)
+            {
+                continue;
+            }
+
+            yield return (sicher, inhalt);
+        }
     }
 
     /// <summary>Was gerade abgelegt ist, nach Namen sortiert.</summary>

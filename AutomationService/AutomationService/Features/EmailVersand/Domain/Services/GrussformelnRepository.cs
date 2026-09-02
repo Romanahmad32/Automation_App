@@ -23,6 +23,7 @@ public sealed class GrussformelnRepository(AutomationDbContext db) : IGrussforme
         GrussformelEntity neu,
         CancellationToken cancellationToken = default)
     {
+        Bereinige(neu);
         await EnsureTextUniqueAsync(neu.Text, eigeneId: null, cancellationToken);
 
         var vorhanden = await db.Grussformeln.AnyAsync(cancellationToken);
@@ -52,6 +53,7 @@ public sealed class GrussformelnRepository(AutomationDbContext db) : IGrussforme
             .FirstOrDefaultAsync(g => g.Id == grussformel.Id, cancellationToken);
         if (existing is null) return null;
 
+        Bereinige(grussformel);
         await EnsureTextUniqueAsync(grussformel.Text, eigeneId: grussformel.Id, cancellationToken);
 
         existing.Text = grussformel.Text;
@@ -69,6 +71,19 @@ public sealed class GrussformelnRepository(AutomationDbContext db) : IGrussforme
         db.Grussformeln.Remove(existing);
         await db.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// Schneidet Leerraum ab und besteht auf einem Wortlaut. Vor der
+    /// Eindeutigkeitsprüfung, damit „ Gruß " kein zweiter Eintrag neben „Gruß"
+    /// wird — siehe <see cref="GrussformelUngueltigException"/>.
+    /// </summary>
+    static void Bereinige(GrussformelEntity grussformel)
+    {
+        grussformel.Text = grussformel.Text?.Trim() ?? string.Empty;
+        if (grussformel.Text.Length > 0) return;
+
+        throw new GrussformelUngueltigException("Der Gruss braucht einen Text");
     }
 
     async Task EnsureTextUniqueAsync(string text, int? eigeneId, CancellationToken ct)

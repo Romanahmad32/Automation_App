@@ -22,6 +22,7 @@ public sealed class MailVorlagenRepository(AutomationDbContext db) : IMailVorlag
         MailVorlageEntity neu,
         CancellationToken cancellationToken = default)
     {
+        Bereinige(neu);
         await EnsureNameUniqueAsync(neu.Name, eigeneId: null, cancellationToken);
 
         var maxId = await db.MailVorlagen.AnyAsync(cancellationToken)
@@ -42,6 +43,7 @@ public sealed class MailVorlagenRepository(AutomationDbContext db) : IMailVorlag
             .FirstOrDefaultAsync(v => v.Id == vorlage.Id, cancellationToken);
         if (existing is null) return null;
 
+        Bereinige(vorlage);
         await EnsureNameUniqueAsync(vorlage.Name, eigeneId: vorlage.Id, cancellationToken);
 
         existing.Name = vorlage.Name;
@@ -60,6 +62,27 @@ public sealed class MailVorlagenRepository(AutomationDbContext db) : IMailVorlag
         db.MailVorlagen.Remove(existing);
         await db.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// Schneidet Leerraum an Name und Betreff ab und besteht auf einem Namen.
+    /// Vor der Eindeutigkeitsprüfung, damit „ Anschreiben " keine zweite
+    /// Vorlage neben „Anschreiben" wird — siehe
+    /// <see cref="MailVorlageUngueltigException"/>.
+    /// </summary>
+    /// <remarks>
+    /// Der <b>Text bleibt unangetastet</b>: Dort ist Leerraum Aufbau, keine
+    /// Unachtsamkeit. Eine führende Leerzeile kann gewollt sein, und das
+    /// Zeilenende steht am Ausgangsbestand aus gutem Grund fest
+    /// (<see cref="MailVorlagenVorgabe"/>).
+    /// </remarks>
+    static void Bereinige(MailVorlageEntity vorlage)
+    {
+        vorlage.Name = vorlage.Name?.Trim() ?? string.Empty;
+        vorlage.Betreff = vorlage.Betreff?.Trim() ?? string.Empty;
+        if (vorlage.Name.Length > 0) return;
+
+        throw new MailVorlageUngueltigException("Die Mail-Vorlage braucht einen Namen");
     }
 
     async Task EnsureNameUniqueAsync(string name, int? eigeneId, CancellationToken ct)

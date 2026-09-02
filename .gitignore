@@ -25,6 +25,14 @@ Beispiele/*.docx
 Beispiele/*.eml
 Beispiele/*.html
 Beispiele/*_files/
+Beispiele/*.pdf
+# Und **jeder Unterordner** darunter (ergaenzt am 03.09.2026): Dort landen
+# ganze Ablagen statt einzelner Dateien — zuerst "Kanzlei Register/" mit dem
+# Sachgebiete-Register und den laufenden Nummern seit 2018. Eine Liste von
+# Endungen erwischt das nicht: Sie greift nur eine Ebene tief, und .pdf stand
+# bis dahin gar nicht darin. Beim naechsten `git add -A` waere die Ablage
+# mitgegangen, und dieses Repo ist oeffentlich.
+Beispiele/*/
 # Auch die PARAMETRISIERTEN Fassungen bleiben lokal. Das Ersetzen trifft nur
 # den Fliesstext: Kopf- und Fusszeile tragen weiterhin Briefkopf, Steuernummer
 # und Bankverbindung der Kanzlei, und der Schriftsatztext selbst ist ihre

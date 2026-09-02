@@ -102,6 +102,10 @@ void main() {
     'lib/features/email_versand/domain/entities/email_versand_ergebnis.dart': [
       'EmailVersandErgebnisDto',
     ],
+    'lib/features/email_versand/domain/entities/anredebaustein.dart': [
+      'AnredeBausteinDto',
+      'SpeichereAnredeBausteinDto',
+    ],
     'lib/features/email_versand/domain/entities/grussformel.dart': [
       'GrussformelDto',
       'SpeichereGrussformelDto',

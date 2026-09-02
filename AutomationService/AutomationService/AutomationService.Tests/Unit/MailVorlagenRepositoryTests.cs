@@ -46,7 +46,7 @@ public sealed class MailVorlagenRepositoryTests : IDisposable
     {
         var text = MailVorlagenVorgabe.Mandantenanschreiben;
 
-        text.Should().Contain("{{Anrede}}").And.Contain("{{Grussformel}}");
+        text.Should().Contain("{{Anrede}}").And.Contain("{{Zusatzgruß}}");
         text.Should().EndWith("Mit freundlichen Grüßen",
             "die Signatur haengt der Versand an — im Vorlagentext stuende sie doppelt");
         text.Should().NotContain("Sehr geehrter Herr/Frau",
@@ -83,6 +83,70 @@ public sealed class MailVorlagenRepositoryTests : IDisposable
         ergebnis!.Betreff.Should().Be("Neuer Betreff");
         ergebnis.Text.Should().Be("Neuer Text");
         (await _repository.UpdateAsync(Neu("Unbekannt"))).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateAsync_LehntEineVorlageOhneNamenAb()
+    {
+        // <c>IsRequired()</c> verbietet nur NULL: Ueber die API liess sich ein
+        // namenloser Eintrag anlegen. Der Name ist der fachliche Schluessel —
+        // danach waehlt der Anwalt beim Verfassen.
+        var ohneNamen = async () => await _repository.CreateAsync(Neu("   "));
+
+        await ohneNamen.Should().ThrowAsync<MailVorlageUngueltigException>();
+        (await _repository.GetAllAsync()).Should().ContainSingle(
+            "ein abgelehnter Schreibvorgang darf den Bestand nicht anfassen");
+    }
+
+    [Fact]
+    public async Task CreateAsync_NimmtEineHalbGeschriebeneVorlageAn()
+    {
+        // Die Gegenprobe, und die wichtigere Zusage (§1.3, §4.7): Betreff und
+        // Text duerfen leer bleiben. Der Vorlageneditor ist ein Hinweisgeber,
+        // kein Riegel — wer beim Schreiben unterbrochen wird, muss speichern
+        // koennen.
+        var angelegt = await _repository.CreateAsync(Neu("Noch im Bau"));
+
+        angelegt.Name.Should().Be("Noch im Bau");
+        angelegt.Betreff.Should().BeEmpty();
+        angelegt.Text.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAsync_SchneidetNamenUndBetreffAb_UndLaesstDenTextInRuhe()
+    {
+        var angelegt = await _repository.CreateAsync(
+            Neu("  Nachfrage ", "  Zu Ihrem Schreiben  ", "\nMit Leerzeile davor"));
+
+        angelegt.Name.Should().Be("Nachfrage");
+        angelegt.Betreff.Should().Be("Zu Ihrem Schreiben");
+        angelegt.Text.Should().Be("\nMit Leerzeile davor",
+            "im Text ist Leerraum Aufbau, keine Unachtsamkeit");
+    }
+
+    [Fact]
+    public async Task CreateAsync_ErkenntDenDoppeltenNamenAuchMitLeerraum()
+    {
+        var doppelt = async () => await _repository.CreateAsync(
+            Neu($" {MailVorlagenVorgabe.MandantenanschreibenName} "));
+
+        await doppelt.Should().ThrowAsync<MailVorlageNameConflictException>(
+            "getrimmt ist es derselbe Name — zwei gleiche Zeilen waeren in der "
+            + "Auswahl nicht auseinanderzuhalten");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_LehntEineVorlageOhneNamenAb()
+    {
+        var ohneNamen = async () => await _repository.UpdateAsync(new MailVorlageEntity
+        {
+            Id = MailVorlagenVorgabe.MandantenanschreibenId,
+            Name = string.Empty,
+            Text = "Bleibt so",
+        });
+
+        await ohneNamen.Should().ThrowAsync<MailVorlageUngueltigException>();
+        (await _repository.GetAllAsync()).Should().NotContain(v => v.Name.Length == 0);
     }
 
     [Fact]

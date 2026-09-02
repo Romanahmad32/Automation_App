@@ -63,6 +63,15 @@ abstract class EmailVersandRepository {
   /// Bildern und deren Größe.
   Future<SignaturStand> ladeSignaturStand();
 
+  /// Liest die gewählte Signatur, **ohne sie zu speichern** — für die Vorschau
+  /// im Formular, bevor der Anwalt auf „Speichern" drückt (§4.7, ergänzt am
+  /// 02.09.2026).
+  ///
+  /// Die Bilder kommen als Angabe zurück, nicht als Inhalt: Auf der Platte
+  /// liegen sie erst nach [uebernimmSignatur], und bis dahin zeigt die
+  /// Vorschau Schrift und Farben, aber kein Logo.
+  Future<SignaturStand> leseSignatur(String name);
+
   /// Übernimmt die gewählte Signatur in die Einstellungen — Text, formatierte
   /// Fassung und deren Bilder. Das geschieht im Dienst und nicht hier: Die
   /// Bilder müssen abgelegt werden, und die HTML-Fassung ist zehntausende

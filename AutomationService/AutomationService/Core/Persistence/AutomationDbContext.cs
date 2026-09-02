@@ -38,6 +38,8 @@ public class AutomationDbContext(DbContextOptions<AutomationDbContext> options)
     public DbSet<MailVorlageEntity> MailVorlagen => Set<MailVorlageEntity>();
     public DbSet<GrussformelEntity> Grussformeln => Set<GrussformelEntity>();
 
+    public DbSet<AnredeBausteinEntity> AnredeBausteine => Set<AnredeBausteinEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Sammelt jede IEntityTypeConfiguration<> aus diesem Assembly ein — jedes
