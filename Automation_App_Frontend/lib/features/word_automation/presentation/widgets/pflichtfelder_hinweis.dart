@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -5,6 +6,12 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Unfalldatum, Versicherer" — jeder Name anklickbar und springt (per Fokus)
 /// in sein Feld (#35 Teil 3). Vorher war der Knopf einfach tot, ohne zu
 /// sagen, welches Feld ihn sperrt.
+///
+/// Gezeigt als [FehlerHinweis], wie jede andere Beanstandung der App: Symbol
+/// in der Fehlerfarbe, Text daneben, über die ganze Breite. Die Schwester
+/// `SchadenspositionFehlerliste` sitzt im nächsten Schritt über demselben
+/// Knopf und tut dasselbe — vorher stand hier stattdessen eine kleingesetzte,
+/// mittig schwebende Zeile ohne Symbol.
 class PflichtfelderHinweis extends StatelessWidget {
   /// Die Feldnamen, die im aktuellen Formular als Pflicht gelten (nach der
   /// Ableitung je Vorlagenvariante, #35 Teil 2).
@@ -27,32 +34,28 @@ class PflichtfelderHinweis extends StatelessWidget {
         ];
         if (fehlend.isEmpty) return const SizedBox.shrink();
 
-        return Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            Text(
-              fehlend.length == 1
-                  ? '1 Pflichtfeld fehlt:'
-                  : '${fehlend.length} Pflichtfelder fehlen:',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-            for (final name in fehlend)
-              InkWell(
-                onTap: () => formGroup.control(name).focus(),
-                child: Text(
-                  name,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
-                    decoration: TextDecoration.underline,
-                    decorationColor: theme.colorScheme.error,
+        return FehlerHinweis(
+          nachricht: fehlend.length == 1
+              ? '1 Pflichtfeld fehlt:'
+              : '${fehlend.length} Pflichtfelder fehlen:',
+          inhalt: Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final name in fehlend)
+                InkWell(
+                  onTap: () => formGroup.control(name).focus(),
+                  child: Text(
+                    name,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.error,
+                      decoration: TextDecoration.underline,
+                      decorationColor: theme.colorScheme.error,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         );
       },
     );
