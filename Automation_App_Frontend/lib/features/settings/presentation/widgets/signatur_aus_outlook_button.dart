@@ -5,24 +5,30 @@ import 'package:automation_app/features/email_versand/domain/repositories/email_
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_auswahl_dialog.dart';
 import 'package:flutter/material.dart';
 
-/// Übernimmt die in Outlook eingerichtete Signatur (§4.7) — statt sie abtippen
-/// zu lassen.
+/// Liest die in Outlook eingerichtete Signatur (§4.7) — statt sie abtippen zu
+/// lassen.
 ///
-/// Übernommen wird beides: Outlooks Nur-Text-Fassung und, falls vorhanden, die
-/// formatierte samt Bildern. Das eigentliche Einlesen erledigt der Dienst; die
-/// App schickt nur den Namen. Die Bilder gehören ins Dateisystem, und die
-/// HTML-Fassung ist zehntausende Zeichen groß — beides durch die Oberfläche zu
-/// schleifen, nur damit es von dort zurückkommt, wären drei Stellen mehr, an
-/// denen etwas verlorengeht.
+/// Gelesen wird beides: Outlooks Nur-Text-Fassung und, falls vorhanden, die
+/// formatierte samt Bildangaben. Das Einlesen erledigt der Dienst; die App
+/// schickt nur den Namen. Die Bilder dürfen 25 MB groß sein und gehören ins
+/// Dateisystem — sie durch die Oberfläche zu schleifen, nur damit sie von dort
+/// zurückkommen, wären drei Stellen mehr, an denen etwas verlorengeht.
+///
+/// **Gelesen, nicht gespeichert** (geändert am 02.09.2026). Vorher schrieb
+/// dieser Knopf sofort in die Einstellungen: Wer eine Signatur aus der Liste
+/// wählte, hatte sie damit gewechselt — samt gelöschter Bilder der bisherigen,
+/// ohne je auf „Speichern" gedrückt zu haben. Geschrieben wird jetzt beim
+/// Speichern der Seite.
 class SignaturAusOutlookButton extends StatefulWidget {
-  /// Der Stand, wie er nach der Übernahme gespeichert ist.
-  final ValueChanged<SignaturStand> onUebernommen;
+  /// Name und gelesener Stand der gewählten Signatur. Der Name geht mit, weil
+  /// die Übernahme beim Speichern ihn braucht — der Dienst liest dann erneut.
+  final void Function(String name, SignaturStand stand) onGelesen;
 
   final bool aktiv;
 
   const SignaturAusOutlookButton({
     super.key,
-    required this.onUebernommen,
+    required this.onGelesen,
     this.aktiv = true,
   });
 
@@ -58,9 +64,9 @@ class _SignaturAusOutlookButtonState extends State<SignaturAusOutlookButton> {
       final gewaehlt = await SignaturAuswahlDialog.zeigen(context, gefunden);
       if (gewaehlt == null || !mounted) return;
 
-      final stand = await zugang.uebernimmSignatur(gewaehlt.name);
+      final stand = await zugang.leseSignatur(gewaehlt.name);
       if (!mounted) return;
-      widget.onUebernommen(stand);
+      widget.onGelesen(gewaehlt.name, stand);
     } catch (e) {
       if (!mounted) return;
       melder.showSnackBar(

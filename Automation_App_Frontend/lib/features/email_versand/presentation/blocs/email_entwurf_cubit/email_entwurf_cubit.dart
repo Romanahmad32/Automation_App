@@ -1,17 +1,18 @@
 import 'dart:async';
 
-import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
-import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
-import 'package:automation_app/features/email_versand/domain/services/mail_vorlagen_fueller.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/ableitung_griff.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/anrede_griff.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/entwurf_quellen.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/outlook_anhaenge_griff.dart';
-import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/versand_griff.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/vorgang_griff.dart';
+import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart';
@@ -29,24 +30,62 @@ import 'package:injectable/injectable.dart';
 /// Blocs nichts miteinander zu tun haben.
 @injectable
 class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
-    with OutlookAnhaengeGriff {
+    with
+        OutlookAnhaengeGriff,
+        VersandGriff,
+        AnredeGriff,
+        VorgangGriff,
+        AbleitungGriff {
   final EmailVersandRepository _repository;
   final VersichererCubit _versicherer;
   final EntwurfQuellen _quellen;
 
+  /// Der Anredebestand (§7.1). Wie beim `VersichererCubit` holt der Entwurf
+  /// ihn selbst: Sonst müsste ihn jede aufrufende Stelle durchreichen, und der
+  /// Dialog geht aus zwei Tabs und einem weiteren Dialog auf.
+  final AnredebausteineCubit _anreden;
+
   EmailEntwurfErzeuger? _erzeuger;
   KanzleiSettings _kanzlei = KanzleiSettings.empty;
+
+  /// Die mitgegebene Zentralruf-Antwort (§4.3). Sie überlebt einen
+  /// Vorgangswechsel: Sie gehört zu der Nachricht, die gerade beantwortet
+  /// wird, nicht zum Vorgang — und sie ist im Postfach die einzige Quelle der
+  /// Versichereradresse.
+  ZentralrufReplyData? _antwort;
+
+  /// Was die App selbst ins Feld „An" gesetzt hat — siehe `VorgangGriff`.
+  List<String> _vorbelegt = const [];
 
   EmailEntwurfCubit(
     this._repository,
     UseCase<KanzleiSettings, NoParams> getKanzleiSettings,
     UseCase<List<Mandant>, NoParams> getMandanten,
     this._versicherer,
-  ) : _quellen = EntwurfQuellen(_repository, getKanzleiSettings, getMandanten),
+    this._anreden,
+    UseCase<Mandant, Mandant> updateMandant,
+  ) : _quellen = EntwurfQuellen(
+        _repository,
+        getKanzleiSettings,
+        getMandanten,
+        updateMandant,
+      ),
       super(const EmailEntwurfState());
 
   @override
   EmailVersandRepository get versandRepository => _repository;
+
+  @override
+  String get absenderName => _kanzlei.name;
+
+  @override
+  EmailEntwurfErzeuger? get anredeErzeuger => _erzeuger;
+
+  @override
+  List<String> get vorbelegteEmpfaenger => _vorbelegt;
+
+  @override
+  set vorbelegteEmpfaenger(List<String> adressen) => _vorbelegt = adressen;
 
   /// Legt den vorbelegten Entwurf an und fragt nebenbei, ob überhaupt gesendet
   /// werden kann. Die Bereitschaft steht damit auf dem Schirm, bevor der Anwalt
@@ -65,15 +104,15 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     ZentralrufReplyData? antwort,
     List<String> anhangPfade = const [],
   }) async {
-    _kanzlei = await _quellen.kanzlei();
-    final erzeuger = EmailEntwurfErzeuger(
-      kanzlei: _kanzlei,
-      vorgang: vorgang,
-      mandant: mandant ?? await _quellen.mandantZu(vorgang),
-      antwort: antwort,
-      versicherer: _versicherer.state,
-    );
-    _erzeuger = erzeuger;
+    // Beides nebeneinander: Die Kanzleidaten kommen aus den Einstellungen, der
+    // Anredebestand aus seinem Singleton — der zweite ist beim zweiten Öffnen
+    // schon da (`ladenWennNoetig`).
+    await (
+      _quellen.kanzlei().then((k) => _kanzlei = k),
+      _anreden.ladenWennNoetig(),
+    ).wait;
+    _antwort = antwort;
+    final erzeuger = await erzeugerFuer(vorgang, mandant: mandant);
 
     // Der Dialog lässt sich abbrechen, solange hier noch gewartet wird — dann
     // ist der Cubit zu, und ein `emit` darauf wirft. Nach jedem `await` deshalb
@@ -82,15 +121,50 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     // Vorbelegt aus dem Mandanten (§5.1), aenderbar je Mail (§4.7): Der
     // Regelfall soll ohne Klick stimmen.
     final gruss = erzeuger.mandant?.persoenlicheGrussformel.trim() ?? '';
-    final entwurf = erzeuger.entwurfMit(anhangPfade, zusatzgruss: gruss);
+    // Die Anrede ebenso: der erste des Bestands, ab Werk „Sehr geehrter" —
+    // also genau die Anrede, die die App vorher fest erzeugt hat. Die Beugung
+    // folgt dem Mandanten (§7.1), ein Klick ist nur fuer die Ausnahme noetig.
+    final anrede = _anreden.state.vorgabe;
+    final entwurf = erzeuger.entwurfMit(
+      anhangPfade,
+      zusatzgruss: gruss,
+      anredebaustein: anrede,
+    );
+    // Diese Adressen hat die App gesetzt; nur sie gehen bei einem
+    // Vorgangswechsel wieder mit (`EmpfaengerAbgleich`).
+    _vorbelegt = entwurf.an;
     emit(
       state.copyWith(
         entwurf: entwurf,
         vorschlaege: erzeuger.vorschlaege,
         zusatzgruss: gruss,
-        grussMoeglich: erzeuger.nurAnDenMandanten(entwurf.alleEmpfaenger),
+        anredebaustein: () => anrede,
+        vorgang: () => vorgang,
+        // Was das Register sagt, damit die Chipreihe zeigt, welche Form
+        // ohne Klick gilt (§5.1); gewaehlt ist zunaechst nichts.
+        mandantAnrede: erzeuger.mandant?.anrede ?? Anrede.keine,
+        mandantBekannt: erzeuger.mandant != null,
+        mitleserImAn: erzeuger.liestJemandMit(entwurf.alleEmpfaenger),
+        anredePersoenlichMoeglich: erzeuger.anredePersoenlichMoeglich(
+          entwurf.alleEmpfaenger,
+        ),
+        // Woertlich mitschreiben, was `entwurfMit` in den Text gesetzt hat —
+        // dieselbe Rechnung, deshalb derselbe Aufruf. Ohne das fand
+        // `AbleitungGriff` die Stelle nie und lief still leer, sobald der
+        // Anwalt **zuerst** tippte und danach einen Chip klickte (behoben am
+        // 02.09.2026).
+        anredeImText: erzeuger.anredeFuer(
+          entwurf.alleEmpfaenger,
+          baustein: anrede,
+        ),
+        zusatzgrussImText: gruss,
       ),
     );
+
+    // Eine im Ladefenster gewaehlte Vorlage nachziehen: `leiteAb` hat sie
+    // damals verworfen, weil der Erzeuger noch fehlte. Jetzt steht er — sonst
+    // blieb die Wahl wirkungslos, bis der Anwalt etwas anderes anfasst.
+    if (state.gewaehlteVorlage != null) leiteAb(betreffAuch: true);
 
     // Outlook im Hintergrund hochfahren, während der Anwalt tippt. Bewusst
     // ohne await: Der Entwurf steht schon, und ob es klappt, ändert hier
@@ -109,6 +183,19 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     );
   }
 
+  /// Schreibt die Anredeart ins Register und zieht den Erzeuger nach; null
+  /// heißt: hat nicht geklappt. Die Entscheidung, **ob** nachgetragen wird,
+  /// trifft `AnredeGriff` am Zustand — hier steht nur der Weg dorthin.
+  @override
+  Future<Mandant?> anredeartNachtragen(Mandant mandant, Anrede anrede) async {
+    final gemerkt = await _quellen.merkeAnredeart(mandant, anrede);
+    if (gemerkt == null) return null;
+    // Sonst behauptet der Erzeuger weiter „keine Angabe" — und die Ableitung
+    // fragt ihn.
+    await erzeugerFuer(state.vorgang, mandant: gemerkt);
+    return gemerkt;
+  }
+
   /// Übernimmt eine gewählte Mail-Textvorlage (§4.7) — oder **keine**:
   /// [vorlage] null führt zur Vorbelegung aus den Vorgangsdaten zurück. Eine
   /// Wahl, die sich nicht zurücknehmen lässt, zwänge zum Schliessen und
@@ -119,76 +206,23 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
   /// Anwalt selbst in den Text schreibt ([setzeText]), hört das auf.
   void waehleVorlage(MailVorlage? vorlage) {
     emit(state.copyWith(gewaehlteVorlage: () => vorlage));
-    _leiteAb(betreffAuch: true);
+    leiteAb(betreffAuch: true);
   }
 
   /// Der beim Verfassen gewählte Zusatzgruß (§4.7); leer heisst keiner.
   void setzeZusatzgruss(String gruss) {
     emit(state.copyWith(zusatzgruss: gruss));
-    _leiteAb(betreffAuch: true);
-  }
-
-  /// Leitet Betreff und Text aus dem ab, was gerade gilt: gewählte Vorlage,
-  /// Empfänger, Zusatzgruß. [betreffAuch] trennt die **ausdrückliche**
-  /// Handlung (Vorlage oder Gruß gewählt — dann darf auch der Betreff neu
-  /// entstehen) von der beiläufigen (ein Empfänger kam dazu — dann bleibt der
-  /// Betreff stehen, wie es hier schon immer war).
-  void _leiteAb({required bool betreffAuch}) {
-    if (state.textSelbstGeschrieben) return;
-    final abgeleitet = _abgeleitet(state.entwurf, betreffAuch: betreffAuch);
-    emit(state.copyWith(entwurf: abgeleitet));
-  }
-
-  /// Der Entwurf mit abgeleitetem Text — und auf Wunsch abgeleitetem Betreff.
-  EmailEntwurf _abgeleitet(EmailEntwurf entwurf, {required bool betreffAuch}) {
-    final erzeuger = _erzeuger;
-    if (erzeuger == null) return entwurf;
-
-    final empfaenger = entwurf.alleEmpfaenger;
-    final nurMandant = erzeuger.nurAnDenMandanten(empfaenger);
-    final gruss = nurMandant ? state.zusatzgruss : '';
-    final vorlage = state.gewaehlteVorlage;
-
-    if (vorlage == null) {
-      return entwurf.copyWith(
-        text: erzeuger.textFuer(
-          empfaenger,
-          mitSchreiben: entwurf.anhangPfade.isNotEmpty,
-          zusatzgruss: gruss,
-        ),
-      );
-    }
-
-    final gefuellt = fuellerFuer(empfaenger).fuelleVorlage(vorlage);
-    return entwurf.copyWith(
-      betreff: betreffAuch ? gefuellt.betreff : entwurf.betreff,
-      text: gefuellt.text,
-    );
-  }
-
-  /// Der Füller zum aktuellen Stand. Öffentlich, weil die
-  /// Platzhalter-Übersicht im Dialog dieselben Werte zeigen muss, die in den
-  /// Text gehen — eine zweite Rechnung daneben liefe auseinander.
-  MailVorlagenFueller fuellerFuer(List<String> empfaenger) {
-    final erzeuger = _erzeuger!;
-    final nurMandant = erzeuger.nurAnDenMandanten(empfaenger);
-    return MailVorlagenFueller(
-      anrede: erzeuger.anredeFuer(empfaenger),
-      nurAnDenMandanten: nurMandant,
-      grussformel: nurMandant ? state.zusatzgruss : '',
-      vorgang: erzeuger.vorgang,
-      mandant: erzeuger.mandant,
-    );
+    leiteAb(betreffAuch: true);
   }
 
   void empfaengerHinzufuegen(String adresse) =>
-      _setzeEntwurf(state.entwurf.mitEmpfaenger(adresse));
+      setzeEntwurf(state.entwurf.mitEmpfaenger(adresse));
 
   void kopieHinzufuegen(String adresse) =>
-      _setzeEntwurf(state.entwurf.mitKopie(adresse));
+      setzeEntwurf(state.entwurf.mitKopie(adresse));
 
   void empfaengerEntfernen(String adresse) =>
-      _setzeEntwurf(state.entwurf.ohneEmpfaenger(adresse));
+      setzeEntwurf(state.entwurf.ohneEmpfaenger(adresse));
 
   void setzeBetreff(String betreff) {
     emit(state.copyWith(entwurf: state.entwurf.copyWith(betreff: betreff)));
@@ -206,12 +240,12 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
   }
 
   void anhangHinzufuegen(String pfad) =>
-      _setzeEntwurf(state.entwurf.mitAnhang(pfad));
+      setzeEntwurf(state.entwurf.mitAnhang(pfad));
 
   /// Nimmt ein Signaturbild für diese eine Mail heraus — oder wieder hinein.
   /// Die Signatur in den Einstellungen bleibt, wie sie ist (§4.7).
   void signaturBildUmschalten(String dateiname) =>
-      _setzeEntwurf(state.entwurf.mitUmgeschaltetemSignaturBild(dateiname));
+      setzeEntwurf(state.entwurf.mitUmgeschaltetemSignaturBild(dateiname));
 
   /// Benennt den Anhang **fuer die Mail** um; die Datei in der Akte behaelt
   /// ihren Namen.
@@ -219,7 +253,7 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
       emit(state.copyWith(entwurf: state.entwurf.mitAnhangName(pfad, name)));
 
   void anhangEntfernen(String pfad) =>
-      _setzeEntwurf(state.entwurf.ohneAnhang(pfad));
+      setzeEntwurf(state.entwurf.ohneAnhang(pfad));
 
   /// Nimmt auf, was in einer Empfängerzeile steht, aber noch nicht übernommen
   /// ist. Der Zustand muss es kennen, damit die Prüfung beim Senden es sieht —
@@ -227,98 +261,22 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
   void setzeOffeneEingabe({String? an, String? kopie}) =>
       emit(state.copyWith(offenAn: an, offenKopie: kopie));
 
-  /// Merkt sich den Versuch und meldet, ob die Mail hinaus kann. Ab jetzt
-  /// markiert das Formular, was fehlt (§4.7): Der Knopf ist anfassbar, und die
-  /// Begründung kommt beim Drücken statt als dauerhafter Kasten über dem
-  /// Formular.
-  bool istVersandbereit() {
-    emit(state.copyWith(versandVersucht: true));
-    return state.pruefung.vollstaendig;
-  }
-
-  /// Sendet und meldet, ob es geklappt hat. Bei einem Fehler ist nichts
-  /// hinausgegangen — der Entwurf bleibt vollständig erhalten, damit der
-  /// Anwalt nach der Ursache nur noch einmal auf „Senden" drücken muss.
-  Future<bool> senden() async {
-    if (!state.kannSenden || !state.pruefung.vollstaendig) return false;
-    emit(state.copyWith(phase: EmailVersandPhase.sendet, fehler: () => null));
-
-    try {
-      final ergebnis = await _repository.sende(
-        state.entwurf,
-        absenderName: _kanzlei.name,
-      );
-      // Ist der Entwurf inzwischen weg, bleibt die Mail trotzdem versendet —
-      // nur zu melden ist es niemandem mehr.
-      if (isClosed) return true;
-      emit(
-        state.copyWith(phase: EmailVersandPhase.gesendet, ergebnis: ergebnis),
-      );
-      return true;
-    } catch (e) {
-      if (isClosed) return false;
-      emit(
-        state.copyWith(
-          phase: EmailVersandPhase.verfassen,
-          fehler: () => ausnahmeText(e),
-        ),
-      );
-      return false;
-    }
-  }
-
-  /// Übergibt den Entwurf ans Mailprogramm, statt zu senden (§4.7). Gesendet
-  /// wird dort von Hand — deshalb schaltet die Phase **nicht** auf `gesendet`:
-  /// Was die App nicht weiß, darf sie im Abschlussdialog nicht behaupten.
-  Future<EmailEntwurfErgebnis?> entwurfOeffnen() async {
-    if (!state.kannEntwurfOeffnen || !state.pruefung.vollstaendig) return null;
-    emit(
-      state.copyWith(phase: EmailVersandPhase.uebergibt, fehler: () => null),
+  /// Der Erzeuger zu einem Vorgang, samt Mandant aus dem Register — und
+  /// gemerkt, weil `fuellerFuer` und die Ableitung ihn brauchen. [mandant]
+  /// überschreibt den Registerzugriff für Aufrufer, die ihn zur Hand haben.
+  @override
+  Future<EmailEntwurfErzeuger> erzeugerFuer(
+    Vorgang? vorgang, {
+    Mandant? mandant,
+  }) async {
+    final erzeuger = EmailEntwurfErzeuger(
+      kanzlei: _kanzlei,
+      vorgang: vorgang,
+      mandant: mandant ?? await _quellen.mandantZu(vorgang),
+      antwort: _antwort,
+      versicherer: _versicherer.state,
     );
-
-    try {
-      final ergebnis = await _repository.oeffneEntwurf(
-        state.entwurf,
-        absenderName: _kanzlei.name,
-      );
-      if (isClosed) return ergebnis;
-      emit(
-        state.copyWith(
-          phase: EmailVersandPhase.verfassen,
-          entwurfErgebnis: ergebnis,
-        ),
-      );
-      return ergebnis;
-    } catch (e) {
-      if (isClosed) return null;
-      emit(
-        state.copyWith(
-          phase: EmailVersandPhase.verfassen,
-          fehler: () => ausnahmeText(e),
-        ),
-      );
-      return null;
-    }
-  }
-
-  /// Übernimmt den geänderten Entwurf und zieht den Text nach, solange der
-  /// Anwalt ihn noch nicht selbst angefasst hat — mit Vorlage durch die
-  /// Vorlage, ohne durch die Vorbelegung.
-  ///
-  /// Der **Betreff bleibt stehen**: Ein hinzugefügter Empfänger ist keine
-  /// Ansage, die Betreffzeile neu zu schreiben.
-  void _setzeEntwurf(EmailEntwurf entwurf) {
-    final angepasst = state.textSelbstGeschrieben
-        ? entwurf
-        : _abgeleitet(entwurf, betreffAuch: false);
-    emit(
-      state.copyWith(
-        entwurf: angepasst,
-        anhangBytes: AnhangDarstellung.summe(angepasst.anhangPfade),
-        grussMoeglich:
-            _erzeuger?.nurAnDenMandanten(angepasst.alleEmpfaenger) ?? false,
-        fehler: () => null,
-      ),
-    );
+    _erzeuger = erzeuger;
+    return erzeuger;
   }
 }

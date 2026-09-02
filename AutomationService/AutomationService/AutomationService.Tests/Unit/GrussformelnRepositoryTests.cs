@@ -70,6 +70,45 @@ public sealed class GrussformelnRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateAsync_LehntLeerenTextAb()
+    {
+        // <c>IsRequired()</c> verbietet nur NULL: Ueber die API liess sich ein
+        // Gruss ohne Wortlaut anlegen — auf dem Schirm ein leerer Chip, und
+        // gewaehlt haette er die Grusszeile aus jeder Mail genommen.
+        var leer = async () => await _repository.CreateAsync(
+            new GrussformelEntity { Text = "   " });
+
+        await leer.Should().ThrowAsync<GrussformelUngueltigException>();
+        (await _repository.GetAllAsync()).Should().HaveCount(2,
+            "ein abgelehnter Schreibvorgang darf den Bestand nicht anfassen");
+    }
+
+    [Fact]
+    public async Task CreateAsync_SchneidetLeerraumAb_UndErkenntDenDoppelten()
+    {
+        var neu = await _repository.CreateAsync(new GrussformelEntity { Text = "  Gruess Gott " });
+
+        neu.Text.Should().Be("Gruess Gott");
+
+        var nochmal = async () => await _repository.CreateAsync(
+            new GrussformelEntity { Text = " Gruess Gott" });
+
+        await nochmal.Should().ThrowAsync<GrussformelTextConflictException>(
+            "getrimmt ist es derselbe Gruss — zwei gleiche Chips waeren nicht "
+            + "auseinanderzuhalten");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_LehntLeerenTextAb()
+    {
+        var leer = async () => await _repository.UpdateAsync(
+            new GrussformelEntity { Id = 1, Text = string.Empty });
+
+        await leer.Should().ThrowAsync<GrussformelUngueltigException>();
+        (await _repository.GetAllAsync()).Should().NotContain(g => g.Text.Length == 0);
+    }
+
+    [Fact]
     public async Task DeleteAsync_EntferntUndMeldetUnbekannte()
     {
         (await _repository.DeleteAsync(1)).Should().BeTrue();

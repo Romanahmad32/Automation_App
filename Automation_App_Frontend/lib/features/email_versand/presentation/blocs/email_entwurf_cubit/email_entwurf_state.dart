@@ -1,3 +1,4 @@
+import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_empfaenger_vorschlag.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
@@ -7,7 +8,10 @@ import 'package:automation_app/features/email_versand/domain/entities/mail_vorla
 import 'package:automation_app/features/email_versand/domain/entities/outlook_anhaenge.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_pruefung.dart';
+import 'package:automation_app/features/email_versand/domain/services/mail_platzhalter.dart';
 import 'package:automation_app/features/email_versand/domain/services/versand_voraussetzungen.dart';
+import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:equatable/equatable.dart';
 
 /// Wo der Entwurf gerade steht.
@@ -97,11 +101,75 @@ class EmailEntwurfState extends Equatable {
   /// dem Mandanten (§5.1). Leer heisst: keiner.
   final String zusatzgruss;
 
-  /// Ob ausschliesslich der Mandant angeschrieben wird — nur dann geht der
-  /// Zusatzgruß mit. Steht im Zustand statt in der Oberfläche, weil dieselbe
-  /// Regel den Text erzeugt und die Chips sperrt; zwei Rechnungen davon liefen
-  /// auseinander.
-  final bool grussMoeglich;
+  /// Ob neben dem Mandanten noch jemand im Feld „An" oder „Kopie" steht. Nur
+  /// ein **Hinweis** an der Gruß-Auswahl, keine Sperre (§4.7, geändert am
+  /// 02.09.2026): Ob der persönliche Gruß trotzdem mitgeht, entscheidet der
+  /// Anwalt über die Vorlage. Steht im Zustand, weil nur der
+  /// `EmailEntwurfErzeuger` die Mandantenadresse kennt.
+  final bool mitleserImAn;
+
+  /// Der Vorgang, aus dem vorbelegt wird — im Dialog wählbar (§4.7). Null
+  /// heisst: keiner, dann entsteht ein leeres Anschreiben und es wird nichts
+  /// protokolliert.
+  final Vorgang? vorgang;
+
+  /// True, solange der gewechselte Vorgang eingelesen wird. Der Mandant dazu
+  /// kommt aus dem Register, und das ist ein Zugriff — bis er da ist, bleibt
+  /// das Formular stehen, statt auf halbem Stand zu antworten.
+  final bool wechseltVorgang;
+
+  /// Der beim Verfassen gewählte Anredeanfang (§4.7, §7.1), vorbelegt mit dem
+  /// ersten des Bestands. Null heisst: Rückfall auf die feste Briefanrede —
+  /// der Bestand kann leer sein, und dann darf keine Mail ohne Anrede
+  /// hinausgehen.
+  final Anredebaustein? anredebaustein;
+
+  /// Ob neutral angeredet wird („Sehr geehrte Damen und Herren").
+  ///
+  /// **null ist die Vorgabe und heisst „wie der Empfängerkreis es ergibt"**:
+  /// namentlich, solange nur der Mandant im Feld „An" steht. true/false ist
+  /// die Übersteuerung durch den Anwalt — und weil null davon unterscheidbar
+  /// ist, braucht es kein zweites Feld „hat er selbst gesetzt".
+  final bool? anredeNeutral;
+
+  /// Ob eine namentliche Anrede überhaupt möglich wäre: nur der Mandant im Feld
+  /// „An", und Geschlecht sowie Nachname sind hinterlegt. Steht im Zustand wie
+  /// [mitleserImAn], weil nur der `EmailEntwurfErzeuger` den Mandanten kennt.
+  final bool anredePersoenlichMoeglich;
+
+  /// Die je Mail **gewählte** Anredeart (§4.7, ergänzt am 02.09.2026); null
+  /// heisst „wie am Mandanten hinterlegt" ([mandantAnrede]).
+  ///
+  /// Sie beugt die Anredezeile und `{{Mandant/Mandantin}}` im Vorlagentext.
+  /// Getrennt von [anredeNeutral], weil es zwei Fragen sind: ob namentlich
+  /// angeredet wird, hängt am Empfängerkreis; welche Form eines Wortes gilt,
+  /// am Mandanten. Eine Mail an die Versicherung beginnt mit „Sehr geehrte
+  /// Damen und Herren" und schreibt trotzdem von „unserer Mandantin".
+  final Anrede? anredeGeschlecht;
+
+  /// Was das Mandantenregister zur Anredeart sagt (§5.1) — die Vorbelegung.
+  /// Steht im Zustand wie [anredePersoenlichMoeglich], weil nur der
+  /// `EmailEntwurfErzeuger` den Mandanten kennt; die Chipreihe braucht sie,
+  /// um zu zeigen, welche Form ohne Klick gilt.
+  final Anrede mandantAnrede;
+
+  /// Ob zum Vorgang ueberhaupt ein Mandant im Register steht. Ohne ihn gibt
+  /// es nichts nachzutragen — der Knopf „Im Register hinterlegen" darf dann
+  /// nicht erscheinen, denn er haette kein Ziel.
+  final bool mandantBekannt;
+
+  /// Die Anredezeile, die **zuletzt in den Text geschrieben** wurde — und
+  /// die dort noch woertlich so steht.
+  ///
+  /// Nur fuer den von Hand bearbeiteten Text: Ab da leitet die App nicht
+  /// mehr ab, kann aber genau diese Stelle noch austauschen
+  /// (`TextNachtrag`). Ohne die Merker waere jeder Klick auf einen
+  /// Anrede-Chip ein stiller Leerlauf — genau das war der Mangel.
+  final String anredeImText;
+
+  /// Der Zusatzgruss, der zuletzt in den Text geschrieben wurde. Leer
+  /// heisst: es stand keiner drin, und dann gibt es nichts zu tauschen.
+  final String zusatzgrussImText;
 
   const EmailEntwurfState({
     this.entwurf = const EmailEntwurf(),
@@ -122,7 +190,17 @@ class EmailEntwurfState extends Equatable {
     this.textSelbstGeschrieben = false,
     this.gewaehlteVorlage,
     this.zusatzgruss = '',
-    this.grussMoeglich = false,
+    this.mitleserImAn = false,
+    this.vorgang,
+    this.wechseltVorgang = false,
+    this.anredebaustein,
+    this.anredeNeutral,
+    this.anredePersoenlichMoeglich = false,
+    this.anredeGeschlecht,
+    this.mandantAnrede = Anrede.keine,
+    this.mandantBekannt = false,
+    this.anredeImText = '',
+    this.zusatzgrussImText = '',
   });
 
   /// Was der Mail noch fehlt, je Feld (§4.7).
@@ -144,8 +222,70 @@ class EmailEntwurfState extends Equatable {
   bool get uebergibtGerade => phase == EmailVersandPhase.uebergibt;
 
   /// Solange die App arbeitet, bleibt das Formular stehen — egal auf welchem
-  /// der beiden Wege.
-  bool get beschaeftigt => sendetGerade || uebergibtGerade;
+  /// der beiden Wege, und auch beim Vorgangswechsel: Der belegt Empfänger,
+  /// Betreff und Text neu, und ein Anschlag mitten hinein ginge verloren.
+  bool get beschaeftigt => sendetGerade || uebergibtGerade || wechseltVorgang;
+
+  /// Ob die Anrede neutral ausfällt — die Rechnung hinter dem Umschalter:
+  /// Der Anwalt entscheidet, wenn er entschieden hat; sonst der Empfängerkreis.
+  bool get anredeGehtNeutral => anredeNeutral ?? !anredePersoenlichMoeglich;
+
+  /// Die Anredeart, die **jetzt** gilt: die gewaehlte schlaegt die am
+  /// Mandanten hinterlegte. Dieselbe Rechnung wie in
+  /// `EmailEntwurfErzeuger.geschlechtFuer` — hier nur fuer die Chipreihe,
+  /// damit sie zeigt, was ohne Klick gilt.
+  Anrede get geschlecht => anredeGeschlecht ?? mandantAnrede;
+
+  /// Ob die gewaehlte Anredeart einer **hinterlegten** widerspricht. Nur
+  /// dann ist „gilt nur fuer diese Mail" die richtige Auskunft: Steht am
+  /// Register nichts, wird nichts uebergangen — dann ist es eine Luecke,
+  /// und dafuer gibt es [anredeartNachtragbar].
+  bool get anredeartWeichtAb =>
+      mandantAnrede != Anrede.keine &&
+      anredeGeschlecht != null &&
+      anredeGeschlecht != mandantAnrede;
+
+  /// Ob sich die gewaehlte Anredeart im Register **nachtragen** laesst: Dort
+  /// steht keine, hier ist eine gewaehlt, und ein Mandant existiert.
+  ///
+  /// Bewusst nur die Luecke und nie die Korrektur (§1.3): Eine hinterlegte
+  /// Anredeart aus dem Versanddialog zu ueberschreiben waere eine Aenderung
+  /// an Stammdaten im Vorbeigehen. Die gehoert ins Register.
+  bool get anredeartNachtragbar =>
+      mandantBekannt &&
+      mandantAnrede == Anrede.keine &&
+      anredeGeschlecht != null &&
+      anredeGeschlecht != Anrede.keine;
+
+  /// Ob der gewählte Zusatzgruß überhaupt eingesetzt werden kann: Die Vorlage
+  /// muss den Platzhalter `{{Zusatzgruß}}` tragen (§4.7, geändert am
+  /// 02.09.2026). Ohne Vorlage gilt die Vorbelegung, und die hat immer eine
+  /// Stelle dafür.
+  ///
+  /// **Abgeleitet und nicht gespeichert:** Die Auskunft hängt allein an der
+  /// gewählten Vorlage. Als Feld liefe sie hinter jeder Vorlagenwahl her, und
+  /// gerade das ist der Fall, in dem sie sich ändert.
+  bool get grussMoeglich {
+    final vorlage = gewaehlteVorlage;
+    if (vorlage == null) return true;
+    return MailPlatzhalter.stehtIn(vorlage.text, MailPlatzhalter.zusatzgruss) ||
+        MailPlatzhalter.stehtIn(vorlage.betreff, MailPlatzhalter.zusatzgruss);
+  }
+
+  /// Ob die gewählte Vorlage überhaupt eine Stelle für die **Anrede** hat: Sie
+  /// muss den Platzhalter `{{Anrede}}` tragen (§4.7, ergänzt am 02.09.2026).
+  /// Ohne Vorlage gilt die Vorbelegung, und die hat immer eine.
+  ///
+  /// Fehlt die Stelle, geht die Mail **ohne Anredezeile** hinaus — und dann
+  /// sind beide Reihen darüber wirkungslos, ohne es zu sagen. Genau wie
+  /// [grussMoeglich], nur für die Zeile darüber; abgeleitet und nicht
+  /// gespeichert, weil die Auskunft allein an der gewählten Vorlage hängt.
+  bool get anredeMoeglich {
+    final vorlage = gewaehlteVorlage;
+    if (vorlage == null) return true;
+    return MailPlatzhalter.stehtIn(vorlage.text, MailPlatzhalter.anrede) ||
+        MailPlatzhalter.stehtIn(vorlage.betreff, MailPlatzhalter.anrede);
+  }
 
   /// Was die mitgehenden Signaturbilder wiegen. Was der Anwalt für diese
   /// Mail weggelassen hat, zählt nicht mit — genau deshalb lässt er es weg.
@@ -195,7 +335,17 @@ class EmailEntwurfState extends Equatable {
     bool? textSelbstGeschrieben,
     MailVorlage? Function()? gewaehlteVorlage,
     String? zusatzgruss,
-    bool? grussMoeglich,
+    bool? mitleserImAn,
+    Vorgang? Function()? vorgang,
+    bool? wechseltVorgang,
+    Anredebaustein? Function()? anredebaustein,
+    bool? Function()? anredeNeutral,
+    bool? anredePersoenlichMoeglich,
+    Anrede? Function()? anredeGeschlecht,
+    Anrede? mandantAnrede,
+    bool? mandantBekannt,
+    String? anredeImText,
+    String? zusatzgrussImText,
   }) {
     return EmailEntwurfState(
       entwurf: entwurf ?? this.entwurf,
@@ -221,7 +371,33 @@ class EmailEntwurfState extends Equatable {
           ? gewaehlteVorlage()
           : this.gewaehlteVorlage,
       zusatzgruss: zusatzgruss ?? this.zusatzgruss,
-      grussMoeglich: grussMoeglich ?? this.grussMoeglich,
+      mitleserImAn: mitleserImAn ?? this.mitleserImAn,
+      // Wie bei `fehler` als Funktion: Der Vorgang muss sich im Dialog auf
+      // null setzen lassen („kein Vorgang"), und mit `?? this.` ginge das nie.
+      vorgang: vorgang != null ? vorgang() : this.vorgang,
+      wechseltVorgang: wechseltVorgang ?? this.wechseltVorgang,
+      // Beide als Funktion, wie `fehler`: Der Anredeanfang muss sich auf null
+      // zuruecksetzen lassen (leerer Bestand), und bei `anredeNeutral` ist
+      // null der Vorgabewert „wie der Empfaengerkreis es ergibt" — mit
+      // `?? this.` waere er nach der ersten Wahl nicht mehr erreichbar.
+      anredebaustein: anredebaustein != null
+          ? anredebaustein()
+          : this.anredebaustein,
+      anredeNeutral: anredeNeutral != null
+          ? anredeNeutral()
+          : this.anredeNeutral,
+      anredePersoenlichMoeglich:
+          anredePersoenlichMoeglich ?? this.anredePersoenlichMoeglich,
+      // Als Funktion, wie `fehler`: null ist hier der Vorgabewert „wie am
+      // Mandanten hinterlegt" und muss nach einer Wahl wieder erreichbar
+      // sein — beim Vorgangswechsel setzt der Cubit genau darauf zurueck.
+      anredeGeschlecht: anredeGeschlecht != null
+          ? anredeGeschlecht()
+          : this.anredeGeschlecht,
+      mandantAnrede: mandantAnrede ?? this.mandantAnrede,
+      mandantBekannt: mandantBekannt ?? this.mandantBekannt,
+      anredeImText: anredeImText ?? this.anredeImText,
+      zusatzgrussImText: zusatzgrussImText ?? this.zusatzgrussImText,
     );
   }
 
@@ -245,6 +421,16 @@ class EmailEntwurfState extends Equatable {
     textSelbstGeschrieben,
     gewaehlteVorlage,
     zusatzgruss,
-    grussMoeglich,
+    mitleserImAn,
+    vorgang,
+    wechseltVorgang,
+    anredebaustein,
+    anredeNeutral,
+    anredePersoenlichMoeglich,
+    anredeGeschlecht,
+    mandantAnrede,
+    mandantBekannt,
+    anredeImText,
+    zusatzgrussImText,
   ];
 }

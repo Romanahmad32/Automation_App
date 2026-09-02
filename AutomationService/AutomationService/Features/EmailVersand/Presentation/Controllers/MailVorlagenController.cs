@@ -7,7 +7,8 @@ namespace AutomationService.Features.EmailVersand.Presentation.Controllers;
 /// <summary>
 /// CRUD über die Mail-Textvorlagen (§4.7, §5.3) — der Bestand, aus dem der
 /// Anwalt beim Verfassen wählt und den er in den Einstellungen pflegt.
-/// Doppelte Namen ergeben 409, unbekannte Ids 404.
+/// Doppelte Namen ergeben 409, unbekannte Ids 404, ein fehlender Name 400 —
+/// Betreff und Text dürfen leer bleiben (§1.3, §4.7).
 ///
 /// Eigener Controller statt eines weiteren Zweigs im
 /// <see cref="EmailVersandController"/>: Der versendet, dieser verwaltet — und
@@ -28,6 +29,7 @@ public class MailVorlagenController(IMailVorlagenRepository repository) : Contro
 
     [HttpPost]
     [ProducesResponseType(typeof(MailVorlageDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<MailVorlageDto>> Create(
         [FromBody] SpeichereMailVorlageDto dto,
@@ -38,6 +40,10 @@ public class MailVorlagenController(IMailVorlagenRepository repository) : Contro
             var angelegt = await repository.CreateAsync(dto.ToEntity(), cancellationToken);
             return CreatedAtAction(nameof(GetAll), MailVorlageDto.From(angelegt));
         }
+        catch (MailVorlageUngueltigException exception)
+        {
+            return BadRequest(exception.Message);
+        }
         catch (MailVorlageNameConflictException exception)
         {
             return Conflict(exception.Message);
@@ -46,6 +52,7 @@ public class MailVorlagenController(IMailVorlagenRepository repository) : Contro
 
     [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(MailVorlageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<MailVorlageDto>> Update(
@@ -60,6 +67,10 @@ public class MailVorlagenController(IMailVorlagenRepository repository) : Contro
             return geaendert is null
                 ? NotFound($"Mail-Vorlage mit ID {id} nicht gefunden")
                 : Ok(MailVorlageDto.From(geaendert));
+        }
+        catch (MailVorlageUngueltigException exception)
+        {
+            return BadRequest(exception.Message);
         }
         catch (MailVorlageNameConflictException exception)
         {

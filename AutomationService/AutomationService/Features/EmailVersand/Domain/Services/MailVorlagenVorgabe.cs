@@ -15,8 +15,10 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// App sie aus dem Mandanten bildet.</item>
 /// <item>Der persönliche Zusatzgruß stand als feste Zeile darunter (im
 /// Beispiel gleich zwei zur Ansicht; wirklich ist es höchstens einer). Hier
-/// steht der Platzhalter Grussformel: Sie kommt vom Mandanten (§5.1), und ohne
-/// hinterlegte Formel entfällt die Zeile ganz.</item>
+/// steht der Platzhalter Zusatzgruß: Gewählt wird er beim Verfassen (§4.7),
+/// vorbelegt aus dem Mandanten (§5.1) — ohne Wahl entfällt die Zeile ganz.
+/// Weil dieser Platzhalter hier steht, nimmt diese Vorlage den Gruß auf; eine
+/// Vorlage ohne ihn tut es nicht.</item>
 /// <item>Unter „Mit freundlichen Grüßen" folgte im Original der komplette
 /// Signaturblock der Kanzlei. Der fehlt hier: Die Signatur steht in den
 /// Einstellungen und wird beim Versand angehängt (§4.7) — beides zusammen
@@ -57,7 +59,7 @@ public static class MailVorlagenVorgabe
     const string Roh =
         """
         {{Anrede}},
-        {{Grussformel}},
+        {{Zusatzgruß}},
 
         ich bedanke mich höflichst für das mir entgegengebrachte Vertrauen und die Übertragung des Mandats in vorbezeichneter Angelegenheit.
 

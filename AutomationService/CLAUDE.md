@@ -107,13 +107,13 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   **nicht** als Versand (§4.8). `AnhangAblage` räumt alle Zwischenlager nach 14 Tagen ab
   (`AnhangAufraeumService` beim Start) — dieselbe Regel wie beim Arbeitsordner. Im Outlook-Entwurf setzt Outlook
   seine eigene Signatur — deshalb hängt `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand
-  an. **Signatur** (§4.7): `GET signaturen` listet die in Outlook eingerichteten, `POST signaturen/uebernehmen`
-  liest eine davon ein — Nur-Text-Fassung (`.txt`) **und** formatierte (`.htm` samt Bildern,
-  `OutlookSignaturHtml`: Rumpf schneiden, Bildverweise auf den blanken Dateinamen kürzen). Die Bilder liegen in
-  `SignaturAblage` (`%APPDATA%\AutomationService\Signatur`), das HTML in `KanzleiSettings.MailSignaturHtml`;
-  `GET signaturen/stand` meldet beides zurück, `GET signaturen/bild?dateiname=` liefert ein einzelnes Bild für
-  die Vorschau der App, `DELETE signaturen/format` wirft die Formatierung weg. Beim Versand baut `MailRumpf`
-  daraus HTML **und** Text und hängt die Bilder als `cid:`-Ressourcen an. Je Mail abwählbar
+  an. **Signatur** (§4.7): `GET signaturen` listet die in Outlook eingerichteten, `POST signaturen/uebernehmen` liest eine davon
+  ein — Nur-Text-Fassung (`.txt`) **und** formatierte (`.htm` samt Bildern, `OutlookSignaturHtml`: Rumpf schneiden, Bildverweise
+  auf den blanken Dateinamen kürzen). Die Bilder liegen in `SignaturAblage` (`%APPDATA%\AutomationService\Signatur`), das HTML
+  in `KanzleiSettings.MailSignaturHtml`; `GET signaturen/stand` meldet beides, `GET signaturen/bild?dateiname=` ein Bild,
+  `DELETE signaturen/format` wirft die Formatierung weg; **`GET signaturen/vorschau?name=` liest ohne zu schreiben** (§4.7) —
+  geschrieben wird erst über `uebernehmen`, das die Oberfläche beim Speichern ruft. Beim Versand baut `MailRumpf` daraus HTML
+  **und** Text und hängt die Bilder als `cid:`-Ressourcen an. Je Mail abwählbar
   (`EmailNachricht.OhneSignaturBilder`, `SignaturHtmlFilter`) — Word schreibt jedes Bild **zweimal** (VML für
   Outlook, `<img>` für alle übrigen); nur eins davon zu entfernen hiesse: abgewählt und trotzdem sichtbar. Das
   eine Muster für alle drei Fälle steht samt Begründung an `BildVerweis`. Die Bilder zählen über `zusatzBytes`
@@ -122,7 +122,11 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   (409). Ausgangsbestand ist das echte Kanzlei-Anschreiben; was daran bewusst vom Original abweicht und warum
   sein Zeilenende erzwungen LF ist, steht an `MailVorlagenVorgabe`. Daneben `GrussformelnController`
   (`api/Grussformeln`, CRUD): die Textbausteine, aus denen der Anwalt den Zusatzgruss waehlt — eine Liste von
-  Bausteinen, kein Merkmal von Personen (Art. 9 DSGVO), geseedet mit den beiden aus der Kanzlei-Mail.
+  Bausteinen, kein Merkmal von Personen (Art. 9 DSGVO), geseedet mit den beiden aus der Kanzlei-Mail. Der
+  Platzhalter dafuer heisst `{{Zusatzgruß}}` (bis 02.09.2026 `{{Grussformel}}`); wo er steht, entscheidet die
+  Vorlage — der Bestand hier weiss davon nichts. Ebenso `AnredebausteineController` (`api/Anredebausteine`,
+  CRUD): je Eintrag der **Anfang** einer Anrede in drei Beugungsformen, Unique-Index ueber alle drei.
+  Warum drei und warum der Seed so aussieht, steht an `AnredeBausteinEntity` und `AnredeBausteineVorgabe`.
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und

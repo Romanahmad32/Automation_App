@@ -33,6 +33,16 @@ class MailVorlagenAuswahl extends StatelessWidget {
 class MailVorlagenAuswahlFeld extends StatelessWidget {
   const MailVorlagenAuswahlFeld({super.key});
 
+  /// Was der Eintrag „keine Vorlage" sagt — und zwar die Wahrheit.
+  ///
+  /// Ohne Vorgang gibt es nichts vorzubelegen: Aus dem Postfach geht der Dialog
+  /// auch dann auf, wenn sich die Antwort keinem Vorgang zuordnen liess (§4.3),
+  /// und „Vorbelegung aus dem Vorgang" versprach dort eine, die es nicht gab.
+  /// Der Vorgang ist im Dialog nachzutragen (`VorgangAuswahl`).
+  static String ohneVorlageText(bool mitVorgang) => mitVorgang
+      ? 'Keine Vorlage (Vorbelegung aus dem Vorgang)'
+      : 'Keine Vorlage (leeres Anschreiben — kein Vorgang gewählt)';
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<MailVorlagenCubit, MailVorlagenState>(
@@ -42,6 +52,7 @@ class MailVorlagenAuswahlFeld extends StatelessWidget {
         return BlocBuilder<EmailEntwurfCubit, EmailEntwurfState>(
           buildWhen: (vorher, jetzt) =>
               vorher.gewaehlteVorlage != jetzt.gewaehlteVorlage ||
+              vorher.vorgang != jetzt.vorgang ||
               vorher.beschaeftigt != jetzt.beschaeftigt,
           builder: (context, entwurf) {
             // Der Eintrag „keine" trägt `null` als Wert — dieselbe Bedeutung
@@ -66,8 +77,8 @@ class MailVorlagenAuswahlFeld extends StatelessWidget {
                   isDense: true,
                 ),
                 items: [
-                  const DropdownMenuItem<MailVorlage?>(
-                    child: Text('Keine Vorlage (Vorbelegung aus dem Vorgang)'),
+                  DropdownMenuItem<MailVorlage?>(
+                    child: Text(ohneVorlageText(entwurf.vorgang != null)),
                   ),
                   for (final vorlage in bestand.vorlagen)
                     DropdownMenuItem<MailVorlage?>(

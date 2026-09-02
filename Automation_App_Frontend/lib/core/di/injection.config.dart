@@ -31,18 +31,24 @@ import 'package:automation_app/features/dev_simulation/data/datasources/simulati
     as _i383;
 import 'package:automation_app/features/dev_simulation/domain/repositories/simulation_repository.dart'
     as _i602;
+import 'package:automation_app/features/email_versand/data/datasources/anredebausteine_datasource.dart'
+    as _i1067;
 import 'package:automation_app/features/email_versand/data/datasources/email_versand_datasource.dart'
     as _i715;
 import 'package:automation_app/features/email_versand/data/datasources/grussformeln_datasource.dart'
     as _i328;
 import 'package:automation_app/features/email_versand/data/datasources/mail_vorlagen_datasource.dart'
     as _i229;
+import 'package:automation_app/features/email_versand/domain/repositories/anredebausteine_repository.dart'
+    as _i975;
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart'
     as _i67;
 import 'package:automation_app/features/email_versand/domain/repositories/grussformeln_repository.dart'
     as _i388;
 import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart'
     as _i435;
+import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart'
+    as _i554;
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart'
     as _i318;
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart'
@@ -304,6 +310,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i30.VorgangPersistenzFehlerCubit>(
       () => _i30.VorgangPersistenzFehlerCubit(),
     );
+    gh.factory<_i975.AnredebausteineRepository>(
+      () => _i1067.ApiAnredebausteineDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i829.MailboxDatasource>(
       () => _i829.ApiMailboxDatasource(gh<_i361.Dio>()),
     );
@@ -392,6 +401,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i366.KanzleiSettingsRepositoryImpl(
         gh<_i501.KanzleiSettingsDatasource>(),
       ),
+    );
+    gh.lazySingleton<_i554.AnredebausteineCubit>(
+      () => _i554.AnredebausteineCubit(gh<_i975.AnredebausteineRepository>()),
     );
     gh.factory<_i304.ZentralrufReplyRepository>(
       () => _i853.ZentralrufReplyRepositoryImpl(
@@ -637,14 +649,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i171.MandantenSeite, _i733.MandantenSeiteParams>>(),
       ),
     );
-    gh.factory<_i318.EmailEntwurfCubit>(
-      () => _i318.EmailEntwurfCubit(
-        gh<_i67.EmailVersandRepository>(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i782.VersichererCubit>(),
-      ),
-    );
     gh.factory<_i263.TemplatePdfPreviewBloc>(
       () => _i263.TemplatePdfPreviewBloc(
         gh<_i223.UseCase<_i100.Uint8List, _i324.ConvertDocxToPdfParams>>(),
@@ -702,6 +706,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
         gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
         gh<_i847.VorgangCubit>(),
+      ),
+    );
+    gh.factory<_i318.EmailEntwurfCubit>(
+      () => _i318.EmailEntwurfCubit(
+        gh<_i67.EmailVersandRepository>(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i782.VersichererCubit>(),
+        gh<_i554.AnredebausteineCubit>(),
+        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
       ),
     );
     return this;

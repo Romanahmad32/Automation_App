@@ -17,6 +17,56 @@ namespace AutomationService.Core.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
 
+            modelBuilder.Entity("AutomationService.Features.EmailVersand.Domain.Persistence.AnredeBausteinEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Maennlich")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Neutral")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Sortierung")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Weiblich")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Maennlich", "Weiblich", "Neutral")
+                        .IsUnique();
+
+                    b.ToTable("AnredeBausteine");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Maennlich = "Sehr geehrter",
+                            Neutral = "Sehr geehrte",
+                            Sortierung = 10,
+                            Weiblich = "Sehr geehrte"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Maennlich = "Guten Tag",
+                            Neutral = "Guten Tag",
+                            Sortierung = 20,
+                            Weiblich = "Guten Tag"
+                        });
+                });
+
             modelBuilder.Entity("AutomationService.Features.EmailVersand.Domain.Persistence.GrussformelEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -86,7 +136,7 @@ namespace AutomationService.Core.Persistence.Migrations
                             Id = 1,
                             Betreff = "Ihre Verkehrsunfallsache {{MandantName}} ./. {{VersichererName}} · Unser Zeichen: {{Referenz}}",
                             Name = "Anschreiben an den Mandanten",
-                            Text = "{{Anrede}},\n{{Grussformel}},\n\nich bedanke mich höflichst für das mir entgegengebrachte Vertrauen und die Übertragung des Mandats in vorbezeichneter Angelegenheit.\n\nIn der Anlage überlasse ich Ihnen zur Kenntnisnahme meinen Schriftsatz an die gegnerische Haftpflichtversicherung, welche ich unter Fristsetzung aufgefordert habe, ihre Haftung dem Grunde nach anzuerkennen und Schadensersatz nach Gutachten zu leisten. Die Einzelheiten möchten Sie bitte meinem Schriftsatz entnehmen.\n\nNunmehr bleibt die Stellungnahme der gegnerischen Haftpflichtversicherung abzuwarten. Sobald mir das Gutachten vorliegt, werde ich den Schadensersatzanspruch beziffern.\n\nFür Rückfragen stehe ich Ihnen gerne zur Verfügung. Sobald mir neue Informationen vorliegen, werde ich selbstverständlich wieder berichten.\n\nMit freundlichen Grüßen"
+                            Text = "{{Anrede}},\n{{Zusatzgruß}},\n\nich bedanke mich höflichst für das mir entgegengebrachte Vertrauen und die Übertragung des Mandats in vorbezeichneter Angelegenheit.\n\nIn der Anlage überlasse ich Ihnen zur Kenntnisnahme meinen Schriftsatz an die gegnerische Haftpflichtversicherung, welche ich unter Fristsetzung aufgefordert habe, ihre Haftung dem Grunde nach anzuerkennen und Schadensersatz nach Gutachten zu leisten. Die Einzelheiten möchten Sie bitte meinem Schriftsatz entnehmen.\n\nNunmehr bleibt die Stellungnahme der gegnerischen Haftpflichtversicherung abzuwarten. Sobald mir das Gutachten vorliegt, werde ich den Schadensersatzanspruch beziffern.\n\nFür Rückfragen stehe ich Ihnen gerne zur Verfügung. Sobald mir neue Informationen vorliegen, werde ich selbstverständlich wieder berichten.\n\nMit freundlichen Grüßen"
                         });
                 });
 
