@@ -7,6 +7,8 @@ import 'package:automation_app/features/form_template_setup/domain/entities/form
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/verwendete_felder.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/nicht_verwendete_felder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/pflichtfelder_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -61,6 +63,10 @@ class FormTemplateBuilder extends StatelessWidget {
   /// nichts ist Pflicht — sie ist der richtige Wert, solange die Platzhalter
   /// (noch) nicht gelesen werden konnten („solange nichts bekannt ist: nicht
   /// sperren").
+  ///
+  /// Dieselbe Menge entscheidet auch, welche Felder **oben** stehen (#82,
+  /// [VerwendeteFelder]) — dort fällt der Zweifelsfall aber andersherum aus:
+  /// ist nichts bekannt, wird alles gezeigt.
   final Set<String>? aktivePlatzhalter;
 
   const FormTemplateBuilder({
@@ -93,8 +99,25 @@ class FormTemplateBuilder extends StatelessWidget {
       ),
       form: () => FormGroup(
         Map.fromEntries(
-          formTemplate!.fields.map(
-            (e) => MapEntry(
+          formTemplate!.fields.map((e) {
+            // Ein eingeklapptes Feld (#82) darf dieses Schreiben weder
+            // blockieren noch heimlich mitreden — beides hängt an derselben
+            // Frage wie seine Sichtbarkeit:
+            //
+            // * **Keine Formatprüfung.** Ihr Fehler wäre unsichtbar (das
+            //   Control ist zugeklappt nicht gebaut) und `PflichtfelderHinweis`
+            //   meldet nur `required`: der Knopf stünde ohne erkennbaren Grund
+            //   tot da — genau das, was #35 Teil 3 beseitigt hat.
+            // * **Keine erfundene Vorbelegung.** Das heutige Datum ist als
+            //   *sichtbarer* Vorschlag gedacht; zugeklappt liefe es
+            //   unkorrigierbar über `ursachendatumAusFormular` in den
+            //   Dateinamen. Selbst Getipptes bleibt unberührt — es steht in
+            //   [erfassteWerte] und hat ohnehin Vorrang.
+            final verwendet = VerwendeteFelder.wirdVerwendet(
+              e.label,
+              aktivePlatzhalter,
+            );
+            return MapEntry(
               e.label,
               FormControl<String>(
                 // Selbst Getipptes zuerst, dann die Vorgangsdaten
@@ -104,28 +127,41 @@ class FormTemplateBuilder extends StatelessWidget {
                 value:
                     erfassteWerte[e.label] ??
                     initialValues[e.label] ??
-                    (e.inputType == InputType.date
+                    (e.inputType == InputType.date && verwendet
                         ? GermanDateField.formatDate(_defaultDateFor(e.label))
                         : null),
                 validators: [
                   if (_istPflicht(e)) Validators.required,
-                  if (e.inputType == InputType.date)
+                  if (e.inputType == InputType.date && verwendet)
                     GermanDateField.validator(),
                 ],
               ),
-            ),
-          ),
+            );
+          }),
         ),
       ),
       builder: (context, formGroup, child) {
+        // Oben steht, was dieses Schreiben braucht; der Rest wandert unter die
+        // aufklappbare Zeile (#82). Beides in der Reihenfolge der Vorlage.
+        final aufteilung = VerwendeteFelder.teile(
+          formTemplate!.fields,
+          aktivePlatzhalter,
+        );
         final inhalt = Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             spacing: 16,
             children: [
-              ...formTemplate!.fields.map((field) {
+              ...aufteilung.verwendet.map((field) {
                 return _buildZeile(context, field);
               }),
+              if (aufteilung.uebrig.isNotEmpty)
+                NichtVerwendeteFelder(
+                  felder: [
+                    for (final field in aufteilung.uebrig)
+                      _buildZeile(context, field),
+                  ],
+                ),
               const SizedBox(height: 8),
               // Sagt, welche leeren Pflichtfelder den Knopf sperren, und
               // springt beim Anklicken hin — statt eines kommentarlos toten
@@ -220,11 +256,13 @@ class FormTemplateBuilder extends StatelessWidget {
       !AppEigenePlatzhalter.istAppEigen(field.label) &&
       _kommtInAktiverDateiVor(field.label);
 
+  /// Anders als bei der Sichtbarkeit ([VerwendeteFelder.wirdVerwendet]) macht
+  /// die **leere** Menge hier nichts zur Pflicht: Was nicht gelesen werden
+  /// konnte, darf nicht sperren.
   bool _kommtInAktiverDateiVor(String label) {
     final platzhalter = aktivePlatzhalter;
     if (platzhalter == null) return true;
-    final gesucht = label.trim().toLowerCase();
-    return platzhalter.any((name) => name.trim().toLowerCase() == gesucht);
+    return VerwendeteFelder.enthaelt(platzhalter, label);
   }
 
   /// Signatur der Platzhaltermenge für den FormGroup-Schlüssel: Ändert sie
@@ -234,7 +272,12 @@ class FormTemplateBuilder extends StatelessWidget {
   String get _platzhalterSignatur {
     final platzhalter = aktivePlatzhalter;
     if (platzhalter == null) return '?';
-    return (platzhalter.map((name) => name.toLowerCase()).toList()..sort())
+    // Genauso normalisiert wie in `VerwendeteFelder.enthaelt` (trim **und**
+    // Kleinschreibung): Sonst gälten zwei Mengen, die die Zuordnung für
+    // gleich hält, hier als verschieden — die FormGroup entstünde neu und
+    // nähme den Tippstand der letzten Sekunden mit.
+    return (platzhalter.map((name) => name.trim().toLowerCase()).toList()
+          ..sort())
         .join(',');
   }
 

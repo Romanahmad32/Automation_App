@@ -9,13 +9,15 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 `presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`
 **Domain:** `FormTemplate`, `FieldData`, `InputType`, `FeldDatenquelle`,
 `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung` (+ `DatenquelleVorschlag`),
-`AppEigenePlatzhalter`, `PlatzhalterUebernahme`, `FeldVorkommen`, `PlatzhalterZuordnung`;
+`AppEigenePlatzhalter`, `PlatzhalterUebernahme`, `FeldVorkommen`, `PlatzhalterZuordnung`,
+`VerwendeteFelder` (welche Felder die aktive Word-Datei einsetzt, #82);
 `GetFormTemplates`, `CreateFormTemplate`,
 `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
 **Backend:** `Features/FormTemplates/` · `GET /api/FormTemplates`, `POST /api/FormTemplates`,
 `PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
 `Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
-**Tests:** `test/features/form_template_setup/feld_datenquelle_erkennung_test.dart`
+**Tests:** `test/features/form_template_setup/` — `feld_datenquelle_erkennung_test.dart`,
+`feld_vorkommen_test.dart`, `feld_vorkommen_badge_test.dart`, `verwendete_felder_test.dart`
 
 **Fallstricke**
 
