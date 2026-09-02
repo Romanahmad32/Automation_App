@@ -9,7 +9,8 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 `presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`
 **Domain:** `FormTemplate`, `FieldData`, `InputType`, `FeldDatenquelle`,
 `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung` (+ `DatenquelleVorschlag`),
-`AppEigenePlatzhalter`, `PlatzhalterUebernahme`, `FeldVorkommen`; `GetFormTemplates`, `CreateFormTemplate`,
+`AppEigenePlatzhalter`, `PlatzhalterUebernahme`, `FeldVorkommen`, `PlatzhalterZuordnung`;
+`GetFormTemplates`, `CreateFormTemplate`,
 `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
 **Backend:** `Features/FormTemplates/` · `GET /api/FormTemplates`, `POST /api/FormTemplates`,
 `PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
@@ -21,7 +22,8 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 - Der Feldname **ist** der Platzhaltername: beim Ausfüllen wird `FieldData.label` zum Schlüssel in
   `replacePatterns` und ersetzt `{{label}}` (ohne Groß-/Kleinschreibung). Ein Platzhalter ohne Feld
   bleibt als `{{…}}` im Dokument stehen und kommt als Warnung zurück — gewollt; ein Feld ohne
-  Platzhalter bleibt wirkungslos.
+  Platzhalter bleibt wirkungslos. Beides wird beim **Einrichten** gemeldet und über den
+  `ZuordnungsDialog` repariert (#36), statt erst nach dem Erzeugen aufzufallen.
 - Solange die Detailseite offen ist, hält `FieldData.label` **nicht** den Feldnamen, sondern den
   Schlüssel des reactive_forms-Controls (`field_0`, `field_1`, …); der Name steht im Wert des
   Controls und wird erst beim Speichern in `FormTemplateActionButtons` zurückgetauscht.
