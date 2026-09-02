@@ -6,7 +6,6 @@ import 'package:automation_app/features/form_template_setup/domain/entities/fiel
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
-import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_uebernahme.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_action_buttons.dart';
@@ -15,6 +14,8 @@ import 'package:automation_app/features/form_template_setup/presentation/widgets
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slots.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_name_card.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_aktionen.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_dialog.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_hineinholen_angebot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -124,23 +125,30 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     }
   }
 
-  /// Übernimmt einen erkannten Platzhalter als Eingabefeld — außer es gibt
-  /// bereits ein Feld mit demselben Namen oder die App füllt ihn selbst
-  /// ([PlatzhalterUebernahme] entscheidet, auch als zweite Sperre neben dem
-  /// nicht klickbaren Chip).
-  void _addFieldFromPlaceholder(String placeholder) {
-    final grund = PlatzhalterUebernahme.ablehnungsgrund(
+  /// Beide Wege der Zuordnung (#36) — sie arbeiten auf dem aktuellen Stand von
+  /// [fields] und [formGroup] und werden deshalb je Klick frisch gebaut.
+  ZuordnungsAktionen get _zuordnung => ZuordnungsAktionen.ausZustand(
+    context.read<TemplatePlaceholdersBloc>().state,
+    fields: fields,
+    formGroup: formGroup,
+  );
+
+  /// Klick auf einen offenen Chip: Statt blind ein Feld anzulegen, fragt der
+  /// [ZuordnungsDialog] erst, ob ein vorhandenes gemeint ist (#36) —
+  /// `{{Verkehrsunfalldatum}}` neben einem Feld `Unfalldatum` ergäbe sonst ein
+  /// zweites Feld, das der Anwalt zusätzlich tippt und das doch ins Leere geht.
+  Future<void> _addFieldFromPlaceholder(String placeholder) {
+    return _zuordnung.vomPlatzhalter(
+      context,
       placeholder,
-      fields.map((field) => formGroup.control(field.label).value as String?),
+      onNeuesFeld: () => _addNewField(initialLabel: placeholder),
     );
-    if (grund != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(grund)));
-      return;
-    }
-    _addNewField(initialLabel: placeholder);
   }
+
+  /// Klick auf das Kennzeichen „in keiner Datei" einer Feldzeile — derselbe
+  /// Dialog aus der anderen Richtung.
+  Future<void> _feldZuordnen(int index) =>
+      _zuordnung.vomFeld(context, fields[index]);
 
   Future<void> _pickFile(TemplateFileSlot slot) async {
     final result = await FilePicker.pickFiles(
@@ -258,6 +266,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                       onDatenquelleChanged: _onDatenquelleChanged,
                       onRequiredChanged: _onRequiredChanged,
                       onDelete: _onDeleteField,
+                      onZuordnen: _feldZuordnen,
                     ),
 
                     Row(
