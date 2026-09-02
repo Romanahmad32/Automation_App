@@ -66,11 +66,16 @@ enum FeldDatenquelle {
   ),
 
   // Vorgang / Unfall.
-  kennzeichenGegner(name: 'Kennzeichen · Gegner', value: 'kennzeichenGegner'),
-  kennzeichenMandant(
-    name: 'Kennzeichen · Mandant/Geschädigter',
-    value: 'kennzeichenMandant',
-  ),
+  //
+  // Beide Kennzeichen heißen aus einem Stück — „Gegnerkennzeichen", nicht
+  // „Kennzeichen · Gegner" (§4.1). Ein Feld namens `Kennzeichen` sagt nicht,
+  // wessen Fahrzeug gemeint ist, und die Antwort darauf ist ein Name, keine
+  // Regel: In der Vorlage steht der Name des Felds, und der soll ihn
+  // beantworten. Die Punkt-Gruppierung der übrigen Einträge trägt hier nicht —
+  // sie bündelt die *Teile* einer Sache (Mandant · Name, Mandant · PLZ, …);
+  // dies sind zwei Beteiligte mit derselben einen Angabe.
+  kennzeichenGegner(name: 'Gegnerkennzeichen', value: 'kennzeichenGegner'),
+  kennzeichenMandant(name: 'Mandantenkennzeichen', value: 'kennzeichenMandant'),
   unfalldatum(name: 'Unfalldatum', value: 'unfalldatum'),
   unfallort(name: 'Unfallort', value: 'unfallort'),
   unfalluhrzeit(name: 'Unfalluhrzeit', value: 'unfalluhrzeit'),

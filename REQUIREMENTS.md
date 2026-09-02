@@ -107,6 +107,12 @@ dabei erfassten Daten gehören zu **einem Vorgang** (siehe 3).
 - **[M]** Die App nimmt die Unfalldaten strukturiert entgegen, insbesondere **Unfalldatum** und
   **Kfz-Kennzeichen des Unfallgegners**, dazu die für Anfrage und Schreiben nötigen Personen- und
   Schadensdaten.
+- **[M] Jedes Kennzeichen nennt seinen Halter.** An einem Unfall sind zwei Fahrzeuge beteiligt;
+  „Kennzeichen" allein sagt nicht, welches gemeint ist. Der angebotene und dokumentierte Name ist
+  deshalb **Gegnerkennzeichen** für das Fahrzeug des Unfallgegners und **Mandantenkennzeichen** für
+  das des Geschädigten — in der Oberfläche, in den Datenquellen der Vorlagenfelder und in den
+  Platzhaltern der Word-Dateien. Vorlagen, die noch das blosse `{{Kennzeichen}}` tragen, werden
+  weiterhin als Gegnerkennzeichen gefüllt: Das Umbenennen darf keine bestehende Word-Datei brechen.
 - **[M]** Bei einem bereits bekannten Mandanten werden dessen Stammdaten aus dem Mandantenregister
   übernommen statt erneut eingegeben (siehe 5.1). Neue Mandanten werden bei dieser Gelegenheit
   erfasst.
