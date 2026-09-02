@@ -21,6 +21,14 @@ passierte.
   Geschädigten}}` meint den Ort des Unfalls. Andersherum fischte das „ort" der Mandantengruppe
   den Namen ab, und das Schreiben trüge still den Wohnort. Wörter wie „unfallort", „unfalltag"
   oder „polizei" benennen nie eine Stammdatenangabe — nur deshalb dürfen sie vorne stehen.
+- **Das Kennzeichen heißt „Gegnerkennzeichen", und das blosse „Kennzeichen" trifft trotzdem.** An
+  einem Unfall sind zwei Fahrzeuge beteiligt, deshalb nennt der angebotene Name seinen Halter
+  (§4.1): **Gegnerkennzeichen** und **Mandantenkennzeichen**. Gefunden werden beide über einen
+  *Teilstring*-Test — `hat('kennzeichen')`, beim Mandanten hinter dem Sprung in die
+  Mandantengruppe. Das ist keine Bequemlichkeit, sondern die Zusage aus dem Umbenennen: Die
+  Kanzleivorlagen tragen `{{Kennzeichen}}` und `{{Mandant Kennzeichen}}`, und wer die Regel zu
+  einem exakten Vergleich „aufräumt", nimmt jedem dieser Felder still seinen Wert. Kein Fehler,
+  keine Meldung — auffallen würde es am leeren Platz im nächsten Schreiben.
 - **„Zeichen" und „Aktenzeichen" meinen dasselbe, „Referenz" nicht.** Die ersten beiden liefern
   `216/26 C03` — den Bezeichner, der in den Brief gehört. Nur wer sein Feld „Referenz" nennt,
   bekommt die volle Zeichenkette samt Kennzeichen; die trägt allein die Zentralruf-Zuordnung

@@ -19,8 +19,8 @@ Musterweg 2, 12345 Musterstadt	{{MandantAdresse}}
 Musterstadt an der Muster	{{Unfallort}}
 01.01.2025	{{Unfalldatum}}
 12:00	{{Unfallzeit}}
-M-AB 1234	{{KennzeichenMandant}}
-M-CD 5678	{{KennzeichenGegner}}
+M-AB 1234	{{Mandantenkennzeichen}}
+M-CD 5678	{{Gegnerkennzeichen}}
 Hauptstrasse	{{Vorfahrtstrasse}}
 Nebenstrasse	{{Nebenstrasse}}
 31.12.2025	{{Frist}}
