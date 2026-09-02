@@ -1,5 +1,6 @@
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/verwendete_felder.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
@@ -72,7 +73,16 @@ class AusfuellFormular extends StatelessWidget {
     final quellen = herkunft.map(
       (label, wert) => MapEntry(label, wert.quelle.beschreibung),
     );
-    final anzahlGespeichert = herkunft.values
+    // Der Hinweis zählt nur, was dieses Schreiben auch einsetzt (#82) — sonst
+    // nennt er sechs vorbelegte Felder, während oben drei stehen, und der
+    // Anwalt sucht die anderen drei. Vorbelegt werden weiterhin alle: Die
+    // eingeklappten behalten ihren Wert für die andere Vorlagenfassung.
+    final sichtbarVorbelegt = [
+      for (final eintrag in herkunft.entries)
+        if (VerwendeteFelder.wirdVerwendet(eintrag.key, aktivePlatzhalter))
+          eintrag.value,
+    ];
+    final anzahlGespeichert = sichtbarVorbelegt
         .where((wert) => wert.quelle == PrefillQuelle.gespeichert)
         .length;
 
@@ -88,9 +98,9 @@ class AusfuellFormular extends StatelessWidget {
                 context.read<WizardCubit>().uebernimmEntwurf(),
             onVerwerfen: () => context.read<WizardCubit>().verwirfEntwurf(),
           ),
-        if (prefill.isNotEmpty)
+        if (sichtbarVorbelegt.isNotEmpty)
           VorgangsdatenHinweis(
-            anzahlFelder: prefill.length,
+            anzahlFelder: sichtbarVorbelegt.length,
             anzahlGespeichert: anzahlGespeichert,
           ),
         FormTemplateBuilder(
