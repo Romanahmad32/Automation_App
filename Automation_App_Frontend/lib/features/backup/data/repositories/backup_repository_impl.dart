@@ -28,7 +28,12 @@ class BackupRepositoryImpl implements BackupRepository {
     } on DioException catch (e) {
       return Left(
         ServerFailure(
-          message: backendFehlertext(e) ?? 'Export fehlgeschlagen.',
+          message:
+              backendFehlertext(e) ??
+              dienstOhneAntwort(
+                e,
+                'Die Sicherung konnte nicht exportiert werden',
+              ),
         ),
       );
     } catch (e) {
@@ -45,7 +50,12 @@ class BackupRepositoryImpl implements BackupRepository {
     } on DioException catch (e) {
       return Left(
         ServerFailure(
-          message: backendFehlertext(e) ?? 'Import fehlgeschlagen.',
+          message:
+              backendFehlertext(e) ??
+              dienstOhneAntwort(
+                e,
+                'Die Sicherung konnte nicht eingespielt werden',
+              ),
         ),
       );
     } catch (e) {

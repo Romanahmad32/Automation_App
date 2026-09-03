@@ -92,4 +92,62 @@ void main() {
       expect(backendFehlertext(exception), 'Der echte Grund');
     });
   });
+
+  group('dienstOhneAntwort', () {
+    DioException ohneAntwort(DioExceptionType typ) =>
+        DioException(requestOptions: _requestOptions, type: typ);
+
+    test('nennt zuerst die Aufgabe, die liegen blieb', () {
+      final satz = dienstOhneAntwort(
+        ohneAntwort(DioExceptionType.connectionError),
+        'Die PDF-Vorschau konnte nicht erstellt werden',
+      );
+
+      expect(
+        satz,
+        startsWith('Die PDF-Vorschau konnte nicht erstellt werden.'),
+      );
+    });
+
+    /// Der Dienst laeuft und war nur zu langsam — ein zweiter Versuch hat
+    /// Aussicht. Genau das unterscheidet diesen Fall vom naechsten.
+    test('raet bei Zeitueberschreitung zum zweiten Versuch', () {
+      final satz = dienstOhneAntwort(
+        ohneAntwort(DioExceptionType.receiveTimeout),
+        'Die RVG-Kosten konnten nicht berechnet werden',
+      );
+
+      expect(satz, contains('noch einmal'));
+      expect(satz, isNot(contains('neu')));
+    });
+
+    /// Ist die Verbindung weg, ist der Kindprozess gestorben: Wiederholen
+    /// hilft nie, nur der Neustart der Anwendung startet ihn mit.
+    test('raet bei fehlender Verbindung zum Neustart', () {
+      for (final typ in [
+        DioExceptionType.connectionError,
+        DioExceptionType.connectionTimeout,
+        DioExceptionType.unknown,
+      ]) {
+        expect(
+          dienstOhneAntwort(
+            ohneAntwort(typ),
+            'Der Mandant wurde nicht gespeichert',
+          ),
+          contains('starten Sie die Anwendung neu'),
+          reason: '$typ heisst: der Dienst ist nicht ansprechbar',
+        );
+      }
+    });
+
+    test('nennt einen Abbruch einen Abbruch', () {
+      expect(
+        dienstOhneAntwort(
+          ohneAntwort(DioExceptionType.cancel),
+          'Der Versand lief nicht',
+        ),
+        contains('abgebrochen'),
+      );
+    });
+  });
 }
