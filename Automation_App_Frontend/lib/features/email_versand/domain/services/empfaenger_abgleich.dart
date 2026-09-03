@@ -63,15 +63,22 @@ class EmpfaengerAbgleich {
       nimm(adresse);
     }
 
-    return (
-      empfaenger: ergebnis,
-      vorbelegt: [
-        for (final adresse in neueVorschlaege)
-          if (_schluessel(adresse).isNotEmpty &&
-              !selbst.contains(_schluessel(adresse)))
-            adresse.trim(),
-      ],
-    );
+    // Über denselben Schlüssel entdoppelt wie [ergebnis] (ergänzt am
+    // 03.09.2026): Zwei Vorschläge, die sich nur in Groß- und Kleinschreibung
+    // unterscheiden, standen sonst zweimal in der Vorbelegung, während die
+    // Empfängerliste daneben nur einen führte. Zwei Rückgaben einer Funktion
+    // dürfen nicht verschieden beantworten, was „die vorbelegten Adressen"
+    // sind.
+    final gemerkt = <String>{};
+    final vorbelegt = <String>[];
+    for (final adresse in neueVorschlaege) {
+      final schluessel = _schluessel(adresse);
+      if (schluessel.isEmpty || selbst.contains(schluessel)) continue;
+      if (!gemerkt.add(schluessel)) continue;
+      vorbelegt.add(adresse.trim());
+    }
+
+    return (empfaenger: ergebnis, vorbelegt: vorbelegt);
   }
 
   static String _schluessel(String adresse) => adresse.trim().toLowerCase();

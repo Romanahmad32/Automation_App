@@ -25,10 +25,7 @@ public sealed class MailVorlagenRepository(AutomationDbContext db) : IMailVorlag
         Bereinige(neu);
         await EnsureNameUniqueAsync(neu.Name, eigeneId: null, cancellationToken);
 
-        var maxId = await db.MailVorlagen.AnyAsync(cancellationToken)
-            ? await db.MailVorlagen.MaxAsync(v => v.Id, cancellationToken)
-            : 0;
-        neu.Id = maxId + 1;
+        neu.Id = await BestandVergabe.NaechsteIdAsync(db.MailVorlagen, cancellationToken);
 
         db.MailVorlagen.Add(neu);
         await db.SaveChangesAsync(cancellationToken);
@@ -87,12 +84,8 @@ public sealed class MailVorlagenRepository(AutomationDbContext db) : IMailVorlag
 
     async Task EnsureNameUniqueAsync(string name, int? eigeneId, CancellationToken ct)
     {
-        // Bewusst getrennt: `v.Id != eigeneId` mit eigeneId == null würde EF zu
-        // `Id <> NULL` übersetzen (SQL-Unknown) und nie treffen — beim Anlegen
-        // bliebe die Dublette unerkannt.
-        var konflikt = eigeneId is null
-            ? await db.MailVorlagen.AnyAsync(v => v.Name == name, ct)
-            : await db.MailVorlagen.AnyAsync(v => v.Name == name && v.Id != eigeneId.Value, ct);
+        var konflikt = await BestandVergabe.GibtEsSchonAsync(
+            db.MailVorlagen.Where(v => v.Name == name), eigeneId, ct);
         if (konflikt)
         {
             throw new MailVorlageNameConflictException(

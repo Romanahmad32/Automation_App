@@ -45,6 +45,11 @@ class _MailVorlageDialogState extends State<MailVorlageDialog> {
 
   bool _speichert = false;
 
+  /// Was am Pflichtfeld „Name" fehlt; null heisst: nichts. Steht als
+  /// `errorText` am Feld — vorher kehrte [_speichern] bei leerem Namen
+  /// wortlos um, und der Knopf sah kaputt aus (behoben am 03.09.2026).
+  String? _fehler;
+
   /// Wohin der naechste Platzhalter geht. Vorgabe ist der Nachrichtentext —
   /// dort stehen die meisten, und ein Klick ohne vorherigen Fokus soll nicht
   /// ins Leere gehen.
@@ -91,9 +96,17 @@ class _MailVorlageDialogState extends State<MailVorlageDialog> {
 
   Future<void> _speichern() async {
     final name = _name.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty) {
+      setState(
+        () => _fehler = 'Ohne Namen ist die Vorlage später nicht zu finden.',
+      );
+      return;
+    }
 
-    setState(() => _speichert = true);
+    setState(() {
+      _speichert = true;
+      _fehler = null;
+    });
     final geglueckt = await widget.onSpeichern(
       widget.vorlage.copyWith(
         name: name,
@@ -122,11 +135,15 @@ class _MailVorlageDialogState extends State<MailVorlageDialog> {
               TextField(
                 controller: _name,
                 autofocus: true,
-                decoration: const InputDecoration(
+                onChanged: (_) {
+                  if (_fehler != null) setState(() => _fehler = null);
+                },
+                decoration: InputDecoration(
                   labelText: 'Name *',
                   helperText:
                       'Danach wählen Sie die Vorlage beim Verfassen aus.',
-                  border: OutlineInputBorder(),
+                  errorText: _fehler,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               TextField(

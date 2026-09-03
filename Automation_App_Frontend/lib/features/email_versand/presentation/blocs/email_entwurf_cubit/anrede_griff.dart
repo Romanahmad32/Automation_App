@@ -148,8 +148,8 @@ mixin AnredeGriff on Cubit<EmailEntwurfState> {
 
   /// Ob der Umschalter „neutral anreden" überhaupt etwas zu schalten hat —
   /// unabhängig davon, was der Empfängerkreis gerade ergibt (§4.7).
-  bool get anredeNamentlichMachbar =>
-      anredeErzeuger?.anredeNamentlichMachbar(
+  bool get anredeGebeugtMachbar =>
+      anredeErzeuger?.anredeGebeugtMachbar(
         geschlecht: state.anredeGeschlecht,
       ) ??
       false;

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
-import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/ableitung_griff.dart';
@@ -149,10 +148,12 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
           entwurf.alleEmpfaenger,
         ),
         // Woertlich mitschreiben, was `entwurfMit` in den Text gesetzt hat —
-        // dieselbe Rechnung, deshalb derselbe Aufruf. Ohne das fand
-        // `AbleitungGriff` die Stelle nie und lief still leer, sobald der
-        // Anwalt **zuerst** tippte und danach einen Chip klickte (behoben am
-        // 02.09.2026).
+        // dieselbe Rechnung ueber dieselbe Empfaengerliste, deshalb derselbe
+        // Aufruf. Ohne das fand `AbleitungGriff` die Stelle nie und lief still
+        // leer, sobald der Anwalt **zuerst** tippte und danach einen Chip
+        // klickte (behoben am 02.09.2026). Dass `entwurfMit` ebenfalls ueber
+        // `alleEmpfaenger` rechnet und nicht ueber die Vorschlagsliste, ist
+        // seit dem 03.09.2026 zugesichert und nicht mehr nur zufaellig wahr.
         anredeImText: erzeuger.anredeFuer(
           entwurf.alleEmpfaenger,
           baustein: anrede,
@@ -194,19 +195,6 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     // fragt ihn.
     await erzeugerFuer(state.vorgang, mandant: gemerkt);
     return gemerkt;
-  }
-
-  /// Übernimmt eine gewählte Mail-Textvorlage (§4.7) — oder **keine**:
-  /// [vorlage] null führt zur Vorbelegung aus den Vorgangsdaten zurück. Eine
-  /// Wahl, die sich nicht zurücknehmen lässt, zwänge zum Schliessen und
-  /// Neuöffnen des Entwurfs.
-  ///
-  /// Betreff und Text sind danach **abgeleitet**, nicht getippt: Sie werden
-  /// nachgezogen, wenn sich Empfänger oder Zusatzgruß ändern. Erst wenn der
-  /// Anwalt selbst in den Text schreibt ([setzeText]), hört das auf.
-  void waehleVorlage(MailVorlage? vorlage) {
-    emit(state.copyWith(gewaehlteVorlage: () => vorlage));
-    leiteAb(betreffAuch: true);
   }
 
   /// Der beim Verfassen gewählte Zusatzgruß (§4.7); leer heisst keiner.

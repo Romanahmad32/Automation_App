@@ -28,9 +28,20 @@ class MailPlatzhalter {
   /// verglichen, damit `{{Zusatzgruss}}` mit ss dasselbe meint.
   static const String zusatzgruss = 'Zusatzgruß';
 
-  /// Findet `{{Name}}` samt Namen. Bewusst dieselbe Form wie im Backend
-  /// (`WordAutomationService`); wer sie hier ändert, hat zwei Schreibweisen.
-  static final RegExp muster = RegExp(r'\{\{\s*([^{}]+?)\s*\}\}');
+  /// Findet `{{Name}}` samt Namen — **innerhalb einer Zeile**.
+  ///
+  /// Die Schreibweise ist dieselbe wie im Backend (`WordAutomationService`);
+  /// wer sie ändert, hat zwei davon. Die Zeilenbindung ist der eine bewusste
+  /// Unterschied (ergänzt am 03.09.2026): Word ersetzt in Textläufen, diese
+  /// Seite ersetzt **zeilenweise** (`MailVorlagenFueller.textzeilen`), weil
+  /// ein leerer Platzhalter seine Zeile mitnimmt. Vorher stand hier `\s*` und
+  /// `[^{}]` — beides schließt den Zeilenumbruch ein. Ein über zwei Zeilen
+  /// gebrochenes `{{Anrede}}` fand deshalb, wer den **ganzen** Text absuchte
+  /// ([stehtIn], [namenIn], `VorlagenPruefung.maengel`), und niemand, der ihn
+  /// füllte: Der Dialog gab die Anredereihe frei und die Mail ging ohne Anrede
+  /// hinaus. Was zeilenweise nicht zu füllen ist, darf zeilenübergreifend auch
+  /// nicht gefunden werden.
+  static final RegExp muster = RegExp(r'\{\{[ \t]*([^{}\r\n]+?)[ \t]*\}\}');
 
   /// **Alle** Platzhalter, die eine Mail-Textvorlage füllen kann — zur Auswahl
   /// in der Verwaltung (§4.7, ergänzt am 02.09.2026).

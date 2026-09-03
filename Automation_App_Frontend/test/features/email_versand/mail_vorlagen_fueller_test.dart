@@ -1,5 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
+import 'package:automation_app/features/email_versand/domain/services/mail_platzhalter.dart';
 import 'package:automation_app/features/email_versand/domain/services/mail_vorlagen_fueller.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -407,6 +408,115 @@ void main() {
         contains('{{Mandant/Mandantin}}'),
         reason: 'die Erklärung nennt die Schreibweise, die gemeint war',
       );
+    });
+  });
+
+  group('der Betreff rechnet je Abschnitt (§4.7)', () {
+    /// Ein Vorgang ohne Versicherer — die häufige Lage, solange der Zentralruf
+    /// noch nicht geantwortet hat.
+    final ohneVersicherer = Vorgang(
+      referenz: '84/26 C03_GG-XY 123',
+      angefragtAm: DateTime(2026, 6, 20),
+      laufendeNummer: 84,
+      jahr: '26',
+      abteilung: 'C03',
+      mandantName: 'Klaus Müller',
+    );
+
+    MailVorlagenFueller fuellerOhne() => MailVorlagenFueller(
+      anrede: 'Sehr geehrter Herr Müller',
+      vorgang: ohneVersicherer,
+      mandant: mandantMit(''),
+    );
+
+    test('ein leerer Abschnitt nimmt sein Trennzeichen mit', () {
+      // Der behobene Fehler: Die Zeilenregel liess eine Zeile schon bei
+      // **einem** gefüllten Platzhalter stehen. Im Betreff gibt es keine
+      // Nachbarzeile, die den Satz weiterträgt — hinaus ging wörtlich
+      // „Sache Klaus Müller ./. · Gruß:".
+      final betreff = fuellerOhne().fuelleBetreff(
+        'Sache {{MandantName}} ./. {{VersichererName}} · Gruß: {{Zusatzgruß}}',
+      );
+
+      expect(betreff, 'Sache Klaus Müller');
+      expect(betreff, isNot(contains('·')));
+      expect(betreff, isNot(endsWith(':')));
+    });
+
+    test('bleibt nichts übrig, bleibt der Betreff leer', () {
+      expect(
+        fuellerOhne().fuelleBetreff('Zeichen: {{VersichererName}}'),
+        isEmpty,
+        reason:
+            'eine erfundene Betreffzeile wäre schlimmer als ein leeres Feld',
+      );
+    });
+
+    test('ein Betreff ohne Platzhalter bleibt unberührt', () {
+      // Vorher lief die Glättung auch über einen von Hand getippten Betreff
+      // und zog dessen Leerzeichen zusammen.
+      const getippt = 'Rückfrage:  zwei Leerzeichen sind gewollt';
+      expect(fuellerOhne().fuelleBetreff(getippt), getippt);
+    });
+  });
+
+  group('ein Name, aber alle seine Stellen (§4.7)', () {
+    test('die zweite entfallene Zeile steht in der Auskunft', () {
+      // Der behobene Fehler: `befunde` entdoppelte über Betreff **und** Text.
+      // Gemeldet wurde nur „fällt aus dem Betreff"; dass Zeile 2 ebenfalls
+      // ersatzlos wegfiel, stand nirgends — und im gefüllten Text ist davon
+      // nichts mehr zu sehen.
+      final befunde =
+          fuellerFuer(mandantMit(''), const ['k.mueller@example.de']).befunde(
+            const MailVorlage(
+              name: 'Probe',
+              betreff: 'Zeichen: {{Zusatzgruß}}',
+              text: 'Hallo\nGruß: {{Zusatzgruß}}',
+            ),
+          );
+
+      final gruss = befunde.singleWhere((b) => b.name == 'Zusatzgruß');
+      expect(gruss.imBetreff, isTrue);
+      expect(gruss.zeileEntfaellt, isTrue);
+      expect(gruss.weitereEntfallene, const [2]);
+      expect(
+        gruss.folge,
+        'bleibt leer — fällt aus dem Betreff, Zeile 2 entfällt',
+      );
+    });
+
+    test('ein Name in nur einer Zeile bleibt schlicht', () {
+      final befunde =
+          fuellerFuer(mandantMit(''), const ['k.mueller@example.de']).befunde(
+            const MailVorlage(
+              name: 'Probe',
+              betreff: '',
+              text: '{{Zusatzgruß}}',
+            ),
+          );
+
+      expect(befunde.single.weitereEntfallene, isEmpty);
+      expect(befunde.single.folge, 'bleibt leer — Zeile 1 entfällt');
+    });
+  });
+
+  group('ein Platzhalter endet an der Zeile (§4.7)', () {
+    test('über zwei Zeilen gebrochen ist er keiner', () {
+      // Der behobene Fehler: `muster` schloss den Zeilenumbruch ein. Wer den
+      // **ganzen** Text absuchte, fand den Platzhalter; wer zeilenweise
+      // füllte, fand ihn nie — der Dialog gab die Anredereihe frei, und die
+      // Mail ging ohne Anrede hinaus.
+      expect(MailPlatzhalter.stehtIn('{{Anrede\n}}', 'Anrede'), isFalse);
+      expect(MailPlatzhalter.namenIn('Hallo\n{{An\nrede}}'), isEmpty);
+      expect(MailPlatzhalter.stehtIn('{{ Anrede }}', 'Anrede'), isTrue);
+    });
+
+    test('und bleibt deshalb auch beim Füllen stehen, wie er ist', () {
+      final text = fuellerFuer(mandantMit(''), const [
+        'k.mueller@example.de',
+      ]).fuelleText('{{Anrede\n}}');
+
+      expect(text, '{{Anrede\n}}');
     });
   });
 }

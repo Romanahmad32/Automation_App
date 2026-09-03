@@ -163,4 +163,44 @@ public sealed class MailVorlagenRepositoryTests : IDisposable
         _db.Dispose();
         _connection.Dispose();
     }
+    [Fact]
+    public async Task Anlegen_ErkenntDenNamenOhneRuecksichtAufGrossschreibung()
+    {
+        // Der Klassenkommentar der Entitaet versprach das von Anfang an, die
+        // Spalte trug aber BINARY: "anschreiben" ging neben "Anschreiben"
+        // durch, und in der Auswahl beim Verfassen standen zwei Eintraege, die
+        // der Anwalt nicht auseinanderhalten kann (behoben am 03.09.2026).
+        await _repository.CreateAsync(Neu("Kurzmitteilung"));
+
+        var tat = async () => await _repository.CreateAsync(Neu("kurzMITTEILUNG"));
+
+        await tat.Should().ThrowAsync<MailVorlageNameConflictException>();
+    }
+
+    [Fact]
+    public async Task Umbenennen_ErkenntDenNamenOhneRuecksichtAufGrossschreibung()
+    {
+        var erste = await _repository.CreateAsync(Neu("Kurzmitteilung"));
+        var zweite = await _repository.CreateAsync(Neu("Sachstand"));
+
+        zweite.Name = "KURZMITTEILUNG";
+        var tat = async () => await _repository.UpdateAsync(zweite);
+
+        await tat.Should().ThrowAsync<MailVorlageNameConflictException>();
+        erste.Name.Should().Be("Kurzmitteilung");
+    }
+
+    [Fact]
+    public async Task Umbenennen_DerEigenenZeileBleibtErlaubt()
+    {
+        // Die Gegenprobe: `eigeneId` haelt den Eintrag von sich selbst frei —
+        // sonst waere jede Aenderung an einer Vorlage ein Konflikt mit ihr.
+        var vorlage = await _repository.CreateAsync(Neu("Kurzmitteilung"));
+
+        vorlage.Betreff = "Neuer Betreff";
+        var geschrieben = await _repository.UpdateAsync(vorlage);
+
+        geschrieben!.Betreff.Should().Be("Neuer Betreff");
+    }
+
 }

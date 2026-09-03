@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/entfernen_rueckfrage.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart';
@@ -42,27 +43,14 @@ class MailVorlagenSektionInhalt extends StatelessWidget {
 
   Future<void> _entferne(BuildContext context, MailVorlage vorlage) async {
     final cubit = context.read<MailVorlagenCubit>();
-    final sicher = await showDialog<bool>(
-      context: context,
-      builder: (dialogKontext) => AlertDialog(
-        title: const Text('Vorlage entfernen?'),
-        content: Text(
+    final sicher = await EntfernenRueckfrage.gestellt(
+      context,
+      titel: 'Vorlage entfernen?',
+      text:
           '„${vorlage.name}" wird aus dem Bestand gelöscht. Bereits '
           'versendete Mails bleiben davon unberührt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogKontext).pop(false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogKontext).pop(true),
-            child: const Text('Entfernen'),
-          ),
-        ],
-      ),
     );
-    if (sicher ?? false) await cubit.loesche(vorlage.id);
+    if (sicher) await cubit.loesche(vorlage.id);
   }
 
   @override

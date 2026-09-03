@@ -1,3 +1,4 @@
+import 'package:automation_app/core/network/dienst_meldung.dart';
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/anredebausteine_repository.dart';
 import 'package:dio/dio.dart';
@@ -21,7 +22,7 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
           .toList();
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ??
+        DienstMeldung.aus(e) ??
             'Die Anreden konnten nicht geladen werden. Läuft der Dienst noch?',
       );
     }
@@ -37,7 +38,7 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
       return Anredebaustein.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ?? 'Die Anrede konnte nicht angelegt werden.',
+        DienstMeldung.aus(e) ?? 'Die Anrede konnte nicht angelegt werden.',
       );
     }
   }
@@ -52,7 +53,7 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
       return Anredebaustein.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ?? 'Die Anrede konnte nicht gespeichert werden.',
+        DienstMeldung.aus(e) ?? 'Die Anrede konnte nicht gespeichert werden.',
       );
     }
   }
@@ -63,16 +64,8 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
       await _dio.delete('/api/Anredebausteine/$id');
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ?? 'Die Anrede konnte nicht entfernt werden.',
+        DienstMeldung.aus(e) ?? 'Die Anrede konnte nicht entfernt werden.',
       );
     }
-  }
-
-  /// Der Klartext des Dienstes, wenn er einen geschickt hat — bei 409 steht
-  /// dort, welchen Anfang es schon gibt.
-  String? _meldung(DioException e) {
-    final daten = e.response?.data;
-    if (daten is String && daten.trim().isNotEmpty) return daten.trim();
-    return null;
   }
 }

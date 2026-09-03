@@ -1,5 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/bestand_arbeit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -11,7 +12,8 @@ import 'package:injectable/injectable.dart';
 /// in den Einstellungen ändert und danach eine Mail schreibt, soll die
 /// geänderte Fassung vorfinden und nicht die des letzten Abrufs.
 @lazySingleton
-class MailVorlagenCubit extends Cubit<MailVorlagenState> {
+class MailVorlagenCubit extends Cubit<MailVorlagenState>
+    with BestandArbeit<MailVorlagenState> {
   final MailVorlagenRepository _repository;
 
   /// Der laufende Abruf. Verwaltung und Versanddialog fragen beide beim
@@ -27,22 +29,18 @@ class MailVorlagenCubit extends Cubit<MailVorlagenState> {
     return _laeuft ??= laden().whenComplete(() => _laeuft = null);
   }
 
-  Future<void> laden() => _fuehreAus(() async {
-    final vorlagen = await _repository.ladeVorlagen();
-    if (isClosed) return;
-    emit(state.kopie(vorlagen: vorlagen, geladen: true));
-  });
+  Future<void> laden() => fuehreAus(_neuLaden);
 
   /// Legt an oder schreibt, je nachdem, ob die Vorlage schon eine Nummer hat.
   /// Liefert true, wenn es geklappt hat — der Dialog schliesst sich nur dann.
-  Future<bool> speichere(MailVorlage vorlage) => _fuehreAus(() async {
+  Future<bool> speichere(MailVorlage vorlage) => fuehreAus(() async {
     vorlage.istGespeichert
         ? await _repository.aktualisiere(vorlage)
         : await _repository.lege(vorlage);
     await _neuLaden();
   });
 
-  Future<bool> loesche(int id) => _fuehreAus(() async {
+  Future<bool> loesche(int id) => fuehreAus(() async {
     await _repository.loesche(id);
     await _neuLaden();
   });
@@ -56,24 +54,8 @@ class MailVorlagenCubit extends Cubit<MailVorlagenState> {
     emit(state.kopie(vorlagen: vorlagen, geladen: true));
   }
 
-  /// Der gemeinsame Rahmen: Ladeanzeige an, alte Meldung weg, Fehler im
-  /// Klartext stehen lassen. Ohne ihn stünde er dreimal.
-  Future<bool> _fuehreAus(Future<void> Function() arbeit) async {
-    emit(state.kopie(laedt: true));
-    try {
-      await arbeit();
-      if (!isClosed) emit(state.kopie(laedt: false));
-      return true;
-    } catch (fehler) {
-      if (!isClosed) {
-        emit(state.kopie(laedt: false, fehler: _klartext(fehler)));
-      }
-      return false;
-    }
-  }
-
-  /// `Exception: …` ist der Präfix, den `toString()` davorsetzt; im Dialog
-  /// stünde er vor jedem Satz, den das Backend geschickt hat.
-  static String _klartext(Object fehler) =>
-      fehler.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+  /// Die eine Zeile, die dieser Bestand zum gemeinsamen Rahmen beisteuert.
+  @override
+  MailVorlagenState mitLadestand({required bool laedt, String? fehler}) =>
+      state.kopie(laedt: laedt, fehler: fehler);
 }

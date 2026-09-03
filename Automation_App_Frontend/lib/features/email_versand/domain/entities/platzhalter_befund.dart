@@ -45,6 +45,17 @@ class PlatzhalterBefund extends Equatable {
   /// eine Zeile entfällt, sah der Anwalt; woran es lag, nicht.
   final String fehlstelle;
 
+  /// Die **weiteren** Zeilen, die derselbe Name mitnimmt (ergänzt am
+  /// 03.09.2026) — aufsteigend, ohne [zeile].
+  ///
+  /// Ein Name kommt in der Übersicht nur einmal vor, sonst stünde
+  /// `{{MandantName}}` fünfmal untereinander. Bis dahin verschwieg diese
+  /// Zusammenfassung aber die übrigen Stellen: `{{Referenz}}` im Betreff
+  /// **und** in „Unser Zeichen: {{Referenz}}" meldete nur „fällt aus dem
+  /// Betreff", und dass Zeile 7 dazu ersatzlos weg war, stand nirgends. Genau
+  /// das soll diese Klasse auffindbar machen.
+  final List<int> weitereEntfallene;
+
   const PlatzhalterBefund({
     required this.name,
     this.wert = '',
@@ -53,6 +64,7 @@ class PlatzhalterBefund extends Equatable {
     this.zeileEntfaellt = false,
     this.bezeichnung = '',
     this.fehlstelle = '',
+    this.weitereEntfallene = const [],
   });
 
   bool get istLeer => wert.trim().isEmpty;
@@ -69,11 +81,19 @@ class PlatzhalterBefund extends Equatable {
   /// Übersicht anstelle des Werts steht.
   String get folge {
     if (!istLeer) return '';
-    if (imBetreff) return 'bleibt leer — fällt aus dem Betreff';
-    return zeileEntfaellt
-        ? 'bleibt leer — Zeile $zeile entfällt'
-        : 'bleibt leer — Zeile $zeile bleibt, ohne diesen Wert';
+    final erste = imBetreff
+        ? 'fällt aus dem Betreff'
+        : zeileEntfaellt
+        ? 'Zeile $zeile entfällt'
+        : 'Zeile $zeile bleibt, ohne diesen Wert';
+    if (weitereEntfallene.isEmpty) return 'bleibt leer — $erste';
+    return 'bleibt leer — $erste, $_weitere';
   }
+
+  /// Die übrigen entfallenen Zeilen im Klartext.
+  String get _weitere => weitereEntfallene.length == 1
+      ? 'Zeile ${weitereEntfallene.single} entfällt'
+      : 'die Zeilen ${weitereEntfallene.join(', ')} entfallen';
 
   @override
   List<Object?> get props => [
@@ -84,5 +104,6 @@ class PlatzhalterBefund extends Equatable {
     zeileEntfaellt,
     bezeichnung,
     fehlstelle,
+    weitereEntfallene,
   ];
 }

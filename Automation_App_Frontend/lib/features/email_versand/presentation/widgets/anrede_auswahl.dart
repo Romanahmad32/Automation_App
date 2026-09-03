@@ -7,6 +7,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/email_e
 import 'package:automation_app/features/email_versand/presentation/widgets/anrede_bestand_fehler.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/anrede_bestand_leer.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/anrede_neutral_grund_zeile.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -84,7 +85,13 @@ class AnredeChips extends StatelessWidget {
               // namentliche Anrede, und das ist einer der Gründe.
               vorher.mandantBekannt != jetzt.mandantBekannt ||
               vorher.vorgang != jetzt.vorgang ||
-              vorher.entwurf.alleEmpfaenger != jetzt.entwurf.alleEmpfaenger ||
+              // `!=` verglich zwei frisch gebaute Listen über die Identität und
+              // war damit immer wahr (behoben am 03.09.2026, siehe
+              // `PlatzhalterUebersicht.neuZeichnen`).
+              !listEquals(
+                vorher.entwurf.alleEmpfaenger,
+                jetzt.entwurf.alleEmpfaenger,
+              ) ||
               vorher.beschaeftigt != jetzt.beschaeftigt,
           builder: (context, entwurf) {
             final cubit = context.read<EmailEntwurfCubit>();
@@ -153,7 +160,7 @@ class AnredeChips extends StatelessWidget {
                   // wenn man ihn braucht — bei der Mail an die Versicherung,
                   // die den Mandanten trotzdem namentlich ansprechen soll.
                   if (ohneStelle == null &&
-                      (cubit.anredeNamentlichMachbar ||
+                      (cubit.anredeGebeugtMachbar ||
                           entwurf.anredeNeutral != null))
                     AnredeNeutralSchalter(
                       neutral: entwurf.anredeGehtNeutral,

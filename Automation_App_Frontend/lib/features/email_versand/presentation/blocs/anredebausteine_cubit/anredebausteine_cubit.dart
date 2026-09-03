@@ -1,6 +1,7 @@
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/anredebausteine_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_state.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/bestand_arbeit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
@@ -11,7 +12,8 @@ import 'package:injectable/injectable.dart';
 /// meinen denselben Bestand, und wer eine Anrede anlegt und danach schreibt,
 /// soll sie vorfinden.
 @lazySingleton
-class AnredebausteineCubit extends Cubit<AnredebausteineState> {
+class AnredebausteineCubit extends Cubit<AnredebausteineState>
+    with BestandArbeit<AnredebausteineState> {
   final AnredebausteineRepository _repository;
 
   /// Der laufende Abruf — Verwaltung und Versanddialog fragen beide beim
@@ -25,18 +27,18 @@ class AnredebausteineCubit extends Cubit<AnredebausteineState> {
     return _laeuft ??= laden().whenComplete(() => _laeuft = null);
   }
 
-  Future<void> laden() => _fuehreAus(_neuLaden);
+  Future<void> laden() => fuehreAus(_neuLaden);
 
   /// Legt an oder schreibt, je nachdem, ob der Anfang schon eine Nummer hat.
   /// Liefert true, wenn es geklappt hat.
-  Future<bool> speichere(Anredebaustein baustein) => _fuehreAus(() async {
+  Future<bool> speichere(Anredebaustein baustein) => fuehreAus(() async {
     baustein.istGespeichert
         ? await _repository.aktualisiere(baustein)
         : await _repository.lege(baustein);
     await _neuLaden();
   });
 
-  Future<bool> loesche(int id) => _fuehreAus(() async {
+  Future<bool> loesche(int id) => fuehreAus(() async {
     await _repository.loesche(id);
     await _neuLaden();
   });
@@ -49,22 +51,8 @@ class AnredebausteineCubit extends Cubit<AnredebausteineState> {
     emit(state.kopie(bausteine: bausteine, geladen: true));
   }
 
-  Future<bool> _fuehreAus(Future<void> Function() arbeit) async {
-    emit(state.kopie(laedt: true));
-    try {
-      await arbeit();
-      if (!isClosed) emit(state.kopie(laedt: false));
-      return true;
-    } catch (fehler) {
-      if (!isClosed) {
-        emit(state.kopie(laedt: false, fehler: _klartext(fehler)));
-      }
-      return false;
-    }
-  }
-
-  /// `Exception: …` ist der Präfix aus `toString()`; im Dialog stünde er vor
-  /// jedem Satz, den das Backend geschickt hat.
-  static String _klartext(Object fehler) =>
-      fehler.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+  /// Die eine Zeile, die dieser Bestand zum gemeinsamen Rahmen beisteuert.
+  @override
+  AnredebausteineState mitLadestand({required bool laedt, String? fehler}) =>
+      state.kopie(laedt: laedt, fehler: fehler);
 }

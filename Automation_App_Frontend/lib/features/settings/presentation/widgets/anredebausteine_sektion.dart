@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/entfernen_rueckfrage.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
@@ -40,12 +41,27 @@ class AnredebausteineSektionInhalt extends StatelessWidget {
     );
   }
 
+  /// Erst fragen, dann entfernen (§7.1, ergänzt am 03.09.2026). Der Anfang
+  /// kommt nicht wieder — und wer den ersten der Liste erwischt, ändert die
+  /// Anrede **jeder** künftigen Mail: Ohne Klick gilt beim Verfassen, was
+  /// vorn steht (`AnredebausteineState.vorgabe`).
+  Future<void> _entferne(BuildContext context, Anredebaustein baustein) async {
+    final cubit = context.read<AnredebausteineCubit>();
+    final sicher = await EntfernenRueckfrage.gestellt(
+      context,
+      titel: 'Anrede entfernen?',
+      text:
+          '„${baustein.bezeichnung}" wird aus dem Bestand gelöscht und steht '
+          'beim Verfassen nicht mehr zur Auswahl. Bereits versendete Mails '
+          'bleiben davon unberührt.',
+    );
+    if (sicher) await cubit.loesche(baustein.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AnredebausteineCubit, AnredebausteineState>(
       builder: (context, stand) {
-        final cubit = context.read<AnredebausteineCubit>();
-
         return FormSection(
           icon: Icons.record_voice_over_outlined,
           title: 'Anreden',
@@ -79,7 +95,7 @@ class AnredebausteineSektionInhalt extends StatelessWidget {
                   InputChip(
                     label: Text(baustein.bezeichnung),
                     onPressed: () => _bearbeite(context, baustein),
-                    onDeleted: () => cubit.loesche(baustein.id),
+                    onDeleted: () => _entferne(context, baustein),
                     deleteButtonTooltipMessage: 'Anrede entfernen',
                   ),
                 ActionChip(

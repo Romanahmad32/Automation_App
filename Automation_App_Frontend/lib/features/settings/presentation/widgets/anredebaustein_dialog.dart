@@ -40,6 +40,12 @@ class _AnredebausteinDialogState extends State<AnredebausteinDialog> {
 
   bool _speichert = false;
 
+  /// Ob die beiden Pflichtformen fehlen. Sie stehen dann als `errorText` an
+  /// **beiden** Feldern — vorher kehrte [_speichern] wortlos um, und wer nur
+  /// eine der Formen ausgefüllt hatte, verlor auch die (behoben am
+  /// 03.09.2026).
+  bool _fehlend = false;
+
   @override
   void dispose() {
     _maennlich.dispose();
@@ -57,9 +63,15 @@ class _AnredebausteinDialogState extends State<AnredebausteinDialog> {
     final neutral = _neutral.text.trim().isEmpty
         ? weiblich
         : _neutral.text.trim();
-    if (maennlich.isEmpty || weiblich.isEmpty) return;
+    if (maennlich.isEmpty || weiblich.isEmpty) {
+      setState(() => _fehlend = true);
+      return;
+    }
 
-    setState(() => _speichert = true);
+    setState(() {
+      _speichert = true;
+      _fehlend = false;
+    });
     final geglueckt = await widget.onSpeichern(
       widget.baustein.copyWith(
         maennlich: maennlich,
@@ -71,6 +83,16 @@ class _AnredebausteinDialogState extends State<AnredebausteinDialog> {
     setState(() => _speichert = false);
     if (geglueckt) Navigator.of(context).pop(true);
   }
+
+  void _fehlerWeg(String _) {
+    if (_fehlend) setState(() => _fehlend = false);
+  }
+
+  /// Beide Formen sind nötig — die dritte folgt der weiblichen, wenn sie leer
+  /// bleibt.
+  static const String _fehlertext =
+      'Nötig — sonst ist die Anrede nur halb '
+      'gebeugt.';
 
   @override
   Widget build(BuildContext context) {
@@ -92,20 +114,28 @@ class _AnredebausteinDialogState extends State<AnredebausteinDialog> {
             TextField(
               controller: _maennlich,
               autofocus: true,
-              decoration: const InputDecoration(
+              onChanged: _fehlerWeg,
+              decoration: InputDecoration(
                 labelText: 'Männlich *',
                 hintText: 'Sehr geehrter',
                 helperText: 'ergibt „Sehr geehrter Herr Müller"',
-                border: OutlineInputBorder(),
+                errorText: _fehlend && _maennlich.text.trim().isEmpty
+                    ? _fehlertext
+                    : null,
+                border: const OutlineInputBorder(),
               ),
             ),
             TextField(
               controller: _weiblich,
-              decoration: const InputDecoration(
+              onChanged: _fehlerWeg,
+              decoration: InputDecoration(
                 labelText: 'Weiblich *',
                 hintText: 'Sehr geehrte',
                 helperText: 'ergibt „Sehr geehrte Frau Schmitt"',
-                border: OutlineInputBorder(),
+                errorText: _fehlend && _weiblich.text.trim().isEmpty
+                    ? _fehlertext
+                    : null,
+                border: const OutlineInputBorder(),
               ),
             ),
             TextField(

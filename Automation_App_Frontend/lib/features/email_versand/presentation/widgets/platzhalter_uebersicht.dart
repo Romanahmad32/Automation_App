@@ -5,6 +5,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/email_e
 import 'package:automation_app/features/email_versand/presentation/widgets/platzhalter_fehlstelle_zeile.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/platzhalter_zeile.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/vorlagentext_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,18 +29,41 @@ class PlatzhalterUebersicht extends StatelessWidget {
   static String fehlstellenTitel(int leer) =>
       leer == 1 ? 'Ein Platzhalter ohne Wert' : '$leer Platzhalter ohne Wert';
 
+  /// Ob sich an den **Werten** etwas geändert hat, die die Übersicht zeigt.
+  ///
+  /// Steht hier und nicht als Ausdruck im `buildWhen`, weil sie prüfbar sein
+  /// muss: Genau eine vergessene Zeile war der Fehler (03.09.2026). Die
+  /// Anredeart fehlte, und weil das Widget im Formular als `const` steht,
+  /// wurde es auch von oben nicht neu gebaut — nach einem Klick auf „Frau"
+  /// behauptete die Übersicht weiter „Mandant", während im Textfeld darunter
+  /// schon „Mandantin" stand. Sie ist die Liste dessen, was
+  /// `EmailEntwurfCubit.fuellerFuer` liest; wer dort etwas ergänzt, ergänzt
+  /// es hier.
+  ///
+  /// `geschlecht` deckt beide Wege ab: die je Mail gewählte Anredeart und die
+  /// des Registereintrags.
+  static bool neuZeichnen(EmailEntwurfState vorher, EmailEntwurfState jetzt) =>
+      vorher.gewaehlteVorlage != jetzt.gewaehlteVorlage ||
+      vorher.zusatzgruss != jetzt.zusatzgruss ||
+      vorher.anredebaustein != jetzt.anredebaustein ||
+      vorher.anredeNeutral != jetzt.anredeNeutral ||
+      vorher.geschlecht != jetzt.geschlecht ||
+      vorher.vorgang != jetzt.vorgang ||
+      // Über [listEquals] und nicht über `!=` (behoben am 03.09.2026):
+      // `alleEmpfaenger` baut bei **jedem** Aufruf eine neue Liste
+      // (`[...an, ...kopie]`), und Dart vergleicht Listen über die Identität.
+      // Der Ausdruck war damit immer wahr, `buildWhen` immer erfüllt und die
+      // ganze Aufzählung darüber wirkungslos — was die fehlende Anredeart
+      // gleich mit verdeckte: Neu gezeichnet wurde ja doch, nur bei jedem
+      // Tastendruck im Nachrichtentext.
+      !listEquals(vorher.entwurf.alleEmpfaenger, jetzt.entwurf.alleEmpfaenger);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return BlocBuilder<EmailEntwurfCubit, EmailEntwurfState>(
-      buildWhen: (vorher, jetzt) =>
-          vorher.gewaehlteVorlage != jetzt.gewaehlteVorlage ||
-          vorher.zusatzgruss != jetzt.zusatzgruss ||
-          vorher.anredebaustein != jetzt.anredebaustein ||
-          vorher.anredeNeutral != jetzt.anredeNeutral ||
-          vorher.vorgang != jetzt.vorgang ||
-          vorher.entwurf.alleEmpfaenger != jetzt.entwurf.alleEmpfaenger,
+      buildWhen: neuZeichnen,
       builder: (context, stand) {
         final vorlage = stand.gewaehlteVorlage;
         if (vorlage == null) return const SizedBox.shrink();

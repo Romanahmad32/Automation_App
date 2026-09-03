@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/entfernen_rueckfrage.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/email_versand/domain/entities/grussformel.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
@@ -40,12 +41,26 @@ class GrussformelnSektionInhalt extends StatelessWidget {
     );
   }
 
+  /// Erst fragen, dann entfernen (§7.1, ergänzt am 03.09.2026): Der Gruß kommt
+  /// nicht wieder, und das ✕ am Chip liegt einen Millimeter neben dem Chip
+  /// selbst.
+  Future<void> _entferne(BuildContext context, Grussformel gruss) async {
+    final cubit = context.read<GrussformelnCubit>();
+    final sicher = await EntfernenRueckfrage.gestellt(
+      context,
+      titel: 'Gruß entfernen?',
+      text:
+          '„${gruss.text}" wird aus dem Bestand gelöscht und steht beim '
+          'Verfassen nicht mehr zur Auswahl. Bereits versendete Mails '
+          'bleiben davon unberührt.',
+    );
+    if (sicher) await cubit.loesche(gruss.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<GrussformelnCubit, GrussformelnState>(
       builder: (context, stand) {
-        final cubit = context.read<GrussformelnCubit>();
-
         return FormSection(
           icon: Icons.waving_hand_outlined,
           title: 'Zusatzgrüße',
@@ -79,7 +94,7 @@ class GrussformelnSektionInhalt extends StatelessWidget {
                   InputChip(
                     label: Text(gruss.text),
                     onPressed: () => _bearbeite(context, gruss),
-                    onDeleted: () => cubit.loesche(gruss.id),
+                    onDeleted: () => _entferne(context, gruss),
                     deleteButtonTooltipMessage: 'Gruß entfernen',
                   ),
                 ActionChip(

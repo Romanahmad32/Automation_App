@@ -121,4 +121,17 @@ public sealed class GrussformelnRepositoryTests : IDisposable
         _db.Dispose();
         _connection.Dispose();
     }
+    [Fact]
+    public async Task Anlegen_ErkenntDenGrussOhneRuecksichtAufGrossschreibung()
+    {
+        // Dieselbe Luecke wie bei den Vorlagen: Der Unique-Index stand, die
+        // Kollation NOCASE fehlte (behoben am 03.09.2026).
+        await _repository.CreateAsync(new GrussformelEntity { Text = "Schalom" });
+
+        var tat = async () =>
+            await _repository.CreateAsync(new GrussformelEntity { Text = "SCHALOM" });
+
+        await tat.Should().ThrowAsync<GrussformelTextConflictException>();
+    }
+
 }

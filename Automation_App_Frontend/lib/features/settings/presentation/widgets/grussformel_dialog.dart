@@ -30,6 +30,11 @@ class _GrussformelDialogState extends State<GrussformelDialog> {
 
   bool _speichert = false;
 
+  /// Was am Pflichtfeld fehlt; null heisst: nichts. Steht als `errorText` am
+  /// Feld — vorher kehrte [_speichern] bei leerer Eingabe wortlos um, und der
+  /// Knopf sah kaputt aus (behoben am 03.09.2026).
+  String? _fehler;
+
   @override
   void dispose() {
     _text.dispose();
@@ -38,9 +43,15 @@ class _GrussformelDialogState extends State<GrussformelDialog> {
 
   Future<void> _speichern() async {
     final text = _text.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty) {
+      setState(() => _fehler = 'Ohne Text gibt es nichts zu speichern.');
+      return;
+    }
 
-    setState(() => _speichert = true);
+    setState(() {
+      _speichert = true;
+      _fehler = null;
+    });
     final geglueckt = await widget.onSpeichern(
       widget.grussformel.copyWith(text: text),
     );
@@ -61,14 +72,18 @@ class _GrussformelDialogState extends State<GrussformelDialog> {
           controller: _text,
           autofocus: true,
           onSubmitted: (_) => _speichern(),
-          decoration: const InputDecoration(
+          onChanged: (_) {
+            if (_fehler != null) setState(() => _fehler = null);
+          },
+          decoration: InputDecoration(
             labelText: 'Gruß *',
             hintText: 'z. B. Salamu aleikum',
             helperText:
                 'Steht beim Verfassen zur Auswahl und erscheint unter der '
                 'Anrede — ohne Komma, das setzt die Vorlage.',
             helperMaxLines: 3,
-            border: OutlineInputBorder(),
+            errorText: _fehler,
+            border: const OutlineInputBorder(),
           ),
         ),
       ),

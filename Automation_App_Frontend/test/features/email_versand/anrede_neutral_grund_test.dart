@@ -186,7 +186,7 @@ void main() {
       // Der Mangel: Angeboten wurde er nur, wenn die namentliche Anrede
       // **schon** galt — also nie, wenn man ihn braucht. „Änderbar" heisst
       // änderbar (§4.7).
-      expect(erzeuger(mit: mandant()).anredeNamentlichMachbar(), isTrue);
+      expect(erzeuger(mit: mandant()).anredeGebeugtMachbar(), isTrue);
       expect(
         erzeuger(mit: mandant()).anredePersoenlichMoeglich(const [
           'k.mueller@example.de',
@@ -199,23 +199,38 @@ void main() {
       );
     });
 
-    test('nicht ohne Nachnamen und nicht ohne Anredeart', () {
+    test('nicht ohne Anredeart — dann ist jede Form dieselbe', () {
       expect(
-        erzeuger(mit: mandant(nachname: '')).anredeNamentlichMachbar(),
+        erzeuger(mit: mandant(anrede: Anrede.keine)).anredeGebeugtMachbar(),
         isFalse,
       );
+      expect(erzeuger().anredeGebeugtMachbar(), isFalse);
+    });
+
+    test('auch ohne Nachnamen, denn die Zeile wird trotzdem gebeugt', () {
+      // Geändert am 03.09.2026 samt der Erwartung, die hier stand: Bis dahin
+      // verlangte `anredeGebeugtMachbar` (vormals `anredeNamentlichMachbar`)
+      // einen Mandanten mit Nachnamen. Seit `Anredebaustein.zeileFuer` die
+      // Zeile auch ohne Namen beugt („Sehr geehrter Herr"), verschwand der
+      // Umschalter ausgerechnet dort, wo die gebeugte Zeile an die
+      // Versicherung hinausging — der Anwalt hatte keinen Weg zurück zu
+      // „Damen und Herren" ausser über den Chip „Keine Angabe".
       expect(
-        erzeuger(mit: mandant(anrede: Anrede.keine)).anredeNamentlichMachbar(),
-        isFalse,
+        erzeuger(mit: mandant(nachname: '')).anredeGebeugtMachbar(),
+        isTrue,
       );
-      expect(erzeuger().anredeNamentlichMachbar(), isFalse);
+      expect(
+        erzeuger().anredeGebeugtMachbar(geschlecht: Anrede.herr),
+        isTrue,
+        reason: 'ohne Registermandanten trägt die gewählte Art die Zeile',
+      );
     });
 
     test('die gewählte Anredeart macht ihn wieder schaltbar', () {
       expect(
         erzeuger(
           mit: mandant(anrede: Anrede.keine),
-        ).anredeNamentlichMachbar(geschlecht: Anrede.frau),
+        ).anredeGebeugtMachbar(geschlecht: Anrede.frau),
         isTrue,
       );
     });
