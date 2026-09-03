@@ -162,6 +162,57 @@ void main() {
         },
       );
 
+      /// Die dritte Pinnungsstelle. Sie war bis zum 03.09.2026 die einzige
+      /// unbewachte — und die unangenehmste: Aus `release.yml` entsteht das
+      /// ausgelieferte Paket. Wer die Pinnung anhebt und nur `ci.yml` und
+      /// `.fvmrc` nachzieht, bekam eine grüne Kette, eine grüne CI und ein
+      /// Release aus einer ungeprüften Toolchain. `docs/RELEASE.md` hielt das
+      /// als Handarbeit fest („wer die Pinnung anhebt, ändert alle drei
+      /// zusammen") — ein Merkzettel ist aber genau das, was beim
+      /// Versionssprung übersehen wird.
+      test('hält an, wenn release.yml und ci.yml auseinanderlaufen', () async {
+        File(
+          '${tmp.path}\\.github\\workflows\\release.yml',
+        ).writeAsStringSync('env:\n  FLUTTER_VERSION: "1.2.3"\n');
+        final cache = Directory('${tmp.path}\\cache');
+        legeSdkAn(cache, testfassung);
+
+        final lauf = await pruefe(tmp, cache: cache);
+
+        expect(lauf.exitCode, 1, reason: protokoll(lauf));
+        expect(
+          protokoll(lauf),
+          contains('release.yml nennt Flutter 1.2.3, ci.yml FLUTTER_VERSION'),
+          reason:
+              'Der Auslieferungsbau fährt die Fassung aus release.yml. Läuft '
+              'sie gegen ci.yml, entsteht das Paket aus einer anderen '
+              'Toolchain als die, gegen die geprüft wurde — und ein Paket aus '
+              'ungeprüfter Toolchain ist schlimmer als keins, denn es sieht '
+              'fertig aus.',
+        );
+      });
+
+      test('meldet nicht grün, wenn release.yml die Pinnung verliert', () async {
+        File(
+          '${tmp.path}\\.github\\workflows\\release.yml',
+        ).writeAsStringSync('env:\n  FLUTTER_FASSUNG: "$testfassung"\n');
+        final cache = Directory('${tmp.path}\\cache');
+        legeSdkAn(cache, testfassung);
+
+        final lauf = await pruefe(tmp, cache: cache);
+
+        expect(
+          lauf.exitCode,
+          1,
+          reason:
+              'Die Datei liegt da, die Pinnung darin nicht — verglichen wurde '
+              'also nichts. Dieselbe Überlegung wie bei ci.yml: Ein Wächter, '
+              'der bei eigener Störung grün meldet, ist schlimmer als '
+              'keiner.\n${protokoll(lauf)}',
+        );
+        expect(protokoll(lauf), contains('release.yml'));
+      });
+
       test('meldet nicht grün, wenn ci.yml fehlt', () async {
         File('${tmp.path}\\.github\\workflows\\ci.yml').deleteSync();
         final cache = Directory('${tmp.path}\\cache');
@@ -187,6 +238,53 @@ void main() {
         ? null
         : 'Die Prüfkette ist ein PowerShell-Skript.',
   );
+
+  /// Die Skripte, die Flutter aufrufen, muessen es ueber diese Aufloesung tun.
+  ///
+  /// Der Fehler, den dieser Test festhaelt (03.09.2026): `build-package.ps1`
+  /// rief blankes `flutter`. In der CI ist das die gepinnte Fassung —
+  /// `flutter-action` installiert sie und legt sie in den PATH —, auf einem
+  /// Entwicklerrechner mit fvm aber irgendeine. Das Skript baute das
+  /// auslieferbare Paket also aus einer anderen Toolchain als die, gegen die
+  /// geprueft wurde, und schrieb dabei stillschweigend `pubspec.lock` um.
+  /// Beides fiel niemandem auf, weil in der CI beide Wege zusammenfallen:
+  /// Genau darum braucht die Regel einen Test und keinen Hinweis.
+  test('kein Skript ruft blankes flutter oder dart', () {
+    // `versionspruefung.ps1` selbst darf: Es *ist* die Aufloesung und faellt
+    // bewusst auf den PATH zurueck, wenn kein FVM-SDK vorliegt.
+    const ausgenommen = {'versionspruefung.ps1'};
+    // Nur der Befehlsname als **Anweisung** zaehlt: am Zeilenanfang (auch
+    // eingerueckt) oder hinter `&`/`|`. In Kommentaren und Fehlermeldungen
+    // steht „flutter" staendig, und das ist richtig so — die beginnen mit `#`
+    // oder tragen den Namen mitten im Satz. Die Einrueckung war beim ersten
+    // Anlauf vergessen, und damit liess der Waechter genau die Zeile durch,
+    // um die es geht (`    flutter pub get`).
+    final blank = RegExp(
+      r'(?:^[ \t]*|[&|][ \t]*)(flutter|dart)[ \t]+(?!--version)\S',
+      multiLine: true,
+    );
+
+    final verstoesse = <String>[];
+    for (final datei in Directory('../scripts').listSync().whereType<File>()) {
+      final name = datei.uri.pathSegments.last;
+      if (!name.endsWith('.ps1') || ausgenommen.contains(name)) continue;
+      for (final treffer in blank.allMatches(datei.readAsStringSync())) {
+        verstoesse.add('$name: ${treffer.group(0)!.trim()}');
+      }
+    }
+
+    expect(
+      verstoesse,
+      isEmpty,
+      reason:
+          'Diese Aufrufe nehmen das Flutter/Dart aus dem PATH statt der '
+          'gepinnten Fassung. Richtig ist der Weg von check.ps1: den Pfad '
+          'ueber `versionspruefung.ps1 -NurFrontend` aufloesen und den '
+          'aufgeloesten Befehl mit `&` aufrufen. Der Rueckfall auf den PATH '
+          'steckt schon darin — er gilt in der CI, wo das PATH-Flutter die '
+          'gepinnte Fassung ist.',
+    );
+  });
 }
 
 /// Die Fassung, auf die die Wegwerf-Repos gepinnt werden. Bewusst eine, die es
@@ -203,6 +301,13 @@ void legeTestrepoAn(Directory wurzel, File skript) {
   Directory('${wurzel.path}\\.github\\workflows').createSync(recursive: true);
   File(
     '${wurzel.path}\\.github\\workflows\\ci.yml',
+  ).writeAsStringSync('env:\n  FLUTTER_VERSION: "$testfassung"\n');
+
+  // release.yml pinnt ein drittes Mal und muss hier mitliegen, sonst
+  // überspringt das Skript den Vergleich (`Test-Path`) und die Fälle, die ihn
+  // prüfen, liefen gegen eine Prüfung, die gar nicht stattfindet.
+  File(
+    '${wurzel.path}\\.github\\workflows\\release.yml',
   ).writeAsStringSync('env:\n  FLUTTER_VERSION: "$testfassung"\n');
 
   Directory('${wurzel.path}\\Automation_App_Frontend').createSync();

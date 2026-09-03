@@ -340,6 +340,35 @@ die Fassung, die dabei herauskommt, und die Frontend-Schritte fahren genau
 dieses SDK. Zusätzlich schlägt sie an, wenn `.fvmrc` und `FLUTTER_VERSION`
 auseinanderlaufen.
 
+**Der Paketbau geht denselben Weg** (behoben am 03.09.2026).
+`scripts/build-package.ps1` rief bis dahin blankes `flutter`. In der CI ist das
+die gepinnte Fassung — `flutter-action` installiert sie und legt sie in den
+PATH —, auf einem Entwicklerrechner mit FVM aber irgendeine. Von Hand
+aufgerufen baute das Skript deshalb ein Paket aus einer anderen Toolchain als
+die, gegen die geprüft wurde, und schrieb dabei stillschweigend `pubspec.lock`
+um. Beobachtet mit Flutter 3.44.1 statt der gepinnten 3.41.2: drei Pakete neu
+aufgelöst, und die Sperrdatei wäre so in einen Commit gewandert. Jetzt löst
+`build-package.ps1` das SDK über `versionspruefung.ps1` auf und bricht ab, wenn
+die Fassung nicht stimmt — ein Paket aus einer ungeprüften Toolchain ist
+schlimmer als keins, denn es sieht fertig aus. Dass kein Skript unter
+`scripts/` mehr blankes `flutter` oder `dart` ruft, hält
+`test/architecture/versionspruefung_test.dart` fest.
+
+> **Für einen Versionssprung heißt das:** Die Pinnung steht an drei Stellen —
+> `FLUTTER_VERSION` in `ci.yml` **und** in `release.yml`, `.fvmrc` daneben. Wer
+> sie anhebt, ändert alle drei zusammen, in einem eigenen Commit.
+
+Die Prüfung vergleicht seither **alle drei** gegeneinander. `release.yml` war
+dabei die letzte unbewachte Stelle und die unangenehmste: Aus ihr entsteht das
+ausgelieferte Paket. Wer nur `ci.yml` und `.fvmrc` nachzog, bekam eine grüne
+Kette, eine grüne CI — und ein Release aus einer Toolchain, gegen die nie
+geprüft wurde. Der Satz oben stand hier vorher als Merkzettel; genau das ist
+aber, was beim Versionssprung übersehen wird, und deshalb ist er jetzt ein
+Test (`versionspruefung_test.dart`). Fehlt `FLUTTER_VERSION` in einer der
+beiden Workflow-Dateien, meldet die Prüfung das statt still nichts zu
+vergleichen — ein Wächter, der bei eigener Störung grün meldet, ist schlimmer
+als keiner.
+
 **`fvm use` ist damit Komfort, keine Voraussetzung.** Es legt die Junction
 `.fvm/flutter_sdk` an, und die hat weiterhin Vorrang — wer sie bewusst gesetzt
 hat, bekommt dieses SDK. Sie verkürzt Aufrufe von Hand und ist das, woran der
