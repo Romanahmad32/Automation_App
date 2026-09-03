@@ -123,7 +123,9 @@ public class VorgaengeController(
     {
         if (string.IsNullOrWhiteSpace(nach))
         {
-            return BadRequest("Die neue Referenz darf nicht leer sein.");
+            return Problem(
+                detail: "Die neue Referenz darf nicht leer sein.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var ergebnis = await repository.RenameReferenzAsync(von, nach, cancellationToken);

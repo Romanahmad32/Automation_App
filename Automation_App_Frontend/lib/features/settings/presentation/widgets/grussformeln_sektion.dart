@@ -1,5 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/core/general_widgets/entfernen_rueckfrage.dart';
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/email_versand/domain/entities/grussformel.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
@@ -46,13 +46,16 @@ class GrussformelnSektionInhalt extends StatelessWidget {
   /// selbst.
   Future<void> _entferne(BuildContext context, Grussformel gruss) async {
     final cubit = context.read<GrussformelnCubit>();
-    final sicher = await EntfernenRueckfrage.gestellt(
+    final sicher = await bestaetigen(
       context,
+      icon: Icons.warning_rounded,
       titel: 'Gruß entfernen?',
       text:
           '„${gruss.text}" wird aus dem Bestand gelöscht und steht beim '
           'Verfassen nicht mehr zur Auswahl. Bereits versendete Mails '
           'bleiben davon unberührt.',
+      bestaetigung: 'Entfernen',
+      destruktiv: true,
     );
     if (sicher) await cubit.loesche(gruss.id);
   }

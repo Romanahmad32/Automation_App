@@ -12,22 +12,14 @@
 # (DSGVO, § 203 StGB; das Repo ist oeffentlich)
 # ---------------------------------------------------------------------------
 # Echte Aktenordner
-/VUnvallsache*/
-# Beispiele/ ist ARBEITSABLAGE, kein Quellcode: Dort liegen fertig
-# ausgefuellte echte Mandantenschreiben (Name, Anschrift, Kennzeichen,
-# Versicherungsschein-Nr. des Mandanten und der Gegenseite), die .eml mit dem
-# vollstaendigen Signaturblock der Kanzlei samt IBAN und Steuernummer, ganze
-# Ablagen wie "Kanzlei Register/" — und morgen etwas, das heute niemand kennt.
-#
-# Deshalb steht hier eine ERLAUBNISLISTE und keine Verbotsliste (geaendert am
-# 03.09.2026). Die Verbotsliste hat zweimal verloren: erst fehlte .pdf, dann
-# griffen die Endungen nur eine Ebene tief und die Ablage "Kanzlei Register/"
-# waere beim naechsten `git add -A` mitgegangen. Jede weitere Endung
-# nachzutragen heisst, auf das naechste Leck zu warten; dieses Repo ist
-# oeffentlich. Versioniert sind genau die zwei neutralen Mustertexte, die
-# `git ls-files Beispiele/` zeigt — wer einen dritten aufnehmen will, traegt
-# ihn hier ein und sieht dabei, was er tut.
-Beispiele/*
+/VUnfallursache*/
+# Alles unter Beispiele/ ist grundsaetzlich echtes Mandanten- oder
+# Kanzleimaterial (Name, Anschrift, Kennzeichen, Versicherungsschein-Nr.,
+# Kanzlei-Briefkopf samt IBAN und Steuernummer) und keine neutralen Vorlagen
+# im technischen Sinn. Deshalb wird der gesamte Ordner ignoriert; versioniert
+# sind ausschliesslich die unten einzeln freigegebenen, bereits gepruefte
+# Dateien ohne Personen- oder Kanzleibezug.
+Beispiele/**
 !Beispiele/Anwortemail von Zentralruf.txt
 !Beispiele/Vorlagen Beispiel.txt
 # Auch die PARAMETRISIERTEN Fassungen bleiben lokal. Das Ersetzen trifft nur

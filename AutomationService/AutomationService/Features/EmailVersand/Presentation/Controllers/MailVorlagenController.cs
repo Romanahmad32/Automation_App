@@ -35,19 +35,8 @@ public class MailVorlagenController(IMailVorlagenRepository repository) : Contro
         [FromBody] SpeichereMailVorlageDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var angelegt = await repository.CreateAsync(dto.ToEntity(), cancellationToken);
-            return CreatedAtAction(nameof(GetAll), MailVorlageDto.From(angelegt));
-        }
-        catch (MailVorlageUngueltigException exception)
-        {
-            return BadRequest(exception.Message);
-        }
-        catch (MailVorlageNameConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var angelegt = await repository.CreateAsync(dto.ToEntity(), cancellationToken);
+        return CreatedAtAction(nameof(GetAll), MailVorlageDto.From(angelegt));
     }
 
     [HttpPut("{id:int}")]
@@ -60,22 +49,11 @@ public class MailVorlagenController(IMailVorlagenRepository repository) : Contro
         [FromBody] MailVorlageDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var geaendert = await repository.UpdateAsync(
-                (dto with { Id = id }).ToEntity(), cancellationToken);
-            return geaendert is null
-                ? NotFound($"Mail-Vorlage mit ID {id} nicht gefunden")
-                : Ok(MailVorlageDto.From(geaendert));
-        }
-        catch (MailVorlageUngueltigException exception)
-        {
-            return BadRequest(exception.Message);
-        }
-        catch (MailVorlageNameConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var geaendert = await repository.UpdateAsync(
+            (dto with { Id = id }).ToEntity(), cancellationToken);
+        return geaendert is null
+            ? Problem(detail: $"Mail-Vorlage mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound)
+            : Ok(MailVorlageDto.From(geaendert));
     }
 
     [HttpDelete("{id:int}")]
@@ -84,6 +62,6 @@ public class MailVorlagenController(IMailVorlagenRepository repository) : Contro
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var entfernt = await repository.DeleteAsync(id, cancellationToken);
-        return entfernt ? NoContent() : NotFound($"Mail-Vorlage mit ID {id} nicht gefunden");
+        return entfernt ? NoContent() : Problem(detail: $"Mail-Vorlage mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound);
     }
 }

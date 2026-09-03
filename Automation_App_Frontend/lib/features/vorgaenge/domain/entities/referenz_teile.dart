@@ -24,4 +24,15 @@ class ReferenzTeile {
       kennzeichen: match.group(4)!.trim(),
     );
   }
+
+  /// Das Zeichen — die Referenz ohne den Kennzeichen-Teil („144/26 C03").
+  String get zeichen => '$nummer/$jahr $abteilung';
+
+  /// Das Zeichen zu einer Referenz, von der sonst nichts vorliegt. Für die
+  /// Anzeigestellen, die nur eine Zeichenkette in der Hand haben und keinen
+  /// [Vorgang] — etwa eine Fehlermeldung zu einem bereits gelöschten Vorgang.
+  /// Lässt sich die Referenz nicht zerlegen, bleibt sie stehen: lieber der
+  /// ganze Schlüssel als gar keiner.
+  static String zeichenAus(String referenz) =>
+      parse(referenz)?.zeichen ?? referenz;
 }

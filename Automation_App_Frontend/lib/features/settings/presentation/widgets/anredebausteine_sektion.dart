@@ -1,5 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/core/general_widgets/entfernen_rueckfrage.dart';
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
@@ -47,13 +47,16 @@ class AnredebausteineSektionInhalt extends StatelessWidget {
   /// vorn steht (`AnredebausteineState.vorgabe`).
   Future<void> _entferne(BuildContext context, Anredebaustein baustein) async {
     final cubit = context.read<AnredebausteineCubit>();
-    final sicher = await EntfernenRueckfrage.gestellt(
+    final sicher = await bestaetigen(
       context,
+      icon: Icons.warning_rounded,
       titel: 'Anrede entfernen?',
       text:
           '„${baustein.bezeichnung}" wird aus dem Bestand gelöscht und steht '
           'beim Verfassen nicht mehr zur Auswahl. Bereits versendete Mails '
           'bleiben davon unberührt.',
+      bestaetigung: 'Entfernen',
+      destruktiv: true,
     );
     if (sicher) await cubit.loesche(baustein.id);
   }

@@ -30,19 +30,8 @@ public class AnredebausteineController(IAnredeBausteineRepository repository) : 
         [FromBody] SpeichereAnredeBausteinDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var angelegt = await repository.CreateAsync(dto.ToEntity(), cancellationToken);
-            return CreatedAtAction(nameof(GetAll), AnredeBausteinDto.From(angelegt));
-        }
-        catch (AnredeBausteinUngueltigException exception)
-        {
-            return BadRequest(exception.Message);
-        }
-        catch (AnredeBausteinConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var angelegt = await repository.CreateAsync(dto.ToEntity(), cancellationToken);
+        return CreatedAtAction(nameof(GetAll), AnredeBausteinDto.From(angelegt));
     }
 
     [HttpPut("{id:int}")]
@@ -55,22 +44,11 @@ public class AnredebausteineController(IAnredeBausteineRepository repository) : 
         [FromBody] AnredeBausteinDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var geaendert = await repository.UpdateAsync(
-                (dto with { Id = id }).ToEntity(), cancellationToken);
-            return geaendert is null
-                ? NotFound($"Anredebaustein mit ID {id} nicht gefunden")
-                : Ok(AnredeBausteinDto.From(geaendert));
-        }
-        catch (AnredeBausteinUngueltigException exception)
-        {
-            return BadRequest(exception.Message);
-        }
-        catch (AnredeBausteinConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var geaendert = await repository.UpdateAsync(
+            (dto with { Id = id }).ToEntity(), cancellationToken);
+        return geaendert is null
+            ? Problem(detail: $"Anredebaustein mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound)
+            : Ok(AnredeBausteinDto.From(geaendert));
     }
 
     [HttpDelete("{id:int}")]
@@ -79,6 +57,6 @@ public class AnredebausteineController(IAnredeBausteineRepository repository) : 
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var entfernt = await repository.DeleteAsync(id, cancellationToken);
-        return entfernt ? NoContent() : NotFound($"Anredebaustein mit ID {id} nicht gefunden");
+        return entfernt ? NoContent() : Problem(detail: $"Anredebaustein mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound);
     }
 }

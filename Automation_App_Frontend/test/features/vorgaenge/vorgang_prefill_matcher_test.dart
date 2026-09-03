@@ -66,6 +66,12 @@ void main() {
   }) {
     return Vorgang(
       referenz: '84/26 C03_GG-XY 123',
+      // Zerlegt wie nach `Vorgang.ausAnfrage`: Ohne die Bestandteile fiele
+      // `zeichen` auf die volle Referenz zurück, und der Unterschied zwischen
+      // Zeichen und Referenz — worum es hier geht — wäre nicht prüfbar.
+      laufendeNummer: 84,
+      jahr: '26',
+      abteilung: 'C03',
       angefragtAm: DateTime(2026, 4, 8),
       rechtsgebiet: rechtsgebiet,
       mandantId: mandantId,
@@ -119,6 +125,7 @@ void main() {
         'Unfalldatum',
         'Kennzeichen des Unfallgegners',
         'Aktenzeichen',
+        'Referenz',
         'Rechtsgebiet',
       ]),
       vorgang(rechtsgebiet: Rechtsgebiet.verkehrsrecht),
@@ -129,7 +136,11 @@ void main() {
     expect(result['Versicherungsschein-Nr.'], '999/123456-X');
     expect(result['Unfalldatum'], '09.03.2026');
     expect(result['Kennzeichen des Unfallgegners'], 'GG XY 123');
-    expect(result['Aktenzeichen'], '84/26 C03_GG-XY 123');
+    // „Aktenzeichen" meint das Zeichen und kommt ohne Kennzeichen in den
+    // Brief; das Kennzeichen trägt nur die volle Referenz, und die bekommt,
+    // wer sein Feld auch so nennt (§4.2).
+    expect(result['Aktenzeichen'], '84/26 C03');
+    expect(result['Referenz'], '84/26 C03_GG-XY 123');
     expect(result['Rechtsgebiet'], 'Verkehrsrecht');
   });
 

@@ -146,7 +146,7 @@ void main() {
   });
 
   group('Vorgang in der Auswahlliste', () {
-    test('die Referenz steht voran, danach sucht der Anwalt', () {
+    test('das Zeichen steht voran, danach sucht der Anwalt', () {
       final beschriftung = VorgangAuswahlFeld.beschriftungFuer(
         Vorgang(
           referenz: '84/26 C03_GG-XY 123',
@@ -159,10 +159,14 @@ void main() {
         ),
       );
 
-      expect(beschriftung, '84/26 C03_GG-XY 123 · Klaus Müller ./. HUK-COBURG');
+      // Das **Zeichen** steht voran, nicht die volle Referenz — nachgezogen
+      // am 03.09.2026 an §4.2: Das Kennzeichen darin ist ein
+      // Ordnungsmerkmal der Ablage und in einer Auswahlliste nur Länge.
+      // Der Wert des Eintrags bleibt die volle Referenz.
+      expect(beschriftung, '84/26 C03 · Klaus Müller ./. HUK-COBURG');
     });
 
-    test('ohne Parteien bleibt die Referenz allein stehen', () {
+    test('ohne Parteien bleibt das Zeichen allein stehen', () {
       final beschriftung = VorgangAuswahlFeld.beschriftungFuer(
         Vorgang(
           referenz: '85/26 C03',

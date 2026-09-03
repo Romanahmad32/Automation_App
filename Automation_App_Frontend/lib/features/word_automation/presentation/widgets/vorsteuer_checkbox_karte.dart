@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,30 +17,18 @@ class VorsteuerCheckboxKarte extends StatelessWidget {
 
   Future<void> _bestaetigeUmschaltung(BuildContext context, bool wert) async {
     final cubit = context.read<WizardCubit>();
-    final bestaetigt = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Vorsteuerabzugsberechtigung ändern?'),
-        content: const Text(
+    final bestaetigt = await bestaetigen(
+      context,
+      titel: 'Vorsteuerabzugsberechtigung ändern?',
+      text:
           'Diese Einstellung stammt aus dem Schritt "Vorlage wählen & '
           'ausfüllen". Sie beeinflusst nicht nur die Umsatzsteuer in der '
           'Schadensaufstellung, sondern auch das Ankreuzen im Dokument '
           '("ist / ist nicht vorsteuerabzugsberechtigt"). Möchten Sie sie '
           'wirklich ändern?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Ändern'),
-          ),
-        ],
-      ),
+      bestaetigung: 'Ändern',
     );
-    if (bestaetigt ?? false) {
+    if (bestaetigt) {
       // Nur das gemeinsame Cubit-Feld setzen; die Neuberechnung von applyVat
       // und der RVG-Kosten erledigt der BlocListener des Schritts.
       cubit.setVorsteuerabzugsberechtigt(wert);

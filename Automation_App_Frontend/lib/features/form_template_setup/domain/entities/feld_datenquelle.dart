@@ -168,17 +168,24 @@ enum FeldDatenquelle {
   ),
 
   // Vorgang / Unfall.
-  /// Angeboten wird **`{{Gegnerkennzeichen}}`** (#58): „Kennzeichen" allein
-  /// sagt nicht, wessen. Das blanke `{{Kennzeichen}}` löst weiter hierher auf,
-  /// damit die Kanzleivorlagen im Bestand nicht brechen.
+  //
+  // Beide Kennzeichen heißen aus einem Stück — „Gegnerkennzeichen", nicht
+  // „Kennzeichen · Gegner" (§4.1). Ein Feld namens `Kennzeichen` sagt nicht,
+  // wessen Fahrzeug gemeint ist, und die Antwort darauf ist ein Name, keine
+  // Regel: In der Vorlage steht der Name des Felds, und der soll ihn
+  // beantworten. Die Punkt-Gruppierung der übrigen Einträge trägt hier nicht —
+  // sie bündelt die *Teile* einer Sache (Mandant · Name, Mandant · PLZ, …);
+  // dies sind zwei Beteiligte mit derselben einen Angabe.
+  /// Das blanke `{{Kennzeichen}}` löst weiter hierher auf, damit die
+  /// Kanzleivorlagen im Bestand nicht brechen (#58).
   kennzeichenGegner(
-    name: 'Kennzeichen · Gegner',
+    name: 'Gegnerkennzeichen',
     value: 'kennzeichenGegner',
     platzhalter: 'Gegnerkennzeichen',
     gruppe: PlatzhalterGruppe.vorgang,
   ),
   kennzeichenMandant(
-    name: 'Kennzeichen · Mandant/Geschädigter',
+    name: 'Mandantenkennzeichen',
     value: 'kennzeichenMandant',
     platzhalter: 'MandantKennzeichen',
     gruppe: PlatzhalterGruppe.vorgang,
@@ -214,15 +221,20 @@ enum FeldDatenquelle {
     gruppe: PlatzhalterGruppe.vorgang,
   ),
 
-  /// **Ohne Platzhalter, solange der Restposten aus #38 offen ist:** Die
-  /// Erkennung schickt `aktenzeichen` *und* `zeichen` auf [referenz], also auf
-  /// die **volle** Referenz mit Kennzeichen (`84/26 C03_GG-XY 123`). Diese
-  /// Quelle liefert die kurze Form und ist über einen Namen nicht erreichbar.
-  /// Sie anzubieten hieße, „ohne Kennzeichen" zu versprechen und die lange
-  /// Form zu liefern.
-  aktenzeichen(
-    name: 'Aktenzeichen (ohne Kennzeichen)',
-    value: 'aktenzeichen',
+  /// Die **kurze** Form ohne Kennzeichen (`216/26 C03`) — was im Brief steht.
+  ///
+  /// Angeboten wird sie seit dem 03.09.2026: Bis dahin schickte die Erkennung
+  /// `{{Aktenzeichen}}` *und* `{{Zeichen}}` auf [referenz], also auf die volle
+  /// Zeichenkette samt Kennzeichen, und diese Quelle war über keinen Namen
+  /// erreichbar (Restposten aus #38). Sie anzubieten hätte damals „ohne
+  /// Kennzeichen" versprochen und die lange Form geliefert. Seit §4.2 treffen
+  /// beide Namen hierher, und die volle Referenz bekommt nur, wer sie
+  /// ausdrücklich als [referenz] anfordert.
+  zeichen(
+    name: 'Zeichen (ohne Kennzeichen)',
+    value: 'zeichen',
+    platzhalter: 'Zeichen',
+    frueher: 'aktenzeichen',
     gruppe: PlatzhalterGruppe.vorgang,
   ),
   rechtsgebiet(
@@ -245,11 +257,22 @@ enum FeldDatenquelle {
   /// Wohin der Eintrag in einer Auswahl gehört.
   final PlatzhalterGruppe gruppe;
 
+  /// Ein früherer [value] derselben Quelle, der in bereits gespeicherten
+  /// Vorlagen steht und weiterhin gelesen werden muss.
+  ///
+  /// Gibt es, weil [fromValue] unbekannte Werte still auf [keine] fallen lässt
+  /// — ein umbenannter Schlüssel bräche also keinen Test und keine Meldung,
+  /// sondern nur die Vorbelegung in jeder Bestandsvorlage, und das merkt erst
+  /// der Anwalt am fehlenden Wert im Brief. Wer hier umbenennt, trägt den alten
+  /// Wert hier ein; `feld_datenquelle_test.dart` hält beide Wege fest.
+  final String? frueher;
+
   const FeldDatenquelle({
     required this.name,
     required this.value,
     required this.gruppe,
     this.platzhalter = '',
+    this.frueher,
   });
 
   String get displayName => name;
@@ -267,12 +290,13 @@ enum FeldDatenquelle {
   static Iterable<FeldDatenquelle> get waehlbare =>
       FeldDatenquelle.values.where((quelle) => quelle.istWaehlbar);
 
-  /// Liest eine [FeldDatenquelle] aus ihrem persistierten [value]. Unbekannte
-  /// oder fehlende Werte fallen tolerant auf [keine] zurück, damit ein
-  /// älterer/fremder Persistenzstand das Feld nicht unlesbar macht.
+  /// Liest eine [FeldDatenquelle] aus ihrem persistierten [value] — oder aus
+  /// einem [frueher] geschriebenen. Unbekannte oder fehlende Werte fallen
+  /// tolerant auf [keine] zurück, damit ein älterer/fremder Persistenzstand das
+  /// Feld nicht unlesbar macht.
   static FeldDatenquelle fromValue(String? input) {
     for (final quelle in FeldDatenquelle.values) {
-      if (quelle.value == input) return quelle;
+      if (quelle.value == input || quelle.frueher == input) return quelle;
     }
     return keine;
   }

@@ -118,3 +118,19 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   bleibt still Pflichtfeld, ein umbenanntes wirft `FormControlNotFoundException`. Der bereits
   getippte Stand (`erfassteWerte`) steht bewusst **nicht** im Schlüssel: sonst setzte sich das
   Formular beim Tippen selbst zurück.
+- **Die Felder der anderen Vorlagenfassung werden eingeklappt, nicht entfernt** (#82,
+  `VerwendeteFelder` + `NichtVerwendeteFelder`). Eine Vorlage hat zwei Word-Dateien, aber eine
+  Feldliste; was nur in der anderen Datei als `{{Platzhalter}}` steht, verwirft die Ersetzung
+  wortlos. Die Controls müssen trotzdem in der `FormGroup` bleiben: `onWerteGeaendert` schreibt
+  `formGroup.value` in den Entwurf, ein fehlendes Feld fiele beim nächsten Tastendruck heraus —
+  und wer HGN ausfüllt, zur Auflistungs-Fassung wechselt und zurückkommt, verlöre die Eingaben
+  der jeweils anderen Seite.
+- **Die unbekannte Platzhaltermenge fällt für Pflicht und Sichtbarkeit in entgegengesetzte
+  Richtungen.** Die leere Menge (Datei nicht lesbar) macht *nichts* zur Pflicht — „solange nichts
+  bekannt ist: nicht sperren" —, lässt aber *alles* sichtbar: derselbe Rückfall verschlänge sonst
+  das ganze Formular. Deshalb hat `VerwendeteFelder` neben `wirdVerwendet` (mit Rückfall) das
+  rückfallfreie `enthaelt`, das `_istPflicht` benutzt.
+- **`VorgangsdatenHinweis` zählt nur die sichtbaren Vorbelegungen** (`ausfuell_formular.dart`).
+  Vorbelegt werden weiterhin alle Felder — die eingeklappten behalten ihren Wert für die andere
+  Fassung —, aber „6 Felder vorbelegt" über einem Formular mit drei Feldern schickt den Anwalt auf
+  die Suche nach den anderen drei.

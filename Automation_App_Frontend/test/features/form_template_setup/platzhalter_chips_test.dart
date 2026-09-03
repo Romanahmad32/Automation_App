@@ -83,6 +83,41 @@ void main() {
     expect(find.text('1 von 1 übernommen'), findsOneWidget);
   });
 
+  testWidgets('offene Chips sagen, was sie kosten (#36)', (tester) async {
+    await zeigeUndKlickeAlle(
+      tester,
+      ['Kennzeichen', 'Frist', 'Schadensaufstellung'],
+      vorhandeneNamen: ['Kennzeichen'],
+    );
+
+    expect(
+      find.text(
+        '1 Platzhalter ohne Feld — er bleibt beim Erzeugen roh im Dokument '
+        'stehen.',
+      ),
+      findsOne,
+    );
+    expect(
+      find.byTooltip(
+        'Platzhalter ohne Feld — bleibt beim Erzeugen roh im Dokument '
+        'stehen. Anklicken, um ihn zuzuordnen.',
+      ),
+      findsOne,
+    );
+  });
+
+  testWidgets('ist jeder Platzhalter versorgt, schweigt die Warnung', (
+    tester,
+  ) async {
+    await zeigeUndKlickeAlle(
+      tester,
+      ['Kennzeichen', 'Schadensaufstellung'],
+      vorhandeneNamen: ['Kennzeichen'],
+    );
+
+    expect(find.textContaining('ohne Feld'), findsNothing);
+  });
+
   testWidgets('der app-eigene Chip erklärt sich im Tooltip', (tester) async {
     await zeigeUndKlickeAlle(tester, ['Schadensaufstellung']);
 

@@ -125,7 +125,7 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Vorgang ${widget.vorgang.referenz} bearbeiten'),
+      title: Text('Vorgang ${widget.vorgang.zeichen} bearbeiten'),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(

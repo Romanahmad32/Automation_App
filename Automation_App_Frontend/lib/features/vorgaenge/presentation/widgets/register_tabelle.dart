@@ -4,7 +4,7 @@ import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_s
 import 'package:flutter/material.dart';
 
 /// Das Sachgebiete-Register als Tabelle im verbindlichen Spaltenschema
-/// (laufende Nr. | Aktenzeichen | Name ./. Gegner + Sachverhalt | Rechtsgebiet)
+/// (laufende Nr. | Zeichen | Name ./. Gegner + Sachverhalt | Rechtsgebiet)
 /// — gemeinsam genutzt von der Registerseite und der Startseiten-Karte, damit
 /// beide dieselben Spalten und Breiten zeigen.
 ///
@@ -68,7 +68,7 @@ class RegisterTabelle extends StatelessWidget {
                   columnWidth: IntrinsicColumnWidth(),
                 ),
                 const DataColumn(
-                  label: Text('Aktenzeichen'),
+                  label: Text('Zeichen'),
                   columnWidth: IntrinsicColumnWidth(),
                 ),
                 // Nimmt den gesamten Platz auf, den die schmalen Spalten übrig
@@ -116,7 +116,7 @@ class RegisterTabelle extends StatelessWidget {
                   DataRow(
                     cells: [
                       DataCell(Text(vorgang.laufendeNummer?.toString() ?? '—')),
-                      DataCell(Text(vorgang.aktenzeichen)),
+                      DataCell(Text(vorgang.zeichen)),
                       DataCell(
                         RegisterSachverhaltZelle(
                           vorgang: vorgang,
