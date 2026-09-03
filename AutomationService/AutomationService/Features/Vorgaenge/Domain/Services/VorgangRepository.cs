@@ -188,6 +188,7 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         target.FeldWerteJson = source.FeldWerteJson;
         target.SchadensaufstellungJson = source.SchadensaufstellungJson;
         target.EntwurfJson = source.EntwurfJson;
+        target.SchreibenNummer = source.SchreibenNummer;
         target.DokumentPfad = source.DokumentPfad;
         target.AktenOrdner = source.AktenOrdner;
         target.AbgeschlossenAm = source.AbgeschlossenAm;

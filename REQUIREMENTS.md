@@ -135,7 +135,9 @@ dabei erfassten Daten gehören zu **einem Vorgang** (siehe 3).
   Kfz-Kennzeichen werden durchgängig mit Bindestrich geschrieben (`HG-E 1427`).
 - **[M] Zeichen und Referenz sind zweierlei.** Der vordere Teil ohne Kennzeichen — `84/26 C03` —
   heißt **Zeichen**. Er ist der Bezeichner der Kanzlei und steht in den Briefen, im Register, im
-  Mailbetreff, im Dateinamen und überall in der Oberfläche. Die volle **Referenz** mit angehängtem
+  Mailbetreff und überall in der Oberfläche — **nicht** im Dateinamen des erzeugten Schreibens
+  (siehe 4.9): dort führt bereits der Ablagepfad zum Vorgang, und der Name trägt stattdessen, was
+  ihn *innerhalb* dieses Ordners unterscheidet. Die volle **Referenz** mit angehängtem
   Kennzeichen trägt allein die maschinelle Zuordnung der Zentralruf-Antwort (siehe 4.3) und
   erscheint nur, wo sie genau diese Aufgabe erfüllt: im Zentralruf-Formular, beim Zuordnen einer
   Antwort und als Nebenzeile am Vorgang. Der Begriff heißt **Zeichen** — nicht Aktenzeichen, nicht
@@ -544,6 +546,27 @@ Gemeinsam:
   Schreiben landen im selben Unterordner.
 - **[M]** Für ein Folgeschreiben stehen alle Daten des Vorgangs erneut vorbelegt bereit —
   einschließlich der Werte, die der Anwalt beim vorherigen Schreiben ergänzt oder korrigiert hat.
+- **[M] Namensmuster des erzeugten Schreibens:**
+
+  ```
+  Anspruchsschreiben an {Versicherung} {Nr} {Vorlagenname}
+  Beispiel: Anspruchsschreiben an Allianz 1 Vorfahrtverletzung STOP 205
+  ```
+
+  `{Nr}` ist die **laufende Nummer des Schreibens innerhalb des Vorgangs** — das erste hat 1, das
+  zweite 2. Sie ist nötig, weil alle Schreiben eines Vorgangs im selben Unterordner landen; ohne
+  sie träfe ein zweites Schreiben derselben Vorlage auf den Namen des ersten. `{Vorlagenname}` ist
+  der Name, den der Anwalt der Vorlage gegeben hat, nicht der Dateiname der Word-Datei — „VORLAGE"
+  gehört nicht in ein fertiges Schreiben. Weder Zeichen (siehe 4.2) noch Unfalldatum stehen im
+  Namen: Beide sind in der Ablage bereits bekannt, das Unfalldatum wörtlich im Ordnernamen
+  (siehe 6.1).
+- **[M] Was die Nummer hochzählt, entscheidet der Anwalt.** Ab dem zweiten Schreiben eines Vorgangs
+  fragt die App, ob das gerade Erzeugte eine **Korrektur** des vorigen ist (Nummer bleibt, die
+  vorige Fassung wird ersetzt) oder ein **neues** Schreiben (nächste Nummer). Geraten wird das
+  nicht: Eine falsch geratene Korrektur legt drei Fassungen desselben Briefes nebeneinander, ein
+  falsch geratenes Folgeschreiben überschreibt ein bereits abgelegtes. Beim ersten Schreiben
+  entfällt die Frage.
+- **[M]** Ein ausdrücklich gewünschter Dateiname schlägt das Muster.
 - **[S]** Am Vorgang ist erkennbar, welche Schreiben bereits erstellt wurden.
 
 ### 4.10 Erstkontakt über die Kanzlei-Website

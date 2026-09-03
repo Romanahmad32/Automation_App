@@ -1,10 +1,15 @@
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 
-/// Heuristiken, die aus den (frei definierten) Vorlagenfeldern die für Ablage
-/// und Dateiname benötigten Werte herauslesen. Alles ist Best-Effort: Findet
-/// die App nichts, gibt sie null/leere Vorschläge zurück und der Nutzer trägt
-/// im Speicherschritt selbst ein.
+/// Heuristiken, die aus den (frei definierten) Vorlagenfeldern die für die
+/// Ablage benötigten Werte herauslesen. Alles ist Best-Effort: Findet die App
+/// nichts, gibt sie null/leere Vorschläge zurück und der Nutzer trägt im
+/// Speicherschritt selbst ein.
+///
+/// Der **Dateiname** des Schreibens entsteht nicht mehr hier: Er folgt seit
+/// #32 der Kanzlei-Konvention aus Empfänger, laufender Nummer und
+/// Vorlagenname (`domain/services/schreiben_dateiname.dart`, §4.9) und wird
+/// nicht aus den Formularfeldern erraten.
 
 /// Ursachendatum (Unfalldatum) aus den Formulardaten: bevorzugt ein Datumsfeld,
 /// dessen Label nach Unfall/Ursache/Schaden/Datum aussieht; sonst das erste
@@ -114,17 +119,4 @@ FormularMandantDaten mandantDatenAusFormular(Map<String, String> data) {
     emailAdresse: suche(['mail'], ausschluss: fremd),
     telefonnummer: suche(['telefon', 'tel.'], ausschluss: fremd),
   );
-}
-
-/// Baut den Ergebnis-Dateinamen aus dem Vorlagen-Dateinamen und dem
-/// Ursachendatum nach dem Schema `Vorlagename Datum` (ohne Datum nur der
-/// Vorlagename).
-String baueDateiname(String wordVorlagePfad, String? ursachendatum) {
-  final dateiMitEndung = wordVorlagePfad.split(RegExp(r'[\\/]')).last;
-  final basis = dateiMitEndung.replaceAll(
-    RegExp(r'\.docx?$', caseSensitive: false),
-    '',
-  );
-  final datum = ursachendatum?.trim() ?? '';
-  return datum.isEmpty ? basis : '$basis $datum';
 }

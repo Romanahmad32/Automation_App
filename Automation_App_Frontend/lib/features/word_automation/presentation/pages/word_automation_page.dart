@@ -7,6 +7,7 @@ import 'package:automation_app/features/settings/presentation/blocs/kanzlei_sett
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_rueckfluss.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/word_automation/domain/services/schreiben_dateiname.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
@@ -140,6 +141,15 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                   var aktualisiert = vorgang.copyWith(
                     status: status,
                     dokumentPfad: state.path,
+                    // Die Nummer, unter der das Schreiben eben entstanden ist
+                    // (§4.9). Sie muss hier aus demselben Aufruf kommen wie im
+                    // Dateinamen, sonst zeigt der Vorgang eine andere Zahl als
+                    // die Datei trägt — `neuesSchreiben` fällt gleich danach in
+                    // `uebernehmeVorgangsStand` auf false zurück.
+                    schreibenNummer: naechsteSchreibenNummer(
+                      vorgang,
+                      neuesSchreiben: wizardState.neuesSchreiben,
+                    ),
                   );
                   final formData = wizardState.formData;
                   if (formData != null) {
