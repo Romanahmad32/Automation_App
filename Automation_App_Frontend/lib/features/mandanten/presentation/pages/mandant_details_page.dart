@@ -129,7 +129,7 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
         } else if (state.status == MandantEditStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message ?? 'Speichern fehlgeschlagen'),
+              content: Text(state.message ?? 'Mandant nicht gespeichert.'),
             ),
           );
         }

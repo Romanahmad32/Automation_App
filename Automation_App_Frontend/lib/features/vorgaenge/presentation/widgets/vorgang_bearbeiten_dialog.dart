@@ -99,7 +99,8 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
       if (ergebnis.fehler != null || ergebnis.vorgang == null) {
         if (!mounted) return;
         setState(() {
-          _referenzFehler = ergebnis.fehler ?? 'Unbekannter Fehler.';
+          _referenzFehler =
+              ergebnis.fehler ?? 'Die Referenz konnte nicht geändert werden.';
           _speichert = false;
         });
         return;
