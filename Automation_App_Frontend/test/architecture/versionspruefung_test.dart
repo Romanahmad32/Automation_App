@@ -187,6 +187,53 @@ void main() {
         ? null
         : 'Die Prüfkette ist ein PowerShell-Skript.',
   );
+
+  /// Die Skripte, die Flutter aufrufen, muessen es ueber diese Aufloesung tun.
+  ///
+  /// Der Fehler, den dieser Test festhaelt (03.09.2026): `build-package.ps1`
+  /// rief blankes `flutter`. In der CI ist das die gepinnte Fassung —
+  /// `flutter-action` installiert sie und legt sie in den PATH —, auf einem
+  /// Entwicklerrechner mit fvm aber irgendeine. Das Skript baute das
+  /// auslieferbare Paket also aus einer anderen Toolchain als die, gegen die
+  /// geprueft wurde, und schrieb dabei stillschweigend `pubspec.lock` um.
+  /// Beides fiel niemandem auf, weil in der CI beide Wege zusammenfallen:
+  /// Genau darum braucht die Regel einen Test und keinen Hinweis.
+  test('kein Skript ruft blankes flutter oder dart', () {
+    // `versionspruefung.ps1` selbst darf: Es *ist* die Aufloesung und faellt
+    // bewusst auf den PATH zurueck, wenn kein FVM-SDK vorliegt.
+    const ausgenommen = {'versionspruefung.ps1'};
+    // Nur der Befehlsname als **Anweisung** zaehlt: am Zeilenanfang (auch
+    // eingerueckt) oder hinter `&`/`|`. In Kommentaren und Fehlermeldungen
+    // steht „flutter" staendig, und das ist richtig so — die beginnen mit `#`
+    // oder tragen den Namen mitten im Satz. Die Einrueckung war beim ersten
+    // Anlauf vergessen, und damit liess der Waechter genau die Zeile durch,
+    // um die es geht (`    flutter pub get`).
+    final blank = RegExp(
+      r'(?:^[ \t]*|[&|][ \t]*)(flutter|dart)[ \t]+(?!--version)\S',
+      multiLine: true,
+    );
+
+    final verstoesse = <String>[];
+    for (final datei in Directory('../scripts').listSync().whereType<File>()) {
+      final name = datei.uri.pathSegments.last;
+      if (!name.endsWith('.ps1') || ausgenommen.contains(name)) continue;
+      for (final treffer in blank.allMatches(datei.readAsStringSync())) {
+        verstoesse.add('$name: ${treffer.group(0)!.trim()}');
+      }
+    }
+
+    expect(
+      verstoesse,
+      isEmpty,
+      reason:
+          'Diese Aufrufe nehmen das Flutter/Dart aus dem PATH statt der '
+          'gepinnten Fassung. Richtig ist der Weg von check.ps1: den Pfad '
+          'ueber `versionspruefung.ps1 -NurFrontend` aufloesen und den '
+          'aufgeloesten Befehl mit `&` aufrufen. Der Rueckfall auf den PATH '
+          'steckt schon darin — er gilt in der CI, wo das PATH-Flutter die '
+          'gepinnte Fassung ist.',
+    );
+  });
 }
 
 /// Die Fassung, auf die die Wegwerf-Repos gepinnt werden. Bewusst eine, die es

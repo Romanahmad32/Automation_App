@@ -340,6 +340,25 @@ die Fassung, die dabei herauskommt, und die Frontend-Schritte fahren genau
 dieses SDK. Zusätzlich schlägt sie an, wenn `.fvmrc` und `FLUTTER_VERSION`
 auseinanderlaufen.
 
+**Der Paketbau geht denselben Weg** (behoben am 03.09.2026).
+`scripts/build-package.ps1` rief bis dahin blankes `flutter`. In der CI ist das
+die gepinnte Fassung — `flutter-action` installiert sie und legt sie in den
+PATH —, auf einem Entwicklerrechner mit FVM aber irgendeine. Von Hand
+aufgerufen baute das Skript deshalb ein Paket aus einer anderen Toolchain als
+die, gegen die geprüft wurde, und schrieb dabei stillschweigend `pubspec.lock`
+um. Beobachtet mit Flutter 3.44.1 statt der gepinnten 3.41.2: drei Pakete neu
+aufgelöst, und die Sperrdatei wäre so in einen Commit gewandert. Jetzt löst
+`build-package.ps1` das SDK über `versionspruefung.ps1` auf und bricht ab, wenn
+die Fassung nicht stimmt — ein Paket aus einer ungeprüften Toolchain ist
+schlimmer als keins, denn es sieht fertig aus. Dass kein Skript unter
+`scripts/` mehr blankes `flutter` oder `dart` ruft, hält
+`test/architecture/versionspruefung_test.dart` fest.
+
+> **Für einen Versionssprung heißt das:** `FLUTTER_VERSION` steht in `ci.yml`
+> **und** in `release.yml`, `.fvmrc` daneben. Die Prüfung vergleicht `.fvmrc`
+> gegen `ci.yml`; die dritte Stelle in `release.yml` sieht sie nicht. Wer die
+> Pinnung anhebt, ändert alle drei zusammen.
+
 **`fvm use` ist damit Komfort, keine Voraussetzung.** Es legt die Junction
 `.fvm/flutter_sdk` an, und die hat weiterhin Vorrang — wer sie bewusst gesetzt
 hat, bekommt dieses SDK. Sie verkürzt Aufrufe von Hand und ist das, woran der
