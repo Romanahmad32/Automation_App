@@ -20,8 +20,10 @@ class RegisterFilter extends Equatable {
   /// Vierstelliger Jahrgang; null heißt: alle Jahrgänge.
   final String? jahr;
 
-  /// Null heißt: alle Rechtsgebiete.
-  final Rechtsgebiet? rechtsgebiet;
+  /// Rechtsgebiet in Anzeigeform („Verkehrsrecht"); null heißt: alle.
+  /// Verglichen wird über [RechtsgebietWert.gleich], damit der
+  /// kleingeschriebene Altbestand dieselben Treffer liefert.
+  final String? rechtsgebiet;
 
   const RegisterFilter({this.status, this.jahr, this.rechtsgebiet});
 
@@ -35,7 +37,7 @@ class RegisterFilter extends Equatable {
   RegisterFilter mit({
     VorgangStatus? status,
     String? jahr,
-    Rechtsgebiet? rechtsgebiet,
+    String? rechtsgebiet,
     bool statusLoeschen = false,
     bool jahrLoeschen = false,
     bool rechtsgebietLoeschen = false,
@@ -50,7 +52,8 @@ class RegisterFilter extends Equatable {
   bool passt(Vorgang vorgang) =>
       (status == null || vorgang.status == status) &&
       (jahr == null || jahrgang(vorgang) == jahr) &&
-      (rechtsgebiet == null || vorgang.rechtsgebiet == rechtsgebiet);
+      (rechtsgebiet == null ||
+          RechtsgebietWert.gleich(vorgang.rechtsgebiet, rechtsgebiet));
 
   /// Wendet den Filter an und sortiert wie die Registerdatei: Jahrgang
   /// aufsteigend, darin nach laufender Nummer. Zeilen ohne Nummer hängen hinten
@@ -95,6 +98,32 @@ class RegisterFilter extends Equatable {
     final jahre = vorgaenge.map(jahrgang).toSet().toList();
     jahre.sort((a, b) => b.compareTo(a));
     return jahre;
+  }
+
+  /// Die Rechtsgebiets-Auswahl der Filterleiste: der Katalog (§7.1) in seiner
+  /// Reihenfolge, dahinter alphabetisch, was **nur im Bestand** vorkommt —
+  /// etwa Vertragsrecht (kein Katalogeintrag, kein Kürzel) oder Altwerte.
+  /// Ohne die Bestandswerte wäre der alte Fehler zurück: Zeilen, nach denen
+  /// niemand filtern kann, weil die Auswahl ihren Wert nicht anbietet.
+  static List<String> rechtsgebiete(
+    List<Vorgang> vorgaenge, {
+    List<String> katalog = const [],
+  }) {
+    // Katalog dedupliziert übernehmen: mehrere Kürzel dürfen auf dasselbe
+    // Rechtsgebiet zeigen, im Dropdown steht es trotzdem nur einmal.
+    final bekannt = <String>{};
+    final auswahl = <String>[];
+    for (final name in katalog) {
+      if (bekannt.add(RechtsgebietWert.normalisiert(name))) auswahl.add(name);
+    }
+    final nurBestand = <String, String>{};
+    for (final vorgang in vorgaenge) {
+      final schluessel = RechtsgebietWert.normalisiert(vorgang.rechtsgebiet);
+      if (schluessel.isEmpty || bekannt.contains(schluessel)) continue;
+      nurBestand[schluessel] = RechtsgebietWert.anzeige(vorgang.rechtsgebiet);
+    }
+    final zusatz = nurBestand.values.toList()..sort();
+    return [...auswahl, ...zusatz];
   }
 
   @override

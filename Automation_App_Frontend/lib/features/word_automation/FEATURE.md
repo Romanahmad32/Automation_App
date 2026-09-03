@@ -18,7 +18,7 @@ Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTempla
 `POST /api/PdfConversion/convert-from-path`; über `VorgangCubit` zusätzlich `PUT /api/Vorgaenge`
 und `POST /api/Vorgaenge/abschliessen`; Standardpositionen über `GET`/`PUT /api/Settings/schadenspositionen`
 **Tests:** `test/features/word_automation/` (Formularextraktion, `WizardCubit`,
-`EditedDocumentBloc`, Dokument-Export, Betrag einer Schadensposition, Standardpositionen samt Editor)
+`EditedDocumentBloc`, Export, Leseregel für Beträge, Betrag einer Position, die drei RVG-Felder)
 
 **Fallstricke**
 

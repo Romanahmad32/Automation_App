@@ -34,7 +34,10 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Der Postausgang ist nicht erreichbar. Läuft der Dienst noch?',
+            dienstOhneAntwort(
+              e,
+              'Die Versandbereitschaft konnte nicht geprüft werden',
+            ),
       );
     }
   }
@@ -56,7 +59,7 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Die E-Mail konnte nicht versendet werden. Läuft der Dienst noch?',
+            dienstOhneAntwort(e, 'Die E-Mail konnte nicht versendet werden'),
       );
     }
   }
@@ -78,7 +81,7 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Der Entwurf konnte nicht geöffnet werden. Läuft der Dienst noch?',
+            dienstOhneAntwort(e, 'Der Entwurf konnte nicht geöffnet werden'),
       );
     }
   }
@@ -105,7 +108,10 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Die Anhänge aus Outlook konnten nicht gelesen werden.',
+            dienstOhneAntwort(
+              e,
+              'Die Anhänge aus Outlook konnten nicht gelesen werden',
+            ),
       );
     }
   }
@@ -121,8 +127,10 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Das Versandprotokoll konnte nicht gelesen werden. Läuft der '
-                'Dienst noch?',
+            dienstOhneAntwort(
+              e,
+              'Das Versandprotokoll konnte nicht gelesen werden',
+            ),
       );
     }
   }
@@ -135,8 +143,10 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Das Versandprotokoll konnte nicht gelesen werden. Läuft der '
-                'Dienst noch?',
+            dienstOhneAntwort(
+              e,
+              'Das Versandprotokoll konnte nicht gelesen werden',
+            ),
       );
     }
   }
@@ -182,7 +192,10 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Die Signaturen aus Outlook konnten nicht gelesen werden.',
+            dienstOhneAntwort(
+              e,
+              'Die Signaturen aus Outlook konnten nicht gelesen werden',
+            ),
       );
     }
   }
@@ -194,7 +207,8 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return SignaturStand.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        backendFehlertext(e) ?? 'Die Signatur konnte nicht gelesen werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Die Signatur konnte nicht gelesen werden'),
       );
     }
   }
@@ -230,7 +244,8 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return SignaturStand.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        backendFehlertext(e) ?? 'Die Signatur konnte nicht übernommen werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Die Signatur konnte nicht übernommen werden'),
       );
     }
   }
@@ -243,7 +258,10 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Die formatierte Fassung konnte nicht verworfen werden.',
+            dienstOhneAntwort(
+              e,
+              'Die formatierte Fassung konnte nicht verworfen werden',
+            ),
       );
     }
   }

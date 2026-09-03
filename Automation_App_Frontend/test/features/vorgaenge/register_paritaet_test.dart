@@ -17,7 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Vorgang vorgang({
     String? gegner = 'HUK',
-    String? rechtsgebietRoh,
+    String rechtsgebiet = RechtsgebietWert.verkehrsrecht,
     String? versichererName,
     String? jahr,
     DateTime? angefragtAm,
@@ -26,7 +26,7 @@ void main() {
     angefragtAm: angefragtAm ?? DateTime(2026, 1, 5),
     mandantName: 'Mustermann',
     gegner: gegner,
-    rechtsgebietRoh: rechtsgebietRoh,
+    rechtsgebiet: rechtsgebiet,
     jahr: jahr,
     antwort: versichererName == null
         ? null
@@ -72,19 +72,18 @@ void main() {
 
   group('Spalte 4 — Rechtsgebiet', () {
     /// Ein nie erfasstes Sachgebiet steht in einem Sachgebiete-Register als
-    /// Strich und nicht als „Verkehrsrecht": Die tolerante Abbildung in
-    /// [Rechtsgebiet.fromValue] ist fürs Bearbeiten gedacht, als Registerzeile
-    /// wäre sie eine Behauptung.
+    /// Strich und nicht als „Verkehrsrecht" — als Registerzeile wäre das eine
+    /// Behauptung.
     test('ein leerer gespeicherter Wert wird zum Strich', () {
       expect(
-        vorgang(rechtsgebietRoh: '').rechtsgebietAnzeige,
-        Rechtsgebiet.unbekannt,
+        vorgang(rechtsgebiet: '').rechtsgebietAnzeige,
+        RechtsgebietWert.unbekannt,
       );
     });
 
     test('ein bekannter Wert bekommt seinen Anzeigenamen', () {
       expect(
-        vorgang(rechtsgebietRoh: 'verkehrsstrafrecht').rechtsgebietAnzeige,
+        vorgang(rechtsgebiet: 'verkehrsstrafrecht').rechtsgebietAnzeige,
         'Verkehrsstrafrecht',
       );
     });
@@ -93,14 +92,14 @@ void main() {
     /// gebogen. „Mietrecht" ist die ehrlichere Zelle als „Verkehrsrecht".
     test('ein unbekannter Wert wird gross geschrieben, nicht ersetzt', () {
       expect(
-        vorgang(rechtsgebietRoh: 'mietrecht').rechtsgebietAnzeige,
+        vorgang(rechtsgebiet: 'mietrecht').rechtsgebietAnzeige,
         'Mietrecht',
       );
     });
 
-    /// Ohne übergebenen Rohwert zählt das gesetzte Rechtsgebiet — ein im Code
-    /// gebauter Vorgang ist nicht „nie erfasst".
-    test('ohne Rohwert zählt das gesetzte Rechtsgebiet', () {
+    /// Ein im Code gebauter Vorgang trägt den Standardwert und ist damit
+    /// nicht „nie erfasst".
+    test('ohne Angabe zählt der Standardwert', () {
       expect(vorgang().rechtsgebietAnzeige, 'Verkehrsrecht');
     });
   });

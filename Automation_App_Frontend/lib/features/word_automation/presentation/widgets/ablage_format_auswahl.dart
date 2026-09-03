@@ -34,7 +34,6 @@ class AblageFormatAuswahl extends StatelessWidget {
                 ButtonSegment(value: wert, label: Text(wert.bezeichnung)),
             ],
             selected: {format},
-            showSelectedIcon: false,
             onSelectionChanged: (auswahl) => onChanged(auswahl.first),
           ),
         ),

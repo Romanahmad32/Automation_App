@@ -112,7 +112,8 @@ class ApiMandantDatasource implements MandantDatasource {
     final status = e.response?.statusCode;
     if (status == 409 || status == 404) {
       return MandantException(
-        backendFehlertext(e) ?? 'Mandant konnte nicht gespeichert werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Der Mandant konnte nicht gespeichert werden'),
       );
     }
     return e;

@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
+import 'package:automation_app/features/sachgebiete/presentation/widgets/sachgebiet_katalog_builder.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
@@ -46,7 +47,10 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
   late final TextEditingController _polizei;
 
   late VorgangStatus _status;
-  late Rechtsgebiet _rechtsgebiet;
+
+  /// Der gespeicherte Rohwert; geändert nur durch eine aktive Auswahl aus dem
+  /// Katalog — lädt der nicht, bleibt der Wert beim Speichern unangetastet.
+  late String _rechtsgebiet;
 
   /// Fehlermeldung einer abgewiesenen Referenzänderung (z. B. schon vergeben).
   String? _referenzFehler;
@@ -99,7 +103,8 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
       if (ergebnis.fehler != null || ergebnis.vorgang == null) {
         if (!mounted) return;
         setState(() {
-          _referenzFehler = ergebnis.fehler ?? 'Unbekannter Fehler.';
+          _referenzFehler =
+              ergebnis.fehler ?? 'Die Referenz konnte nicht geändert werden.';
           _speichert = false;
         });
         return;
@@ -187,16 +192,47 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
                 onChanged: (s) => setState(() => _status = s ?? _status),
               ),
               const SizedBox(height: 16),
-              SearchableDropdown<Rechtsgebiet>(
-                value: _rechtsgebiet,
-                labelText: 'Rechtsgebiet',
-                hintText: 'Rechtsgebiet wählen',
-                entries: [
-                  for (final r in Rechtsgebiet.values)
-                    SearchableDropdownEntry(value: r, label: r.displayName),
-                ],
-                onChanged: (r) =>
-                    setState(() => _rechtsgebiet = r ?? _rechtsgebiet),
+              // Auswahl aus dem Sachgebietskatalog (§7.1); ein gespeicherter
+              // Wert ausserhalb des Katalogs (Altbestand) bleibt als eigener
+              // Eintrag wählbar. Lädt der Katalog nicht, steht hier der
+              // Fehlerhinweis mit „Erneut versuchen" statt der Auswahl.
+              SachgebietKatalogBuilder(
+                builder: (context, katalog) {
+                  final entries = [
+                    for (final sachgebiet in katalog)
+                      SearchableDropdownEntry(
+                        value: sachgebiet.rechtsgebietVorschlag,
+                        label: sachgebiet.rechtsgebietVorschlag,
+                      ),
+                  ];
+                  // Den gespeicherten Wert auf den Katalogeintrag abbilden
+                  // ('verkehrsrecht' → 'Verkehrsrecht'), damit die Auswahl ihn
+                  // anzeigt; ohne Deckung kommt er als eigener Eintrag dazu.
+                  String? wert;
+                  for (final eintrag in entries) {
+                    if (RechtsgebietWert.gleich(eintrag.value, _rechtsgebiet)) {
+                      wert = eintrag.value;
+                      break;
+                    }
+                  }
+                  if (wert == null && _rechtsgebiet.trim().isNotEmpty) {
+                    wert = _rechtsgebiet;
+                    entries.add(
+                      SearchableDropdownEntry(
+                        value: _rechtsgebiet,
+                        label: RechtsgebietWert.anzeige(_rechtsgebiet),
+                      ),
+                    );
+                  }
+                  return SearchableDropdown<String>(
+                    value: wert,
+                    labelText: 'Rechtsgebiet',
+                    hintText: 'Rechtsgebiet wählen',
+                    entries: entries,
+                    onChanged: (r) =>
+                        setState(() => _rechtsgebiet = r ?? _rechtsgebiet),
+                  );
+                },
               ),
             ],
           ),

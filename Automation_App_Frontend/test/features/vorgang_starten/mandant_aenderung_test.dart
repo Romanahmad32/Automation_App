@@ -14,7 +14,7 @@ VorgangStartenDaten _daten({
     auftragsnummer: 1,
     auftragsjahr: 26,
     abteilung: 'C03',
-    rechtsgebiet: Rechtsgebiet.verkehrsrecht,
+    rechtsgebiet: RechtsgebietWert.verkehrsrecht,
     referenz: '1/26 C03',
     vorname: vorname,
     nachname: nachname,

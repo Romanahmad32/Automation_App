@@ -1,8 +1,10 @@
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/betrag_eingabe.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/rvg_felder_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/rvg_korrektur_felder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/schadensposition_hinzufuegen_menue.dart';
 import 'package:flutter/material.dart';
 
@@ -50,7 +52,7 @@ class _DamageListingFormState extends State<DamageListingForm> {
     super.initState();
     final initial = widget.initialValue;
     _gebuehrensatzController = TextEditingController(
-      text: betragAlsEingabe(initial?.gebuehrensatz ?? 1.3),
+      text: betragAlsEingabe(initial?.gebuehrensatz ?? gebuehrensatzVorgabe),
     );
     _geschaeftsgebuehrOverrideController = TextEditingController(
       text: initial?.geschaeftsgebuehrOverride != null
@@ -132,9 +134,7 @@ class _DamageListingFormState extends State<DamageListingForm> {
                       border: const OutlineInputBorder(),
                       // Die Beanstandung steht an der Zeile, die sie auslöst —
                       // nicht als Sammelmeldung über der Aufstellung.
-                      errorText: betragUnzulaessig(zeilen[index].betrag)
-                          ? negativerBetragHinweis
-                          : null,
+                      errorText: betragFehler(zeilen[index]),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -194,54 +194,16 @@ class _DamageListingFormState extends State<DamageListingForm> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _gebuehrensatzController,
-          decoration: const InputDecoration(
-            labelText: 'Gebührensatz (Geschäftsgebühr)',
-            border: OutlineInputBorder(),
-          ),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onChanged: (_) => _emit(),
-        ),
-        const SizedBox(height: 8),
-        // Manuelle Korrektur der RVG-Berechnung: leer = automatisch nach der
-        // amtlichen Gebührentabelle (Anlage 2 zu § 13 RVG) rechnen.
-        ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: const Text('RVG-Berechnung korrigieren'),
-          subtitle: const Text(
-            'Leer lassen für die automatische Berechnung nach § 13 RVG',
-          ),
-          childrenPadding: const EdgeInsets.only(bottom: 8),
-          children: [
-            TextField(
-              controller: _geschaeftsgebuehrOverrideController,
-              decoration: const InputDecoration(
-                labelText: 'Geschäftsgebühr überschreiben (€)',
-                helperText:
-                    'Ersetzt Wertgebühr × Gebührensatz (Nr. 2300 VV RVG)',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onChanged: (_) => _emit(),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _auslagenpauschaleOverrideController,
-              decoration: const InputDecoration(
-                labelText: 'Auslagenpauschale überschreiben (€)',
-                helperText:
-                    'Ersetzt die Pauschale nach Nr. 7002 VV RVG (20 %, max. 20 €)',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onChanged: (_) => _emit(),
-            ),
-          ],
+        // setState wie bei den Betragsfeldern: Mit dem Text ändert sich auch
+        // die Markierung am Feld, und _emit() allein baut sie nicht neu.
+        RvgKorrekturFelder(
+          gebuehrensatz: _gebuehrensatzController,
+          geschaeftsgebuehr: _geschaeftsgebuehrOverrideController,
+          auslagenpauschale: _auslagenpauschaleOverrideController,
+          onChanged: () {
+            setState(() {});
+            _emit();
+          },
         ),
       ],
     );
@@ -252,9 +214,9 @@ class _DamageListingFormState extends State<DamageListingForm> {
   /// geht; beide sehen damit garantiert dasselbe.
   List<Schadenspositionszeile> _zeilen() => [
     for (final item in _items)
-      (
+      schadenspositionszeile(
         bezeichnung: item.description.text,
-        betrag: betragAusEingabe(item.amount.text),
+        betragText: item.amount.text,
       ),
   ];
 
@@ -265,6 +227,11 @@ class _DamageListingFormState extends State<DamageListingForm> {
   /// während getippt wird. Beanstandet werden sie trotzdem: Das Verdikt läuft
   /// über **alle** Zeilen, sonst bliebe eine Zeile mit `-250` und leerer
   /// Bezeichnung sichtbar rot und „Dokument erstellen" trotzdem frei.
+  ///
+  /// In dieselbe Liste gehen die drei RVG-Felder (`rvg_felder_pruefung.dart`).
+  /// Eine gemeinsame Liste und nicht zwei: `schadensaufstellungIstErzeugbar`
+  /// ist die einzige Stelle, die über den Knopf entscheidet — eine zweite
+  /// Quelle müsste jemand von Hand gleichlaufend halten.
   void _emit() {
     final zeilen = _zeilen();
     final items = [
@@ -279,7 +246,7 @@ class _DamageListingFormState extends State<DamageListingForm> {
     widget.onChanged(
       DamageListing(
         items: items,
-        gebuehrensatz: betragAusEingabe(_gebuehrensatzController.text) ?? 1.3,
+        gebuehrensatz: gebuehrensatzAusEingabe(_gebuehrensatzController.text),
         // applyVat wird vom Wizard aus der Vorsteuer-Checkbox gesetzt.
         geschaeftsgebuehrOverride: betragAusEingabe(
           _geschaeftsgebuehrOverrideController.text,
@@ -288,7 +255,14 @@ class _DamageListingFormState extends State<DamageListingForm> {
           _auslagenpauschaleOverrideController.text,
         ),
       ),
-      schadenspositionenFehler(zeilen),
+      [
+        ...schadenspositionenFehler(zeilen),
+        ...rvgFelderFehler(
+          gebuehrensatz: _gebuehrensatzController.text,
+          geschaeftsgebuehr: _geschaeftsgebuehrOverrideController.text,
+          auslagenpauschale: _auslagenpauschaleOverrideController.text,
+        ),
+      ],
     );
   }
 }
