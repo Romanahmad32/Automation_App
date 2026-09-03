@@ -26,6 +26,7 @@ class VorgangStartenSektionen extends StatelessWidget {
   final ValueChanged<Mandant> onMandantGewaehlt;
   final VoidCallback onAuswahlAufheben;
   final ValueChanged<String> onKennzeichenGewaehlt;
+  final int vorgaengeAmMandanten;
   final void Function(MandantAenderungsart art, VorgangStartenDaten daten)
   onMandantBestaetigt;
   final ValueChanged<String> onVorlageAusfuellen;
@@ -43,6 +44,7 @@ class VorgangStartenSektionen extends StatelessWidget {
     required this.onMandantGewaehlt,
     required this.onAuswahlAufheben,
     required this.onKennzeichenGewaehlt,
+    required this.vorgaengeAmMandanten,
     required this.onMandantBestaetigt,
     required this.onVorlageAusfuellen,
     required this.onZumPostfach,
@@ -75,6 +77,7 @@ class VorgangStartenSektionen extends StatelessWidget {
                 onMandantGewaehlt: onMandantGewaehlt,
                 onAuswahlAufheben: onAuswahlAufheben,
                 onKennzeichenGewaehlt: onKennzeichenGewaehlt,
+                vorgaengeAmMandanten: vorgaengeAmMandanten,
                 onMandantBestaetigt: onMandantBestaetigt,
               ),
               if (istVerkehrsunfall) const UnfallhergangSection(),

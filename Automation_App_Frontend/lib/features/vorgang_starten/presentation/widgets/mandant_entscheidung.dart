@@ -39,10 +39,13 @@ class MandantEntscheidung {
   /// Der Karten-Knopf (`MandantSpeichernButton`) stellt dieselbe Frage, gibt
   /// aber nur die [MandantAenderungsart] zurück, weil er den Mandanten allein
   /// speichert. Hier wird daraus gleich die Nutzlast des Speicher-Events.
+  /// [vorgaengeAmMandanten] hängt nur an der Warnung vor einer Umbenennung und
+  /// darf deshalb 0 bleiben, wo die Zahl nicht zu haben ist.
   static Future<MandantEntscheidung> hole(
     BuildContext context, {
     required VorgangStartenDaten daten,
     required Mandant? gewaehlt,
+    int vorgaengeAmMandanten = 0,
   }) async {
     final art = mandantAenderungsart(daten, gewaehlt);
     if (art == MandantAenderungsart.keine) return ohneAenderung;
@@ -52,6 +55,11 @@ class MandantEntscheidung {
       context,
       istNeu: istNeu,
       zeilen: istNeu ? mandantNeuFelder(daten) : mandantDiff(daten, gewaehlt!),
+      umbenennung: mandantUmbenennung(
+        daten,
+        gewaehlt,
+        vorgaengeAmMandanten: vorgaengeAmMandanten,
+      ),
     );
     if (bestaetigt != true) return abgebrochen;
 

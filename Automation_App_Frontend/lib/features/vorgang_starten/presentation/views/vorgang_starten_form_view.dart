@@ -12,6 +12,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_nav
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
+import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_bindung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_entscheidung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_aktionsleiste.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_group.dart';
@@ -153,6 +154,9 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     }
   }
 
+  /// Die Zahl für die Umbenennungs-Warnung — gezählt wird in `mandant_bindung`.
+  int get _vorgaengeAmMandanten => vorgaengeAmMandanten(_selectedMandantId);
+
   Mandant? _findeMandant(int id) {
     for (final mandant in _mandanten) {
       if (mandant.id == id) return mandant;
@@ -161,13 +165,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
   }
 
   void _uebernehmeMandant(Mandant mandant) {
-    _form.control('mandantVorname').updateValue(mandant.vorname);
-    _form.control('mandantNachname').updateValue(mandant.nachname);
-    _form.control('mandantStrasse').updateValue(mandant.strasseHausnummer);
-    _form.control('mandantPlz').updateValue(mandant.postleitzahl);
-    _form.control('mandantOrt').updateValue(mandant.ort);
-    _form.control('mandantEmail').updateValue(mandant.emailAdresse);
-    _form.control('mandantTelefon').updateValue(mandant.telefonnummer);
+    uebernimmMandantInFormular(_form, mandant);
     setState(() => _selectedMandantId = mandant.id);
   }
 
@@ -184,6 +182,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
       context,
       daten: daten,
       gewaehlt: gewaehlt,
+      vorgaengeAmMandanten: _vorgaengeAmMandanten,
     );
     if (!entscheidung.bestaetigt || !mounted) return;
 
@@ -291,6 +290,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
                 onKennzeichenGewaehlt: (kennzeichen) => _form
                     .control('mandantKennzeichen')
                     .updateValue(kennzeichen),
+                vorgaengeAmMandanten: _vorgaengeAmMandanten,
                 onMandantBestaetigt: _onMandantBestaetigt,
                 onVorlageAusfuellen: _vorlageAusfuellen,
                 onZumPostfach: _zumPostfach,

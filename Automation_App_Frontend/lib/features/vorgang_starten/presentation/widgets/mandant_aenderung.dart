@@ -19,6 +19,45 @@ class MandantFeldDiff {
   });
 }
 
+/// Was eine Aktualisierung am Namen des verknüpften Registereintrags anrichtet:
+/// Aus [alt] wird [neu], und [betroffeneVorgaenge] Vorgänge, die an diesem
+/// Eintrag hängen, tragen danach den neuen Namen.
+///
+/// Eine eigene Klasse und keine weitere [MandantFeldDiff]-Zeile, weil der Fall
+/// eine andere Größenordnung hat: Der Eintrag wird **umbenannt**, nicht kopiert
+/// — einen Mandanten namens [alt] gibt es danach nicht mehr (§5.1). Wer nur die
+/// Zeile „Name: alt → neu" sieht, liest darin eine Korrektur und nicht, dass er
+/// gerade den Menschen austauscht, an dem seine Vorgänge hängen.
+class MandantUmbenennung {
+  final String alt;
+  final String neu;
+  final int betroffeneVorgaenge;
+
+  const MandantUmbenennung({
+    required this.alt,
+    required this.neu,
+    this.betroffeneVorgaenge = 0,
+  });
+}
+
+/// Die Umbenennung, die aus [daten] gegenüber [gewaehlt] entstünde — oder null,
+/// wenn der Name bleibt und die Aktualisierung damit eine gewöhnliche ist.
+///
+/// [vorgaengeAmMandanten] ist die Zahl der Vorgänge am Registereintrag; sie
+/// kommt von der View (aus dem `VorgangCubit`) und steht im Hinweis.
+MandantUmbenennung? mandantUmbenennung(
+  VorgangStartenDaten daten,
+  Mandant? gewaehlt, {
+  int vorgaengeAmMandanten = 0,
+}) {
+  if (gewaehlt == null || !daten.nameWeichtAbVon(gewaehlt)) return null;
+  return MandantUmbenennung(
+    alt: gewaehlt.anzeigename,
+    neu: daten.mandantName,
+    betroffeneVorgaenge: vorgaengeAmMandanten,
+  );
+}
+
 /// Bestimmt, ob aus den Eingaben ein neuer Mandant entstünde, ein bestehender
 /// geändert würde oder nichts zu tun ist. Grundlage für Button-Zustand/-Label
 /// und für die Rückfrage beim „Vorgang speichern".

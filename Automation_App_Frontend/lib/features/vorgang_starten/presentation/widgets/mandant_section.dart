@@ -34,6 +34,11 @@ class MandantSection extends StatelessWidget {
   /// freier String aus dem Sachgebietskatalog, kein Enum mehr.
   final String rechtsgebiet;
 
+  /// Wie viele Vorgänge am verknüpften Registereintrag hängen — Zahl für die
+  /// Warnung, wenn ein geänderter Name ihn umbenennt. Die Karte selbst weiß das
+  /// nicht: Die Vorgänge kennt die View (`VorgangCubit`).
+  final int vorgaengeAmMandanten;
+
   /// Bestätigte Mandanten-Aktion (Anlegen/Aktualisieren) aus dem Karten-Button.
   final void Function(MandantAenderungsart art, VorgangStartenDaten daten)
   onMandantBestaetigt;
@@ -46,6 +51,7 @@ class MandantSection extends StatelessWidget {
     required this.onAuswahlAufheben,
     required this.onKennzeichenGewaehlt,
     required this.rechtsgebiet,
+    required this.vorgaengeAmMandanten,
     required this.onMandantBestaetigt,
   });
 
@@ -92,10 +98,14 @@ class MandantSection extends StatelessWidget {
                 value: selectedMandantId,
                 labelText: 'Aus Mandanten übernehmen',
                 hintText: 'Mandant suchen oder „(neuer Mandant)"',
+                // Was hier steht, ist ein Versprechen: Der Satz stand einmal
+                // umgekehrt da („Änderungen am Namen lösen die Verknüpfung"),
+                // und niemand hat das je gebaut — die Karte benannte den
+                // Eintrag um, während der Hinweis das Gegenteil zusagte (#50).
                 helperText:
-                    'Füllt die Felder aus dem Register; Änderungen am Namen lösen '
-                    'die Verknüpfung.',
-                helperMaxLines: 2,
+                    'Füllt die Felder aus dem Register; beim Speichern wird '
+                    'dieser Eintrag geändert — auch sein Name.',
+                helperMaxLines: 3,
                 entries: [
                   const SearchableDropdownEntry<int>(
                     value: -1,
@@ -201,6 +211,7 @@ class MandantSection extends StatelessWidget {
               daten: daten,
               gewaehlterMandant: _gewaehlterMandant,
               felderGueltig: _felderGueltig(form),
+              vorgaengeAmMandanten: vorgaengeAmMandanten,
               onBestaetigt: onMandantBestaetigt,
             ),
           ],

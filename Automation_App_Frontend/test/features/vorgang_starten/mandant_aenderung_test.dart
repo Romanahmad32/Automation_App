@@ -71,6 +71,52 @@ void main() {
     });
   });
 
+  /// Der Name ist der eine Wert, dessen Änderung nicht den Eintrag verbessert,
+  /// sondern den Menschen austauscht, für den er steht (#50). Deshalb hat er
+  /// einen eigenen Ausgang — und der muss stumm bleiben, solange nur Adresse
+  /// oder Kennzeichen wandern.
+  group('mandantUmbenennung', () {
+    test('ohne verknüpften Mandanten: keine Umbenennung', () {
+      expect(
+        mandantUmbenennung(_daten(vorname: 'Anna', nachname: 'Klein'), null),
+        isNull,
+      );
+    });
+
+    test('bei geänderter Adresse: keine Umbenennung', () {
+      final daten = _daten(
+        vorname: 'Max',
+        nachname: 'Müller',
+        strasse: 'Hauptstr. 2',
+      );
+      expect(mandantUmbenennung(daten, _mandant()), isNull);
+    });
+
+    test('bei geändertem Namen: alter und neuer Name, mit Zahl', () {
+      final daten = _daten(vorname: 'Erika', nachname: 'Mustermann');
+      final umbenennung = mandantUmbenennung(
+        daten,
+        _mandant(),
+        vorgaengeAmMandanten: 3,
+      );
+
+      expect(umbenennung, isNotNull);
+      expect(umbenennung!.alt, 'Max Müller');
+      expect(umbenennung.neu, 'Erika Mustermann');
+      expect(umbenennung.betroffeneVorgaenge, 3);
+    });
+
+    test('nur der Vorname geändert ist schon eine Umbenennung', () {
+      final daten = _daten(vorname: 'Maximilian', nachname: 'Müller');
+      expect(mandantUmbenennung(daten, _mandant())?.neu, 'Maximilian Müller');
+    });
+
+    test('umliegende Leerzeichen im Namen sind keine Änderung', () {
+      final daten = _daten(vorname: ' Max ', nachname: 'Müller ');
+      expect(mandantUmbenennung(daten, _mandant()), isNull);
+    });
+  });
+
   test('mandantDiff zeigt nur geänderte Felder als alt → neu', () {
     final daten = _daten(
       vorname: 'Max',
