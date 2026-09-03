@@ -17,6 +17,17 @@
     Der Dienst wird self-contained veroeffentlicht: auf dem Kanzlei-PC soll
     niemand vorher eine .NET-Laufzeit installieren muessen.
 
+    Gebaut wird mit der **gepinnten** Flutter-Fassung, aufgeloest ueber
+    scripts/versionspruefung.ps1 — derselbe Weg, den auch check.ps1 nimmt.
+    Vorher stand hier blankes `flutter`, und das ist genau dort falsch, wo es
+    am meisten kostet: In der CI ist das PATH-Flutter die gepinnte Fassung
+    (flutter-action installiert sie), auf einem Entwicklerrechner mit fvm aber
+    irgendeine. Das Skript baute dann ein Paket aus einer anderen Toolchain als
+    die, gegen die geprueft wurde, und schrieb dabei stillschweigend
+    pubspec.lock um (beobachtet am 03.09.2026: 3.44.1 statt 3.41.2, drei
+    Pakete neu aufgeloest). Weder das Paket noch die Sperrdatei war danach
+    das, was die CI gesehen hatte.
+
 .EXAMPLE
     ./scripts/build-package.ps1 -Version 1.2.0 -BuildNumber 42
 #>
@@ -44,6 +55,18 @@ $ziel = Join-Path $repo $OutputDirectory
 
 Write-Host "== Paket $Version+$BuildNumber wird gebaut ==" -ForegroundColor Cyan
 
+# Dasselbe SDK, das die Pruefkette faehrt. Das Skript meldet den Pfad nur bei
+# Erfolg und bricht sonst mit einer Anleitung ab — ein Paket aus einer
+# ungepruefen Toolchain ist schlimmer als keins, denn es sieht fertig aus.
+# Leerer Pfad heisst: kein FVM-SDK vorhanden, dann gilt das Flutter aus dem
+# PATH. Genau das ist der Fall in der CI, und dort ist es die gepinnte Fassung.
+$sdkBin = & (Join-Path $PSScriptRoot 'versionspruefung.ps1') -NurFrontend
+if ($LASTEXITCODE -ne 0) {
+    throw 'Die Toolchain-Pruefung ist fehlgeschlagen (siehe oben). Es wurde kein Paket gebaut.'
+}
+$flutterBefehl = if ($sdkBin) { Join-Path $sdkBin 'flutter.bat' } else { 'flutter' }
+Write-Host "-- Flutter: $flutterBefehl" -ForegroundColor DarkGray
+
 if (Test-Path $ziel) { Remove-Item $ziel -Recurse -Force }
 New-Item -ItemType Directory -Path $ziel -Force | Out-Null
 
@@ -51,10 +74,10 @@ New-Item -ItemType Directory -Path $ziel -Force | Out-Null
 Write-Host "-- Flutter-Anwendung" -ForegroundColor Cyan
 Push-Location $frontend
 try {
-    flutter pub get
+    & $flutterBefehl pub get
     if ($LASTEXITCODE -ne 0) { throw "flutter pub get ist fehlgeschlagen." }
 
-    flutter build windows --release --build-name=$Version --build-number=$BuildNumber
+    & $flutterBefehl build windows --release --build-name=$Version --build-number=$BuildNumber
     if ($LASTEXITCODE -ne 0) { throw "flutter build windows ist fehlgeschlagen." }
 }
 finally {

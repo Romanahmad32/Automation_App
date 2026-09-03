@@ -138,11 +138,27 @@ if (-not $NurBackend) {
             'oder https://docs.flutter.dev/release/archive.'
     }
     else {
-        # Nur die erste Zeile ("Flutter 3.41.2 • channel stable • ...") — der
+        # Die Versionszeile ("Flutter 3.41.2 • channel stable • ...") — der
         # Aufruf kostet ein paar Sekunden, ist aber der einzige Weg, der auch
         # eine per PATH gewechselte Installation ehrlich beantwortet.
-        $zeile = [string](& $flutterBefehl --version 2>$null | Select-Object -First 1)
-        $installiert = [regex]::Match($zeile, 'Flutter\s+(\S+)').Groups[1].Value
+        #
+        # Gesucht wird die *erste passende* Zeile und nicht die erste
+        # ueberhaupt (geaendert am 03.09.2026): Ein frisches Flutter schreibt
+        # beim ersten Lauf einen Hinweis davor. Bisher lief dieses Skript nur
+        # auf Entwicklerrechnern, wo das langst geschehen ist; seit
+        # build-package.ps1 es ruft, laeuft es auch auf einem GitHub-Runner,
+        # der jedes Mal frisch ist. Faende die Regex dort nichts, meldete der
+        # Vergleich "Flutter  statt der gepinnten 3.41.2" und der Paketbau
+        # braeche ab, ohne dass etwas fehlte.
+        $ausgabe = @(& $flutterBefehl --version 2>$null)
+        $installiert = ''
+        foreach ($zeile in $ausgabe) {
+            $treffer = [regex]::Match([string]$zeile, 'Flutter\s+(\d\S*)')
+            if ($treffer.Success) {
+                $installiert = $treffer.Groups[1].Value
+                break
+            }
+        }
         if ($installiert -ne $gepinnt) {
             $fehler += "Flutter $installiert statt der gepinnten $gepinnt. In Automation_App_Frontend " +
                 "'fvm install $gepinnt' und 'fvm use $gepinnt' ausfuehren (die Kette greift dann von " +
