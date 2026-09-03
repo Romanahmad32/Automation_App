@@ -75,6 +75,36 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   `CalculateRvgEvent.hatPositionen` — der leere Stand muss beim Bloc ankommen, sonst bleibt der
   zuletzt berechnete Betrag in der Vorschau stehen und eine laufende Anfrage unstorniert.
 
+## Die Platzhalter, die die App selbst füllt
+
+Acht Namen füllt die App aus der Schadensaufstellung — `{{Gegenstandswert}}`, `{{Gebuehrensatz}}`,
+`{{Geschaeftsgebuehr}}`, `{{Auslagenpauschale}}`, `{{RvgNetto}}`, `{{RvgUmsatzsteuer}}`,
+`{{RvgBrutto}}` und seit #31 `{{Gesamtforderung}}` (Zwischensumme plus RA-Kosten brutto, die Zahl,
+die der Gegner überweisen soll). Dazu `{{Schadensaufstellung}}`, an dessen Stelle die Tabelle tritt.
+
+Sie stehen im Backend an **einer** Stelle (`RvgPlatzhalter`) und werden im Frontend von
+`AppEigenePlatzhalter` gespiegelt, das sie von der Feldübernahme ausschließt und in der
+Vorlagenverwaltung auflistet (`AppEigenePlatzhalterListe`). Ein neuer Name gehört an beide Stellen;
+`app_eigene_platzhalter_test.dart` liest die C#-Quelle und hält die Listen zusammen.
+
+Zwei Dinge daran sind leicht wieder kaputtzumachen:
+
+- **Die Werte hängen an der erfassten Aufstellung, nicht an der Tabelle.** Bis #31 stand die
+  Zuweisung mitten in `DamageListingTable.Insert`; die Kosten waren damit ein Nebenprodukt des
+  Tabellenbaus. Jetzt setzt `RvgPlatzhalter.Setze` sie vorher und reicht die Kalkulation in
+  `Insert` weiter — gerechnet wird einmal.
+- **Ohne Aufstellung werden sie geleert, nicht stehen gelassen.** Ein `{{RvgBrutto}}` im
+  ausgehenden Anspruchsschreiben ist ein Kanzleifehler vor dem Mandanten. Aufgefangen wurde das
+  vorher allein von der Warnliste im Begutachten-Schritt — eine Warnung, die bei *jedem* Schreiben
+  ohne Auflistung erscheint, wird überlesen. Geleert wird über `TryAdd`: Ein vom Anwalt selbst
+  erfasstes Feld gleichen Namens behält seinen Wert; leeren soll die Lücke schließen, nicht eine
+  Eingabe wegwerfen.
+
+Was **nicht** verschwunden ist: Eine erfasste Aufstellung ohne `{{Schadensaufstellung}}` in der
+Vorlage bleibt ein Fehler (`TemplateProcessingException`) — ein Schreiben, das eine erfasste
+Aufstellung verschweigt, fordert Beträge, die es nicht zeigt. Die Vorlagenverwaltung warnt davor
+schon beim Verknüpfen der Datei.
+
 ## Vorlagen
 
 - `linkWordFileToTemplate` merkt sich die gewählte .docx am aktiven Vorlagen-Slot; die
