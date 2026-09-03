@@ -1,12 +1,12 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
+import 'package:automation_app/features/word_automation/domain/services/schreiben_dateiname.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
-import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_listing_form.dart';
@@ -226,11 +226,7 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                               if (!await darfNeuErzeugen(context, bloc.state)) {
                                 return;
                               }
-                              final datum = ursachendatumAusFormular(
-                                wizardState.selectedFormTemplate?.fields ??
-                                    const [],
-                                wizardState.formData!,
-                              );
+                              final vorgang = wizardState.selectedVorgang;
                               bloc.add(
                                 EditDocumentEvent(
                                   data: wizardState.formData!,
@@ -238,12 +234,22 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                                   path: loadedPath,
                                   vorsteuerabzugsberechtigt:
                                       wizardState.vorsteuerabzugsberechtigt,
-                                  outputFileName: baueDateiname(
-                                    loadedPath,
-                                    datum,
+                                  outputFileName: schreibenDateiname(
+                                    vorlagenname:
+                                        wizardState
+                                            .selectedFormTemplate
+                                            ?.templateName ??
+                                        '',
+                                    nummer: naechsteSchreibenNummer(
+                                      vorgang,
+                                      neuesSchreiben:
+                                          wizardState.neuesSchreiben,
+                                    ),
+                                    versicherer: empfaengerFuerDateiname(
+                                      vorgang,
+                                    ),
                                   ),
-                                  vorgangSchluessel:
-                                      wizardState.selectedVorgang?.referenz,
+                                  vorgangSchluessel: vorgang?.referenz,
                                 ),
                               );
                             }
