@@ -10,7 +10,16 @@ import 'package:automation_app/features/email_versand/domain/entities/outlook_si
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
+import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
+import 'package:automation_app/features/email_versand/domain/entities/grussformel.dart';
+import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/anredebausteine_repository.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/grussformeln_repository.dart';
+import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
+import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
@@ -125,11 +134,68 @@ class StummerVersanddienst implements EmailVersandRepository {
   Future<List<OutlookSignatur>> ladeOutlookSignaturen() async => const [];
 
   @override
+  Future<SignaturStand> leseSignatur(String name) async =>
+      const SignaturStand();
+
+  @override
   Future<SignaturStand> uebernimmSignatur(String name) async =>
       const SignaturStand();
 
   @override
   Future<SignaturStand> verwirfSignaturFormat() async => const SignaturStand();
+}
+
+/// Daneben die Verwaltung der persoenlichen Gruesse (§4.7, §7.1) — auch sie
+/// holt beim Aufgehen; hier bleibt der Bestand leer.
+/// Ebenfalls unten in derselben Maske: die Verwaltung der Anredeanfaenge
+/// (§4.7, §7.1). Sie holt den Bestand beim Aufgehen; hier bleibt er leer.
+class StummerAnredeDienst implements AnredebausteineRepository {
+  @override
+  Future<List<Anredebaustein>> ladeAnredebausteine() async => const [];
+
+  @override
+  Future<Anredebaustein> lege(Anredebaustein baustein) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Anredebaustein> aktualisiere(Anredebaustein baustein) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> loesche(int id) => throw UnimplementedError();
+}
+
+class StummerGrussDienst implements GrussformelnRepository {
+  @override
+  Future<List<Grussformel>> ladeGrussformeln() async => const [];
+
+  @override
+  Future<Grussformel> lege(Grussformel grussformel) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Grussformel> aktualisiere(Grussformel grussformel) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> loesche(int id) => throw UnimplementedError();
+}
+
+/// Ebenfalls unten in derselben Maske: die Verwaltung der Mail-Textvorlagen
+/// (§4.7). Sie holt den Bestand beim Aufgehen; hier bleibt er leer.
+class StummerVorlagenDienst implements MailVorlagenRepository {
+  @override
+  Future<List<MailVorlage>> ladeVorlagen() async => const [];
+
+  @override
+  Future<MailVorlage> lege(MailVorlage vorlage) => throw UnimplementedError();
+
+  @override
+  Future<MailVorlage> aktualisiere(MailVorlage vorlage) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> loesche(int id) => throw UnimplementedError();
 }
 
 void main() {
@@ -143,10 +209,18 @@ void main() {
     subjectFilter: 'Zentralruf',
   );
 
-  setUp(
-    () =>
-        getIt.registerSingleton<EmailVersandRepository>(StummerVersanddienst()),
-  );
+  setUp(() {
+    getIt.registerSingleton<EmailVersandRepository>(StummerVersanddienst());
+    getIt.registerLazySingleton<MailVorlagenCubit>(
+      () => MailVorlagenCubit(StummerVorlagenDienst()),
+    );
+    getIt.registerLazySingleton<GrussformelnCubit>(
+      () => GrussformelnCubit(StummerGrussDienst()),
+    );
+    getIt.registerLazySingleton<AnredebausteineCubit>(
+      () => AnredebausteineCubit(StummerAnredeDienst()),
+    );
+  });
 
   tearDown(() => getIt.reset());
 

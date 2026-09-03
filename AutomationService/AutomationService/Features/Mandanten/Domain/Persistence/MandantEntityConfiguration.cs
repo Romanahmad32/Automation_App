@@ -13,5 +13,9 @@ public class MandantEntityConfiguration : IEntityTypeConfiguration<MandantEntity
     {
         builder.Property(m => m.AktenOrdnernamenJson).HasDefaultValue("[]");
         builder.Property(m => m.KennzeichenJson).HasDefaultValue("[]");
+        // Ohne Default trügen die Zeilen aus der Zeit vor dieser Spalte NULL, und
+        // jeder Leser müsste den Fall kennen. Eine Grußformel gibt es entweder
+        // oder nicht — "nicht" ist die leere Zeichenkette.
+        builder.Property(m => m.PersoenlicheGrussformel).HasDefaultValue(string.Empty);
     }
 }

@@ -16,7 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// liegt aber nicht auf der Platte" war ungeprüft.
 void main() {
   String pfad(String basis) =>
-      '$basis${Platform.pathSeparator}${SynchronisierterOrdner.unterordner}';
+      '$basis${Platform.pathSeparator}${SynchronisierterOrdner.registerUnterordner}';
 
   /// Alle Ordner liegen da. Die Prüfung merkt sich, wonach gefragt wurde.
   Future<bool> Function(String) alleDa(List<String> gefragt) => (pfad) async {
@@ -100,5 +100,24 @@ void main() {
       ),
       isNull,
     );
+  });
+
+  /// Register-Spiegel und Sicherungen liegen im selben synchronisierten
+  /// Bereich, aber nicht im selben Ordner: Das eine wird gelesen, das andere
+  /// soll niemand anfassen (§7.2, #39).
+  test('schlägt für die Sicherungen einen eigenen Unterordner vor', () async {
+    final vorschlag = await SynchronisierterOrdner.suche(
+      unterordner: SynchronisierterOrdner.sicherungenUnterordner,
+      umgebung: {'OneDrive': r'C:\Users\anwalt\OneDrive'},
+      existiert: alleDa([]),
+    );
+
+    expect(
+      vorschlag,
+      r'C:\Users\anwalt\OneDrive'
+      '${Platform.pathSeparator}'
+      '${SynchronisierterOrdner.sicherungenUnterordner}',
+    );
+    expect(vorschlag, isNot(pfad(r'C:\Users\anwalt\OneDrive')));
   });
 }

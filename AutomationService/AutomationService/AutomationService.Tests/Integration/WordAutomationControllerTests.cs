@@ -24,7 +24,9 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
                     ["WordAutomation:TemplatesDirectory"] = "Templates",
                     ["WordAutomation:OutputDirectory"] = "Generated",
                     // Tests sollen kein Word starten — Warmup nur in der echten App.
-                    ["PdfConversion:WarmupOnStartup"] = "false"
+                    ["PdfConversion:WarmupOnStartup"] = "false",
+                    // Keine echte Sicherung in den Ablageordner des Anwalts.
+                    ["Backup:AutomatischeSicherung"] = "false",
                 });
             });
         });
@@ -43,6 +45,7 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/WordAutomation/replaced-document", payload);
 
         // [ApiController] validiert das Modell automatisch und liefert hier ProblemDetails (400).
+        // Was in diesem Rumpf steht, prueft ValidierungsAntwortTests.
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 

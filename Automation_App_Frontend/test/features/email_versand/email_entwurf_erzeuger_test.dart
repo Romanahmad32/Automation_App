@@ -195,7 +195,7 @@ void main() {
     );
   });
 
-  test('Betreff trägt Parteien, Unfalldatum und Aktenzeichen', () {
+  test('Betreff trägt Parteien, Unfalldatum und Zeichen', () {
     final betreff = EmailEntwurfErzeuger(
       kanzlei: kanzlei,
       vorgang: vorgang(),

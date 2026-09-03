@@ -77,14 +77,43 @@ class KanzleiSettingsBloc
     );
   }
 
+  /// Schreibt [settings] — mit **frisch geholter** formatierter Signatur.
+  ///
+  /// `mailSignaturHtml` ist das einzige Feld, das nicht über diesen Weg
+  /// entsteht: Es gehört dem Dienst, der es beim Übernehmen aus Outlook
+  /// schreibt (samt Bildern im Dateisystem). Der zuletzt geladene Stand kennt
+  /// es dann noch nicht, und weil der PUT **jedes** Feld ersetzt, löschte das
+  /// nächste Speichern die gerade übernommene Signatur wieder — der Anwalt
+  /// sah „Die Signatur ist gespeichert." und hatte danach nur noch den
+  /// Nur-Text unter seinen Mails (behoben am 02.09.2026).
+  ///
+  /// **Schlägt das Nachladen fehl, wird nicht geschrieben.** Blind zu
+  /// speichern hiesse, die formatierte Signatur auf Verdacht zu löschen;
+  /// eine Fehlermeldung ist die ehrlichere Antwort.
   Future<void> _speichere(
     KanzleiSettings settings,
     KanzleiSettingsBereich bereich,
     Emitter<KanzleiSettingsState> emit,
   ) async {
     emit(const KanzleiSettingsLoading());
-    final result = await _saveSettings(settings);
-    switch (result) {
+    switch (await _getSettings(const NoParams())) {
+      case Right(value: final stand):
+        await _schreibe(
+          settings.copyWith(mailSignaturHtml: stand.mailSignaturHtml),
+          bereich,
+          emit,
+        );
+      case Left(value: final failure):
+        emit(KanzleiSettingsError(failure.message));
+    }
+  }
+
+  Future<void> _schreibe(
+    KanzleiSettings settings,
+    KanzleiSettingsBereich bereich,
+    Emitter<KanzleiSettingsState> emit,
+  ) async {
+    switch (await _saveSettings(settings)) {
       case Right(value: final gespeichert):
         emit(KanzleiSettingsLoaded(gespeichert, gespeichert: bereich));
       case Left(value: final failure):

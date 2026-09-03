@@ -18,7 +18,9 @@ public interface IDatabaseBackupService
     /// Spielt eine zuvor exportierte Sicherung ein: validiert sie, sichert den
     /// aktuellen Stand vorher daneben ab, ersetzt die Datenbankdatei und hebt sie
     /// auf den aktuellen Schemastand. Wirft <see cref="InvalidBackupException"/>,
-    /// wenn die Datei keine gültige Sicherung dieser Anwendung ist.
+    /// wenn die Datei keine gültige Sicherung dieser Anwendung ist. Das Ergebnis
+    /// nennt Vorlagen, die wegen abweichenden lokalen Inhalts nicht ersetzt wurden.
     /// </summary>
-    Task ImportBackupAsync(Stream sicherung, CancellationToken cancellationToken = default);
+    Task<SicherungsImportErgebnis> ImportBackupAsync(
+        Stream sicherung, CancellationToken cancellationToken = default);
 }

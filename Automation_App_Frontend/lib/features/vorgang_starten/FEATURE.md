@@ -16,7 +16,8 @@ Fremd eingebunden: `VorgangCubit` (vorgaenge).
 `GET /api/Settings`, `POST /api/Mandanten`, `PUT /api/Mandanten/{id}`, `PUT /api/Vorgaenge`
 **Tests:** `test/features/vorgang_starten/vorgang_starten_bloc_test.dart`,
 `test/features/vorgang_starten/mandant_aenderung_test.dart`,
-`test/features/vorgang_starten/mandant_uebernahme_test.dart`
+`test/features/vorgang_starten/mandant_uebernahme_test.dart`,
+`test/features/vorgang_starten/mandant_ungespeichert_test.dart`
 
 **Fallstricke**
 

@@ -143,15 +143,31 @@ class Vorgang extends Equatable {
     );
   }
 
-  /// Aktenzeichen ohne Kennzeichen-Teil für die Registerspalte 2 (z. B.
-  /// „144/26 C03"). Fällt auf die volle Referenz zurück, wenn die Bestandteile
-  /// fehlen.
-  String get aktenzeichen {
+  /// Das **Zeichen** — die Referenz ohne den Kennzeichen-Teil (z. B.
+  /// „144/26 C03"). Das ist die Sprache der Kanzlei und damit die
+  /// Standardanzeige der Oberfläche; die volle [referenz] mit Kennzeichen
+  /// trägt nur dort, wo die Zentralruf-Zuordnung sie braucht (§4.2).
+  ///
+  /// Fällt auf die volle Referenz zurück, wenn die Bestandteile fehlen. Muss
+  /// dieselbe Antwort geben wie `RegisterZeilenBau.Zeichen` im Backend — sonst
+  /// zeigt der Bildschirm ein anderes Zeichen an, als in der Register-Datei
+  /// steht.
+  String get zeichen {
     if (laufendeNummer != null && jahr != null && abteilung != null) {
       return '$laufendeNummer/$jahr $abteilung';
     }
     return referenz;
   }
+
+  /// Die volle [referenz] als Nebenzeile unter dem [zeichen] — oder `null`,
+  /// wenn sie dort nichts hinzufügt.
+  ///
+  /// Beides steht auf Vorgangskachel und Startseite untereinander: oben das
+  /// Zeichen, darunter die Referenz, deren Kennzeichen die Zentralruf-Zuordnung
+  /// trägt. Lässt sich die Referenz nicht zerlegen (freihändig eingetragen),
+  /// *ist* das Zeichen die Referenz — dann stünde dieselbe Zeichenkette zweimal
+  /// untereinander, und die Nebenzeile entfällt.
+  String? get referenzZusatz => referenz == zeichen ? null : referenz;
 
   /// Was in der vierten Registerspalte steht. Muss dieselbe Antwort geben wie
   /// `RechtsgebietAnzeige.Fuer` im Backend — sonst zeigt der Bildschirm ein

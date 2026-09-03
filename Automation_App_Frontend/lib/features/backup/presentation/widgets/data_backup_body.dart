@@ -1,5 +1,7 @@
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_state.dart';
+import 'package:automation_app/features/backup/presentation/widgets/sicherungs_stand_zeile.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -49,31 +51,19 @@ class _DataBackupBodyState extends State<DataBackupBody> {
     if (pfad == null || !mounted) return;
 
     final bestaetigt = await _bestaetigeImport();
-    if (bestaetigt != true || !mounted) return;
+    if (!bestaetigt || !mounted) return;
     await context.read<BackupCubit>().importiere(pfad);
   }
 
-  Future<bool?> _bestaetigeImport() {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sicherung einspielen?'),
-        content: const Text(
+  Future<bool> _bestaetigeImport() {
+    return bestaetigen(
+      context,
+      titel: 'Sicherung einspielen?',
+      text:
           'Dabei werden alle aktuellen Daten durch die Sicherung ersetzt. '
           'Der bisherige Stand wird zuvor automatisch als Sicherungskopie '
           'abgelegt. Nach dem Einspielen die App bitte neu starten.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Einspielen'),
-          ),
-        ],
-      ),
+      bestaetigung: 'Einspielen',
     );
   }
 
@@ -130,6 +120,7 @@ class _DataBackupBodyState extends State<DataBackupBody> {
                   ),
                   const SizedBox(height: 16),
                   DataBackupStatus(state: state),
+                  const SicherungsStandZeile(),
                 ],
               ),
             ),

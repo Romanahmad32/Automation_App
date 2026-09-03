@@ -83,6 +83,8 @@ public sealed class KanzleiSettingsRepository(AutomationDbContext db)
         target.MailSignatur = source.MailSignatur;
         target.MailSignaturHtml = source.MailSignaturHtml;
         target.RegisterAblageOrdner = source.RegisterAblageOrdner;
+        target.VorlagenOrdner = source.VorlagenOrdner;
+        target.SicherungsAblageOrdner = source.SicherungsAblageOrdner;
         target.RegisterDateiname = source.RegisterDateiname;
         target.RegisterNachAbschlussSchreiben = source.RegisterNachAbschlussSchreiben;
         target.RegisterExportFilter = source.RegisterExportFilter;

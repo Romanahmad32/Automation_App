@@ -23,6 +23,54 @@ public sealed class SignaturUebernahme(
     ILogger<SignaturUebernahme> logger)
 {
     /// <summary>
+    /// Liest die Signatur mit diesem Namen, <b>ohne etwas zu speichern</b>
+    /// (§4.7, ergänzt am 02.09.2026) — für die Vorschau im Formular, bevor der
+    /// Anwalt auf „Speichern" drückt.
+    ///
+    /// Der Grund: <see cref="UebernimmAsync"/> schrieb bisher schon beim
+    /// Übernehmen — Text, HTML und Bilder waren in der Datenbank, bevor
+    /// irgendwer gespeichert hatte, und die bisherigen Bilder waren dabei
+    /// unwiederbringlich weg. Wer sich die Signatur nur ansehen wollte, hatte
+    /// sie damit gewechselt.
+    ///
+    /// Die Bilder kommen als <b>Angabe</b> zurück, nicht als Inhalt: Sie
+    /// dürfen 25 MB groß sein (<see cref="SignaturAblage.MaxBildBytes"/>) und
+    /// gehen nicht über die Leitung, nur um von dort wieder zurückzukommen.
+    /// Abgelegt werden sie erst bei der Übernahme — bis dahin zeigt die
+    /// Vorschau Schrift und Farben, aber kein Logo, und sagt das.
+    /// </summary>
+    /// <exception cref="EmailVersandException">
+    /// Wenn es unter diesem Namen keine Signatur gibt.
+    /// </exception>
+    public (SignaturBlock Block, IReadOnlyList<string> Uebergangen) Lies(string name)
+    {
+        var (text, format) = LiesAusOutlook(name);
+        var bilder = format is null ? [] : ablage.Vorschau(format.Bilder);
+        return (
+            new SignaturBlock(text ?? string.Empty, format?.Html ?? string.Empty, bilder),
+            format?.Uebergangen ?? []);
+    }
+
+    /// <summary>
+    /// Text und formatierte Fassung aus Outlook — die eine Stelle, die den
+    /// Namen auflöst, damit Lesen und Übernehmen nicht auseinanderlaufen.
+    /// </summary>
+    private static (string? Text, OutlookSignaturFormat? Format) LiesAusOutlook(string name)
+    {
+        var text = OutlookSignaturen.LiesTextVon(name);
+        var format = OutlookSignaturen.LiesFormat(name);
+
+        if (text is null && format is null)
+        {
+            throw new EmailVersandException(
+                EmailVersandFehler.Anhang,
+                $"In Outlook gibt es keine Signatur namens \"{name}\" (mehr).");
+        }
+
+        return (text, format);
+    }
+
+    /// <summary>
     /// Übernimmt die Signatur mit diesem Namen. Gibt zurück, was danach
     /// gespeichert ist — die Oberfläche zeigt daraus Text und Bildliste — und
     /// welche Bilder dabei übergangen werden mussten.
@@ -36,15 +84,7 @@ public sealed class SignaturUebernahme(
         string name,
         CancellationToken cancellationToken)
     {
-        var text = OutlookSignaturen.LiesTextVon(name);
-        var format = OutlookSignaturen.LiesFormat(name);
-
-        if (text is null && format is null)
-        {
-            throw new EmailVersandException(
-                EmailVersandFehler.Anhang,
-                $"In Outlook gibt es keine Signatur namens \"{name}\" (mehr).");
-        }
+        var (text, format) = LiesAusOutlook(name);
 
         IReadOnlyList<SignaturBild> bilder = [];
         if (format is null)

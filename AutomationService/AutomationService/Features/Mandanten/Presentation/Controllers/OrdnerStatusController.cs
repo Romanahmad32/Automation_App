@@ -41,7 +41,7 @@ public class OrdnerStatusController(IOrdnerStatusRegister register) : Controller
         }
         catch (ArgumentException exception)
         {
-            return BadRequest(exception.Message);
+            return Problem(detail: exception.Message, statusCode: StatusCodes.Status400BadRequest);
         }
     }
 }

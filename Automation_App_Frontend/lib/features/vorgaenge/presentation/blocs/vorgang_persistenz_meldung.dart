@@ -1,3 +1,4 @@
+import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler.dart';
 
@@ -21,7 +22,7 @@ abstract final class VorgangPersistenzMeldung {
       VorgangPersistenzFehler(
         aktion: VorgangPersistenzAktion.speichern,
         meldung:
-            'Der Vorgang „${vorgang.referenz}" konnte nicht gespeichert '
+            'Der Vorgang „${vorgang.zeichen}" konnte nicht gespeichert '
             'werden. Ohne Speichern geht die Änderung beim Beenden verloren.',
         vorgang: vorgang,
       );
@@ -30,8 +31,8 @@ abstract final class VorgangPersistenzMeldung {
       VorgangPersistenzFehler(
         aktion: VorgangPersistenzAktion.loeschen,
         meldung:
-            'Der Vorgang „$referenz" konnte nicht gelöscht werden und '
-            'taucht nach einem Neustart wieder auf.',
+            'Der Vorgang „${ReferenzTeile.zeichenAus(referenz)}" konnte nicht '
+            'gelöscht werden und taucht nach einem Neustart wieder auf.',
         referenz: referenz,
       );
 }

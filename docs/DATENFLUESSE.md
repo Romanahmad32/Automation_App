@@ -1,6 +1,6 @@
 # Datenflüsse — was durch mehrere Features läuft
 
-Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Vier Ketten laufen
+Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Fünf Ketten laufen
 quer durch den Baum, und in keiner steht an der Nahtstelle, dass es eine gibt. Wer eine davon
 ändert, ohne sie zu kennen, ändert sie an einer Stelle und lässt die anderen stehen.
 
@@ -13,6 +13,7 @@ Der Weg, den ein `{{Platzhalter}}` aus der Word-Vorlage bis zum fertigen Wert ni
 
 ```
 form_template_setup ──▶ vorgaenge ──▶ mandanten / zentralruf_reply ──▶ word_automation
+                                                              └──▶ email_versand
 ```
 
 - **Einrichten:** `FeldDatenquelleErkennung` (`form_template_setup/domain/services/`) löst den
@@ -24,6 +25,19 @@ form_template_setup ──▶ vorgaenge ──▶ mandanten / zentralruf_reply �
 - **Quellen:** `Vorgang` (vorgaenge), `Mandant` (mandanten) und die übernommene
   `ZentralrufReplyData` (zentralruf_reply). Zusammengesetzt wird in `mandant_anschrift.dart` —
   das liegt bei `vorgaenge`, nicht bei `mandanten`: Es dient der Vorbelegung, nicht dem Register.
+
+- **Zweiter Verbraucher: die Mail-Textvorlagen** (§4.7). `MailVorlagenFueller`
+  (`email_versand/domain/services/`) benutzt dieselbe Kette über
+  `VorgangPrefillMatcher.wertFuerNamen` — bewusst dieselben Namen und dieselbe Schreibweise
+  `{{…}}`, damit niemand zwei Kataloge im Kopf behalten muss. Eigen sind ihm nur `{{Anrede}}`,
+  `{{Zusatzgruß}}` und die **Beugungen** (`{{Mandant/Mandantin}}`): Alle drei entstehen beim
+  Verfassen **dieser einen Mail** und stehen nicht am Vorgang, werden deshalb vor der Kette
+  beantwortet. Eine Beugung geht dabei gar nicht in den Katalog — sie trägt ihre Formen selbst und
+  braucht nur die Anredeart. Dazu die Regel, dass eine Zeile ohne gefüllten
+  Platzhalter ganz entfällt — die gilt nur für Mails, nicht für Word; was dabei übersprungen wurde,
+  trägt `PlatzhalterBefund` mit Stelle und Folge weiter in den Dialog.
+  **Die Beugung endet an der Mail:** Word füllt das Backend über `FieldData.label`, dort bleibt
+  `{{Mandant/Mandantin}}` als Platzhalter im Dokument stehen und kommt als Warnung zurück.
 
 **Die Naht:** Die `FeldDatenquelle` ist die einzige Verbindung zwischen Einrichten und Ausfüllen.
 Ein neuer Wert dort braucht **beide** Seiten — ohne den Zweig im Matcher steht die Quelle im
@@ -112,9 +126,47 @@ zusätzlich mit leeren Feldern für Name, Anschrift und Telefon des Anwalts: kei
 nur eine Einladung, personenbezogene Daten in ein öffentliches Repository zu schreiben. Er ist
 entfernt — der Rückfall selbst bleibt.
 
+## 5. Der Stand wechselt den Arbeitsplatz
+
+```
+App beenden ──▶ Sicherung im synchronisierten Ordner ──▶ App am zweiten Rechner starten
+                (automation-<Rechner>.zip + arbeitsplatz-<Rechner>.json)   └──▶ Rückfrage
+```
+
+Der Anwalt arbeitet im Büro und zu Hause; die Datenbank selbst darf dabei **nicht** in den
+Sync-Ordner (WAL-Modus: drei Dateien, die ein Synchronisierer einzeln und zu verschiedenen Zeiten
+kopiert). Übergeben wird deshalb eine Datei (§7.2).
+
+Beim Beenden schreibt `ArbeitsplatzDienst.StopAsync` über `AutomatischeSicherung` ein Archiv in den
+eingestellten Ordner und daneben die eigene `arbeitsplatz-<Rechner>.json`. Beim Start liest
+`ArbeitsplatzUebergabe` alle *fremden* Akten; ist eine davon neuer, fragt die App **vor** der
+Oberfläche nach (`ArbeitsplatzUebergabeGate` → `GET api/Backup/uebergabe`), und erst auf Klick
+spielt sie ein — über denselben Import wie eine Sicherung von Hand.
+
+**Die Naht — zwei Zeitpunkte, nicht einer:** Die Akte trennt `zuletztGearbeitet` von `gesichertAm`.
+Das Angebot entscheidet sich am zweiten, der Satz auf dem Bildschirm nennt den ersten. Wer beide
+zusammenlegt, macht aus einem Rechner, der heute nur kurz auf war, den „neueren" Stand — obwohl sein
+Archiv von vorgestern ist. Nach einer Übernahme trägt die eigene Akte deshalb *jetzt* als
+Arbeitszeitpunkt und den *übernommenen* als Stand; sonst böte entweder jeder Start dasselbe Archiv
+erneut an oder der andere Rechner böte den Stand postwendend zurück.
+
+**Die zweite Naht — Übergabe ist keine Verschmelzung.** Wer übernimmt, ersetzt seinen Bestand. Was
+davor schützt: die Frage selbst (sie nennt Rechner, Zeitpunkt und den eigenen Stand daneben), die
+Vor-Import-Sicherung des Backends — und dass die Frage kommt, bevor irgendeine Ansicht Daten
+geladen hat.
+
+**Die dritte Naht — maschinenabhängige Pfade.** Aktenstammordner, Vorlagen-, Register- und
+Sicherungsordner überleben den Import mit den Werten *dieses* Rechners
+(`DatabaseBackupService.SchuetzeMaschinenPfadeAsync`). Der fremde Sicherungsordner wäre der
+schlimmste: Der Rechner legte danach seine Sicherungen woanders ab, als er sein Angebot liest.
+
+Und die Rückmeldung: Beim Beenden sieht niemand mehr zu, deshalb merkt sich jeder Lauf sein Ergebnis
+lokal (`letzte-sicherung.json`, neben der Datenbank statt darin — ein Import ersetzt die Datenbank).
+Der nächste Start zeigt einen Fehlschlag, der Reiter „Datensicherung" die Zeile „zuletzt gesichert".
+
 ## Wo eine Kette anfängt zu lügen
 
-Alle vier haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
+Alle fünf haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
 das von allein — die Architektur-Tests prüfen Schichten und Verträge, nicht Fachwege. Was hilft,
 ist die Naht mitzulesen, bevor man eine Seite anfasst.
 

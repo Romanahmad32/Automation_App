@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/dev_simulation/presentation/widgets/demo_vorgang_button.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
@@ -37,27 +38,16 @@ class VorgaengeVerwaltenPage extends StatelessWidget {
 
   Future<void> _loeschen(BuildContext context, Vorgang vorgang) async {
     final cubit = getIt<VorgangCubit>();
-    final bestaetigt = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Vorgang löschen?'),
-        content: Text(
-          'Der Vorgang „${vorgang.referenz}" wird endgültig gelöscht. '
+    final bestaetigt = await bestaetigen(
+      context,
+      titel: 'Vorgang löschen?',
+      text:
+          'Der Vorgang „${vorgang.zeichen}" wird endgültig gelöscht. '
           'Dies kann nicht rückgängig gemacht werden.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Löschen'),
-          ),
-        ],
-      ),
+      bestaetigung: 'Löschen',
+      destruktiv: true,
     );
-    if (bestaetigt == true) {
+    if (bestaetigt) {
       await cubit.loesche(vorgang.referenz);
     }
   }

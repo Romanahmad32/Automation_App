@@ -35,6 +35,10 @@ public class AutomationDbContext(DbContextOptions<AutomationDbContext> options)
     public DbSet<VersichererEntity> Versicherer => Set<VersichererEntity>();
     public DbSet<SachgebietEntity> Sachgebiete => Set<SachgebietEntity>();
     public DbSet<VersandEintragEntity> Versandprotokoll => Set<VersandEintragEntity>();
+    public DbSet<MailVorlageEntity> MailVorlagen => Set<MailVorlageEntity>();
+    public DbSet<GrussformelEntity> Grussformeln => Set<GrussformelEntity>();
+
+    public DbSet<AnredeBausteinEntity> AnredeBausteine => Set<AnredeBausteinEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

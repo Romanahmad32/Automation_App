@@ -1,4 +1,5 @@
 using AutomationService.Core.Persistence;
+using AutomationService.Features.Settings.Domain.Services;
 using AutomationService.Features.WordAutomation.Domain.Services;
 using AutomationService.Features.WordAutomation.Presentation.HostedServices;
 using Microsoft.Extensions.Options;
@@ -41,9 +42,11 @@ public static class WordAutomationInjection
                 "Arbeit"),
             sp.GetRequiredService<ILogger<ArbeitsVerzeichnis>>()));
 
-        // Zustandslos und an den festen Ordner in %APPDATA% gebunden — Singleton.
-        services.AddSingleton(sp => new VorlagenVerzeichnis(
-            AppDataPaths.EnsureVorlagenDirectory(),
+        // Der Ordner ist eine Einstellung (#33) und kann sich zur Laufzeit
+        // aendern — deshalb Scoped statt Singleton: jede Anfrage loest ihn neu
+        // aus der Datenbank auf (leer = App-Ordner unter %APPDATA%).
+        services.AddScoped(sp => new VorlagenVerzeichnis(
+            VorlagenOrdnerVorgabe.Ermittle(sp.GetRequiredService<AutomationDbContext>()),
             sp.GetRequiredService<ILogger<VorlagenVerzeichnis>>()));
         services.AddHostedService<VorlagenSeedService>();
 

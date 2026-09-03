@@ -96,6 +96,21 @@ class KanzleiSettings extends Equatable {
   /// gerade am Bildschirm eingestellt war.
   final String registerExportFilter;
 
+  /// Ordner, in dem die Word-Vorlagen des Anwalts liegen. Leer = der
+  /// App-Ordner des Backends unter %APPDATA% (der Stand vor dieser
+  /// Einstellung). Maschinenabhängig wie [aktenStammordner]: wird beim
+  /// Einspielen einer Sicherung nicht übernommen. Bewusst kein Default-Pfad —
+  /// die App läuft auf einem fremden Rechner.
+  final String vorlagenOrdner;
+
+  /// Ordner, in den die App beim Beenden selbsttätig eine Sicherung legt (§7.2).
+  /// Gedacht ist ein Ordner im synchronisierten Bereich: Von dort bietet der
+  /// zweite Arbeitsplatz den Stand beim Öffnen zur Übernahme an. Leer heißt:
+  /// keine automatische Sicherung — wie beim [registerAblageOrdner] schaltet der
+  /// Ordner die Funktion ein. Maschinenabhängig wie [aktenStammordner]: Beide
+  /// Rechner meinen denselben Ordner, aber unter verschiedenen Pfaden.
+  final String sicherungsAblageOrdner;
+
   /// Die formatierte Fassung derselben Signatur (§4.7): Schrift, Farben, Logo.
   /// Die App **reicht sie nur durch** — übernommen und geändert wird sie im
   /// Dienst (`POST api/EmailVersand/signaturen/uebernehmen`), weil dabei auch
@@ -121,6 +136,8 @@ class KanzleiSettings extends Equatable {
     this.registerDateiname = defaultRegisterDateiname,
     this.registerNachAbschlussSchreiben = true,
     this.registerExportFilter = registerFilterAlle,
+    this.vorlagenOrdner = '',
+    this.sicherungsAblageOrdner = '',
   });
 
   static const KanzleiSettings empty = KanzleiSettings();
@@ -143,6 +160,8 @@ class KanzleiSettings extends Equatable {
     String? registerDateiname,
     bool? registerNachAbschlussSchreiben,
     String? registerExportFilter,
+    String? vorlagenOrdner,
+    String? sicherungsAblageOrdner,
   }) {
     return KanzleiSettings(
       personentyp: personentyp ?? this.personentyp,
@@ -164,6 +183,9 @@ class KanzleiSettings extends Equatable {
       registerNachAbschlussSchreiben:
           registerNachAbschlussSchreiben ?? this.registerNachAbschlussSchreiben,
       registerExportFilter: registerExportFilter ?? this.registerExportFilter,
+      vorlagenOrdner: vorlagenOrdner ?? this.vorlagenOrdner,
+      sicherungsAblageOrdner:
+          sicherungsAblageOrdner ?? this.sicherungsAblageOrdner,
     );
   }
 
@@ -198,6 +220,8 @@ class KanzleiSettings extends Equatable {
           json['registerNachAbschlussSchreiben'] as bool? ?? true,
       registerExportFilter:
           json['registerExportFilter'] as String? ?? registerFilterAlle,
+      vorlagenOrdner: json['vorlagenOrdner'] as String? ?? '',
+      sicherungsAblageOrdner: json['sicherungsAblageOrdner'] as String? ?? '',
     );
   }
 
@@ -219,6 +243,8 @@ class KanzleiSettings extends Equatable {
     'registerDateiname': registerDateiname,
     'registerNachAbschlussSchreiben': registerNachAbschlussSchreiben,
     'registerExportFilter': registerExportFilter,
+    'vorlagenOrdner': vorlagenOrdner,
+    'sicherungsAblageOrdner': sicherungsAblageOrdner,
   };
 
   @override
@@ -240,5 +266,7 @@ class KanzleiSettings extends Equatable {
     registerDateiname,
     registerNachAbschlussSchreiben,
     registerExportFilter,
+    vorlagenOrdner,
+    sicherungsAblageOrdner,
   ];
 }

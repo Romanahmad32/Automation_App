@@ -1,3 +1,4 @@
+using AutomationService.Core.ErrorHandling;
 using AutomationService.Core.Lifetime;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Presentation.DependencyInjection;
@@ -22,6 +23,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+// Einheitliches Fehlerformat (RFC 7807) fuer alle Fehlerantworten -- die
+// sieben Fach-Ausnahmen der Slices bildet FachExceptionHandler ab.
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<FachExceptionHandler>();
+// Ein ungueltiges Modell beantwortet [ApiController] selbst — mit einem
+// ValidationProblemDetails ohne detail und mit englischem title.
+// AddValidierungsAntwort fuellt beides, damit die Meldung die Oberflaeche
+// erreicht (#53).
+builder.Services.AddValidierungsAntwort();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
@@ -41,6 +51,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Beim Beenden schreibt der ArbeitsplatzDienst die automatische Sicherung
+// (#39) — VACUUM INTO, ZIP, und das Ganze in einen Ordner, der auf „Dateien bei
+// Bedarf" stehen kann. Die Vorgabe des Hosts ist dafuer knapp bemessen; ein
+// abgeschnittener Lauf hinterliesse keine Sicherung, und zwar wortlos.
+builder.Services.Configure<HostOptions>(options =>
+    options.ShutdownTimeout = TimeSpan.FromSeconds(60));
+
 builder.Services.AddLifetimeServices(builder.Configuration);
 builder.Services.AddPersistenceServices();
 builder.Services.AddWordServices(builder.Configuration);
@@ -54,7 +71,7 @@ builder.Services.AddVersichererServices();
 builder.Services.AddSachgebieteServices();
 builder.Services.AddVorgaengeServices();
 builder.Services.AddFormTemplatesServices();
-builder.Services.AddBackupServices();
+builder.Services.AddBackupServices(builder.Configuration);
 builder.Services.AddDevSimulationServices(builder.Configuration);
 
 var app = builder.Build();
@@ -69,6 +86,7 @@ if (app.Environment.IsDevelopment())
 // Kein UseHttpsRedirection: Der Dienst spricht bewusst nur lokales HTTP (localhost:5143);
 // ohne konfigurierten HTTPS-Endpunkt erzeugte die Middleware nur die Warnung
 // "Failed to determine the https port for redirect".
+app.UseExceptionHandler();
 app.UseCors(CorsPolicyName);
 app.MapHealthEndpoint();
 app.MapControllers();

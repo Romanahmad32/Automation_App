@@ -1,3 +1,5 @@
+using AutomationService.Core.Ablage;
+
 namespace AutomationService.Features.Vorgaenge.Domain.Services;
 
 /// <summary>

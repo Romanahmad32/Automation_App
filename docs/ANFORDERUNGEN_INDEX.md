@@ -71,7 +71,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 | 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, Standardpositionen der Schadensaufstellung, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |
 | 4.6 | Ablage in der Akte; Ablageort am Vorgang festhalten |
-| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, Textvorlagen, Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
+| 4.7 | Versand: Mail in der App verfassen und über das Kanzlei-Postfach senden, Empfänger, Anhänge, Signatur, wählbarer Vorgang, gewählte Textvorlage mit wählbaren Platzhaltern samt sichtbar übersprungenen, Anrede, Anredeart und Zusatzgruß je Mail, Grund der neutralen Anrede, gebeugte Wörter im Vorlagentext, Hinweise und Beugungsvorschau im Vorlageneditor, Nachtrag im selbst geschriebenen Text, Signatur (Import erst beim Speichern, ganz entfernbar), Versandnachweis je Vorgang; Abgrenzung siehe 8 (kein Mailprogramm) |
 | 4.8 | Auftragsabschluss als eigener Schritt: erledigt, Auftragsnummer weiterzählen, Registereintrag |
 | 4.9 | Folgekorrespondenz zu einem offenen Vorgang |
 | 4.10 | Erstkontakt über die Kanzlei-Website (durchgehend **[K]**) |
@@ -80,7 +80,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, mehrere Kennzeichen/Akten, Duplikatschutz |
+| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, mehrere Kennzeichen/Akten, Duplikatschutz, Anredeart als Beugungsquelle (Vorbelegung, je Mail wählbar, aus dem Versand nachtragbar), persönliche Grußformel |
 | 5.2 | Versicherer-Wissensbasis aus Zentralruf-Antworten; Lücken aus früherem Wissen füllen |
 | 5.3 | Vorlagenverwaltung durch den Anwalt selbst: Word-Vorlagen, Felder, Mail-Textvorlagen |
 
@@ -95,7 +95,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand, Postfach-Zugang, Darstellung, Sicherung |
+| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand samt Mail-Textvorlagen, Anreden und Zusatzgrüßen, Postfach-Zugang, Darstellung, Sicherung |
 | 7.2 | Datensicherung und Datenintegrität: Schutz vor Datenverlust, Sichern/Wiederherstellen, robuste Wiederherstellung, dauerhafte Kennungen, Änderungsstand |
 | 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[K]**, siehe 8) |
 

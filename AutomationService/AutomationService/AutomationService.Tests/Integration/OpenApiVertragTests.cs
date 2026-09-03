@@ -42,7 +42,9 @@ public class OpenApiVertragTests : IClassFixture<WebApplicationFactory<Program>>
                 configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     // Kein Word starten, nur das Dokument abholen.
-                    ["PdfConversion:WarmupOnStartup"] = "false"
+                    ["PdfConversion:WarmupOnStartup"] = "false",
+                    // Keine echte Sicherung in den Ablageordner des Anwalts.
+                    ["Backup:AutomatischeSicherung"] = "false",
                 });
             });
         });

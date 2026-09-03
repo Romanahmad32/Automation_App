@@ -142,17 +142,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ZentralrufPrefillResponseDto"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               }
             }
@@ -461,17 +461,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RvgCalculationResponseDto"
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
                 }
               }
             }
@@ -2614,6 +2614,294 @@
         }
       }
     },
+    "/api/Anredebausteine": {
+      "get": {
+        "tags": [
+          "Anredebausteine"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnredeBausteinDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnredeBausteinDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnredeBausteinDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Anredebausteine"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereAnredeBausteinDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereAnredeBausteinDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereAnredeBausteinDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnredeBausteinDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnredeBausteinDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnredeBausteinDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Anredebausteine/{id}": {
+      "put": {
+        "tags": [
+          "Anredebausteine"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnredeBausteinDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnredeBausteinDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AnredeBausteinDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnredeBausteinDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnredeBausteinDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnredeBausteinDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Anredebausteine"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/EmailVersand/bereitschaft": {
       "get": {
         "tags": [
@@ -2734,6 +3022,65 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/signaturen/vorschau": {
+      "get": {
+        "tags": [
+          "EmailVersand"
+        ],
+        "summary": "Liest die gew\u00E4hlte Signatur, \u003Cb\u003Eohne sie zu speichern\u003C/b\u003E (\u00A74.7,\r\nerg\u00E4nzt am 02.09.2026) \u2014 damit das Formular sie zeigen kann, bevor der\r\nAnwalt auf \u201ESpeichern\u0022 dr\u00FCckt.\r\n\r\nVorher gab es diesen Weg nicht: Wer eine Signatur aus der Liste w\u00E4hlte,\r\nhatte sie damit schon gewechselt \u2014 samt gel\u00F6schter Bilder der bisherigen.\r\nGeschrieben wird jetzt erst \u00FCber \u0060signaturen/uebernehmen\u0060, und das\r\nruft die Oberfl\u00E4che beim Speichern.\r\n\r\nDie Bilder kommen als Angabe zur\u00FCck, nicht als Inhalt; auf der Platte\r\nliegen sie erst nach der \u00DCbernahme. Bis dahin zeigt die Vorschau Schrift\r\nund Farben, aber kein Logo.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignaturStandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3148,6 +3495,582 @@
         }
       }
     },
+    "/api/Grussformeln": {
+      "get": {
+        "tags": [
+          "Grussformeln"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrussformelDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrussformelDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrussformelDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Grussformeln"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereGrussformelDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereGrussformelDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereGrussformelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrussformelDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrussformelDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrussformelDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Grussformeln/{id}": {
+      "put": {
+        "tags": [
+          "Grussformeln"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrussformelDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrussformelDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/GrussformelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrussformelDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrussformelDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrussformelDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Grussformeln"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/MailVorlagen": {
+      "get": {
+        "tags": [
+          "MailVorlagen"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MailVorlageDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MailVorlageDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MailVorlageDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "MailVorlagen"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereMailVorlageDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereMailVorlageDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeichereMailVorlageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailVorlageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailVorlageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailVorlageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/MailVorlagen/{id}": {
+      "put": {
+        "tags": [
+          "MailVorlagen"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailVorlageDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailVorlageDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MailVorlageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailVorlageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailVorlageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailVorlageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "MailVorlagen"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/EmailVersand/protokoll": {
       "get": {
         "tags": [
@@ -3382,10 +4305,141 @@
           }
         }
       }
+    },
+    "/api/Backup/uebergabe": {
+      "get": {
+        "tags": [
+          "Backup"
+        ],
+        "summary": "Liegt am anderen Arbeitsplatz ein neuerer Stand \u2014 und wie ist die letzte\r\nautomatische Sicherung ausgegangen? Wird beim Start abgefragt, bevor die\r\nOberfl\u00E4che aufgeht.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UebergabeStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UebergabeStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UebergabeStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Backup/uebergabe/uebernehmen": {
+      "post": {
+        "tags": [
+          "Backup"
+        ],
+        "summary": "\u00DCbernimmt den angebotenen Stand. Ersetzt den bisherigen Bestand \u2014 deshalb\r\nausschlie\u00DFlich auf Klick und nie von selbst. Der bisherige Stand wird vom\r\nImport vorher vollst\u00E4ndig daneben gelegt.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UebernahmeErgebnisDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UebernahmeErgebnisDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UebernahmeErgebnisDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Backup/sicherungsstand/quittieren": {
+      "post": {
+        "tags": [
+          "Backup"
+        ],
+        "summary": "Best\u00E4tigt, dass die Meldung \u00FCber eine misslungene automatische Sicherung\r\ngelesen wurde. Der Zeitpunkt bleibt stehen, nur die Meldung kommt beim\r\nn\u00E4chsten Start nicht wieder.",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AnredeBausteinDto": {
+        "required": [
+          "id",
+          "maennlich",
+          "weiblich",
+          "neutral",
+          "sortierung"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maennlich": {
+            "type": "string"
+          },
+          "weiblich": {
+            "type": "string"
+          },
+          "neutral": {
+            "type": "string"
+          },
+          "sortierung": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "\u00DCbertragungsformat eines Anredeanfangs (\u00A74.7). PascalCase wird als camelCase\r\nserialisiert und passt damit 1:1 zur Flutter-Entit\u00E4t \u0060Anredebaustein\u0060."
+      },
       "ArbeitsordnerAufgeraeumtDto": {
         "required": [
           "success",
@@ -3466,6 +4520,7 @@
           "emailAdresse",
           "telefonnummer",
           "notiz",
+          "persoenlicheGrussformel",
           "aktenOrdnernamen",
           "kennzeichen"
         ],
@@ -3496,6 +4551,9 @@
             "type": "string"
           },
           "notiz": {
+            "type": "string"
+          },
+          "persoenlicheGrussformel": {
             "type": "string"
           },
           "aktenOrdnernamen": {
@@ -3543,6 +4601,7 @@
         "type": "object",
         "properties": {
           "items": {
+            "maxItems": 100,
             "minItems": 1,
             "type": "array",
             "items": {
@@ -3812,7 +4871,37 @@
             ]
           }
         },
-        "description": "\u00DCbertragungsformat einer Formularvorlage. Die Feldliste wird als opakes JSON\r\n(JsonElement FormTemplateDto.Fields) verlustfrei durchgereicht \u2014 das Backend muss das\r\nFieldData-Schema nicht doppelt pflegen."
+        "description": "\u00DCbertragungsformat einer Formularvorlage. Die Feldliste wird als opakes JSON\r\n(JsonElement FormTemplateDto.Fields) verlustfrei durchgereicht \u2014 das Backend muss das\r\nFieldData-Schema nicht doppelt pflegen. Die Word-Pfade gehen aufgel\u00F6st\r\n(absolut) hinaus, obwohl sie relativ gespeichert sein k\u00F6nnen (#33): das\r\nFrontend \u00F6ffnet die Dateien direkt und kennt den Vorlagenordner nicht."
+      },
+      "GrussformelDto": {
+        "required": [
+          "id",
+          "text",
+          "sortierung"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "text": {
+            "type": "string"
+          },
+          "sortierung": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "\u00DCbertragungsformat einer pers\u00F6nlichen Gru\u00DFformel (\u00A74.7). PascalCase wird als\r\ncamelCase serialisiert und passt damit 1:1 zur Flutter-Entit\u00E4t\r\n\u0060Grussformel\u0060."
       },
       "IFormFile": {
         "type": "string",
@@ -4072,7 +5161,9 @@
           "registerAblageOrdner",
           "registerDateiname",
           "registerNachAbschlussSchreiben",
-          "registerExportFilter"
+          "registerExportFilter",
+          "vorlagenOrdner",
+          "sicherungsAblageOrdner"
         ],
         "type": "object",
         "properties": {
@@ -4131,9 +5222,50 @@
           },
           "registerExportFilter": {
             "type": "string"
+          },
+          "vorlagenOrdner": {
+            "type": "string"
+          },
+          "sicherungsAblageOrdner": {
+            "type": "string"
           }
         },
         "description": "\u00DCbertragungsformat der Kanzlei-Einstellungen. Die PascalCase-Properties werden\r\nvon ASP.NET Core als camelCase serialisiert und passen damit 1:1 zum JSON der\r\nFlutter-Entit\u00E4t \u0060KanzleiSettings\u0060 (personentyp, strasseHausnummer, \u2026)."
+      },
+      "LetzteSicherungDto": {
+        "required": [
+          "zeitpunkt",
+          "gelungen",
+          "datei",
+          "meldung",
+          "fehlerQuittiert"
+        ],
+        "type": "object",
+        "properties": {
+          "zeitpunkt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "gelungen": {
+            "type": "boolean"
+          },
+          "datei": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "meldung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fehlerQuittiert": {
+            "type": "boolean"
+          }
+        },
+        "description": "Ausgang des letzten automatischen Sicherungslaufs. Tr\u00E4gt zwei Aufgaben:\r\ndie Zeile \u201Ezuletzt gesichert am \u2026\u0022 im Reiter Datensicherung und die Meldung\r\nbeim Start, wenn der Lauf misslungen und noch nicht quittiert ist."
       },
       "MailboxConfigDto": {
         "required": [
@@ -4327,6 +5459,35 @@
         },
         "description": "Statusanzeige der Postfach-\u00DCberwachung f\u00FCr die Oberfl\u00E4che."
       },
+      "MailVorlageDto": {
+        "required": [
+          "id",
+          "name",
+          "betreff",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "betreff": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "\u00DCbertragungsformat einer Mail-Textvorlage (\u00A74.7). PascalCase wird als\r\ncamelCase serialisiert und passt damit 1:1 zur Flutter-Entit\u00E4t\r\n\u0060MailVorlage\u0060."
+      },
       "MandantDto": {
         "required": [
           "id",
@@ -4339,6 +5500,7 @@
           "emailAdresse",
           "telefonnummer",
           "notiz",
+          "persoenlicheGrussformel",
           "aktenOrdnernamen",
           "kennzeichen",
           "erstelltAm"
@@ -4378,6 +5540,9 @@
             "type": "string"
           },
           "notiz": {
+            "type": "string"
+          },
+          "persoenlicheGrussformel": {
             "type": "string"
           },
           "aktenOrdnernamen": {
@@ -5118,6 +6283,76 @@
         "description": "Welche der generischen Zentralruf-Antworten die Simulation erzeugen soll.\r\nAls String serialisiert (z. B. \u0022zwischennachricht\u0022), damit das Frontend\r\nkeine Zahlenwerte kennen muss.",
         "default": "Versicherer"
       },
+      "SpeichereAnredeBausteinDto": {
+        "required": [
+          "maennlich",
+          "weiblich",
+          "neutral",
+          "sortierung"
+        ],
+        "type": "object",
+        "properties": {
+          "maennlich": {
+            "type": "string"
+          },
+          "weiblich": {
+            "type": "string"
+          },
+          "neutral": {
+            "type": "string"
+          },
+          "sortierung": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Eingabe zum Anlegen eines Anredeanfangs; Id und Reihenfolge vergibt der\r\nBestand, wenn nichts mitkommt."
+      },
+      "SpeichereGrussformelDto": {
+        "required": [
+          "text",
+          "sortierung"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "sortierung": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Eingabe zum Anlegen einer Gru\u00DFformel; Id und Reihenfolge vergibt der\r\nBestand, wenn nichts mitkommt."
+      },
+      "SpeichereMailVorlageDto": {
+        "required": [
+          "name",
+          "betreff",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "betreff": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "Eingabe zum Anlegen einer Mail-Textvorlage; die Id vergibt der Bestand beim\r\nSpeichern."
+      },
       "StandardSchadenspositionDto": {
         "required": [
           "bezeichnung",
@@ -5181,6 +6416,160 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "UebergabeAngebotDto": {
+        "required": [
+          "rechnername",
+          "zuletztGearbeitet",
+          "gesichertAm",
+          "sicherung",
+          "programmfassung"
+        ],
+        "type": "object",
+        "properties": {
+          "rechnername": {
+            "type": "string",
+            "description": "Steht so im Satz auf dem Bildschirm."
+          },
+          "zuletztGearbeitet": {
+            "type": "string",
+            "description": "\u201EZuletzt heute 14:12 auf BUERO-PC gearbeitet.\u0022",
+            "format": "date-time"
+          },
+          "gesichertAm": {
+            "type": "string",
+            "description": "Der Stand, der \u00FCbernommen w\u00FCrde.",
+            "format": "date-time"
+          },
+          "sicherung": {
+            "type": "string",
+            "description": "Dateiname des Archivs."
+          },
+          "programmfassung": {
+            "type": "string",
+            "description": "Fassung, die es geschrieben hat."
+          }
+        },
+        "description": "Der Arbeitsplatz, dessen Stand zur \u00DCbernahme bereitliegt."
+      },
+      "UebergabeStandDto": {
+        "required": [
+          "angebot",
+          "eigenerStandGesichertAm",
+          "letzteSicherung",
+          "ablageOrdner"
+        ],
+        "type": "object",
+        "properties": {
+          "angebot": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Der \u00FCbernehmbare fremde Stand, sonst \u0060null\u0060.",
+                "$ref": "#/components/schemas/UebergabeAngebotDto"
+              }
+            ]
+          },
+          "eigenerStandGesichertAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Wann dieser Rechner zuletzt gesichert hat, damit der Bildschirm zeigen kann,\r\nwas eine \u00DCbernahme ersetzen w\u00FCrde. \u0060null\u0060: noch nie.",
+            "format": "date-time"
+          },
+          "letzteSicherung": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Ausgang des letzten automatischen Laufs.",
+                "$ref": "#/components/schemas/LetzteSicherungDto"
+              }
+            ]
+          },
+          "ablageOrdner": {
+            "type": "string",
+            "description": "Der eingestellte Ordner; leer hei\u00DFt abgeschaltet."
+          }
+        },
+        "description": "Auskunft f\u00FCr den Start der App (\u00A77.2, #39): Gibt es einen neueren Stand am\r\nanderen Arbeitsplatz, und wie ist die letzte automatische Sicherung\r\nausgegangen? Beides in einer Abfrage, weil beides an derselben Stelle\r\ngezeigt wird \u2014 bevor die Oberfl\u00E4che aufgeht."
+      },
+      "UebernahmeErgebnisDto": {
+        "required": [
+          "uebernommen",
+          "rechnername",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "uebernommen": {
+            "type": "boolean",
+            "description": "\u0060false\u0060 hei\u00DFt nicht \u201EFehler\u0022, sondern \u201Ees gab nichts mehr zu\r\n\u00FCbernehmen\u0022: Zwischen der Frage auf dem Bildschirm und dem Klick kann sich\r\nder Ordner ge\u00E4ndert haben. Die Oberfl\u00E4che geht dann einfach weiter."
+          },
+          "rechnername": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Von wem der Stand kam."
+          },
+          "message": {
+            "type": "string",
+            "description": "Der Satz, den die App anzeigt."
+          }
+        },
+        "description": "Ausgang einer Arbeitsplatz-\u00DCbernahme (\u00A77.2, #39)."
+      },
+      "ValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         }
       },
@@ -6032,7 +7421,16 @@
       "name": "FormTemplates"
     },
     {
+      "name": "Anredebausteine"
+    },
+    {
       "name": "EmailVersand"
+    },
+    {
+      "name": "Grussformeln"
+    },
+    {
+      "name": "MailVorlagen"
     },
     {
       "name": "VersandProtokoll"

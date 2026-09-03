@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
@@ -11,6 +13,9 @@ import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_ima
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_server_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_microsoft_signin_section.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_signatur_sektion.dart';
+import 'package:automation_app/features/settings/presentation/widgets/anredebausteine_sektion.dart';
+import 'package:automation_app/features/settings/presentation/widgets/grussformeln_sektion.dart';
+import 'package:automation_app/features/settings/presentation/widgets/mail_vorlagen_sektion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -67,6 +72,11 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   /// Speichern-Knopf unten liest daraus.
   final TextEditingController _signatur = TextEditingController();
 
+  /// Name der aus Outlook gelesenen, noch nicht uebernommenen Signatur.
+  /// Gehoert der Seite, weil ihr Speichern-Knopf die Uebernahme ausloest
+  /// (§4.7, geaendert am 02.09.2026: Der Import schreibt nicht mehr selbst).
+  final ValueNotifier<String> _signaturAusOutlook = ValueNotifier<String>('');
+
   final FormGroup _form = FormGroup({
     'enabled': FormControl<bool>(value: false),
     'authMethod': FormControl<MailboxAuthMethod>(
@@ -94,6 +104,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   void dispose() {
     _scrollController.dispose();
     _signatur.dispose();
+    _signaturAusOutlook.dispose();
     super.dispose();
   }
 
@@ -111,7 +122,13 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   /// Einstellungssatz, ihr Erfolg kommt entsprechend später — [MailSignaturSektion]
   /// meldet ihn selbst, wenn er da ist.
   void _save() {
-    MailSignaturSektion.speichereWennGeaendert(context, _signatur.text);
+    unawaited(
+      MailSignaturSektion.speichereWennGeaendert(
+        context,
+        _signatur.text,
+        _signaturAusOutlook,
+      ),
+    );
 
     if (!_form.valid) {
       _form.markAllAsTouched();
@@ -254,7 +271,14 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
                           },
                         ),
                         const MailboxFilterSection(),
-                        MailSignaturSektion(controller: _signatur),
+                        MailSignaturSektion(
+                          controller: _signatur,
+                          vorgemerkt: _signaturAusOutlook,
+                        ),
+                        const MailVorlagenSektion(),
+                        // Anrede vor Gruss, wie sie in der Mail stehen.
+                        const AnredebausteineSektion(),
+                        const GrussformelnSektion(),
                         SpeichernButton(
                           speichert: isSaving,
                           onSpeichern: signInPending ? null : _save,

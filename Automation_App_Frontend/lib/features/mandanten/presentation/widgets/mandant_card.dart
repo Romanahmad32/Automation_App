@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -166,39 +167,19 @@ class MandantCard extends StatelessWidget {
     }
   }
 
-  void _loeschen(BuildContext context) {
+  Future<void> _loeschen(BuildContext context) async {
     final bloc = context.read<MandantenOverviewBloc>();
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: Icon(
-          Icons.warning_rounded,
-          size: 40,
-          color: Theme.of(context).colorScheme.error,
-        ),
-        title: const Text('Löschen bestätigen'),
-        content: Text(
+    final bestaetigt = await bestaetigen(
+      context,
+      icon: Icons.warning_rounded,
+      titel: 'Löschen bestätigen',
+      text:
           'Soll der Mandant „${mandant.anzeigename}" aus der App entfernt '
           'werden? Die Akten-Ordner im Dateisystem bleiben unberührt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () {
-              bloc.add(DeleteMandantEvent(mandant.id));
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Löschen'),
-          ),
-        ],
-      ),
+      bestaetigung: 'Löschen',
+      destruktiv: true,
     );
+    if (!bestaetigt) return;
+    bloc.add(DeleteMandantEvent(mandant.id));
   }
 }

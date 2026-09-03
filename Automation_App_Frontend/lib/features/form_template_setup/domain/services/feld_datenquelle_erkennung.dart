@@ -176,11 +176,21 @@ class FeldDatenquelleErkennung {
     }
     if (hat('versicherungsbeginn')) return FeldDatenquelle.versicherungsbeginn;
     // Ein Kennzeichen ohne Mandantenbezug ist das des Gegners — Referenz und
-    // Antwort kennen nur dieses.
+    // Antwort kennen nur dieses. Der angebotene Name ist „Gegnerkennzeichen"
+    // (§4.1), aber die Prüfung bleibt ein *Teilstring*-Test: Vorlagen aus der
+    // Zeit davor tragen das blanke `{{Kennzeichen}}`, und ein exakter
+    // Vergleich ließe sie still auf leer fallen — kein Fehler, keine Meldung,
+    // nur ein fehlender Wert im Brief. `feld_datenquelle_erkennung_test.dart`
+    // hält beide Schreibweisen fest.
     if (hat('kennzeichen')) return FeldDatenquelle.kennzeichenGegner;
-    if (hat('referenz') || hat('aktenzeichen') || name == 'zeichen') {
-      return FeldDatenquelle.referenz;
+    // „Zeichen" und „Aktenzeichen" meinen dasselbe und stehen im Brief ohne
+    // Kennzeichen („216/26 C03"). Nur wer ausdrücklich „Referenz" schreibt,
+    // will die volle Zeichenkette samt Kennzeichen — die braucht sonst nur
+    // der Zentralruf (§4.2).
+    if (hat('aktenzeichen') || name == 'zeichen') {
+      return FeldDatenquelle.zeichen;
     }
+    if (hat('referenz')) return FeldDatenquelle.referenz;
     if (hat('versicher') || hat('gegner') || hat('empfaenger')) {
       return _versichererfeld(name);
     }
@@ -193,6 +203,9 @@ class FeldDatenquelleErkennung {
   static FeldDatenquelle _mandantenfeld(String name) {
     bool hat(String wort) => name.contains(wort);
 
+    // Gegenstück zum Gegnerkennzeichen: „Mandantenkennzeichen" trägt seinen
+    // Bezug im Namen und landet über ihn schon hier; „Mandant Kennzeichen" aus
+    // dem Bestand ebenso.
     if (hat('kennzeichen')) return FeldDatenquelle.kennzeichenMandant;
     if (hat('vorname')) return FeldDatenquelle.mandantVorname;
     if (hat('nachname') || hat('familienname')) {

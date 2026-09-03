@@ -86,22 +86,12 @@ public class ZentralrufController(
 
     [HttpPost("prefill")]
     [ProducesResponseType(typeof(ZentralrufPrefillResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ZentralrufPrefillResponseDto), StatusCodes.Status400BadRequest)]
+    // Der einzige 400 dieses Endpunkts ist der Verstoss gegen die Schranken der
+    // Anfrage, und den beantwortet [ApiController] in ProblemDetails-Form.
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ZentralrufPrefillResponseDto), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ZentralrufPrefillResponseDto>> PrefillForm([FromBody] ZentralrufPrefillDto prefillDto)
     {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
-            return BadRequest(new ZentralrufPrefillResponseDto(
-                false,
-                null,
-                [],
-                [],
-                "validation_failed",
-                string.Join(" | ", errors)));
-        }
-
         try
         {
             var result = await zentralrufAutomationService.PrefillAsync(prefillDto.ToDomain());

@@ -76,6 +76,10 @@ class ProtokollDienst implements EmailVersandRepository {
   Future<SignaturStand> ladeSignaturStand() async => const SignaturStand();
 
   @override
+  Future<SignaturStand> leseSignatur(String name) async =>
+      const SignaturStand();
+
+  @override
   Future<SignaturStand> uebernimmSignatur(String name) async =>
       const SignaturStand();
 

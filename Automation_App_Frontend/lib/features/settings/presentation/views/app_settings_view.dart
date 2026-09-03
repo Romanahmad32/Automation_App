@@ -55,6 +55,9 @@ class _AppSettingsViewState extends State<AppSettingsView>
     // "Schadensaufstellung" (StandardpositionenSettingsView) und speichert
     // dort für sich (SaveTabellenkopfFarbeEvent).
     'aktenStammordner': FormControl<String>(),
+    // Vorlagenordner (#33), ohne Validator: Leer heißt App-Ordner des
+    // Backends unter %APPDATA% — der Stand vor dieser Einstellung.
+    'vorlagenOrdner': FormControl<String>(),
     // Register-Spiegel (§6.2). Der Ablageordner ist bewusst ohne Validator:
     // Er darf leer bleiben — dann wird keine Datei geschrieben.
     'registerAblageOrdner': FormControl<String>(),
@@ -65,6 +68,9 @@ class _AppSettingsViewState extends State<AppSettingsView>
     'registerExportFilter': FormControl<String>(
       value: KanzleiSettings.registerFilterAlle,
     ),
+    // Sicherungsablage (§7.2, #39), ebenfalls ohne Validator: Leer heißt keine
+    // automatische Sicherung — der Ordner schaltet die Funktion ein.
+    'sicherungsAblageOrdner': FormControl<String>(),
   });
 
   @override
@@ -89,10 +95,12 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'laufendeAuftragsnummer': settings.laufendeAuftragsnummer.toString(),
       'abteilung': settings.abteilung,
       'aktenStammordner': settings.aktenStammordner,
+      'vorlagenOrdner': settings.vorlagenOrdner,
       'registerAblageOrdner': settings.registerAblageOrdner,
       'registerDateiname': settings.registerDateiname,
       'registerNachAbschlussSchreiben': settings.registerNachAbschlussSchreiben,
       'registerExportFilter': settings.registerExportFilter,
+      'sicherungsAblageOrdner': settings.sicherungsAblageOrdner,
     });
   }
 
@@ -128,6 +136,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
           // auf beiden Seiten still.
           abteilung: AbteilungKuerzel.normalisiere(read('abteilung')),
           aktenStammordner: read('aktenStammordner'),
+          vorlagenOrdner: read('vorlagenOrdner'),
           registerAblageOrdner: read('registerAblageOrdner'),
           // Leerer Name heißt Vorgabe: Ein Spiegel ohne Dateinamen wäre eine
           // Datei, die nur ".docx" heißt.
@@ -139,6 +148,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
           registerExportFilter: read('registerExportFilter').isEmpty
               ? KanzleiSettings.registerFilterAlle
               : read('registerExportFilter'),
+          sicherungsAblageOrdner: read('sicherungsAblageOrdner'),
         ),
       ),
     );
