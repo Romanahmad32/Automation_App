@@ -160,7 +160,9 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 ## Vorhandene Bausteine (`lib/core/general_widgets/`)
 
-- `form/` — `GeneralTextField`, `GermanDateField`, `FormSection`, `FormWertBeobachter`,
+- `form/` — `GeneralTextField`, `GermanDateField`, `AuswahlTextField` (Textfeld, dessen Symbol den
+  `AuswahlDialog` über bekannte Werte öffnet — je Wert ein `AuswahlKandidat` mit Herkunftszeile;
+  ohne Kandidaten kein Symbol), `FormSection`, `FormWertBeobachter`,
   `TexteListenEditor`; dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
   (rechtsbündig, mit Ring beim Schreiben) und `HinzufuegenButton` (linksbündig, **unter**
   der Liste — eine Handlung sieht anders aus als der Bestand, an dem sie arbeitet)

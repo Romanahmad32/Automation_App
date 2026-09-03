@@ -1,8 +1,10 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/datums_vorbelegung_editor.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_name_hinweis.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_vorkommen_badge.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +16,11 @@ class TemplateFieldItem extends StatelessWidget {
   final ValueChanged<InputType?> onTypeChanged;
   final ValueChanged<FeldDatenquelle?> onDatenquelleChanged;
   final ValueChanged<bool?> onRequiredChanged;
+
+  /// Die Datums-Vorbelegung des Felds wurde geändert (§5.3). Null nimmt die
+  /// Einstellung zurück, sodass wieder die Namensregel greift.
+  final ValueChanged<DatumsVorbelegung?> onVorbelegungChanged;
+
   final VoidCallback onDelete;
 
   /// Klick auf das Kennzeichen „in keiner Datei" — führt zur Zuordnung (#36).
@@ -26,6 +33,7 @@ class TemplateFieldItem extends StatelessWidget {
     required this.onTypeChanged,
     required this.onDatenquelleChanged,
     required this.onRequiredChanged,
+    required this.onVorbelegungChanged,
     required this.onDelete,
     this.onZuordnen,
   });
@@ -57,7 +65,30 @@ class TemplateFieldItem extends StatelessWidget {
             formControlName: fieldData.label,
             datenquelleGesetzt: fieldData.datenquelle.istGesetzt,
           ),
+          // Eine Vorbelegung hat nur ein Datumsfeld (§5.3).
+          if (fieldData.inputType == InputType.date) _vorbelegung(),
         ],
+      ),
+    );
+  }
+
+  /// Der Vorbelegungs-Einsteller unter der Feldzeile.
+  ///
+  /// Er hängt am **Wert** des Controls, nicht an `fieldData.label`: Solange
+  /// die Detailseite offen ist, hält das Label nur den Control-Schlüssel
+  /// (`field_0`, …, siehe FEATURE.md). Ohne den Umweg leitete die Namensregel
+  /// aus „field_0" ab statt aus „Zahlungsfrist" — und der Anwalt sähe beim
+  /// Umbenennen nie, dass sich die Ableitung mitändert.
+  Widget _vorbelegung() {
+    return ReactiveValueListenableBuilder<String>(
+      formControlName: fieldData.label,
+      builder: (context, control, _) => Padding(
+        padding: const EdgeInsets.fromLTRB(46, 0, 8, 8),
+        child: DatumsVorbelegungEditor(
+          vorbelegung: fieldData.vorbelegung,
+          feldname: control.value ?? '',
+          onChanged: onVorbelegungChanged,
+        ),
       ),
     );
   }

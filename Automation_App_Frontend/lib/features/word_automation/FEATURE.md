@@ -7,23 +7,23 @@ legt es in der Mandantenakte ab und schließt den Vorgang ab. Größtes Feature 
 **Zustand:** in `presentation/blocs/`: `WizardCubit` (Schritt + Eingaben), `DocumentBloc` (geladene Vorlagendatei),
 `EditedDocumentBloc` (Erzeugung), `TemplatePdfPreviewBloc` + `ResultPdfPreviewBloc` (`pdf_preview_bloc.dart`),
 `RvgCalculationBloc`, `StandardpositionenCubit`, `AktivePlatzhalterCubit` (Pflicht + Sichtbarkeit je Variante, #35/#82).
-Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTemplateOverviewBloc`,
-`VorgangCubit`.
+Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTemplateOverviewBloc`, `VorgangCubit`.
 **Domain:** Entities `DamageListing`, `GeneratedDocument`, `RvgCalculation`, `VorlagenUebersicht`,
-`ArbeitsordnerAufraeumung`, `AblageFormat`, `StandardSchadenspositionen`; UseCases `FillOutTemplate`,
-`ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateRvgFees`, `GetVorlagenUebersicht`, `ArbeitsordnerAufraeumen`.
+`ArbeitsordnerAufraeumung`, `AblageFormat`, `StandardSchadenspositionen`; Dienst `DatenquelleVorschlaege`
+(bekannte Werte je Datenquelle zur Auswahl am Feld, #17 — gezeigt von `AusfuellFeld`); UseCases
+`FillOutTemplate`, `ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateRvgFees`, `GetVorlagenUebersicht`,
+`ArbeitsordnerAufraeumen`.
 **Backend:** `Features/WordAutomation/`, `Features/PdfConversion/` ·
 `GET /api/WordAutomation/vorlagen`, `POST /api/WordAutomation/replaced-document`,
 `POST /api/WordAutomation/rvg-calculation`, `POST /api/WordAutomation/arbeitsordner/aufraeumen`,
 `POST /api/PdfConversion/convert-from-path`; über `VorgangCubit` zusätzlich `PUT /api/Vorgaenge`
 und `POST /api/Vorgaenge/abschliessen`; Standardpositionen über `GET`/`PUT /api/Settings/schadenspositionen`
 **Tests:** `test/features/word_automation/` (Formularextraktion, `WizardCubit`,
-`EditedDocumentBloc`, Export, Leseregel für Beträge, Betrag einer Position, die drei RVG-Felder)
+`EditedDocumentBloc`, Export, Leseregel für Beträge, Betrag einer Position, RVG-Felder, Auswahlhilfe)
 
 **Fallstricke**
 
-- Der lange Rest steht in `FALLSTRICKE.md` daneben: Ablageformat, Vorgangsstatus, Vorsteuer,
-  Vorlagenverknüpfung.
+- Der lange Rest steht in `FALLSTRICKE.md`: Ablageformat, Vorgangsstatus, Vorsteuer, Vorlagen, Auswahlhilfe.
 - Der `IndexedStack` der Page hält alle vier Views auf den festen `WizardStep`-Enum-Indizes;
   sichtbar sind nur die aus `WizardState.steps`. Einen Schritt einfügen: Enum, `steps` und
   `children` gemeinsam ändern.

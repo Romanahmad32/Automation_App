@@ -21,4 +21,43 @@ void main() {
     expect(gleichesKennzeichen(null, 'GG-XY 123'), isFalse);
     expect(gleichesKennzeichen(null, null), isFalse);
   });
+
+  group('istKennzeichen', () {
+    /// Dieselbe Toleranz wie [normalizeKennzeichen]: Was sich in die
+    /// Konvention überführen lässt, ist ein Kennzeichen. Liefen die beiden
+    /// auseinander, beanstandete das Formular einen Wert, den die App selbst
+    /// aus dem Register angeboten hat.
+    test('erkennt jede Schreibweise, die normalisiert werden kann', () {
+      for (final wert in [
+        'HG-E 1427',
+        'hg-e 1427',
+        'HGE1427',
+        'GG XY 123',
+        '  HG-E 1427 ',
+        'HG-E1427H',
+        'B-A 1',
+      ]) {
+        expect(istKennzeichen(wert), isTrue, reason: wert);
+      }
+    });
+
+    test('leer und null sind kein Kennzeichen', () {
+      expect(istKennzeichen(null), isFalse);
+      expect(istKennzeichen(''), isFalse);
+      expect(istKennzeichen('   '), isFalse);
+    });
+
+    test('was kein Kennzeichen ist, wird nicht dazu erklärt', () {
+      for (final wert in [
+        'kein kennzeichen',
+        'HG-E',
+        '1427',
+        'HGEF-XY 1427',
+        'HG-E 12345',
+        'HG-E 1427X',
+      ]) {
+        expect(istKennzeichen(wert), isFalse, reason: wert);
+      }
+    });
+  });
 }

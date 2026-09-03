@@ -134,7 +134,13 @@ class FeldDatenquelleErkennung {
 
   /// Ein Datumsfeld erkennt man am Namen, nicht an der Datenquelle: auch ein
   /// ungebundenes `{{Zahlungsfrist}}` ist ein Datum.
+  ///
+  /// Das Kennzeichen steht **vor** der Datumsprüfung. Sonst fischte deren
+  /// Wortliste jeden Namen ab, der beides nennt (`{{KennzeichenAmUnfalltag}}`),
+  /// und das Feld bekäme eine Datumsprüfung auf einen Wert wie `HG-E 1427`.
+  /// Umgekehrt kann nichts verloren gehen: Kein Datumsfeld heißt „Kennzeichen".
   static InputType _feldtypFuer(String name) {
+    if (name.contains('kennzeichen')) return InputType.kennzeichen;
     const datumsWorte = ['datum', 'tag', 'frist', 'beginn'];
     return datumsWorte.any(name.contains) ? InputType.date : InputType.text;
   }

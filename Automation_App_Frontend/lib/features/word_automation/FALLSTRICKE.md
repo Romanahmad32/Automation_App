@@ -157,3 +157,35 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   Vorbelegt werden weiterhin alle Felder — die eingeklappten behalten ihren Wert für die andere
   Fassung —, aber „6 Felder vorbelegt" über einem Formular mit drei Feldern schickt den Anwalt auf
   die Suche nach den anderen drei.
+
+## Auswahlhilfe am Feld (#17)
+
+- **Die Auswahlhilfe hängt an der Datenquelle, nicht am Feldtyp.** Welche Werte an einem Feld zur
+  Wahl stehen, rechnet `DatenquelleVorschlaege.fuerFelder` aus der `FeldDatenquelle` — genau der
+  Kette, die auch `VorgangPrefillMatcher` nimmt (gesetzte Quelle, sonst `FeldDatenquelleErkennung`
+  über den Namen). Deshalb bekommt auch ein gewöhnliches `InputType.text` die Liste, sobald zu
+  seiner Quelle mehrere Werte bekannt sind, und ein `InputType.kennzeichen` ohne bekannte Werte
+  bekommt keine. Wer das am Feldtyp festmachte, hätte für dieselbe Angabe je Vorlage eine andere
+  Bedienung — und müsste die Liste zweimal pflegen.
+- **Ohne Kandidaten kein Symbol.** `AuswahlTextField` zeigt das Listensymbol nur bei nicht-leerer
+  Kandidatenliste. Ein Knopf, der einen leeren Dialog öffnet, verspricht Hilfe und liefert nichts —
+  schlechter als kein Knopf.
+- **Vorbelegen und Anbieten sind zwei Entscheidungen zum selben Feld.** Kennt der Vorgang das
+  eigene Kennzeichen, belegt es vor (`PrefillQuelle.vorgang`); kennt nur das Register es und dort
+  genau einmal, belegt dieses vor (`PrefillQuelle.mandant`). Bei **mehreren** Registereinträgen
+  bleibt das Feld leer — welches Fahrzeug im Unfall stand, weiß das Register nicht, und eines
+  davon wäre in jedem zweiten Fall das falsche im Anspruchsschreiben (§1.3). Angeboten werden dann
+  alle. Das Kennzeichen des **Gegners** kommt im Mandantenfeld unter keinen Umständen an; dafür
+  gab es früher die Notbremse „bleibt lieber leer", die jetzt der Fall „genau eines" ersetzt.
+- **`InputType.kennzeichen` steht in keiner Bestandsvorlage.** Der Wert wird erst geschrieben, wenn
+  ihn jemand am Feld auswählt; bis dahin bleibt dort `text`. Das Backend hält `fields` als opakes
+  JSON, aber `InputType.fromValue` wirft bei Unbekanntem — eine Vorlage mit dem neuen Wert lässt
+  sich also von einer **älteren** App-Fassung nicht mehr laden. Beim Erkennen aus dem Namen steht
+  das Kennzeichen **vor** der Datumsprüfung (`_feldtypFuer`): sonst fischte deren Wortliste
+  `{{KennzeichenAmUnfalltag}}` ab und das Feld verlangte ein Datum.
+- **Der Validator ist nicht der aus `vorgang_starten`.** `kennzeichenFeldValidator`
+  (`presentation/widgets/kennzeichen_feld_validator.dart`) beanstandet nur, was `istKennzeichen`
+  gar nicht lesen kann, während `kennzeichenValidator` beim Erfassen den Bindestrich verlangt. Hier
+  muss er toleranter sein: Die Werte kommen aus mehreren Beständen und laufen über den Dialog
+  ohnehin durch `normalizeKennzeichen` — eine strengere Prüfung beanstandete einen Wert, den die
+  App selbst angeboten hat.
