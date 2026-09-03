@@ -7,11 +7,13 @@ namespace AutomationService.Features.WordAutomation.Domain.Services;
 /// <c>Generated/Arbeit/</c>, in dem immer nur die <em>aktuelle</em> Fassung des
 /// Schreibens liegt.
 ///
-/// Warum je Vorgang getrennt: der Ergebnisname besteht nur aus Vorlagenname und
-/// Unfalldatum (siehe <see cref="OutputFileNaming"/>). Zwei Vorgänge derselben
-/// Vorlage zum selben Unfalldatum träfen in einem gemeinsamen Ordner denselben
+/// Warum je Vorgang getrennt: der Ergebnisname trägt den Vorgang nicht (§4.9,
+/// siehe <see cref="OutputFileNaming"/>) — er besteht aus Empfänger, laufender
+/// Nummer und Vorlagenname. Zwei Vorgänge, die dieselbe Versicherung mit
+/// derselben Vorlage anschreiben, träfen in einem gemeinsamen Ordner denselben
 /// Dateinamen — und die zweite Erzeugung überschriebe das noch nicht abgelegte
-/// Schreiben des ersten.
+/// Schreiben des ersten. Die Nummer trennt Schreiben <em>innerhalb</em> eines
+/// Vorgangs, nicht die Vorgänge voneinander; das tut dieser Ordner.
 ///
 /// Bleibendes Ergebnis ist allein die Kopie in der Mandantenakte (§4.6): nach
 /// erfolgreicher Ablage löscht das Frontend den Arbeitsordner wieder

@@ -73,6 +73,19 @@ class WizardState extends Equatable {
   /// verknüpft ist.
   final Mandant? selectedMandant;
 
+  /// Ob das nächste Erzeugen ein **neues** Schreiben ist (§4.9) — im Gegensatz
+  /// zur Korrektur des vorigen, die dessen Nummer behält und seine Fassung
+  /// ersetzt. Der Anwalt entscheidet das in der Leiste des Ausfüllschritts;
+  /// geraten wird es nicht.
+  ///
+  /// Fällt nach jeder Erzeugung auf `false` zurück ([WizardCubit.setFormData]
+  /// setzt es nicht, der Rückfluss der Seite tut es): Die Entscheidung ist mit
+  /// dem erzeugten Schreiben verbraucht, und wer danach noch einmal auf
+  /// „erstellen" drückt, korrigiert genau dieses — sonst zählte jede Korrektur
+  /// weiter hoch. Beim ersten Schreiben eines Vorgangs ohne Wirkung: dort ist
+  /// die Nummer die 1, ob so oder so.
+  final bool neuesSchreiben;
+
   const WizardState({
     this.currentStep = WizardStep.fillOut,
     this.selectedFormTemplate,
@@ -86,6 +99,7 @@ class WizardState extends Equatable {
     this.aufbauMarke = 0,
     this.selectedVorgang,
     this.selectedMandant,
+    this.neuesSchreiben = false,
   });
 
   /// Ob aus der erfassten Schadensaufstellung ein Dokument entstehen darf:
@@ -122,6 +136,7 @@ class WizardState extends Equatable {
     int? aufbauMarke,
     Vorgang? Function()? selectedVorgang,
     Mandant? Function()? selectedMandant,
+    bool? neuesSchreiben,
   }) {
     return WizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -150,6 +165,7 @@ class WizardState extends Equatable {
       selectedMandant: selectedMandant != null
           ? selectedMandant()
           : this.selectedMandant,
+      neuesSchreiben: neuesSchreiben ?? this.neuesSchreiben,
     );
   }
 
@@ -167,5 +183,6 @@ class WizardState extends Equatable {
     aufbauMarke,
     selectedVorgang,
     selectedMandant,
+    neuesSchreiben,
   ];
 }

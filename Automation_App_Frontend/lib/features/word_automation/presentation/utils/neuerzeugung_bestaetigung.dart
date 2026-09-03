@@ -39,7 +39,7 @@ Future<bool> darfNeuErzeugen(
     text:
         'Das Dokument wurde nach der Erzeugung geändert — vermutlich von Ihnen '
         'in Word. Neu erzeugen überschreibt diese Änderungen.\n\n'
-        '${zustand.path.split(RegExp(r'[\/]')).last}',
+        '${zustand.path.split(RegExp(r'[\\/]')).last}',
     bestaetigung: 'Neu erzeugen',
   );
 }

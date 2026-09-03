@@ -16,6 +16,38 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   springt der Listener der Page ins Begutachten. Wer sie vergisst, wirft den Anwalt nach jeder
   Ablage aus Schritt 3.
 
+## Der Dateiname des Schreibens (§4.9, #32)
+
+`Anspruchsschreiben an {Versicherung} {Nr} {Vorlagenname}` — gebaut im **Frontend**
+(`domain/services/schreiben_dateiname.dart`), weil Versicherer, Vorlage und Vorgang dort schon
+vorliegen; im Backend wären sie nur über einen Zugriff auf den Vorgangs-Slice zu holen.
+`OutputFileNaming` im Dienst ist seitdem nur noch der Schutzwall (unzulässige Zeichen, Endung).
+
+Vier Dinge daran sind leicht wieder kaputtzumachen:
+
+- **Die Nummer wird gefragt, nicht geraten.** Beide Fälle sehen von aussen gleich aus: derselbe
+  Anwalt füllt dasselbe Formular aus und drückt denselben Knopf. `SchreibenNummerHinweis` stellt
+  die Frage ab dem zweiten Schreiben; `WizardState.neuesSchreiben` hält die Antwort. Der Anker,
+  den #32 ursprünglich dafür vorsah, trägt **nicht**: `neuerzeugung_bestaetigung.dart` prüft die
+  *Änderungszeit* der Datei — ob jemand in Word nachgebessert hat — und gibt bei der Korrektur
+  direkt nach dem Erzeugen stumm `true` zurück.
+- **`neuesSchreiben` fällt nach jeder Erzeugung auf `false`** (`uebernehmeVorgangsStand`). Sonst
+  zählte jeder weitere Klick auf „erstellen" eine Nummer hoch, obwohl er dasselbe Schreiben
+  korrigiert. Die Entscheidung ist mit dem erzeugten Schreiben verbraucht.
+- **Die Nummer im Dateinamen und die am Vorgang müssen aus demselben Aufruf stammen.** Beide
+  rufen `naechsteSchreibenNummer` — die Aufrufstelle beim Erzeugen und der Rückfluss in
+  `word_automation_page.dart`. Rechnete eine davon anders, trüge die Datei eine andere Zahl als
+  der Vorgang, und das nächste Schreiben setzte auf der falschen auf.
+- **Ohne Versicherer fällt das „an" mit weg**, statt eine Lücke zu lassen: „Anspruchsschreiben  1
+  HGN" mit doppeltem Leerzeichen sieht aus wie ein Fehler und ist einer. Vorgänge ohne
+  Zentralruf-Antwort sind der Normalfall, solange die Antwort aussteht.
+
+Was **nicht** mehr im Namen steht: das Unfalldatum (es trägt der Fall-Ordner, §6.1) und das
+Zeichen (§4.2 — der Ablagepfad führt bereits zum Vorgang). Und `{Vorlagenname}` ist
+`FormTemplate.templateName`, **nicht** der Dateiname der Word-Datei: sonst stünde „VORLAGE" im
+fertigen Schreiben. Folge davon — die HGN- und die Auflistungs-Fassung derselben Vorlage tragen
+denselben Vorlagennamen; unterschieden werden sie allein durch die Nummer.
+
 ## Vorgang und Berechnung
 
 - Der Vorgangsstatus wird nur vorwärts geschaltet (`status.index`): „erstellt" im Listener der
