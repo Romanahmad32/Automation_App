@@ -1,27 +1,13 @@
-import 'package:automation_app/core/general_classes/failures/failure.dart';
-import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
-import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
-import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
-import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
-import 'package:automation_app/features/word_automation/domain/entities/rvg_calculation.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
-import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart';
-import 'package:automation_app/features/word_automation/domain/repositories/standard_schadenspositionen_repository.dart';
-import 'package:automation_app/features/word_automation/domain/usecases/calculate_rvg_fees.dart';
-import 'package:automation_app/features/word_automation/domain/usecases/fill_out_template.dart';
-import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
-import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
-import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_schadensaufstellung.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'wizard_doubles.dart';
+import 'schadensaufstellung_schritt.dart';
 
 /// Der Betrag einer Schadensposition: `0,00` gehört ins Schreiben, ein
 /// negativer Betrag nicht.
@@ -31,134 +17,15 @@ import 'wizard_doubles.dart';
 /// Form der Rückmeldung: spät, unspezifisch, und die Zwischensumme darüber
 /// sieht dabei völlig plausibel aus. Geprüft wird deshalb hier, im Formular,
 /// an der Zeile.
-class _FakeVorlagenUebersicht implements UseCase<VorlagenUebersicht, NoParams> {
-  @override
-  Future<Either<Failure, VorlagenUebersicht>> call(NoParams params) =>
-      throw UnimplementedError();
-}
-
-class _FakeFillOutTemplate
-    implements UseCase<GeneratedDocument, FillOutTemplateParams> {
-  @override
-  Future<Either<Failure, GeneratedDocument>> call(
-    FillOutTemplateParams params,
-  ) => throw UnimplementedError();
-}
-
-/// Antwortet mit einer festen Berechnung — die Zahlen prüft der Backend-Test
-/// (`RvgFeeCalculatorTests`), hier zählt nur, dass die Vorschau nicht hängt.
-class _FakeCalculateRvgFees
-    implements UseCase<RvgCalculation, CalculateRvgFeesParams> {
-  @override
-  Future<Either<Failure, RvgCalculation>> call(
-    CalculateRvgFeesParams params,
-  ) async => Right(
-    const RvgCalculation(
-      gegenstandswert: 0,
-      gebuehrensatz: 1.3,
-      wertgebuehr: 51.50,
-      geschaeftsgebuehr: 66.95,
-      auslagenpauschale: 13.39,
-      netto: 80.34,
-      umsatzsteuer: 0,
-      brutto: 80.34,
-    ),
-  );
-}
-
-/// Der Cubit wird im Test nie geladen — das Formular startet dann mit der
-/// Vorgabe aus dem Code, wie vor der Konfigurierbarkeit.
-class _NieGeladeneStandardpositionen
-    implements StandardSchadenspositionenRepository {
-  @override
-  Future<List<StandardSchadensposition>> lade() => throw UnimplementedError();
-
-  @override
-  Future<List<StandardSchadensposition>> speichere(
-    List<StandardSchadensposition> positionen,
-  ) => throw UnimplementedError();
-}
-
-class _NieAbgerufeneSettings implements UseCase<KanzleiSettings, NoParams> {
-  @override
-  Future<Either<Failure, KanzleiSettings>> call(NoParams params) =>
-      throw UnimplementedError();
-}
-
-class _NieGespeicherteSettings
-    implements UseCase<KanzleiSettings, KanzleiSettings> {
-  @override
-  Future<Either<Failure, KanzleiSettings>> call(KanzleiSettings params) =>
-      throw UnimplementedError();
-}
-
+///
+/// Die drei Felder unter der Liste (Gebührensatz, die beiden Korrekturfelder)
+/// prüft `rvg_felder_test.dart` — dieselbe Bahn, andere Eingaben.
 void main() {
-  WizardUmgebung? wizard;
-  DocumentBloc? document;
+  final schritt = SchadensaufstellungSchritt();
 
-  // Diese beiden gehen als BlocProvider.value in den Baum; deren Vertrag lässt
-  // die Lebensdauer beim Aufrufer — anders als bei BlocProvider(create:), das
-  // seine Blocs selbst schliesst. Ohne dieses tearDown blieben acht
-  // StreamController über die Datei offen, und sobald einer dieser Blocs einmal
-  // einen Timer startet, schlägt er in einem *anderen* Test als „A Timer is
-  // still pending" auf.
-  tearDown(() async {
-    await wizard?.schliesse();
-    await document?.close();
-    wizard = null;
-    document = null;
-  });
+  tearDown(schritt.schliesse);
 
-  /// Baut den Schritt mit allem, was `canGenerate` braucht: ausgefülltes
-  /// Formular aus Schritt 1 und eine geladene Vorlagendatei. Fehlte eines von
-  /// beiden, wäre der Knopf ohnehin gesperrt und der Test bewiese nichts.
-  Future<void> zeigeSchritt(WidgetTester tester) async {
-    final umgebung = WizardUmgebung();
-    final cubit = umgebung.wizard;
-    cubit.setFormData({'Name': 'Mustermann'});
-    final dokument = DocumentBloc(_FakeVorlagenUebersicht());
-    dokument.add(const SetDocumentPathEvent(r'C:\Vorlagen\HGN.docx'));
-    wizard = umgebung;
-    document = dokument;
-
-    await tester.pumpWidget(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: cubit),
-          BlocProvider.value(value: dokument),
-          BlocProvider(
-            create: (_) => EditedDocumentBloc(_FakeFillOutTemplate()),
-          ),
-          BlocProvider(
-            create: (_) => RvgCalculationBloc(_FakeCalculateRvgFees()),
-          ),
-          BlocProvider(
-            create: (_) => KanzleiSettingsBloc(
-              _NieAbgerufeneSettings(),
-              _NieGespeicherteSettings(),
-            ),
-          ),
-          BlocProvider(
-            create: (_) =>
-                StandardpositionenCubit(_NieGeladeneStandardpositionen()),
-          ),
-        ],
-        child: const MaterialApp(
-          home: Scaffold(body: WizardStepSchadensaufstellung()),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-  }
-
-  /// Wartet die Entprellung des [RvgCalculationBloc] (350 ms) ab. `pumpAndSettle`
-  /// allein reicht dafür **nicht**: Ein wartender Timer plant kein Bild ein, die
-  /// Schleife hält ihn also für erledigt — und der Test fällt am Ende über
-  /// „A Timer is still pending".
-  Future<void> beruhige(WidgetTester tester) async {
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
-  }
+  Future<void> zeigeSchritt(WidgetTester tester) => schritt.zeige(tester);
 
   Future<void> tippeBetrag(WidgetTester tester, String betrag) async {
     await tester.enterText(find.byType(TextField).at(1), betrag);
@@ -195,14 +62,6 @@ void main() {
     await tippeBetrag(tester, betrag);
   }
 
-  CustomRectangularButton erstellenKnopf(WidgetTester tester) => tester
-      .widgetList<CustomRectangularButton>(find.byType(CustomRectangularButton))
-      .firstWhere(
-        (knopf) =>
-            knopf.label is Text &&
-            (knopf.label as Text).data == 'Dokument erstellen',
-      );
-
   testWidgets(
     'ein negativer Betrag sperrt das Erzeugen und benennt die Zeile',
     (tester) async {
@@ -231,7 +90,7 @@ void main() {
     );
 
     expect(find.text(negativerBetragHinweis), findsNothing);
-    expect(wizard!.wizard.state.damageListing?.items.single.amount, 0);
+    expect(schritt.umgebung.wizard.state.damageListing?.items.single.amount, 0);
     expect(erstellenKnopf(tester).onPressed, isNotNull);
   });
 
@@ -246,7 +105,8 @@ void main() {
     await zeigeSchritt(tester);
     await erfasse(tester, bezeichnung: 'Gutachten', betrag: '-0,00');
 
-    final betrag = wizard!.wizard.state.damageListing!.items.single.amount;
+    final betrag =
+        schritt.umgebung.wizard.state.damageListing!.items.single.amount;
     expect(betrag.isNegative, isFalse);
     expect(find.text(negativerBetragHinweis), findsNothing);
     expect(erstellenKnopf(tester).onPressed, isNotNull);

@@ -27,6 +27,15 @@ sechzig Dateien das größte der App, entsprechend viel davon.
 - **Eine Schadensposition über `0,00 €` ist gültig** (noch nicht beziffert), ein negativer Betrag
   nicht. Geprüft wird im Formular an der Zeile (`utils/schadenspositionen_pruefung.dart`), nicht
   erst im Dienst: dessen `[Range]` antwortet mit einem HTTP 400, das keine Zeile benennt.
+- **Die drei Felder unter der Liste prüfen sich anders als die Zeilen darüber**
+  (`utils/rvg_felder_pruefung.dart`). Sie werden am **Rohtext** geprüft, nicht am gelesenen Wert:
+  Ihr *leerer* Zustand hat eine eigene Bedeutung (Gebührensatz → 1,3; Korrekturfelder →
+  automatisch nach § 13 RVG), und die lässt sich an einer Zahl nicht mehr von einer getippten
+  unterscheiden. Beim Gebührensatz zählt Unlesbares als Verstoß — anders als beim Betrag je
+  Position, wo Unlesbares der Normalzustand während des Tippens ist. Hier nicht: `1`, `1,` und
+  `1,3` lesen sich alle, eine gültige Eingabe kommt also nie durch einen unlesbaren
+  Zwischenstand. Ohne diese Prüfung ging still 1,3 hinaus, obwohl etwas anderes im Feld stand —
+  und `0` ist der schärfste Fall, weil sie *lesbar* ist und der Rückfall deshalb nicht griff.
 - **Das Verdikt kommt aus dem Formular, nicht aus der `DamageListing`.** `DamageListingForm.onChanged`
   meldet Stand **und** Beanstandungen; `WizardState.schadenspositionFehler` hält sie, und
   `schadensaufstellungIstErzeugbar` ist die einzige Stelle, die über den Knopf entscheidet. Der
