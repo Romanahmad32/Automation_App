@@ -159,7 +159,10 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 ## Vorhandene Bausteine (`lib/core/general_widgets/`)
 
-- `form/` — `GeneralTextField`, `GermanDateField`, `FormSection`, `FormWertBeobachter`
+- `form/` — `GeneralTextField`, `GermanDateField`, `FormSection`, `FormWertBeobachter`,
+  `TexteListenEditor`; dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
+  (rechtsbündig, mit Ring beim Schreiben) und `HinzufuegenButton` (linksbündig, **unter**
+  der Liste — eine Handlung sieht anders aus als der Bestand, an dem sie arbeitet)
 - `buttons/` — `CustomRectangularButton`; `buttons/dropdowns/` — `SearchableDropdown`
   (+ `SearchableDropdownEntry`), `ReactiveSearchableDropdown`, `TemplateSelector`
 - `drawer/` — `AppShellPage`, `AppSidebar`, `SidebarItem`, `SidebarFooter`, `SidebarThemeToggle`,

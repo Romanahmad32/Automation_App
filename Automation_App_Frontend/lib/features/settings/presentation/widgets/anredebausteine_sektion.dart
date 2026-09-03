@@ -1,6 +1,7 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/form/hinzufuegen_button.dart';
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_state.dart';
@@ -90,23 +91,23 @@ class AnredebausteineSektionInhalt extends StatelessWidget {
                 'Keine Anrede hinterlegt. Dann gilt weiter „Sehr geehrter '
                 'Herr …" bzw. „Sehr geehrte Damen und Herren".',
               ),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final baustein in stand.bausteine)
-                  InputChip(
-                    label: Text(baustein.bezeichnung),
-                    onPressed: () => _bearbeite(context, baustein),
-                    onDeleted: () => _entferne(context, baustein),
-                    deleteButtonTooltipMessage: 'Anrede entfernen',
-                  ),
-                ActionChip(
-                  avatar: const Icon(Icons.add, size: 18),
-                  label: const Text('Anrede hinzufügen'),
-                  onPressed: () => _bearbeite(context, const Anredebaustein()),
-                ),
-              ],
+            if (stand.bausteine.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final baustein in stand.bausteine)
+                    InputChip(
+                      label: Text(baustein.bezeichnung),
+                      onPressed: () => _bearbeite(context, baustein),
+                      onDeleted: () => _entferne(context, baustein),
+                      deleteButtonTooltipMessage: 'Anrede entfernen',
+                    ),
+                ],
+              ),
+            HinzufuegenButton(
+              beschriftung: 'Anrede hinzufügen',
+              onHinzufuegen: () => _bearbeite(context, const Anredebaustein()),
             ),
           ],
         );

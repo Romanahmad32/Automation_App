@@ -1,4 +1,4 @@
-import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
@@ -173,14 +173,18 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
             ],
           ),
           const SizedBox(height: 16),
-          CustomRectangularButton(
-            onPressed: stand.speichert || _hatUnzulaessigenBetrag
+          // Derselbe Knopf wie in jeder anderen Einstellungsmaske
+          // (Kanzleidaten, Postfach): rechtsbündig, mit Ring während des
+          // Schreibens. Hier stand vorher ein CustomRectangularButton, und
+          // damit sah der Speichern-Knopf der Schadensaufstellung als
+          // einziger anders aus als der Rest der Einstellungen.
+          SpeichernButton(
+            speichert: stand.speichert,
+            onSpeichern: _hatUnzulaessigenBetrag
                 ? null
                 : () => context.read<StandardpositionenCubit>().speichern(
                     _positionen(),
                   ),
-            icon: const Icon(Icons.save_outlined),
-            label: const Text('Speichern'),
           ),
           const SizedBox(height: 24),
           Text(
