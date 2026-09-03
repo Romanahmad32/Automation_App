@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AutomationService.Core.ErrorHandling;
 
 namespace AutomationService.Features.WordAutomation.Presentation.Dtos;
 
@@ -12,7 +13,8 @@ public class ArbeitsordnerDto
     /// Referenz des Vorgangs — derselbe Schlüssel, unter dem das Dokument
     /// erzeugt wurde; leer = der Ordner der freien Erfassung.
     /// </summary>
-    [MaxLength(260)]
+    [Display(Name = "Die Referenz des Vorgangs")]
+    [MaxLength(260, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string VorgangSchluessel { get; set; } = string.Empty;
 }
 
