@@ -1,30 +1,36 @@
 using System.ComponentModel.DataAnnotations;
+using AutomationService.Core.ErrorHandling;
 
 namespace AutomationService.Features.ZentralrufAutomation.Presentation.Dtos;
 
 public class ZentralrufPrefillDto
 {
     /// <summary>Laufende Auftragsnummer, z. B. 84.</summary>
-    [Required]
-    [Range(1, 99999)]
+    [Display(Name = "Die Auftragsnummer")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
+    [Range(1, 99999, ErrorMessage = Validierungstexte.Bereich)]
     public int Auftragsnummer { get; set; }
 
     /// <summary>Zweistelliges Auftragsjahr, z. B. 26. 0 = aktuelles Jahr.</summary>
-    [Range(0, 99)]
+    [Display(Name = "Das Auftragsjahr")]
+    [Range(0, 99, ErrorMessage = Validierungstexte.Bereich)]
     public int Auftragsjahr { get; set; }
 
     /// <summary>Abteilung, z. B. "C03".</summary>
-    [Required]
-    [MaxLength(10)]
+    [Display(Name = "Die Abteilung")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
+    [MaxLength(10, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Abteilung { get; set; } = string.Empty;
 
     /// <summary>Amtliches Kennzeichen des Unfallgegners, z. B. "GG-XY 123".</summary>
-    [Required]
-    [MaxLength(12)]
+    [Display(Name = "Das Kennzeichen des Unfallgegners")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
+    [MaxLength(12, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string KennzeichenSchaediger { get; set; } = string.Empty;
 
     /// <summary>Unfalldatum.</summary>
-    [Required]
+    [Display(Name = "Der Unfalltag")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
     public DateOnly Schadentag { get; set; }
 
     /// <summary>
@@ -32,7 +38,8 @@ public class ZentralrufPrefillDto
     /// Referenz aus Auftragsnummer/-jahr, Abteilung und Kennzeichen zusammen
     /// (<c>ZentralrufAutomationService.BuildReferenz</c>).
     /// </summary>
-    [MaxLength(60)]
+    [Display(Name = "Die Referenz")]
+    [MaxLength(60, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string? Referenz { get; set; }
 
     public ZentralrufGeschaedigterDto? Geschaedigter { get; set; }
@@ -46,20 +53,25 @@ public class ZentralrufPrefillDto
 
 public class ZentralrufGeschaedigterDto
 {
-    [Required]
-    [MaxLength(100)]
+    [Display(Name = "Der Name des Mandanten")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
+    [MaxLength(100, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Name { get; set; } = string.Empty;
 
-    [MaxLength(100)]
+    [Display(Name = "Straße und Hausnummer des Mandanten")]
+    [MaxLength(100, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string StrasseHausnummer { get; set; } = string.Empty;
 
-    [MaxLength(10)]
+    [Display(Name = "Die Postleitzahl des Mandanten")]
+    [MaxLength(10, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Postleitzahl { get; set; } = string.Empty;
 
-    [MaxLength(60)]
+    [Display(Name = "Der Ort des Mandanten")]
+    [MaxLength(60, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Ort { get; set; } = string.Empty;
 
     /// <summary>Kennzeichen des Fahrzeugs des Geschädigten.</summary>
-    [MaxLength(12)]
+    [Display(Name = "Das Kennzeichen des Mandanten")]
+    [MaxLength(12, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Kennzeichen { get; set; } = string.Empty;
 }

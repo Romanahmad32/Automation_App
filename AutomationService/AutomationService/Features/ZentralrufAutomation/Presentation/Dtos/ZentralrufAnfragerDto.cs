@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AutomationService.Core.ErrorHandling;
 
 namespace AutomationService.Features.ZentralrufAutomation.Presentation.Dtos;
 
@@ -10,25 +11,32 @@ namespace AutomationService.Features.ZentralrufAutomation.Presentation.Dtos;
 /// </summary>
 public class ZentralrufAnfragerDto
 {
-    [MaxLength(40)]
+    [Display(Name = "Die Personenart der Kanzlei")]
+    [MaxLength(40, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Personentyp { get; set; } = string.Empty;
 
-    [MaxLength(100)]
+    [Display(Name = "Der Name der Kanzlei")]
+    [MaxLength(100, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Name { get; set; } = string.Empty;
 
-    [MaxLength(100)]
+    [Display(Name = "Straße und Hausnummer der Kanzlei")]
+    [MaxLength(100, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string StrasseHausnummer { get; set; } = string.Empty;
 
-    [MaxLength(10)]
+    [Display(Name = "Die Postleitzahl der Kanzlei")]
+    [MaxLength(10, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Postleitzahl { get; set; } = string.Empty;
 
-    [MaxLength(60)]
+    [Display(Name = "Der Ort der Kanzlei")]
+    [MaxLength(60, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Ort { get; set; } = string.Empty;
 
-    [MaxLength(120)]
-    [EmailAddress]
+    [Display(Name = "Die E-Mail-Adresse der Kanzlei")]
+    [MaxLength(120, ErrorMessage = Validierungstexte.MaxZeichen)]
+    [EmailAddress(ErrorMessage = Validierungstexte.EmailForm)]
     public string EmailAdresse { get; set; } = string.Empty;
 
-    [MaxLength(40)]
+    [Display(Name = "Die Telefonnummer der Kanzlei")]
+    [MaxLength(40, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Telefonnummer { get; set; } = string.Empty;
 }
