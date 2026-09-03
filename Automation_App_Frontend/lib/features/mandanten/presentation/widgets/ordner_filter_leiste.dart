@@ -49,7 +49,6 @@ class OrdnerFilterLeiste extends StatelessWidget {
                   ),
               ],
               selected: {filter.ansicht},
-              showSelectedIcon: false,
               onSelectionChanged: (auswahl) =>
                   onChanged(filter.copyWith(ansicht: auswahl.first)),
             ),
