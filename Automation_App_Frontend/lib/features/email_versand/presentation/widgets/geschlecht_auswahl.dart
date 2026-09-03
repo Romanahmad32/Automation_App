@@ -1,6 +1,7 @@
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -42,7 +43,13 @@ class GeschlechtAuswahl extends StatelessWidget {
           vorher.gewaehlteVorlage != jetzt.gewaehlteVorlage ||
           vorher.anredeNeutral != jetzt.anredeNeutral ||
           vorher.anredePersoenlichMoeglich != jetzt.anredePersoenlichMoeglich ||
-          vorher.entwurf.alleEmpfaenger != jetzt.entwurf.alleEmpfaenger ||
+          // `!=` verglich zwei frisch gebaute Listen über die Identität und
+          // war damit immer wahr (behoben am 03.09.2026, siehe
+          // `PlatzhalterUebersicht.neuZeichnen`).
+          !listEquals(
+            vorher.entwurf.alleEmpfaenger,
+            jetzt.entwurf.alleEmpfaenger,
+          ) ||
           vorher.beschaeftigt != jetzt.beschaeftigt,
       builder: (context, state) {
         final cubit = context.read<EmailEntwurfCubit>();

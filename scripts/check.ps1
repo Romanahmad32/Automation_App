@@ -124,6 +124,15 @@ $hinweise = New-Object System.Collections.ArrayList
 # Nur schreiben, wenn es abweicht: `git config` beruehrt sonst .git/config bei
 # jedem Lauf. Zeigt der Pfad woandershin, hat das jemand mit Absicht getan —
 # dann bleibt es stehen und wird nur gemeldet.
+#
+# Verglichen werden **aufgeloeste Pfade**, nicht die Zeichenketten (behoben am
+# 03.09.2026). Git nimmt fuer core.hooksPath auch einen absoluten Pfad, und der
+# zeigte hier auf genau dieses .githooks/ — der Vergleich gegen '.githooks' sah
+# darin trotzdem eine Abweichung. Gemeldet wurde dann, der Geheimnis-Waechter
+# laufe nicht, waehrend er lief und Funde anhielt. Eine Falschmeldung
+# ausgerechnet an der Stelle, an der jede Meldung ernst genommen werden muss:
+# Wer sie zweimal liest und nichts findet, liest sie beim dritten Mal nicht
+# mehr.
 $hooksPfad = (& git -C $wurzel config --local core.hooksPath 2>$null)
 if ([string]::IsNullOrWhiteSpace($hooksPfad)) {
     & git -C $wurzel config --local core.hooksPath '.githooks' 2>&1 | Out-Null
@@ -131,10 +140,24 @@ if ([string]::IsNullOrWhiteSpace($hooksPfad)) {
         'core.hooksPath auf .githooks/ gesetzt — der Geheimnis-Waechter laeuft ' +
         'ab jetzt vor jedem Commit (docs/RELEASE.md).')
 }
-elseif ($hooksPfad.Trim() -ne '.githooks') {
-    $null = $hinweise.Add(
-        "core.hooksPath zeigt auf '$($hooksPfad.Trim())' statt auf .githooks/ — " +
-        'der Geheimnis-Waechter vor dem Commit laeuft damit nicht.')
+else {
+    $eingetragen = $hooksPfad.Trim()
+    $gemeint = [System.IO.Path]::GetFullPath((Join-Path $wurzel '.githooks'))
+    $tatsaechlich = if ([System.IO.Path]::IsPathRooted($eingetragen)) {
+        [System.IO.Path]::GetFullPath($eingetragen)
+    }
+    else {
+        [System.IO.Path]::GetFullPath((Join-Path $wurzel $eingetragen))
+    }
+    # Trennzeichen ueber ihren Kodepunkt, nicht als Literal: Ein
+    # Backslash in einfachen Anfuehrungszeichen ist zu leicht zu
+    # verlieren, und genau das ist beim Schreiben dieser Zeile passiert.
+    $abschluss = [char[]]@(92, 47)
+    if ($tatsaechlich.TrimEnd($abschluss) -ne $gemeint.TrimEnd($abschluss)) {
+        $null = $hinweise.Add(
+            "core.hooksPath zeigt auf '$eingetragen' statt auf .githooks/ — " +
+            'der Geheimnis-Waechter vor dem Commit laeuft damit nicht.')
+    }
 }
 
 # Laeuft die Anwendung, haelt ihr Kindprozess AutomationService.exe *und*

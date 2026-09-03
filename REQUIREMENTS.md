@@ -353,11 +353,14 @@ Gemeinsam:
   Platzhalter und die Folge — dieselbe Auskunft, die es für `{{Zusatzgruß}}` längst gab; sie fehlte
   ausgerechnet für die Zeile darüber. *Ergänzt am 02.09.2026.*
 - **[S] „Neutral anreden" wird angeboten, sobald es etwas zu schalten gibt:** Der Umschalter steht
-  zur Verfügung, wenn Nachname und Anredeart vorliegen — unabhängig davon, was der Empfängerkreis
-  gerade ergibt. Vorher erschien er nur, wenn die namentliche Anrede **schon** galt, und fehlte
-  damit genau in dem Fall, für den er gedacht ist: die Mail an die Versicherung, die den Mandanten
-  trotzdem namentlich ansprechen soll. Fehlt Nachname oder Anredeart, bleibt er weg — dort gibt es
-  keine namentliche Anrede, die er herstellen könnte. *Ergänzt am 02.09.2026.*
+  zur Verfügung, sobald eine **Anredeart** vorliegt — unabhängig davon, was der Empfängerkreis
+  gerade ergibt und ob ein Nachname bekannt ist. Vorher erschien er nur, wenn die namentliche
+  Anrede **schon** galt, und fehlte damit genau in dem Fall, für den er gedacht ist: die Mail an
+  die Versicherung, die den Mandanten trotzdem namentlich ansprechen soll. Ohne Anredeart bleibt
+  er weg — dann ist jede Form dieselbe, und es gibt nichts zu schalten. *Ergänzt am 02.09.2026;
+  der Nachname fiel am 03.09.2026 aus der Bedingung, weil die Zeile seither auch ohne ihn gebeugt
+  wird (§4.7, „Fehlt nur der Nachname"). Solange er noch mitzählte, verschwand der Umschalter
+  ausgerechnet dort, wo „Sehr geehrter Herr" an die Versicherung ging.*
 - **[S] Der Rückfall ohne Anredebestand folgt der gewählten Anredeart:** Ist die Liste der
   Anredeanfänge leer, gilt „Sehr geehrter / Sehr geehrte" wie ab Werk — und diese Zeile beugt sich
   nach derselben Angabe wie der Vorlagentext. Vorher las der Rückfall allein das Mandantenregister:

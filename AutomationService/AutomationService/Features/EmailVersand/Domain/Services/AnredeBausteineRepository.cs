@@ -27,18 +27,14 @@ public sealed class AnredeBausteineRepository(AutomationDbContext db)
         Bereinige(neu);
         await EnsureUniqueAsync(neu, eigeneId: null, cancellationToken);
 
-        var vorhanden = await db.AnredeBausteine.AnyAsync(cancellationToken);
-        neu.Id = vorhanden
-            ? await db.AnredeBausteine.MaxAsync(a => a.Id, cancellationToken) + 1
-            : 1;
+        neu.Id = await BestandVergabe.NaechsteIdAsync(db.AnredeBausteine, cancellationToken);
 
         // Ans Ende, wenn nichts vorgegeben ist: Ein neuer Anfang soll die
         // gewohnte Reihenfolge der vorhandenen nicht durcheinanderbringen.
         if (neu.Sortierung == 0)
         {
-            neu.Sortierung = vorhanden
-                ? await db.AnredeBausteine.MaxAsync(a => a.Sortierung, cancellationToken) + 10
-                : 10;
+            neu.Sortierung = await BestandVergabe.NaechsteSortierungAsync(
+                db.AnredeBausteine, cancellationToken);
         }
 
         db.AnredeBausteine.Add(neu);
@@ -101,16 +97,12 @@ public sealed class AnredeBausteineRepository(AutomationDbContext db)
 
     async Task EnsureUniqueAsync(AnredeBausteinEntity kandidat, int? eigeneId, CancellationToken ct)
     {
-        // Bewusst getrennt: `a.Id != eigeneId` mit eigeneId == null würde EF zu
-        // `Id <> NULL` übersetzen (SQL-Unknown) und nie treffen.
         var gleich = db.AnredeBausteine.Where(a =>
             a.Maennlich == kandidat.Maennlich
             && a.Weiblich == kandidat.Weiblich
             && a.Neutral == kandidat.Neutral);
 
-        var konflikt = eigeneId is null
-            ? await gleich.AnyAsync(ct)
-            : await gleich.AnyAsync(a => a.Id != eigeneId.Value, ct);
+        var konflikt = await BestandVergabe.GibtEsSchonAsync(gleich, eigeneId, ct);
         if (konflikt)
         {
             throw new AnredeBausteinConflictException(

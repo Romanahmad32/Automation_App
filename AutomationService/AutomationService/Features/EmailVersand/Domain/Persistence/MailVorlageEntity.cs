@@ -10,7 +10,7 @@ namespace AutomationService.Features.EmailVersand.Domain.Persistence;
 /// eine Vorlage, die sie mitbrächte, ließe sie unter jeder Mail doppelt
 /// erscheinen.
 /// </summary>
-public class MailVorlageEntity
+public class MailVorlageEntity : IBestandEintrag
 {
     public int Id { get; set; }
 

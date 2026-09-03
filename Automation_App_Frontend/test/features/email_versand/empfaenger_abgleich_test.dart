@@ -85,4 +85,19 @@ void main() {
 
     expect(abgeglichen.empfaenger, ['getippt@example.de']);
   });
+
+  test('die Vorbelegung ist genauso entdoppelt wie die Empfängerliste', () {
+    // Beide Rückgaben derselben Funktion müssen dasselbe darüber sagen, was
+    // „die vorbelegten Adressen" sind (ergänzt am 03.09.2026). `empfaenger`
+    // war entdoppelt, `vorbelegt` nicht — zwei Vorschläge, die sich nur in
+    // der Schreibweise unterscheiden, standen dort zweimal.
+    final abgeglichen = EmpfaengerAbgleich.nachWechsel(
+      vorhanden: const [],
+      zuvorVorbelegt: const [],
+      neueVorschlaege: const ['Schaden@HUK.de', ' schaden@huk.de ', ''],
+    );
+
+    expect(abgeglichen.empfaenger, ['Schaden@HUK.de']);
+    expect(abgeglichen.vorbelegt, ['Schaden@HUK.de']);
+  });
 }

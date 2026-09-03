@@ -86,9 +86,11 @@ class MandantStammdatenFelder extends StatelessWidget {
           dekoration: const InputDecoration(
             hintText: 'z. B. Salamu aleikum',
             helperText:
-                'Steht in Mails an diesen Mandanten unter der Anrede — nur, '
-                'wenn sonst niemand mitliest. Leer lassen heißt: kein Zusatzgruß.',
-            helperMaxLines: 3,
+                'Vorbelegung für Mails an diesen Mandanten: Er steht unter '
+                'der Anrede, wenn die gewählte Vorlage {{Zusatzgruß}} trägt '
+                '— auch dann, wenn die Gegenseite in Kopie mitliest. Beim '
+                'Verfassen abwählbar. Leer lassen heißt: kein Zusatzgruß.',
+            helperMaxLines: 5,
           ),
         ),
         _feld('notiz', 'Notiz', maxLines: 3),

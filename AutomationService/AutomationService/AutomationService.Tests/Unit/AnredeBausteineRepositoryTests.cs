@@ -191,4 +191,26 @@ public sealed class AnredeBausteineRepositoryTests : IDisposable
         _db.Dispose();
         _connection.Dispose();
     }
+    [Fact]
+    public async Task Anlegen_ErkenntDenAnfangOhneRuecksichtAufGrossschreibung()
+    {
+        // "Moin" und "MOIN" sind auf dem Schirm derselbe Chip
+        // (behoben am 03.09.2026).
+        await _repository.CreateAsync(new AnredeBausteinEntity
+        {
+            Maennlich = "Moin",
+            Weiblich = "Moin",
+            Neutral = "Moin",
+        });
+
+        var tat = async () => await _repository.CreateAsync(new AnredeBausteinEntity
+        {
+            Maennlich = "MOIN",
+            Weiblich = "moin",
+            Neutral = "Moin",
+        });
+
+        await tat.Should().ThrowAsync<AnredeBausteinConflictException>();
+    }
+
 }

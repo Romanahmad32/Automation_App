@@ -26,18 +26,14 @@ public sealed class GrussformelnRepository(AutomationDbContext db) : IGrussforme
         Bereinige(neu);
         await EnsureTextUniqueAsync(neu.Text, eigeneId: null, cancellationToken);
 
-        var vorhanden = await db.Grussformeln.AnyAsync(cancellationToken);
-        neu.Id = vorhanden
-            ? await db.Grussformeln.MaxAsync(g => g.Id, cancellationToken) + 1
-            : 1;
+        neu.Id = await BestandVergabe.NaechsteIdAsync(db.Grussformeln, cancellationToken);
 
         // Ans Ende, wenn nichts vorgegeben ist: Ein neuer Gruss soll die
         // gewohnte Reihenfolge der vorhandenen nicht durcheinanderbringen.
         if (neu.Sortierung == 0)
         {
-            neu.Sortierung = vorhanden
-                ? await db.Grussformeln.MaxAsync(g => g.Sortierung, cancellationToken) + 10
-                : 10;
+            neu.Sortierung = await BestandVergabe.NaechsteSortierungAsync(
+                db.Grussformeln, cancellationToken);
         }
 
         db.Grussformeln.Add(neu);
@@ -88,11 +84,8 @@ public sealed class GrussformelnRepository(AutomationDbContext db) : IGrussforme
 
     async Task EnsureTextUniqueAsync(string text, int? eigeneId, CancellationToken ct)
     {
-        // Bewusst getrennt: `g.Id != eigeneId` mit eigeneId == null würde EF zu
-        // `Id <> NULL` übersetzen (SQL-Unknown) und nie treffen.
-        var konflikt = eigeneId is null
-            ? await db.Grussformeln.AnyAsync(g => g.Text == text, ct)
-            : await db.Grussformeln.AnyAsync(g => g.Text == text && g.Id != eigeneId.Value, ct);
+        var konflikt = await BestandVergabe.GibtEsSchonAsync(
+            db.Grussformeln.Where(g => g.Text == text), eigeneId, ct);
         if (konflikt)
         {
             throw new GrussformelTextConflictException($"Den Gruss \"{text}\" gibt es bereits");

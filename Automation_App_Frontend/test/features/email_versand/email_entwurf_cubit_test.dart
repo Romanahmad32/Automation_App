@@ -783,6 +783,39 @@ void main() {
       await gebaut.cubit.close();
     });
 
+    test('und der Betreff geht mit zurück', () async {
+      // Der behobene Fehler (03.09.2026): Zurück ging nur der Text. Der
+      // Betreff der Vorlage blieb als ihr einziger Rest über einem Text
+      // stehen, der schon wieder aus der Vorbelegung kam — und so ging die
+      // Mail hinaus.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      final vorbelegt = gebaut.cubit.state.entwurf.betreff;
+
+      gebaut.cubit.waehleVorlage(vorlage);
+      expect(gebaut.cubit.state.entwurf.betreff, isNot(vorbelegt));
+
+      gebaut.cubit.waehleVorlage(null);
+
+      expect(gebaut.cubit.state.entwurf.betreff, vorbelegt);
+      await gebaut.cubit.close();
+    });
+
+    test('wer selbst getippt hat, behält seinen Betreff', () async {
+      // Dieselbe Abwägung wie beim Vorgangswechsel: Handarbeit wird nicht
+      // überschrieben.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+
+      gebaut.cubit.waehleVorlage(vorlage);
+      gebaut.cubit.setzeText('Ganz eigener Text.');
+      gebaut.cubit.setzeBetreff('Mein eigener Betreff');
+      gebaut.cubit.waehleVorlage(null);
+
+      expect(gebaut.cubit.state.entwurf.betreff, 'Mein eigener Betreff');
+      await gebaut.cubit.close();
+    });
+
     test(
       'ein gewählter Zusatzgruß steht ohne Vorlage unter der Anrede',
       () async {
@@ -1892,7 +1925,7 @@ void main() {
         await gebaut.cubit.starte(vorgang: vorgang);
 
         expect(gebaut.cubit.state.anredePersoenlichMoeglich, isFalse);
-        expect(gebaut.cubit.anredeNamentlichMachbar, isTrue);
+        expect(gebaut.cubit.anredeGebeugtMachbar, isTrue);
         await gebaut.cubit.close();
       },
     );

@@ -15,7 +15,7 @@ namespace AutomationService.Features.EmailVersand.Domain.Persistence;
 /// das Geschlecht nicht hinterlegt ist oder neben dem Mandanten noch jemand
 /// mitliest — dort folgt „Damen und Herren" statt eines Namens.
 /// </summary>
-public class AnredeBausteinEntity
+public class AnredeBausteinEntity : IBestandEintragMitReihenfolge
 {
     public int Id { get; set; }
 

@@ -10,7 +10,7 @@ namespace AutomationService.Features.EmailVersand.Domain.Persistence;
 /// ist weiterhin freier Text (<c>MandantEntity.PersoenlicheGrussformel</c>)
 /// und dient nur der Vorbelegung.
 /// </summary>
-public class GrussformelEntity
+public class GrussformelEntity : IBestandEintragMitReihenfolge
 {
     public int Id { get; set; }
 

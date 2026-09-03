@@ -1,3 +1,4 @@
+import 'package:automation_app/core/network/dienst_meldung.dart';
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart';
 import 'package:dio/dio.dart';
@@ -21,7 +22,7 @@ class ApiMailVorlagenDatasource implements MailVorlagenRepository {
           .toList();
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ??
+        DienstMeldung.aus(e) ??
             'Die Mail-Vorlagen konnten nicht geladen werden. '
                 'Läuft der Dienst noch?',
       );
@@ -38,7 +39,7 @@ class ApiMailVorlagenDatasource implements MailVorlagenRepository {
       return MailVorlage.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ?? 'Die Vorlage konnte nicht angelegt werden.',
+        DienstMeldung.aus(e) ?? 'Die Vorlage konnte nicht angelegt werden.',
       );
     }
   }
@@ -53,7 +54,7 @@ class ApiMailVorlagenDatasource implements MailVorlagenRepository {
       return MailVorlage.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ?? 'Die Vorlage konnte nicht gespeichert werden.',
+        DienstMeldung.aus(e) ?? 'Die Vorlage konnte nicht gespeichert werden.',
       );
     }
   }
@@ -64,16 +65,8 @@ class ApiMailVorlagenDatasource implements MailVorlagenRepository {
       await _dio.delete('/api/MailVorlagen/$id');
     } on DioException catch (e) {
       throw Exception(
-        _meldung(e) ?? 'Die Vorlage konnte nicht entfernt werden.',
+        DienstMeldung.aus(e) ?? 'Die Vorlage konnte nicht entfernt werden.',
       );
     }
-  }
-
-  /// Der Klartext des Dienstes, wenn er einen geschickt hat — bei 409 steht
-  /// dort, welcher Name schon vergeben ist. Ohne ihn bliebe nur „Fehler 409".
-  String? _meldung(DioException e) {
-    final daten = e.response?.data;
-    if (daten is String && daten.trim().isNotEmpty) return daten.trim();
-    return null;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:automation_app/features/email_versand/domain/entities/beugung.dart';
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/entities/platzhalter_befund.dart';
+import 'package:automation_app/features/email_versand/domain/services/mail_betreff_aufbau.dart';
 import 'package:automation_app/features/email_versand/domain/services/mail_platzhalter.dart';
 import 'package:automation_app/features/email_versand/domain/services/platzhalter_fehlstelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
@@ -118,13 +119,12 @@ class MailVorlagenFueller {
     return ergebnis;
   }
 
-  /// Die Betreffzeile. Dieselbe Regel, nur ohne Zeilen: Bleibt nichts übrig,
-  /// bleibt der Betreff leer — eine erfundene Betreffzeile wäre schlimmer als
+  /// Die Betreffzeile. Dieselbe Regel, nur **je Abschnitt** statt je Zeile —
+  /// die Begründung dafür steht in [MailBetreffAufbau]. Bleibt nichts übrig,
+  /// bleibt der Betreff leer: Eine erfundene Betreffzeile wäre schlimmer als
   /// ein leeres Feld, das erkennbar auf eine Eingabe wartet (§4.7).
-  String fuelleBetreff(String vorlage) {
-    final ersetzt = _ersetzeInZeile(vorlage) ?? '';
-    return ersetzt.replaceAll(RegExp(r'[ \t]{2,}'), ' ').trim();
-  }
+  String fuelleBetreff(String vorlage) =>
+      MailBetreffAufbau.gefuellt(vorlage, _ersetzeInZeile);
 
   /// Die Zeile mit eingesetzten Werten, oder null, wenn sie entfallen soll:
   /// Sie trug mindestens einen Platzhalter, und **keiner** davon hatte einen
@@ -155,9 +155,18 @@ class MailVorlagenFueller {
   /// Jeder Befund weiss dabei, **wo** er stand (Betreff oder Zeilennummer) und
   /// ob seine Zeile entfällt. Erst das macht die Lücke auffindbar: Im gefüllten
   /// Text ist von einem übersprungenen Platzhalter nichts mehr zu sehen.
+  ///
+  /// **Ein Name, aber alle seine Stellen** (ergänzt am 03.09.2026): Steht
+  /// derselbe Platzhalter im Betreff und noch einmal im Text, zählte bis dahin
+  /// nur das erste Vorkommen — die Meldung lautete „fällt aus dem Betreff",
+  /// und die ebenfalls entfallene Textzeile stand nirgends. Die übrigen
+  /// entfallenen Zeilen kommen deshalb als [PlatzhalterBefund.weitereEntfallene]
+  /// mit, statt die Liste um Wiederholungen desselben Namens zu verlängern.
   List<PlatzhalterBefund> befunde(MailVorlage vorlage) {
-    final gesehen = <String>{};
-    final gefunden = <PlatzhalterBefund>[];
+    final reihenfolge = <String>[];
+    final namen = <String, String>{};
+    final erste = <String, int>{};
+    final entfallene = <String, Set<int>>{};
 
     for (final zeile in _zeilen(vorlage)) {
       // Ob die Zeile ganz entfällt, entscheidet sie als Ganzes: Ein einziger
@@ -166,26 +175,49 @@ class MailVorlagenFueller {
 
       for (final treffer in MailPlatzhalter.muster.allMatches(zeile.text)) {
         final name = treffer.group(1)!.trim();
-        if (!gesehen.add(FeldDatenquelleErkennung.normalisiere(name))) continue;
-
-        final wert = _wertFuer(name)?.trim() ?? '';
-        gefunden.add(
-          PlatzhalterBefund(
-            name: name,
-            wert: wert,
-            herkunft: wert.isEmpty ? '' : _herkunftFuer(name),
-            zeile: zeile.nummer,
-            zeileEntfaellt: entfaellt,
-            bezeichnung: PlatzhalterFehlstelle.bezeichnungFuer(name),
-            // Nur im leeren Fall: Wo ein Wert steht, ist nichts zu erklaeren.
-            fehlstelle: wert.isEmpty
-                ? PlatzhalterFehlstelle.fuer(name, mitVorgang: vorgang != null)
-                : '',
-          ),
-        );
+        final schluessel = FeldDatenquelleErkennung.normalisiere(name);
+        if (!namen.containsKey(schluessel)) {
+          reihenfolge.add(schluessel);
+          namen[schluessel] = name;
+          erste[schluessel] = zeile.nummer;
+          entfallene[schluessel] = <int>{};
+        }
+        if (entfaellt) entfallene[schluessel]!.add(zeile.nummer);
       }
     }
-    return gefunden;
+
+    return [
+      for (final schluessel in reihenfolge)
+        _befund(
+          namen[schluessel]!,
+          zeile: erste[schluessel]!,
+          entfallene: entfallene[schluessel]!,
+        ),
+    ];
+  }
+
+  /// Ein Befund aus den gesammelten Stellen **eines** Namens.
+  PlatzhalterBefund _befund(
+    String name, {
+    required int zeile,
+    required Set<int> entfallene,
+  }) {
+    final wert = _wertFuer(name)?.trim() ?? '';
+    final weitere = entfallene.where((nummer) => nummer != zeile).toList()
+      ..sort();
+    return PlatzhalterBefund(
+      name: name,
+      wert: wert,
+      herkunft: wert.isEmpty ? '' : _herkunftFuer(name),
+      zeile: zeile,
+      zeileEntfaellt: entfallene.contains(zeile),
+      bezeichnung: PlatzhalterFehlstelle.bezeichnungFuer(name),
+      // Nur im leeren Fall: Wo ein Wert steht, ist nichts zu erklaeren.
+      fehlstelle: wert.isEmpty
+          ? PlatzhalterFehlstelle.fuer(name, mitVorgang: vorgang != null)
+          : '',
+      weitereEntfallene: weitere,
+    );
   }
 
   /// Vorlage und Ergebnis Zeile für Zeile — die Gegenüberstellung im Dialog.
@@ -206,8 +238,9 @@ class MailVorlagenFueller {
       (
         nummer: 0,
         vorlage: vorlage.betreff,
-        // Der Betreff läuft über `fuelleBetreff`: Er zieht mehrfache
-        // Leerzeichen zusammen, die Textzeilen nicht.
+        // Der Betreff läuft über `fuelleBetreff` und damit über
+        // `MailBetreffAufbau`: Er rechnet je Abschnitt und glättet, was das
+        // Einsetzen hinterlässt — die Textzeilen tun beides nicht.
         ergebnis: _oderNull(fuelleBetreff(vorlage.betreff), vorlage.betreff),
       ),
       for (var i = 0; i < vorlagenzeilen.length; i++)

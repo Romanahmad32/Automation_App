@@ -191,8 +191,10 @@ $unterschrift''';
     // lief hier `Mandant.briefanrede`, und die liest nur den Registereintrag —
     // die je Mail gewählte Anredeart fiel unter den Tisch, und die Mail redete
     // „Damen und Herren" an, während ihr Text von „unserer Mandantin" schrieb.
-    // Ohne Mandanten ist der Nachname leer, und `zeileFuer` wird von selbst
-    // neutral; ein eigener Zweig dafür wäre ein zweites Ergebnis.
+    // Ohne Mandanten ist der Nachname leer, und `zeileFuer` trägt die Zeile
+    // dann allein („Sehr geehrter Herr", geändert am 03.09.2026); ein eigener
+    // Zweig dafür wäre ein zweites Ergebnis. Bis dahin stand hier „wird von
+    // selbst neutral" — seit der Änderung das Gegenteil dessen, was geschieht.
     return (baustein ?? Anredebaustein.rueckfall).zeileFuer(
       anrede: geschlechtFuer(geschlecht),
       nachname: mandant?.nachname ?? '',
@@ -210,8 +212,8 @@ $unterschrift''';
   Anrede geschlechtFuer(Anrede? gewaehlt) =>
       gewaehlt ?? mandant?.anrede ?? Anrede.keine;
 
-  /// Ob eine namentliche Anrede überhaupt möglich wäre — Grundlage für die
-  /// Vorauswahl des Umschalters „neutral anreden". Ohne bekannten Mandanten
+  /// Ob die Anredezeile ohne Zutun **gebeugt** ausfällt — die Vorauswahl des
+  /// Umschalters „neutral anreden". Ohne bekannten Mandanten im Feld „An"
   /// oder ohne Anredeart gibt es nichts persönlich Anzuredendes; die je Mail
   /// **gewählte** Anredeart zählt dabei mit, denn mit ihr ist die Angabe da,
   /// die am Register fehlte.
@@ -220,22 +222,29 @@ $unterschrift''';
     Anrede? geschlecht,
   }) =>
       nurAnDenMandanten(empfaenger) &&
-      anredeNamentlichMachbar(geschlecht: geschlecht);
+      anredeGebeugtMachbar(geschlecht: geschlecht);
 
-  /// Ob eine namentliche Anrede möglich **wäre**, wenn der Anwalt sie verlangt
-  /// — ohne Rücksicht auf den Empfängerkreis (ergänzt am 02.09.2026).
+  /// Ob überhaupt eine **gebeugte** Anredezeile möglich wäre, wenn der Anwalt
+  /// sie verlangt — ohne Rücksicht auf den Empfängerkreis (ergänzt am
+  /// 02.09.2026).
   ///
   /// Der Unterschied zu [anredePersoenlichMoeglich] ist der Umschalter
   /// „neutral anreden": Der wurde nur angeboten, wenn die namentliche Anrede
   /// **schon** galt — also nie in dem Fall, in dem man ihn braucht. Wer an die
   /// Versicherung schrieb und den Mandanten trotzdem namentlich ansprechen
   /// wollte, hatte keinen Griff dafür, obwohl „änderbar" änderbar heisst
-  /// (§4.7). Was hier fehlt, ist dagegen wirklich nicht zu schalten: Ohne
-  /// Nachnamen und ohne Anredeart gibt es keine namentliche Anrede, die der
-  /// Umschalter herstellen könnte.
-  bool anredeNamentlichMachbar({Anrede? geschlecht}) =>
-      mandant != null &&
-      mandant!.nachname.trim().isNotEmpty &&
+  /// (§4.7).
+  ///
+  /// **Es zählt allein die Anredeart** (geändert am 03.09.2026) — vorher stand
+  /// hier zusätzlich ein Mandant mit Nachnamen. Seit [Anredebaustein.zeileFuer]
+  /// die Zeile auch ohne Namen beugt („Sehr geehrter Herr"), war das die
+  /// falsche Frage: Der Umschalter verschwand ausgerechnet dort, wo die Zeile
+  /// gebeugt hinausging und der Anwalt sie zurücknehmen wollte — bei der Mail
+  /// an die Versicherung zu einem Vorgang ohne Registermandanten. Deshalb
+  /// heisst die Zusage jetzt „gebeugt" und nicht mehr „namentlich": Der Name
+  /// ist die Zugabe, die Beugung ist der Schalter. Ohne Anredeart bleibt
+  /// wirklich nichts zu schalten — dann ist jede Form dieselbe.
+  bool anredeGebeugtMachbar({Anrede? geschlecht}) =>
       geschlechtFuer(geschlecht) != Anrede.keine;
 
   /// Warum die Anredezeile **neutral** ausfällt (§4.7, ergänzt am
@@ -345,20 +354,29 @@ $unterschrift''';
     String zusatzgruss = '',
     Anredebaustein? anredebaustein,
   }) {
-    final adressen = vorschlaege.map((vorschlag) => vorschlag.adresse).toList();
     final mitSchreiben = anhangPfade.isNotEmpty;
-    return EmailEntwurf(
-      an: adressen,
+    final entwurf = EmailEntwurf(
+      an: [for (final vorschlag in vorschlaege) vorschlag.adresse],
       betreff: betreffFuer(mitSchreiben: mitSchreiben),
+      anhangPfade: anhangPfade,
+      // Ohne Vorgang bleibt sie leer — dann wird auch nichts protokolliert.
+      vorgangReferenz: vorgang?.referenz ?? '',
+    );
+    // Der Text kommt aus **[EmailEntwurf.alleEmpfaenger]** des eben gebauten
+    // Entwurfs, nicht aus der Vorschlagsliste (geändert am 03.09.2026). Beide
+    // sind hier gleich, weil noch niemand in Kopie steht — aber der Cubit
+    // schreibt sich die eingesetzte Anredezeile über `alleEmpfaenger` mit
+    // (`anredeImText`) und behauptet dabei, es sei dieselbe Rechnung. Über
+    // zwei verschiedene Listen war das eine Zusage auf Widerruf: Sobald hier
+    // je ein Empfänger in Kopie entstünde, suchte `TextNachtrag` im Text nach
+    // einer Zeile, die nie hineingeschrieben wurde.
+    return entwurf.copyWith(
       text: textFuer(
-        adressen,
+        entwurf.alleEmpfaenger,
         mitSchreiben: mitSchreiben,
         zusatzgruss: zusatzgruss,
         anredebaustein: anredebaustein,
       ),
-      anhangPfade: anhangPfade,
-      // Ohne Vorgang bleibt sie leer — dann wird auch nichts protokolliert.
-      vorgangReferenz: vorgang?.referenz ?? '',
     );
   }
 

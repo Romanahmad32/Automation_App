@@ -43,6 +43,54 @@ void main() {
     });
   });
 
+  group('wann die Übersicht neu gezeichnet wird', () {
+    const vorlage = MailVorlage(id: 1, name: 'V', text: '{{Anrede}}');
+
+    test('die gewählte Anredeart zählt dazu', () {
+      // Der behobene Fehler (03.09.2026): Sie fehlte in der Liste, und weil
+      // das Widget im Formular `const` ist, half auch der Neuaufbau von oben
+      // nicht. Die Übersicht zeigte „Mandant", der Text darunter „Mandantin".
+      expect(
+        PlatzhalterUebersicht.neuZeichnen(
+          const EmailEntwurfState(gewaehlteVorlage: vorlage),
+          const EmailEntwurfState(
+            gewaehlteVorlage: vorlage,
+            anredeGeschlecht: Anrede.frau,
+          ),
+        ),
+        isTrue,
+      );
+    });
+
+    test('auch die Anredeart aus dem Register', () {
+      expect(
+        PlatzhalterUebersicht.neuZeichnen(
+          const EmailEntwurfState(gewaehlteVorlage: vorlage),
+          const EmailEntwurfState(
+            gewaehlteVorlage: vorlage,
+            mandantAnrede: Anrede.herr,
+          ),
+        ),
+        isTrue,
+      );
+    });
+
+    test('etwas, das keinen Platzhalter füllt, zählt nicht dazu', () {
+      // Die Gegenprobe: `buildWhen` soll nicht zu allem „ja" sagen, sonst
+      // rechnet die Übersicht bei jedem Tastendruck im Textfeld neu.
+      expect(
+        PlatzhalterUebersicht.neuZeichnen(
+          const EmailEntwurfState(gewaehlteVorlage: vorlage),
+          const EmailEntwurfState(
+            gewaehlteVorlage: vorlage,
+            versandVersucht: true,
+          ),
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('Hinweis an der Zusatzgruß-Auswahl', () {
     test('eine Vorlage ohne Stelle dafür nennt den Platzhalter', () {
       const ohneStelle = MailVorlage(

@@ -1,4 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
+import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/email_entwurf_erzeuger.dart';
 import 'package:automation_app/features/email_versand/domain/services/entwurf_ableitung.dart';
 import 'package:automation_app/features/email_versand/domain/services/mail_vorlagen_fueller.dart';
@@ -61,6 +62,40 @@ mixin AbleitungGriff on Cubit<EmailEntwurfState> {
         zusatzgrussImText: state.zusatzgruss,
       ),
     );
+  }
+
+  /// Übernimmt eine gewählte Mail-Textvorlage (§4.7) — oder **keine**:
+  /// [vorlage] null führt zur Vorbelegung aus den Vorgangsdaten zurück. Eine
+  /// Wahl, die sich nicht zurücknehmen lässt, zwänge zum Schliessen und
+  /// Neuöffnen des Entwurfs.
+  ///
+  /// Betreff und Text sind danach **abgeleitet**, nicht getippt: Sie werden
+  /// nachgezogen, wenn sich Empfänger oder Zusatzgruß ändern. Erst wenn der
+  /// Anwalt selbst in den Text schreibt (`setzeText`), hört das auf.
+  ///
+  /// **Beim Abwählen geht der Betreff mit** (behoben am 03.09.2026): Sonst
+  /// blieb er als einziger Rest der Vorlage über einem Text stehen, der schon
+  /// wieder aus der Vorbelegung kam — „Ihre Verkehrsunfallsache Müller ./. HUK
+  /// · Unser Zeichen: 84/26" über dem leeren Anschreiben, und so ging die Mail
+  /// hinaus. [EntwurfAbleitung.abgeleitet] rührt den Betreff ohne Vorlage
+  /// absichtlich nicht an, weil ein hinzugefügter Empfänger keine Ansage ist,
+  /// ihn neu zu schreiben; das Abwählen ist eine. Deshalb steht es hier und
+  /// nicht dort — und deshalb behält, wer selbst getippt hat, was dasteht:
+  /// dieselbe Abwägung wie in `VorgangGriff._betreffNachWechsel`.
+  void waehleVorlage(MailVorlage? vorlage) {
+    final zurueck = vorlage == null && state.gewaehlteVorlage != null;
+    final stand = zurueck && !state.textSelbstGeschrieben ? ableitung : null;
+    emit(
+      state.copyWith(
+        gewaehlteVorlage: () => vorlage,
+        entwurf: stand == null
+            ? state.entwurf
+            : state.entwurf.copyWith(
+                betreff: stand.betreffAusVorbelegung(state.entwurf),
+              ),
+      ),
+    );
+    leiteAb(betreffAuch: true);
   }
 
   /// Die Zusage aus `AnredeGriff` und `VorgangGriff`: Eine ausdrückliche Wahl

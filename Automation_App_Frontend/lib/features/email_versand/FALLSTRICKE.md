@@ -227,11 +227,18 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
   seine Adresse von Hand im Feld „An" steht. Das ist die teuerste der sechs Lagen, weil sie wie ein
   Mitleser aussieht. Und ein **leeres** Feld „An" ist kein Mitleser, sondern der Anfang: „neben dem
   Mandanten steht noch jemand" wäre am Einstieg aus dem Postfach schlicht falsch.
-- **Der Umschalter „neutral anreden" hängt an `anredeNamentlichMachbar`, nicht an
+- **Der Umschalter „neutral anreden" hängt an `anredeGebeugtMachbar`, nicht an
   `anredePersoenlichMoeglich`** (geändert am 02.09.2026). Der Unterschied ist der Empfängerkreis:
   Vorher erschien der Umschalter nur, wenn die namentliche Anrede **schon** galt — also nie bei der
-  häufigsten Mail dieser Kanzlei. „Änderbar" heisst änderbar (§4.7); was ohne Nachname und ohne
-  Anredeart fehlt, kann er dagegen wirklich nicht herstellen, und dort bleibt er weg.
+  häufigsten Mail dieser Kanzlei. „Änderbar" heisst änderbar (§4.7).
+- **Und er fragt nach der Beugung, nicht nach dem Namen** (geändert am 03.09.2026, vormals
+  `anredeNamentlichMachbar`). Als `zeileFuer` am selben Tag lernte, ohne Nachnamen trotzdem zu
+  beugen („Sehr geehrter Herr"), blieb diese Wache stehen und verlangte weiter einen Mandanten mit
+  Nachnamen. Damit verschwand der Umschalter genau dort, wo die gebeugte Zeile an die Versicherung
+  hinausging — ein Vorgang ohne Registermandanten, ein Klick auf „Herr", und zurück ging es nur
+  über den Chip „Keine Angabe". **Wer eine Regel der Anredezeile ändert, prüft alle drei Stellen:**
+  `zeileFuer`, `anredeGebeugtMachbar` und `neutralGrund` beantworten dieselbe Frage aus drei
+  Richtungen, und sie laufen leise auseinander.
 - **Zwei Sätze unter der Reihe dürfen sich nie überschneiden.** Der Grund für die neutrale Anrede
   und die Warnung „die namentliche Anrede liest er mit" behaupten Gegenteiliges. Maßgeblich ist
   `grund == null && anredeNeutral != true` — nur dann ist die Zeile namentlich. Über
@@ -374,3 +381,40 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
 - Ein **aus Outlook** gezogener Anhang kommt als *leeres* Ablegen an (Windows reicht ihn als
   virtuelle Datei durch, `desktop_drop` liest nur `CF_HDROP`) — `onNichtsErkannt` fragt dann
   Outlook nach derselben Nachricht.
+- **`buildWhen` darf `alleEmpfaenger` nicht mit `!=` vergleichen** (behoben am 03.09.2026).
+  `EmailEntwurf.alleEmpfaenger` baut bei jedem Aufruf eine neue Liste (`[...an, ...kopie]`), und
+  Dart vergleicht Listen über die Identität — der Ausdruck war immer wahr, `buildWhen` damit immer
+  erfüllt und die ganze Aufzählung darüber wirkungslos. Drei Widgets betraf das
+  (`PlatzhalterUebersicht`, `AnredeAuswahl`, `GeschlechtAuswahl`); jetzt steht dort `listEquals`.
+  Das ist doppelt bösartig: Solange alles neu gezeichnet wird, fällt ein **fehlendes** Feld in der
+  Liste nicht auf — genau so blieb die Anredeart dort unbemerkt liegen.
+- **Die Bedingung von `PlatzhalterUebersicht` steht als `neuZeichnen` daneben, nicht im Ausdruck.**
+  Sie ist die Liste dessen, was `EmailEntwurfCubit.fuellerFuer` liest; wer dort etwas ergänzt,
+  ergänzt es hier — und ein Ausdruck mitten im `build` ist nicht prüfbar. Das Widget steht im
+  Formular als `const`: Von oben wird es also auch dann nicht neu gebaut, wenn der Zustand sich
+  ändert.
+
+## Vorlage und Betreff
+
+- **Das Abwählen einer Vorlage nimmt den Betreff mit** (behoben am 03.09.2026). `waehleVorlage`
+  liegt deshalb in `AbleitungGriff` und nicht am Cubit: `EntwurfAbleitung.abgeleitet` rührt den
+  Betreff ohne Vorlage absichtlich **nicht** an — ein hinzugefügter Empfänger ist keine Ansage,
+  ihn neu zu schreiben. Das Abwählen ist eine. Vorher blieb der Betreff der Vorlage als ihr
+  einziger Rest über einem Text stehen, der schon wieder aus der Vorbelegung kam. Wer selbst
+  getippt hat, behält seinen Betreff — dieselbe Abwägung wie in
+  `VorgangGriff._betreffNachWechsel`.
+- **Der Betreff rechnet je Abschnitt, der Text je Zeile** (`MailBetreffAufbau`, 03.09.2026). Die
+  Zeilenregel — ein Platzhalter ohne Wert nimmt seine Zeile mit — setzt Nachbarzeilen voraus, die
+  den Satz weitertragen. Der Betreff hat keine: Dort blieben die Trennzeichen stehen und trennten
+  nichts mehr („Sache Müller ./. · Zeichen:"). Ein Betreff **ohne** Platzhalter kommt unberührt
+  zurück; geglättet wird nur, was das Einsetzen selbst hinterlässt.
+- **`MailPlatzhalter.muster` endet an der Zeile.** `\s*` und `[^{}]` schlossen den Zeilenumbruch
+  ein: Ein über zwei Zeilen gebrochenes `{{Anrede}}` fand jeder, der den ganzen Text absuchte
+  (`stehtIn`, `namenIn`, `VorlagenPruefung.maengel`), und niemand, der ihn zeilenweise füllte —
+  der Dialog gab die Anredereihe frei, und die Mail ging ohne Anrede hinaus (behoben am
+  03.09.2026). Was zeilenweise nicht zu füllen ist, darf zeilenübergreifend auch nicht gefunden
+  werden.
+- **Ein Befund trägt alle Stellen seines Namens.** `befunde` entdoppelt über Betreff **und** Text;
+  stünde derselbe Platzhalter in beiden, meldete es nur den Betreff, und die ebenfalls entfallene
+  Textzeile stand nirgends. Die übrigen kommen als `weitereEntfallene` mit — die Liste bleibt kurz,
+  die Auskunft vollständig.
