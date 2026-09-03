@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
+import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_cubit.dart';
+import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_katalog_stand.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
@@ -117,10 +119,24 @@ class RegisterPageState extends State<RegisterPage> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          child: RegisterFilterLeiste(
-            filter: _filter,
-            alle: vorgaenge,
-            onGeaendert: (filter) => setState(() => _filter = filter),
+          // Der Katalog (§7.1) speist die Rechtsgebiets-Auswahl; scheitert
+          // sein Laden, filtert die Leiste sichtbar nur über den Bestand.
+          child: BlocBuilder<SachgebietCubit, SachgebietKatalogStand>(
+            bloc: getIt<SachgebietCubit>(),
+            builder: (context, stand) => RegisterFilterLeiste(
+              filter: _filter,
+              alle: vorgaenge,
+              onGeaendert: (filter) => setState(() => _filter = filter),
+              katalog: switch (stand) {
+                SachgebietKatalogGeladen(:final auswahl) => [
+                  for (final sachgebiet in auswahl)
+                    sachgebiet.rechtsgebietVorschlag,
+                ],
+                _ => const [],
+              },
+              katalogFehlt: stand is SachgebietKatalogFehler,
+              onKatalogErneut: getIt<SachgebietCubit>().ladeErneut,
+            ),
           ),
         ),
         Padding(

@@ -6,6 +6,7 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
@@ -29,7 +30,7 @@ class VorgangStartenFormView extends StatefulWidget {
 }
 
 class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
-  Rechtsgebiet _rechtsgebiet = Rechtsgebiet.verkehrsrecht;
+  String _rechtsgebiet = RechtsgebietWert.verkehrsrecht;
 
   List<Mandant> _mandanten = const [];
   int? _selectedMandantId;
@@ -46,7 +47,8 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   late final FormGroup _form = createVorgangForm();
 
-  bool get _istVerkehrsunfall => _rechtsgebiet == Rechtsgebiet.verkehrsrecht;
+  bool get _istVerkehrsunfall =>
+      RechtsgebietWert.istVerkehrsrecht(_rechtsgebiet);
 
   @override
   void initState() {
@@ -91,8 +93,11 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
 
   void _patchDefaults(int auftragsnummer, String abteilung) {
     _form.control('auftragsnummer').updateValue(auftragsnummer.toString());
-    if (abteilung.trim().isNotEmpty) {
-      _form.control('abteilung').updateValue(abteilung);
+    // Kürzel ohne Leerzeichen (§7.1) — ein gespeicherter Altwert wie 'C 03'
+    // wird beim Einlesen normalisiert, bevor er in die Referenz wandert.
+    final bereinigt = AbteilungKuerzel.normalisiere(abteilung);
+    if (bereinigt.isNotEmpty) {
+      _form.control('abteilung').updateValue(bereinigt);
     }
   }
 
@@ -119,7 +124,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     schadentag.updateValueAndValidity();
   }
 
-  void _onRechtsgebietChanged(Rechtsgebiet gebiet) {
+  void _onRechtsgebietChanged(String gebiet) {
     setState(() => _rechtsgebiet = gebiet);
     _applyUnfallValidators();
     _syncReferenzVorschau();

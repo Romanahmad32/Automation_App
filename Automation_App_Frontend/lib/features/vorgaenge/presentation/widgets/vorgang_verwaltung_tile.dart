@@ -31,7 +31,7 @@ class VorgangVerwaltungTile extends StatelessWidget {
       ?vorgang.referenzZusatz,
       if ((vorgang.unfallDatum ?? '').trim().isNotEmpty)
         'Unfall v. ${vorgang.unfallDatum!.trim()}',
-      vorgang.rechtsgebiet.displayName,
+      vorgang.rechtsgebietAnzeige,
     ];
     return teile.join('  ·  ');
   }

@@ -2,7 +2,6 @@ import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_kennzeichen_auswahl.dart';
@@ -31,8 +30,9 @@ class MandantSection extends StatelessWidget {
   /// Kennzeichen-Feld (leerer String hebt die Auswahl auf).
   final ValueChanged<String> onKennzeichenGewaehlt;
 
-  /// Aktuelles Rechtsgebiet (für das Auslesen der Formularwerte).
-  final Rechtsgebiet rechtsgebiet;
+  /// Aktuelles Rechtsgebiet (für das Auslesen der Formularwerte). Seit #70 ein
+  /// freier String aus dem Sachgebietskatalog, kein Enum mehr.
+  final String rechtsgebiet;
 
   /// Bestätigte Mandanten-Aktion (Anlegen/Aktualisieren) aus dem Karten-Button.
   final void Function(MandantAenderungsart art, VorgangStartenDaten daten)

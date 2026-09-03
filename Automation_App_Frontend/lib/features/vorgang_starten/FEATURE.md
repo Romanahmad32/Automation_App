@@ -9,7 +9,7 @@ lässt optional das Zentralruf-Onlineformular im sichtbaren Browser vorbefüllen
 reactive_forms-`FormGroup` der View, die Dialog-Entscheidungen trifft ebenfalls die View.
 Fremd eingebunden: `VorgangCubit` (vorgaenge).
 **Domain:** kein eigener `domain/`-Ordner. Eingabecontainer ist `VorgangStartenDaten`
-(`presentation/blocs/vorgang_starten_daten.dart`); verwendet werden `Vorgang`/`Rechtsgebiet`
+(`presentation/blocs/vorgang_starten_daten.dart`); verwendet werden `Vorgang`/`RechtsgebietWert`
 (vorgaenge), `Mandant`/`CreateMandantRequest` (mandanten), `ZentralrufRequest`
 (zentralruf_request), `KanzleiSettings` (settings) samt deren UseCases.
 **Backend:** `Features/ZentralrufAutomation/` · `POST /api/Zentralruf/prefill`; mittelbar

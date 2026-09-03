@@ -19,7 +19,7 @@ void main() {
       expect(vorgang.abteilung, 'C03');
       expect(vorgang.kennzeichen, 'GG-XY 123');
       expect(vorgang.status, VorgangStatus.angefragt);
-      expect(vorgang.rechtsgebiet, Rechtsgebiet.verkehrsrecht);
+      expect(vorgang.rechtsgebiet, RechtsgebietWert.verkehrsrecht);
       expect(vorgang.zeichen, '84/26 C03');
     });
 
@@ -76,18 +76,20 @@ void main() {
     expect(kopie.schadensaufstellung?.items.single.amount, 1250.50);
   });
 
-  test(
-    'fromJson fällt bei unbekanntem Rechtsgebiet/Status tolerant zurück',
-    () {
-      final vorgang = vorgangAusJson({
-        'referenz': '1/26 C03_HG-E 1',
-        'angefragtAm': DateTime(2026, 1, 1).toIso8601String(),
-        'rechtsgebiet': 'voelkerrecht',
-        'status': 'archiviert',
-      });
+  test('fromJson übernimmt ein unbekanntes Rechtsgebiet wortgetreu, '
+      'nur der Status fällt tolerant zurück', () {
+    // Seit #70 ist das Rechtsgebiet ein freier String aus dem
+    // Sachgebietskatalog: Ein unbekannter gespeicherter Wert bleibt
+    // erhalten, statt still auf Verkehrsrecht umgebogen zu werden —
+    // genau das Umbiegen hat vorher Bestandszeilen unfilterbar gemacht.
+    final vorgang = vorgangAusJson({
+      'referenz': '1/26 C03_HG-E 1',
+      'angefragtAm': DateTime(2026, 1, 1).toIso8601String(),
+      'rechtsgebiet': 'voelkerrecht',
+      'status': 'archiviert',
+    });
 
-      expect(vorgang.rechtsgebiet, Rechtsgebiet.verkehrsrecht);
-      expect(vorgang.status, VorgangStatus.angefragt);
-    },
-  );
+    expect(vorgang.rechtsgebiet, 'voelkerrecht');
+    expect(vorgang.status, VorgangStatus.angefragt);
+  });
 }

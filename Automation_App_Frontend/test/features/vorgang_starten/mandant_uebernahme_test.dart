@@ -11,6 +11,8 @@ import 'package:automation_app/features/zentralruf_request/domain/entities/zentr
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../sachgebiete/sachgebiet_test_katalog.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 import 'vorgang_starten_doubles.dart';
@@ -89,6 +91,8 @@ void main() {
     getIt.registerSingleton<UseCase<List<Mandant>, NoParams>>(
       MandantenListeDouble(register),
     );
+    // Die Auftrag-Karte zieht ihre Auswahlen aus dem Sachgebietskatalog.
+    registriereSachgebietKatalog();
     // Nur die Registrierung wird zurückgenommen. `bloc.close()` wartet auf
     // Mikrotasks der Testuhr — die treibt nach dem Testkörper niemand mehr an,
     // der Lauf bliebe schweigend hängen. Mit dem Testprozess ist der Bloc weg.
