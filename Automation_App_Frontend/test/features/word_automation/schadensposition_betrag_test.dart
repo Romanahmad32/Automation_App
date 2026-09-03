@@ -1,6 +1,7 @@
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/betrag_eingabe.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_schadensaufstellung.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'schadensaufstellung_schritt.dart';
 
 /// Der Betrag einer Schadensposition: `0,00` gehört ins Schreiben, ein
-/// negativer Betrag nicht.
+/// negativer Betrag nicht — und was sich gar nicht lesen lässt, hält die Zeile
+/// fest, statt sie verschwinden zu lassen.
 ///
 /// Beides endete vorher gleich — als HTTP 400 aus der Modellvalidierung des
 /// Dienstes, ohne zu sagen, welche Zeile schuld ist. Das ist die schlechteste
@@ -205,13 +207,83 @@ void main() {
     expect(erstellenKnopf(tester).onPressed, isNotNull);
   });
 
+  /// Die gefährlichere Hälfte derselben Fehlerklasse: Eine Zeile, deren Betrag
+  /// sich nicht lesen liess, fiel bis hierher stillschweigend aus der
+  /// Aufstellung — mit freigegebenem Knopf. Der Anwalt sah seine ausgefüllte
+  /// Zeile im Formular stehen und verschickte ein Anspruchsschreiben, dem genau
+  /// diese Forderung fehlte.
+  testWidgets('ein unlesbarer Betrag sperrt, statt die Zeile fallen zu lassen', (
+    tester,
+  ) async {
+    const eingabe = '1.234,56 €';
+    await zeigeSchritt(tester);
+    await erfasse(tester, bezeichnung: 'Reparaturkosten', betrag: eingabe);
+
+    // An der Zeile selbst, mit dem Text, der dort steht …
+    expect(find.text(unlesbarerBetragHinweis(eingabe)), findsOneWidget);
+    // … und als Satz über dem Knopf.
+    expect(
+      find.text(
+        'Position 1 ("Reparaturkosten"): ${unlesbarerBetragHinweis(eingabe)}',
+      ),
+      findsOneWidget,
+    );
+    // Die Zeile bleibt aus der Aufstellung draussen — aber es kommt jetzt auch
+    // kein Schreiben mehr an ihr vorbei.
+    expect(schritt.umgebung.wizard.state.damageListing?.items, isEmpty);
+    expect(erstellenKnopf(tester).onPressed, isNull);
+  });
+
+  /// Der Punkt, an dem der zehnfache Betrag entstand: `1.5` wurde zu 15,00 €,
+  /// ohne Meldung und mit plausibler Vorschau.
+  testWidgets('1.5 wird 1,50 und nicht 15,00', (tester) async {
+    await zeigeSchritt(tester);
+    await erfasse(tester, bezeichnung: 'Zuzahlung', betrag: '1.5');
+
+    expect(
+      schritt.umgebung.wizard.state.damageListing?.items.single.amount,
+      1.5,
+    );
+    expect(erstellenKnopf(tester).onPressed, isNotNull);
+  });
+
+  /// Die vorbelegten Standardpositionen (§4.4) tragen eine Bezeichnung und ein
+  /// leeres Betragsfeld. Zählte „leer" als unlesbar, stünde das Formular direkt
+  /// nach dem Öffnen fünfmal rot da.
+  testWidgets('die vorbelegten Standardpositionen stehen nicht rot da', (
+    tester,
+  ) async {
+    await zeigeSchritt(tester);
+
+    expect(find.textContaining('nicht lesbar'), findsNothing);
+  });
+
+  /// Wer nach dem ersten Tastendruck angeblafft wird, lernt die Markierung zu
+  /// übersehen. Deshalb steht hier der ganze Weg zu `1.234`.
+  testWidgets('während des Tippens wird nichts markiert', (tester) async {
+    await zeigeSchritt(tester);
+    await tester.enterText(find.byType(TextField).at(0), 'Reparaturkosten');
+
+    for (final zwischenstand in ['1', '1.', '1.2', '1.23', '1.234']) {
+      await tippeBetrag(tester, zwischenstand);
+      expect(
+        find.textContaining('nicht lesbar'),
+        findsNothing,
+        reason: zwischenstand,
+      );
+    }
+  });
+
+  Schadenspositionszeile zeile(String bezeichnung, String betragText) =>
+      schadenspositionszeile(bezeichnung: bezeichnung, betragText: betragText);
+
   test('die Meldung zählt die Zeilen von oben und nennt die Bezeichnung', () {
-    final fehler = schadenspositionenFehler(const [
-      (bezeichnung: 'Reparaturkosten', betrag: 2560.87),
-      (bezeichnung: 'Gutachten', betrag: 0.0),
-      (bezeichnung: '', betrag: -500.0),
-      (bezeichnung: 'Bereits reguliert', betrag: -500.0),
-      (bezeichnung: 'noch nichts getippt', betrag: null),
+    final fehler = schadenspositionenFehler([
+      zeile('Reparaturkosten', '2.560,87'),
+      zeile('Gutachten', '0'),
+      zeile('', '-500'),
+      zeile('Bereits reguliert', '-500'),
+      zeile('noch nichts getippt', ''),
     ]);
 
     expect(fehler, [
@@ -228,5 +300,27 @@ void main() {
       ]),
       ['Position 2 ("Bereits reguliert"): $negativerBetragHinweis'],
     );
+  });
+
+  group('wann eine unlesbare Zeile beanstandet wird', () {
+    /// Beide Bedingungen zusammen, und beide am Zustand festgemacht: Die Zeile
+    /// muss erkennbar gemeint sein (Bezeichnung) und es muss etwas dastehen,
+    /// das gelesen werden sollte.
+    test('nur mit Bezeichnung und mit etwas im Betragsfeld', () {
+      expect(
+        betragFehler(zeile('Gutachten', '1.234,56 €')),
+        unlesbarerBetragHinweis('1.234,56 €'),
+      );
+      expect(betragFehler(zeile('', '1.234,56 €')), isNull);
+      expect(betragFehler(zeile('Gutachten', '')), isNull);
+      expect(betragFehler(zeile('', '')), isNull);
+    });
+
+    /// Der negative Betrag hat seine eigene Bahn und behält sie: Er wird auch
+    /// an einer Zeile ohne Bezeichnung beanstandet, sonst bliebe ein rotes Feld
+    /// über einem freigegebenen Knopf stehen.
+    test('ein negativer Betrag zählt auch ohne Bezeichnung', () {
+      expect(betragFehler(zeile('', '-250')), negativerBetragHinweis);
+    });
   });
 }
