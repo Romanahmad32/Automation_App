@@ -49,7 +49,11 @@ class _AppBootstrapState extends State<AppBootstrap> {
     if (!mounted) return;
 
     if (!ergebnis.erfolgreich) {
-      setState(() => _fehler = ergebnis.meldung ?? 'Unbekannter Fehler.');
+      setState(
+        () => _fehler =
+            ergebnis.meldung ??
+            'Der Dienst hat sich beim Start beendet, ohne einen Grund zu melden.',
+      );
       return;
     }
 
