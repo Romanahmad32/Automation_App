@@ -67,13 +67,18 @@ String? gebuehrensatzFehler(String text) {
 /// Dieselbe Prüfung für die beiden Korrekturfelder. Leer heißt hier „automatisch
 /// nach § 13 RVG rechnen" und ist der Normalfall.
 ///
-/// Unlesbares bleibt hier unbeanstandet — es fällt heute auf „automatisch"
-/// zurück, und das ist die harmlose Richtung. Was daran noch fehlt (eine
-/// Eingabe wie `1.234,56 €` verschwindet lautlos), gehört zur Leseregel aus
-/// #46 und wird dort für alle Betragsfelder zugleich entschieden.
+/// Unlesbares ist es nicht. Es fiel bis hierher stillschweigend auf
+/// „automatisch" zurück — der Anwalt sah seinen eingetippten Betrag im Feld
+/// stehen und bekam im Schreiben die errechnete Gebühr. Dieselbe stille Falle
+/// wie beim Rückfall auf 1,3 im Gebührensatz, nur eine Zeile tiefer; beide
+/// enden jetzt gleich: Feld markiert, Erzeugen gesperrt.
+///
+/// Der leere Fall wird **vor** dem Lesen abgefangen, nicht am `null` danach:
+/// Beide ergeben `null`, bedeuten aber das Gegenteil voneinander.
 String? korrekturbetragFehler(String text) {
+  if (text.trim().isEmpty) return null;
   final wert = betragAusEingabe(text);
-  if (wert == null) return null;
+  if (wert == null) return unlesbarerBetragHinweis(text);
   if (wert < 0) return negativerKorrekturbetragHinweis;
   if (wert > korrekturbetragMaximum) return zuGrosserKorrekturbetragHinweis;
   return null;
