@@ -162,6 +162,57 @@ void main() {
         },
       );
 
+      /// Die dritte Pinnungsstelle. Sie war bis zum 03.09.2026 die einzige
+      /// unbewachte — und die unangenehmste: Aus `release.yml` entsteht das
+      /// ausgelieferte Paket. Wer die Pinnung anhebt und nur `ci.yml` und
+      /// `.fvmrc` nachzieht, bekam eine grüne Kette, eine grüne CI und ein
+      /// Release aus einer ungeprüften Toolchain. `docs/RELEASE.md` hielt das
+      /// als Handarbeit fest („wer die Pinnung anhebt, ändert alle drei
+      /// zusammen") — ein Merkzettel ist aber genau das, was beim
+      /// Versionssprung übersehen wird.
+      test('hält an, wenn release.yml und ci.yml auseinanderlaufen', () async {
+        File(
+          '${tmp.path}\\.github\\workflows\\release.yml',
+        ).writeAsStringSync('env:\n  FLUTTER_VERSION: "1.2.3"\n');
+        final cache = Directory('${tmp.path}\\cache');
+        legeSdkAn(cache, testfassung);
+
+        final lauf = await pruefe(tmp, cache: cache);
+
+        expect(lauf.exitCode, 1, reason: protokoll(lauf));
+        expect(
+          protokoll(lauf),
+          contains('release.yml nennt Flutter 1.2.3, ci.yml FLUTTER_VERSION'),
+          reason:
+              'Der Auslieferungsbau fährt die Fassung aus release.yml. Läuft '
+              'sie gegen ci.yml, entsteht das Paket aus einer anderen '
+              'Toolchain als die, gegen die geprüft wurde — und ein Paket aus '
+              'ungeprüfter Toolchain ist schlimmer als keins, denn es sieht '
+              'fertig aus.',
+        );
+      });
+
+      test('meldet nicht grün, wenn release.yml die Pinnung verliert', () async {
+        File(
+          '${tmp.path}\\.github\\workflows\\release.yml',
+        ).writeAsStringSync('env:\n  FLUTTER_FASSUNG: "$testfassung"\n');
+        final cache = Directory('${tmp.path}\\cache');
+        legeSdkAn(cache, testfassung);
+
+        final lauf = await pruefe(tmp, cache: cache);
+
+        expect(
+          lauf.exitCode,
+          1,
+          reason:
+              'Die Datei liegt da, die Pinnung darin nicht — verglichen wurde '
+              'also nichts. Dieselbe Überlegung wie bei ci.yml: Ein Wächter, '
+              'der bei eigener Störung grün meldet, ist schlimmer als '
+              'keiner.\n${protokoll(lauf)}',
+        );
+        expect(protokoll(lauf), contains('release.yml'));
+      });
+
       test('meldet nicht grün, wenn ci.yml fehlt', () async {
         File('${tmp.path}\\.github\\workflows\\ci.yml').deleteSync();
         final cache = Directory('${tmp.path}\\cache');
@@ -250,6 +301,13 @@ void legeTestrepoAn(Directory wurzel, File skript) {
   Directory('${wurzel.path}\\.github\\workflows').createSync(recursive: true);
   File(
     '${wurzel.path}\\.github\\workflows\\ci.yml',
+  ).writeAsStringSync('env:\n  FLUTTER_VERSION: "$testfassung"\n');
+
+  // release.yml pinnt ein drittes Mal und muss hier mitliegen, sonst
+  // überspringt das Skript den Vergleich (`Test-Path`) und die Fälle, die ihn
+  // prüfen, liefen gegen eine Prüfung, die gar nicht stattfindet.
+  File(
+    '${wurzel.path}\\.github\\workflows\\release.yml',
   ).writeAsStringSync('env:\n  FLUTTER_VERSION: "$testfassung"\n');
 
   Directory('${wurzel.path}\\Automation_App_Frontend').createSync();

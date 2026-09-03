@@ -80,6 +80,33 @@ if (-not $NurBackend) {
         }
     }
 
+    # release.yml pinnt die Fassung ein *drittes* Mal, und diese Stelle war bis
+    # hierher die einzige unbewachte. Sie ist die unangenehmste von allen: Aus
+    # ihr entsteht das ausgelieferte Paket. Wer die Pinnung anhebt und nur
+    # ci.yml und .fvmrc nachzieht, bekommt eine gruene Kette und eine gruene
+    # CI — und ein Release aus einer anderen Toolchain als die, gegen die
+    # geprueft wurde. docs/RELEASE.md hat das als Handarbeit vermerkt („wer die
+    # Pinnung anhebt, aendert alle drei zusammen"); ein Merkzettel ist aber
+    # genau das, was beim Versionssprung uebersehen wird.
+    $releaseDatei = Join-Path $wurzel '.github/workflows/release.yml'
+    if (Test-Path -LiteralPath $releaseDatei) {
+        $releaseInhalt = Get-Content -LiteralPath $releaseDatei -Raw
+        $releaseFassung = [regex]::Match(
+            $releaseInhalt, 'FLUTTER_VERSION:\s*"([^"]+)"').Groups[1].Value
+        if (-not $releaseFassung) {
+            # Dieselbe Ueberlegung wie bei ci.yml: Findet die Pruefung ihre
+            # eigene Vergleichsgrundlage nicht mehr, sagt sie das, statt still
+            # nichts zu vergleichen.
+            $fehler += "In $releaseDatei steht keine FLUTTER_VERSION mehr — die Pinnung " +
+                'des Auslieferungsbaus ist umgezogen, und dieses Skript muss ihr folgen.'
+        }
+        elseif ($gepinnt -and $releaseFassung -ne $gepinnt) {
+            $fehler += "release.yml nennt Flutter $releaseFassung, ci.yml FLUTTER_VERSION $gepinnt. " +
+                'Aus release.yml entsteht das ausgelieferte Paket — ein Versionssprung aendert ' +
+                'ci.yml, release.yml und .fvmrc zusammen (docs/RELEASE.md).'
+        }
+    }
+
     # Wo das SDK gesucht wird, in dieser Reihenfolge:
     #
     #   1. .fvm/flutter_sdk — die Junction aus `fvm use`. Wer sie gelegt hat,
