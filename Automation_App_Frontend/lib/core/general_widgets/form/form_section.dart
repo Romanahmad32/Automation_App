@@ -11,6 +11,7 @@ class FormSection extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
+    this.hervorgehoben = false,
     required this.children,
   });
 
@@ -24,13 +25,35 @@ class FormSection extends StatelessWidget {
   /// Abschnitt aktiviert).
   final Widget? trailing;
 
+  /// Hebt die Karte hervor, solange in ihr etwas offen ist, das sonst
+  /// untergeht — etwa Eingaben, die nur im Formular stehen. Standard ist
+  /// `false`: Betonung, die immer da ist, betont nichts.
+  final bool hervorgehoben;
+
   final List<Widget> children;
+
+  /// Dieselbe Form wie die ruhige Karte, nur mit kräftigerem Rand in der
+  /// Akzentfarbe. Über `copyWith` auf die Form aus dem `cardTheme` statt neu
+  /// gebaut, damit ein dort geänderter Radius auch hier ankommt; `null` heißt
+  /// „nichts überschreiben" und lässt der Karte ihr Standardaussehen.
+  ShapeBorder? _kartenform(ThemeData theme) {
+    if (!hervorgehoben) return null;
+    final rand = BorderSide(color: theme.colorScheme.primary, width: 2);
+    final standard = theme.cardTheme.shape;
+    return standard is RoundedRectangleBorder
+        ? standard.copyWith(side: rand)
+        : RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: rand,
+          );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       margin: EdgeInsets.zero,
+      shape: _kartenform(theme),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

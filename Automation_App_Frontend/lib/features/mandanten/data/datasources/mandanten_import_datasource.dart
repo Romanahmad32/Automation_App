@@ -44,7 +44,8 @@ class ApiMandantenImportDatasource implements MandantenImportDatasource {
   Object _mapError(DioException e) {
     if (e.response?.statusCode != 400) return e;
     return MandantException(
-      backendFehlertext(e) ?? 'Die Importdatei konnte nicht gelesen werden.',
+      backendFehlertext(e) ??
+          dienstOhneAntwort(e, 'Die Importdatei konnte nicht gelesen werden'),
     );
   }
 }

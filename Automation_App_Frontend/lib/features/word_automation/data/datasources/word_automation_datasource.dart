@@ -111,7 +111,7 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
       );
       throw Exception(
         backendFehlertext(e) ??
-            'Beim bearbeiten des Word-Dokuments ist ein Fehler aufgetreten',
+            dienstOhneAntwort(e, 'Das Schreiben konnte nicht erzeugt werden'),
       );
     }
   }
@@ -131,7 +131,11 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
       );
     } on DioException catch (e) {
       throw Exception(
-        backendFehlertext(e) ?? 'Die Arbeitskopie konnte nicht gelöscht werden',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die Arbeitskopie konnte nicht gelöscht werden',
+            ),
       );
     }
   }
@@ -166,7 +170,11 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
         name: 'PERF',
       );
       throw Exception(
-        backendFehlertext(e) ?? 'Die PDF-Vorschau konnte nicht erstellt werden',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die PDF-Vorschau konnte nicht erstellt werden',
+            ),
       );
     }
   }
@@ -205,7 +213,11 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
       );
     } on DioException catch (e) {
       throw Exception(
-        backendFehlertext(e) ?? 'Die RVG-Kosten konnten nicht berechnet werden',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die RVG-Kosten konnten nicht berechnet werden',
+            ),
       );
     }
   }

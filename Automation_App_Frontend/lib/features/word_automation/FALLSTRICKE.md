@@ -27,6 +27,29 @@ sechzig Dateien das größte der App, entsprechend viel davon.
 - **Eine Schadensposition über `0,00 €` ist gültig** (noch nicht beziffert), ein negativer Betrag
   nicht. Geprüft wird im Formular an der Zeile (`utils/schadenspositionen_pruefung.dart`), nicht
   erst im Dienst: dessen `[Range]` antwortet mit einem HTTP 400, das keine Zeile benennt.
+- **Ein Punkt im Betrag ist nur dann ein Tausendertrennzeichen, wenn er einer sein kann**
+  (`utils/betrag_eingabe.dart`). Genau drei Ziffern dahinter und kein Komma daneben, das die
+  Dezimalrolle schon vergeben hat — sonst ist er das Dezimaltrennzeichen. Die frühere Fassung
+  strich jeden Punkt und machte aus `1.5` kommentarlos **15,00 €**: keine Meldung, kein negativer
+  Betrag, plausible Vorschau, zehnfacher Betrag im Schreiben. Was danach mehrdeutig bleibt
+  (`1.234.56`) oder Beiwerk trägt (`1.234,56 €`), wird **nicht geraten** — es bleibt unlesbar.
+- **Unlesbar heißt markiert und gesperrt, nicht weggelassen.** Eine Zeile, deren Betrag sich nicht
+  lesen ließ, fiel früher stillschweigend aus der Aufstellung — bei freiem Knopf. Beanstandet wird
+  aber erst, wenn die Zeile *gemeint* ist: Bezeichnung vorhanden **und** etwas im Betragsfeld.
+  Beides am Zustand festgemacht und nicht am Fokus, damit das Verdikt auch dann stimmt, wenn der
+  Anwalt direkt aus dem Feld heraus auf „Dokument erstellen" klickt. Die vorbelegten
+  Standardpositionen (Bezeichnung, leeres Betragsfeld) bleiben damit unbeanstandet.
+- **Die drei Felder unter der Liste prüfen sich anders als die Zeilen darüber**
+  (`utils/rvg_felder_pruefung.dart`). Sie werden am **Rohtext** geprüft, nicht am gelesenen Wert:
+  Ihr *leerer* Zustand hat eine eigene Bedeutung (Gebührensatz → 1,3; Korrekturfelder →
+  automatisch nach § 13 RVG), und die lässt sich an einer Zahl nicht mehr von einer getippten
+  unterscheiden. Der *leere* Fall wird deshalb vor dem Lesen abgefangen und nicht am `null`
+  danach: Leer und unlesbar ergeben beide `null` und bedeuten das Gegenteil voneinander.
+  Unlesbares zählt in allen drei Feldern als Verstoß — der Rückfall (1,3 bzw. „automatisch") ist
+  dem leeren Feld zugedacht und ging sonst still hinaus, obwohl etwas anderes im Feld stand. `0`
+  im Gebührensatz ist der schärfste Fall, weil sie *lesbar* ist und der Rückfall deshalb erst
+  recht nicht griff. Ein unlesbarer Zwischenstand beim Tippen entsteht dabei nicht: `1`, `1,`
+  und `1,3` lesen sich alle.
 - **Das Verdikt kommt aus dem Formular, nicht aus der `DamageListing`.** `DamageListingForm.onChanged`
   meldet Stand **und** Beanstandungen; `WizardState.schadenspositionFehler` hält sie, und
   `schadensaufstellungIstErzeugbar` ist die einzige Stelle, die über den Knopf entscheidet. Der

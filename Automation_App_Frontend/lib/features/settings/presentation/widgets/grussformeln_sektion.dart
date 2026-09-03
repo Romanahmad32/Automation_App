@@ -1,6 +1,7 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/form/hinzufuegen_button.dart';
 import 'package:automation_app/features/email_versand/domain/entities/grussformel.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_state.dart';
@@ -89,23 +90,23 @@ class GrussformelnSektionInhalt extends StatelessWidget {
                 'Noch kein Gruß hinterlegt. Ohne Einträge bleibt die Auswahl '
                 'beim Verfassen leer.',
               ),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final gruss in stand.grussformeln)
-                  InputChip(
-                    label: Text(gruss.text),
-                    onPressed: () => _bearbeite(context, gruss),
-                    onDeleted: () => _entferne(context, gruss),
-                    deleteButtonTooltipMessage: 'Gruß entfernen',
-                  ),
-                ActionChip(
-                  avatar: const Icon(Icons.add, size: 18),
-                  label: const Text('Gruß hinzufügen'),
-                  onPressed: () => _bearbeite(context, const Grussformel()),
-                ),
-              ],
+            if (stand.grussformeln.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final gruss in stand.grussformeln)
+                    InputChip(
+                      label: Text(gruss.text),
+                      onPressed: () => _bearbeite(context, gruss),
+                      onDeleted: () => _entferne(context, gruss),
+                      deleteButtonTooltipMessage: 'Gruß entfernen',
+                    ),
+                ],
+              ),
+            HinzufuegenButton(
+              beschriftung: 'Gruß hinzufügen',
+              onHinzufuegen: () => _bearbeite(context, const Grussformel()),
             ),
           ],
         );

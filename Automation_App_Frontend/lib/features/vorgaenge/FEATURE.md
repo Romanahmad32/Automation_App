@@ -10,7 +10,7 @@ Word- und PDF-Datei in einen einstellbaren Ordner geht (§6.2).
 app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashboard lesen) ·
 `VorgangPersistenzFehlerCubit` · `VorgangNavigationSignal` · `RegisterSpiegelCubit` ·
 `LetzteVersaendeCubit` aus **email_versand** für die Versandzeile der Liste
-**Domain:** Entities `Vorgang`, `VorgangEntwurf`, `VorgangStatus`, `ReferenzTeile`, `Rechtsgebiet`,
+**Domain:** Entities `Vorgang`, `VorgangEntwurf`, `VorgangStatus`, `ReferenzTeile`, `RechtsgebietWert`,
 `RegisterSpiegelErgebnis`; Ports `VorgangRepository`, `RegisterSpiegelRepository`; Dienste
 `AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`, `VorgangVollstaendigkeit`,
 `VorgangWartezeit`, `RegisterFilter`, `MandantAnschrift`. Keine UseCases.

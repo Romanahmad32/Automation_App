@@ -35,7 +35,6 @@ class AppearanceSettingsView extends StatelessWidget {
                           '"Standard" das klassische blaue Theme.',
                       children: [
                         SegmentedButton<AppThemeVariant>(
-                          showSelectedIcon: false,
                           segments: const [
                             ButtonSegment(
                               value: AppThemeVariant.kanzlei,
@@ -63,7 +62,6 @@ class AppearanceSettingsView extends StatelessWidget {
                           'Windows-Einstellung.',
                       children: [
                         SegmentedButton<ThemeMode>(
-                          showSelectedIcon: false,
                           segments: const [
                             ButtonSegment(
                               value: ThemeMode.system,

@@ -27,7 +27,6 @@ class _AnredeAuswahlState extends State<AnredeAuswahl> {
     return Align(
       alignment: Alignment.centerLeft,
       child: SegmentedButton<Anrede>(
-        showSelectedIcon: false,
         segments: const [
           ButtonSegment(value: Anrede.herr, label: Text('Herr')),
           ButtonSegment(value: Anrede.frau, label: Text('Frau')),

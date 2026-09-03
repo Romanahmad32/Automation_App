@@ -29,7 +29,10 @@ class ApiWordTemplateDatasource implements WordTemplateDatasource {
     } on DioException catch (e) {
       throw Exception(
         backendFehlertext(e) ??
-            'Die Platzhalter der Word-Datei konnten nicht gelesen werden',
+            dienstOhneAntwort(
+              e,
+              'Die Platzhalter der Word-Datei konnten nicht gelesen werden',
+            ),
       );
     }
   }
