@@ -1,6 +1,7 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/form/hinzufuegen_button.dart';
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_state.dart';
@@ -90,13 +91,9 @@ class MailVorlagenSektionInhalt extends StatelessWidget {
                 onBearbeiten: () => _bearbeite(context, vorlage),
                 onEntfernen: () => _entferne(context, vorlage),
               ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Vorlage hinzufügen'),
-                onPressed: () => _bearbeite(context, const MailVorlage()),
-              ),
+            HinzufuegenButton(
+              beschriftung: 'Vorlage hinzufügen',
+              onHinzufuegen: () => _bearbeite(context, const MailVorlage()),
             ),
           ],
         );
