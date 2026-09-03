@@ -572,6 +572,14 @@ werden — fachlich der Einstieg **vor** 4.1.
   Kontaktdaten, Notizen).
 - **[M] Einmal erfassen, wiederverwenden:** Bei einem neuen Vorgang für einen bekannten Mandanten
   werden dessen Daten übernommen.
+- **[M] Eine Namensänderung benennt den Eintrag um — und sagt das vorher:** Ist ein Mandant in
+  einen Vorgang übernommen und wird dort sein Name geändert, trägt danach **derselbe**
+  Registereintrag den neuen Namen; ein zweiter entsteht nicht. Das ist gewollt: Ein Tippfehler
+  soll sich dort berichtigen lassen, wo er auffällt. Weil damit aber jeder Vorgang an diesem
+  Eintrag den neuen Namen mitträgt, nennt die Rückfrage vor dem Speichern die Sache beim Namen —
+  „umbenennen", nicht „aktualisieren" — und zeigt alten Namen, neuen Namen und die Zahl der
+  betroffenen Vorgänge. Wer einen **anderen** Menschen erfassen will, wählt „(neuer Mandant)".
+  *Ergänzt am 03.09.2026: Umgesetzt war bis dahin die Umbenennung, angekündigt das Gegenteil.*
 - **[M]** Einem Mandanten können mehrere **Kfz-Kennzeichen** und mehrere **Akten** zugeordnet sein.
 - **[M]** Das Register ist die Grundlage für die Aktenablage (siehe 6.1) und für die
   Parteienbezeichnung „Mandant ./. Gegner" im Register (siehe 6.2).

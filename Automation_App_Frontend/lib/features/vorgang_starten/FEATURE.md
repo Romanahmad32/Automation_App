@@ -15,9 +15,8 @@ Fremd eingebunden: `VorgangCubit` (vorgaenge).
 **Backend:** `Features/ZentralrufAutomation/` · `POST /api/Zentralruf/prefill`; mittelbar
 `GET /api/Settings`, `POST /api/Mandanten`, `PUT /api/Mandanten/{id}`, `PUT /api/Vorgaenge`
 **Tests:** `test/features/vorgang_starten/vorgang_starten_bloc_test.dart`,
-`test/features/vorgang_starten/mandant_aenderung_test.dart`,
-`test/features/vorgang_starten/mandant_uebernahme_test.dart`,
-`test/features/vorgang_starten/mandant_ungespeichert_test.dart`
+`test/features/vorgang_starten/mandant_aenderung_test.dart`, `test/features/vorgang_starten/mandant_uebernahme_test.dart`,
+`test/features/vorgang_starten/mandant_umbenennung_test.dart`, `test/features/vorgang_starten/mandant_ungespeichert_test.dart`
 
 **Fallstricke**
 
@@ -35,6 +34,7 @@ Fremd eingebunden: `VorgangCubit` (vorgaenge).
   oder Änderung läuft vorher durch `MandantUebersichtDialog` — wird der abgebrochen, wird auch der
   Vorgang nicht gespeichert.
 - Der lange Rest steht in `FALLSTRICKE.md` daneben: Reihenfolge im Speicherpfad, die drei Zustände
-  mit gespeichertem Mandanten (sonst 409-Sackgasse) und warum Tests kein `pumpAndSettle` vertragen.
+  mit gespeichertem Mandanten (sonst 409-Sackgasse), warum ein geänderter Name den Registereintrag
+  umbenennt (§5.1) und warum Tests kein `pumpAndSettle` vertragen.
 - `registriereAnfrage` ist ein Upsert über die Referenz: dieselbe Referenz erneut speichern
   aktualisiert nur die hier erfassten Felder und behält Antwort- und Dokumentdaten.

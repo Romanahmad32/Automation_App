@@ -100,6 +100,17 @@ class VorgangStartenDaten {
     kennzeichen: _gemergteKennzeichen(original.kennzeichen),
   );
 
+  /// True, wenn der eingetippte Name vom gespeicherten abweicht.
+  ///
+  /// Eigener Eingang, weil an dieser Frage mehr hängt als an den übrigen
+  /// Feldern: Eine geänderte Hausnummer verbessert einen Registereintrag, ein
+  /// geänderter Name **benennt ihn um** — den Menschen, der vorher so hieß,
+  /// gibt es danach im Register nicht mehr (§5.1). Die Rückfrage muss das
+  /// eigens sagen, und dafür braucht sie diese Unterscheidung.
+  bool nameWeichtAbVon(Mandant m) =>
+      vorname.trim() != m.vorname.trim() ||
+      nachname.trim() != m.nachname.trim();
+
   /// True, wenn die Eingaben vom gespeicherten Mandanten abweichen (Auslöser für
   /// den „Daten aktualisieren?"-Dialog).
   bool weichtAbVon(Mandant m) {
@@ -109,8 +120,7 @@ class VorgangStartenDaten {
         !m.kennzeichen.any(
           (k) => k.trim().toUpperCase() == neuesKennzeichen.toUpperCase(),
         );
-    return vorname.trim() != m.vorname.trim() ||
-        nachname.trim() != m.nachname.trim() ||
+    return nameWeichtAbVon(m) ||
         strasseHausnummer.trim() != m.strasseHausnummer.trim() ||
         postleitzahl.trim() != m.postleitzahl.trim() ||
         ort.trim() != m.ort.trim() ||
