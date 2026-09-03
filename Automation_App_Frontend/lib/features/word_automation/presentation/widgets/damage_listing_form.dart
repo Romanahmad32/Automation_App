@@ -134,9 +134,7 @@ class _DamageListingFormState extends State<DamageListingForm> {
                       border: const OutlineInputBorder(),
                       // Die Beanstandung steht an der Zeile, die sie auslöst —
                       // nicht als Sammelmeldung über der Aufstellung.
-                      errorText: betragUnzulaessig(zeilen[index].betrag)
-                          ? negativerBetragHinweis
-                          : null,
+                      errorText: betragFehler(zeilen[index]),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -216,9 +214,9 @@ class _DamageListingFormState extends State<DamageListingForm> {
   /// geht; beide sehen damit garantiert dasselbe.
   List<Schadenspositionszeile> _zeilen() => [
     for (final item in _items)
-      (
+      schadenspositionszeile(
         bezeichnung: item.description.text,
-        betrag: betragAusEingabe(item.amount.text),
+        betragText: item.amount.text,
       ),
   ];
 

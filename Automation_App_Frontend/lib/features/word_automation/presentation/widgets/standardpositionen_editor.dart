@@ -84,9 +84,19 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
         ),
   ];
 
-  bool get _hatUnzulaessigenBetrag => _zeilen.any(
-    (zeile) => betragUnzulaessig(betragAusEingabe(zeile.amount.text)),
-  );
+  /// Die Zeile, wie die gemeinsame Pruefung sie sieht — dieselbe Bahn wie in
+  /// der Schadensaufstellung des Wizards. Hier ist ein leerer Betrag der
+  /// Normalfall („Betrag (€), optional"), ein unlesbarer dagegen dieselbe
+  /// stille Falle: Er wurde bisher zu „kein Betrag hinterlegt", und die naechste
+  /// Aufstellung startete ohne die Vorbelegung, die der Anwalt eingetippt hatte.
+  Schadenspositionszeile _zeile(DamageItemControllers zeile) =>
+      schadenspositionszeile(
+        bezeichnung: zeile.description.text,
+        betragText: zeile.amount.text,
+      );
+
+  bool get _hatBeanstandetenBetrag =>
+      _zeilen.any((zeile) => betragFehler(_zeile(zeile)) != null);
 
   @override
   Widget build(BuildContext context) {
@@ -130,12 +140,7 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
                       decoration: InputDecoration(
                         labelText: 'Betrag (€), optional',
                         border: const OutlineInputBorder(),
-                        errorText:
-                            betragUnzulaessig(
-                              betragAusEingabe(zeile.amount.text),
-                            )
-                            ? negativerBetragHinweis
-                            : null,
+                        errorText: betragFehler(_zeile(zeile)),
                       ),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -180,7 +185,7 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
           // einziger anders aus als der Rest der Einstellungen.
           SpeichernButton(
             speichert: stand.speichert,
-            onSpeichern: _hatUnzulaessigenBetrag
+            onSpeichern: _hatBeanstandetenBetrag
                 ? null
                 : () => context.read<StandardpositionenCubit>().speichern(
                     _positionen(),

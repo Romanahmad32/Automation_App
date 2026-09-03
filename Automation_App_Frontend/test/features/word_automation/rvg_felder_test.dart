@@ -1,3 +1,4 @@
+import 'package:automation_app/features/word_automation/presentation/utils/betrag_eingabe.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/rvg_felder_pruefung.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,6 +157,27 @@ void main() {
     expect(erstellenKnopf(tester).onPressed, isNull);
   });
 
+  /// Der stille Zwilling des Gebührensatz-Rückfalls, eine Zeile tiefer: Ein
+  /// unlesbares Korrekturfeld fiel auf „automatisch" zurück. Der Anwalt sah
+  /// seinen eingetippten Betrag im Feld stehen und bekam im Schreiben die
+  /// errechnete Gebühr.
+  testWidgets('eine unlesbare Geschäftsgebühr sperrt statt still zu rechnen', (
+    tester,
+  ) async {
+    const eingabe = '1.234,56 €';
+    await schritt.zeige(tester);
+    await erfassePosition(tester);
+    await klappeKorrekturAuf(tester);
+    await tippe(tester, geschaeftsgebuehrfeld(), eingabe);
+
+    expect(find.text(unlesbarerBetragHinweis(eingabe)), findsOneWidget);
+    expect(
+      schritt.umgebung.wizard.state.damageListing?.geschaeftsgebuehrOverride,
+      isNull,
+    );
+    expect(erstellenKnopf(tester).onPressed, isNull);
+  });
+
   /// Leer heißt hier „automatisch nach § 13 RVG rechnen" und ist der Normalfall
   /// — er darf nicht als Verstoß gelten.
   testWidgets('leere Korrekturfelder bleiben unbeanstandet', (tester) async {
@@ -199,8 +221,13 @@ void main() {
 
     test('die Korrekturfelder beanstanden Negatives und zu Großes', () {
       expect(korrekturbetragFehler(''), isNull);
+      expect(korrekturbetragFehler('   '), isNull);
       expect(korrekturbetragFehler('0'), isNull);
       expect(korrekturbetragFehler('1.234,56'), isNull);
+      expect(
+        korrekturbetragFehler('1.234,56 €'),
+        unlesbarerBetragHinweis('1.234,56 €'),
+      );
       expect(korrekturbetragFehler('-0,01'), negativerKorrekturbetragHinweis);
       expect(korrekturbetragFehler('-500'), negativerKorrekturbetragHinweis);
       expect(
