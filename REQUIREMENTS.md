@@ -260,11 +260,206 @@ Gemeinsam:
   geht **nichts** hinaus, und der Grund steht im Klartext vor dem Anwalt. Eine Mail, der
   ausgerechnet das Anspruchsschreiben fehlt, wäre schlimmer als eine, die gar nicht erst hinausging.
 - **[M] Betreff und Mailtext aus Vorlage:** Betreff und Anschreiben stammen aus einer vom Anwalt
-  pflegbaren Textvorlage mit Platzhaltern (z. B. Zeichen, Mandantenname, Schadennummer) — je
-  Empfängertyp eine eigene Vorlage. Ausgangsbestand ist die in der Kanzlei bereits verwendete
-  Mailvorlage — sie wird einmalig übernommen, nicht nachgebaut. Solange diese Verwaltung nicht
-  steht, belegt die App Anrede, Betreff und Bezugssatz aus den Vorgangsdaten vor; vor dem
-  Absenden ist alles änderbar.
+  pflegbaren Textvorlage mit Platzhaltern (z. B. Zeichen, Mandantenname, Schadennummer).
+  Ausgangsbestand ist die in der Kanzlei bereits verwendete Mailvorlage — sie wird einmalig
+  übernommen, nicht nachgebaut. Ist keine Vorlage gewählt, belegt die App Anrede, Betreff und
+  Bezugssatz aus den Vorgangsdaten vor; vor dem Absenden ist alles änderbar. *Geändert am
+  01.09.2026: Bis dahin stand hier „je Empfängertyp eine eigene Vorlage" — siehe den nächsten
+  Punkt.*
+- **[M] Die Vorlage wählt der Anwalt, die App errät sie nicht:** Beim Verfassen steht die Liste der
+  Vorlagen zur Auswahl; die gewählte ersetzt Betreff und Text des Entwurfs. Eine Bindung an den
+  Empfängertyp wäre hier eine Falle: Standardmäßig gehen Mandant und Versicherung **eine
+  gemeinsame** Mail (siehe oben), ein Mandantenanschreiben passt dort aber nicht hinein. Wer die
+  Mandantenvorlage nimmt, nimmt die Versicherung aus dem Feld „An" — diese Entscheidung trifft
+  der Anwalt. *Ergänzt am 01.09.2026.*
+- **[M] Anrede und Gruß stehen in der Vorlage:** Auch die Anrede ist ein Platzhalter im
+  Vorlagentext. So bestimmt jede Vorlage selbst, ob und wie angeredet wird — die eine an
+  zwei Empfänger, die andere persönlich an den Mandanten. Ein Platzhalter, für den es nichts
+  einzusetzen gibt, lässt seine Zeile **ganz** entfallen, statt eine leere zurückzulassen; eine
+  Vorlage darf also Zeilen enthalten, die nur manchmal erscheinen. *Ergänzt am 01.09.2026.*
+- **[M] Alle Platzhalter eines Vorgangs sind beim Schreiben einer Vorlage wählbar:** Der Anwalt
+  bekommt sie nach Gruppen geordnet (beim Verfassen gewählt, Mandant, Versicherung, Vorgang) mit
+  Klartext dazu, und ein Klick setzt den Namen an der Schreibmarke ein. Der Grund: Der Katalog ist
+  über dreißig Namen lang, angeboten wurden sechs, und die Auflösung eines getippten Namens ist
+  eine Heuristik — `{{Schadennummer}}` trifft die Versicherungsschein-Nr., `{{Adresse}}` trifft
+  nichts, und keins von beidem war vorher zu erkennen. Die angebotene Liste ist **abgeleitet**,
+  nicht gepflegt: Jeder angebotene Name muss über dieselbe Auflösung auf seine Quelle
+  zurückführen, sonst schlägt ein Test an. *Ergänzt am 02.09.2026.*
+- **[S] Die Anrede wählt der Anwalt je Mail, gepflegt wird nur ihr Anfang:** Zur Auswahl stehen
+  Anfänge („Sehr geehrter", „Guten Tag"); Anredewort und Nachname setzt die App dazu. Jeder Anfang
+  ist in **drei Formen** hinterlegt — männlich, weiblich, neutral —, weil das Deutsche hier beugt:
+  „Sehr geehrt**er** Herr" gegen „Sehr geehrt**e** Frau". Vorausgewählt ist die Form, die zum
+  hinterlegten Geschlecht des Mandanten passt (siehe 5.1); ist keines hinterlegt, gilt die neutrale
+  Form — geraten wird nicht. **Fehlt nur der Nachname, steht die gewählte Anredeart allein da**
+  („Sehr geehrter Herr"): Bei einem Vorgang ohne Mandanten im Register sahen sonst alle Anfänge
+  gleich aus, und ein Klick auf „Herr" bewegte nichts. Verschwiegen wird dabei niemand — ohne Namen
+  nennt die Zeile keinen. Der Weg zur neutralen Form bleibt die Anredeart „Keine Angabe".
+  *Ergänzt am 03.09.2026.* Ohne hinterlegte Anrede bleibt es bei der
+  festen Briefanrede: Die Umstellung von „fest" auf „wählbar" darf keine Mail ohne Anrede
+  hinterlassen. Die Liste pflegt der Anwalt selbst (siehe 7.1). *Ergänzt am 02.09.2026.*
+- **[S] Die Anredeart wählt der Anwalt je Mail, und sie beugt auch den Vorlagentext:** Beim
+  Verfassen steht „Herr", „Frau" oder „keine Angabe" zur Wahl; vorbelegt ist, was am Mandanten
+  hinterlegt ist (siehe 5.1). Die Wahl gilt **nur für diese Mail** — in die Stammdaten wird nichts
+  zurückgeschrieben. Sie entscheidet zwei Dinge auf einmal: welche Form eines Anredeanfangs gilt,
+  **und** welche Form die gebeugten Wörter im Vorlagentext annehmen. *Ergänzt am 02.09.2026.*
+- **[S] Gebeugte Wörter stehen mit ihren Formen im Vorlagentext:** Ein Platzhalter mit Schrägstrich
+  ist eine Beugung — `{{Mandant/Mandantin}}`, `{{er/sie}}`, `{{Geschädigter/Geschädigte}}`. Die
+  Formen stehen dort, wo sie gelten, und nicht in einer gepflegten Liste: Es sind viele, und jede
+  gehört an ihre Stelle im Satz. Zwei Formen genügen; fehlt die dritte, rechnet die App sie aus —
+  **nie falsch gebeugt, und wo das Deutsche eine kurze Schreibweise hat, in der kurzen**: Ist die
+  eine Form der Anfang der anderen, kommt der Unterschied in Klammern („Mandant(in)",
+  „Geschädigte(r)"); sonst bleiben es beide mit Schrägstrich („der/die", „er/sie"). Eine dritte
+  Form in der Vorlage schlägt diesen Rückfall immer, und der Vorlageneditor zeigt beim Schreiben,
+  was errechnet wurde — dort ist es zu verbessern. Was keine zwei oder drei
+  nicht-leeren Formen ergibt, bleibt leer und wird als solches erklärt (siehe den Punkt zur
+  Fehlstelle) statt stillschweigend zu verschwinden. *Ergänzt am 02.09.2026.*
+- **[S] Eine fehlende Anredeart lässt sich beim Verfassen nachtragen:** Ist am Mandanten **keine**
+  hinterlegt, bietet die App an, die gewählte ins Register zu schreiben — auf Klick, nicht von
+  selbst. Ohne diesen Weg stünde die Wahl bei jeder Mail an denselben Mandanten wieder aus, und die
+  Lücke bliebe für immer; sie fällt hier auf, also ist sie hier zu beheben. Eine **bereits**
+  hinterlegte Anredeart wird von hier aus nie überschrieben: Das ist eine Änderung an Stammdaten
+  und gehört ins Register (siehe 1.3, 5.1). *Ergänzt am 02.09.2026.*
+- **[S] Der Vorlageneditor sagt beim Schreiben, was nicht aufgehen wird:** Platzhalter, die auf kein
+  Feld auflösen, und Beugungen, aus denen keine werden, stehen als Hinweis unter dem Feld — samt
+  Grund. Dieselbe Auskunft gab es bisher nur im Versanddialog, also an einer Vorlage, die längst
+  als fertig galt, und unter einer Mail, die gleich hinausgehen soll. Ein **Hinweis, kein Riegel**
+  (siehe 1.3): Eine halb geschriebene Vorlage muss sich speichern lassen. *Ergänzt am 02.09.2026.*
+- **[S] Die Beugungen sind im Editor mit allen Formen zu sehen:** Zu jeder Beugung der Vorlage zeigt
+  der Editor, was sie bei „Herr", „Frau" und „keine Angabe" ergibt, und markiert eine **errechnete**
+  neutrale Form als solche. Nur sie lässt sich noch verbessern — und ob „Mandant(in)" so in der
+  Mail stehen soll, wäre sonst erst an einer Mail zu einem Mandanten ohne hinterlegte Anredeart zu
+  sehen, also selten und spät. Der ganze Text dreimal gefüllt wäre hier irreführend: Im Editor ist
+  kein Vorgang gewählt, und nach der Regel „Zeile ohne gefüllten Platzhalter entfällt" stünde von
+  der Vorlage kaum etwas da. *Ergänzt am 02.09.2026.*
+- **[S] Anredeart und „neutral anreden" sind zwei Angaben, nicht eine:** Ob **namentlich** angeredet
+  wird, hängt am Empfängerkreis; welche **Form** ein Wort annimmt, am Mandanten. Der Regelfall
+  zeigt, warum sie getrennt bleiben: Eine Mail an die gegnerische Versicherung beginnt mit „Sehr
+  geehrte Damen und Herren" und schreibt im Text trotzdem von „unserer Mandantin".
+  *Ergänzt am 02.09.2026.*
+- **[S] Neutral anreden ist vorausgewählt, wenn jemand mitliest — aber änderbar:** Steht neben dem
+  Mandanten eine weitere Adresse im Feld „An" oder in Kopie, ist die neutrale Form vorgewählt und
+  die App sagt, warum. Der Anwalt darf sie überstimmen: Eine an zwei Empfänger gerichtete Mail kann
+  nur eine Anrede haben, welche das ist, entscheidet er. *Ergänzt am 02.09.2026.*
+- **[S] Die Anrede sagt bei jeder Lage, warum sie neutral ist:** Sechs Lagen führen zur neutralen
+  Anrede, und nur eine davon hat der Anwalt gewählt: ein Mitleser im Feld „An", ein noch leeres
+  Feld „An", kein Mandant zum Vorgang, keine hinterlegte E-Mail-Adresse des Mandanten (an ihr
+  allein erkennt die App ihn unter den Empfängern), kein Nachname, keine Anredeart. Die zwei
+  Lagen ohne Namen — kein Mandant, kein Nachname — gelten nur, solange auch **keine Anredeart**
+  gewählt ist: Mit ihr trägt sie die Zeile allein, und dann ist nichts zu erklären. Die App nennt
+  den Grund unter der Auswahl und unterscheidet dabei zwei Arten: Der Empfängerkreis ist eine
+  **Auskunft** — dann ist die Mail richtig, wie sie ist —, eine Lücke im Register eine **Aufgabe**.
+  Was der Anwalt **selbst** gewählt hat, ist keins von beidem und wird nicht erklärt: weder das
+  Häkchen „neutral anreden" noch die Anredeart „Keine Angabe". Vorher stand die neutrale Anrede
+  unerklärt da: Der Anwalt sah eine Anrede, die er nie angelegt hatte, und ein Klick auf die
+  Anredeart bewegte sie nicht. *Ergänzt am 02.09.2026.*
+- **[S] Die Anredeart sagt, worauf sie gerade wirkt:** Sie beugt zwei Dinge — die Anredezeile und
+  gebeugte Wörter im Vorlagentext —, und beide können einzeln wegfallen: Die Anrede kann neutral
+  sein, die Vorlage kann keine gebeugte Form tragen, und sie kann sogar ganz ohne Anredezeile
+  auskommen. Die App sagt darum, was von beidem **jetzt** mitgeht, statt zu behaupten, es sei
+  immer beides. Fällt beides weg, steht das da — samt dem Muster `{{Mandant/Mandantin}}`, mit dem
+  sich eine Wirkung herstellen lässt. Vorher stand über der Auswahl ein fester Satz, den die
+  häufigste Mail dieser Kanzlei nicht einlöste, und der Klick blieb wortlos ohne Folge.
+  *Ergänzt am 02.09.2026.*
+- **[S] Fehlt der Vorlage die Stelle für die Anrede, steht das dabei:** Ohne `{{Anrede}}` geht die
+  Mail **ohne Anredezeile** hinaus, und Anrede wie Anredeart sind wirkungslos. Die App nennt den
+  Platzhalter und die Folge — dieselbe Auskunft, die es für `{{Zusatzgruß}}` längst gab; sie fehlte
+  ausgerechnet für die Zeile darüber. *Ergänzt am 02.09.2026.*
+- **[S] „Neutral anreden" wird angeboten, sobald es etwas zu schalten gibt:** Der Umschalter steht
+  zur Verfügung, sobald eine **Anredeart** vorliegt — unabhängig davon, was der Empfängerkreis
+  gerade ergibt und ob ein Nachname bekannt ist. Vorher erschien er nur, wenn die namentliche
+  Anrede **schon** galt, und fehlte damit genau in dem Fall, für den er gedacht ist: die Mail an
+  die Versicherung, die den Mandanten trotzdem namentlich ansprechen soll. Ohne Anredeart bleibt
+  er weg — dann ist jede Form dieselbe, und es gibt nichts zu schalten. *Ergänzt am 02.09.2026;
+  der Nachname fiel am 03.09.2026 aus der Bedingung, weil die Zeile seither auch ohne ihn gebeugt
+  wird (§4.7, „Fehlt nur der Nachname"). Solange er noch mitzählte, verschwand der Umschalter
+  ausgerechnet dort, wo „Sehr geehrter Herr" an die Versicherung ging.*
+- **[S] Der Rückfall ohne Anredebestand folgt der gewählten Anredeart:** Ist die Liste der
+  Anredeanfänge leer, gilt „Sehr geehrter / Sehr geehrte" wie ab Werk — und diese Zeile beugt sich
+  nach derselben Angabe wie der Vorlagentext. Vorher las der Rückfall allein das Mandantenregister:
+  Wer für eine Mail „Frau" wählte, bekam „unserer Mandantin" im Text und „Sehr geehrte Damen und
+  Herren" darüber. Lässt sich der Bestand **nicht laden**, sagt die App das an der Stelle der
+  Auswahl und lässt es erneut versuchen; vorher verschwand die Auswahl wortlos und sah aus wie eine
+  Einstellung, die es nicht gibt. Ist der Bestand **leer**, sagt sie ebenso, was stattdessen gilt
+  und wo Anreden angelegt werden: Gelöscht ist die Liste, nicht die Anredezeile — der Rückfall
+  schreibt weiter. *Ergänzt am 02.09.2026; leerer Bestand am 03.09.2026.*
+- **[S] Was für eine Mail entschieden wurde, endet mit dem Vorgang:** Wechselt der Anwalt im Dialog
+  den Vorgang, gelten Zusatzgruß, Anredeart **und** die Entscheidung „neutral anreden" wieder wie
+  vorbelegt. Sie galten für diesen Adressaten und diesen Empfängerkreis; stehengeblieben hätten sie
+  den nächsten Mandanten namentlich angeredet, obwohl die Mail an die Versicherung geht. Was der
+  Anwalt selbst eingetragen hat — getippte Adressen, Anhänge, sein eigener Text —, bleibt dagegen:
+  auch eine Adresse, die der neue Vorgang zufällig ebenfalls vorschlägt. Und wer in **Kopie** steht,
+  zählt als Mitleser wie im Feld „An". *Ergänzt am 03.09.2026.*
+- **[S] Ein selbst geschriebener Text bleibt stehen — die Auswahl läuft aber nicht leer:** Sobald der
+  Anwalt in den Mailtext geschrieben hat, wird er nicht mehr neu erzeugt; seine Arbeit darf kein
+  Klick kosten. **Anrede und Zusatzgruß werden darin trotzdem weiter getauscht**, an genau der
+  Stelle, an der die App sie selbst eingesetzt hat. Was den ganzen Text betrifft — eine andere
+  Vorlage — oder Wörter mitten im Satz — eine andere Anredeart —, wird nicht mehr eingesetzt; die
+  App sagt das und bietet an, den Text neu zu erzeugen. Vorher blieb die Auswahl anfassbar und tat
+  wortlos nichts. *Ergänzt am 02.09.2026.*
+- **[S] Persönlicher Zusatzgruß, gewählt je Mail:** Beim Verfassen wählt der Anwalt den
+  persönlichen Gruß aus einer Liste — oder keinen. Der Platzhalter `{{Zusatzgruß}}` setzt ihn ein,
+  üblich als eigene Zeile unter der Anrede; ohne Wahl entfällt die Zeile. Vorbelegt ist, was am
+  Mandanten hinterlegt ist (siehe 5.1): Der Regelfall soll ohne Klick stimmen, die Ausnahme ohne
+  Umweg über die Stammdaten möglich sein. Die Liste pflegt der Anwalt selbst — wie viele Grüße es
+  gibt, bestimmt er (siehe 7.1). *Geändert am 02.09.2026: Bis dahin kam der Gruß allein aus dem
+  Mandanten und war beim Schreiben nicht änderbar; der Platzhalter hieß `{{Grussformel}}`.*
+- **[S] Der Signatur-Import füllt das Formular, geschrieben wird beim Speichern:** „Aus Outlook
+  übernehmen" liest die gewählte Signatur und zeigt sie — gespeichert wird sie erst mit dem
+  Speichern-Knopf der Seite, und bis dahin bleibt die bisherige in Kraft. Vorher schrieb der Import
+  sofort: Wer sich eine Signatur nur ansehen wollte, hatte sie damit gewechselt, samt gelöschter
+  Bilder der bisherigen (siehe 1.3). Die Bilder kommen erst bei der Übernahme dazu und fehlen
+  darum in der Vorschau noch — die App sagt es, statt es aussehen zu lassen wie einen Fehler.
+  **Das Speichern lässt die übernommene Formatierung stehen:** Sie gehört nicht dem Formular,
+  sondern dem Dienst, und wurde von einem Speichern auf altem Stand gelöscht — die Meldung sagte
+  „gespeichert", unter den Mails stand danach nur noch der Text ohne Schrift und Logo.
+  *Ergänzt am 02.09.2026; Formatierung am 03.09.2026.*
+- **[S] Die Signatur lässt sich ganz entfernen:** Ein Griff nimmt Text, Formatierung und Bilder
+  mit; danach steht unter den Mails keine Signatur mehr. Vorher entfernte das geleerte Feld nur die
+  Nur-Text-Fassung — die formatierte blieb in den Einstellungen stehen und ging, weil die Mail sie
+  bevorzugt, samt Logo **weiter unter jeder Mail hinaus**. Mit Rückfrage, denn nichts davon kommt
+  zurück. *Ergänzt am 02.09.2026.*
+- **[S] Die Vorlage entscheidet, ob der Zusatzgruß mitgeht — nicht der Empfängerkreis:** Trägt die
+  gewählte Vorlage den Platzhalter, wird der gewählte Gruß eingesetzt, **immer**. Steht neben dem
+  Mandanten noch jemand im Feld „An" oder in Kopie, sagt die App das an der Auswahl — als Hinweis,
+  nicht als Sperre: Wer eine Vorlage mit `{{Zusatzgruß}}` wählt, will ihn, und das ist eine
+  Entscheidung des Anwalts. Hat die gewählte Vorlage **keine** Stelle dafür, bleibt die Auswahl
+  sichtbar gesperrt und nennt den Grund, statt zu verschwinden. *Geändert am 02.09.2026: Bis dahin
+  ging der Gruß nur an den Mandanten allein (Beobachtung aus der Kanzlei vom 25.08.2026) — damit
+  verlor jedes Mandantenanschreiben mit einer Adresse in Kopie den Gruß, obwohl die Vorlagenwahl
+  die Absicht schon ausgedrückt hatte.*
+- **[S] Sichtbar, was die Platzhalter ergeben:** Zu einer gewählten Vorlage zeigt die App, welche
+  Platzhalter darin stehen, was jeweils eingesetzt wurde und was leer blieb — und den Vorlagentext,
+  wie er hinterlegt ist. **Beiläufig, solange alles aufgeht:** zugeklappt, bis jemand nachsieht.
+  Ohne diese Auskunft ist ein fertig gefüllter Text nicht mehr auf die Vorlage zurückzuführen, aus
+  der er stammt, und ein falsch belegter Platzhalter sieht aus wie ein Tippfehler. *Ergänzt am
+  02.09.2026.*
+- **[M] Ein übersprungener Platzhalter bleibt auffindbar — und sagt, was fehlt:** Was leer blieb,
+  steht **offen** im Formular, nicht hinter einem Aufklapper: samt **Stelle** (Betreff oder
+  Zeilennummer), Folge (entfällt die Zeile ganz oder verliert sie nur diesen Wert) und vor allem
+  dem **Grund** — „im Mandantenregister nicht erfasst", „am Vorgang nicht erfasst", „wird oben im
+  Dialog gewählt" oder „kein Feld dieses Namens: Schreibweise prüfen". Der letzte Fall ist der
+  wichtigste: Ein Tippfehler im Platzhalternamen war vorher von einer wirklich fehlenden Angabe
+  nicht zu unterscheiden, und die eine Aufgabe ist „berichtigen", die andere „nachpflegen".
+  Der Ton bleibt der der übrigen Hinweise (kein Alarmrot): Ein fehlender Zusatzgruß ist kein
+  Fehler. *Ergänzt am 02.09.2026: Beobachtung aus der Arbeit am Versand.*
+- **[S] Vorlage und Ergebnis nebeneinander:** Auf Wunsch stellt die App den hinterlegten
+  Vorlagentext dem gefüllten Text **zeilenweise gegenüber**, mit „entfällt" samt Namen des
+  Platzhalters an den Zeilen, die verschwunden sind. Den Vorlagentext allein zu zeigen war fast
+  keine Auskunft — der Anwalt hat ihn geschrieben; die Zuordnung Vorlagenzeile ↔ Textzeile ist es.
+  *Ergänzt am 02.09.2026.*
+- **[M] Vorlage wieder abwählen:** „Keine Vorlage" steht in der Auswahl gleichberechtigt neben den
+  Vorlagen und führt zur Vorbelegung aus den Vorgangsdaten zurück. Eine Wahl, die sich nicht
+  zurücknehmen lässt, zwingt zum Schließen und Neuöffnen des Entwurfs. Ist **kein Vorgang**
+  gewählt, sagt der Eintrag das auch — eine „Vorbelegung aus dem Vorgang" zu versprechen, den es
+  nicht gibt, wäre falsch. *Ergänzt am 02.09.2026.*
+- **[M] Der Vorgang ist im Entwurf wählbar:** Im Versanddialog steht der Vorgang als erstes Feld,
+  durchsuchbar nach Referenz und Mandant, und ist jederzeit wechselbar — „kein Vorgang" ist ein
+  gleichberechtigter Eintrag darin. Ein Wechsel belegt Empfänger, Betreff und die Platzhalter neu;
+  **was der Anwalt selbst eingetragen hat, bleibt** (getippte Adressen, Anhänge, selbst
+  geschriebener Text), was aus den Vorschlägen des alten Vorgangs stammte, geht mit ihm. Der Grund:
+  Aus dem Postfach geht der Entwurf auch dann auf, wenn sich die Antwort keinem Vorgang zuordnen
+  ließ (siehe 4.3) — ohne diesen Schalter war die Vorbelegung nur durch Schließen und Neuöffnen zu
+  erreichen. *Ergänzt am 02.09.2026.*
 - **[S] Auch außerhalb des Schreibens:** Derselbe Entwurf lässt sich aus dem Postfach heraus
   öffnen — mit dem Vorgang der ausgewählten Antwort vorbelegt, sonst als leeres Anschreiben.
   Damit bleibt eine Nachfrage an die Versicherung in der App, ohne den Umweg über den
@@ -382,6 +577,19 @@ werden — fachlich der Einstieg **vor** 4.1.
   Parteienbezeichnung „Mandant ./. Gegner" im Register (siehe 6.2).
 - **[S] Duplikatschutz:** Tippt der Anwalt Daten ein, die zu einem bekannten Mandanten passen,
   weist die App darauf hin und bietet die Übernahme an — als Vorschlag, nicht als Automatik.
+- **[M] Die Anredeart steuert die Beugung:** „Herr"/„Frau"/keine Angabe am Mandanten entscheidet,
+  welche Form eines Anredeanfangs beim Verfassen gilt (siehe 4.7) — und welche Form die gebeugten
+  Wörter im Vorlagentext annehmen. Bei „keine Angabe" gilt die neutrale Form; geraten wird nicht.
+  Das Register ist dabei die **Vorbelegung**: Beim Verfassen ist die Anredeart je Mail wählbar,
+  ohne dass sich am Register etwas ändert (siehe 4.7). Fehlt sie hier, lässt sie sich von dort auf
+  Klick nachtragen — eine hinterlegte wird nie von dort überschrieben. *Ergänzt am 02.09.2026.*
+- **[S] Persönliche Grußformel:** Zu einem Mandanten lässt sich eine frei geschriebene
+  persönliche Grußformel hinterlegen (z. B. „Salamu aleikum"). Sie ist die **Vorbelegung** für
+  Mails an ihn; gewählt wird beim Verfassen (siehe 4.7). Leer heißt: kein Zusatzgruß; mehr als
+  eine gibt es nicht.
+  **Bewusst ein freies Textfeld und keine Religionszugehörigkeit:** Die wäre ein besonderes
+  personenbezogenes Datum (Art. 9 DSGVO) und für diesen Zweck unnötig — das freie Feld erreicht
+  dasselbe, ohne jemanden zu kategorisieren. *Ergänzt am 01.09.2026.*
 
 ### 5.2 Versicherer
 
@@ -483,6 +691,14 @@ Konfigurierbar sein müssen mindestens:
 - **[M] Stammordner des Aktensystems** und **[S] Namensmuster der Unterordner** (siehe 6.1).
 - **[M] Mail-Textvorlagen** für den Versand (siehe 4.7). Die Empfänger wählt der Anwalt je Mail,
   sie sind keine Einstellung.
+- **[S] Anreden**, aus denen beim Verfassen gewählt wird (siehe 4.7) — anlegen, ändern, entfernen.
+  Gepflegt wird je Eintrag nur der **Anfang** in seinen drei Beugungsformen (männlich, weiblich,
+  neutral); „Herr"/„Frau" und den Nachnamen setzt der Versand dazu. Der erste der Liste gilt beim
+  Verfassen ohne Klick. *Ergänzt am 02.09.2026.*
+- **[S] Zusatzgrüße**, aus denen beim Verfassen gewählt wird (siehe 4.7) — anlegen, ändern,
+  entfernen; **wie viele es gibt, bestimmt der Anwalt**. Es ist eine Liste von **Textbausteinen**,
+  kein Merkmal von Personen: Sie hängt an keinem Mandanten und ordnet niemanden ein. *Ergänzt am
+  02.09.2026.*
 - **[S] Postfach-Zugang** für die automatische Überwachung (siehe 4.3): Postfach-Adresse,
   Zugangsdaten und Betreff-Filter. Ohne hinterlegten Zugang bleibt die Überwachung inaktiv.
 - **[S] Darstellungsoptionen für erzeugte Dokumente** (z. B. Farbe der Tabellen-Titelzeile der

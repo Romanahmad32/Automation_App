@@ -79,6 +79,39 @@ public class EmailVersandController(
     }
 
     /// <summary>
+    /// Liest die gewählte Signatur, <b>ohne sie zu speichern</b> (§4.7,
+    /// ergänzt am 02.09.2026) — damit das Formular sie zeigen kann, bevor der
+    /// Anwalt auf „Speichern" drückt.
+    ///
+    /// Vorher gab es diesen Weg nicht: Wer eine Signatur aus der Liste wählte,
+    /// hatte sie damit schon gewechselt — samt gelöschter Bilder der bisherigen.
+    /// Geschrieben wird jetzt erst über <c>signaturen/uebernehmen</c>, und das
+    /// ruft die Oberfläche beim Speichern.
+    ///
+    /// Die Bilder kommen als Angabe zurück, nicht als Inhalt; auf der Platte
+    /// liegen sie erst nach der Übernahme. Bis dahin zeigt die Vorschau Schrift
+    /// und Farben, aber kein Logo.
+    /// </summary>
+    [HttpGet("signaturen/vorschau")]
+    [ProducesResponseType(typeof(SignaturStandDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public ActionResult<SignaturStandDto> SignaturVorschau([FromQuery] string? name)
+    {
+        try
+        {
+            var (block, uebergangen) = signaturUebernahme.Lies(name ?? string.Empty);
+            return Ok(SignaturStandDto.From(block, uebergangen));
+        }
+        catch (EmailVersandException exception)
+        {
+            return Problem(
+                title: "Die Signatur wurde nicht gelesen",
+                detail: exception.Message,
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+    }
+
+    /// <summary>
     /// Übernimmt die gewählte Signatur in die Einstellungen (§4.7): Text,
     /// formatierte Fassung und deren Bilder in einem Zug. Das geschieht hier
     /// und nicht in der Oberfläche, weil die Bilder abgelegt werden müssen und

@@ -25,15 +25,14 @@ void main() {
   /// Dateien, die bei der Umstellung schon über der Grenze lagen, mit ihrem
   /// damaligen Stand als Obergrenze: sie dürfen nur noch schrumpfen.
   ///
-  /// Beide sind große Formularseiten mit wenig Kommentar — die Regel zeigt
-  /// hier also richtig hin. Sie stehen namentlich hier statt hinter einem
-  /// hochgesetzten Limit, damit sichtbar bleibt, dass es Schulden sind und wie
-  /// viele. Wer eine davon aufteilt, streicht ihre Zeile — so geschehen mit
-  /// `vorgang_starten_form_view.dart`, aus der `MandantEntscheidung` heraus-
-  /// geschnitten wurde.
-  const altlasten = <String, int>{
-    'lib/features/mandanten/presentation/pages/mandant_details_page.dart': 279,
-  };
+  /// **Zurzeit leer** — und das soll so bleiben. Eine Altlast steht namentlich
+  /// hier statt hinter einem hochgesetzten Limit, damit sichtbar bleibt, dass
+  /// es eine Schuld ist und wie groß. Wer eine Datei aufteilt, streicht ihre
+  /// Zeile: so geschehen mit `vorgang_starten_form_view.dart` (daraus wurde
+  /// `MandantEntscheidung` geschnitten) und mit `mandant_details_page.dart`
+  /// (daraus `MandantStammdatenFelder`). Ein **neuer** Eintrag ist keine
+  /// Lösung: Eine zu lange Datei wird aufgeteilt, nicht eingetragen.
+  const altlasten = <String, int>{};
 
   int grenzeFuer(String pfad) => altlasten[pfad] ?? maxAnweisungen;
 

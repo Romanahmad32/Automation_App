@@ -1,13 +1,16 @@
-/// Wer da angeschrieben wird. Bestimmt die Anrede, das Symbol am Vorschlag und
-/// später (§4.7) die Textvorlage — je Empfängertyp eine eigene.
+/// Wer da angeschrieben wird. Bestimmt die Anrede und das Symbol am Vorschlag.
+///
+/// **Nicht** die Textvorlage: Die wählt der Anwalt von Hand (§4.7). Hier stand
+/// einmal „je Empfängertyp eine eigene" — das ging nicht auf, weil Mandant und
+/// Versicherung standardmässig **eine gemeinsame** Mail bekommen und ein
+/// Mandantenanschreiben dort nicht hineinpasst.
 enum EmpfaengerArt {
   mandant('Mandant'),
   versicherung('Versicherung'),
 
   /// Noch von niemandem erzeugt: Vorschläge kommen bisher nur aus dem Vorgang
   /// (Mandant) und aus der Zentralruf-Antwort (Versicherung). Der Wert steht
-  /// für die pflegbaren Mail-Textvorlagen bereit (§4.7, §5.3), bei denen der
-  /// Anwalt eine Adresse ohne solche Herkunft anschreibt — dann trägt sie
+  /// bereit für eine eingetippte Adresse ohne solche Herkunft — sie trägt dann
   /// weder die Anrede des Mandanten noch die der Versicherung.
   sonstige('Weitere');
 

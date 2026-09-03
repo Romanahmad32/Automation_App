@@ -105,6 +105,7 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
         EmailAdresse = dto.EmailAdresse,
         Telefonnummer = dto.Telefonnummer,
         Notiz = dto.Notiz,
+        PersoenlicheGrussformel = dto.PersoenlicheGrussformel,
         AktenOrdnernamenJson = MandantListen.Schreib(dto.AktenOrdnernamen),
         KennzeichenJson = MandantListen.Schreib(dto.Kennzeichen),
     };
@@ -121,6 +122,7 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
         EmailAdresse = dto.EmailAdresse,
         Telefonnummer = dto.Telefonnummer,
         Notiz = dto.Notiz,
+        PersoenlicheGrussformel = dto.PersoenlicheGrussformel,
         AktenOrdnernamenJson = MandantListen.Schreib(dto.AktenOrdnernamen),
         KennzeichenJson = MandantListen.Schreib(dto.Kennzeichen),
     };

@@ -37,6 +37,16 @@ public sealed class FachExceptionHandler : IExceptionHandler
         {
             MandantNameConflictException => (StatusCodes.Status409Conflict, "Namenskonflikt"),
             FormTemplateNameConflictException => (StatusCodes.Status409Conflict, "Namenskonflikt"),
+            // Die drei Mail-Bestaende (§4.7): Ein Pflichtfeld fehlt, oder es
+            // gibt den Eintrag schon. Beides kann der Anwalt im Dialog
+            // beheben, deshalb 400 bzw. 409 mit dem Satz der Ausnahme.
+            MailVorlageNameConflictException => (StatusCodes.Status409Conflict, "Namenskonflikt"),
+            GrussformelTextConflictException => (StatusCodes.Status409Conflict, "Namenskonflikt"),
+            AnredeBausteinConflictException => (StatusCodes.Status409Conflict, "Namenskonflikt"),
+            MailVorlageUngueltigException => (StatusCodes.Status400BadRequest, "Unvollstaendige Mail-Vorlage"),
+            GrussformelUngueltigException => (StatusCodes.Status400BadRequest, "Unvollstaendiger Gruss"),
+            AnredeBausteinUngueltigException =>
+                (StatusCodes.Status400BadRequest, "Unvollstaendiger Anredeanfang"),
             InvalidBackupException => (StatusCodes.Status400BadRequest, "Ungültige Sicherungsdatei"),
             PdfConversionUnavailableException =>
                 (StatusCodes.Status503ServiceUnavailable, "PDF-Konvertierung nicht verfügbar"),

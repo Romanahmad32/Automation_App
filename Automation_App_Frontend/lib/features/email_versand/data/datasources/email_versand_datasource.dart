@@ -200,6 +200,24 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
   }
 
   @override
+  Future<SignaturStand> leseSignatur(String name) async {
+    try {
+      final response = await _dio.get(
+        '/api/EmailVersand/signaturen/vorschau',
+        queryParameters: {'name': name},
+        // Die Signaturdatei samt Bildern zu lesen dauert laenger als die drei
+        // Sekunden, die das NetworkModule global setzt.
+        options: Options(receiveTimeout: _versandTimeout),
+      );
+      return SignaturStand.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(
+        backendFehlertext(e) ?? 'Die Signatur konnte nicht gelesen werden.',
+      );
+    }
+  }
+
+  @override
   Future<SignaturStand> uebernimmSignatur(String name) async {
     try {
       final response = await _dio.post(

@@ -122,6 +122,7 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
         existing.EmailAdresse = mandant.EmailAdresse;
         existing.Telefonnummer = mandant.Telefonnummer;
         existing.Notiz = mandant.Notiz;
+        existing.PersoenlicheGrussformel = mandant.PersoenlicheGrussformel;
         existing.AktenOrdnernamenJson = mandant.AktenOrdnernamenJson;
         existing.KennzeichenJson = mandant.KennzeichenJson;
         // ErstelltAm bleibt unverändert.
