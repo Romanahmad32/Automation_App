@@ -4,6 +4,7 @@ import 'package:automation_app/features/form_template_setup/domain/services/verw
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
+import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
@@ -86,6 +87,15 @@ class AusfuellFormular extends StatelessWidget {
         .where((wert) => wert.quelle == PrefillQuelle.gespeichert)
         .length;
 
+    // Was nicht *eindeutig* aus dem Bestand kommt, wird nicht geraten, sondern
+    // am Feld zur Wahl gestellt (#17, §1.3) — etwa die drei Fahrzeuge eines
+    // Mandanten, von denen das Register nicht weiss, welches im Unfall stand.
+    final vorschlaege = DatenquelleVorschlaege.fuerFelder(
+      template.fields,
+      vorgang: vorgang,
+      mandant: wizardState.selectedMandant,
+    );
+
     final angebot = wizardState.entwurfAngebot;
 
     return Column(
@@ -112,6 +122,7 @@ class AusfuellFormular extends StatelessWidget {
           erfassteWerte: wizardState.formDataEntwurf ?? const {},
           aufbauMarke: wizardState.aufbauMarke,
           aktivePlatzhalter: aktivePlatzhalter,
+          vorschlaege: vorschlaege,
           onWerteGeaendert: (werte) =>
               context.read<WizardCubit>().setFormDataEntwurf(werte),
           onFeldBearbeiten: (feld) => _feldBearbeiten(context, feld),

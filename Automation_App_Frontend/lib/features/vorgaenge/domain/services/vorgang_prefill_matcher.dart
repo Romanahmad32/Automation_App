@@ -160,7 +160,7 @@ class VorgangPrefillMatcher {
       case FeldDatenquelle.kennzeichenGegner:
         return vorgang.kennzeichen ?? antwort?.kennzeichen;
       case FeldDatenquelle.kennzeichenMandant:
-        return vorgang.geschaedigtenKennzeichen;
+        return _mandantenKennzeichen(vorgang, mandant);
       case FeldDatenquelle.unfalldatum:
         return vorgang.unfallDatum ?? antwort?.unfallDatum;
       case FeldDatenquelle.unfallort:
@@ -180,6 +180,33 @@ class VorgangPrefillMatcher {
     }
   }
 
+  /// Das eigene Fahrzeug des Mandanten (§4.4): erst der Vorgang, dann — und nur
+  /// bei **genau einem** Eintrag — das Mandantenregister (§5.1).
+  ///
+  /// Mehrere Kennzeichen im Register sind eine *Auswahl* und keine Vorbelegung:
+  /// Ein Mandant kann mehrere Fahrzeuge halten, und welches in diesem Unfall
+  /// beschädigt wurde, weiß das Register nicht. Eines davon zu nehmen wäre in
+  /// jedem zweiten Fall das falsche und stünde ungeprüft im Anspruchsschreiben
+  /// — deshalb bleibt das Feld leer und der Anwalt wählt über die Auswahlhilfe
+  /// am Feld (`DatenquelleVorschlaege`, §1.3 „vorschlagen statt entscheiden").
+  ///
+  /// Das Kennzeichen des **Gegners** kommt hier unter keinen Umständen herein;
+  /// das war die Regression, für die es früher die Notbremse „bleibt lieber
+  /// leer" gab.
+  static String? _mandantenKennzeichen(Vorgang vorgang, Mandant? mandant) {
+    final eigenes = vorgang.geschaedigtenKennzeichen?.trim();
+    if (eigenes != null && eigenes.isNotEmpty) return eigenes;
+
+    final ausRegister = _registerKennzeichen(mandant);
+    return ausRegister.length == 1 ? ausRegister.single : null;
+  }
+
+  /// Die nicht-leeren Kennzeichen des Registereintrags, gestutzt.
+  static List<String> _registerKennzeichen(Mandant? mandant) => [
+    for (final wert in mandant?.kennzeichen ?? const <String>[])
+      if (wert.trim().isNotEmpty) wert.trim(),
+  ];
+
   /// Herkunft eines über die [FeldDatenquelle] aufgelösten Werts. Bei Quellen
   /// mit Fallback (Name-Schnappschuss, Kennzeichen/Unfalldatum aus der
   /// Antwort) entscheidet der tatsächlich verwendete Datenbestand.
@@ -195,6 +222,12 @@ class VorgangPrefillMatcher {
         return vorgang.kennzeichen != null
             ? PrefillQuelle.vorgang
             : PrefillQuelle.antwort;
+      case FeldDatenquelle.kennzeichenMandant:
+        // Gerufen wird das nur zu einem gefundenen Wert; kannte der Vorgang
+        // das eigene Fahrzeug nicht, kam er also aus dem Register.
+        return (vorgang.geschaedigtenKennzeichen?.trim() ?? '').isNotEmpty
+            ? PrefillQuelle.vorgang
+            : PrefillQuelle.mandant;
       case FeldDatenquelle.unfalldatum:
         return vorgang.unfallDatum != null
             ? PrefillQuelle.vorgang

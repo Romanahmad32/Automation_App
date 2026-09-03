@@ -198,6 +198,9 @@ void main() {
         'bewusst kein Teil des OpenAPI-Vertrags',
     'lib/core/theme/domain/theme_preferences.dart':
         'geraetelokale Darstellungs-Einstellung, geht nie ueber HTTP',
+    'lib/features/form_template_setup/domain/entities/datums_vorbelegung.dart':
+        'steckt als Unterobjekt in field_data.dart und damit in derselben '
+        'opaken fields-Spalte — dasselbe Schema, dieselbe Begruendung',
     'lib/features/form_template_setup/domain/entities/field_data.dart':
         'Inhalt der opaken fields-Spalte von FormTemplateDto — das Schema '
         'lebt nur in Dart (FALLSTRICKE.md des Features)',

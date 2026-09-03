@@ -222,6 +222,34 @@ void main() {
       }
     });
 
+    /// #17: Ein Kennzeichenfeld bekommt Formatprüfung und Auswahlhilfe — und
+    /// zwar unabhängig davon, ob es das eigene oder das gegnerische Fahrzeug
+    /// meint. Der Feldtyp sagt „so sieht der Wert aus", die Datenquelle sagt
+    /// „woher kommt er".
+    test('Kennzeichennamen entstehen als Kennzeichenfeld', () {
+      for (final name in [
+        'Kennzeichen',
+        'MandantKennzeichen',
+        'Gegnerkennzeichen',
+        'Kennzeichen des Geschädigten',
+      ]) {
+        expect(
+          FeldDatenquelleErkennung.erkenne(name).inputType,
+          InputType.kennzeichen,
+          reason: name,
+        );
+      }
+    });
+
+    /// Die Reihenfolge ist die Regel: Stünde die Datumsprüfung vorn, fischte
+    /// ihre Wortliste diesen Namen ab und das Feld verlangte ein Datum.
+    test('das Kennzeichen gewinnt gegen ein Datumswort im Namen', () {
+      expect(
+        FeldDatenquelleErkennung.erkenne('Kennzeichen am Unfalltag').inputType,
+        InputType.kennzeichen,
+      );
+    });
+
     test('alles andere bleibt Textfeld', () {
       expect(
         FeldDatenquelleErkennung.erkenne('Betrag').inputType,
