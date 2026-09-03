@@ -18,7 +18,7 @@ class AblageKonfliktDialog extends StatelessWidget {
   const AblageKonfliktDialog({super.key, required this.vorhandenePfade});
 
   List<String> get _dateinamen => [
-    for (final pfad in vorhandenePfade) pfad.split(RegExp(r'[\/]')).last,
+    for (final pfad in vorhandenePfade) pfad.split(RegExp(r'[\\/]')).last,
   ];
 
   @override
