@@ -19,6 +19,7 @@ public sealed record MandantDto(
     string EmailAdresse,
     string Telefonnummer,
     string Notiz,
+    string PersoenlicheGrussformel,
     IReadOnlyList<string> AktenOrdnernamen,
     IReadOnlyList<string> Kennzeichen,
     DateTime ErstelltAm)
@@ -34,6 +35,7 @@ public sealed record MandantDto(
         e.EmailAdresse,
         e.Telefonnummer,
         e.Notiz,
+        e.PersoenlicheGrussformel,
         MandantListen.Lies(e.AktenOrdnernamenJson),
         MandantListen.Lies(e.KennzeichenJson),
         e.ErstelltAm);

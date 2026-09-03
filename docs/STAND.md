@@ -35,10 +35,59 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   nicht auf den Kaltstart wartet, und die Anhänge der dort offenen Nachricht lassen sich per Knopf
   holen. Eine **Vorschau** zeigt jederzeit, was hinausgeht.
   Die **Signatur** für den Direktversand wird einmal aus Outlook übernommen
-  (Einstellungen → E-Mail-Signatur). Hängen an einer erfassten Postfach-Antwort Dateien, stehen
-  sie beim Verfassen zum Anklicken bereit (§4.3). **Noch offen:** die pflegbaren
-  Mail-Textvorlagen je Empfängertyp
-  (§4.7/§5.3); dafür ist `EmailEntwurfErzeuger` die vorgesehene Stelle.
+  (Einstellungen → E-Mail-Signatur). Der **Import aus Outlook liest nur** und füllt das Formular;
+  geschrieben wird beim Speichern der Seite (`signaturen/vorschau` gegen `signaturen/uebernehmen`),
+  und ein Griff entfernt die Signatur ganz — Text, Formatierung und Bilder. Jedes Speichern der
+  Einstellungen holt dabei zuerst den frischen Stand: Die formatierte Fassung gehört dem Dienst,
+  und auf altem Stand geschrieben löschte sie sich selbst.
+  Hängen an einer erfassten Postfach-Antwort Dateien, stehen
+  sie beim Verfassen zum Anklicken bereit (§4.3). **Mail-Textvorlagen** sind pflegbar
+  (Einstellungen → E-Mail); die gewählte ersetzt Betreff und Text, ihre `{{Platzhalter}}` füllt
+  `MailVorlagenFueller` aus dem Vorgang — mit `{{Anrede}}` und `{{Zusatzgruß}}` als eigenen
+  Namen und der Regel, dass eine Zeile ohne gefüllten Platzhalter ganz entfällt. Gewählt wird von
+  Hand: Standardmäßig gehen Mandant und Versicherung eine gemeinsame Mail, und dort passt ein
+  Mandantenanschreiben nicht hinein (§4.7/§5.3); „keine Vorlage" führt zur Vorbelegung zurück.
+  Ausgangsbestand ist die Outlook-Vorlage der Kanzlei; **alle** Platzhalter eines Vorgangs stehen
+  beim Schreiben einer Vorlage zur Auswahl (`PlatzhalterKatalog`, nach Gruppen, Klick setzt ein) —
+  die Liste ist aus `FeldDatenquelle` abgeleitet, und ein Rundlauf-Test hält sie mit der
+  Auflösung zusammen. **Anrede** und **Zusatzgruß** wählt der Anwalt je Mail aus in den
+  Einstellungen gepflegten Listen (Chips über dem Betreff). Vom Zusatzgruß gilt: Er geht überall
+  mit, wo die Vorlage den Platzhalter trägt; von der Anrede wird nur der **Anfang** gepflegt
+  („Sehr geehrter"), in drei Beugungsformen — „Herr"/„Frau" und Nachnamen setzt der Versand dazu.
+  Welche Form gilt, sagt die **Anredeart je Mail** (Chips „Herr"/„Frau"/„keine Angabe", vorbelegt
+  aus `Mandant.anrede`, ohne Rückschreiben ins Register): Sie beugt die Anredezeile **und** die
+  Wörter im Vorlagentext, die mit Schrägstrich geschrieben sind — `{{Mandant/Mandantin}}`,
+  `{{er/sie}}`; ohne dritte Form rechnet die App die neutrale aus — gemeinsamer Wortstamm in
+  Klammern („Mandant(in)"), sonst beide mit Schrägstrich („der/die"). Fehlt die Anredeart am
+  Mandanten, lässt sie sich aus dem Dialog auf Klick **nachtragen**; eine hinterlegte wird von dort
+  nie überschrieben (§1.3). Davon getrennt: Liest jemand mit, ist die **namentliche** Anrede
+  abgewählt, aber änderbar — eine Mail an die Versicherung beginnt neutral und schreibt im Text
+  trotzdem von „unserer Mandantin". **Warum** die Anrede neutral ist, steht seither darunter
+  (`AnredeNeutralGrund`): sechs Lagen führen dahin, und der Empfängerkreis ist eine Auskunft, eine
+  Lücke im Register eine Aufgabe. Der Umschalter „neutral anreden" wird angeboten, sobald Nachname
+  und Anredeart vorliegen — nicht mehr erst, wenn die namentliche Anrede schon gilt. Ohne
+  Anredebestand gilt `Anredebaustein.rueckfall`, und der folgt der Anredeart wie jeder gespeicherte
+  Anfang; lässt sich der Bestand nicht laden oder ist er leer, sagt die App das statt die Auswahl
+  zu verstecken — gelöscht ist die Liste, nicht die Anredezeile. Fehlt der **Nachname** (Vorgang
+  ohne Mandanten im Register), steht die gewählte Anredeart allein da („Sehr geehrter Herr")
+  statt auf „Damen und Herren" zurückzufallen; zurück führt „Keine Angabe".
+  Über der Anredeart steht, worauf sie **jetzt** wirkt (`AnredeartWirkung`) — Anredezeile,
+  gebeugte Wörter der Vorlage, beides oder nichts; ein fester Satz behauptete vorher immer beides.
+  Fehlt der Vorlage die Stelle für die Anrede (`{{Anrede}}`), steht das dabei, und Grund wie
+  Umschalter entfallen: Wo keine Zeile ist, gibt es nichts zu erklären.
+  Der **Vorlageneditor** sagt beim Schreiben, welche Platzhalter
+  nichts liefern werden (`VorlagenPruefung`, Hinweis ohne Riegel) und was die Beugungen in allen
+  drei Formen ergeben — eine errechnete neutrale Form ist als solche markiert. Hat der Anwalt den
+  Text selbst angefasst, tauschen Anrede und Zusatzgruß darin weiter ihre Stelle (`TextNachtrag`);
+  Vorlage und Anredeart nicht mehr — das sagt ein Hinweis, samt Knopf „Text neu erzeugen"; die
+  Merker dafür setzt schon `starte` und zieht jede Ableitung nach, sonst lief der Tausch leer.
+  Ein **Vorgangswechsel** nimmt Gruß, Anredeart und die Entscheidung „neutral anreden" zurück und
+  behält, was der Anwalt selbst eingetragen hat — auch eine Adresse, die der neue Vorgang zufällig
+  ebenfalls vorschlägt.
+  Der **Vorgang** ist im Dialog wählbar (`VorgangAuswahl`, durchsuchbar), damit auch ein
+  Entwurf aus dem Postfach ohne Treffer nachträglich vorbelegt werden kann. Was leer blieb, steht
+  **offen** im Formular — mit Stelle, Folge und Grund („im Mandantenregister nicht erfasst",
+  „kein Feld dieses Namens") —, und ein Dialog stellt Vorlage und Ergebnis zeilenweise gegenüber.
 - **Sicherung** — das `backup`-Feature schreibt Datenbank und Vorlagen als ZIP
   (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`). Ist in den Einstellungen eine
   **Sicherungsablage** gewählt (gedacht: ein OneDrive-Ordner), sichert die App zusätzlich beim

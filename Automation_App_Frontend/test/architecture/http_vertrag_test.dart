@@ -102,6 +102,18 @@ void main() {
     'lib/features/email_versand/domain/entities/email_versand_ergebnis.dart': [
       'EmailVersandErgebnisDto',
     ],
+    'lib/features/email_versand/domain/entities/anredebaustein.dart': [
+      'AnredeBausteinDto',
+      'SpeichereAnredeBausteinDto',
+    ],
+    'lib/features/email_versand/domain/entities/grussformel.dart': [
+      'GrussformelDto',
+      'SpeichereGrussformelDto',
+    ],
+    'lib/features/email_versand/domain/entities/mail_vorlage.dart': [
+      'MailVorlageDto',
+      'SpeichereMailVorlageDto',
+    ],
     'lib/features/email_versand/domain/entities/outlook_anhaenge.dart': [
       'OutlookAnhaengeDto',
     ],

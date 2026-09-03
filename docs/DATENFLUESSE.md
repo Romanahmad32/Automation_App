@@ -13,6 +13,7 @@ Der Weg, den ein `{{Platzhalter}}` aus der Word-Vorlage bis zum fertigen Wert ni
 
 ```
 form_template_setup ──▶ vorgaenge ──▶ mandanten / zentralruf_reply ──▶ word_automation
+                                                              └──▶ email_versand
 ```
 
 - **Einrichten:** `FeldDatenquelleErkennung` (`form_template_setup/domain/services/`) löst den
@@ -24,6 +25,19 @@ form_template_setup ──▶ vorgaenge ──▶ mandanten / zentralruf_reply �
 - **Quellen:** `Vorgang` (vorgaenge), `Mandant` (mandanten) und die übernommene
   `ZentralrufReplyData` (zentralruf_reply). Zusammengesetzt wird in `mandant_anschrift.dart` —
   das liegt bei `vorgaenge`, nicht bei `mandanten`: Es dient der Vorbelegung, nicht dem Register.
+
+- **Zweiter Verbraucher: die Mail-Textvorlagen** (§4.7). `MailVorlagenFueller`
+  (`email_versand/domain/services/`) benutzt dieselbe Kette über
+  `VorgangPrefillMatcher.wertFuerNamen` — bewusst dieselben Namen und dieselbe Schreibweise
+  `{{…}}`, damit niemand zwei Kataloge im Kopf behalten muss. Eigen sind ihm nur `{{Anrede}}`,
+  `{{Zusatzgruß}}` und die **Beugungen** (`{{Mandant/Mandantin}}`): Alle drei entstehen beim
+  Verfassen **dieser einen Mail** und stehen nicht am Vorgang, werden deshalb vor der Kette
+  beantwortet. Eine Beugung geht dabei gar nicht in den Katalog — sie trägt ihre Formen selbst und
+  braucht nur die Anredeart. Dazu die Regel, dass eine Zeile ohne gefüllten
+  Platzhalter ganz entfällt — die gilt nur für Mails, nicht für Word; was dabei übersprungen wurde,
+  trägt `PlatzhalterBefund` mit Stelle und Folge weiter in den Dialog.
+  **Die Beugung endet an der Mail:** Word füllt das Backend über `FieldData.label`, dort bleibt
+  `{{Mandant/Mandantin}}` als Platzhalter im Dokument stehen und kommt als Warnung zurück.
 
 **Die Naht:** Die `FeldDatenquelle` ist die einzige Verbindung zwischen Einrichten und Ausfüllen.
 Ein neuer Wert dort braucht **beide** Seiten — ohne den Zweig im Matcher steht die Quelle im

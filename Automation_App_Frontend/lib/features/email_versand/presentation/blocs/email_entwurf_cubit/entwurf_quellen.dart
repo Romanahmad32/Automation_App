@@ -3,6 +3,7 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
+import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
@@ -20,11 +21,32 @@ class EntwurfQuellen {
   final UseCase<KanzleiSettings, NoParams> _getKanzleiSettings;
   final UseCase<List<Mandant>, NoParams> _getMandanten;
 
+  /// Der **einzige Schreibzugriff** von hier aus: die beim Verfassen gewählte
+  /// Anredeart im Register nachtragen (§4.7, ergänzt am 02.09.2026).
+  ///
+  /// Er steht hier und nicht im Cubit, weil diese Klasse die Stelle ist, die
+  /// mit anderen Features spricht — und weil er dieselbe Haltung braucht:
+  /// **Misslingt er, bleibt der Entwurf stehen.** Nachgetragen wird nur eine
+  /// Lücke, nie eine Korrektur; entschieden wird das am Zustand
+  /// (`anredeartNachtragbar`).
+  final UseCase<Mandant, Mandant> _updateMandant;
+
   const EntwurfQuellen(
     this._repository,
     this._getKanzleiSettings,
     this._getMandanten,
+    this._updateMandant,
   );
+
+  /// Schreibt [anrede] an [mandant] und gibt den geänderten Mandanten zurück;
+  /// null heißt: hat nicht geklappt, und der Aufrufer sagt es dem Anwalt.
+  Future<Mandant?> merkeAnredeart(Mandant mandant, Anrede anrede) async {
+    final ergebnis = await _updateMandant(mandant.copyWith(anrede: anrede));
+    return switch (ergebnis) {
+      Right(value: final gemerkt) => gemerkt,
+      Left() => null,
+    };
+  }
 
   /// Ohne Kanzleidaten fehlt nur die Unterschrift unter dem Entwurf — kein
   /// Grund, den Versand zu verweigern.

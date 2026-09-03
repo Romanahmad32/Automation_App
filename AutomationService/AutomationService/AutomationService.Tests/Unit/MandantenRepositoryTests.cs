@@ -183,6 +183,29 @@ public sealed class MandantenRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateAsync_UebernimmtDiePersoenlicheGrussformel()
+    {
+        var angelegt = await _repository.CreateAsync(Neu(nachname: "Bein"));
+        angelegt.PersoenlicheGrussformel.Should()
+            .BeEmpty("ohne Angabe gibt es keinen Zusatzgruss");
+
+        var geaendert = Neu(nachname: "Bein");
+        geaendert.Id = angelegt.Id;
+        geaendert.PersoenlicheGrussformel = "Salamu aleikum";
+        await _repository.UpdateAsync(geaendert);
+
+        // Über eine zweite Verbindung zur selben Datei lesen: Der Änderungs-
+        // verfolger des ersten Kontexts würde die Eigenschaft auch dann
+        // zurückgeben, wenn sie nie in eine Spalte geschrieben worden wäre.
+        using var zweiter = new AutomationDbContext(
+            new DbContextOptionsBuilder<AutomationDbContext>()
+                .UseSqlite(_connection)
+                .Options);
+        var gelesen = await zweiter.Mandanten.SingleAsync(m => m.Id == angelegt.Id);
+        gelesen.PersoenlicheGrussformel.Should().Be("Salamu aleikum");
+    }
+
+    [Fact]
     public async Task DeleteAsync_EntferntUndMeldetUnbekannte()
     {
         var m = await _repository.CreateAsync(Neu(nachname: "Bein"));
