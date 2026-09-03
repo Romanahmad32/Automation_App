@@ -60,6 +60,19 @@ public class VorgangEntity
     /// </summary>
     public string? EntwurfJson { get; set; }
 
+    /// <summary>
+    /// Laufende Nummer des zuletzt erzeugten Schreibens innerhalb des Vorgangs
+    /// (§4.9): das erste hat 1, das zweite 2. Steht im Dateinamen und trennt
+    /// dort die Schreiben, die alle im selben Aktenunterordner landen.
+    ///
+    /// Sie steigt nur, wenn der Anwalt beim Erzeugen ausdrücklich ein
+    /// <em>neues</em> Schreiben verlangt — eine Korrektur behält ihre Nummer und
+    /// ersetzt damit die vorige Fassung. Geraten wird das nicht; die
+    /// Änderungszeit der Datei kann beides nicht unterscheiden. Null, solange
+    /// noch kein Schreiben erzeugt wurde.
+    /// </summary>
+    public int? SchreibenNummer { get; set; }
+
     public string? DokumentPfad { get; set; }
     public string? AktenOrdner { get; set; }
     public DateTime? AbgeschlossenAm { get; set; }

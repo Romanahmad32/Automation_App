@@ -30,6 +30,7 @@ public sealed record VorgangDto(
     JsonElement? FeldWerte,
     JsonElement? Schadensaufstellung,
     JsonElement? Entwurf,
+    int? SchreibenNummer,
     string? DokumentPfad,
     string? AktenOrdner,
     DateTime? AbgeschlossenAm)
@@ -55,6 +56,7 @@ public sealed record VorgangDto(
         ParseJson(e.FeldWerteJson),
         ParseJson(e.SchadensaufstellungJson),
         ParseJson(e.EntwurfJson),
+        e.SchreibenNummer,
         e.DokumentPfad,
         e.AktenOrdner,
         e.AbgeschlossenAm);
@@ -82,6 +84,7 @@ public sealed record VorgangDto(
         SchadensaufstellungJson =
             Schadensaufstellung.HasValue ? Schadensaufstellung.Value.GetRawText() : null,
         EntwurfJson = Entwurf.HasValue ? Entwurf.Value.GetRawText() : null,
+        SchreibenNummer = SchreibenNummer,
         DokumentPfad = DokumentPfad,
         AktenOrdner = AktenOrdner,
         AbgeschlossenAm = AbgeschlossenAm,

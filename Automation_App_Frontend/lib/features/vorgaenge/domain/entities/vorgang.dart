@@ -78,6 +78,15 @@ class Vorgang extends Equatable {
   /// bestätigte Stand ihn ([VorgangRueckfluss]).
   final VorgangEntwurf? entwurf;
 
+  /// Laufende Nummer des zuletzt erzeugten Schreibens innerhalb des Vorgangs
+  /// (§4.9): das erste hat 1, das zweite 2. Sie steht im Dateinamen und trennt
+  /// dort die Schreiben, die alle im selben Aktenunterordner landen.
+  ///
+  /// Sie steigt nur, wenn der Anwalt beim Erzeugen ausdrücklich ein *neues*
+  /// Schreiben verlangt; eine Korrektur behält ihre Nummer und ersetzt damit
+  /// die vorige Fassung. Null, solange noch kein Schreiben erzeugt wurde.
+  final int? schreibenNummer;
+
   /// Pfad des erzeugten Anspruchsschreibens bzw. der Ablageort in der Akte.
   final String? dokumentPfad;
   final String? aktenOrdner;
@@ -105,6 +114,7 @@ class Vorgang extends Equatable {
     this.feldWerte,
     this.schadensaufstellung,
     this.entwurf,
+    this.schreibenNummer,
     this.dokumentPfad,
     this.aktenOrdner,
     this.abgeschlossenAm,
@@ -236,6 +246,7 @@ class Vorgang extends Equatable {
     Map<String, String>? feldWerte,
     DamageListing? schadensaufstellung,
     VorgangEntwurf? Function()? entwurf,
+    int? schreibenNummer,
     String? dokumentPfad,
     String? aktenOrdner,
     DateTime? abgeschlossenAm,
@@ -263,6 +274,7 @@ class Vorgang extends Equatable {
       feldWerte: feldWerte ?? this.feldWerte,
       schadensaufstellung: schadensaufstellung ?? this.schadensaufstellung,
       entwurf: entwurf != null ? entwurf() : this.entwurf,
+      schreibenNummer: schreibenNummer ?? this.schreibenNummer,
       dokumentPfad: dokumentPfad ?? this.dokumentPfad,
       aktenOrdner: aktenOrdner ?? this.aktenOrdner,
       abgeschlossenAm: abgeschlossenAm ?? this.abgeschlossenAm,
@@ -304,6 +316,7 @@ class Vorgang extends Equatable {
       feldWerte: feldWerte,
       schadensaufstellung: schadensaufstellung,
       entwurf: entwurf,
+      schreibenNummer: schreibenNummer,
       dokumentPfad: dokumentPfad,
       aktenOrdner: aktenOrdner,
       abgeschlossenAm: abgeschlossenAm,
@@ -332,6 +345,7 @@ class Vorgang extends Equatable {
     feldWerte,
     schadensaufstellung,
     entwurf,
+    schreibenNummer,
     dokumentPfad,
     aktenOrdner,
     abgeschlossenAm,
