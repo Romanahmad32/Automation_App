@@ -34,6 +34,12 @@ public class WordAutomationController(
         "Die Word-Datei kann nicht gelesen werden, weil sie gerade in einem anderen Programm " +
         "(z. B. Microsoft Word) geöffnet ist. Bitte schließen Sie die Datei und versuchen Sie es erneut.";
 
+    // 400 hat hier zwei Formen, und das ist kein Versehen: invalid_request kommt als
+    // DTO aus der Action, ein Verstoss gegen die DTO-Schranken dagegen als
+    // ValidationProblemDetails — [ApiController] antwortet darauf, bevor die Action
+    // ueberhaupt laeuft (siehe ValidierungsAntwort). Beide Formen liest die Dart-Seite
+    // ueber backendFehlertext (message bzw. detail); der Vertrag unten nennt die
+    // haeufigere. Bewusst kein ///-Kommentar: der stuende sonst als summary im Vertrag.
     [HttpPost("replaced-document")]
     [ProducesResponseType(typeof(ReplacedDocumentResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ReplacedDocumentResponseDto), StatusCodes.Status400BadRequest)]
@@ -43,17 +49,6 @@ public class WordAutomationController(
     [ProducesResponseType(typeof(ReplacedDocumentResponseDto), StatusCodes.Status500InternalServerError)]
     public ActionResult<ReplacedDocumentResponseDto> GenerateReplacedDocument([FromBody] WordReplacementDto wordReplacementDto)
     {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
-            return BadRequest(new ReplacedDocumentResponseDto(
-                false,
-                null,
-                [],
-                "validation_failed",
-                string.Join(" | ", errors)));
-        }
-
         try
         {
             var result = wordAutomationService.GenerateReplacedDocument(wordReplacementDto.ToDomain());
@@ -87,7 +82,8 @@ public class WordAutomationController(
             logger.LogError(exception, "Unexpected failure while generating replaced document.");
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                new ReplacedDocumentResponseDto(false, null, [], "internal_error", "Unexpected error while generating document."));
+                new ReplacedDocumentResponseDto(false, null, [], "internal_error",
+                    "Das Schreiben konnte nicht erzeugt werden. Der Grund steht im Protokoll des Dienstes."));
         }
     }
 
@@ -117,16 +113,11 @@ public class WordAutomationController(
     /// </summary>
     [HttpPost("rvg-calculation")]
     [ProducesResponseType(typeof(RvgCalculationResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(RvgCalculationResponseDto), StatusCodes.Status400BadRequest)]
+    // Der einzige 400 dieses Endpunkts ist der Verstoss gegen die Schranken der
+    // Anfrage, und den beantwortet [ApiController] in ProblemDetails-Form.
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public ActionResult<RvgCalculationResponseDto> CalculateRvgFees([FromBody] RvgCalculationRequestDto requestDto)
     {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList();
-            return BadRequest(new RvgCalculationResponseDto(
-                false, 0, 0, 0, 0, 0, 0, 0, 0, "validation_failed", string.Join(" | ", errors)));
-        }
-
         try
         {
             var calculation = RvgFeeCalculator.Calculate(
@@ -193,7 +184,8 @@ public class WordAutomationController(
             logger.LogError(exception, "Unexpected failure while extracting template placeholders.");
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                new TemplatePlaceholdersResponseDto(false, [], "internal_error", "Unexpected error while reading template placeholders."));
+                new TemplatePlaceholdersResponseDto(false, [], "internal_error",
+                    "Die Platzhalter der Vorlage konnten nicht gelesen werden. Der Grund steht im Protokoll des Dienstes."));
         }
     }
 }

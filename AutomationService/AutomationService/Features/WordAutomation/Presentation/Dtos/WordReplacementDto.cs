@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using AutomationService.Core.ErrorHandling;
 
 namespace AutomationService.Features.WordAutomation.Presentation.Dtos;
 
 public class WordReplacementDto
 {
-    [Required]
-    [MaxLength(260)]
+    [Display(Name = "Die Vorlagendatei")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
+    [MaxLength(260, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string TemplateFilePath { get; set; } = string.Empty;
 
     public string OutputFileName { get; set; } = string.Empty;
@@ -15,10 +17,13 @@ public class WordReplacementDto
     /// Arbeitsordner der Vorgänge voneinander und ist der Schlüssel zum
     /// Aufräumen nach der Ablage; leer = freie Erfassung ohne Vorgangsbezug.
     /// </summary>
-    [MaxLength(260)]
+    [Display(Name = "Die Referenz des Vorgangs")]
+    [MaxLength(260, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string VorgangSchluessel { get; set; } = string.Empty;
-    [Required]
-    [MinLength(1)]
+
+    [Display(Name = "Die Liste der Platzhalter")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
+    [MinLength(1, ErrorMessage = Validierungstexte.MindestensEinEintrag)]
     public Dictionary<string, string> ReplacePatterns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Nur für Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGN).</summary>

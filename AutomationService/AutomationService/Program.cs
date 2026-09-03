@@ -27,6 +27,11 @@ builder.Services.AddSignalR();
 // sieben Fach-Ausnahmen der Slices bildet FachExceptionHandler ab.
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<FachExceptionHandler>();
+// Ein ungueltiges Modell beantwortet [ApiController] selbst — mit einem
+// ValidationProblemDetails ohne detail und mit englischem title.
+// AddValidierungsAntwort fuellt beides, damit die Meldung die Oberflaeche
+// erreicht (#53).
+builder.Services.AddValidierungsAntwort();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {

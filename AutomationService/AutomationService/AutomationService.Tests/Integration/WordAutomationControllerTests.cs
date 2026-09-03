@@ -45,6 +45,7 @@ public class WordAutomationControllerTests : IClassFixture<WebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/WordAutomation/replaced-document", payload);
 
         // [ApiController] validiert das Modell automatisch und liefert hier ProblemDetails (400).
+        // Was in diesem Rumpf steht, prueft ValidierungsAntwortTests.
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
