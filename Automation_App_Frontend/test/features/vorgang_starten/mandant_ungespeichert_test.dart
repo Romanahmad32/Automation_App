@@ -84,6 +84,7 @@ void main() {
                   onMandantGewaehlt: (_) {},
                   onAuswahlAufheben: () {},
                   onKennzeichenGewaehlt: (_) {},
+                  vorgaengeAmMandanten: 0,
                   onMandantBestaetigt: (_, _) {},
                 ),
               ),

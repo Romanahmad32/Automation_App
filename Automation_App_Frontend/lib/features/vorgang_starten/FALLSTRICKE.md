@@ -62,6 +62,35 @@ sonst kommentarlos auf den Stand vom Speicherzeitpunkt zurückfallen — gegen �
 nichts stillschweigend". Felder füllt nur `_uebernehmeMandant`, und das hängt allein am Dropdown
 „Aus Mandanten übernehmen".
 
+## Ein geänderter Name benennt den Registereintrag um
+
+Ist ein Mandant über das Dropdown verknüpft und wird sein Name überschrieben, geht daraus ein
+`PUT /api/Mandanten/{id}` hervor: Derselbe Eintrag behält seine Id und trägt fortan den neuen
+Namen. Jeder Vorgang, der über `mandantId` daran hängt, zeigt danach auf diesen Namen — der
+Mensch, der vorher so hieß, steht nirgends mehr im Register.
+
+**Das ist gewollt** (§5.1): Ein Tippfehler im Namen soll sich dort berichtigen lassen, wo er
+auffällt, und nicht erst im Mandanten-Tab. Falsch war bis #50 nur die Ansage. Die Karte versprach
+im Hinweistext des Dropdowns das Gegenteil („Änderungen am Namen lösen die Verknüpfung" — nie
+gebaut), und die Rückfrage nannte den Fall „Mandantendaten aktualisieren" und zeigte den Namen
+als eine Zeile unter sieben, in derselben Aufmachung wie eine geänderte Hausnummer.
+
+Wer hier etwas ändert, hält die drei Stellen zusammen:
+
+- `VorgangStartenDaten.nameWeichtAbVon` ist der **einzige** Eingang für die Frage; `weichtAbVon`
+  ruft ihn mit auf, damit die Namensprüfung nicht in zwei Fassungen auseinanderläuft.
+- `mandantUmbenennung` (`mandant_aenderung.dart`) macht daraus alten Namen, neuen Namen und die
+  Zahl der betroffenen Vorgänge — oder `null`, wenn der Name bleibt. `null` heißt: gewöhnliche
+  Aktualisierung, keine Warnung. Eine Warnung, die immer dasteht, warnt vor nichts mehr.
+- Die Zahl kommt aus dem `VorgangCubit` und wird **in der View** gezählt
+  (`_vorgaengeAmMandanten`), nicht in der Karte: Die Karte kennt die Vorgänge nicht. Steht der
+  Cubit noch leer, warnt der Dialog ohne Zahl statt mit einer falschen. Deshalb registrieren die
+  Widget-Tests, die das ganze Formular aufbauen, einen `VorgangCubit` in `getIt`.
+
+Was der Anwalt stattdessen tun soll, wenn ein **anderer** Mensch gemeint ist, steht in der Warnung
+selbst: oben „(neuer Mandant)" wählen. Ein automatisches Lösen der Verknüpfung wäre der andere
+Weg gewesen und ist bewusst nicht gewählt worden — er nimmt die Korrektur eines Vertippers mit.
+
 ## Warum Widget-Tests hier nicht `pumpAndSettle` benutzen dürfen
 
 Zwei Fallen übereinander, beide in `mandant_uebernahme_test.dart` beschrieben:

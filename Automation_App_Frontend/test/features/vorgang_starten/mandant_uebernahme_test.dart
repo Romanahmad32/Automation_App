@@ -91,6 +91,10 @@ void main() {
     getIt.registerSingleton<UseCase<List<Mandant>, NoParams>>(
       MandantenListeDouble(register),
     );
+    // Die Karte fragt den Bestand nach den Vorgängen am verknüpften Mandanten,
+    // um vor einer Umbenennung mit einer Zahl zu warnen. Ohne Registrierung
+    // fiele das Formular schon beim Aufbauen um.
+    getIt.registerSingleton<VorgangCubit>(vorgaenge);
     // Die Auftrag-Karte zieht ihre Auswahlen aus dem Sachgebietskatalog.
     registriereSachgebietKatalog();
     // Nur die Registrierung wird zurückgenommen. `bloc.close()` wartet auf
