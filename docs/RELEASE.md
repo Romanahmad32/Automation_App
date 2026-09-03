@@ -354,10 +354,20 @@ schlimmer als keins, denn es sieht fertig aus. Dass kein Skript unter
 `scripts/` mehr blankes `flutter` oder `dart` ruft, hält
 `test/architecture/versionspruefung_test.dart` fest.
 
-> **Für einen Versionssprung heißt das:** `FLUTTER_VERSION` steht in `ci.yml`
-> **und** in `release.yml`, `.fvmrc` daneben. Die Prüfung vergleicht `.fvmrc`
-> gegen `ci.yml`; die dritte Stelle in `release.yml` sieht sie nicht. Wer die
-> Pinnung anhebt, ändert alle drei zusammen.
+> **Für einen Versionssprung heißt das:** Die Pinnung steht an drei Stellen —
+> `FLUTTER_VERSION` in `ci.yml` **und** in `release.yml`, `.fvmrc` daneben. Wer
+> sie anhebt, ändert alle drei zusammen, in einem eigenen Commit.
+
+Die Prüfung vergleicht seither **alle drei** gegeneinander. `release.yml` war
+dabei die letzte unbewachte Stelle und die unangenehmste: Aus ihr entsteht das
+ausgelieferte Paket. Wer nur `ci.yml` und `.fvmrc` nachzog, bekam eine grüne
+Kette, eine grüne CI — und ein Release aus einer Toolchain, gegen die nie
+geprüft wurde. Der Satz oben stand hier vorher als Merkzettel; genau das ist
+aber, was beim Versionssprung übersehen wird, und deshalb ist er jetzt ein
+Test (`versionspruefung_test.dart`). Fehlt `FLUTTER_VERSION` in einer der
+beiden Workflow-Dateien, meldet die Prüfung das statt still nichts zu
+vergleichen — ein Wächter, der bei eigener Störung grün meldet, ist schlimmer
+als keiner.
 
 **`fvm use` ist damit Komfort, keine Voraussetzung.** Es legt die Junction
 `.fvm/flutter_sdk` an, und die hat weiterhin Vorrang — wer sie bewusst gesetzt
