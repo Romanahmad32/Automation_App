@@ -56,7 +56,7 @@ void main() {
     ZentralrufReplyData? mitAntwort = antwort,
     int? mandantId = 7,
     String? mandantName = 'Erika Mustermann',
-    Rechtsgebiet rechtsgebiet = Rechtsgebiet.verkehrsrecht,
+    String rechtsgebiet = RechtsgebietWert.verkehrsrecht,
     String? kennzeichen,
     String? geschaedigtenKennzeichen,
     String? unfallDatum,
@@ -128,7 +128,7 @@ void main() {
         'Referenz',
         'Rechtsgebiet',
       ]),
-      vorgang(rechtsgebiet: Rechtsgebiet.verkehrsrecht),
+      vorgang(rechtsgebiet: RechtsgebietWert.verkehrsrecht),
       mandant: mandant,
     );
 

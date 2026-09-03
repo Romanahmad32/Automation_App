@@ -80,7 +80,7 @@ void main() {
                 child: MandantSection(
                   mandanten: mandanten,
                   selectedMandantId: gewaehlt,
-                  rechtsgebiet: Rechtsgebiet.verkehrsrecht,
+                  rechtsgebiet: RechtsgebietWert.verkehrsrecht,
                   onMandantGewaehlt: (_) {},
                   onAuswahlAufheben: () {},
                   onKennzeichenGewaehlt: (_) {},

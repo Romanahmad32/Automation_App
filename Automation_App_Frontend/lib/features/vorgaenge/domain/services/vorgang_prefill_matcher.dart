@@ -176,7 +176,7 @@ class VorgangPrefillMatcher {
       case FeldDatenquelle.zeichen:
         return vorgang.zeichen;
       case FeldDatenquelle.rechtsgebiet:
-        return vorgang.rechtsgebiet.displayName;
+        return vorgang.rechtsgebietAnzeige;
     }
   }
 
