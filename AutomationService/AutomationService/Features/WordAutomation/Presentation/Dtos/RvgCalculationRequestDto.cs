@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AutomationService.Core.ErrorHandling;
 
 namespace AutomationService.Features.WordAutomation.Presentation.Dtos;
 
@@ -23,22 +24,30 @@ public class RvgCalculationRequestDto
     // mehr von "gar nicht geschickt". Ein leerer Rumpf oder ein falsch geschriebener
     // Feldname ergaebe sonst still 51,50 EUR Gebuehren statt eines Fehlers — eine Zahl,
     // der der Anwalt keinen Grund hat zu misstrauen.
-    [Required]
-    [Range(0.0, 100_000_000.0)]
+    //
+    // Was diese Schranken fangen, beantwortet [ApiController] selbst und nicht die
+    // Action: 400 mit ProblemDetails, den Feldnamen im detail (ValidierungsAntwort).
+    // Die Obergrenze haengt an der Anzahl der Positionen — siehe DamageListingDto.Items.
+    [Display(Name = "Der Gegenstandswert")]
+    [Required(ErrorMessage = Validierungstexte.Pflicht)]
+    [Range(0.0, 100_000_000.0, ErrorMessage = Validierungstexte.BereichEuro)]
     public decimal? Gegenstandswert { get; set; }
 
     /// <summary>Gebührensatz der Geschäftsgebühr, üblicherweise 1,3.</summary>
-    [Range(0.1, 10)]
+    [Display(Name = "Der Gebührensatz")]
+    [Range(0.1, 10, ErrorMessage = Validierungstexte.Bereich)]
     public decimal Gebuehrensatz { get; set; } = 1.3m;
 
     /// <summary>True, wenn der Mandant nicht vorsteuerabzugsberechtigt ist (Umsatzsteuer ausweisen).</summary>
     public bool ApplyVat { get; set; }
 
     /// <summary>Manuell korrigierte Geschäftsgebühr in €; null = automatisch nach § 13 RVG berechnen.</summary>
-    [Range(0.0, 10_000_000.0)]
+    [Display(Name = "Die eingetragene Geschäftsgebühr")]
+    [Range(0.0, 10_000_000.0, ErrorMessage = Validierungstexte.BereichEuro)]
     public decimal? GeschaeftsgebuehrOverride { get; set; }
 
     /// <summary>Manuell korrigierte Auslagenpauschale in €; null = 20 % der Geschäftsgebühr, max. 20 € (Nr. 7002 VV RVG).</summary>
-    [Range(0.0, 10_000_000.0)]
+    [Display(Name = "Die eingetragene Auslagenpauschale")]
+    [Range(0.0, 10_000_000.0, ErrorMessage = Validierungstexte.BereichEuro)]
     public decimal? AuslagenpauschaleOverride { get; set; }
 }
