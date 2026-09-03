@@ -8,6 +8,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/inpu
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/app_eigene_platzhalter_liste.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_action_buttons.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/initial_template_form.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_fehler_melder.dart';
@@ -256,6 +257,11 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                       onPlaceholderSelected: _addFieldFromPlaceholder,
                       onAlleUebernehmen: _alleUebernehmen,
                     ),
+
+                    // Direkt unter den Chips: Dort steht der Anwalt vor einem
+                    // Platzhalter, den er nicht anklicken kann, und fragt sich,
+                    // warum (#31).
+                    const AppEigenePlatzhalterListe(),
 
                     TemplateFieldsCard(
                       fields: fields,

@@ -23,7 +23,7 @@ und `POST /api/Vorgaenge/abschliessen`; Standardpositionen über `GET`/`PUT /api
 **Fallstricke**
 
 - Der lange Rest steht in `FALLSTRICKE.md` daneben: Ablageformat, Vorgangsstatus, Vorsteuer,
-  Vorlagenverknüpfung.
+  Vorlagenverknüpfung und die Platzhalter, die die App selbst füllt (RVG, `{{Gesamtforderung}}`).
 - Der `IndexedStack` der Page hält alle vier Views auf den festen `WizardStep`-Enum-Indizes;
   sichtbar sind nur die aus `WizardState.steps`. Einen Schritt einfügen: Enum, `steps` und
   `children` gemeinsam ändern.
