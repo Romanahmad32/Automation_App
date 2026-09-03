@@ -56,10 +56,29 @@ jobs:
         with:
           global-json-file: global.json
 
+      # Dieselben Caches wie in ci.yml (dort Einzelheiten zu den Keys) — ein
+      # Release baut mit derselben Toolchain und profitiert genauso.
+      - name: NuGet-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', 'global.json') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
+          cache: true
+
+      - name: Pub-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\Pub\Cache
+          key: pub-${{ env.FLUTTER_VERSION }}-${{ hashFiles('Automation_App_Frontend/pubspec.lock') }}
+          restore-keys: |
+            pub-${{ env.FLUTTER_VERSION }}-
 
       - name: Version aus dem Tag ableiten
         id: version

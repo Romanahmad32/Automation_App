@@ -31,6 +31,7 @@ void main() {
   final importsFlutterUi = RegExp(
     "import\\s+'package:flutter/(material|widgets|cupertino)\\.dart'",
   );
+  final importsDio = RegExp("import\\s+'package:dio/dio\\.dart'");
 
   Iterable<File> dateienInSchicht(String schicht) => dateien.where((f) {
     final p = relPfad(f);
@@ -95,6 +96,21 @@ void main() {
         '(Repository-Interface/UseCase + DI).',
         dateienInSchicht('presentation'),
         importsData,
+      );
+    });
+
+    test('presentation spricht kein HTTP direkt', () {
+      // dart:io ist hier bewusst nicht mitgeprüft: mehrere Features öffnen
+      // oder speichern lokale Dateien direkt aus der Präsentation (native
+      // Dialoge, Anhänge) — ein etabliertes, nicht zu beanstandendes Muster.
+      // Diese Regel trifft gezielt den Schichtbruch, der Anlass für sie war:
+      // Dio (HTTP) gehört ausschließlich in die data-Schicht.
+      erwarteKeineTreffer(
+        'Die presentation-Schicht darf Dio nicht importieren — HTTP-Zugriff '
+        'gehört in die data-Schicht (Datasource/Repository), die Präsentation '
+        'bekommt nur noch Domain-Typen bzw. Either<Failure, T>.',
+        dateienInSchicht('presentation'),
+        importsDio,
       );
     });
   });

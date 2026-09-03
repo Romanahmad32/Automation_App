@@ -12,10 +12,23 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// [TemplatePlaceholdersBloc], wandert also beim Tippen und beim Verknüpfen
 /// einer anderen Datei mit. Ohne bekannte Platzhalter oder ohne Namen zeigt
 /// es nichts.
+///
+/// Sagt es „in keiner Datei", ist es zugleich der Weg zur Reparatur: Ein Klick
+/// öffnet die Zuordnung (#36), statt den Anwalt mit dem Befund allein zu
+/// lassen. Die anderen drei Fälle sind reine Auskunft und nicht klickbar.
 class FeldVorkommenBadge extends StatelessWidget {
   final String formControlName;
 
-  const FeldVorkommenBadge({super.key, required this.formControlName});
+  /// Wird beim Klick auf ein „in keiner Datei" gerufen. Null lässt das
+  /// Kennzeichen stumm — etwa dort, wo es keine Platzhalterliste zum Wählen
+  /// gibt.
+  final VoidCallback? onZuordnen;
+
+  const FeldVorkommenBadge({
+    super.key,
+    required this.formControlName,
+    this.onZuordnen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,22 +57,40 @@ class FeldVorkommenBadge extends StatelessWidget {
             final farbe = warnung
                 ? theme.colorScheme.error
                 : theme.colorScheme.onSurfaceVariant;
+            final zuordnen = warnung ? onZuordnen : null;
             return Padding(
               padding: const EdgeInsets.only(left: 8, bottom: 4),
               child: Tooltip(
-                message: vorkommen.erklaerung,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: farbe),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    vorkommen.anzeige,
-                    style: theme.textTheme.labelSmall?.copyWith(color: farbe),
+                message: zuordnen == null
+                    ? vorkommen.erklaerung
+                    : '${vorkommen.erklaerung} '
+                          'Anklicken, um einen Platzhalter zuzuordnen.',
+                child: InkWell(
+                  onTap: zuordnen,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: farbe),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 4,
+                      children: [
+                        Text(
+                          vorkommen.anzeige,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: farbe,
+                          ),
+                        ),
+                        if (zuordnen != null)
+                          Icon(Icons.link, size: 12, color: farbe),
+                      ],
+                    ),
                   ),
                 ),
               ),

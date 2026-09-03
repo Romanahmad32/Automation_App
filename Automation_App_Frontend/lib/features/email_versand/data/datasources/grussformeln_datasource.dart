@@ -1,4 +1,4 @@
-import 'package:automation_app/core/network/dienst_meldung.dart';
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/email_versand/domain/entities/grussformel.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/grussformeln_repository.dart';
 import 'package:dio/dio.dart';
@@ -22,7 +22,7 @@ class ApiGrussformelnDatasource implements GrussformelnRepository {
           .toList();
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ??
+        backendFehlertext(e) ??
             'Die Grußformeln konnten nicht geladen werden. '
                 'Läuft der Dienst noch?',
       );
@@ -39,7 +39,7 @@ class ApiGrussformelnDatasource implements GrussformelnRepository {
       return Grussformel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ?? 'Der Gruß konnte nicht angelegt werden.',
+        backendFehlertext(e) ?? 'Der Gruß konnte nicht angelegt werden.',
       );
     }
   }
@@ -54,7 +54,7 @@ class ApiGrussformelnDatasource implements GrussformelnRepository {
       return Grussformel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ?? 'Der Gruß konnte nicht gespeichert werden.',
+        backendFehlertext(e) ?? 'Der Gruß konnte nicht gespeichert werden.',
       );
     }
   }
@@ -65,7 +65,7 @@ class ApiGrussformelnDatasource implements GrussformelnRepository {
       await _dio.delete('/api/Grussformeln/$id');
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ?? 'Der Gruß konnte nicht entfernt werden.',
+        backendFehlertext(e) ?? 'Der Gruß konnte nicht entfernt werden.',
       );
     }
   }

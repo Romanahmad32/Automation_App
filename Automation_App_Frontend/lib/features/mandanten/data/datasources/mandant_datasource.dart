@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
@@ -110,11 +111,9 @@ class ApiMandantDatasource implements MandantDatasource {
   Object _mapError(DioException e) {
     final status = e.response?.statusCode;
     if (status == 409 || status == 404) {
-      final data = e.response?.data;
-      final message = data is String && data.isNotEmpty
-          ? data
-          : 'Mandant konnte nicht gespeichert werden.';
-      return MandantException(message);
+      return MandantException(
+        backendFehlertext(e) ?? 'Mandant konnte nicht gespeichert werden.',
+      );
     }
     return e;
   }

@@ -6,7 +6,7 @@ import 'package:automation_app/features/vorgaenge/presentation/widgets/register_
 import 'package:flutter/material.dart';
 
 /// Karte „Sachgebiete-Register": die zuletzt entstandenen Registerzeilen im
-/// selben Spaltenschema wie die Registerseite (laufende Nr. | Aktenzeichen |
+/// selben Spaltenschema wie die Registerseite (laufende Nr. | Zeichen |
 /// Name ./. Gegner + Sachverhalt | Rechtsgebiet) — der Anwalt sieht auf der
 /// Startseite, wo die laufende Auftragsnummer gerade steht.
 class DashboardRegisterKarte extends StatelessWidget {

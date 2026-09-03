@@ -1,4 +1,4 @@
-import 'package:automation_app/core/network/dienst_meldung.dart';
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/anredebausteine_repository.dart';
 import 'package:dio/dio.dart';
@@ -22,7 +22,7 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
           .toList();
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ??
+        backendFehlertext(e) ??
             'Die Anreden konnten nicht geladen werden. Läuft der Dienst noch?',
       );
     }
@@ -38,7 +38,7 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
       return Anredebaustein.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ?? 'Die Anrede konnte nicht angelegt werden.',
+        backendFehlertext(e) ?? 'Die Anrede konnte nicht angelegt werden.',
       );
     }
   }
@@ -53,7 +53,7 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
       return Anredebaustein.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ?? 'Die Anrede konnte nicht gespeichert werden.',
+        backendFehlertext(e) ?? 'Die Anrede konnte nicht gespeichert werden.',
       );
     }
   }
@@ -64,7 +64,7 @@ class ApiAnredebausteineDatasource implements AnredebausteineRepository {
       await _dio.delete('/api/Anredebausteine/$id');
     } on DioException catch (e) {
       throw Exception(
-        DienstMeldung.aus(e) ?? 'Die Anrede konnte nicht entfernt werden.',
+        backendFehlertext(e) ?? 'Die Anrede konnte nicht entfernt werden.',
       );
     }
   }

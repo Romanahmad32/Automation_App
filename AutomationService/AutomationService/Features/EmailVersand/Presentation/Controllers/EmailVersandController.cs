@@ -124,20 +124,10 @@ public class EmailVersandController(
         [FromBody] SignaturUebernahmeDto anfrage,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var (block, uebergangen) = await signaturUebernahme.UebernimmAsync(
-                anfrage.Name ?? string.Empty,
-                cancellationToken);
-            return Ok(SignaturStandDto.From(block, uebergangen));
-        }
-        catch (EmailVersandException exception)
-        {
-            return Problem(
-                title: "Die Signatur wurde nicht übernommen",
-                detail: exception.Message,
-                statusCode: StatusCodes.Status400BadRequest);
-        }
+        var (block, uebergangen) = await signaturUebernahme.UebernimmAsync(
+            anfrage.Name ?? string.Empty,
+            cancellationToken);
+        return Ok(SignaturStandDto.From(block, uebergangen));
     }
 
     /// <summary>
@@ -168,18 +158,8 @@ public class EmailVersandController(
         [FromBody] EmailVersandDto anfrage,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var ergebnis = await versender.SendeAsync(anfrage.ToDomain(), cancellationToken);
-            return Ok(EmailVersandErgebnisDto.From(ergebnis));
-        }
-        catch (EmailVersandException exception)
-        {
-            return Problem(
-                title: "Die E-Mail wurde nicht versendet",
-                detail: exception.Message,
-                statusCode: StatusFuer(exception.Grund));
-        }
+        var ergebnis = await versender.SendeAsync(anfrage.ToDomain(), cancellationToken);
+        return Ok(EmailVersandErgebnisDto.From(ergebnis));
     }
 
     /// <summary>
@@ -268,30 +248,7 @@ public class EmailVersandController(
         [FromBody] EmailVersandDto anfrage,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var ergebnis = await oeffner.OeffneAsync(anfrage.ToDomain(), cancellationToken);
-            return Ok(EntwurfErgebnisDto.From(ergebnis));
-        }
-        catch (EmailVersandException exception)
-        {
-            return Problem(
-                title: "Der Entwurf wurde nicht geöffnet",
-                detail: exception.Message,
-                statusCode: StatusFuer(exception.Grund));
-        }
+        var ergebnis = await oeffner.OeffneAsync(anfrage.ToDomain(), cancellationToken);
+        return Ok(EntwurfErgebnisDto.From(ergebnis));
     }
-
-    /// <summary>
-    /// Was der Anwalt selbst beheben kann, ist eine 400 — was der Server
-    /// verweigert hat, eine 502. Die Unterscheidung entscheidet in der
-    /// Oberfläche darüber, ob ein erneuter Versuch überhaupt Sinn hat.
-    /// </summary>
-    private static int StatusFuer(EmailVersandFehler grund) => grund switch
-    {
-        EmailVersandFehler.Anmeldung
-            or EmailVersandFehler.Server
-            or EmailVersandFehler.Entwurf => StatusCodes.Status502BadGateway,
-        _ => StatusCodes.Status400BadRequest,
-    };
 }

@@ -11,7 +11,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 
 /// Baut aus den Daten des Vorgangs den Anfang der Mail (§4.7): Empfänger, die
-/// die App schon kennt, einen Betreff aus Aktenzeichen und Parteien und einen
+/// die App schon kennt, einen Betreff aus Zeichen und Parteien und einen
 /// Textrumpf mit passender Anrede. Der Anwalt vervollständigt nur noch.
 ///
 /// **Das ist die Vorbelegung, nicht die Vorlage.** Wählt der Anwalt eine
@@ -105,7 +105,7 @@ class EmailEntwurfErzeuger {
     return gefunden.values.toList();
   }
 
-  /// Betreff aus Parteien, Unfalldatum und Aktenzeichen — je nach dem, was der
+  /// Betreff aus Parteien, Unfalldatum und Zeichen — je nach dem, was der
   /// Vorgang hergibt. [mitSchreiben] sagt, ob das Anspruchsschreiben anhängt;
   /// nur dann wird es im Betreff angekündigt. Ohne Vorgang und ohne Schreiben
   /// bleibt der Betreff leer: Eine erfundene Betreffzeile wäre schlimmer als
@@ -118,7 +118,7 @@ class EmailEntwurfErzeuger {
 
     if (_unfallDatum.isNotEmpty) teile.add('Unfall vom $_unfallDatum');
 
-    final zeichen = vorgang?.aktenzeichen.trim() ?? '';
+    final zeichen = vorgang?.zeichen.trim() ?? '';
     if (zeichen.isNotEmpty) teile.add('Unser Zeichen: $zeichen');
 
     return teile.join(' · ');

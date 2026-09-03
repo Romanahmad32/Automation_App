@@ -64,15 +64,8 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
         [FromBody] CreateMandantDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var created = await repository.CreateAsync(ToEntity(dto), cancellationToken);
-            return CreatedAtAction(nameof(GetAll), MandantDto.From(created));
-        }
-        catch (MandantNameConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var created = await repository.CreateAsync(ToEntity(dto), cancellationToken);
+        return CreatedAtAction(nameof(GetAll), MandantDto.From(created));
     }
 
     [HttpPut("{id:int}")]
@@ -84,17 +77,10 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
         [FromBody] MandantDto dto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await repository.UpdateAsync(ToEntity(dto with { Id = id }), cancellationToken);
-            return updated is null
-                ? NotFound($"Mandant mit ID {id} nicht gefunden")
-                : Ok(MandantDto.From(updated));
-        }
-        catch (MandantNameConflictException exception)
-        {
-            return Conflict(exception.Message);
-        }
+        var updated = await repository.UpdateAsync(ToEntity(dto with { Id = id }), cancellationToken);
+        return updated is null
+            ? Problem(detail: $"Mandant mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound)
+            : Ok(MandantDto.From(updated));
     }
 
     [HttpDelete("{id:int}")]
@@ -103,7 +89,9 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var removed = await repository.DeleteAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound($"Mandant mit ID {id} nicht gefunden");
+        return removed
+            ? NoContent()
+            : Problem(detail: $"Mandant mit ID {id} nicht gefunden", statusCode: StatusCodes.Status404NotFound);
     }
 
     static MandantEntity ToEntity(CreateMandantDto dto) => new()

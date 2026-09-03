@@ -12,8 +12,9 @@ beim Öffnen zur Übernahme an — nach Rückfrage, nie von selbst.
 keinen Bloc: Sie ist ein einmaliger Schritt beim Start, vor Router und Theme
 (`ArbeitsplatzUebergabeGateState`).
 **Domain:** `UebergabeStand`, `UebergabeAngebot`, `LetzteSicherung` (`domain/entities/`); Port
-`BackupRepository` mit `exportDatenbank`/`importDatenbank`/`uebergabeStand`/`uebernehmeStand`/
-`quittiereSicherungsfehler`
+`BackupRepository` mit `exportiereNach`/`importiere` (beide `Either<Failure, String>`,
+Dateizugriff + Fehlerübersetzung liegen in `BackupRepositoryImpl`) sowie `uebergabeStand`/
+`uebernehmeStand`/`quittiereSicherungsfehler`
 **Backend:** `Features/Backup/` · `GET|POST /api/Backup/export|import`,
 `GET /api/Backup/uebergabe`, `POST /api/Backup/uebergabe/uebernehmen`,
 `POST /api/Backup/sicherungsstand/quittieren`
@@ -24,8 +25,9 @@ keinen Bloc: Sie ist ein einmaliger Schritt beim Start, vor Router und Theme
 
 - Kein eigener Tab: die Ansicht hängt als Reiter „Datensicherung" in
   `features/settings/presentation/pages/settings_page.dart`.
-- Kein Repository-Impl: `ApiBackupDatasource` setzt `BackupRepository` direkt um — das zweite in
-  CLAUDE.md erlaubte Muster, kein Versehen.
+- `BackupRepositoryImpl` übersetzt `ApiBackupDatasource` (Port `BackupDatasource`) in
+  `Either<Failure, T>` und übernimmt den Dateizugriff für Export/Import — der Cubit kennt
+  weder Dio noch dart:io.
 - Import und Übernahme ersetzen alle Daten und laufen erst nach Rückfrage. Dieser Schritt darf nicht
   wegautomatisiert werden.
 - Die Kette Beenden → Ablage → Start → Übernahme läuft über mehrere Features und steht in

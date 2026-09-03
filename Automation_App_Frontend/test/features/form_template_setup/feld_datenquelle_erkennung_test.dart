@@ -58,6 +58,10 @@ void main() {
     test('Kennzeichen des Mandanten ist nicht das des Gegners', () {
       // Der Kern der Verhaltensänderung: früher lieferte dieses Feld bewusst
       // nichts, weil es sonst an den Gegner-Matcher durchgefallen wäre.
+      expect(
+        quelle('Mandantenkennzeichen'),
+        FeldDatenquelle.kennzeichenMandant,
+      );
       expect(quelle('Kennzeichen Mandant'), FeldDatenquelle.kennzeichenMandant);
       expect(
         quelle('Kennzeichen des Geschädigten'),
@@ -96,22 +100,39 @@ void main() {
       expect(quelle('Schadentag'), FeldDatenquelle.unfalldatum);
       expect(quelle('Rechtsgebiet'), FeldDatenquelle.rechtsgebiet);
       expect(quelle('Sachgebiet'), FeldDatenquelle.rechtsgebiet);
-      expect(quelle('Aktenzeichen'), FeldDatenquelle.referenz);
+      // „Aktenzeichen" ist dasselbe wie „Zeichen" und steht im Brief ohne
+      // Kennzeichen. Die volle Referenz bekommt nur, wer sie beim Namen nennt.
+      expect(quelle('Aktenzeichen'), FeldDatenquelle.zeichen);
       expect(quelle('Referenz'), FeldDatenquelle.referenz);
     });
 
     test('„Zeichen" bindet nur allein stehend', () {
-      expect(quelle('Zeichen'), FeldDatenquelle.referenz);
-      // „Ihr Zeichen" meint das Aktenzeichen der Gegenseite, nicht das eigene.
+      expect(quelle('Zeichen'), FeldDatenquelle.zeichen);
+      // „Ihr Zeichen" meint das Zeichen der Gegenseite, nicht das eigene.
       expect(quelle('Ihr Zeichen'), FeldDatenquelle.keine);
     });
 
     test('ein Kennzeichen ohne Mandantenbezug ist das des Gegners', () {
+      // Der angebotene und dokumentierte Name (§4.1).
+      expect(quelle('Gegnerkennzeichen'), FeldDatenquelle.kennzeichenGegner);
       expect(quelle('Kennzeichen'), FeldDatenquelle.kennzeichenGegner);
       expect(
         quelle('Kennzeichen des Unfallgegners'),
         FeldDatenquelle.kennzeichenGegner,
       );
+    });
+
+    test('das blosse „Kennzeichen" der Bestandsvorlagen trifft weiter', () {
+      // Die Zusage aus dem Umbenennen: Der Name heißt künftig
+      // „Gegnerkennzeichen", die Word-Dateien der Kanzlei tragen aber das
+      // blosse `{{Kennzeichen}}` und ihre Feldnamen ebenso. Sie hängt allein
+      // daran, dass die Regel ein *Teilstring*-Test ist — wer daraus einen
+      // exakten Vergleich macht, lässt jedes dieser Felder still auf leer
+      // fallen: kein Fehler, keine Meldung, nur ein Wert, der im Brief fehlt.
+      // Deshalb steht sie als eigener Test da und nicht als Kommentar.
+      for (final name in ['Kennzeichen', 'kennzeichen', '{{Kennzeichen}}']) {
+        expect(quelle(name), FeldDatenquelle.kennzeichenGegner, reason: name);
+      }
     });
   });
 

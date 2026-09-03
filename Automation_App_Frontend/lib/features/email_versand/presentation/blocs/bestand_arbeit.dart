@@ -1,4 +1,3 @@
-import 'package:automation_app/core/network/dienst_meldung.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der gemeinsame Rahmen der drei Mail-Bestände (§4.7): Vorlagen, Zusatzgrüße
@@ -36,8 +35,8 @@ mixin BestandArbeit<S> on Cubit<S> {
   }
 
   /// `Exception: …` ist der Präfix, den `toString()` davorsetzt; im Dialog
-  /// stünde er vor jedem Satz, den das Backend über [DienstMeldung] geschickt
-  /// hat.
+  /// stünde er vor jedem Satz, den das Backend über `backendFehlertext`
+  /// geschickt hat.
   static String klartext(Object fehler) =>
       fehler.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
 }

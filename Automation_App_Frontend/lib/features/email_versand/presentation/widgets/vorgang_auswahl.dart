@@ -36,9 +36,16 @@ class VorgangAuswahl extends StatelessWidget {
 class VorgangAuswahlFeld extends StatelessWidget {
   const VorgangAuswahlFeld({super.key});
 
-  /// Wie ein Vorgang in der Liste steht: Referenz zuerst, denn danach sucht
-  /// der Anwalt — sie steht auf dem Schriftsatz. Der Mandantenname dahinter
-  /// bestätigt den Treffer.
+  /// Wie ein Vorgang in der Liste steht: das **Zeichen** zuerst, denn danach
+  /// sucht der Anwalt — es steht auf dem Schriftsatz. Der Mandantenname
+  /// dahinter bestätigt den Treffer.
+  ///
+  /// Angezeigt wird das Zeichen (`216/26 C03`), nicht die volle Referenz
+  /// (§4.2, nachgezogen am 03.09.2026): Das Kennzeichen darin ist ein
+  /// Ordnungsmerkmal der Ablage und in einer Auswahlliste nur Länge. Der
+  /// **Wert** des Eintrags bleibt die volle Referenz — er muss den Vorgang
+  /// eindeutig treffen, und zwei Vorgänge desselben Mandanten teilen sich ein
+  /// Zeichen nicht, aber ein gekürztes Zeichen wäre der falsche Schlüssel.
   static String beschriftungFuer(Vorgang vorgang) {
     final name = (vorgang.mandantName ?? '').trim();
     final gegner = (vorgang.gegner ?? '').trim();
@@ -46,7 +53,7 @@ class VorgangAuswahlFeld extends StatelessWidget {
       if (name.isNotEmpty) name,
       if (gegner.isNotEmpty) './. $gegner',
     ].join(' ');
-    return zusatz.isEmpty ? vorgang.referenz : '${vorgang.referenz} · $zusatz';
+    return zusatz.isEmpty ? vorgang.zeichen : '${vorgang.zeichen} · $zusatz';
   }
 
   @override

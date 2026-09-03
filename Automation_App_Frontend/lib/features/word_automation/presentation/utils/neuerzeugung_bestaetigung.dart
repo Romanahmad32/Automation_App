@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:flutter/material.dart';
 
@@ -31,27 +32,14 @@ Future<bool> darfNeuErzeugen(
     return true;
   }
 
-  final weiter = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      icon: const Icon(Icons.edit_note),
-      title: const Text('In Word geänderte Fassung verwerfen?'),
-      content: Text(
+  return bestaetigen(
+    context,
+    icon: Icons.edit_note,
+    titel: 'In Word geänderte Fassung verwerfen?',
+    text:
         'Das Dokument wurde nach der Erzeugung geändert — vermutlich von Ihnen '
         'in Word. Neu erzeugen überschreibt diese Änderungen.\n\n'
         '${zustand.path.split(RegExp(r'[\/]')).last}',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('Abbrechen'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: const Text('Neu erzeugen'),
-        ),
-      ],
-    ),
+    bestaetigung: 'Neu erzeugen',
   );
-  return weiter ?? false;
 }

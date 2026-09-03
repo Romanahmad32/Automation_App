@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -92,10 +93,7 @@ class GermanDateField extends StatelessWidget {
     }
   }
 
-  static String formatDate(DateTime date) =>
-      '${date.day.toString().padLeft(2, '0')}.'
-      '${date.month.toString().padLeft(2, '0')}.'
-      '${date.year.toString().padLeft(4, '0')}';
+  static String formatDate(DateTime date) => deutschesDatum(date);
 
   /// Liest ein Datum im Format T(T).M(M).JJJJ; null bei leerem,
   /// formal ungültigem oder nicht existierendem Wert (z. B. 31.02.).
