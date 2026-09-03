@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
@@ -46,33 +47,18 @@ class OrdnerMassenaktion extends StatelessWidget {
 
   Future<void> _fragen(BuildContext context) async {
     final bloc = context.read<MandantenOverviewBloc>();
-    final bestaetigt = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          _nimmtZurueck ? 'Zurück in den Stapel' : 'Ohne Mandantenbezug',
-        ),
-        content: Text(
-          _nimmtZurueck
-              ? '${sichtbar.length} Ordner stehen danach wieder als offen im '
-                    'Zuordnungsstapel.'
-              : '${sichtbar.length} Ordner werden als „ohne Mandantenbezug" '
-                    'vermerkt. Es wird nichts gelöscht und kein Ordner '
-                    'angefasst — der Vermerk ist jederzeit zurücknehmbar.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(_nimmtZurueck ? 'Zurücknehmen' : 'Markieren'),
-          ),
-        ],
-      ),
+    final bestaetigt = await bestaetigen(
+      context,
+      titel: _nimmtZurueck ? 'Zurück in den Stapel' : 'Ohne Mandantenbezug',
+      text: _nimmtZurueck
+          ? '${sichtbar.length} Ordner stehen danach wieder als offen im '
+                'Zuordnungsstapel.'
+          : '${sichtbar.length} Ordner werden als „ohne Mandantenbezug" '
+                'vermerkt. Es wird nichts gelöscht und kein Ordner '
+                'angefasst — der Vermerk ist jederzeit zurücknehmbar.',
+      bestaetigung: _nimmtZurueck ? 'Zurücknehmen' : 'Markieren',
     );
-    if (bestaetigt != true) return;
+    if (!bestaetigt) return;
 
     bloc.add(
       SetzeOrdnerStatusEvent(

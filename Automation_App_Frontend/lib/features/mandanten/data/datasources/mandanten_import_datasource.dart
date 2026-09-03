@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:dio/dio.dart';
@@ -42,11 +43,9 @@ class ApiMandantenImportDatasource implements MandantenImportDatasource {
   /// nicht lesen" — eine fachliche Auskunft, die der Anwender sehen soll.
   Object _mapError(DioException e) {
     if (e.response?.statusCode != 400) return e;
-    final daten = e.response?.data;
     return MandantException(
-      daten is String && daten.isNotEmpty
-          ? daten
-          : 'Die Importdatei konnte nicht gelesen werden.',
+      backendFehlertext(e) ??
+          dienstOhneAntwort(e, 'Die Importdatei konnte nicht gelesen werden'),
     );
   }
 }

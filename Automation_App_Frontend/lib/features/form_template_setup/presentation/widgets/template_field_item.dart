@@ -16,6 +16,9 @@ class TemplateFieldItem extends StatelessWidget {
   final ValueChanged<bool?> onRequiredChanged;
   final VoidCallback onDelete;
 
+  /// Klick auf das Kennzeichen „in keiner Datei" — führt zur Zuordnung (#36).
+  final VoidCallback? onZuordnen;
+
   const TemplateFieldItem({
     super.key,
     required this.index,
@@ -24,6 +27,7 @@ class TemplateFieldItem extends StatelessWidget {
     required this.onDatenquelleChanged,
     required this.onRequiredChanged,
     required this.onDelete,
+    this.onZuordnen,
   });
 
   @override
@@ -43,8 +47,12 @@ class TemplateFieldItem extends StatelessWidget {
         children: [
           Row(spacing: 10, children: _zeile(theme)),
           // Kennzeichen „beide · nur HGN · nur Auflistung · in keiner Datei"
-          // (#35 Teil 3) — sagt, welches Schreiben dieses Feld braucht.
-          FeldVorkommenBadge(formControlName: fieldData.label),
+          // (#35 Teil 3) — sagt, welches Schreiben dieses Feld braucht, und
+          // führt bei „in keiner Datei" zur Zuordnung (#36).
+          FeldVorkommenBadge(
+            formControlName: fieldData.label,
+            onZuordnen: onZuordnen,
+          ),
           FeldNameHinweis(
             formControlName: fieldData.label,
             datenquelleGesetzt: fieldData.datenquelle.istGesetzt,

@@ -74,6 +74,20 @@ public sealed class VorlagenVerzeichnisTests : IDisposable
         vorlagen.Should().OnlyContain(v => File.Exists(v.Pfad));
     }
 
+    [Fact]
+    public void Listet_Word_Sperrdateien_nicht_mit()
+    {
+        var (verzeichnis, ordner) = LegeLeerenVorlagenordnerAn();
+        File.WriteAllText(Path.Combine(ordner, "Anspruch.docx"), "echt");
+        // Entsteht, solange die Vorlage in Word offen ist — in einem Ordner,
+        // in dem jemand Vorlagen bearbeitet, der Normalfall (#33).
+        File.WriteAllText(Path.Combine(ordner, "~$Anspruch.docx"), "Sperrdatei");
+
+        var vorlagen = verzeichnis.Auflisten();
+
+        vorlagen.Select(v => v.Name).Should().BeEquivalentTo("Anspruch.docx");
+    }
+
     private (VorlagenVerzeichnis, string Ordner) LegeLeerenVorlagenordnerAn()
     {
         var ordner = Path.Combine(_quelle, "ziel");

@@ -10,10 +10,10 @@ import 'package:automation_app/features/email_versand/presentation/utils/anhang_
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
-import 'package:automation_app/features/email_versand/presentation/widgets/outlook_hinweis_zeile.dart';
-import 'package:automation_app/features/settings/presentation/widgets/signatur_aus_outlook_button.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_format_zeile.dart';
+import 'package:automation_app/features/settings/presentation/widgets/signatur_knopfzeile.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_render_vorschau.dart';
+import 'package:automation_app/features/settings/presentation/widgets/signatur_vorgemerkt_zeile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -26,33 +26,90 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// untereinander sahen aus wie zwei Formulare, und der obere stand mitten auf
 /// der Seite, als gälte er für alles. Jetzt schreibt der eine Knopf der Seite
 /// beides, jedes auf seinem Weg ([speichereWennGeaendert]).
+///
+/// **Und der Import schreibt nicht mehr selbst** (geändert am 02.09.2026): Wer
+/// eine Signatur aus Outlook wählte, hatte sie damit schon gewechselt — samt
+/// gelöschter Bilder der bisherigen, ohne je auf „Speichern" gedrückt zu haben.
+/// Jetzt füllt der Import nur das Formular und merkt den Namen vor
+/// ([vorgemerkt]); übernommen wird beim Speichern.
 class MailSignaturSektion extends StatefulWidget {
   /// Gehört der Seite, nicht diesem Abschnitt: Ihr Speichern-Knopf liest daraus.
   final TextEditingController controller;
 
-  const MailSignaturSektion({super.key, required this.controller});
+  /// Name der aus Outlook **gelesenen, noch nicht übernommenen** Signatur;
+  /// leer heißt: keine vorgemerkt.
+  ///
+  /// Gehört ebenfalls der Seite, und aus demselben Grund: Ihr Speichern-Knopf
+  /// muss die Übernahme auslösen, und er kennt diesen Abschnitt nur über das,
+  /// was ihm mitgegeben wird.
+  final ValueNotifier<String> vorgemerkt;
 
-  /// Schreibt die Signatur, wenn sie vom gespeicherten Stand abweicht.
+  const MailSignaturSektion({
+    super.key,
+    required this.controller,
+    required this.vorgemerkt,
+  });
+
+  /// Schreibt die Signatur: erst eine vorgemerkte Übernahme aus Outlook, dann
+  /// den Text aus dem Feld.
+  ///
+  /// **Die Reihenfolge ist die Regel.** Die Übernahme schreibt Outlooks
+  /// Nur-Text-Fassung mit; was der Anwalt danach von Hand geändert hat, muss
+  /// darüber gewinnen. Andersherum stünde nach dem Speichern wieder Outlooks
+  /// Fassung im Feld.
   ///
   /// Eigenes Ereignis und nicht Teil des Kanzlei-Formulars: Beide hängen am
   /// selben Einstellungssatz, stehen aber in verschiedenen Reitern — ein
   /// Rundum-Speichern aus dem einen überschriebe die ungespeicherten Änderungen
   /// des anderen.
   ///
-  /// **Meldet nichts zurück.** Ob geschrieben wurde, weiß erst der Bloc:
-  /// Er kopiert die Signatur in den zuletzt geladenen Einstellungssatz hinein
-  /// und steigt ohne einen solchen wortlos wieder aus, und auch danach kann das
-  /// Speichern noch scheitern. Der Abschnitt sagt deshalb selbst Bescheid,
-  /// sobald der Bloc den Erfolg als [KanzleiSettingsBereich.signatur] meldet —
-  /// vorher stand hier „Die Signatur ist gespeichert", während nichts
-  /// geschrieben war.
-  static void speichereWennGeaendert(BuildContext context, String signatur) {
+  /// **Meldet den Erfolg nicht selbst.** Ob geschrieben wurde, weiß erst der
+  /// Bloc: Er kopiert die Signatur in den zuletzt geladenen Einstellungssatz
+  /// hinein und steigt ohne einen solchen wortlos wieder aus. Der Abschnitt
+  /// sagt deshalb Bescheid, sobald der Bloc den Erfolg als
+  /// [KanzleiSettingsBereich.signatur] meldet. Nur das Misslingen der
+  /// **Übernahme** steht hier: Danach ist nichts geschrieben, und der Bloc
+  /// erfährt davon nichts.
+  static Future<void> speichereWennGeaendert(
+    BuildContext context,
+    String signatur,
+    ValueNotifier<String> vorgemerkt,
+  ) async {
     final bloc = context.read<KanzleiSettingsBloc>();
+    final melder = ScaffoldMessenger.of(context);
     final stand = bloc.state;
     if (stand is! KanzleiSettingsLoaded) return;
 
+    final name = vorgemerkt.value;
+    if (name.isNotEmpty) {
+      try {
+        await getIt<EmailVersandRepository>().uebernimmSignatur(name);
+        // Nach dem await kann die Seite weg sein — der Aufrufer schickt diese
+        // Methode ohne `await` los (`unawaited`), und `vorgemerkt` gehört
+        // ihm: Nach seinem `dispose` wäre das Schreiben ein Zugriff auf einen
+        // entsorgten `ValueNotifier`, der Bloc daneben womöglich geschlossen
+        // (behoben am 02.09.2026). Verloren ist dabei nichts: Die Übernahme
+        // ist durch und hat die Nur-Text-Fassung mitgeschrieben — nur was der
+        // Anwalt danach von Hand geändert hat, bleibt ungespeichert.
+        if (!context.mounted) return;
+        vorgemerkt.value = '';
+      } catch (e) {
+        if (!context.mounted) return;
+        melder.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Die Signatur ließ sich nicht übernehmen: ${ausnahmeText(e)}',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     final neu = signatur.trim();
-    if (neu == stand.settings.mailSignatur.trim()) return;
+    // Nach einer Übernahme immer schreiben: Sie hat den Text schon angefasst,
+    // und der aus dem Feld ist der maßgebliche.
+    if (name.isEmpty && neu == stand.settings.mailSignatur.trim()) return;
     bloc.add(SaveMailSignaturEvent(neu));
   }
 
@@ -63,10 +120,9 @@ class MailSignaturSektion extends StatefulWidget {
 class _MailSignaturSektionState extends State<MailSignaturSektion> {
   bool _geladen = false;
 
-  /// Was der Dienst gespeichert hat: formatierte Fassung ja/nein und ihre
-  /// Bilder. Steht nicht im Einstellungssatz — die Bilder liegen im
-  /// Dateisystem des Dienstes, und die HTML-Fassung geht bewusst nicht über
-  /// die Leitung.
+  /// Was der Dienst hält, oder — bei vorgemerkter Übernahme — was aus Outlook
+  /// gelesen wurde: formatierte Fassung ja/nein und ihre Bilder. Steht nicht
+  /// im Einstellungssatz — die Bilder liegen im Dateisystem des Dienstes.
   SignaturStand _stand = const SignaturStand();
 
   /// Welches Outlook hier steht. Ohne das klassische gibt es nichts zu
@@ -76,11 +132,25 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
   @override
   void initState() {
     super.initState();
+    widget.vorgemerkt.addListener(_vorgemerktGeaendert);
 
     // Den vorhandenen Stand liest [StandNachziehen] unten — beim zweiten
     // Öffnen des Reiters steht der Bloc längst auf Loaded, und ein blosser
     // Listener feuerte nie.
     unawaited(_standLaden());
+  }
+
+  @override
+  void dispose() {
+    widget.vorgemerkt.removeListener(_vorgemerktGeaendert);
+    super.dispose();
+  }
+
+  /// Fällt der vorgemerkte Name weg, ist die Übernahme durch — **erst jetzt**
+  /// liegen die Bilder im Dienst, und die Vorschau darf sie zeigen.
+  void _vorgemerktGeaendert() {
+    if (widget.vorgemerkt.value.isEmpty) unawaited(_standLaden());
+    if (mounted) setState(() {});
   }
 
   Future<void> _standLaden() async {
@@ -92,7 +162,9 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       ).wait;
       if (!mounted) return;
       setState(() {
-        _stand = geladen.$1;
+        // Eine vorgemerkte Übernahme steht über dem gespeicherten Stand: Sie
+        // ist es, die der Anwalt gerade ansieht.
+        if (widget.vorgemerkt.value.isEmpty) _stand = geladen.$1;
         _outlook = geladen.$2;
       });
     } catch (_) {
@@ -102,39 +174,37 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
     }
   }
 
-  /// Nach einer Uebernahme steht in der Datenbank eine neue Signatur — auch
-  /// die HTML-Fassung, die das Formular nur durchreicht. Ohne das Nachladen
-  /// schriebe das naechste Speichern der Kanzleidaten die alte zurueck.
-  void _uebernommen(SignaturStand stand) {
+  /// Der Import: Formular füllen, Namen vormerken — **nicht** speichern.
+  void _gelesen(String name, SignaturStand stand) {
     setState(() {
       _stand = stand;
       widget.controller.text = stand.text;
     });
-    context.read<KanzleiSettingsBloc>().add(const LoadKanzleiSettingsEvent());
+    widget.vorgemerkt.value = name;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_uebernahmeMeldung(stand)),
-        duration: Duration(seconds: stand.uebergangen.isEmpty ? 4 : 8),
+        content: Text(_leseMeldung(stand)),
+        duration: Duration(seconds: stand.uebergangen.isEmpty ? 5 : 9),
       ),
     );
   }
 
-  /// Was übernommen wurde — und was nicht.
+  /// Was gelesen wurde — und was nicht.
   ///
   /// Der zweite Teil ist der wichtigere: Ein Bild, das nicht mitgenommen
-  /// werden konnte, fehlt danach in jeder Mail. Es wegzulassen **und** zu
+  /// werden kann, fehlt danach in jeder Mail. Es wegzulassen **und** zu
   /// verschweigen, hiesse den Anwalt eine unvollständige Signatur führen zu
   /// lassen, ohne dass er es je erfährt.
-  static String _uebernahmeMeldung(SignaturStand stand) {
+  static String _leseMeldung(SignaturStand stand) {
     final grundstock = stand.hatFormat
-        ? 'Signatur übernommen — mit Formatierung und '
-              '${stand.bilder.length} Bild(ern).'
-        : 'Signatur übernommen.';
+        ? 'Signatur gelesen — mit Formatierung und '
+              '${stand.bilder.length} Bild(ern). Zum Speichern unten klicken.'
+        : 'Signatur gelesen. Zum Speichern unten klicken.';
 
     if (stand.uebergangen.isEmpty) return grundstock;
 
     final namen = stand.uebergangen.map(AnhangDarstellung.name).join(', ');
-    return '$grundstock Nicht mitgenommen wurde $namen — zu groß, leer oder '
+    return '$grundstock Nicht mitgenommen wird $namen — zu groß, leer oder '
         'nicht lesbar. Die Signatur geht ohne dieses Bild hinaus.';
   }
 
@@ -146,12 +216,40 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
           .verwirfSignaturFormat();
       if (!mounted) return;
       setState(() => _stand = stand);
+      widget.vorgemerkt.value = '';
       bloc.add(const LoadKanzleiSettingsEvent());
       melder.showSnackBar(
         const SnackBar(
           content: Text('Die Formatierung ist weg — der Text bleibt.'),
         ),
       );
+    } catch (e) {
+      if (mounted) {
+        melder.showSnackBar(
+          SnackBar(content: Text('Fehlgeschlagen: ${ausnahmeText(e)}')),
+        );
+      }
+    }
+  }
+
+  /// Entfernt die Signatur ganz: Formatierung und Bilder im Dienst, Text in
+  /// den Einstellungen (§4.7).
+  ///
+  /// **Beides, und das war der Mangel.** Das Feld zu leeren und zu speichern
+  /// entfernte nur die Nur-Text-Fassung; die HTML-Fassung blieb stehen, und
+  /// weil die Mail sie bevorzugt, ging die Signatur samt Logo weiter hinaus.
+  Future<void> _entfernen() async {
+    final melder = ScaffoldMessenger.of(context);
+    final bloc = context.read<KanzleiSettingsBloc>();
+    try {
+      await getIt<EmailVersandRepository>().verwirfSignaturFormat();
+      if (!mounted) return;
+      setState(() {
+        _stand = const SignaturStand();
+        widget.controller.clear();
+      });
+      widget.vorgemerkt.value = '';
+      bloc.add(const SaveMailSignaturEvent(''));
     } catch (e) {
       if (mounted) {
         melder.showSnackBar(
@@ -186,6 +284,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       },
       builder: (context, state) {
         final speichertGerade = state is KanzleiSettingsLoading;
+        final vorgemerkt = widget.vorgemerkt.value;
 
         return FormSection(
           icon: Icons.draw_outlined,
@@ -201,6 +300,11 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
               onVerwerfen: _formatVerwerfen,
               aktiv: !speichertGerade,
             ),
+            if (vorgemerkt.isNotEmpty)
+              SignaturVorgemerktZeile(
+                name: vorgemerkt,
+                mitBildern: _stand.bilder.isNotEmpty,
+              ),
             TextField(
               controller: widget.controller,
               enabled: !speichertGerade,
@@ -215,19 +319,11 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
                 border: OutlineInputBorder(),
               ),
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: _outlook.steuerbar
-                  ? SignaturAusOutlookButton(
-                      aktiv: !speichertGerade,
-                      onUebernommen: _uebernommen,
-                    )
-                  : OutlookHinweisZeile(
-                      stand: _outlook,
-                      was:
-                          'Die Signatur lässt sich nicht aus Outlook '
-                          'übernehmen',
-                    ),
+            SignaturKnopfzeile(
+              outlook: _outlook,
+              aktiv: !speichertGerade,
+              onGelesen: _gelesen,
+              onEntfernen: _entfernen,
             ),
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: widget.controller,

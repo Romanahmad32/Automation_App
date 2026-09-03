@@ -20,7 +20,7 @@ void main() {
       expect(vorgang.kennzeichen, 'GG-XY 123');
       expect(vorgang.status, VorgangStatus.angefragt);
       expect(vorgang.rechtsgebiet, RechtsgebietWert.verkehrsrecht);
-      expect(vorgang.aktenzeichen, '84/26 C03');
+      expect(vorgang.zeichen, '84/26 C03');
     });
 
     test(
@@ -32,7 +32,7 @@ void main() {
         );
 
         expect(vorgang.laufendeNummer, isNull);
-        expect(vorgang.aktenzeichen, 'freitext-referenz');
+        expect(vorgang.zeichen, 'freitext-referenz');
       },
     );
   });

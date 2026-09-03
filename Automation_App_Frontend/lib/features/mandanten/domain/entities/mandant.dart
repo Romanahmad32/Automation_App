@@ -22,6 +22,15 @@ class Mandant extends Equatable {
   final String telefonnummer;
   final String notiz;
 
+  /// Frei geschriebener persönlicher Zusatzgruß, der in Mails an diesen
+  /// Mandanten unter der Anrede erscheint (§5.1, §4.7) — z. B. „Salamu
+  /// aleikum". Leer heißt: kein Zusatzgruß, und es gibt höchstens einen.
+  ///
+  /// Bewusst freier Text und **keine Religionszugehörigkeit**: die wäre ein
+  /// besonderes personenbezogenes Datum (Art. 9 DSGVO) und für diesen Zweck
+  /// unnötig — das freie Feld erreicht dasselbe, ohne jemanden einzuordnen.
+  final String persoenlicheGrussformel;
+
   /// Namen der zugeordneten Akten-Ordner (relativ zum Stammordner), 0..n.
   final List<String> aktenOrdnernamen;
 
@@ -43,6 +52,7 @@ class Mandant extends Equatable {
     this.emailAdresse = '',
     this.telefonnummer = '',
     this.notiz = '',
+    this.persoenlicheGrussformel = '',
     this.aktenOrdnernamen = const [],
     this.kennzeichen = const [],
     required this.erstelltAm,
@@ -70,6 +80,7 @@ class Mandant extends Equatable {
       emailAdresse: json['emailAdresse'] as String? ?? '',
       telefonnummer: json['telefonnummer'] as String? ?? '',
       notiz: json['notiz'] as String? ?? '',
+      persoenlicheGrussformel: json['persoenlicheGrussformel'] as String? ?? '',
       aktenOrdnernamen: ordner is List
           ? ordner.whereType<String>().toList()
           : const [],
@@ -91,6 +102,7 @@ class Mandant extends Equatable {
     'emailAdresse': emailAdresse,
     'telefonnummer': telefonnummer,
     'notiz': notiz,
+    'persoenlicheGrussformel': persoenlicheGrussformel,
     'aktenOrdnernamen': aktenOrdnernamen,
     'kennzeichen': kennzeichen,
     'erstelltAm': erstelltAm.toIso8601String(),
@@ -106,6 +118,7 @@ class Mandant extends Equatable {
     String? emailAdresse,
     String? telefonnummer,
     String? notiz,
+    String? persoenlicheGrussformel,
     List<String>? aktenOrdnernamen,
     List<String>? kennzeichen,
   }) {
@@ -120,6 +133,8 @@ class Mandant extends Equatable {
       emailAdresse: emailAdresse ?? this.emailAdresse,
       telefonnummer: telefonnummer ?? this.telefonnummer,
       notiz: notiz ?? this.notiz,
+      persoenlicheGrussformel:
+          persoenlicheGrussformel ?? this.persoenlicheGrussformel,
       aktenOrdnernamen: aktenOrdnernamen ?? this.aktenOrdnernamen,
       kennzeichen: kennzeichen ?? this.kennzeichen,
       erstelltAm: erstelltAm,
@@ -138,6 +153,7 @@ class Mandant extends Equatable {
     emailAdresse,
     telefonnummer,
     notiz,
+    persoenlicheGrussformel,
     aktenOrdnernamen,
     kennzeichen,
     erstelltAm,

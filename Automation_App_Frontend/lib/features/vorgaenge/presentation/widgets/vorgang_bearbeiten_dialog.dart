@@ -103,7 +103,8 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
       if (ergebnis.fehler != null || ergebnis.vorgang == null) {
         if (!mounted) return;
         setState(() {
-          _referenzFehler = ergebnis.fehler ?? 'Unbekannter Fehler.';
+          _referenzFehler =
+              ergebnis.fehler ?? 'Die Referenz konnte nicht geändert werden.';
           _speichert = false;
         });
         return;
@@ -129,7 +130,7 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Vorgang ${widget.vorgang.referenz} bearbeiten'),
+      title: Text('Vorgang ${widget.vorgang.zeichen} bearbeiten'),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(

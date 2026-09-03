@@ -1,3 +1,5 @@
+using AutomationService.Core.Persistence;
+using AutomationService.Features.FormTemplates.Domain.Services;
 using AutomationService.Features.Settings.Domain.Services;
 using AutomationService.Features.Settings.Presentation.Dtos;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +16,8 @@ namespace AutomationService.Features.Settings.Presentation.Controllers;
 [Route("api/[controller]")]
 public class SettingsController(
     IKanzleiSettingsRepository repository,
-    IStandardSchadenspositionenRepository schadenspositionen) : ControllerBase
+    IStandardSchadenspositionenRepository schadenspositionen,
+    AutomationDbContext db) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(KanzleiSettingsDto), StatusCodes.Status200OK)]
@@ -30,7 +33,19 @@ public class SettingsController(
         [FromBody] KanzleiSettingsDto dto,
         CancellationToken cancellationToken)
     {
+        var vorherigerOrdner = (await repository.GetAsync(cancellationToken)).VorlagenOrdner.Trim();
         var saved = await repository.SaveAsync(dto.ToEntity(), cancellationToken);
+
+        // Einmalige Umstellung des Bestands (#33): Waehlt der Anwalt den
+        // Vorlagenordner (neu), werden absolute Pfade darin ab sofort relativ
+        // gespeichert — sonst hilft der einstellbare Ordner niemandem, dessen
+        // Datenbank weiter auf C:\Users\<Name>\... zeigt.
+        if (saved.VorlagenOrdner.Trim() != vorherigerOrdner)
+        {
+            await VorlagenPfadUmstellung.StelleUmAsync(
+                db, VorlagenOrdnerVorgabe.Ermittle(db), cancellationToken);
+        }
+
         return Ok(KanzleiSettingsDto.From(saved));
     }
 
@@ -68,7 +83,9 @@ public class SettingsController(
         // Betrag — auch nicht als Vorbelegung.
         if (dtos.Any(dto => dto.Betrag < 0))
         {
-            return BadRequest("Ein vorbelegter Betrag darf nicht negativ sein.");
+            return Problem(
+                detail: "Ein vorbelegter Betrag darf nicht negativ sein.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var saved = await schadenspositionen.SaveAsync(

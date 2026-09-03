@@ -1,6 +1,5 @@
 using AutomationService.Core.Persistence;
 using AutomationService.Core.Persistence.HostedServices;
-using AutomationService.Features.Mandanten.Domain.Persistence;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +65,13 @@ public sealed class DatabaseMigrationServiceTests : IDisposable
     /// <summary>
     /// Migriert bewusst nur bis zur ersten Migration, damit die uebrigen als
     /// ausstehend gelten — der Zustand, in dem ein Anwender nach einem Update ist.
+    ///
+    /// Der Mandant geht per rohem SQL hinein, nicht ueber
+    /// <c>context.Mandanten.Add</c>: EF schriebe die Spalten des *heutigen*
+    /// Modells in ein Schema von damals, und jede neue Spalte liesse diesen
+    /// Test mit "table Mandanten has no column named ..." fallen — an einer
+    /// Stelle, die mit der Sicherung nichts zu tun hat. Aufgezaehlt sind
+    /// deshalb genau die Spalten der ersten Migration.
     /// </summary>
     private async Task LegeDatenbankAufAeltestemStandAn(string nachname)
     {
@@ -74,8 +80,14 @@ public sealed class DatabaseMigrationServiceTests : IDisposable
             var ersteMigration = context.Database.GetMigrations().First();
             await context.GetService<IMigrator>().MigrateAsync(ersteMigration);
 
-            context.Mandanten.Add(new MandantEntity { Nachname = nachname });
-            await context.SaveChangesAsync();
+            await context.Database.ExecuteSqlRawAsync(
+                """
+                INSERT INTO Mandanten
+                    (Anrede, Vorname, Nachname, StrasseHausnummer, Postleitzahl,
+                     Ort, EmailAdresse, Telefonnummer, Notiz, ErstelltAm)
+                VALUES ('', '', {0}, '', '', '', '', '', '', '2026-01-01')
+                """,
+                nachname);
         }
 
         SqliteConnection.ClearAllPools();
@@ -115,13 +127,26 @@ public sealed class DatabaseMigrationServiceTests : IDisposable
             : [];
     }
 
+    /// <summary>
+    /// Liest die Nachnamen aus einer Sicherungsdatei. Auch hier rohes SQL: Die
+    /// Sicherung entsteht <b>vor</b> der Migration und traegt damit das alte
+    /// Schema — eine EF-Abfrage waehlte die Spalten des heutigen Modells und
+    /// liefe ins Leere.
+    /// </summary>
     private static async Task<List<string>> LeseMandantenAsync(string dbPfad)
     {
-        var options = new DbContextOptionsBuilder<AutomationDbContext>()
-            .UseSqlite($"Data Source={dbPfad}")
-            .Options;
-        await using var context = new AutomationDbContext(options);
-        return await context.Mandanten.Select(m => m.Nachname).ToListAsync();
+        await using var verbindung = new SqliteConnection($"Data Source={dbPfad}");
+        await verbindung.OpenAsync();
+        var befehl = verbindung.CreateCommand();
+        befehl.CommandText = "SELECT Nachname FROM Mandanten";
+
+        var namen = new List<string>();
+        await using var leser = await befehl.ExecuteReaderAsync();
+        while (await leser.ReadAsync())
+        {
+            namen.Add(leser.GetString(0));
+        }
+        return namen;
     }
 
     public void Dispose()

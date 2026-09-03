@@ -34,16 +34,23 @@ class WizardStepFillOut extends StatelessWidget {
     if (path == null) {
       return;
     }
+    final documentBloc = context.read<DocumentBloc>();
     if (File(path).existsSync()) {
-      context.read<DocumentBloc>().add(SetDocumentPathEvent(path));
+      documentBloc.add(SetDocumentPathEvent(path));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Die verknüpfte Word-Datei wurde nicht gefunden:\n$path\n'
-            'Bitte wählen Sie die Datei neu aus.',
+            'Die verknüpfte Word-Datei wurde nicht gefunden:\n$path',
           ),
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 8),
+          // Öffnet dieselbe Dateiauswahl wie der Knopf an der Word-Datei-
+          // Zeile; die neue Wahl speichert der bestehende Listener dauerhaft
+          // an der Vorlage (linkWordFileToTemplate).
+          action: SnackBarAction(
+            label: 'Neu verknüpfen',
+            onPressed: () => documentBloc.add(const SelectDocumentEvent()),
+          ),
         ),
       );
     }

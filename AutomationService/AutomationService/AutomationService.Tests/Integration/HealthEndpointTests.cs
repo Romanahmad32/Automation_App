@@ -27,7 +27,12 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
                 configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     // Tests sollen kein Word starten — Warmup nur in der echten App.
-                    ["PdfConversion:WarmupOnStartup"] = "false"
+                    ["PdfConversion:WarmupOnStartup"] = "false",
+                    // Und keine automatische Sicherung anstossen — die
+                    // Datenbank selbst liegt dank TestAppDataUmgebung schon in
+                    // einem Temp-Verzeichnis, dieser Schalter ist nur der
+                    // zusaetzliche Not-Aus.
+                    ["Backup:AutomatischeSicherung"] = "false",
                 });
             });
         });

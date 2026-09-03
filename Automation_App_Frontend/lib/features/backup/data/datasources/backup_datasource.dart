@@ -1,11 +1,25 @@
-import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
+import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
-/// HTTP-Zugriff auf die Datensicherung des Backends (`api/Backup`) — die
-/// data-seitige Umsetzung des [BackupRepository]-Ports.
-@Injectable(as: BackupRepository)
-class ApiBackupDatasource implements BackupRepository {
+/// Der HTTP-Vertrag der Datensicherung (`api/Backup`), roh: wirft bei einem
+/// Fehler die [DioException] weiter. Die Übersetzung in `Either<Failure, T>`
+/// und der Dateizugriff (Export schreiben, Import lesen) liegen in
+/// `BackupRepositoryImpl` — diese Datasource spricht nur HTTP.
+abstract class BackupDatasource {
+  Future<List<int>> exportDatenbank();
+
+  Future<String> importDatenbank(String dateipfad);
+
+  Future<UebergabeStand> uebergabeStand();
+
+  Future<String> uebernehmeStand();
+
+  Future<void> quittiereSicherungsfehler();
+}
+
+@Injectable(as: BackupDatasource)
+class ApiBackupDatasource implements BackupDatasource {
   final Dio _dio;
 
   ApiBackupDatasource(this._dio);
@@ -38,10 +52,37 @@ class ApiBackupDatasource implements BackupRepository {
       data: formData,
       options: Options(sendTimeout: _timeout, receiveTimeout: _timeout),
     );
-    final data = response.data;
-    if (data is Map && data['message'] is String) {
-      return data['message'] as String;
-    }
-    return 'Sicherung eingespielt.';
+    return _meldung(response.data, 'Sicherung eingespielt.');
   }
+
+  @override
+  Future<UebergabeStand> uebergabeStand() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/Backup/uebergabe',
+    );
+    final data = response.data;
+    return data == null ? UebergabeStand.still : UebergabeStand.fromJson(data);
+  }
+
+  @override
+  Future<String> uebernehmeStand() async {
+    final response = await _dio.post(
+      '/api/Backup/uebergabe/uebernehmen',
+      // Einspielen heißt Datenbank tauschen und migrieren — dieselbe
+      // Größenordnung wie ein Import von Hand, nicht die 3-Sekunden-Vorgabe.
+      options: Options(sendTimeout: _timeout, receiveTimeout: _timeout),
+    );
+    return _meldung(response.data, 'Stand übernommen.');
+  }
+
+  @override
+  Future<void> quittiereSicherungsfehler() =>
+      _dio.post<void>('/api/Backup/sicherungsstand/quittieren');
+
+  /// Beide Einspielwege antworten mit einem `message`-Feld; der Rückfall greift
+  /// nur, wenn das Backend etwas anderes schickt als vereinbart.
+  String _meldung(Object? data, String rueckfall) =>
+      data is Map && data['message'] is String
+      ? data['message'] as String
+      : rueckfall;
 }

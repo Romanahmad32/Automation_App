@@ -117,7 +117,7 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Der Vorgang „${widget.vorgang.referenz}" wird als erledigt '
+              'Der Vorgang „${widget.vorgang.zeichen}" wird als erledigt '
               'markiert und ins Sachgebiete-Register aufgenommen. Die laufende '
               'Auftragsnummer wird für den nächsten Auftrag um eins '
               'hochgezählt.',

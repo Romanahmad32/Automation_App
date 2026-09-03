@@ -52,6 +52,30 @@ public class KanzleiSettingsEntity
     public string RegisterAblageOrdner { get; set; } = string.Empty;
 
     /// <summary>
+    /// Ordner, in dem die Word-Vorlagen des Anwalts liegen (#33). Leer heisst:
+    /// der App-Ordner unter %APPDATA% (<c>AppDataPaths.EnsureVorlagenDirectory</c>)
+    /// — der Stand vor dieser Einstellung. Maschinenabhaengig wie
+    /// <see cref="AktenStammordner"/>: wird beim Einspielen einer Sicherung
+    /// nicht uebernommen, denn ein Pfad des einen Rechners zeigt auf dem
+    /// anderen ins Leere.
+    /// </summary>
+    public string VorlagenOrdner { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Ordner, in den die App beim Beenden selbsttaetig eine Sicherung legt
+    /// (§7.2, #39). Gedacht ist ein Ordner im synchronisierten Bereich: von dort
+    /// bietet der zweite Arbeitsplatz den Stand beim Oeffnen zur Uebernahme an.
+    /// Leer heisst: keine automatische Sicherung — wie beim
+    /// <see cref="RegisterAblageOrdner"/> schaltet der Ordner die Funktion ein.
+    ///
+    /// Maschinenabhaengig wie <see cref="AktenStammordner"/>: Der Pfad zu
+    /// <em>demselben</em> OneDrive-Ordner lautet auf jedem Rechner anders. Wuerde
+    /// er beim Einspielen mituebernommen, legte der zweite Rechner seine
+    /// Sicherungen woanders ab, als er sein Angebot liest.
+    /// </summary>
+    public string SicherungsAblageOrdner { get; set; } = string.Empty;
+
+    /// <summary>
     /// Basisname der Spiegeldateien ohne Endung; daraus entstehen
     /// "&lt;Name&gt;.docx" und "&lt;Name&gt;.pdf". Bewusst einstellbar und
     /// bewusst nicht der Name des gewachsenen Kanzleidokuments: Das bleibt

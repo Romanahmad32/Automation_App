@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 
+import "auswahl_themes.dart";
 import "extended_color.dart";
 import "theme_schemes_dark.dart";
 import "theme_schemes_light.dart";
@@ -108,6 +109,13 @@ class MaterialTheme {
           ),
         ),
       ),
+      // Ausgewählt trägt über Form und Farbe, nicht über Farbe allein —
+      // die Begründung und die gemessenen Kontraste stehen in
+      // [AuswahlThemes].
+      segmentedButtonTheme: AuswahlThemes.segmentierteSchaltflaeche(
+        colorScheme,
+      ),
+      chipTheme: AuswahlThemes.chips(colorScheme, styledText),
       // Gefüllte, kompakte Eingabefelder mit ruhigem Rahmen. Der Rahmen wird
       // erst beim Fokus kräftig (primär), Fehler bleiben immer rot (s. u.).
       inputDecorationTheme: InputDecorationTheme(

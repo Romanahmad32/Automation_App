@@ -1,13 +1,20 @@
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/anrede_auswahl.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_anhang_liste.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_bereitschaft_hinweis.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/outlook_griff_meldung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_empfaenger_feld.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/geschlecht_auswahl.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/handarbeit_hinweis.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_groesse_zeile.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_bilder.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_vorschau.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/grussformel_auswahl.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/mail_vorlagen_auswahl.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/platzhalter_uebersicht.dart';
+import 'package:automation_app/features/email_versand/presentation/widgets/vorgang_auswahl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -109,6 +116,10 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               ),
             ],
             const SizedBox(height: 16),
+            // Ganz oben, weil alles Weitere daraus vorbelegt wird (§4.7): Wer
+            // den Vorgang erst nach dem Tippen wechselt, bekommt Empfänger und
+            // Betreff neu — deshalb steht die Frage vor den Feldern.
+            const VorgangAuswahl(),
             EmailEmpfaengerFeld(
               titel: 'An',
               adressen: state.entwurf.an,
@@ -133,6 +144,16 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
               aktiv: aktiv,
             ),
             const SizedBox(height: 16),
+            // Ueber den Chipreihen, weil er von ihnen handelt: Was sie noch
+            // tun, sobald der Text von Hand bearbeitet ist (§4.7).
+            const HandarbeitHinweis(),
+            const MailVorlagenAuswahl(),
+            // Anredeart vor Anrede vor Gruss: Die erste beugt die zweite, und
+            // die zweite steht in der Mail ueber der dritten.
+            const GeschlechtAuswahl(),
+            const AnredeAuswahl(),
+            const GrussformelAuswahl(),
+            const PlatzhalterUebersicht(),
             TextField(
               controller: _betreff,
               enabled: aktiv,

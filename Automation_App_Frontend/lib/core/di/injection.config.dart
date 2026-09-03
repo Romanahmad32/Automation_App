@@ -23,6 +23,8 @@ import 'package:automation_app/core/theme/presentation/bloc/theme_bloc.dart'
     as _i1049;
 import 'package:automation_app/features/backup/data/datasources/backup_datasource.dart'
     as _i182;
+import 'package:automation_app/features/backup/data/repositories/backup_repository_impl.dart'
+    as _i1012;
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart'
     as _i285;
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart'
@@ -31,14 +33,32 @@ import 'package:automation_app/features/dev_simulation/data/datasources/simulati
     as _i383;
 import 'package:automation_app/features/dev_simulation/domain/repositories/simulation_repository.dart'
     as _i602;
+import 'package:automation_app/features/email_versand/data/datasources/anredebausteine_datasource.dart'
+    as _i1067;
 import 'package:automation_app/features/email_versand/data/datasources/email_versand_datasource.dart'
     as _i715;
+import 'package:automation_app/features/email_versand/data/datasources/grussformeln_datasource.dart'
+    as _i328;
+import 'package:automation_app/features/email_versand/data/datasources/mail_vorlagen_datasource.dart'
+    as _i229;
+import 'package:automation_app/features/email_versand/domain/repositories/anredebausteine_repository.dart'
+    as _i975;
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart'
     as _i67;
+import 'package:automation_app/features/email_versand/domain/repositories/grussformeln_repository.dart'
+    as _i388;
+import 'package:automation_app/features/email_versand/domain/repositories/mail_vorlagen_repository.dart'
+    as _i435;
+import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart'
+    as _i554;
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart'
     as _i318;
+import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart'
+    as _i1058;
 import 'package:automation_app/features/email_versand/presentation/blocs/letzte_versaende_cubit.dart'
     as _i161;
+import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_cubit.dart'
+    as _i103;
 import 'package:automation_app/features/form_template_setup/data/datasources/form_template_datasource.dart'
     as _i308;
 import 'package:automation_app/features/form_template_setup/data/datasources/word_template_datasource.dart'
@@ -298,6 +318,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i30.VorgangPersistenzFehlerCubit>(
       () => _i30.VorgangPersistenzFehlerCubit(),
     );
+    gh.factory<_i975.AnredebausteineRepository>(
+      () => _i1067.ApiAnredebausteineDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i829.MailboxDatasource>(
       () => _i829.ApiMailboxDatasource(gh<_i361.Dio>()),
     );
@@ -334,14 +357,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i764.OrdnerStatusDatasource>(
       () => _i764.ApiOrdnerStatusDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i435.MailVorlagenRepository>(
+      () => _i229.ApiMailVorlagenDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i501.KanzleiSettingsDatasource>(
       () => _i501.ApiKanzleiSettingsDatasource(gh<_i361.Dio>()),
     );
     gh.lazySingleton<_i310.SachgebietCubit>(
       () => _i310.SachgebietCubit(gh<_i1069.SachgebietRepository>()),
     );
-    gh.factory<_i285.BackupRepository>(
-      () => _i182.ApiBackupDatasource(gh<_i361.Dio>()),
+    gh.factory<_i388.GrussformelnRepository>(
+      () => _i328.ApiGrussformelnDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i615.ZentralrufDatasource>(
       () => _i615.ApiZentralrufDatasource(gh<_i361.Dio>()),
@@ -354,6 +380,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i242.RegisterSpiegelCubit>(
       () => _i242.RegisterSpiegelCubit(gh<_i738.RegisterSpiegelRepository>()),
+    );
+    gh.factory<_i182.BackupDatasource>(
+      () => _i182.ApiBackupDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i651.WordTemplateDatasource>(
       () => _i651.ApiWordTemplateDatasource(gh<_i361.Dio>()),
@@ -386,6 +415,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i366.KanzleiSettingsRepositoryImpl(
         gh<_i501.KanzleiSettingsDatasource>(),
       ),
+    );
+    gh.lazySingleton<_i554.AnredebausteineCubit>(
+      () => _i554.AnredebausteineCubit(gh<_i975.AnredebausteineRepository>()),
     );
     gh.factory<_i304.ZentralrufReplyRepository>(
       () => _i853.ZentralrufReplyRepositoryImpl(
@@ -428,6 +460,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i777.ZentralrufRepository>(
       () => _i248.ZentralrufRepositoryImpl(gh<_i615.ZentralrufDatasource>()),
     );
+    gh.lazySingleton<_i103.MailVorlagenCubit>(
+      () => _i103.MailVorlagenCubit(gh<_i435.MailVorlagenRepository>()),
+    );
     gh.factory<
       _i223.UseCase<_i578.MandantenImportDatei, _i675.LiesImportDateiParams>
     >(() => _i675.LiesImportDatei(gh<_i763.MandantenRepository>()));
@@ -450,11 +485,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(
       () => _i706.GetKanzleiSettings(gh<_i849.KanzleiSettingsRepository>()),
     );
+    gh.lazySingleton<_i1058.GrussformelnCubit>(
+      () => _i1058.GrussformelnCubit(gh<_i388.GrussformelnRepository>()),
+    );
     gh.factory<_i431.MailboxInboxCubit>(
       () => _i431.MailboxInboxCubit(
         gh<_i469.MailboxRepository>(),
         gh<_i579.MailboxPushNotifier>(),
       ),
+    );
+    gh.factory<_i285.BackupRepository>(
+      () => _i1012.BackupRepositoryImpl(gh<_i182.BackupDatasource>()),
     );
     gh.factory<_i223.UseCase<_i609.KanzleiSettings, _i609.KanzleiSettings>>(
       () => _i104.SaveKanzleiSettings(gh<_i849.KanzleiSettingsRepository>()),
@@ -465,9 +506,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i430.CalculateRvgFees(
         repository: gh<_i770.WordAutomationRepository>(),
       ),
-    );
-    gh.factory<_i198.BackupCubit>(
-      () => _i198.BackupCubit(gh<_i285.BackupRepository>()),
     );
     gh.factory<_i299.ErhoeheAuftragsnummer>(
       () => _i299.ErhoeheAuftragsnummer(gh<_i849.KanzleiSettingsRepository>()),
@@ -524,6 +562,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i772.ParseZentralrufReply(
         repository: gh<_i304.ZentralrufReplyRepository>(),
       ),
+    );
+    gh.factory<_i198.BackupCubit>(
+      () => _i198.BackupCubit(gh<_i285.BackupRepository>()),
     );
     gh.factory<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(
       () => _i2.CreateMandant(gh<_i763.MandantenRepository>()),
@@ -625,14 +666,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i171.MandantenSeite, _i733.MandantenSeiteParams>>(),
       ),
     );
-    gh.factory<_i318.EmailEntwurfCubit>(
-      () => _i318.EmailEntwurfCubit(
-        gh<_i67.EmailVersandRepository>(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i782.VersichererCubit>(),
-      ),
-    );
     gh.factory<_i263.TemplatePdfPreviewBloc>(
       () => _i263.TemplatePdfPreviewBloc(
         gh<_i223.UseCase<_i100.Uint8List, _i324.ConvertDocxToPdfParams>>(),
@@ -690,6 +723,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
         gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
         gh<_i847.VorgangCubit>(),
+      ),
+    );
+    gh.factory<_i318.EmailEntwurfCubit>(
+      () => _i318.EmailEntwurfCubit(
+        gh<_i67.EmailVersandRepository>(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i782.VersichererCubit>(),
+        gh<_i554.AnredebausteineCubit>(),
+        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
       ),
     );
     return this;

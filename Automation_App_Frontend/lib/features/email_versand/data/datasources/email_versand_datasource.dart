@@ -1,3 +1,4 @@
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
@@ -32,8 +33,11 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       );
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Der Postausgang ist nicht erreichbar. Läuft der Dienst noch?',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die Versandbereitschaft konnte nicht geprüft werden',
+            ),
       );
     }
   }
@@ -54,8 +58,8 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       );
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Die E-Mail konnte nicht versendet werden. Läuft der Dienst noch?',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Die E-Mail konnte nicht versendet werden'),
       );
     }
   }
@@ -76,8 +80,8 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       );
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Der Entwurf konnte nicht geöffnet werden. Läuft der Dienst noch?',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Der Entwurf konnte nicht geöffnet werden'),
       );
     }
   }
@@ -103,8 +107,11 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return OutlookAnhaenge.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Die Anhänge aus Outlook konnten nicht gelesen werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die Anhänge aus Outlook konnten nicht gelesen werden',
+            ),
       );
     }
   }
@@ -119,9 +126,11 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return _eintraege(response.data);
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Das Versandprotokoll konnte nicht gelesen werden. Läuft der '
-                'Dienst noch?',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Das Versandprotokoll konnte nicht gelesen werden',
+            ),
       );
     }
   }
@@ -133,9 +142,11 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return _eintraege(response.data);
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Das Versandprotokoll konnte nicht gelesen werden. Läuft der '
-                'Dienst noch?',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Das Versandprotokoll konnte nicht gelesen werden',
+            ),
       );
     }
   }
@@ -180,8 +191,11 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       ];
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Die Signaturen aus Outlook konnten nicht gelesen werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die Signaturen aus Outlook konnten nicht gelesen werden',
+            ),
       );
     }
   }
@@ -193,7 +207,26 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return SignaturStand.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ?? 'Die Signatur konnte nicht gelesen werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Die Signatur konnte nicht gelesen werden'),
+      );
+    }
+  }
+
+  @override
+  Future<SignaturStand> leseSignatur(String name) async {
+    try {
+      final response = await _dio.get(
+        '/api/EmailVersand/signaturen/vorschau',
+        queryParameters: {'name': name},
+        // Die Signaturdatei samt Bildern zu lesen dauert laenger als die drei
+        // Sekunden, die das NetworkModule global setzt.
+        options: Options(receiveTimeout: _versandTimeout),
+      );
+      return SignaturStand.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(
+        backendFehlertext(e) ?? 'Die Signatur konnte nicht gelesen werden.',
       );
     }
   }
@@ -211,7 +244,8 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return SignaturStand.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ?? 'Die Signatur konnte nicht übernommen werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Die Signatur konnte nicht übernommen werden'),
       );
     }
   }
@@ -223,26 +257,12 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
       return SignaturStand.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(
-        _serverMeldung(e) ??
-            'Die formatierte Fassung konnte nicht verworfen werden.',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die formatierte Fassung konnte nicht verworfen werden',
+            ),
       );
     }
-  }
-
-  /// Der Grund im Klartext aus den ProblemDetails des Backends. Genau dieser
-  /// Text landet vor dem Anwalt — er sagt ihm, was zu tun ist (Anhang
-  /// schließen, neu anmelden), was eine Statusnummer nie könnte.
-  ///
-  /// **Jede** Methode hier übersetzt so, auch die lesenden: Ein durchgereichter
-  /// `DioException` steht sonst mitsamt Verbindungsdaten und Stapel vor dem
-  /// Anwalt, sobald ein Aufrufer den Fehler anzeigt statt ihn zu schlucken.
-  String? _serverMeldung(DioException e) {
-    final data = e.response?.data;
-    if (data is Map<String, dynamic>) {
-      final detail = data['detail'] ?? data['title'];
-      if (detail is String && detail.isNotEmpty) return detail;
-    }
-    if (data is String && data.isNotEmpty) return data;
-    return null;
   }
 }

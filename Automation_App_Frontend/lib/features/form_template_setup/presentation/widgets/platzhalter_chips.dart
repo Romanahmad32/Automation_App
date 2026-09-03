@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 /// Die erkannten {{Platzhalter}} einer Word-Datei als Chips, mit Zählzeile
 /// und „Alle übernehmen" (#35 Teil 3). Drei Zustände je Chip:
 ///
-/// - **offen**: Klick übernimmt den Platzhalter als Eingabefeld.
+/// - **offen**: Platzhalter ohne Feld — Klick führt zur Zuordnung (#36).
+///   Wie viele das sind und was es kostet, sagt die Warnzeile darunter.
 /// - **übernommen** (Name existiert schon als Feld): Häkchen, nicht klickbar.
 /// - **app-eigen** ([AppEigenePlatzhalter]): füllt die App beim Erzeugen
 ///   selbst — nie klickbar, der Tooltip sagt warum.
@@ -48,6 +49,21 @@ class PlatzhalterChips extends StatelessWidget {
             for (final placeholder in placeholders) _chip(placeholder),
           ],
         ),
+        // Was ein offener Chip kostet, steht als Satz da statt nur als
+        // fehlendes Häkchen (#36): Ein Platzhalter ohne Feld bleibt im Brief
+        // stehen — heute fällt das erst im Begutachten-Schritt auf, nach
+        // Erzeugung und PDF-Umwandlung.
+        if (uebernehmbar.isNotEmpty)
+          Text(
+            uebernehmbar.length == 1
+                ? '1 Platzhalter ohne Feld — er bleibt beim Erzeugen roh im '
+                      'Dokument stehen.'
+                : '${uebernehmbar.length} Platzhalter ohne Feld — sie bleiben '
+                      'beim Erzeugen roh im Dokument stehen.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
         Row(
           spacing: 12,
           children: [
@@ -92,7 +108,9 @@ class PlatzhalterChips extends StatelessWidget {
     return ActionChip(
       avatar: const Icon(Icons.add, size: 18),
       label: Text('{{$placeholder}}'),
-      tooltip: 'Als Eingabefeld übernehmen',
+      tooltip:
+          'Platzhalter ohne Feld — bleibt beim Erzeugen roh im Dokument '
+          'stehen. Anklicken, um ihn zuzuordnen.',
       onPressed: () => onPlaceholderSelected(placeholder),
     );
   }

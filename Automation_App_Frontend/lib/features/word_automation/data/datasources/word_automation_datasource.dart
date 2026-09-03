@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:typed_data';
 
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/generated_document.dart';
@@ -109,8 +110,8 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
         name: 'PERF',
       );
       throw Exception(
-        _serverMessage(e) ??
-            'Beim bearbeiten des Word-Dokuments ist ein Fehler aufgetreten',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(e, 'Das Schreiben konnte nicht erzeugt werden'),
       );
     }
   }
@@ -130,7 +131,11 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
       );
     } on DioException catch (e) {
       throw Exception(
-        _serverMessage(e) ?? 'Die Arbeitskopie konnte nicht gelöscht werden',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die Arbeitskopie konnte nicht gelöscht werden',
+            ),
       );
     }
   }
@@ -165,7 +170,11 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
         name: 'PERF',
       );
       throw Exception(
-        _serverMessage(e) ?? 'Die PDF-Vorschau konnte nicht erstellt werden',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die PDF-Vorschau konnte nicht erstellt werden',
+            ),
       );
     }
   }
@@ -204,27 +213,12 @@ class ApiWordAutomationDatasource implements WordAutomationDatasource {
       );
     } on DioException catch (e) {
       throw Exception(
-        _serverMessage(e) ?? 'Die RVG-Kosten konnten nicht berechnet werden',
+        backendFehlertext(e) ??
+            dienstOhneAntwort(
+              e,
+              'Die RVG-Kosten konnten nicht berechnet werden',
+            ),
       );
     }
-  }
-
-  /// Liest eine vom Backend gelieferte Fehlermeldung aus der Response
-  /// (z. B. die 503-Meldung "Microsoft Word ist nicht installiert …").
-  String? _serverMessage(DioException e) {
-    final data = e.response?.data;
-    if (data is String && data.isNotEmpty) {
-      return data;
-    }
-    if (data is List<int> && data.isNotEmpty) {
-      return String.fromCharCodes(data);
-    }
-    if (data is Map<String, dynamic>) {
-      final message = data['message'] ?? data['title'];
-      if (message is String && message.isNotEmpty) {
-        return message;
-      }
-    }
-    return null;
   }
 }

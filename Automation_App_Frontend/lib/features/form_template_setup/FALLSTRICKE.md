@@ -21,6 +21,18 @@ passierte.
   Geschädigten}}` meint den Ort des Unfalls. Andersherum fischte das „ort" der Mandantengruppe
   den Namen ab, und das Schreiben trüge still den Wohnort. Wörter wie „unfallort", „unfalltag"
   oder „polizei" benennen nie eine Stammdatenangabe — nur deshalb dürfen sie vorne stehen.
+- **Das Kennzeichen heißt „Gegnerkennzeichen", und das blosse „Kennzeichen" trifft trotzdem.** An
+  einem Unfall sind zwei Fahrzeuge beteiligt, deshalb nennt der angebotene Name seinen Halter
+  (§4.1): **Gegnerkennzeichen** und **Mandantenkennzeichen**. Gefunden werden beide über einen
+  *Teilstring*-Test — `hat('kennzeichen')`, beim Mandanten hinter dem Sprung in die
+  Mandantengruppe. Das ist keine Bequemlichkeit, sondern die Zusage aus dem Umbenennen: Die
+  Kanzleivorlagen tragen `{{Kennzeichen}}` und `{{Mandant Kennzeichen}}`, und wer die Regel zu
+  einem exakten Vergleich „aufräumt", nimmt jedem dieser Felder still seinen Wert. Kein Fehler,
+  keine Meldung — auffallen würde es am leeren Platz im nächsten Schreiben.
+- **„Zeichen" und „Aktenzeichen" meinen dasselbe, „Referenz" nicht.** Die ersten beiden liefern
+  `216/26 C03` — den Bezeichner, der in den Brief gehört. Nur wer sein Feld „Referenz" nennt,
+  bekommt die volle Zeichenkette samt Kennzeichen; die trägt allein die Zentralruf-Zuordnung
+  (§4.2). „Ihr Zeichen" bleibt ungebunden: das meint die Gegenseite, nicht die eigene Kanzlei.
 - Nennt ein Name zwei einzeln gespeicherte Angaben (`{{VersicherungPlzOrt}}`,
   `{{MandantVornameNachname}}`), bindet die Erkennung ihn **nicht**, und `FeldNameHinweis` sagt
   unter dem Feld, warum. Grund: Solche Namen lieferten früher still nur die erste der beiden
@@ -41,8 +53,21 @@ passierte.
   Erzeugung fehl; die Karte warnt nur, sie blockiert das Speichern nicht. Der Chip zu diesem
   Platzhalter wird trotzdem angeboten — als Eingabefeld übernehmen wäre falsch, die Tabelle setzt
   ihn selbst ein.
-- Der Word-Pfad wird absolut gespeichert und auch aus `word_automation` überschrieben
-  (`WizardCubit.linkWordFileToTemplate`). `fields` liegt im Backend als opakes JSON — das Schema
+- **Zuordnen heißt umbenennen, nicht die `.docx` anfassen** (#36): `PlatzhalterZuordnung` schlägt
+  zu einem Namen ohne Gegenstück Kandidaten der anderen Seite vor — gleich nach
+  `FeldDatenquelleErkennung.normalisiere` (`Versicherungsschein-Nr` ↔ `{{VersicherungsscheinNr}}`,
+  der stille Killer: das Backend ersetzt nur `IgnoreCase`) oder ineinander steckend
+  (`Unfalldatum` ↔ `{{Verkehrsunfalldatum}}`, ab fünf Zeichen). Vorgeschlagen wird nur, was **kein**
+  Feld wegnimmt: Ein Feld, das schon irgendwo ankommt, steht als Befund da statt als Angebot —
+  es umzubenennen tauschte nur den einen Waisen gegen den anderen. Genau das ist der Produktivfall,
+  in dem die beiden Word-Dateien dieselbe Angabe verschieden nennen; dort hilft nur Word.
+  `{{VersScheinNr}}` erkennt keine Regel — deshalb hat der Dialog die aufklappbare Handauswahl.
+- Der Word-Pfad läuft im Frontend absolut und wird auch aus `word_automation` überschrieben
+  (`WizardCubit.linkWordFileToTemplate`). Gespeichert wird er seit #33 im **Backend** relativ zum
+  eingestellten Vorlagenordner, sofern die Datei darin liegt (`FormTemplatesController`) — das
+  Frontend rechnet nie um. Eine Datei außerhalb bietet `_pickFile` zum Hineinkopieren an
+  (`VorlagenHineinholen`); abgelehnt bleibt sie absolut verknüpft und fehlt in der Sicherung.
+  `fields` liegt im Backend als opakes JSON — das Schema
   lebt nur in Dart, ein unbekannter `inputType` wirft beim Laden (`InputType.fromValue`). Tot:
   `FormTemplateField` (gemeint ist `FieldData`) und `getFormTemplateByName`.
 
