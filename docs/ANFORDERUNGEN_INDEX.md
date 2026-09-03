@@ -80,7 +80,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, mehrere Kennzeichen/Akten, Duplikatschutz, Anredeart als Beugungsquelle (Vorbelegung, je Mail wählbar, aus dem Versand nachtragbar), persönliche Grußformel |
+| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, Namensänderung benennt den Eintrag um (mit Rückfrage), mehrere Kennzeichen/Akten, Duplikatschutz, Anredeart als Beugungsquelle (Vorbelegung, je Mail wählbar, aus dem Versand nachtragbar), persönliche Grußformel |
 | 5.2 | Versicherer-Wissensbasis aus Zentralruf-Antworten; Lücken aus früherem Wissen füllen |
 | 5.3 | Vorlagenverwaltung durch den Anwalt selbst: Word-Vorlagen, Felder, Mail-Textvorlagen |
 
