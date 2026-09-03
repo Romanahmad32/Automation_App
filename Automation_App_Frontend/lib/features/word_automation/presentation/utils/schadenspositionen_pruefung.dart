@@ -43,16 +43,13 @@ Schadenspositionszeile schadenspositionszeile({
   betrag: betragAusEingabe(betragText),
 );
 
-/// Ob dieser Betrag die Zeile rot macht. `null` (noch nichts oder Unlesbares
-/// getippt) ist für sich genommen keine Beanstandung — ob daraus eine wird,
-/// entscheidet [betragFehler] anhand der ganzen Zeile.
+/// Die Beanstandung dieser Zeile, oder `null` — ein negativer Betrag oder ein
+/// unlesbarer. Beide Fälle enden gleich: Das Feld wird rot und
+/// `schadensaufstellungIstErzeugbar` sperrt den Knopf.
 ///
-/// `-0,0` ist **kein** Verstoß — es ist numerisch null. Damit trotzdem kein
-/// `-0.0` in den Vertrag hinausgeht, normalisiert `betragAusEingabe` es.
-bool betragUnzulaessig(double? betrag) => betrag != null && betrag < 0;
-
-/// Die Beanstandung dieser Zeile, oder `null`. Beide Fälle enden gleich: Das
-/// Feld wird rot und `schadensaufstellungIstErzeugbar` sperrt den Knopf.
+/// `-0,0` ist **kein** Verstoß, es ist numerisch null (`-0.0 < 0` ist `false`).
+/// Damit trotzdem kein `-0.0` in den Vertrag hinausgeht, normalisiert
+/// `betragAusEingabe` es.
 ///
 /// Der zweite Fall ist der gefährlichere und der jüngere. Eine Zeile, deren
 /// Betrag sich nicht lesen ließ, fiel bis hierher stillschweigend aus der
@@ -70,9 +67,11 @@ bool betragUnzulaessig(double? betrag) => betrag != null && betrag < 0;
 /// Die vorbelegten Standardpositionen (§4.4) bleiben damit unbeanstandet: Sie
 /// tragen zwar eine Bezeichnung, ihr Betragsfeld ist aber leer.
 String? betragFehler(Schadenspositionszeile zeile) {
-  if (betragUnzulaessig(zeile.betrag)) return negativerBetragHinweis;
-  if (zeile.betrag == null &&
-      zeile.betragText.trim().isNotEmpty &&
+  final betrag = zeile.betrag;
+  if (betrag != null) {
+    return betrag < 0 ? negativerBetragHinweis : null;
+  }
+  if (zeile.betragText.trim().isNotEmpty &&
       zeile.bezeichnung.trim().isNotEmpty) {
     return unlesbarerBetragHinweis(zeile.betragText);
   }
