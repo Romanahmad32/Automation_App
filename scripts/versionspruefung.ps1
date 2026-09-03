@@ -80,6 +80,33 @@ if (-not $NurBackend) {
         }
     }
 
+    # release.yml pinnt die Fassung ein *drittes* Mal, und diese Stelle war bis
+    # hierher die einzige unbewachte. Sie ist die unangenehmste von allen: Aus
+    # ihr entsteht das ausgelieferte Paket. Wer die Pinnung anhebt und nur
+    # ci.yml und .fvmrc nachzieht, bekommt eine gruene Kette und eine gruene
+    # CI — und ein Release aus einer anderen Toolchain als die, gegen die
+    # geprueft wurde. docs/RELEASE.md hat das als Handarbeit vermerkt („wer die
+    # Pinnung anhebt, aendert alle drei zusammen"); ein Merkzettel ist aber
+    # genau das, was beim Versionssprung uebersehen wird.
+    $releaseDatei = Join-Path $wurzel '.github/workflows/release.yml'
+    if (Test-Path -LiteralPath $releaseDatei) {
+        $releaseInhalt = Get-Content -LiteralPath $releaseDatei -Raw
+        $releaseFassung = [regex]::Match(
+            $releaseInhalt, 'FLUTTER_VERSION:\s*"([^"]+)"').Groups[1].Value
+        if (-not $releaseFassung) {
+            # Dieselbe Ueberlegung wie bei ci.yml: Findet die Pruefung ihre
+            # eigene Vergleichsgrundlage nicht mehr, sagt sie das, statt still
+            # nichts zu vergleichen.
+            $fehler += "In $releaseDatei steht keine FLUTTER_VERSION mehr — die Pinnung " +
+                'des Auslieferungsbaus ist umgezogen, und dieses Skript muss ihr folgen.'
+        }
+        elseif ($gepinnt -and $releaseFassung -ne $gepinnt) {
+            $fehler += "release.yml nennt Flutter $releaseFassung, ci.yml FLUTTER_VERSION $gepinnt. " +
+                'Aus release.yml entsteht das ausgelieferte Paket — ein Versionssprung aendert ' +
+                'ci.yml, release.yml und .fvmrc zusammen (docs/RELEASE.md).'
+        }
+    }
+
     # Wo das SDK gesucht wird, in dieser Reihenfolge:
     #
     #   1. .fvm/flutter_sdk — die Junction aus `fvm use`. Wer sie gelegt hat,
@@ -138,11 +165,27 @@ if (-not $NurBackend) {
             'oder https://docs.flutter.dev/release/archive.'
     }
     else {
-        # Nur die erste Zeile ("Flutter 3.41.2 • channel stable • ...") — der
+        # Die Versionszeile ("Flutter 3.41.2 • channel stable • ...") — der
         # Aufruf kostet ein paar Sekunden, ist aber der einzige Weg, der auch
         # eine per PATH gewechselte Installation ehrlich beantwortet.
-        $zeile = [string](& $flutterBefehl --version 2>$null | Select-Object -First 1)
-        $installiert = [regex]::Match($zeile, 'Flutter\s+(\S+)').Groups[1].Value
+        #
+        # Gesucht wird die *erste passende* Zeile und nicht die erste
+        # ueberhaupt (geaendert am 03.09.2026): Ein frisches Flutter schreibt
+        # beim ersten Lauf einen Hinweis davor. Bisher lief dieses Skript nur
+        # auf Entwicklerrechnern, wo das langst geschehen ist; seit
+        # build-package.ps1 es ruft, laeuft es auch auf einem GitHub-Runner,
+        # der jedes Mal frisch ist. Faende die Regex dort nichts, meldete der
+        # Vergleich "Flutter  statt der gepinnten 3.41.2" und der Paketbau
+        # braeche ab, ohne dass etwas fehlte.
+        $ausgabe = @(& $flutterBefehl --version 2>$null)
+        $installiert = ''
+        foreach ($zeile in $ausgabe) {
+            $treffer = [regex]::Match([string]$zeile, 'Flutter\s+(\d\S*)')
+            if ($treffer.Success) {
+                $installiert = $treffer.Groups[1].Value
+                break
+            }
+        }
         if ($installiert -ne $gepinnt) {
             $fehler += "Flutter $installiert statt der gepinnten $gepinnt. In Automation_App_Frontend " +
                 "'fvm install $gepinnt' und 'fvm use $gepinnt' ausfuehren (die Kette greift dann von " +
