@@ -22,10 +22,7 @@ class SeitenAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Aktionen rechts im Kopf (z. B. `PageRefreshButton`).
   final List<Widget> aktionen;
 
-  /// Optionaler Aufsatz unter dem Kopf, z. B. die `TabBar` der Einstellungen.
-  final PreferredSizeWidget? bottom;
-
-  /// Höhe der Kopfzeile selbst (ohne [bottom]).
+  /// Höhe der Kopfzeile.
   static const double hoehe = 76;
 
   const SeitenAppBar({
@@ -34,12 +31,10 @@ class SeitenAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.icon,
     this.untertitel,
     this.aktionen = const [],
-    this.bottom,
   });
 
   @override
-  Size get preferredSize =>
-      Size.fromHeight(hoehe + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize => Size.fromHeight(hoehe);
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +99,6 @@ class SeitenAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [...aktionen, const SizedBox(width: 12)],
-      bottom: bottom,
     );
   }
 }
