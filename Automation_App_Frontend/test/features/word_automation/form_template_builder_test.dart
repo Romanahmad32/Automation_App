@@ -1,7 +1,11 @@
+import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
+import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,11 +17,17 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// und arbeitet mit den alten Controls. Der bereits getippte Stand kommt beim
 /// Neuaufbau von außen wieder herein, damit der Anwalt nicht von vorn anfängt.
 void main() {
-  FieldData feld(String label, {bool required = true}) => FieldData(
+  FieldData feld(
+    String label, {
+    bool required = true,
+    InputType inputType = InputType.text,
+    DatumsVorbelegung? vorbelegung,
+  }) => FieldData(
     order: 0,
     label: label,
     required: required,
-    inputType: InputType.text,
+    inputType: inputType,
+    vorbelegung: vorbelegung,
   );
 
   FormTemplate vorlage(List<FieldData> fields) =>
@@ -30,6 +40,23 @@ void main() {
       .formGroup
       .control(name)
       .value;
+
+  /// Verlässt das Feld. reactive_forms zeigt die Meldung eines Validators erst
+  /// am **berührten** Control — im Betrieb geschieht das, sobald der Fokus
+  /// weiterwandert. Der Knopf ist dagegen sofort gesperrt (`formGroup.valid`).
+  ///
+  /// Der echte Fokusverlust (nicht nur `markAsTouched`) steht mit dabei, damit
+  /// derselbe Helfer auch die Normalisierung beim Verlassen des Felds auslöst
+  /// (`AuswahlTextField`, `normalisiere`).
+  Future<void> verlasse(WidgetTester tester, String name) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    tester
+        .widget<ReactiveForm>(find.byType(ReactiveForm).first)
+        .formGroup
+        .control(name)
+        .markAsTouched();
+    await tester.pump();
+  }
 
   bool knopfAktiv(WidgetTester tester) =>
       tester
@@ -44,6 +71,7 @@ void main() {
     Map<String, String> erfasst = const {},
     void Function(Map<String, String>)? onWerte,
     Set<String>? aktivePlatzhalter,
+    Map<String, List<FeldVorschlag>> vorschlaege = const {},
   }) => tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -54,6 +82,7 @@ void main() {
             erfassteWerte: erfasst,
             onWerteGeaendert: onWerte,
             aktivePlatzhalter: aktivePlatzhalter,
+            vorschlaege: vorschlaege,
             submitButtonLabel: const Text('Dokument erstellen'),
             onSubmitted: (_) {},
           ),
@@ -229,6 +258,81 @@ void main() {
     expect(knopfAktiv(tester), isTrue);
   });
 
+  /// Das Datum, mit dem ein Datumsfeld vorbelegt sein muss. Gerechnet wird
+  /// über dieselbe Entität wie im Code — die Kalenderregel steht in ihren
+  /// eigenen Tests, hier geht es nur darum, dass sie ankommt. Läuft der Test
+  /// über Mitternacht, ist auch der Folgetag richtig.
+  Matcher datumFuer(DatumsVorbelegung vorbelegung) {
+    final heute = DateTime.now();
+    return isIn([
+      deutschesDatum(vorbelegung.anwendenAuf(heute)),
+      deutschesDatum(
+        vorbelegung.anwendenAuf(heute.add(const Duration(days: 1))),
+      ),
+    ]);
+  }
+
+  FieldData datumsfeld(String label, {DatumsVorbelegung? vorbelegung}) =>
+      feld(label, inputType: InputType.date, vorbelegung: vorbelegung);
+
+  /// §5.3: Die Vorbelegung eines Datumsfelds ist je Feld einstellbar. Der
+  /// eingestellte Wert gewinnt — der Feldname sagt dann nichts mehr dazu.
+  testWidgets('eine eingestellte Vorbelegung schlägt im Feld auf', (
+    tester,
+  ) async {
+    await zeige(
+      tester,
+      vorlage([
+        datumsfeld(
+          'Wiedervorlage',
+          vorbelegung: const DatumsVorbelegung(wochen: 2),
+        ),
+      ]),
+    );
+
+    expect(
+      imFeld(tester, 'Wiedervorlage'),
+      datumFuer(const DatumsVorbelegung(wochen: 2)),
+    );
+  });
+
+  /// Bestandsvorlagen tragen keine Vorbelegung — für sie gilt die Namensregel
+  /// weiter, damit niemand sie nachtragen muss.
+  testWidgets('ein Feld „Frist" ohne Einstellung bekommt 4 Wochen', (
+    tester,
+  ) async {
+    await zeige(tester, vorlage([datumsfeld('Frist')]));
+
+    expect(
+      imFeld(tester, 'Frist'),
+      datumFuer(const DatumsVorbelegung(wochen: 4)),
+    );
+  });
+
+  /// Die Unterscheidung, an der alles hängt: **lauter Nullen ist eine
+  /// Einstellung**, kein fehlender Wert. Fiele sie auf die Namensregel
+  /// zurück, liesse sich die Ableitung an einem Feld namens „zahlungsfrist"
+  /// nie abschalten.
+  testWidgets('eingestellte Nullen fallen nicht auf die Namensregel zurück', (
+    tester,
+  ) async {
+    await zeige(
+      tester,
+      vorlage([
+        datumsfeld('zahlungsfrist', vorbelegung: const DatumsVorbelegung()),
+      ]),
+    );
+
+    expect(
+      imFeld(tester, 'zahlungsfrist'),
+      datumFuer(const DatumsVorbelegung()),
+    );
+    expect(
+      imFeld(tester, 'zahlungsfrist'),
+      isNot(datumFuer(const DatumsVorbelegung(wochen: 5))),
+    );
+  });
+
   testWidgets('meldet den Tippstand entprellt', (tester) async {
     Map<String, String>? gemeldet;
     await zeige(
@@ -243,5 +347,122 @@ void main() {
 
     await tester.pump(const Duration(seconds: 2));
     expect(gemeldet, const {'Versicherer': 'HUK-COBURG'});
+  });
+
+  /// #17: Das Kennzeichenfeld prüft sein Format. Beanstandet wird am
+  /// **Wortlaut der Konvention** und nicht mit „ungültig": `HG-E 1427` erklärt
+  /// in vier Zeichen, was drei Sätze bräuchten.
+  group('Kennzeichenfeld', () {
+    FieldData kennzeichenfeld({bool required = false}) =>
+        feld('Fahrzeug', required: required, inputType: InputType.kennzeichen);
+
+    testWidgets('ein unlesbarer Wert wird beanstandet und sperrt den Knopf', (
+      tester,
+    ) async {
+      await zeige(tester, vorlage([kennzeichenfeld()]));
+
+      await tester.enterText(find.byType(TextField).first, 'kein kennzeichen');
+      await tester.pump();
+      expect(knopfAktiv(tester), isFalse);
+
+      await verlasse(tester, 'Fahrzeug');
+      expect(find.text('Kennzeichen wie HG-E 1427 eingeben'), findsOneWidget);
+    });
+
+    testWidgets('ein lesbarer Wert geht durch', (tester) async {
+      await zeige(tester, vorlage([kennzeichenfeld()]));
+
+      await tester.enterText(find.byType(TextField).first, 'HG-E 1427');
+      await verlasse(tester, 'Fahrzeug');
+
+      expect(find.text('Kennzeichen wie HG-E 1427 eingeben'), findsNothing);
+      expect(knopfAktiv(tester), isTrue);
+    });
+
+    /// Leer heisst „noch nicht beziffert" und nicht „falsch" — ob das Feld
+    /// gefüllt sein muss, entscheidet allein die Pflichtmarkierung.
+    testWidgets('leer ist ohne Pflicht in Ordnung', (tester) async {
+      await zeige(tester, vorlage([kennzeichenfeld()]));
+      await verlasse(tester, 'Fahrzeug');
+
+      expect(find.text('Kennzeichen wie HG-E 1427 eingeben'), findsNothing);
+      expect(knopfAktiv(tester), isTrue);
+    });
+
+    /// Nicht nur die freie Eingabe im Auswahldialog, auch der direkt
+    /// getippte Wert soll die Konvention tragen — sonst hinge es vom Zufall
+    /// ab, ob der Anwalt den Dialog benutzt oder gleich tippt.
+    testWidgets('ein direkt getippter Wert wird beim Verlassen normalisiert', (
+      tester,
+    ) async {
+      await zeige(tester, vorlage([kennzeichenfeld()]));
+
+      await tester.enterText(find.byType(TextField).first, 'hg-e1427');
+      await verlasse(tester, 'Fahrzeug');
+
+      expect(imFeld(tester, 'Fahrzeug'), 'HG-E 1427');
+    });
+
+    testWidgets('leer sperrt, wenn das Feld Pflicht ist', (tester) async {
+      await zeige(tester, vorlage([kennzeichenfeld(required: true)]));
+
+      // Wie bei jedem anderen Feldtyp: Der Hinweis unter dem Formular nennt
+      // das leere Pflichtfeld, statt den Knopf kommentarlos tot dastehen zu
+      // lassen (#35 Teil 3).
+      expect(find.text('1 Pflichtfeld fehlt:'), findsOneWidget);
+      expect(find.text('Fahrzeug'), findsWidgets);
+      expect(knopfAktiv(tester), isFalse);
+    });
+
+    testWidgets('bekannte Werte stehen als Auswahl daneben', (tester) async {
+      await zeige(
+        tester,
+        vorlage([kennzeichenfeld()]),
+        vorschlaege: const {
+          'Fahrzeug': [
+            FeldVorschlag('HG-E 1427', PrefillQuelle.vorgang),
+            FeldVorschlag('F-AB 12', PrefillQuelle.mandant),
+          ],
+        },
+      );
+
+      expect(find.byIcon(Icons.list_alt), findsOneWidget);
+    });
+  });
+
+  /// Die Auswahlhilfe hängt an der **Datenquelle**, nicht am Feldtyp: Sind zu
+  /// einem gewöhnlichen Textfeld mehrere Werte bekannt, bekommt es die Liste
+  /// genauso. Sonst hätte dieselbe Angabe je Feldtyp eine andere Bedienung.
+  group('Auswahlhilfe am Textfeld', () {
+    testWidgets('ohne Vorschläge bleibt es ein blankes Textfeld', (
+      tester,
+    ) async {
+      await zeige(tester, vorlage([feld('Fahrzeug', required: false)]));
+
+      expect(find.byIcon(Icons.list_alt), findsNothing);
+    });
+
+    testWidgets('mit Vorschlägen trägt es das Auswahlsymbol', (tester) async {
+      await zeige(
+        tester,
+        vorlage([feld('Fahrzeug', required: false)]),
+        vorschlaege: const {
+          'Fahrzeug': [FeldVorschlag('F-AB 12', PrefillQuelle.mandant)],
+        },
+      );
+
+      expect(find.byIcon(Icons.list_alt), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.list_alt));
+      await tester.pumpAndSettle();
+
+      // Die Herkunft steht im Dialog im Wortlaut der Herkunftszeile am Feld.
+      expect(find.text('aus dem Mandantenregister'), findsOneWidget);
+
+      await tester.tap(find.text('F-AB 12'));
+      await tester.pumpAndSettle();
+
+      expect(imFeld(tester, 'Fahrzeug'), 'F-AB 12');
+    });
   });
 }

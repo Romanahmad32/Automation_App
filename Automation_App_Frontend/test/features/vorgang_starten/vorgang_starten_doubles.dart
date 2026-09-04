@@ -124,7 +124,7 @@ class MandantAktualisierenDouble implements UseCase<Mandant, Mandant> {
       register.aktualisieren(params);
 }
 
-/// Der Abruf, den die View für Dropdown und Kennzeichen-Chips benutzt. Liefert
+/// Der Abruf, den die View für Dropdown und Kennzeichen-Auswahl benutzt. Liefert
 /// eine Kopie, damit ein Test die Liste nicht an der Fassade vorbei ändert.
 class MandantenListeDouble implements UseCase<List<Mandant>, NoParams> {
   final MandantenRegisterDouble register;

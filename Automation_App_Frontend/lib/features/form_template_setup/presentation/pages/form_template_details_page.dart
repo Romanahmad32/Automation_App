@@ -1,14 +1,13 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
-import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/app_eigene_platzhalter_liste.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_aenderungen.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_action_buttons.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/initial_template_form.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_fehler_melder.dart';
@@ -190,19 +189,13 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     );
   }
 
-  void _onTypeChanged(int i, InputType? v) =>
-      setState(() => fields[i] = fields[i].copyWith(inputType: v));
-
-  void _onDatenquelleChanged(int i, FeldDatenquelle? v) =>
-      setState(() => fields[i] = fields[i].copyWith(datenquelle: v));
-
-  void _onRequiredChanged(int i, bool? v) =>
-      setState(() => fields[i] = fields[i].copyWith(required: v ?? false));
-
-  void _onDeleteField(int i) => setState(() {
-    formGroup.removeControl(fields[i].label);
-    fields.removeAt(i);
-  });
+  /// Alle Änderungen an einer Feldzeile — wie [_zuordnung] je Klick frisch
+  /// gebaut, weil sie auf dem aktuellen Stand von [fields] arbeiten.
+  FeldAenderungen get _aenderungen => FeldAenderungen(
+    fields: fields,
+    formGroup: formGroup,
+    onGeaendert: () => setState(() {}),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -268,10 +261,11 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                       formGroup: formGroup,
                       onAddField: _addNewField,
                       onReorder: _reorderFields,
-                      onTypeChanged: _onTypeChanged,
-                      onDatenquelleChanged: _onDatenquelleChanged,
-                      onRequiredChanged: _onRequiredChanged,
-                      onDelete: _onDeleteField,
+                      onTypeChanged: _aenderungen.typ,
+                      onDatenquelleChanged: _aenderungen.datenquelle,
+                      onRequiredChanged: _aenderungen.pflicht,
+                      onVorbelegungChanged: _aenderungen.vorbelegung,
+                      onDelete: _aenderungen.loeschen,
                       onZuordnen: _feldZuordnen,
                     ),
 

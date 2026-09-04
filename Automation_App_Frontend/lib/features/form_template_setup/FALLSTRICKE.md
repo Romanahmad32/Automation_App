@@ -43,6 +43,16 @@ passierte.
   Platzhalter nebeneinander nicht können — dort bliebe eine Leerstelle samt wanderndem Komma.
 - Der Hinweis schweigt, sobald am Feld eine Datenquelle gewählt ist: Dann hat der Anwalt
   entschieden, und eine gesetzte Quelle gewinnt immer über die Erkennung.
+- **Dieselbe Erkennung schlägt auch den Feldtyp vor** (`_feldtypFuer`) — und dort steht das
+  Kennzeichen **vor** der Datumsprüfung. Sonst fischte deren Wortliste („datum", „tag", „frist",
+  „beginn") einen Namen wie `{{KennzeichenAmUnfalltag}}` ab, und das Feld verlangte ein Datum auf
+  einem Wert wie `HG-E 1427`. Umgekehrt geht nichts verloren: Kein Datumsfeld heißt „Kennzeichen".
+- **`InputType.kennzeichen` (#17) steht in keiner Bestandsvorlage** und wird erst geschrieben, wenn
+  ihn jemand am Feld auswählt — bis dahin bleibt dort `text`. Das Backend hält `fields` als opakes
+  JSON und reicht den Wert durch; das Schema lebt nur in Dart. Die Kehrseite steht weiter unten:
+  `InputType.fromValue` wirft bei Unbekanntem, eine Vorlage mit dem neuen Wert lässt sich also von
+  einer **älteren** App-Fassung nicht mehr laden. Was das Feld im Ausfüllschritt daraus macht
+  (Formatprüfung, Auswahlhilfe), steht in `word_automation/FALLSTRICKE.md`.
 
 ## Platzhalter und Dateien
 
@@ -70,6 +80,38 @@ passierte.
   `fields` liegt im Backend als opakes JSON — das Schema
   lebt nur in Dart, ein unbekannter `inputType` wirft beim Laden (`InputType.fromValue`). Tot:
   `FormTemplateField` (gemeint ist `FieldData`) und `getFormTemplateByName`.
+
+## Vorbelegung der Datumsfelder
+
+`DatumsVorbelegung` (`domain/entities/`) sagt je Datumsfeld, um wie viel es beim Ausfüllen in die
+Zukunft vorbelegt wird — eingestellt im Vorlageneditor, eingesetzt im `FormTemplateBuilder`. Vorher
+war das ein Sonderfall im Ausfüllschritt: „zahlungsfrist" im Namen bekam heute + 35 Tage, alles
+andere heute; eine andere Frist ging nur über den Quellcode.
+
+- **`null` und „lauter Nullen" sind nicht dasselbe** — das ist der Fallstrick. `null` heißt „an
+  diesem Feld wurde nie eine Vorbelegung eingestellt", und dann greift die Namensregel
+  (`DatumsVorbelegung.ausFeldname`). Lauter Nullen heißt „bewusst heute" und schaltet die
+  Namensregel ab. Ohne diese Unterscheidung liesse sich die Ableitung an einem Feld namens
+  „Zahlungsfrist" nie loswerden: Jedes Zurücksetzen auf 0 fiele sofort wieder auf 5 Wochen.
+  Deshalb hat `FieldData` neben `copyWith` (das die Vorbelegung nur durchreicht) die Methode
+  `mitVorbelegung`, und `toJson` schreibt den Schlüssel `vorbelegung` **nur, wenn er gesetzt ist**
+  — eine Bestandsvorlage bleibt damit byteidentisch, und ein vorhandener Schlüssel heißt umgekehrt
+  immer „bewusst eingestellt".
+- Die Namensregel prüft **„zahlungsfrist" vor „frist"** (5 bzw. 4 Wochen, Entscheidung vom
+  29.08.2026): „frist" steckt in „zahlungsfrist". Wer die beiden Zeilen tauscht, gibt jedem
+  Zahlungsfrist-Feld still eine Woche weniger. Verglichen wird über
+  `FeldDatenquelleErkennung.normalisiere`, damit `{{Zahlungs-Frist}}` derselbe Name ist.
+- **Gerechnet wird über den `DateTime`-Konstruktor, nicht mit `Duration`.** Ein „Jahr" als 365 Tage
+  wäre im Schaltjahr falsch, und eine Sommerzeitumstellung verschöbe das Ergebnis über Mitternacht
+  um einen Tag. Die Überläufe der Kalenderrechnung sind gewollt und in
+  `datums_vorbelegung_test.dart` festgehalten: 29.02.2028 + 1 Jahr → 01.03.2029, 31.01.2027 +
+  1 Monat → 03.03.2027, im Schaltjahr 31.01.2028 + 1 Monat → 02.03.2028.
+- **Das ist keine Fristenlogik (§8):** keine Werktagsverschiebung, keine Feiertage, keine
+  Wiedervorlage. 4 Wochen sind 28 Kalendertage. Der Wert landet als sichtbarer Vorschlag im
+  Datumsfeld des Ausfüllschritts und ist dort überschreibbar — die Vorschauzeile des Editors
+  („ergibt heute: …") zeigt darum das gerechnete Datum und nicht bloß die Zahlen.
+- Der Editor steht in der Feldzeile der Detailseite und liest den Feldnamen aus dem **Control**,
+  nicht aus `FieldData.label` (siehe oben, `field_0`). Sonst leitete er aus `field_0` ab.
 
 ## Zustand
 

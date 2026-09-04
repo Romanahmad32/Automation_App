@@ -24,7 +24,7 @@ keinen Endpunkt, sie kommen direkt aus dem Dateisystem.
 
 **Fallstricke**
 
-- Der lange Rest steht in `FALLSTRICKE.md` daneben: Zuordnungsstapel, Register, Import, Ablage.
+- Der lange Rest steht in `FALLSTRICKE.md` daneben: Zuordnungsstapel, Register, Import, Ablage, Kennzeichen.
 - Zwei Herkünfte in einem Feature: `ApiMandantDatasource` und `ApiOrdnerStatusDatasource` holen
   Register und Vermerke per HTTP aus der Backend-Datenbank, `FilesystemAktenDatasource` scannt den
   Stammordner mit `dart:io`. Akten und Fälle sind reine Laufzeitsicht.
