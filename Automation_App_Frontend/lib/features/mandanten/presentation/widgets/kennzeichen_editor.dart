@@ -12,7 +12,12 @@ import 'package:flutter/material.dart';
 /// Prüfung und Hinweistext kommen von [KennzeichenField], damit hier keine
 /// zweite Auffassung davon entsteht, was ein Kennzeichen ist. Aufgenommen wird
 /// der **normalisierte** Wert: So steht in der Liste die Konvention, und
-/// `hge1427` fällt als Dublette zu `HG-E 1427` auf statt als zweiter Wagen.
+/// `hg-e1427` fällt als Dublette zu `HG-E 1427` auf statt als zweiter Wagen.
+///
+/// Ein mehrdeutiger Wert (`HGE1427` — `HG-E 1427` oder `H-GE 1427`?) kommt gar
+/// nicht erst in die Liste: `KennzeichenField.beanstandung` nennt am Feld die
+/// Lesarten. Ein hier geratenes Kennzeichen hinge dauerhaft am Mandanten und
+/// träfe später die Zuordnung einer Zentralruf-Antwort.
 class KennzeichenEditor extends StatelessWidget {
   /// Bereits hinterlegte Kennzeichen (Ausgangswert).
   final List<String> initialKennzeichen;
@@ -39,8 +44,7 @@ class KennzeichenEditor extends StatelessWidget {
       textCapitalization: TextCapitalization.characters,
       dublettenHinweis: 'Dieses Kennzeichen ist bereits hinterlegt',
       normalisiere: (eingabe) => normalizeKennzeichen(eingabe) ?? eingabe,
-      pruefe: (eingabe) =>
-          istKennzeichen(eingabe) ? null : KennzeichenField.hinweis,
+      pruefe: KennzeichenField.beanstandung,
     );
   }
 }

@@ -220,7 +220,7 @@ void main() {
   testWidgets('legt ein getipptes Kennzeichen in der Konvention an', (
     tester,
   ) async {
-    await zeigeFormular(tester, mandantKennzeichen: 'hge1427');
+    await zeigeFormular(tester, mandantKennzeichen: 'hg-e1427');
     await zentralrufAusfuellen(tester);
 
     expect(register.bestand.single.kennzeichen, ['HG-E 1427']);

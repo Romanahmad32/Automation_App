@@ -95,13 +95,18 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
 
   Future<void> _speichern() async {
     // Der Dialog führt kein reactive_forms mit sich; geprüft wird deshalb hier,
-    // beim Speichern. Was lesbar ist, geht in der Konvention `HG-E 1427` in den
-    // Bestand — an dem Wert hängt die Zuordnung einer Zentralruf-Antwort, und
-    // die vergleicht normalisiert (`gleichesKennzeichen`).
+    // beim Speichern. Was eindeutig lesbar ist, geht in der Konvention
+    // `HG-E 1427` in den Bestand — an dem Wert hängt die Zuordnung einer
+    // Zentralruf-Antwort, und die vergleicht normalisiert
+    // (`gleichesKennzeichen`). Mehrdeutiges bleibt stehen und wird beanstandet,
+    // statt geraten zu werden: `HGE1427` ist zwei verschiedene Fahrzeuge.
     final kennzeichen =
-        normalizeKennzeichen(_geschaedigtenKennzeichen.text) ?? '';
-    if (kennzeichen.isNotEmpty && !istKennzeichen(kennzeichen)) {
-      setState(() => _kennzeichenFehler = KennzeichenField.hinweis);
+        normalizeKennzeichen(_geschaedigtenKennzeichen.text)?.trim() ?? '';
+    final beanstandung = kennzeichen.isEmpty
+        ? null
+        : KennzeichenField.beanstandung(kennzeichen);
+    if (beanstandung != null) {
+      setState(() => _kennzeichenFehler = beanstandung);
       return;
     }
 

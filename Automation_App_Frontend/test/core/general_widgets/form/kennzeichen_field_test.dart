@@ -8,10 +8,15 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Stelle, an der festliegt, was ein Kennzeichen ist.
 ///
 /// Die beiden Hälften gehören zusammen und laufen leicht auseinander: Das Feld
-/// **stellt die Konvention selbst her** (`HGE1427` → `HG-E 1427`), also darf
+/// **stellt die Konvention selbst her** (`hg-e1427` → `HG-E 1427`), also darf
 /// der Validator nur beanstanden, was sich gar nicht lesen lässt. Verlangte er
 /// mehr, beanstandete er Werte, die die App im selben Atemzug geradezieht — und
 /// solche, die sie aus dem eigenen Register angeboten hat.
+///
+/// Die eine Ausnahme von der Toleranz ist die **Mehrdeutigkeit**: `HGE1427`
+/// kann `HG-E 1427` oder `H-GE 1427` heissen, und das sind zwei Fahrzeuge.
+/// Geraten wird da nichts — das Feld nennt die Lesarten und lässt den Wert
+/// stehen, wie er getippt wurde.
 void main() {
   const feldname = 'kennzeichen';
 
@@ -92,16 +97,42 @@ void main() {
   ) async {
     final form = await zeige(tester);
 
-    await tester.enterText(find.byType(TextField), 'HGE1427');
+    await tester.enterText(find.byType(TextField), 'hg-e1427');
     // Noch nicht umgeformt: Unter dem Cursor soll sich nichts bewegen, solange
     // getippt wird.
-    expect(form.control(feldname).value, 'HGE1427');
+    expect(form.control(feldname).value, 'hg-e1427');
 
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pump();
 
     expect(form.control(feldname).value, 'HG-E 1427');
     expect(form.control(feldname).valid, isTrue);
+  });
+
+  /// Der Gegenfall dazu, und der Grund für die ganze Unterscheidung: Bei
+  /// `HGE1427` steht nicht fest, wo das Unterscheidungszeichen endet. Das Feld
+  /// darf sich hier **nicht** entscheiden — ein falsch aufgeteiltes
+  /// Kennzeichen benennt ein anderes Fahrzeug und ginge unbemerkt in die
+  /// Referenz und ins Anspruchsschreiben.
+  testWidgets('lässt einen mehrdeutigen Wert stehen und nennt die Lesarten', (
+    tester,
+  ) async {
+    final form = await zeige(tester);
+
+    await tester.enterText(find.byType(TextField), 'HGE1427');
+    FocusManager.instance.primaryFocus?.unfocus();
+    form.control(feldname).markAsTouched();
+    await tester.pump();
+
+    expect(form.control(feldname).value, 'HGE1427');
+    expect(form.control(feldname).valid, isFalse);
+    expect(
+      find.text('Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427'),
+      findsOneWidget,
+    );
+    // Nicht die allgemeine Meldung: „so eingeben wie HG-E 1427" hätte der
+    // Anwalt hier ja getan — er hat nur den Bindestrich weggelassen.
+    expect(find.text(KennzeichenField.hinweis), findsNothing);
   });
 
   testWidgets('trägt ohne Kandidaten kein Auswahlsymbol', (tester) async {
@@ -138,11 +169,13 @@ void main() {
     /// Auch die Schreibvarianten: Was das Feld normalisieren kann, ist gültig —
     /// sonst stünde die Beanstandung an einem Wert, den es gleich darauf selbst
     /// geradezieht.
-    test('jede lesbare Schreibweise ist gültig', () {
+    test('jede eindeutig lesbare Schreibweise ist gültig', () {
       expect(pruefe('HG-E 1427'), isNull);
-      expect(pruefe('hge1427'), isNull);
+      expect(pruefe('hg-e1427'), isNull);
       expect(pruefe('GG XY 123'), isNull);
       expect(pruefe('HG-E1427H'), isNull);
+      // Zwei Buchstaben lassen nur eine Aufteilung zu — kein Bindestrich nötig.
+      expect(pruefe('he1427'), isNull);
     });
 
     test('Unlesbares meldet den eigenen Fehlerschlüssel', () {
@@ -150,10 +183,59 @@ void main() {
       expect(KennzeichenField.formatError, 'kennzeichen');
     });
 
+    /// Der Fehlerwert **ist** die Liste der Lesarten und nicht `true`:
+    /// reactive_forms reicht ihn an die Meldungsfunktion durch, und nur so
+    /// kann die Meldung sagen, zwischen welchen Werten zu wählen ist.
+    test('Mehrdeutiges meldet die Lesarten als Fehlerwert', () {
+      expect(pruefe('HGE1427'), {
+        KennzeichenField.mehrdeutigError: ['HG-E 1427', 'H-GE 1427'],
+      });
+      expect(pruefe('FABC12'), {
+        KennzeichenField.mehrdeutigError: ['FAB-C 12', 'FA-BC 12'],
+      });
+      expect(KennzeichenField.mehrdeutigError, 'kennzeichenMehrdeutig');
+    });
+
     test('die Meldung nennt die Konvention mit Beispiel', () {
       final melden = KennzeichenField.meldungen[KennzeichenField.formatError]!;
       expect(melden(true), KennzeichenField.hinweis);
       expect(KennzeichenField.hinweis, contains('HG-E 1427'));
+    });
+
+    test('die Mehrdeutig-Meldung zählt die Lesarten auf', () {
+      final melden =
+          KennzeichenField.meldungen[KennzeichenField.mehrdeutigError]!;
+
+      expect(
+        melden(const ['HG-E 1427', 'H-GE 1427']),
+        'Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427',
+      );
+      // Drei und mehr: Komma dazwischen, „oder" vor der letzten.
+      expect(
+        melden(const ['A-BC 1', 'AB-C 1', 'ABC-D 1']),
+        'Mehrdeutig, bitte mit Bindestrich: A-BC 1, AB-C 1 oder ABC-D 1',
+      );
+    });
+  });
+
+  /// Für die Prüfstellen ausserhalb von reactive_forms (Chip-Editor am
+  /// Mandanten, Bearbeiten-Dialog eines Vorgangs). Sie sollen dieselbe Auskunft
+  /// geben wie das Formular — sonst hängt es am Eingabeort, ob der Anwalt
+  /// erfährt, was der App fehlt.
+  group('beanstandung', () {
+    test('eindeutig ist in Ordnung, Unlesbares nennt die Konvention', () {
+      expect(KennzeichenField.beanstandung('hg-e 1427'), isNull);
+      expect(
+        KennzeichenField.beanstandung('mein Auto'),
+        KennzeichenField.hinweis,
+      );
+    });
+
+    test('mehrdeutig nennt die Lesarten', () {
+      expect(
+        KennzeichenField.beanstandung('HGE1427'),
+        'Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427',
+      );
     });
   });
 }

@@ -33,14 +33,14 @@ class FeldVorschlag extends Equatable {
 /// an. Beide lesen dieselbe Datenquelle, damit „vorbelegt" und „zur Wahl" nicht
 /// aus verschiedenen Beständen kommen.
 ///
-/// **Ausbauweg:** Heute liefert nur [FeldDatenquelle.kennzeichenMandant]
-/// Kandidaten, weil nur dort mehrere Werte nebeneinander stehen. Die nächsten
-/// Anwärter, sobald der Bestand sie mehrfach kennt:
-/// [FeldDatenquelle.kennzeichenGegner] (Vorgang und Zentralruf-Antwort können
-/// abweichen), [FeldDatenquelle.versichererName] (Wissensbasis + Antwort) und
-/// [FeldDatenquelle.mandantName] (Register-Eintrag + Namens-Schnappschuss des
-/// Vorgangs). Je Quelle ein `case` in [fuer] — mehr braucht keine der Stellen,
-/// die diese Klasse benutzen.
+/// **Ausbauweg:** Kandidaten liefern heute die beiden Kennzeichen-Quellen
+/// ([FeldDatenquelle.kennzeichenMandant] aus Vorgang + Register,
+/// [FeldDatenquelle.kennzeichenGegner] aus Vorgang + Zentralruf-Antwort) —
+/// dort stehen mehrere Werte nebeneinander. Die nächsten Anwärter, sobald der
+/// Bestand sie mehrfach kennt: [FeldDatenquelle.versichererName]
+/// (Wissensbasis + Antwort) und [FeldDatenquelle.mandantName] (Register-Eintrag
+/// + Namens-Schnappschuss des Vorgangs). Je Quelle ein `case` in [fuer] — mehr
+/// braucht keine der Stellen, die diese Klasse benutzen.
 class DatenquelleVorschlaege {
   const DatenquelleVorschlaege._();
 
@@ -62,6 +62,23 @@ class DatenquelleVorschlaege {
             ),
           for (final wert in mandant?.kennzeichen ?? const <String>[])
             FeldVorschlag(wert, PrefillQuelle.mandant),
+        ]);
+      case FeldDatenquelle.kennzeichenGegner:
+        // Dieselben zwei Bestände und dieselbe Rangfolge, die
+        // `VorgangPrefillMatcher` für dieses Feld nimmt (`vorgang.kennzeichen
+        // ?? antwort?.kennzeichen`). Vorbelegt wird der erste; angeboten
+        // werden beide, denn sie können auseinanderlaufen: Die Referenz trägt
+        // das beim Start getippte Kennzeichen, die Antwort das, unter dem der
+        // Zentralruf den Wagen kennt — welches im Anspruchsschreiben stehen
+        // soll, entscheidet der Anwalt.
+        return _kennzeichen([
+          if (vorgang?.kennzeichen != null)
+            FeldVorschlag(vorgang!.kennzeichen!, PrefillQuelle.vorgang),
+          if (vorgang?.antwort?.kennzeichen != null)
+            FeldVorschlag(
+              vorgang!.antwort!.kennzeichen!,
+              PrefillQuelle.antwort,
+            ),
         ]);
       default:
         return const [];
@@ -91,14 +108,20 @@ class DatenquelleVorschlaege {
     return ergebnis;
   }
 
-  /// Kennzeichen in die Konvention `HG-E 1427` gebracht, Leeres verworfen,
-  /// Doppelte entfernt.
+  /// Kennzeichen in die Konvention `HG-E 1427` gebracht — soweit die
+  /// Aufteilung eindeutig ist —, Leeres verworfen, Doppelte entfernt.
+  ///
+  /// Ein mehrdeutiger Bestandswert (`HGE1427` — `HG-E 1427` oder `H-GE 1427`?)
+  /// wird **nicht geraten**, sondern so angeboten, wie er im Bestand steht:
+  /// Die Auswahl zeigt, was da ist, und stellt nicht eine Aufteilung als
+  /// Tatsache hin, die niemand entschieden hat.
   ///
   /// Verglichen wird über [gleichesKennzeichen] und nicht über die Zeichen:
   /// Derselbe Wagen steht im Vorgang als `HG-E 1427` und im Register als
   /// `HGE1427`, und zweimal dasselbe Fahrzeug in einer Auswahl sieht nach zwei
   /// Fahrzeugen aus. Der **erste** Treffer gewinnt, deshalb steht der Vorgang
-  /// in [fuer] vorn: Er ist der Bestand zu genau diesem Unfall.
+  /// in [fuer] vorn: Er ist der Bestand zu genau diesem Unfall — und der ist
+  /// dank Referenz-Konvention auch der eindeutig geschriebene.
   static List<FeldVorschlag> _kennzeichen(List<FeldVorschlag> rohe) {
     final ergebnis = <FeldVorschlag>[];
     for (final vorschlag in rohe) {

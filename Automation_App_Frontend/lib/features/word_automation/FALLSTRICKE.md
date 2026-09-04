@@ -177,6 +177,14 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   davon wäre in jedem zweiten Fall das falsche im Anspruchsschreiben (§1.3). Angeboten werden dann
   alle. Das Kennzeichen des **Gegners** kommt im Mandantenfeld unter keinen Umständen an; dafür
   gab es früher die Notbremse „bleibt lieber leer", die jetzt der Fall „genau eines" ersetzt.
+- **Das Gegnerkennzeichen hat zwei Bestände, und beide werden angeboten.** Der Vorgang kennt es aus
+  der Referenz (`Nr/Jahr Abteilung_Kennzeichen`), die übernommene Zentralruf-Antwort aus dem
+  Bestand des Zentralrufs. Sie können auseinanderlaufen — ein Vertipper beim Start, ein anderer
+  Wagen desselben Halters. `VorgangPrefillMatcher` belegt weiterhin den ersten vor
+  (`vorgang.kennzeichen ?? antwort?.kennzeichen`); `DatenquelleVorschlaege` bietet beide zur Wahl,
+  in derselben Rangfolge. Wer nur einen anböte, machte die Abweichung unsichtbar, statt sie zur
+  Frage zu machen.
+
 - **`InputType.kennzeichen` steht in keiner Bestandsvorlage.** Der Wert wird erst geschrieben, wenn
   ihn jemand am Feld auswählt; bis dahin bleibt dort `text`. Das Backend hält `fields` als opakes
   JSON, aber `InputType.fromValue` wirft bei Unbekanntem — eine Vorlage mit dem neuen Wert lässt
@@ -192,3 +200,29 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   weg, und das ist die Richtung: Die Werte kommen aus mehreren Beständen und laufen ohnehin durch
   `normalizeKennzeichen` — eine strengere Prüfung beanstandete einen Wert, den die App selbst
   angeboten hat.
+
+## Mehrdeutige Kennzeichen werden nicht geraten
+
+`HGE1427` kann `HG-E 1427` oder `H-GE 1427` heißen — Unterscheidungszeichen (1–3 Buchstaben) und
+Erkennungsbuchstaben (1–2) sind beide variabel lang, und ohne Bindestrich sagt niemand, wo das
+eine endet. Das sind **zwei verschiedene Fahrzeuge.** Der frühere Ausdruck riet gierig und schrieb
+das Ergebnis wortlos in Referenz, Registereintrag und Anspruchsschreiben.
+
+`normalizeKennzeichen` teilt deshalb nur auf, wenn `kennzeichenLesarten`
+(`core/general_classes/kennzeichen_normalisierung.dart`) genau **eine** Lesart findet; sonst bleibt
+der Wert bereinigt stehen. Am Feld meldet `KennzeichenField.validator` den eigenen Schlüssel
+`mehrdeutigError` und legt die Lesarten als **Fehlerwert** ab — reactive_forms reicht ihn an die
+Meldungsfunktion durch (`String Function(Object error)`), und die Meldung nennt sie: „Mehrdeutig,
+bitte mit Bindestrich: HG-E 1427 oder H-GE 1427". Eine Meldung, die nur „ungültig" sagt, schickte
+den Anwalt auf die Suche nach einem Tippfehler, den es nicht gibt.
+
+Eindeutig bleibt, was ein Trennzeichen trägt (`HG E1427`, `hg-e 1427`) — und ohne Trennzeichen die
+Fälle, in denen nur eine Aufteilung passt: 2 Buchstaben (`HE1427` → `H-E 1427`) und 5
+(`ABCDE123` → `ABC-DE 123`).
+
+Für die Auswahlhilfe heißt das: Steht ein mehrdeutiger Wert im Bestand, wird er **so angeboten, wie
+er dort steht** — die Liste zeigt, was da ist, statt eine Aufteilung als Tatsache hinzustellen.
+Beim *Wiedererkennen* ist `gleichesKennzeichen` dagegen großzügig: Sagt eine Seite die Aufteilung,
+gilt der Wagen als derselbe (`HGE1427` = `HG-E 1427`). Die Gefahr ist dort die umgekehrte — wer
+nicht wiedererkennt, bietet denselben Wagen zweimal an und ordnet eine Zentralruf-Antwort keinem
+Vorgang zu.

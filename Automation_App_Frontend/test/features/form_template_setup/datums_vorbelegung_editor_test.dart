@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/datums_vorbelegung_editor.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/ganzzahl_feld_klein.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,9 +38,18 @@ void main() {
     return gemeldet;
   }
 
-  /// Das Eingabefeld hinter einem Beschriftungstext.
-  Finder feldMit(String label) =>
-      find.ancestor(of: find.text(label), matching: find.byType(TextField));
+  /// Das Eingabefeld zu einem Beschriftungstext. Beschriftung und Feld stehen
+  /// als Geschwister in derselben `GanzzahlFeldKlein` — deshalb erst dieses
+  /// Widget suchen und darin das `TextField`, statt eine Vorfahren-Beziehung
+  /// zwischen Text und Feld anzunehmen, die es seit der Beschriftung
+  /// ausserhalb des Rahmens nicht mehr gibt.
+  Finder feldMit(String label) => find.descendant(
+    of: find.ancestor(
+      of: find.text(label),
+      matching: find.byType(GanzzahlFeldKlein),
+    ),
+    matching: find.byType(TextField),
+  );
 
   String textVon(Finder feld) =>
       (feld.evaluate().single.widget as TextField).controller!.text;
