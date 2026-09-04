@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
@@ -212,7 +213,7 @@ class _AktenAblageSectionState extends State<AktenAblageSection> {
   }
 
   void _hinweis(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    Rueckmeldung.zeigeHinweis(context, text);
   }
 
   @override

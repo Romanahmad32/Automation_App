@@ -1,23 +1,20 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Meldet Fehler beim Lesen einer Word-Datei (z. B. Datei in Word geöffnet)
-/// als Snackbar — zusätzlich zum Inline-Text in der Platzhalter-Box.
-class PlatzhalterFehlerMelder extends StatefulWidget {
+/// über [Rueckmeldung] — zusätzlich zum Inline-Text in der Platzhalter-Box.
+///
+/// Braucht keine eigene Dublettenprüfung mehr (Issue #56): Liefert der Bloc
+/// denselben Fehlerzustand erneut aus — etwa weil der andere Slot sich ändert
+/// und die ganze Zustandsliste neu emittiert wird —, erkennt
+/// `RueckmeldungsInhalt.gleichWie` dieselbe stehende Meldung und startet nur
+/// ihren Timer neu, statt sie zu verdoppeln.
+class PlatzhalterFehlerMelder extends StatelessWidget {
   final Widget child;
 
   const PlatzhalterFehlerMelder({super.key, required this.child});
-
-  @override
-  State<PlatzhalterFehlerMelder> createState() =>
-      _PlatzhalterFehlerMelderState();
-}
-
-class _PlatzhalterFehlerMelderState extends State<PlatzhalterFehlerMelder> {
-  // Zuletzt je Slot angezeigte Fehlermeldung, um Snackbar-Wiederholungen
-  // bei jedem Rebuild zu vermeiden.
-  final Map<TemplateFileSlot, String?> _lastErrorShown = {};
 
   @override
   Widget build(BuildContext context) {
@@ -25,18 +22,12 @@ class _PlatzhalterFehlerMelderState extends State<PlatzhalterFehlerMelder> {
       listener: (context, state) {
         for (final slot in TemplateFileSlot.values) {
           final result = state.forSlot(slot);
-          final message = result is SlotPlaceholdersError
-              ? result.message
-              : null;
-          if (message != null && _lastErrorShown[slot] != message) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(message)));
+          if (result is SlotPlaceholdersError) {
+            Rueckmeldung.zeigeFehler(context, result.message);
           }
-          _lastErrorShown[slot] = message;
         }
       },
-      child: widget.child,
+      child: child,
     );
   }
 }

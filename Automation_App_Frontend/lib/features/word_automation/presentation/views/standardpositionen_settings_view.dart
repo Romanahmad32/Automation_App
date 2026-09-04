@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
@@ -89,11 +90,7 @@ class _StandardpositionenSettingsViewState
       beiUebergang: (context, stand) {
         if (stand is KanzleiSettingsLoaded &&
             stand.gespeichert == KanzleiSettingsBereich.schadensaufstellung) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(content: Text('Tabellenfarbe gespeichert.')),
-            );
+          Rueckmeldung.zeigeErfolg(context, 'Tabellenfarbe gespeichert.');
         }
       },
       builder: (context, stand) => SingleChildScrollView(
