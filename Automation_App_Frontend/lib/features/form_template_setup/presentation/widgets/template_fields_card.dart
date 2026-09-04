@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
@@ -20,6 +21,12 @@ class TemplateFieldsCard extends StatelessWidget {
   final void Function(int index, FeldDatenquelle? newValue)
   onDatenquelleChanged;
   final void Function(int index, bool? value) onRequiredChanged;
+
+  /// Datums-Vorbelegung einer Zeile geändert (§5.3). Ohne Rückmeldung bleibt
+  /// der Einsteller wirkungslos — die Karte kommt in Tests auch ohne vor.
+  final void Function(int index, DatumsVorbelegung? neuerWert)?
+  onVorbelegungChanged;
+
   final void Function(int index) onDelete;
 
   /// Klick auf das Kennzeichen „in keiner Datei" einer Zeile (#36).
@@ -35,6 +42,7 @@ class TemplateFieldsCard extends StatelessWidget {
     required this.onDatenquelleChanged,
     required this.onRequiredChanged,
     required this.onDelete,
+    this.onVorbelegungChanged,
     this.onZuordnen,
   });
 
@@ -98,6 +106,8 @@ class TemplateFieldsCard extends StatelessWidget {
                   onDatenquelleChanged: (newValue) =>
                       onDatenquelleChanged(index, newValue),
                   onRequiredChanged: (value) => onRequiredChanged(index, value),
+                  onVorbelegungChanged: (wert) =>
+                      onVorbelegungChanged?.call(index, wert),
                   onDelete: () => onDelete(index),
                   onZuordnen: onZuordnen == null
                       ? null

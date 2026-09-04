@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
@@ -15,7 +16,7 @@ String baueReferenz(FormGroup form, String rechtsgebiet) {
   final abteilung = AbteilungKuerzel.normalisiere(valueOf('abteilung'));
   final basis = '$nummer/${jahr.toString().padLeft(2, '0')} $abteilung';
   if (!RechtsgebietWert.istVerkehrsrecht(rechtsgebiet)) return basis;
-  final kennzeichen = valueOf('kennzeichenGegner').toUpperCase();
+  final kennzeichen = kennzeichenAusFormular(valueOf('kennzeichenGegner'));
   return kennzeichen.isEmpty ? basis : '${basis}_$kennzeichen';
 }
 
@@ -36,11 +37,22 @@ VorgangStartenDaten leseVorgangDaten(FormGroup form, String rechtsgebiet) {
     ort: v('mandantOrt'),
     emailAdresse: v('mandantEmail'),
     telefonnummer: v('mandantTelefon'),
-    mandantKennzeichen: v('mandantKennzeichen').toUpperCase(),
-    kennzeichenGegner: v('kennzeichenGegner').toUpperCase(),
+    mandantKennzeichen: kennzeichenAusFormular(v('mandantKennzeichen')),
+    kennzeichenGegner: kennzeichenAusFormular(v('kennzeichenGegner')),
     unfalltag: GermanDateField.parseDate(v('schadentag')),
     unfallort: v('unfallort'),
     unfalluhrzeit: v('unfalluhrzeit'),
     polizeiVorgangsnummer: v('polizeiVorgangsnummer'),
   );
 }
+
+/// Ein Kennzeichen in der Konvention `HG-E 1427`.
+///
+/// Das Feld stellt sie beim Verlassen selbst her (`KennzeichenField`) — hier
+/// wird sie ein zweites Mal angewandt, weil ein eingefügter Wert das Feld nie
+/// verlassen haben muss: Wer `hge1427` einfügt und sofort auf „Speichern"
+/// klickt, hätte den Rohwert in Referenz, Vorgang und Registereintrag stehen.
+/// Was sich nicht als Kennzeichen lesen lässt, bleibt großgeschrieben stehen
+/// statt zu verschwinden.
+String kennzeichenAusFormular(String wert) =>
+    normalizeKennzeichen(wert) ?? wert.toUpperCase();

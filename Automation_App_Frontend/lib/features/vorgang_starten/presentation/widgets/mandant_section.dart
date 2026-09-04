@@ -1,15 +1,15 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
+import 'package:automation_app/core/general_widgets/form/auswahl_kandidat.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
-import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_kennzeichen_auswahl.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_speichern_button.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_ungespeichert_hinweis.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_vorschlag_banner.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_reader.dart';
-import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -25,10 +25,6 @@ class MandantSection extends StatelessWidget {
 
   /// Hebt die Verknüpfung zum gewählten Mandanten auf (Auswahl „(neuer Mandant)").
   final VoidCallback onAuswahlAufheben;
-
-  /// Übernimmt ein gespeichertes Kennzeichen des gewählten Mandanten in das
-  /// Kennzeichen-Feld (leerer String hebt die Auswahl auf).
-  final ValueChanged<String> onKennzeichenGewaehlt;
 
   /// Aktuelles Rechtsgebiet (für das Auslesen der Formularwerte). Seit #70 ein
   /// freier String aus dem Sachgebietskatalog, kein Enum mehr.
@@ -49,7 +45,6 @@ class MandantSection extends StatelessWidget {
     required this.selectedMandantId,
     required this.onMandantGewaehlt,
     required this.onAuswahlAufheben,
-    required this.onKennzeichenGewaehlt,
     required this.rechtsgebiet,
     required this.vorgaengeAmMandanten,
     required this.onMandantBestaetigt,
@@ -63,9 +58,15 @@ class MandantSection extends StatelessWidget {
     return null;
   }
 
-  /// Die beim aktuell gewählten Mandanten gespeicherten Kennzeichen (0..n).
-  List<String> get _gespeicherteKennzeichen =>
-      _gewaehlterMandant?.kennzeichen ?? const [];
+  /// Die beim aktuell gewählten Mandanten gespeicherten Kennzeichen (0..n) —
+  /// als Kandidaten des Auswahldialogs am Kennzeichenfeld. Dieselbe
+  /// Auswahlhilfe wie im Ausfüllschritt, statt einer eigenen Chipreihe: ein
+  /// Angebot, das die freie Eingabe nicht verstellt.
+  List<AuswahlKandidat> get _gespeicherteKennzeichen => [
+    for (final kennzeichen
+        in _gewaehlterMandant?.kennzeichen ?? const <String>[])
+      AuswahlKandidat(kennzeichen, 'aus dem Mandantenregister'),
+  ];
 
   /// Ob die beiden formatgeprüften Mandantenfelder in Ordnung sind. Nur sie:
   /// Die übrigen Pflichten (Auftragsnummer, Unfalldaten) hängen am Vorgang und
@@ -194,16 +195,10 @@ class MandantSection extends StatelessWidget {
                 ),
               ],
             ),
-            if (_gespeicherteKennzeichen.isNotEmpty)
-              MandantKennzeichenAuswahl(
-                kennzeichen: _gespeicherteKennzeichen,
-                formControlName: 'mandantKennzeichen',
-                onGewaehlt: onKennzeichenGewaehlt,
-              ),
-            GeneralTextField<String>(
+            KennzeichenField(
               labelText: 'Kfz-Kennzeichen des Mandanten (z. B. HG-E 1427)',
               formControlName: 'mandantKennzeichen',
-              validationMessages: kennzeichenMessages,
+              kandidaten: _gespeicherteKennzeichen,
             ),
             if (ungespeichert) const MandantUngespeichertHinweis(),
             MandantSpeichernButton(

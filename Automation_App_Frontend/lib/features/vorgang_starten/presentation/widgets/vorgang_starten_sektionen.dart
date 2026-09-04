@@ -25,7 +25,6 @@ class VorgangStartenSektionen extends StatelessWidget {
   final int? selectedMandantId;
   final ValueChanged<Mandant> onMandantGewaehlt;
   final VoidCallback onAuswahlAufheben;
-  final ValueChanged<String> onKennzeichenGewaehlt;
   final int vorgaengeAmMandanten;
   final void Function(MandantAenderungsart art, VorgangStartenDaten daten)
   onMandantBestaetigt;
@@ -43,7 +42,6 @@ class VorgangStartenSektionen extends StatelessWidget {
     required this.selectedMandantId,
     required this.onMandantGewaehlt,
     required this.onAuswahlAufheben,
-    required this.onKennzeichenGewaehlt,
     required this.vorgaengeAmMandanten,
     required this.onMandantBestaetigt,
     required this.onVorlageAusfuellen,
@@ -76,7 +74,6 @@ class VorgangStartenSektionen extends StatelessWidget {
                 rechtsgebiet: rechtsgebiet,
                 onMandantGewaehlt: onMandantGewaehlt,
                 onAuswahlAufheben: onAuswahlAufheben,
-                onKennzeichenGewaehlt: onKennzeichenGewaehlt,
                 vorgaengeAmMandanten: vorgaengeAmMandanten,
                 onMandantBestaetigt: onMandantBestaetigt,
               ),

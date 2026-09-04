@@ -1,8 +1,11 @@
+import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/sachgebiet_katalog_builder.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_dialog_field.dart';
 import 'package:flutter/material.dart';
 
 /// Führt die Referenzänderung aus (konfliktgeprüft im Backend, siehe
@@ -54,6 +57,9 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
 
   /// Fehlermeldung einer abgewiesenen Referenzänderung (z. B. schon vergeben).
   String? _referenzFehler;
+
+  /// Meldung am Kennzeichenfeld, wenn der Wert sich nicht lesen lässt.
+  String? _kennzeichenFehler;
   bool _speichert = false;
 
   @override
@@ -88,8 +94,25 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
   }
 
   Future<void> _speichern() async {
+    // Der Dialog führt kein reactive_forms mit sich; geprüft wird deshalb hier,
+    // beim Speichern. Was eindeutig lesbar ist, geht in der Konvention
+    // `HG-E 1427` in den Bestand — an dem Wert hängt die Zuordnung einer
+    // Zentralruf-Antwort, und die vergleicht normalisiert
+    // (`gleichesKennzeichen`). Mehrdeutiges bleibt stehen und wird beanstandet,
+    // statt geraten zu werden: `HGE1427` ist zwei verschiedene Fahrzeuge.
+    final kennzeichen =
+        normalizeKennzeichen(_geschaedigtenKennzeichen.text)?.trim() ?? '';
+    final beanstandung = kennzeichen.isEmpty
+        ? null
+        : KennzeichenField.beanstandung(kennzeichen);
+    if (beanstandung != null) {
+      setState(() => _kennzeichenFehler = beanstandung);
+      return;
+    }
+
     setState(() {
       _referenzFehler = null;
+      _kennzeichenFehler = null;
       _speichert = true;
     });
 
@@ -117,7 +140,7 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
       rechtsgebiet: _rechtsgebiet,
       mandantName: _mandantName.text.trim(),
       gegner: _gegner.text.trim(),
-      geschaedigtenKennzeichen: _geschaedigtenKennzeichen.text.trim(),
+      geschaedigtenKennzeichen: kennzeichen,
       unfallDatum: _unfallDatum.text.trim(),
       unfallort: _unfallort.text.trim(),
       unfalluhrzeit: _unfalluhrzeit.text.trim(),
@@ -166,6 +189,7 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
               VorgangDialogField(
                 controller: _geschaedigtenKennzeichen,
                 label: 'Kennzeichen Mandant (z. B. HG-E 1427)',
+                errorText: _kennzeichenFehler,
               ),
               VorgangDialogField(
                 controller: _unfallDatum,
@@ -248,34 +272,6 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
           child: const Text('Speichern'),
         ),
       ],
-    );
-  }
-}
-
-/// Ein beschriftetes Textfeld im Bearbeiten-Dialog — eigenständig, damit kein
-/// privates Hilfs-Widget nötig ist und es wiederverwendbar bleibt.
-class VorgangDialogField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-
-  const VorgangDialogField({
-    super.key,
-    required this.controller,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          isDense: true,
-        ),
-      ),
     );
   }
 }

@@ -160,8 +160,13 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 ## Vorhandene Bausteine (`lib/core/general_widgets/`)
 
-- `form/` — `GeneralTextField`, `GermanDateField`, `FormSection`, `FormWertBeobachter`,
-  `TexteListenEditor`; dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
+- `form/` — `GeneralTextField`, `GermanDateField`, `AuswahlTextField` (Textfeld, dessen Symbol den
+  `AuswahlDialog` über bekannte Werte öffnet — je Wert ein `AuswahlKandidat` mit Herkunftszeile;
+  ohne Kandidaten kein Symbol), `KennzeichenField` (**jedes** Kfz-Kennzeichen-Feld der App: prüft
+  tolerant `KennzeichenField.validator` und stellt die Konvention `HG-E 1427` beim Verlassen selbst
+  her — nie eine zweite Kennzeichenprüfung danebenbauen), `FormSection`, `FormWertBeobachter`,
+  `TexteListenEditor` (Chips über einem Eingabefeld, mit `normalisiere` vor Prüfung und
+  Dublettenvergleich); dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
   (rechtsbündig, mit Ring beim Schreiben) und `HinzufuegenButton` (linksbündig, **unter**
   der Liste — eine Handlung sieht anders aus als der Bestand, an dem sie arbeitet)
 - `buttons/` — `CustomRectangularButton`; `buttons/dropdowns/` — `SearchableDropdown`

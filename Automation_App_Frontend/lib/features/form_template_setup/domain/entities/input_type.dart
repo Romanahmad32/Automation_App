@@ -1,8 +1,19 @@
 enum InputType {
-  integer(name: 'Ganzzahl eingabe', value: 'integer'),
+  integer(name: 'Ganzzahl', value: 'integer'),
   text(name: 'Textfeld', value: 'text'),
-  date(name: 'Datum eigabe', value: 'date'),
-  decimal(name: 'Kommazahl eingabe', value: 'decimal');
+  date(name: 'Datum', value: 'date'),
+  decimal(name: 'Kommazahl', value: 'decimal'),
+
+  /// Kfz-Kennzeichen in der Domaenen-Konvention `HG-E 1427`. Ein Textfeld mit
+  /// Formatpruefung und der Auswahlhilfe aus den bekannten Kennzeichen des
+  /// Vorgangs und des Mandantenregisters (#17).
+  ///
+  /// **Bestehende Vorlagen bleiben unberuehrt.** Der Wert `kennzeichen` wird
+  /// erst in eine Vorlage geschrieben, wenn ihn jemand am Feld auswaehlt; bis
+  /// dahin steht dort weiter `text`. Das Backend haelt `fields` als opakes
+  /// JSON und reicht den Wert nur durch — nur Dart kennt das Schema (siehe
+  /// FALLSTRICKE.md), und [fromValue] wirft deshalb bei allem Unbekannten.
+  kennzeichen(name: 'Kennzeichen', value: 'kennzeichen');
 
   final String name;
 

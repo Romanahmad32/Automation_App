@@ -1,17 +1,18 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
-import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
+import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
-import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/verwendete_felder.dart';
+import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/ausfuell_feld.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/nicht_verwendete_felder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/pflichtfelder_hinweis.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 class FormTemplateBuilder extends StatelessWidget {
@@ -69,6 +70,15 @@ class FormTemplateBuilder extends StatelessWidget {
   /// ist nichts bekannt, wird alles gezeigt.
   final Set<String>? aktivePlatzhalter;
 
+  /// Bekannte Werte je Feldname, unter denen der Anwalt wählen darf (#17) —
+  /// gerechnet von `DatenquelleVorschlaege` und hier nur durchgereicht.
+  ///
+  /// Nicht zu verwechseln mit [initialValues]: Das ist der *eine* Wert, mit dem
+  /// ein Feld belegt wird; dies sind die, unter denen es keine eindeutige Wahl
+  /// gibt (drei Fahrzeuge des Mandanten). Beides kann an einem Feld gleichzeitig
+  /// stehen: vorbelegt mit dem naheliegenden Wert, umschaltbar auf die anderen.
+  final Map<String, List<FeldVorschlag>> vorschlaege;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
@@ -81,6 +91,7 @@ class FormTemplateBuilder extends StatelessWidget {
     this.aufbauMarke = 0,
     this.onFeldBearbeiten,
     this.aktivePlatzhalter,
+    this.vorschlaege = const {},
   });
 
   @override
@@ -128,12 +139,14 @@ class FormTemplateBuilder extends StatelessWidget {
                     erfassteWerte[e.label] ??
                     initialValues[e.label] ??
                     (e.inputType == InputType.date && verwendet
-                        ? GermanDateField.formatDate(_defaultDateFor(e.label))
+                        ? GermanDateField.formatDate(_defaultDateFor(e))
                         : null),
                 validators: [
                   if (_istPflicht(e)) Validators.required,
                   if (e.inputType == InputType.date && verwendet)
                     GermanDateField.validator(),
+                  if (e.inputType == InputType.kennzeichen && verwendet)
+                    Validators.delegate(KennzeichenField.validator),
                 ],
               ),
             );
@@ -152,14 +165,11 @@ class FormTemplateBuilder extends StatelessWidget {
           child: Column(
             spacing: 16,
             children: [
-              ...aufteilung.verwendet.map((field) {
-                return _buildZeile(context, field);
-              }),
+              ...aufteilung.verwendet.map(_buildZeile),
               if (aufteilung.uebrig.isNotEmpty)
                 NichtVerwendeteFelder(
                   felder: [
-                    for (final field in aufteilung.uebrig)
-                      _buildZeile(context, field),
+                    for (final field in aufteilung.uebrig) _buildZeile(field),
                   ],
                 ),
               const SizedBox(height: 8),
@@ -222,14 +232,14 @@ class FormTemplateBuilder extends StatelessWidget {
   /// Das Feld, bei Bedarf mit dem Stift daneben. Der Stift sitzt **am Feld**
   /// und nicht in einer Werkzeugleiste: Er soll dort sein, wo der Anwalt gerade
   /// stutzt („dieses Feld will ich gar nicht ausfüllen müssen").
-  Widget _buildZeile(BuildContext context, FieldData field) {
+  Widget _buildZeile(FieldData field) {
     final bearbeiten = onFeldBearbeiten;
-    if (bearbeiten == null) return _buildField(context, field);
+    if (bearbeiten == null) return _buildField(field);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _buildField(context, field)),
+        Expanded(child: _buildField(field)),
         Padding(
           // Auf die Höhe des Eingabefelds gerückt, nicht auf die der Zeile:
           // Unter dem Feld steht oft noch eine Hinweiszeile.
@@ -281,59 +291,19 @@ class FormTemplateBuilder extends StatelessWidget {
         .join(',');
   }
 
-  Widget _buildField(BuildContext context, FieldData field) {
-    final validationMessages = _istPflicht(field)
+  /// Das Feld selbst: Aussehen, Auswahlhilfe und die Meldungen der
+  /// Validatoren, die oben an der FormGroup hängen.
+  Widget _buildField(FieldData field) => AusfuellFeld(
+    field: field,
+    helperText: _helperText(field),
+    helperMaxLines: _helperZeilen,
+    validationMessages: _istPflicht(field)
         ? {
             ValidationMessage.required: (Object _) =>
                 '${field.label} ist ein Pflichtfeld',
           }
-        : <String, String Function(Object)>{};
-
-    switch (field.inputType) {
-      case InputType.date:
-        // Direkt tippbar (Format prüft GermanDateField.validator);
-        // das Kalender-Icon öffnet zusätzlich den Auswahl-Dialog.
-        return GermanDateField(
-          formControlName: field.label,
-          labelText: field.label,
-          helperText: _helperText(field),
-          helperMaxLines: _helperZeilen,
-          validationMessages: validationMessages,
-        );
-      case InputType.integer:
-        return GeneralTextField<String>(
-          formControlName: field.label,
-          labelText: field.label,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validationMessages: validationMessages,
-          inputDecoration: _decoration(field),
-        );
-      case InputType.decimal:
-        return GeneralTextField<String>(
-          formControlName: field.label,
-          labelText: field.label,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-          ],
-          validationMessages: validationMessages,
-          inputDecoration: _decoration(field),
-        );
-      case InputType.text:
-        return GeneralTextField<String>(
-          formControlName: field.label,
-          labelText: field.label,
-          keyboardType: TextInputType.text,
-          validationMessages: validationMessages,
-          inputDecoration: _decoration(field),
-        );
-    }
-  }
-
-  InputDecoration _decoration(FieldData field) => InputDecoration(
-    helperText: _helperText(field),
-    helperMaxLines: _helperZeilen,
+        : const {},
+    vorschlaege: vorschlaege[field.label] ?? const [],
   );
 
   /// Die Hinweiszeile darf umbrechen. Das Formular steht in der 450 px breiten
@@ -354,14 +324,11 @@ class FormTemplateBuilder extends StatelessWidget {
     return pflicht == null ? vorbelegt : '$pflicht · $vorbelegt';
   }
 
-  /// Zahlungsfrist-Felder werden mit Generierungsdatum + 5 Wochen vorbelegt,
-  /// alle anderen Datumsfelder mit dem heutigen Datum.
-  ///
-  /// Verglichen wird über [FeldDatenquelleErkennung.normalisiere], nicht über
-  /// ein blosses `toLowerCase()`: sonst bekäme `{{Zahlungs-Frist}}` die
-  /// Vorbelegung nicht, obwohl dasselbe gemeint ist.
-  static DateTime _defaultDateFor(String label) =>
-      FeldDatenquelleErkennung.normalisiere(label).contains('zahlungsfrist')
-      ? DateTime.now().add(const Duration(days: 35))
-      : DateTime.now();
+  /// Vorschlag für ein Datumsfeld: die am Feld eingestellte
+  /// [DatumsVorbelegung], sonst die Namensregel als Rückfall. Was die beiden
+  /// unterscheidet und warum hier kein [Duration] gerechnet wird, steht an der
+  /// Entität.
+  static DateTime _defaultDateFor(FieldData field) =>
+      (field.vorbelegung ?? DatumsVorbelegung.ausFeldname(field.label))
+          .anwendenAuf(DateTime.now());
 }

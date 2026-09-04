@@ -253,6 +253,82 @@ void main() {
 
       expect(result.containsKey('Kennzeichen des Geschädigten'), isFalse);
     });
+
+    /// #17: Kennt der Vorgang das eigene Fahrzeug nicht, springt das Register
+    /// ein — aber nur, wenn es **eindeutig** ist.
+    test('kommt aus dem Register, wenn dort genau eines steht', () {
+      final result = VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
+        ungebunden(['Kennzeichen Mandant']),
+        vorgang(),
+        mandant: mandant.copyWith(kennzeichen: ['HG-E 1427']),
+      );
+
+      expect(result['Kennzeichen Mandant']?.wert, 'HG-E 1427');
+      // Die Herkunftszeile am Feld muss den Bestand nennen, aus dem der Wert
+      // wirklich kam — sonst sucht der Anwalt den Fehler im falschen Register.
+      expect(result['Kennzeichen Mandant']?.quelle, PrefillQuelle.mandant);
+    });
+
+    test('der Vorgang schlägt das Register', () {
+      final result = VorgangPrefillMatcher.matchTemplateFieldsMitHerkunft(
+        ungebunden(['Kennzeichen Mandant']),
+        vorgang(geschaedigtenKennzeichen: 'HG-E 1427'),
+        mandant: mandant.copyWith(kennzeichen: ['F-AB 12']),
+      );
+
+      expect(result['Kennzeichen Mandant']?.wert, 'HG-E 1427');
+      expect(result['Kennzeichen Mandant']?.quelle, PrefillQuelle.vorgang);
+    });
+
+    /// Der Kern der Entscheidung: Mehrere Fahrzeuge sind eine **Auswahl**, und
+    /// welches im Unfall stand, weiß das Register nicht. Eines davon zu nehmen
+    /// wäre in jedem zweiten Fall das falsche — und es stünde ungeprüft im
+    /// Anspruchsschreiben (§1.3). Angeboten werden sie am Feld
+    /// (`DatenquelleVorschlaege`).
+    test('mehrere im Register belegen nichts vor', () {
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        ungebunden(['Kennzeichen Mandant']),
+        vorgang(),
+        mandant: mandant.copyWith(kennzeichen: ['HG-E 1427', 'F-AB 12']),
+      );
+
+      expect(result.containsKey('Kennzeichen Mandant'), isFalse);
+    });
+
+    test('ein leerer Eintrag im Register zählt nicht mit', () {
+      final result = VorgangPrefillMatcher.matchTemplateFields(
+        ungebunden(['Kennzeichen Mandant']),
+        vorgang(),
+        mandant: mandant.copyWith(kennzeichen: ['  ', 'F-AB 12']),
+      );
+
+      expect(result['Kennzeichen Mandant'], 'F-AB 12');
+    });
+
+    /// Über alle vier Fälle hinweg: Das Kennzeichen des Gegners (`GG-XY 123`
+    /// aus Referenz und Antwort) kommt im Mandantenfeld nie an.
+    test('in keinem Fall rückt das Kennzeichen des Gegners ein', () {
+      final register = [
+        <String>[],
+        ['HG-E 1427'],
+        ['HG-E 1427', 'F-AB 12'],
+      ];
+      for (final eintraege in register) {
+        for (final eigenes in [null, 'WI-CD 345']) {
+          final result = VorgangPrefillMatcher.matchTemplateFields(
+            ungebunden(['Kennzeichen Mandant']),
+            vorgang(geschaedigtenKennzeichen: eigenes),
+            mandant: mandant.copyWith(kennzeichen: eintraege),
+          );
+
+          expect(
+            result['Kennzeichen Mandant'],
+            isNot(anyOf('GG-XY 123', 'GG XY 123')),
+            reason: 'Register $eintraege, eigenes $eigenes',
+          );
+        }
+      }
+    });
   });
 
   test('bindet mehrdeutige Platzhalter nicht', () {

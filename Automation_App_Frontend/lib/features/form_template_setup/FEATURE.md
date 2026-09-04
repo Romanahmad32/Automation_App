@@ -7,8 +7,8 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 **Zustand:** `presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart`,
 `presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart`,
 `presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`
-**Domain:** `FormTemplate`, `FieldData`, `InputType`, `FeldDatenquelle` (+ `platzhalter`, `gruppe`, `frueher`),
-`PlatzhalterGruppe`, `PlatzhalterEintrag`, `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung`
+**Domain:** `FormTemplate`, `FieldData`, `DatumsVorbelegung`, `InputType`, `FeldDatenquelle` (+ `platzhalter`, `gruppe`,
+`frueher`), `PlatzhalterGruppe`, `PlatzhalterEintrag`, `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung`
 (+ `DatenquelleVorschlag`), `PlatzhalterKatalog`, `AppEigenePlatzhalter`, `PlatzhalterUebernahme`,
 `FeldVorkommen`, `PlatzhalterZuordnung`, `VerwendeteFelder` (welche Felder die aktive Word-Datei einsetzt, #82);
 `GetFormTemplates`, `CreateFormTemplate`, `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
@@ -16,7 +16,7 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 `PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
 `Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
 **Tests:** `test/features/form_template_setup/` — `feld_datenquelle_erkennung_test.dart`,
-`feld_vorkommen_test.dart`, `feld_vorkommen_badge_test.dart`, `verwendete_felder_test.dart`
+`feld_vorkommen_test.dart`, `feld_vorkommen_badge_test.dart`, `verwendete_felder_test.dart`, `datums_vorbelegung_test.dart`
 
 **Fallstricke**
 
@@ -36,5 +36,5 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 - Beim Übernehmen eines Platzhalters schlägt `FeldDatenquelleErkennung` Feldtyp und Datenquelle
   vor — sichtbar im Dropdown und änderbar, nie stillschweigend gesetzt (§1.3). Dieselbe Erkennung
   löst zur Laufzeit die Felder auf, an denen nie eine Quelle gesetzt wurde.
-- Der lange Rest steht in `FALLSTRICKE.md` daneben: Erkennungsregeln und mehrdeutige Namen,
-  erlaubte Zeichen im Platzhalter, Slot „mit Auflistung“, Word-Pfad und `FormTemplateOverviewBloc`.
+- Der lange Rest steht in `FALLSTRICKE.md` daneben: Erkennungsregeln, mehrdeutige Namen, erlaubte
+  Zeichen im Platzhalter, Slot „mit Auflistung“, Word-Pfad, `FormTemplateOverviewBloc`, Vorbelegung.
