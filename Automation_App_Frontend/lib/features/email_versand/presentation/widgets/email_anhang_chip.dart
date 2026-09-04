@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_oeffner.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/anhang_umbenennen_dialog.dart';
@@ -60,18 +61,14 @@ class _EmailAnhangChipState extends State<EmailAnhangChip> {
   }
 
   Future<void> _oeffnen(BuildContext context) async {
-    final melder = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
     if (await AnhangOeffner.oeffne(widget.pfad)) return;
 
-    melder.showSnackBar(
-      SnackBar(
-        content: Text(
-          '„${widget.name}" lässt sich nicht öffnen — liegt die Datei noch dort?',
-        ),
-        action: SnackBarAction(
-          label: 'Im Ordner zeigen',
-          onPressed: () => AnhangOeffner.zeigeImOrdner(widget.pfad),
-        ),
+    melder.hinweis(
+      '„${widget.name}" lässt sich nicht öffnen — liegt die Datei noch dort?',
+      aktion: RueckmeldungsAktion(
+        text: 'Im Ordner zeigen',
+        beiDruck: () => AnhangOeffner.zeigeImOrdner(widget.pfad),
       ),
     );
   }

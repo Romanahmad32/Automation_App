@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
@@ -80,9 +81,7 @@ class EmailVersandDialog extends StatelessWidget {
 
     final punkt = cubit.state.pruefung.erster;
     if (punkt != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(punkt)));
+      Rueckmeldung.zeigeHinweis(context, punkt);
     }
     return false;
   }

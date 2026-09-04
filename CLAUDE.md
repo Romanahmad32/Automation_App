@@ -33,8 +33,7 @@ gewöhnliche Windows-Anwendung, kein separater Serverstart, kein Terminal. **Das
 beendet ihn wieder.
 
 Fachliche Konvention: Kfz-Kennzeichen mit Bindestrich, z. B. `HG-E 1427`
-(Unterscheidungszeichen-Erkennungsbuchstaben Nummer) — in Hinweisen, Prüfungen und erzeugten
-Dokumenten.
+(Unterscheidungszeichen-Erkennungsbuchstaben Nummer) — in Hinweisen, Prüfungen und erzeugten Dokumenten.
 
 ## Bevor du anfängst — was lesen?
 
@@ -51,6 +50,7 @@ Dokumenten.
 | wissen, welche Rechte, Hooks, Befehle und Skills gelten | [`.claude/README.md`](.claude/README.md) |
 | das Postfach anbinden (welcher Weg? 1&1/IONOS, Gmail) | [`docs/POSTFACH_SETUP.md`](docs/POSTFACH_SETUP.md) |
 | das Postfach an Outlook/M365 anbinden (Azure-Einrichtung) | [`docs/OUTLOOK_SETUP.md`](docs/OUTLOOK_SETUP.md) |
+| ein GitHub-Issue lösen, oder einen Subagenten beauftragen | Skill `issue-loesen` bzw. `subagent-auftrag` |
 
 ## Landkarte
 
@@ -155,6 +155,7 @@ Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Tes
 | Dateilänge ≤ 250 Anweisungszeilen, ≤ 450 gesamt | `test/architecture/file_length_test.dart`, `Architecture/DateilaengeTests.cs` |
 | Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
 | Benennung von Datasources/Repositories | `test/architecture/benennung_test.dart` |
+| Flüchtige Meldungen nur über `Rueckmeldung`, kein direkter `ScaffoldMessenger` | `test/architecture/rueckmeldung_test.dart` |
 | Schichten (Clean Architecture / senkrechte Schnitte) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
 | Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs`, `test/architecture/http_vertrag_test.dart` |

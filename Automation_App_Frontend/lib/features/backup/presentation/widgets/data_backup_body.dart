@@ -1,5 +1,6 @@
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_state.dart';
 import 'package:automation_app/features/backup/presentation/widgets/sicherungs_stand_zeile.dart';
@@ -71,22 +72,12 @@ class _DataBackupBodyState extends State<DataBackupBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return BlocConsumer<BackupCubit, BackupState>(
       listener: (context, state) {
         if (state is BackupErfolg) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(state.meldung)));
+          Rueckmeldung.zeigeErfolg(context, state.meldung);
         } else if (state is BackupFehler) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(state.meldung),
-                backgroundColor: theme.colorScheme.error,
-              ),
-            );
+          Rueckmeldung.zeigeFehler(context, state.meldung);
         }
       },
       builder: (context, state) {

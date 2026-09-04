@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/import_anleitung.dart';
 import 'package:file_picker/file_picker.dart';
@@ -81,15 +82,11 @@ class ImportDateiAuswahl extends StatelessWidget {
   }
 
   Future<void> _anleitungKopieren(BuildContext context) async {
-    final bote = ScaffoldMessenger.of(context);
+    final bote = Rueckmeldung.von(context);
     await Clipboard.setData(ClipboardData(text: ImportAnleitung.text.trim()));
-    bote.showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Auftrag kopiert — auf dem Kanzleirechner einfügen, den Stammordner '
-          'eintragen und die Datei erzeugen lassen.',
-        ),
-      ),
+    bote.erfolg(
+      'Auftrag kopiert — auf dem Kanzleirechner einfügen, den Stammordner '
+      'eintragen und die Datei erzeugen lassen.',
     );
   }
 }
