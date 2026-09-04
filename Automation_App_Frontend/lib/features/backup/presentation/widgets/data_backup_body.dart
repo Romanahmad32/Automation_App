@@ -1,8 +1,10 @@
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
+import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_state.dart';
 import 'package:automation_app/features/backup/presentation/widgets/sicherungs_stand_zeile.dart';
+import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -70,7 +72,6 @@ class _DataBackupBodyState extends State<DataBackupBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return BlocConsumer<BackupCubit, BackupState>(
       listener: (context, state) {
         if (state is BackupErfolg) {
@@ -81,42 +82,35 @@ class _DataBackupBodyState extends State<DataBackupBody> {
       },
       builder: (context, state) {
         final busy = state is BackupBusy;
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Datensicherung', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Sichert alle Daten (Mandanten, Vorgänge, Einstellungen, '
-                    'erfasste Antworten) in eine einzelne Datei und spielt sie '
-                    'bei Bedarf wieder ein — etwa für ein Backup oder den Umzug '
-                    'auf einen neuen Rechner.',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: busy ? null : _sichern,
-                    icon: const Icon(Icons.save_alt),
-                    label: const Text('Daten sichern …'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: busy ? null : _einspielen,
-                    icon: const Icon(Icons.restore),
-                    label: const Text('Sicherung einspielen …'),
-                  ),
-                  const SizedBox(height: 16),
-                  DataBackupStatus(state: state),
-                  const SicherungsStandZeile(),
-                ],
-              ),
+        // Überschrift und Erläuterung liegen jetzt im `FormSection`-Kopf statt
+        // als eigene Textzeilen davor: So sieht der Reiter aus wie die
+        // übrigen fünf, und die Abstände kommen von dort.
+        return EinstellungenReiter(
+          links: [
+            FormSection(
+              icon: Icons.backup_outlined,
+              title: 'Datensicherung',
+              subtitle:
+                  'Sichert alle Daten (Mandanten, Vorgänge, Einstellungen, '
+                  'erfasste Antworten) in eine einzelne Datei und spielt sie '
+                  'bei Bedarf wieder ein — etwa für ein Backup oder den Umzug '
+                  'auf einen neuen Rechner.',
+              children: [
+                FilledButton.icon(
+                  onPressed: busy ? null : _sichern,
+                  icon: const Icon(Icons.save_alt),
+                  label: const Text('Daten sichern …'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: busy ? null : _einspielen,
+                  icon: const Icon(Icons.restore),
+                  label: const Text('Sicherung einspielen …'),
+                ),
+                DataBackupStatus(state: state),
+                const SicherungsStandZeile(),
+              ],
             ),
-          ),
+          ],
         );
       },
     );

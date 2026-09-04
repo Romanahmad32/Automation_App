@@ -13,6 +13,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_fil
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_credentials_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_imap_server_section.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_microsoft_signin_section.dart';
+import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_signatur_sektion.dart';
 import 'package:automation_app/features/settings/presentation/widgets/anredebausteine_sektion.dart';
 import 'package:automation_app/features/settings/presentation/widgets/grussformeln_sektion.dart';
@@ -67,10 +68,8 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
   /// Zuletzt geladene Konfiguration (für die Microsoft-Konto-Anzeige).
   MailboxConfig _config = MailboxConfig.empty;
 
-  final ScrollController _scrollController = ScrollController();
-
   /// Die Signatur gehört der Seite, nicht ihrem Abschnitt: Der eine
-  /// Speichern-Knopf unten liest daraus.
+  /// Speichern-Knopf in der Kopfzeile liest daraus.
   final TextEditingController _signatur = TextEditingController();
 
   /// Name der aus Outlook gelesenen, noch nicht uebernommenen Signatur.
@@ -103,7 +102,6 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _signatur.dispose();
     _signaturAusOutlook.dispose();
     super.dispose();
@@ -211,78 +209,65 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
         final isSaving = state is MailboxConfigLoading;
         final signInPending = state is MailboxMicrosoftSignInPending;
 
-        return Scrollbar(
-          controller: _scrollController,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: ReactiveForm(
-                    formGroup: _form,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 16,
-                      children: [
-                        const FormSection(
-                          icon: Icons.mark_email_unread,
-                          title: 'Postfach-Überwachung',
-                          subtitle:
-                              'Ist ein Zugang hinterlegt und die Überwachung '
-                              'eingeschaltet, erfasst die App eingehende '
-                              'Zentralruf-Antworten automatisch (erkannt über den '
-                              'Betreff). Ohne Zugang bleibt sie inaktiv.',
-                          children: [
-                            MailboxEnabledSwitch(),
-                            MailboxAuthMethodSelector(),
-                          ],
-                        ),
-                        ReactiveValueListenableBuilder<MailboxAuthMethod>(
-                          formControlName: 'authMethod',
-                          builder: (context, control, _) {
-                            final microsoft =
-                                control.value ==
-                                MailboxAuthMethod.microsoftOAuth;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              spacing: 16,
-                              children: microsoft
-                                  ? [
-                                      MailboxMicrosoftSignInSection(
-                                        config: _config,
-                                        signInPending: signInPending,
-                                      ),
-                                    ]
-                                  : [
-                                      MailboxImapCredentialsSection(
-                                        appPasswordSet: _appPasswordSet,
-                                      ),
-                                      const MailboxImapServerSection(),
-                                    ],
-                            );
-                          },
-                        ),
-                        const MailboxFilterSection(),
-                        MailSignaturSektion(
-                          controller: _signatur,
-                          vorgemerkt: _signaturAusOutlook,
-                        ),
-                        const MailVorlagenSektion(),
-                        // Anrede vor Gruss, wie sie in der Mail stehen.
-                        const AnredebausteineSektion(),
-                        const GrussformelnSektion(),
-                        SpeichernButton(
-                          speichert: isSaving,
-                          onSpeichern: signInPending ? null : _save,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+        // Links der Zugang, rechts die Textbausteine: Wer den Zugang
+        // einrichtet, tut das einmal; wer Anreden und Vorlagen pflegt, kommt
+        // immer wieder — auf einem breiten Schirm stehen beide nebeneinander,
+        // statt dass das eine unter dem anderen begraben liegt.
+        return ReactiveForm(
+          formGroup: _form,
+          child: EinstellungenReiter(
+            aktion: SpeichernButton(
+              kompakt: true,
+              speichert: isSaving,
+              onSpeichern: signInPending ? null : _save,
             ),
+            links: [
+              const FormSection(
+                icon: Icons.mark_email_unread,
+                title: 'Postfach-Überwachung',
+                subtitle:
+                    'Ist ein Zugang hinterlegt und die Überwachung '
+                    'eingeschaltet, erfasst die App eingehende '
+                    'Zentralruf-Antworten automatisch (erkannt über den '
+                    'Betreff). Ohne Zugang bleibt sie inaktiv.',
+                children: [MailboxEnabledSwitch(), MailboxAuthMethodSelector()],
+              ),
+              ReactiveValueListenableBuilder<MailboxAuthMethod>(
+                formControlName: 'authMethod',
+                builder: (context, control, _) {
+                  final microsoft =
+                      control.value == MailboxAuthMethod.microsoftOAuth;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 16,
+                    children: microsoft
+                        ? [
+                            MailboxMicrosoftSignInSection(
+                              config: _config,
+                              signInPending: signInPending,
+                            ),
+                          ]
+                        : [
+                            MailboxImapCredentialsSection(
+                              appPasswordSet: _appPasswordSet,
+                            ),
+                            const MailboxImapServerSection(),
+                          ],
+                  );
+                },
+              ),
+              const MailboxFilterSection(),
+            ],
+            rechts: [
+              MailSignaturSektion(
+                controller: _signatur,
+                vorgemerkt: _signaturAusOutlook,
+              ),
+              const MailVorlagenSektion(),
+              // Anrede vor Gruss, wie sie in der Mail stehen.
+              const AnredebausteineSektion(),
+              const GrussformelnSektion(),
+            ],
           ),
         );
       },

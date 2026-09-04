@@ -21,17 +21,15 @@ class _AppSettingsViewState extends State<AppSettingsView>
     with AutomaticKeepAliveClientMixin {
   bool _initialized = false;
 
-  // In den Einstellungen liegt diese Ansicht in einem TabBarView neben dem
-  // Postfach-Zugang. Ohne KeepAlive verwirft die TabBarView den State beim
-  // Tab-Wechsel und baut das Formular leer neu — der Bloc steht dann schon auf
-  // "Loaded", der Listener feuert nicht erneut, und die Kanzleidaten würden
-  // verschwinden (und beim Speichern mit Defaults überschrieben).
+  // Der `TraegeIndexedStack` der Einstellungsseite hält diese Ansicht schon
+  // von sich aus am Leben. KeepAlive bleibt trotzdem stehen: Es kostet nichts
+  // und hält die Ansicht auch dann heil, wenn sie wieder in einer
+  // `TabBarView` oder einer Liste landet — dort verwürfe der Wechsel den
+  // State, der Bloc stünde schon auf „Loaded", der Listener feuerte nicht
+  // erneut, und die Kanzleidaten wären weg (und würden beim Speichern mit
+  // Vorgabewerten überschrieben).
   @override
   bool get wantKeepAlive => true;
-
-  // Eigener Controller, damit die Scrollbar am rechten Seitenrand sitzt
-  // (volle Breite) und nicht am Rand der zentrierten Formularspalte.
-  final ScrollController _scrollController = ScrollController();
 
   static const List<String> _anfragertypen =
       KanzleiSettings.gueltigePersonentypen;
@@ -73,12 +71,6 @@ class _AppSettingsViewState extends State<AppSettingsView>
     // automatische Sicherung — der Ordner schaltet die Funktion ein.
     'sicherungsAblageOrdner': FormControl<String>(),
   });
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
 
   void _patch(KanzleiSettings settings) {
     _form.patchValue({
@@ -183,26 +175,12 @@ class _AppSettingsViewState extends State<AppSettingsView>
 
         final isSaving = state is KanzleiSettingsLoading;
 
-        return Scrollbar(
-          controller: _scrollController,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: ReactiveForm(
-                    formGroup: _form,
-                    child: KanzleiSettingsFormBody(
-                      isSaving: isSaving,
-                      onSave: _save,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        // Der ReactiveForm liegt über dem ganzen Reiter, nicht nur über den
+        // Feldern: Der Speichern-Knopf steht in dessen Kopfzeile und liest
+        // über den Context, ob das Formular gültig ist.
+        return ReactiveForm(
+          formGroup: _form,
+          child: KanzleiSettingsFormBody(isSaving: isSaving, onSave: _save),
         );
       },
     );

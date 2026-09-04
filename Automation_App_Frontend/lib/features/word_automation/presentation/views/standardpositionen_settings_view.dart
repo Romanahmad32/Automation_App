@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
+import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:automation_app/features/settings/presentation/widgets/tabellenkopf_farbe_field.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_editor.dart';
 import 'package:flutter/material.dart';
@@ -93,66 +95,52 @@ class _StandardpositionenSettingsViewState
           Rueckmeldung.zeigeErfolg(context, 'Tabellenfarbe gespeichert.');
         }
       },
-      builder: (context, stand) => SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: ReactiveForm(
-              formGroup: _form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Farbe der Titelzeile',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Gilt für die Schadensaufstellung in den erzeugten '
-                    'Word-Dokumenten; die Zebra-Streifen der Positionszeilen '
-                    'werden daraus abgeleitet. Eine gewählte Farbe wird '
-                    'sofort gespeichert.',
-                  ),
-                  const SizedBox(height: 12),
-                  const TabellenkopfFarbeField(),
-                  const SizedBox(height: 32),
-                  Text(
-                    'Standardpositionen der Schadensaufstellung',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Mit diesen Positionen startet jede neu begonnene '
-                    'Schadensaufstellung. Ein Betrag ist optional: Er wird nur '
-                    'vorbelegt und bleibt im Wizard änderbar; Positionen ohne '
-                    'Betrag erscheinen nicht im erzeugten Schreiben.',
-                  ),
-                  const SizedBox(height: 16),
-                  // Die Vorschau folgt dem Feld live; erst ein gültiger Wert
-                  // wechselt die Farbe, unterwegs bleibt die gespeicherte.
-                  ReactiveValueListenableBuilder<String>(
-                    formControlName: 'tabellenkopfFarbeHex',
-                    builder: (context, control, _) {
-                      final eingabe = _normalisiert(control.value);
-                      final headerColorHex = _hexMuster.hasMatch(eingabe)
-                          ? eingabe
-                          : stand is KanzleiSettingsLoaded
-                          ? stand.settings.tabellenkopfFarbeHex
-                          : null;
-                      return StandardpositionenEditor(
-                        headerColorHex: headerColorHex,
-                      );
-                    },
-                  ),
-                ],
-              ),
+      builder: (context, stand) => ReactiveForm(
+        formGroup: _form,
+        // Einspaltig und breiter als die übrigen Reiter: Der Editor zeigt die
+        // Tabelle so, wie sie im Dokument steht — in 760 px bricht sie um und
+        // die Vorschau taugt nicht mehr als Vorschau.
+        child: EinstellungenReiter(
+          breiteEinspaltig: 1000,
+          links: [
+            const FormSection(
+              icon: Icons.format_color_fill_outlined,
+              title: 'Farbe der Titelzeile',
+              subtitle:
+                  'Gilt für die Schadensaufstellung in den erzeugten '
+                  'Word-Dokumenten; die Zebra-Streifen der Positionszeilen '
+                  'werden daraus abgeleitet. Eine gewählte Farbe wird '
+                  'sofort gespeichert.',
+              children: [TabellenkopfFarbeField()],
             ),
-          ),
+            FormSection(
+              icon: Icons.table_rows_outlined,
+              title: 'Standardpositionen der Schadensaufstellung',
+              subtitle:
+                  'Mit diesen Positionen startet jede neu begonnene '
+                  'Schadensaufstellung. Ein Betrag ist optional: Er wird nur '
+                  'vorbelegt und bleibt im Wizard änderbar; Positionen ohne '
+                  'Betrag erscheinen nicht im erzeugten Schreiben.',
+              children: [
+                // Die Vorschau folgt dem Feld live; erst ein gültiger Wert
+                // wechselt die Farbe, unterwegs bleibt die gespeicherte.
+                ReactiveValueListenableBuilder<String>(
+                  formControlName: 'tabellenkopfFarbeHex',
+                  builder: (context, control, _) {
+                    final eingabe = _normalisiert(control.value);
+                    final headerColorHex = _hexMuster.hasMatch(eingabe)
+                        ? eingabe
+                        : stand is KanzleiSettingsLoaded
+                        ? stand.settings.tabellenkopfFarbeHex
+                        : null;
+                    return StandardpositionenEditor(
+                      headerColorHex: headerColorHex,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
