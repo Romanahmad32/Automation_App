@@ -397,7 +397,7 @@ void main() {
     ) async {
       await zeige(tester, vorlage([kennzeichenfeld()]));
 
-      await tester.enterText(find.byType(TextField).first, 'HGE1427');
+      await tester.enterText(find.byType(TextField).first, 'hg-e1427');
       await verlasse(tester, 'Fahrzeug');
 
       expect(imFeld(tester, 'Fahrzeug'), 'HG-E 1427');

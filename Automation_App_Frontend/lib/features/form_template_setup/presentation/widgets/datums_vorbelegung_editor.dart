@@ -111,17 +111,21 @@ class _DatumsVorbelegungEditorState extends State<DatumsVorbelegungEditor> {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.event_repeat,
-              size: 18,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 6),
-            Text('Vorbelegung: heute +', style: theme.textTheme.bodyMedium),
-          ],
+        _mitKopfzeile(
+          theme,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.event_repeat,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text('Vorbelegung: heute +', style: theme.textTheme.bodyMedium),
+            ],
+          ),
         ),
         GanzzahlFeldKlein(
           controller: _jahre,
@@ -143,25 +147,50 @@ class _DatumsVorbelegungEditorState extends State<DatumsVorbelegungEditor> {
           labelText: 'Tage',
           onChanged: _geaendert,
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.arrow_forward,
-              size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 6),
-            Text('ergibt ', style: theme.textTheme.bodyMedium),
-            Text(
-              datum,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+        _mitKopfzeile(
+          theme,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.arrow_forward,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text('ergibt ', style: theme.textTheme.bodyMedium),
+              Text(
+                datum,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
         if (abgeleitet) _ableitungsBadge(theme) else _zuruecksetzenButton(),
+      ],
+    );
+  }
+
+  /// Stellt [inhalt] eine unsichtbare Kopfzeile in Beschriftungshöhe voran und
+  /// zwingt ihn auf [GanzzahlFeldKlein.feldHoehe]: Dieselbe Kopfzeile+Höhe
+  /// benutzt `GanzzahlFeldKlein` für Beschriftung und Feld, deshalb landen
+  /// Vorlauftext und Vorschau exakt auf der Mitte des Eingaberahmens, nicht
+  /// auf der Mitte von Beschriftung und Feld zusammen (siehe dortigen
+  /// Klassenkommentar).
+  Widget _mitKopfzeile(ThemeData theme, Widget inhalt) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Opacity(
+          opacity: 0,
+          child: Text('Platzhalter', style: theme.textTheme.bodyMedium),
+        ),
+        const SizedBox(height: GanzzahlFeldKlein.beschriftungsAbstand),
+        SizedBox(height: GanzzahlFeldKlein.feldHoehe, child: inhalt),
       ],
     );
   }

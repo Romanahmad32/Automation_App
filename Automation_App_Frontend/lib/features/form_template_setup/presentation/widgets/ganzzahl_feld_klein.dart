@@ -13,13 +13,15 @@ import 'package:flutter/services.dart';
 /// Leer heisst 0; der Aufrufer liest den Text und parst ihn selbst, damit ein
 /// geleertes Feld nicht gleich wieder mit „0" gefüllt wird.
 ///
-/// Die Beschriftung steht als **schwebendes Label** immer oberhalb des
-/// Rahmens (`floatingLabelBehavior: always`), statt in den Eingabebereich zu
-/// rutschen. Die App-weite `InputDecorationTheme` bemisst ihr Innenpolster für
-/// ausgefüllte Formularfelder (16 px auf jeder Seite) — bei der schmalen
-/// Feldbreite hier bliebe damit kein Platz für „Monate"/„Wochen", das Label
-/// würde abgeschnitten. Deshalb wird das Innenpolster hier bewusst kleiner
-/// überschrieben.
+/// Die Beschriftung steht als eigener Text **über** dem Feld statt als
+/// schwebendes Label im Rahmen: In Feldschriftgrösse (`labelSmall`) blieb sie
+/// zu klein, in Zeilenschriftgrösse (`bodyMedium`, wie der Vorlauftext
+/// „Vorbelegung: heute +") hätte sie im schmalen Rahmen keinen Platz gehabt,
+/// ohne abgeschnitten zu werden. Das Feld selbst bleibt dadurch schlicht:
+/// ohne eigenes Label, `isDense`, feste Höhe [feldHoehe] — dieselbe Höhe
+/// benutzt `DatumsVorbelegungEditor` für Vorlauftext und Vorschau, damit
+/// beide auf der Mitte des Eingaberahmens stehen statt auf der Mitte von
+/// Beschriftung und Feld zusammen.
 class GanzzahlFeldKlein extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
@@ -32,32 +34,54 @@ class GanzzahlFeldKlein extends StatelessWidget {
     required this.onChanged,
   });
 
+  /// Höhe des Eingabefelds, feststehend statt aus dem Innenpolster
+  /// hervorgehend — siehe Klassenkommentar.
+  static const feldHoehe = 44.0;
+
+  /// Abstand zwischen Beschriftung und Feld, ebenfalls von
+  /// `DatumsVorbelegungEditor` mitbenutzt (siehe [feldHoehe]).
+  static const beschriftungsAbstand = 4.0;
+
+  static const _feldBreite = 88.0;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SizedBox(
-      width: 100,
-      child: Tooltip(
-        message: 'Anzahl $labelText',
-        child: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: onChanged,
-          textAlign: TextAlign.right,
-          decoration: InputDecoration(
-            labelText: labelText,
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            floatingLabelStyle: theme.textTheme.labelSmall,
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 12,
-            ),
-            border: const OutlineInputBorder(),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          labelText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-      ),
+        const SizedBox(height: beschriftungsAbstand),
+        Tooltip(
+          message: 'Anzahl $labelText',
+          child: SizedBox(
+            width: _feldBreite,
+            height: feldHoehe,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: onChanged,
+              textAlign: TextAlign.right,
+              style: theme.textTheme.bodyLarge,
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

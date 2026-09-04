@@ -81,7 +81,7 @@ void main() {
   testWidgets('speichert das Kennzeichen in der Konvention', (tester) async {
     await zeigeDialog(tester, basis());
 
-    await tester.enterText(kennzeichenFeld(), 'hge1427');
+    await tester.enterText(kennzeichenFeld(), 'hg-e1427');
     await speichere(tester);
 
     expect(gespeichert?.geschaedigtenKennzeichen, 'HG-E 1427');
@@ -97,6 +97,23 @@ void main() {
 
     expect(gespeichert, isNull);
     expect(find.text(KennzeichenField.hinweis), findsOneWidget);
+  });
+
+  /// Mehrdeutig ist kein Tippfehler, sondern eine fehlende Angabe — und die
+  /// Meldung sagt genau das, statt die Konvention noch einmal vorzubeten.
+  /// Geraten wird nichts: Ein falsch aufgeteiltes Kennzeichen benennt ein
+  /// anderes Fahrzeug und träfe die Zuordnung der Zentralruf-Antwort.
+  testWidgets('weist ein mehrdeutiges Kennzeichen ab', (tester) async {
+    await zeigeDialog(tester, basis(kennzeichen: 'HG-E 1427'));
+
+    await tester.enterText(kennzeichenFeld(), 'hge1427');
+    await speichere(tester);
+
+    expect(gespeichert, isNull);
+    expect(
+      find.text('Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427'),
+      findsOneWidget,
+    );
   });
 
   /// Ein leeres Feld heißt „nicht erfasst" — kein Grund, das Speichern

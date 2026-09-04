@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Am Mandanten hängen 0..n Kennzeichen, und sie werden später verglichen —
 /// gegen die Zentralruf-Antwort, gegen das Feld im Anspruchsschreiben. Deshalb
-/// nimmt der Editor den **normalisierten** Wert auf: Stünde `hge1427` neben
+/// nimmt der Editor den **normalisierten** Wert auf: Stünde `hg-e1427` neben
 /// `HG-E 1427` in derselben Liste, wäre derselbe Wagen zweimal hinterlegt, und
 /// die Auswahlhilfe böte ihn zweimal an.
 void main() {
@@ -40,7 +40,7 @@ void main() {
   ) async {
     await zeigeEditor(tester);
 
-    await fuegeHinzu(tester, 'hge 1427');
+    await fuegeHinzu(tester, 'hg-e 1427');
 
     expect(gemeldet, ['HG-E 1427']);
     expect(find.widgetWithText(Chip, 'HG-E 1427'), findsOneWidget);
@@ -51,7 +51,7 @@ void main() {
     (tester) async {
       await zeigeEditor(tester);
 
-      await fuegeHinzu(tester, 'hge 1427');
+      await fuegeHinzu(tester, 'hg-e 1427');
       await fuegeHinzu(tester, 'HG-E 1427');
 
       expect(
@@ -62,6 +62,21 @@ void main() {
       expect(find.widgetWithText(Chip, 'HG-E 1427'), findsOneWidget);
     },
   );
+
+  /// Dieselbe Auskunft wie im Formular: Ein Wert, bei dem offen ist, wo das
+  /// Unterscheidungszeichen endet, kommt nicht in die Liste — er hinge dauerhaft
+  /// am Mandanten und träfe später die Zuordnung einer Zentralruf-Antwort.
+  testWidgets('nimmt ein mehrdeutiges Kennzeichen nicht auf', (tester) async {
+    await zeigeEditor(tester);
+
+    await fuegeHinzu(tester, 'hge1427');
+
+    expect(gemeldet, isEmpty);
+    expect(
+      find.text('Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427'),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('zeigt die hinterlegten Kennzeichen als Chips', (tester) async {
     await zeigeEditor(tester, vorhanden: const ['HG-E 1427', 'F-AB 12']);
