@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// Sagt, dass eine gelesene Signatur noch **aussteht** — und was daran erst
-/// beim Speichern dazukommt (§4.7, ergänzt am 02.09.2026).
+/// Sagt, dass eine gelesene Signatur noch **aussteht** (§4.7, ergänzt am
+/// 02.09.2026).
 ///
 /// Ohne diese Zeile sähe der Import aus wie erledigt: Das Feld ist gefüllt, die
-/// Vorschau zeigt Schrift und Farben — nur das Logo fehlt, weil die Bilder erst
-/// bei der Übernahme im Dienst landen. Ein fehlendes Logo ohne Erklärung liest
-/// sich wie ein Fehler.
+/// Vorschau zeigt die neue Signatur — geschrieben ist aber nichts, und unter
+/// den Mails steht bis zum Speichern weiter die bisherige.
+///
+/// **Der Zusatz über fehlende Bilder ist weg** (04.09.2026). Er stand hier,
+/// weil die Vorschau die Bilder erst nach der Übernahme zeigen konnte. Das
+/// stimmte nicht einmal: Sie holte sie aus der Ablage und bekam dort unter
+/// demselben Namen das Logo der **vorigen** Signatur. Seit sie in Outlooks
+/// Beiordner liest, zeigt sie das richtige, und es fehlt nichts mehr zu
+/// erklären.
 class SignaturVorgemerktZeile extends StatelessWidget {
   final String name;
 
-  /// Ob die gelesene Fassung überhaupt Bilder hat; ohne sie fehlt in der
-  /// Vorschau nichts und der Satz dazu wäre eine Verwirrung.
-  final bool mitBildern;
-
-  const SignaturVorgemerktZeile({
-    super.key,
-    required this.name,
-    this.mitBildern = false,
-  });
+  const SignaturVorgemerktZeile({super.key, required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +30,7 @@ class SignaturVorgemerktZeile extends StatelessWidget {
         Icon(Icons.pending_outlined, size: 16, color: ton),
         Expanded(
           child: Text(
-            text(name, mitBildern: mitBildern),
+            text(name),
             style: theme.textTheme.bodySmall?.copyWith(color: ton),
           ),
         ),
@@ -42,13 +40,7 @@ class SignaturVorgemerktZeile extends StatelessWidget {
 
   /// Der Satz selbst. Öffentlich, weil ein Test darauf zeigt: Er ist die ganze
   /// Auskunft darüber, dass noch nichts geschrieben ist.
-  static String text(String name, {required bool mitBildern}) {
-    final grundstock =
-        'Aus Outlook gelesen: „$name". Gespeichert wird sie erst mit '
-        '„Speichern" — bis dahin bleibt die bisherige Signatur in Kraft.';
-    return mitBildern
-        ? '$grundstock Die Bilder kommen dabei dazu; deshalb fehlen sie in der '
-              'Vorschau noch.'
-        : grundstock;
-  }
+  static String text(String name) =>
+      'Aus Outlook gelesen: „$name". Gespeichert wird sie erst mit '
+      '„Speichern" — bis dahin bleibt die bisherige Signatur in Kraft.';
 }

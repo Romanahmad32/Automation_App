@@ -409,8 +409,11 @@ Gemeinsam:
   übernehmen" liest die gewählte Signatur und zeigt sie — gespeichert wird sie erst mit dem
   Speichern-Knopf der Seite, und bis dahin bleibt die bisherige in Kraft. Vorher schrieb der Import
   sofort: Wer sich eine Signatur nur ansehen wollte, hatte sie damit gewechselt, samt gelöschter
-  Bilder der bisherigen (siehe 1.3). Die Bilder kommen erst bei der Übernahme dazu und fehlen
-  darum in der Vorschau noch — die App sagt es, statt es aussehen zu lassen wie einen Fehler.
+  Bilder der bisherigen (siehe 1.3). **Die Vorschau zeigt die gewählte Signatur samt ihren
+  Bildern**, obwohl noch nichts gespeichert ist: Sie liest sie dafür in Outlook.
+  *Geändert am 04.09.2026: Bis dahin holte sie die Bilder aus der Ablage des Dienstes, in der noch
+  die vorige Signatur lag. Weil Outlook das erste Bild jeder Signatur `image001.png` nennt, traf
+  sie dort das alte Logo und zeigte es als das neue — die App sagte dazu, die Bilder fehlten noch.*
   **Das Speichern lässt die übernommene Formatierung stehen:** Sie gehört nicht dem Formular,
   sondern dem Dienst, und wurde von einem Speichern auf altem Stand gelöscht — die Meldung sagte
   „gespeichert", unter den Mails stand danach nur noch der Text ohne Schrift und Logo.
