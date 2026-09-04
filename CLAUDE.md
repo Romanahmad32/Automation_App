@@ -33,8 +33,7 @@ gewöhnliche Windows-Anwendung, kein separater Serverstart, kein Terminal. **Das
 beendet ihn wieder.
 
 Fachliche Konvention: Kfz-Kennzeichen mit Bindestrich, z. B. `HG-E 1427`
-(Unterscheidungszeichen-Erkennungsbuchstaben Nummer) — in Hinweisen, Prüfungen und erzeugten
-Dokumenten.
+(Unterscheidungszeichen-Erkennungsbuchstaben Nummer) — in Hinweisen, Prüfungen und erzeugten Dokumenten.
 
 ## Bevor du anfängst — was lesen?
 
@@ -51,6 +50,7 @@ Dokumenten.
 | wissen, welche Rechte, Hooks, Befehle und Skills gelten | [`.claude/README.md`](.claude/README.md) |
 | das Postfach anbinden (welcher Weg? 1&1/IONOS, Gmail) | [`docs/POSTFACH_SETUP.md`](docs/POSTFACH_SETUP.md) |
 | das Postfach an Outlook/M365 anbinden (Azure-Einrichtung) | [`docs/OUTLOOK_SETUP.md`](docs/OUTLOOK_SETUP.md) |
+| ein GitHub-Issue lösen, oder einen Subagenten beauftragen | Skill `issue-loesen` bzw. `subagent-auftrag` |
 
 ## Landkarte
 
