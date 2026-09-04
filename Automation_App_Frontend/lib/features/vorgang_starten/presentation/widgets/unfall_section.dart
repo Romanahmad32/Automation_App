@@ -1,7 +1,6 @@
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
-import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
-import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_validators.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:flutter/material.dart';
 
 /// Karte „Unfall": Kennzeichen des Unfallgegners und Unfalltag. Nur sichtbar,
@@ -17,10 +16,12 @@ class UnfallSection extends StatelessWidget {
       icon: Icons.directions_car_outlined,
       title: 'Unfall',
       children: [
-        GeneralTextField<String>(
+        // Ohne Kandidaten: Welches Fahrzeug dem Gegner gehört, weiß die App
+        // vor der Zentralruf-Antwort nicht — angeboten wird hier nichts, die
+        // Schreibweise stellt das Feld beim Verlassen trotzdem selbst her.
+        const KennzeichenField(
           labelText: 'Kennzeichen des Unfallgegners (z. B. HG-E 1427)',
           formControlName: 'kennzeichenGegner',
-          validationMessages: kennzeichenMessages,
         ),
         // Direkt tippbar; das Kalender-Icon öffnet den Dialog.
         GermanDateField(

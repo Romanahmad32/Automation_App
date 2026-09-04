@@ -179,3 +179,14 @@ Gleicher Vor- und Nachname ergibt beim Anlegen/Ändern ein 409 des Backends, das
 `nameVorschlagAusOrdner` streift damit dasselbe Präfix für den Namensvorschlag ab. Zwei Listen wären
 beim nächsten gefundenen Schreibfehler auseinandergelaufen. Die Schreibweisen sind die in der Kanzlei
 beobachteten, uneinheitlichen; eine unbekannte kostet nichts, sie landet nur unter „ohne Präfix".
+
+## Kennzeichen am Mandanten: aufgenommen wird die Konvention
+
+`KennzeichenEditor` prüft mit `istKennzeichen` und zeigt `KennzeichenField.hinweis` — dieselbe
+Auffassung davon, was ein Kennzeichen ist, wie jedes Eingabefeld der App. Aufgenommen wird der
+**normalisierte** Wert: `TexteListenEditor.normalisiere` läuft vor Prüfung, Dublettenvergleich und
+Aufnahme.
+
+Diese Reihenfolge ist der Zweck. Ohne sie stünde derselbe Wagen zweimal in der Liste — einmal als
+`HG-E 1427`, einmal als `hge1427` — und die Auswahlhilfe im Ausfüllschritt böte ihn zweimal an,
+obwohl der Vergleich (`gleichesKennzeichen`) beide längst für gleich hält.

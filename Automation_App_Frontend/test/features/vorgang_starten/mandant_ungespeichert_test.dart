@@ -83,7 +83,6 @@ void main() {
                   rechtsgebiet: RechtsgebietWert.verkehrsrecht,
                   onMandantGewaehlt: (_) {},
                   onAuswahlAufheben: () {},
-                  onKennzeichenGewaehlt: (_) {},
                   vorgaengeAmMandanten: 0,
                   onMandantBestaetigt: (_, _) {},
                 ),

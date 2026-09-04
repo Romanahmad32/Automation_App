@@ -1,4 +1,4 @@
-import 'package:automation_app/features/vorgaenge/domain/services/kennzeichen_normalisierung.dart';
+import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

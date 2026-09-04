@@ -44,9 +44,13 @@ void main() {
   String textVon(Finder feld) =>
       (feld.evaluate().single.widget as TextField).controller!.text;
 
-  /// Die Vorschauzeile rechnet mit `DateTime.now()`. Läuft der Test über
+  /// Die Vorschau rechnet mit `DateTime.now()`. Läuft der Test über
   /// Mitternacht, ist auch das Datum von morgen richtig — beide zulassen,
   /// statt den Test einmal im Jahr rot werden zu lassen.
+  ///
+  /// Das Datum steht als eigener, hervorgehobener Text neben „ergibt " —
+  /// deshalb hier ein exakter Treffer auf das Datum selbst statt auf einen
+  /// zusammenhängenden Satz.
   void erwarteVorschau(DatumsVorbelegung vorbelegung) {
     final heute = DateTime.now();
     final erlaubt = {
@@ -56,15 +60,15 @@ void main() {
       ),
     };
     final treffer = erlaubt.where(
-      (datum) =>
-          find.textContaining('ergibt heute: $datum').evaluate().isNotEmpty,
+      (datum) => find.text(datum).evaluate().isNotEmpty,
     );
 
     expect(
       treffer,
       isNotEmpty,
-      reason: 'keine Vorschauzeile mit einem von $erlaubt gefunden',
+      reason: 'keine Vorschau mit einem von $erlaubt gefunden',
     );
+    expect(find.text('ergibt '), findsOneWidget);
   }
 
   testWidgets(
@@ -74,10 +78,7 @@ void main() {
 
       expect(textVon(feldMit('Wochen')), '5');
       expect(textVon(feldMit('Jahre')), '0');
-      expect(
-        find.textContaining('aus dem Feldnamen abgeleitet'),
-        findsOneWidget,
-      );
+      expect(find.text('abgeleitet'), findsOneWidget);
       erwarteVorschau(const DatumsVorbelegung(wochen: 5));
     },
   );
@@ -93,7 +94,8 @@ void main() {
     expect(gemeldet.last, const DatumsVorbelegung(wochen: 3));
     erwarteVorschau(const DatumsVorbelegung(wochen: 3));
     // Ab jetzt ist es eine feste Einstellung, nicht mehr eine Ableitung.
-    expect(find.textContaining('aus dem Feldnamen abgeleitet'), findsNothing);
+    expect(find.text('abgeleitet'), findsNothing);
+    expect(find.text('Zurücksetzen'), findsOneWidget);
   });
 
   testWidgets('lauter Nullen werden ausdrücklich gemeldet', (tester) async {
@@ -121,9 +123,46 @@ void main() {
     expect(textVon(feldMit('Jahre')), '1');
     expect(textVon(feldMit('Tage')), '4');
     expect(textVon(feldMit('Wochen')), '0');
-    expect(find.textContaining('aus dem Feldnamen abgeleitet'), findsNothing);
+    expect(find.text('abgeleitet'), findsNothing);
     erwarteVorschau(const DatumsVorbelegung(jahre: 1, tage: 4));
   });
+
+  testWidgets(
+    'das Kennzeichen „abgeleitet" ist nur ohne eingestellte Vorbelegung da',
+    (tester) async {
+      await zeige(tester, feldname: 'Zahlungsfrist');
+      expect(find.text('abgeleitet'), findsOneWidget);
+      expect(find.text('Zurücksetzen'), findsNothing);
+
+      await zeige(
+        tester,
+        feldname: 'Zahlungsfrist',
+        start: const DatumsVorbelegung(wochen: 5),
+      );
+      expect(find.text('abgeleitet'), findsNothing);
+      expect(find.text('Zurücksetzen'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    '„Zurücksetzen" meldet null und macht die Werte wieder zur Ableitung',
+    (tester) async {
+      final gemeldet = await zeige(
+        tester,
+        feldname: 'Zahlungsfrist',
+        start: const DatumsVorbelegung(jahre: 1, tage: 4),
+      );
+
+      await tester.tap(find.text('Zurücksetzen'));
+      await tester.pump();
+
+      expect(gemeldet.last, isNull);
+      expect(find.text('abgeleitet'), findsOneWidget);
+      expect(textVon(feldMit('Wochen')), '5');
+      expect(textVon(feldMit('Jahre')), '0');
+      expect(textVon(feldMit('Tage')), '0');
+    },
+  );
 
   testWidgets('ein anderer Feldname zieht die Ableitung nach', (tester) async {
     // Auf der Detailseite tippt der Anwalt den Feldnamen, während der

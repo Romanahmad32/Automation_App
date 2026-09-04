@@ -91,6 +91,27 @@ Was der Anwalt stattdessen tun soll, wenn ein **anderer** Mensch gemeint ist, st
 selbst: oben „(neuer Mandant)" wählen. Ein automatisches Lösen der Verknüpfung wäre der andere
 Weg gewesen und ist bewusst nicht gewählt worden — er nimmt die Korrektur eines Vertippers mit.
 
+## Das Kennzeichen: ein Baustein, keine zweite Prüfung
+
+Beide Kennzeichenfelder dieser Seite — Gegner (`UnfallSection`) und Mandant (`MandantSection`) —
+sind `KennzeichenField` aus `core/general_widgets/form/`. Am Control hängt
+`KennzeichenField.validator` (`vorgang_form_group.dart`, und in
+`_applyUnfallValidators` noch einmal, weil das Gegner-Feld je nach Rechtsgebiet zusätzlich Pflicht
+wird). Eine eigene Kennzeichen-Prüfung gehört hier nicht mehr hin: Die frühere strenge Fassung
+verlangte den Bindestrich vom Anwalt und beanstandete damit Werte, die die App selbst aus dem
+Register angeboten hatte.
+
+Das Feld stellt die Konvention `HG-E 1427` beim **Verlassen** her. `leseVorgangDaten` normalisiert
+trotzdem ein zweites Mal (`kennzeichenAusFormular`) — ein eingefügter Wert muss das Feld nie
+verlassen haben, und wer `hge1427` einfügt und sofort speichert, hätte den Rohwert in Referenz,
+Vorgang und Registereintrag stehen.
+
+Die gespeicherten Kennzeichen des verknüpften Mandanten sind seit #17/#18 **Kandidaten des
+Auswahldialogs** am Feld, nicht mehr eine eigene Chipreihe darüber (`MandantKennzeichenAuswahl` ist
+weg, samt der Callback-Kette `onKennzeichenGewaehlt` durch `VorgangStartenSektionen` und die View).
+Damit sieht die Auswahlhilfe hier aus wie im Ausfüllschritt, und die freie Eingabe bleibt der
+Normalfall statt einer Ausnahme neben den Chips.
+
 ## Warum Widget-Tests hier nicht `pumpAndSettle` benutzen dürfen
 
 Zwei Fallen übereinander, beide in `mandant_uebernahme_test.dart` beschrieben:

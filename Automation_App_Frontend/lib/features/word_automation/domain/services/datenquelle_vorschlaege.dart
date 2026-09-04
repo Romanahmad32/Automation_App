@@ -4,7 +4,7 @@ import 'package:automation_app/features/form_template_setup/domain/services/feld
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/services/kennzeichen_normalisierung.dart';
+import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:equatable/equatable.dart';
 
 /// Ein zur Wahl stehender Wert für ein Formularfeld samt seiner Herkunft.

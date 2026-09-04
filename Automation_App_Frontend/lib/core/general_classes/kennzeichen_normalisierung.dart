@@ -3,10 +3,11 @@
 /// Leerzeichen oder nichts), dazu optional das E/H-Suffix für Elektro- und
 /// Oldtimerkennzeichen.
 ///
-/// Bewusst toleranter als das Muster in `vorgang_form_validators.dart`, das den
-/// Bindestrich verlangt: Hier geht es ums *Wiedererkennen* eines Werts, nicht
-/// um die Eingabeform. Wer die Konvention braucht, lässt sich den Wert von
-/// [normalizeKennzeichen] geben.
+/// Bewusst tolerant: Hier geht es ums *Wiedererkennen* eines Werts, nicht um
+/// die Eingabeform. Wer die Konvention braucht, lässt sich den Wert von
+/// [normalizeKennzeichen] geben — und genau so hält es `KennzeichenField`, das
+/// jedes Kennzeichenfeld der App baut: prüfen, was lesbar ist, und die
+/// Schreibweise selbst herstellen, statt sie zu verlangen.
 final _kennzeichenMuster = RegExp(
   r'^([A-ZÄÖÜ]{1,3})[ \-]?([A-ZÄÖÜ]{1,2})[ \-]?(\d{1,4})\s*([HE])?$',
 );
