@@ -19,11 +19,24 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// ändert. Der Dienst braucht sie nicht, um das Bild zu finden; sie steht nur
 /// dort, damit ein anderes Bild eine andere Adresse hat.
 ///
-/// Warum aus dem Inhalt und nicht aus dem Änderungszeitpunkt: Das Bild kommt
-/// in der Vorschau aus Outlooks Beiordner und nach dem Übernehmen aus der
-/// Ablage — zwei Dateien mit zwei Zeitstempeln, aber demselben Inhalt. Eine
-/// Marke aus dem Inhalt bleibt über die Übernahme hinweg dieselbe und lässt
-/// die Oberfläche das schon geladene Bild behalten.
+/// Je Quelle ein Weg, und beide beantworten dieselbe Frage — „sind das noch
+/// dieselben Bytes?":
+///
+/// * Aus dem <b>Inhalt</b>, wo er ohnehin im Speicher liegt: beim Lesen aus
+///   Outlook, wo es noch gar keine Datei von uns gibt.
+/// * Aus <b>Größe und Änderungszeitpunkt</b> für eine abgelegte Datei. Sie
+///   noch einmal zu lesen, nur um sie zu kennzeichnen, wäre teuer an der
+///   falschen Stelle: <see cref="SignaturAblage.Bilder"/> hängt über
+///   <c>KanzleiSignatur.BlockAsync</c> auch am Versand und an der
+///   Bereitschaftsabfrage, die die Marke gar nicht brauchen — ein 25-MB-Bild
+///   ginge dort bei jeder Mail durch den Hash. Beide Angaben stehen im
+///   Verzeichniseintrag, den die Ablage ohnehin schon gelesen hat, und sie
+///   können damit auch nicht fehlschlagen.
+///
+/// Der Preis: Beim Übernehmen wechselt die Marke desselben Bildes einmal von
+/// der einen Form in die andere, und die Oberfläche lädt es ein weiteres Mal.
+/// Das ist ein Abruf über localhost — gegen einen Hash über 25 MB bei jedem
+/// Versand ist das kein Handel, über den man lange nachdenkt.
 /// </summary>
 public static class SignaturMarke
 {
@@ -39,22 +52,13 @@ public static class SignaturMarke
     public static string Von(byte[] inhalt) => Kurz(SHA256.HashData(inhalt));
 
     /// <summary>
-    /// Die Marke zu einer abgelegten Datei. Leer, wenn sie sich nicht lesen
-    /// lässt — dann fehlt der Oberfläche nur die Unterscheidung, und das ist
-    /// kein Grund, die Signatur gar nicht erst zu melden.
+    /// Die Marke zu einer abgelegten Datei, aus ihrem Verzeichniseintrag —
+    /// ohne sie zu öffnen. Ein Neuschreiben ändert den Zeitstempel, und mehr
+    /// muss sie nicht unterscheiden: Es geht um dieselbe Datei vorher und
+    /// nachher, nicht um zwei fremde Dateien.
     /// </summary>
-    public static string Von(FileInfo datei)
-    {
-        try
-        {
-            using var strom = datei.OpenRead();
-            return Kurz(SHA256.HashData(strom));
-        }
-        catch (Exception ausnahme) when (ausnahme is IOException or UnauthorizedAccessException)
-        {
-            return string.Empty;
-        }
-    }
+    public static string Von(FileInfo datei) =>
+        $"{datei.Length:x}-{datei.LastWriteTimeUtc.Ticks:x}";
 
     private static string Kurz(byte[] hash) =>
         Convert.ToHexString(hash.AsSpan(0, Bytes)).ToLowerInvariant();

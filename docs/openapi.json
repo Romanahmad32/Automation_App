@@ -3017,8 +3017,9 @@
             }
           },
           {
-            "name": "signatur",
+            "name": "ausOutlook",
             "in": "query",
+            "description": "Name der Outlook-Signatur, aus der das Bild kommt; leer hei\u00DFt: aus der\r\nAblage. Der Name ist bewusst nicht \u0060signatur\u0060: Dieser Kopf f\u00FChrt\r\nschon eine KanzleiSignatur dieses Namens, und ein\r\nabweichender Name in der Adresse k\u00E4me ohne Beschreibung im Vertrag an \u2014\r\ndie Beschreibung h\u00E4ngt am C#-Bezeichner.",
             "schema": {
               "type": "string"
             }
@@ -3064,7 +3065,7 @@
         "tags": [
           "EmailVersand"
         ],
-        "summary": "Liest die gew\u00E4hlte Signatur, \u003Cb\u003Eohne sie zu speichern\u003C/b\u003E (\u00A74.7,\r\nerg\u00E4nzt am 02.09.2026) \u2014 damit das Formular sie zeigen kann, bevor der\r\nAnwalt auf \u201ESpeichern\u0022 dr\u00FCckt.\r\n\r\nVorher gab es diesen Weg nicht: Wer eine Signatur aus der Liste w\u00E4hlte,\r\nhatte sie damit schon gewechselt \u2014 samt gel\u00F6schter Bilder der bisherigen.\r\nGeschrieben wird jetzt erst \u00FCber \u0060signaturen/uebernehmen\u0060, und das\r\nruft die Oberfl\u00E4che beim Speichern.\r\n\r\nDie Bilder kommen als Angabe zur\u00FCck, nicht als Inhalt: Sie d\u00FCrfen 25 MB\r\ngro\u00DF sein und gehen nicht \u00FCber die Leitung, nur um von dort wieder\r\nzur\u00FCckzukommen. Zu sehen sind sie trotzdem \u2014 die Vorschau holt jedes\r\neinzeln \u00FCber \u0060signaturen/bild?signatur=\u0060, das daf\u00FCr in Outlooks\r\nBeiordner liest statt in der Ablage, in der noch die vorige Signatur\r\nliegt.",
+        "summary": "Liest die gew\u00E4hlte Signatur, \u003Cb\u003Eohne sie zu speichern\u003C/b\u003E (\u00A74.7,\r\nerg\u00E4nzt am 02.09.2026) \u2014 damit das Formular sie zeigen kann, bevor der\r\nAnwalt auf \u201ESpeichern\u0022 dr\u00FCckt.\r\n\r\nVorher gab es diesen Weg nicht: Wer eine Signatur aus der Liste w\u00E4hlte,\r\nhatte sie damit schon gewechselt \u2014 samt gel\u00F6schter Bilder der bisherigen.\r\nGeschrieben wird jetzt erst \u00FCber \u0060signaturen/uebernehmen\u0060, und das\r\nruft die Oberfl\u00E4che beim Speichern.\r\n\r\nDie Bilder kommen als Angabe zur\u00FCck, nicht als Inhalt: Sie d\u00FCrfen 25 MB\r\ngro\u00DF sein und gehen nicht \u00FCber die Leitung, nur um von dort wieder\r\nzur\u00FCckzukommen. Zu sehen sind sie trotzdem \u2014 die Vorschau holt jedes\r\neinzeln \u00FCber \u0060signaturen/bild?ausOutlook=\u0060, das daf\u00FCr in Outlooks\r\nBeiordner liest statt in der Ablage, in der noch die vorige Signatur\r\nliegt.",
         "parameters": [
           {
             "name": "name",

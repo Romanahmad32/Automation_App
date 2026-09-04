@@ -82,8 +82,10 @@ public class EmailVersandController(
     /// <param name="dateiname">Der blanke Name des Bildes.</param>
     /// <param name="ausOutlook">
     /// Name der Outlook-Signatur, aus der das Bild kommt; leer heißt: aus der
-    /// Ablage. Heißt in der Adresse <c>signatur</c> — hier nicht, weil dieser
-    /// Kopf schon eine <see cref="KanzleiSignatur"/> dieses Namens führt.
+    /// Ablage. Der Name ist bewusst nicht <c>signatur</c>: Dieser Kopf führt
+    /// schon eine <see cref="KanzleiSignatur"/> dieses Namens, und ein
+    /// abweichender Name in der Adresse käme ohne Beschreibung im Vertrag an —
+    /// die Beschreibung hängt am C#-Bezeichner.
     /// </param>
     /// <param name="marke">
     /// Wird <b>nicht ausgewertet</b> und steht trotzdem im Vertrag: Sie macht
@@ -98,7 +100,7 @@ public class EmailVersandController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult GetSignaturBild(
         [FromQuery] string? dateiname,
-        [FromQuery(Name = "signatur")] string? ausOutlook = null,
+        [FromQuery] string? ausOutlook = null,
         [FromQuery] string? marke = null)
     {
         // Die Marke steht nur in der Adresse, damit ein anderes Bild eine
@@ -109,9 +111,12 @@ public class EmailVersandController(
         if (!string.IsNullOrWhiteSpace(ausOutlook))
         {
             var inhalt = OutlookSignaturen.LiesBild(ausOutlook, name);
+            // Die Inhaltsart aus demselben blanken Namen, unter dem das Bild
+            // gefunden wurde — aus dem rohen ergäbe „bild.png " keine Endung
+            // und ginge als unbestimmter Bytestrom hinaus.
             return inhalt is null
                 ? NotFound()
-                : File(inhalt, SignaturAblage.InhaltsArt(name));
+                : File(inhalt, SignaturAblage.InhaltsArt(Path.GetFileName(name.Trim())));
         }
 
         var pfad = signaturAblage.PfadVon(name);
@@ -133,7 +138,7 @@ public class EmailVersandController(
     /// Die Bilder kommen als Angabe zurück, nicht als Inhalt: Sie dürfen 25 MB
     /// groß sein und gehen nicht über die Leitung, nur um von dort wieder
     /// zurückzukommen. Zu sehen sind sie trotzdem — die Vorschau holt jedes
-    /// einzeln über <c>signaturen/bild?signatur=</c>, das dafür in Outlooks
+    /// einzeln über <c>signaturen/bild?ausOutlook=</c>, das dafür in Outlooks
     /// Beiordner liest statt in der Ablage, in der noch die vorige Signatur
     /// liegt.
     /// </summary>

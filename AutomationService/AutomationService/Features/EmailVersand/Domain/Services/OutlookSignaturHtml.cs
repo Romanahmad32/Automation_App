@@ -82,9 +82,13 @@ public static partial class OutlookSignaturHtml
     /// zusammengesetzten Pfad: Wie der Beiordner heißt, weiß nur das Dokument
     /// (<c>Name-Dateien</c>, englisch <c>Name_files</c>), und was darin ein
     /// Signaturbild ist, entscheidet dieselbe Auslese wie beim Übernehmen —
-    /// Größengrenze eingeschlossen. Ein Verweis, der aus dem Ordner hinausführt,
-    /// findet so von vornherein nichts: Verglichen wird gegen die Namen, die
-    /// beim Einsammeln entstanden sind, nicht gegen das Dateisystem.
+    /// Größengrenze und Ordnergrenze eingeschlossen.
+    ///
+    /// Beide Wege aus dem Ordner heraus sind damit zu: <paramref name="dateiname"/>
+    /// wird gegen die Namen verglichen, die beim Einsammeln entstanden sind, und
+    /// nie zu einem Pfad zusammengesetzt; ein Verweis <b>im Dokument</b>, der
+    /// hinausführt, ist beim Einsammeln schon herausgefallen
+    /// (<c>DateiHinter</c>).
     /// </summary>
     /// <returns>Null, wenn es die Signatur, ihre formatierte Fassung oder
     /// dieses Bild darin nicht gibt.</returns>
@@ -141,7 +145,8 @@ public static partial class OutlookSignaturHtml
     /// <c>data:</c>-Bild; der bleibt unangetastet. <c>Unbrauchbar = true</c>
     /// heißt: Gemeint war
     /// eine Datei neben der Signatur, wir bekommen sie aber nicht — zu groß,
-    /// leer, weg oder nicht lesbar. Dann muss die ganze Bildmarke fallen.
+    /// leer, weg, nicht lesbar oder <b>gar nicht im Signaturordner</b>. Dann
+    /// muss die ganze Bildmarke fallen.
     /// </returns>
     private static (string? Name, bool Unbrauchbar) DateiHinter(
         string verweis,
@@ -156,7 +161,19 @@ public static partial class OutlookSignaturHtml
         try
         {
             // Outlook schreibt Ordnernamen mit Umlauten prozentkodiert.
-            var pfad = Path.GetFullPath(Path.Combine(ordner, Uri.UnescapeDataString(verweis)));
+            var wurzel = Path.GetFullPath(ordner);
+            var pfad = Path.GetFullPath(Path.Combine(wurzel, Uri.UnescapeDataString(verweis)));
+
+            // Der Verweis steht in einer Datei, die der Anwender selbst hält —
+            // gelesen wird trotzdem nur unterhalb des Signaturordners. Ein
+            // `src="..\..\automation.db"` sammelte sonst die Mandatsdatenbank
+            // als angebliches Signaturbild ein, und der Dienst liefert dieses
+            // Bündel danach einzeln über `signaturen/bild` aus.
+            if (!Innerhalb(wurzel, pfad))
+            {
+                return (null, true);
+            }
+
             var datei = new FileInfo(pfad);
             if (!datei.Exists || datei.Length == 0 || datei.Length > SignaturAblage.MaxBildBytes)
             {
@@ -177,6 +194,14 @@ public static partial class OutlookSignaturHtml
         {
             return (null, true);
         }
+    }
+
+    /// <summary>Ob <paramref name="pfad"/> unterhalb von <paramref name="wurzel"/> liegt.</summary>
+    private static bool Innerhalb(string wurzel, string pfad)
+    {
+        var rand = wurzel.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        return pfad.StartsWith(rand, StringComparison.OrdinalIgnoreCase);
     }
 
     [GeneratedRegex(@"<body[^>]*>(?<inhalt>.*)</body>",
