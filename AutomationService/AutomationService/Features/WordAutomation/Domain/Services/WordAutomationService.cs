@@ -50,8 +50,19 @@ public sealed partial class WordAutomationService : IWordAutomationService
         if (request.DamageListing is { Items.Count: > 0 } damageListing)
         {
             stepStopwatch.Restart();
-            DamageListingTable.Insert(document, damageListing, replacementValues);
+            // Erst die Werte, dann die Tabelle: Die RVG-Kosten hängen an der
+            // erfassten Aufstellung, nicht daran, ob die Vorlage sie als
+            // Tabelle einsetzt (#31).
+            var calculation = RvgPlatzhalter.Setze(damageListing, replacementValues);
+            DamageListingTable.Insert(document, damageListing, calculation);
             _logger.LogInformation("[PERF] InsertDamageListing: {Ms} ms", stepStopwatch.ElapsedMilliseconds);
+        }
+        else
+        {
+            // Ohne Aufstellung gibt es nichts zu rechnen — die Platzhalter
+            // werden trotzdem aufgelöst, nur eben leer. Blieben sie stehen,
+            // ginge ein "{{RvgBrutto}}" im Anspruchsschreiben hinaus (#31).
+            RvgPlatzhalter.Leere(replacementValues);
         }
 
         // Hinweis: Der frühere Vorab-Scan via FindUniqueByPattern wurde entfernt.

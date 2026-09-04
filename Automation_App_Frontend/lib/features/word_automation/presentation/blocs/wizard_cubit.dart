@@ -69,6 +69,10 @@ class WizardCubit extends Cubit<WizardState> {
         schadenspositionFehler: const [],
         formDataEntwurf: () => null,
         entwurfAngebot: () => vorgang?.entwurf,
+        // Die Entscheidung gehört dem Vorgang, aus dem sie stammt: Am neuen
+        // steht eine andere Nummer, und „neues Schreiben" hiesse dort etwas
+        // anderes als hier.
+        neuesSchreiben: false,
       ),
     );
     if (vorgang?.mandantId == null) return;
@@ -128,7 +132,18 @@ class WizardCubit extends Cubit<WizardState> {
       return;
     }
     _entwurf.markiereBestaetigt();
-    emit(state.copyWith(selectedVorgang: () => vorgang));
+    // Mit dem erzeugten Schreiben ist die Entscheidung verbraucht: Wer jetzt
+    // noch einmal auf „erstellen" drückt, korrigiert genau dieses Schreiben.
+    // Ohne das Zurücksetzen zählte jede Korrektur eine Nummer weiter.
+    emit(state.copyWith(selectedVorgang: () => vorgang, neuesSchreiben: false));
+  }
+
+  /// Die Entscheidung des Anwalts, ob das nächste Erzeugen ein **neues**
+  /// Schreiben ist oder die Korrektur des vorigen (§4.9). Gestellt wird sie in
+  /// der Leiste des Ausfüllschritts, und nur ab dem zweiten Schreiben eines
+  /// Vorgangs — vorher gibt es nichts zu entscheiden.
+  void setNeuesSchreiben(bool neuesSchreiben) {
+    emit(state.copyWith(neuesSchreiben: neuesSchreiben));
   }
 
   void goToStep(WizardStep step) {
