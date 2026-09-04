@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
-import 'package:automation_app/features/vorgaenge/domain/services/kennzeichen_normalisierung.dart';
+import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 
 /// Fallback für die Antwort-Zuordnung, wenn die Referenz zu keinem Vorgang

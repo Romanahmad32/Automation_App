@@ -2,11 +2,10 @@ import 'package:automation_app/core/general_widgets/form/auswahl_kandidat.dart';
 import 'package:automation_app/core/general_widgets/form/auswahl_text_field.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
-import 'package:automation_app/features/vorgaenge/domain/services/kennzeichen_normalisierung.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
-import 'package:automation_app/features/word_automation/presentation/widgets/kennzeichen_feld_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -61,13 +60,15 @@ class AusfuellFeld extends StatelessWidget {
           validationMessages: validationMessages,
         );
       case InputType.kennzeichen:
-        return _auswahlFeld(
-          titel: 'Kennzeichen wählen',
-          meldungen: {...kennzeichenMeldungen, ...validationMessages},
-          // Aus `HGE1427` wird `HG-E 1427`; was sich nicht lesen lässt, bleibt
-          // stehen und wird vom Validator beanstandet — Raten wäre hier
-          // schlimmer als eine Meldung.
-          normalisiere: (eingabe) => normalizeKennzeichen(eingabe) ?? eingabe,
+        // Derselbe Baustein wie beim Erfassen des Mandats: Prüfung, Meldung
+        // und die Schreibweise `HG-E 1427` stehen genau einmal im Projekt.
+        return KennzeichenField(
+          formControlName: field.label,
+          labelText: field.label,
+          helperText: helperText,
+          helperMaxLines: helperMaxLines,
+          validationMessages: validationMessages,
+          kandidaten: _kandidaten,
         );
       case InputType.integer:
         return GeneralTextField<String>(
@@ -112,20 +113,22 @@ class AusfuellFeld extends StatelessWidget {
   Widget _auswahlFeld({
     required String titel,
     required Map<String, String Function(Object)> meldungen,
-    String Function(String)? normalisiere,
   }) => AuswahlTextField(
     formControlName: field.label,
     labelText: field.label,
     helperText: helperText,
     helperMaxLines: helperMaxLines,
     validationMessages: meldungen,
-    kandidaten: [
-      for (final vorschlag in vorschlaege)
-        AuswahlKandidat(vorschlag.wert, vorschlag.herkunft.beschreibung),
-    ],
+    kandidaten: _kandidaten,
     dialogTitel: titel,
-    normalisiere: normalisiere,
   );
+
+  /// Die bekannten Werte dieses Felds als Kandidaten des Auswahldialogs; die
+  /// Herkunftszeile kommt aus der Datenquelle des Vorschlags.
+  List<AuswahlKandidat> get _kandidaten => [
+    for (final vorschlag in vorschlaege)
+      AuswahlKandidat(vorschlag.wert, vorschlag.herkunft.beschreibung),
+  ];
 
   InputDecoration get _decoration =>
       InputDecoration(helperText: helperText, helperMaxLines: helperMaxLines);

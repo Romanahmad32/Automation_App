@@ -4,6 +4,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
@@ -17,7 +18,6 @@ import 'package:automation_app/features/vorgang_starten/presentation/widgets/man
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_aktionsleiste.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_group.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_reader.dart';
-import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_validators.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_starten_sektionen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -114,11 +114,13 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     if (_istVerkehrsunfall) {
       kennzeichen.setValidators([
         Validators.required,
-        Validators.delegate(kennzeichenValidator),
+        Validators.delegate(KennzeichenField.validator),
       ]);
       schadentag.setValidators([Validators.required, dateValidator]);
     } else {
-      kennzeichen.setValidators([Validators.delegate(kennzeichenValidator)]);
+      kennzeichen.setValidators([
+        Validators.delegate(KennzeichenField.validator),
+      ]);
       schadentag.setValidators([dateValidator]);
     }
     kennzeichen.updateValueAndValidity();
@@ -238,7 +240,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
       _mandanten = [..._mandanten.where((m) => m.id != mandant.id), mandant];
       _selectedMandantId = mandant.id;
     });
-    // Nur noch Auffrischung für Kennzeichen-Chips und Reihenfolge.
+    // Nur noch Auffrischung für die Kennzeichen-Auswahl und die Reihenfolge.
     unawaited(_ladeMandanten());
   }
 
@@ -287,9 +289,6 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
                 onMandantGewaehlt: _uebernehmeMandant,
                 onAuswahlAufheben: () =>
                     setState(() => _selectedMandantId = null),
-                onKennzeichenGewaehlt: (kennzeichen) => _form
-                    .control('mandantKennzeichen')
-                    .updateValue(kennzeichen),
                 vorgaengeAmMandanten: _vorgaengeAmMandanten,
                 onMandantBestaetigt: _onMandantBestaetigt,
                 onVorlageAusfuellen: _vorlageAusfuellen,

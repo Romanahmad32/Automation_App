@@ -67,6 +67,7 @@ void main() {
   Future<void> zeigeFormular(
     WidgetTester tester, {
     UseCase<ZentralrufPrefillResult, ZentralrufRequest>? vorbefuellung,
+    String mandantKennzeichen = 'HG-E 1427',
   }) async {
     register = MandantenRegisterDouble();
     protokoll = [];
@@ -130,7 +131,7 @@ void main() {
     form.control('schadentag').updateValue('01.03.2026');
     form.control('mandantVorname').updateValue('Max');
     form.control('mandantNachname').updateValue('Müller');
-    form.control('mandantKennzeichen').updateValue('HG-E 1427');
+    form.control('mandantKennzeichen').updateValue(mandantKennzeichen);
     await tester.pumpAndSettle();
   }
 
@@ -210,6 +211,19 @@ void main() {
       ),
     );
     expect(knopf.onPressed, isNull);
+  });
+
+  /// Das Kennzeichen wird im Register verglichen — gegen die Zentralruf-Antwort
+  /// und gegen das Feld im Anspruchsschreiben. Ein eingefügter Rohwert kommt
+  /// hier an, ohne dass das Feld je verlassen wurde: `leseVorgangDaten` zieht
+  /// ihn deshalb ein zweites Mal gerade, bevor er in die Anlage-Anfrage geht.
+  testWidgets('legt ein getipptes Kennzeichen in der Konvention an', (
+    tester,
+  ) async {
+    await zeigeFormular(tester, mandantKennzeichen: 'hge1427');
+    await zentralrufAusfuellen(tester);
+
+    expect(register.bestand.single.kennzeichen, ['HG-E 1427']);
   });
 
   /// Der Weg, auf dem die Reparatur sonst vorbeiläuft: Der Mandant ist

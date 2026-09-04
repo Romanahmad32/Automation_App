@@ -4,19 +4,21 @@ import 'package:automation_app/features/form_template_setup/presentation/widgets
 import 'package:flutter/material.dart';
 
 /// Stellt die Vorbelegung eines Datumsfelds ein (§5.3): vier Zahlenfelder für
-/// Jahre, Monate, Wochen und Tage, darunter das Datum, das heute dabei
+/// Jahre, Monate, Wochen und Tage, daneben das Datum, das heute dabei
 /// herauskäme.
 ///
-/// Die Vorschauzeile ist der Sinn der Sache. „5 Wochen" sagt dem Anwalt nicht,
-/// ob das Schreiben dann noch in seinen Urlaub fällt — ein Datum sagt es. Und
+/// Die Vorschau ist der Sinn der Sache. „5 Wochen" sagt dem Anwalt nicht, ob
+/// das Schreiben dann noch in seinen Urlaub fällt — ein Datum sagt es. Und
 /// weil hier keine Fristenlogik läuft (§8: keine Werktagsverschiebung, keine
 /// Feiertage), muss der gerechnete Tag sichtbar sein, statt erst im erzeugten
 /// Dokument aufzufallen.
 ///
 /// **Ist [vorbelegung] null, ist am Feld nichts eingestellt**: Dann zeigen die
-/// Zahlenfelder, was die Namensregel aus [feldname] ableitet, und die Vorschau
-/// sagt es dazu. Die erste Eingabe macht daraus eine feste Einstellung —
-/// deshalb meldet [onChanged] immer eine ausdrückliche [DatumsVorbelegung],
+/// Zahlenfelder, was die Namensregel aus [feldname] ableitet, und ein
+/// Kennzeichen macht das kenntlich. Die erste Eingabe macht daraus eine feste
+/// Einstellung — das Kennzeichen weicht einem „Zurücksetzen"-Knopf, der mit
+/// [onChanged]`(null)` wieder zur Ableitung zurückkehrt. Deshalb meldet
+/// [onChanged] bei jeder Eingabe immer eine ausdrückliche [DatumsVorbelegung],
 /// auch die aus lauter Nullen („bewusst heute", siehe `FieldData`).
 class DatumsVorbelegungEditor extends StatefulWidget {
   /// Die eingestellte Vorbelegung, oder null für „nie angefasst".
@@ -100,56 +102,115 @@ class _DatumsVorbelegungEditorState extends State<DatumsVorbelegungEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final datum = deutschesDatum(_eingestellt.anwendenAuf(DateTime.now()));
-    final zusatz = widget.vorbelegung == null ? ' $_ableitungsHinweis' : '';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final abgeleitet = widget.vorbelegung == null;
+    // Wrap statt Row: Die Karte ist meist breit genug für eine Zeile, aber bei
+    // wenig Platz rutscht die Vorschau (oder ein Feld) in eine zweite Zeile,
+    // statt seitlich abgeschnitten zu werden.
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Vorbelegt mit heute +', style: theme.textTheme.bodySmall),
-            GanzzahlFeldKlein(
-              controller: _jahre,
-              labelText: 'Jahre',
-              onChanged: _geaendert,
+            Icon(
+              Icons.event_repeat,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            GanzzahlFeldKlein(
-              controller: _monate,
-              labelText: 'Monate',
-              onChanged: _geaendert,
+            const SizedBox(width: 6),
+            Text('Vorbelegung: heute +', style: theme.textTheme.bodyMedium),
+          ],
+        ),
+        GanzzahlFeldKlein(
+          controller: _jahre,
+          labelText: 'Jahre',
+          onChanged: _geaendert,
+        ),
+        GanzzahlFeldKlein(
+          controller: _monate,
+          labelText: 'Monate',
+          onChanged: _geaendert,
+        ),
+        GanzzahlFeldKlein(
+          controller: _wochen,
+          labelText: 'Wochen',
+          onChanged: _geaendert,
+        ),
+        GanzzahlFeldKlein(
+          controller: _tage,
+          labelText: 'Tage',
+          onChanged: _geaendert,
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.arrow_forward,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            GanzzahlFeldKlein(
-              controller: _wochen,
-              labelText: 'Wochen',
-              onChanged: _geaendert,
-            ),
-            GanzzahlFeldKlein(
-              controller: _tage,
-              labelText: 'Tage',
-              onChanged: _geaendert,
+            const SizedBox(width: 6),
+            Text('ergibt ', style: theme.textTheme.bodyMedium),
+            Text(
+              datum,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          'ergibt heute: $datum$zusatz',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
+        if (abgeleitet) _ableitungsBadge(theme) else _zuruecksetzenButton(),
       ],
     );
   }
 
-  static const _ableitungsHinweis =
-      '(aus dem Feldnamen abgeleitet — Änderung macht es zur festen '
-      'Einstellung)';
+  /// Solange nichts eingestellt ist, sagt dieses Kennzeichen, dass die Werte
+  /// aus der Namensregel stammen — in der Optik von `FeldVorkommenBadge`
+  /// (schmaler Rahmen, `labelSmall`, dieselbe Rundung), damit es zu den
+  /// übrigen Kennzeichen der Karte passt.
+  static Widget _ableitungsBadge(ThemeData theme) {
+    final farbe = theme.colorScheme.onSurfaceVariant;
+    return Tooltip(
+      message: _ableitungsTooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          border: Border.all(color: farbe),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          'abgeleitet',
+          style: theme.textTheme.labelSmall?.copyWith(color: farbe),
+        ),
+      ),
+    );
+  }
+
+  static const _ableitungsTooltip =
+      'Aus dem Feldnamen abgeleitet. Sobald du einen Wert änderst, gilt die '
+      'Einstellung fest für dieses Feld.';
+
+  /// Ersetzt das Kennzeichen, sobald eine Einstellung feststeht: der Weg
+  /// zurück zur Ableitung, ohne die Zahlenfelder einzeln auf 0 zu setzen.
+  Widget _zuruecksetzenButton() {
+    return TextButton.icon(
+      onPressed: () => widget.onChanged(null),
+      icon: const Icon(Icons.undo, size: 16),
+      label: const Text('Zurücksetzen'),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
 
   /// Jede Eingabe meldet einen ausdrücklichen Wert nach draussen. `setState`
-  /// dazu, damit die Vorschauzeile mittippt, auch wenn der Aufrufer den Stand
-  /// erst später zurückreicht.
+  /// dazu, damit die Vorschau mittippt, auch wenn der Aufrufer den Stand erst
+  /// später zurückreicht.
   void _geaendert(String _) {
     setState(() {});
     widget.onChanged(_eingestellt);

@@ -75,3 +75,15 @@ etwas ändert, prüft `Abschliessen_BleibtBestehen_WennDerSpiegelScheitert` im B
 „Register-LAPTOP.docx" aussehen. Taucht eine auf, hat jemand den Spiegel unterwegs bearbeitet —
 ab da gäbe es zwei Register, und genau davor will die Kanzlei weg. Die `RegisterSpiegelLeiste`
 zeigt das deshalb in Fehlerfarbe und nicht als Nebensatz.
+
+## Der Bearbeiten-Dialog prüft von Hand — er hat kein reactive_forms
+
+`VorgangBearbeitenDialog` arbeitet mit `TextEditingController`n, nicht mit einer FormGroup. Das
+Kennzeichen des Mandanten wird deshalb **beim Speichern** geprüft: `normalizeKennzeichen` zieht die
+Schreibweise gerade, und was `istKennzeichen` nicht lesen kann, wird gar nicht erst gespeichert —
+der Dialog bleibt offen und zeigt `KennzeichenField.hinweis` als `errorText` am Feld
+(`VorgangDialogField.errorText`).
+
+Ohne das wäre dies der eine Weg, auf dem ein Rohwert in den Bestand käme: Beim Erfassen stellt
+`KennzeichenField` die Konvention selbst her, hier stand das Feld ungeprüft da. An dem Wert hängt
+die Zuordnung einer Zentralruf-Antwort über das Kennzeichen (`gleichesKennzeichen`).

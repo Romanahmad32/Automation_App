@@ -183,9 +183,12 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   sich also von einer **älteren** App-Fassung nicht mehr laden. Beim Erkennen aus dem Namen steht
   das Kennzeichen **vor** der Datumsprüfung (`_feldtypFuer`): sonst fischte deren Wortliste
   `{{KennzeichenAmUnfalltag}}` ab und das Feld verlangte ein Datum.
-- **Der Validator ist nicht der aus `vorgang_starten`.** `kennzeichenFeldValidator`
-  (`presentation/widgets/kennzeichen_feld_validator.dart`) beanstandet nur, was `istKennzeichen`
-  gar nicht lesen kann, während `kennzeichenValidator` beim Erfassen den Bindestrich verlangt. Hier
-  muss er toleranter sein: Die Werte kommen aus mehreren Beständen und laufen über den Dialog
-  ohnehin durch `normalizeKennzeichen` — eine strengere Prüfung beanstandete einen Wert, den die
-  App selbst angeboten hat.
+- **Es gibt nur noch einen Kennzeichen-Validator.** `KennzeichenField`
+  (`core/general_widgets/form/kennzeichen_field.dart`) ist der Baustein für jedes Kennzeichenfeld
+  der App — hier im Ausfüllschritt wie beim Erfassen in „Vorgang starten"; `AusfuellFeld` setzt ihn
+  für `InputType.kennzeichen` ein, `FormTemplateBuilder` hängt `KennzeichenField.validator` ans
+  Control. Früher standen hier zwei Auffassungen nebeneinander: ein toleranter Validator im
+  Ausfüllschritt und ein strenger beim Erfassen, der den Bindestrich verlangte. Der strenge ist
+  weg, und das ist die Richtung: Die Werte kommen aus mehreren Beständen und laufen ohnehin durch
+  `normalizeKennzeichen` — eine strengere Prüfung beanstandete einen Wert, den die App selbst
+  angeboten hat.

@@ -35,6 +35,6 @@ Fremd eingebunden: `VorgangCubit` (vorgaenge).
   Vorgang nicht gespeichert.
 - Der lange Rest steht in `FALLSTRICKE.md` daneben: Reihenfolge im Speicherpfad, die drei Zustände
   mit gespeichertem Mandanten (sonst 409-Sackgasse), warum ein geänderter Name den Registereintrag
-  umbenennt (§5.1) und warum Tests kein `pumpAndSettle` vertragen.
+  umbenennt (§5.1), das Kennzeichenfeld und warum Tests kein `pumpAndSettle` vertragen.
 - `registriereAnfrage` ist ein Upsert über die Referenz: dieselbe Referenz erneut speichern
   aktualisiert nur die hier erfassten Felder und behält Antwort- und Dokumentdaten.

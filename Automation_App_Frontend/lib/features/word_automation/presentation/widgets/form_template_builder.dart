@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
@@ -9,7 +10,6 @@ import 'package:automation_app/features/form_template_setup/domain/services/app_
 import 'package:automation_app/features/form_template_setup/domain/services/verwendete_felder.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ausfuell_feld.dart';
-import 'package:automation_app/features/word_automation/presentation/widgets/kennzeichen_feld_validator.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/nicht_verwendete_felder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/pflichtfelder_hinweis.dart';
 import 'package:flutter/material.dart';
@@ -146,7 +146,7 @@ class FormTemplateBuilder extends StatelessWidget {
                   if (e.inputType == InputType.date && verwendet)
                     GermanDateField.validator(),
                   if (e.inputType == InputType.kennzeichen && verwendet)
-                    Validators.delegate(kennzeichenFeldValidator),
+                    Validators.delegate(KennzeichenField.validator),
                 ],
               ),
             );
