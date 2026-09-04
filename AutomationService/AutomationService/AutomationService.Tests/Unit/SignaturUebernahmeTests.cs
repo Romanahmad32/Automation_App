@@ -2,6 +2,7 @@ using System.Text;
 using AutomationService.Features.EmailVersand.Domain.Services;
 using AutomationService.Tests.Support;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace AutomationService.Tests.Unit;
@@ -171,7 +172,7 @@ public sealed class SignaturUebernahmeTests : IDisposable
         uebrig.Should().NotContain("_x0000_i1025");
         // Was bleiben soll, bleibt in beiden Fassungen stehen.
         uebrig.Should().Contain("logo.png");
-        SignaturHtmlFilter.Verwendete(uebrig, [new SignaturBild("werbung.gif", 4_000_000)])
+        SignaturHtmlFilter.Verwendete(uebrig, [new SignaturBild("werbung.gif", 4_000_000, "")])
             .Should().BeEmpty();
     }
 
@@ -195,7 +196,7 @@ public sealed class SignaturUebernahmeTests : IDisposable
         // hiesse, die Signatur auseinanderzunehmen.
         uebrig.Should().Contain("Kanzlei").And.Contain("valign=\"top\"");
         uebrig.Should().Contain("background=\"logo.png\"");
-        SignaturHtmlFilter.Verwendete(uebrig, [new SignaturBild("werbung.gif", 4_000_000)])
+        SignaturHtmlFilter.Verwendete(uebrig, [new SignaturBild("werbung.gif", 4_000_000, "")])
             .Should().BeEmpty();
     }
 
@@ -213,7 +214,7 @@ public sealed class SignaturUebernahmeTests : IDisposable
     public void SignaturHtmlFilter_MeldetNurDieNochVerwendetenBilder()
     {
         const string html = "<img src=\"logo.png\">";
-        SignaturBild[] abgelegt = [new("logo.png", 100), new("werbung.gif", 4_000_000)];
+        SignaturBild[] abgelegt = [new("logo.png", 100, ""), new("werbung.gif", 4_000_000, "")];
 
         SignaturHtmlFilter.Verwendete(html, abgelegt).Should().Equal("logo.png");
     }
@@ -234,6 +235,115 @@ public sealed class SignaturUebernahmeTests : IDisposable
         // Die Vorschau laedt das Bild ueber den Dienst; mit
         // application/octet-stream zeigte sie es nicht an.
         SignaturAblage.InhaltsArt("werbung.gif").Should().Be("image/gif");
+    }
+
+    /// <summary>
+    /// Outlook nennt das erste Bild jeder Signatur image001.png. Ohne eine
+    /// Marke am Bild bekaeme die Oberflaeche fuer zwei verschiedene Logos
+    /// dieselbe Adresse -- und zeigte, weil Flutter Bilder je Adresse
+    /// aufhebt, weiter das zuerst geladene (behoben am 04.09.2026).
+    /// </summary>
+    [Fact]
+    public void SignaturAblage_UnterscheidetGleichnamigeBilderAnDerMarke()
+    {
+        var ablage = new SignaturAblage(NullLogger<SignaturAblage>.Instance);
+        Dictionary<string, byte[]> alt = new() { ["image001.png"] = Bild(120) };
+        Dictionary<string, byte[]> neu = new() { ["image001.png"] = Bild(240) };
+
+        var vorher = ablage.Vorschau(alt).Single();
+        var nachher = ablage.Vorschau(neu).Single();
+
+        nachher.Dateiname.Should().Be(vorher.Dateiname);
+        nachher.Marke.Should().NotBe(vorher.Marke).And.NotBeEmpty();
+        // Dasselbe Bild behaelt seine Marke: Sonst laedt die Oberflaeche es
+        // bei jedem Blick neu, statt das schon geladene zu behalten.
+        ablage.Vorschau(alt).Single().Marke.Should().Be(vorher.Marke);
+    }
+
+    /// <summary>
+    /// Dieselbe Frage fuer die abgelegte Datei — dort kommt die Marke aus dem
+    /// Verzeichniseintrag statt aus dem Inhalt, damit Versand und
+    /// Bereitschaftsabfrage nicht bei jedem Aufruf ein 25-MB-Bild durch den
+    /// Hash schicken (siehe SignaturMarke).
+    /// </summary>
+    [Fact]
+    public void SignaturMarke_AendertSichMitDerAbgelegtenDatei()
+    {
+        var pfad = Datei("logo.png", Bild(120));
+        var vorher = SignaturMarke.Von(new FileInfo(pfad));
+
+        Datei("logo.png", Bild(240));
+        var nachher = SignaturMarke.Von(new FileInfo(pfad));
+
+        nachher.Should().NotBe(vorher).And.NotBeEmpty();
+        SignaturMarke.Von(new FileInfo(pfad)).Should().Be(nachher);
+    }
+
+    /// <summary>
+    /// Die Vorschau zeigt eine gelesene, noch nicht uebernommene Signatur --
+    /// ihre Bilder liegen dann noch nirgends in der Ablage. Holte sie sie von
+    /// dort, bekaeme sie unter demselben Namen das Logo der vorigen Signatur
+    /// geliefert und zeigte es als das neue (behoben am 04.09.2026).
+    /// </summary>
+    [Fact]
+    public void OutlookSignaturHtml_HoltEinEinzelnesBildAusDemBeiordner()
+    {
+        Datei("Neu-Dateien/image001.png", Bild(300));
+        var htm = Datei("Neu.htm", Encoding.UTF8.GetBytes(
+            "<body><img src=\"Neu-Dateien/image001.png\"></body>"));
+
+        OutlookSignaturHtml.Bild(htm, "image001.png").Should().HaveCount(300);
+    }
+
+    /// <summary>
+    /// Der Dateiname kommt aus der Adresse und damit von aussen. Ausgeliefert
+    /// wird nur, was diese Signatur selbst erwaehnt -- sonst waere jede Datei
+    /// neben ihr ueber den Dienst abrufbar.
+    /// </summary>
+    [Fact]
+    public void OutlookSignaturHtml_KenntNurDieBilderDieserSignatur()
+    {
+        Datei("Neu-Dateien/image001.png", Bild(300));
+        Datei("geheim.png", Bild(50));
+        var htm = Datei("Neu.htm", Encoding.UTF8.GetBytes(
+            "<body><img src=\"Neu-Dateien/image001.png\"></body>"));
+
+        OutlookSignaturHtml.Bild(htm, "geheim.png").Should().BeNull();
+        OutlookSignaturHtml.Bild(htm, @"..\..\automation.db").Should().BeNull();
+        OutlookSignaturHtml.Bild(htm, "  ").Should().BeNull();
+    }
+
+    /// <summary>
+    /// Die andere Haelfte derselben Frage: Der Verweis steht im Dokument, nicht
+    /// in der Adresse. Die .htm gehoert dem Anwender, aber gelesen wird nur
+    /// unterhalb des Signaturordners — sonst sammelte ein
+    /// `src="..\..\automation.db"` die Mandatsdatenbank als angebliches
+    /// Signaturbild ein, und `signaturen/bild` lieferte sie danach aus.
+    /// </summary>
+    [Fact]
+    public void OutlookSignaturHtml_NimmtNichtsVonAusserhalbDesSignaturordners()
+    {
+        var draussen = Path.Combine(_ordner, "..", $"beute_{Guid.NewGuid():N}.png");
+        File.WriteAllBytes(Path.GetFullPath(draussen), Bild(80));
+        var name = Path.GetFileName(draussen);
+        var htm = Datei("Frech.htm", Encoding.UTF8.GetBytes(
+            $"<body><img src=\"../{name}\"></body>"));
+
+        try
+        {
+            var gelesen = OutlookSignaturHtml.Lies(htm);
+
+            gelesen.Should().NotBeNull();
+            gelesen!.Bilder.Should().BeEmpty();
+            OutlookSignaturHtml.Bild(htm, name).Should().BeNull();
+            // Und die Bildmarke faellt, statt beim Empfaenger als Kreuz zu stehen.
+            gelesen.Uebergangen.Should().ContainSingle();
+            gelesen.Html.Should().NotContain("<img");
+        }
+        finally
+        {
+            File.Delete(Path.GetFullPath(draussen));
+        }
     }
 
     public void Dispose()

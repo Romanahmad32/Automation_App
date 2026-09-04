@@ -27,11 +27,17 @@ class SignaturRenderVorschau extends StatelessWidget {
   /// Die Bilder der übernommenen formatierten Fassung; leer bei Nur-Text.
   final List<SignaturBild> bilder;
 
+  /// Name der aus Outlook gelesenen, noch nicht gespeicherten Signatur; sonst
+  /// leer. Ohne ihn zeigte die Vorschau die Bilder der **bisherigen** Signatur,
+  /// weil sie unter denselben Namen in der Ablage liegen (§4.7).
+  final String ausOutlook;
+
   const SignaturRenderVorschau({
     super.key,
     required this.text,
     this.html = '',
     this.bilder = const [],
+    this.ausOutlook = '',
   });
 
   @override
@@ -68,7 +74,12 @@ class SignaturRenderVorschau extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          SignaturAnsicht(text: inhalt, html: html, bilder: bilder),
+          SignaturAnsicht(
+            text: inhalt,
+            html: html,
+            bilder: bilder,
+            ausOutlook: ausOutlook,
+          ),
           if (bilder.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(

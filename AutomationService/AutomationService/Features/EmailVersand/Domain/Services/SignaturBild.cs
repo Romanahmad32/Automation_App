@@ -9,4 +9,10 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// wächst mit jeder Nachricht mit, und der Anwalt entscheidet je Mail, ob es
 /// mitgeht.
 /// </summary>
-public sealed record SignaturBild(string Dateiname, long Bytes);
+/// <param name="Dateiname">Der blanke Name, unter dem es in der Ablage liegt.</param>
+/// <param name="Bytes">Wie schwer es wiegt.</param>
+/// <param name="Marke">
+/// Sein Inhalt in Kurzform (<see cref="SignaturMarke"/>). Der Name allein
+/// unterscheidet zwei Logos nicht — Outlook nennt beide <c>image001.png</c>.
+/// </param>
+public sealed record SignaturBild(string Dateiname, long Bytes, string Marke);

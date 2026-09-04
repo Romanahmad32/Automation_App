@@ -3006,11 +3006,28 @@
         "tags": [
           "EmailVersand"
         ],
-        "summary": "Ein einzelnes Bild der \u00FCbernommenen Signatur (\u00A74.7). Die Oberfl\u00E4che\r\nzeigt damit in der Vorschau, was wirklich unter der Mail steht \u2014 den\r\nSignaturtext allein anzuzeigen hie\u00DFe, das Logo erst im Ordner\r\n\u0022Gesendet\u0022 zu sehen.\r\n\r\nAusgeliefert wird nur, was in der Signaturablage liegt: Der Name kommt\r\nvon aussen, string? SignaturAblage.PfadVon(string dateiname) l\u00E4sst deshalb keinen\r\nPfad durch, der aus diesem einen Ordner hinausf\u00FChrt.",
+        "summary": "Ein einzelnes Bild der Signatur (\u00A74.7). Die Oberfl\u00E4che zeigt damit in\r\nder Vorschau, was wirklich unter der Mail steht \u2014 den Signaturtext\r\nallein anzuzeigen hie\u00DFe, das Logo erst im Ordner \u0022Gesendet\u0022 zu sehen.\r\n\r\nZwei Quellen, und welche gilt, sagt ausOutlook: ohne\r\nihn die \u003Cb\u003EAblage\u003C/b\u003E \u2014 die \u00FCbernommene Signatur, die unter den Mails\r\nsteht. Mit ihm \u003Cb\u003EOutlooks Beiordner\u003C/b\u003E zu dieser Signatur \u2014 die\r\ngelesene, noch nicht gespeicherte (\u0060signaturen/vorschau\u0060).\r\n\r\nDer zweite Weg kam am 04.09.2026 dazu, und er behebt einen Fehler.\r\nVorher hatte die Vorschau nur den ersten: Sie zeigte das HTML der neuen\r\nSignatur, holte die Bilder dazu aber aus der Ablage \u2014 wo noch die\r\nvorige lag. Outlook nennt das erste Bild jeder Signatur\r\n\u0060image001.png\u0060, also traf sie dort verl\u00E4sslich das alte Logo und\r\nzeigte es als das neue.\r\n\r\nBeide Namen kommen von aussen und werden beide auf den blanken\r\nDateinamen zur\u00FCckgef\u00FChrt (string? SignaturAblage.PfadVon(string dateiname),\r\nbyte[]? OutlookSignaturen.LiesBild(string name, string dateiname)): Ein Verweis, der aus seinem\r\nOrdner hinausf\u00FChrt, findet nichts.",
         "parameters": [
           {
             "name": "dateiname",
             "in": "query",
+            "description": "Der blanke Name des Bildes.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ausOutlook",
+            "in": "query",
+            "description": "Name der Outlook-Signatur, aus der das Bild kommt; leer hei\u00DFt: aus der\r\nAblage. Der Name ist bewusst nicht \u0060signatur\u0060: Dieser Kopf f\u00FChrt\r\nschon eine KanzleiSignatur dieses Namens, und ein\r\nabweichender Name in der Adresse k\u00E4me ohne Beschreibung im Vertrag an \u2014\r\ndie Beschreibung h\u00E4ngt am C#-Bezeichner.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "marke",
+            "in": "query",
+            "description": "Wird \u003Cb\u003Enicht ausgewertet\u003C/b\u003E und steht trotzdem im Vertrag: Sie macht\r\ndie Adresse eindeutig. Flutter merkt sich geladene Bilder je Adresse,\r\nund weil jedes Logo \u0060image001.png\u0060 hei\u00DFt, zeigte die Oberfl\u00E4che\r\nnach einem Signaturwechsel weiter das vorige \u2014 bis zum Neustart der\r\nApp. Mit der Marke aus SignaturBildDto \u00E4ndert sich die\r\nAdresse genau dann, wenn sich das Bild \u00E4ndert.",
             "schema": {
               "type": "string"
             }
@@ -3048,7 +3065,7 @@
         "tags": [
           "EmailVersand"
         ],
-        "summary": "Liest die gew\u00E4hlte Signatur, \u003Cb\u003Eohne sie zu speichern\u003C/b\u003E (\u00A74.7,\r\nerg\u00E4nzt am 02.09.2026) \u2014 damit das Formular sie zeigen kann, bevor der\r\nAnwalt auf \u201ESpeichern\u0022 dr\u00FCckt.\r\n\r\nVorher gab es diesen Weg nicht: Wer eine Signatur aus der Liste w\u00E4hlte,\r\nhatte sie damit schon gewechselt \u2014 samt gel\u00F6schter Bilder der bisherigen.\r\nGeschrieben wird jetzt erst \u00FCber \u0060signaturen/uebernehmen\u0060, und das\r\nruft die Oberfl\u00E4che beim Speichern.\r\n\r\nDie Bilder kommen als Angabe zur\u00FCck, nicht als Inhalt; auf der Platte\r\nliegen sie erst nach der \u00DCbernahme. Bis dahin zeigt die Vorschau Schrift\r\nund Farben, aber kein Logo.",
+        "summary": "Liest die gew\u00E4hlte Signatur, \u003Cb\u003Eohne sie zu speichern\u003C/b\u003E (\u00A74.7,\r\nerg\u00E4nzt am 02.09.2026) \u2014 damit das Formular sie zeigen kann, bevor der\r\nAnwalt auf \u201ESpeichern\u0022 dr\u00FCckt.\r\n\r\nVorher gab es diesen Weg nicht: Wer eine Signatur aus der Liste w\u00E4hlte,\r\nhatte sie damit schon gewechselt \u2014 samt gel\u00F6schter Bilder der bisherigen.\r\nGeschrieben wird jetzt erst \u00FCber \u0060signaturen/uebernehmen\u0060, und das\r\nruft die Oberfl\u00E4che beim Speichern.\r\n\r\nDie Bilder kommen als Angabe zur\u00FCck, nicht als Inhalt: Sie d\u00FCrfen 25 MB\r\ngro\u00DF sein und gehen nicht \u00FCber die Leitung, nur um von dort wieder\r\nzur\u00FCckzukommen. Zu sehen sind sie trotzdem \u2014 die Vorschau holt jedes\r\neinzeln \u00FCber \u0060signaturen/bild?ausOutlook=\u0060, das daf\u00FCr in Outlooks\r\nBeiordner liest statt in der Ablage, in der noch die vorige Signatur\r\nliegt.",
         "parameters": [
           {
             "name": "name",
@@ -6172,12 +6189,14 @@
       "SignaturBildDto": {
         "required": [
           "dateiname",
-          "bytes"
+          "bytes",
+          "marke"
         ],
         "type": "object",
         "properties": {
           "dateiname": {
-            "type": "string"
+            "type": "string",
+            "description": "Der Name, unter dem der Dienst es ausliefert."
           },
           "bytes": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -6185,7 +6204,12 @@
               "integer",
               "string"
             ],
+            "description": "Wie schwer es wiegt.",
             "format": "int64"
+          },
+          "marke": {
+            "type": "string",
+            "description": "Sein Inhalt in Kurzform (SignaturMarke) \u2014 geh\u00F6rt an die\r\nAdresse, unter der die Oberfl\u00E4che das Bild holt. Ohne sie hei\u00DFen zwei\r\nverschiedene Logos beide \u0060image001.png\u0060, und die Oberfl\u00E4che zeigt nach\r\neinem Signaturwechsel weiter das alte aus ihrem Bildspeicher."
           }
         },
         "description": "Ein Bild der formatierten Signatur mit seiner Gr\u00F6\u00DFe (REQUIREMENTS.md \u00A74.7).\r\nDie Gr\u00F6\u00DFe geht mit, weil der Anwalt je Mail entscheidet, ob das Bild\r\nmitgeht \u2014 und diese Entscheidung ohne Zahl nicht zu treffen ist."

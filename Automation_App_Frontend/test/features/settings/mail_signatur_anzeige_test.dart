@@ -306,20 +306,42 @@ void main() {
       tester,
     ) async {
       expect(
-        SignaturVorgemerktZeile.text('Kanzlei', mitBildern: true),
+        SignaturVorgemerktZeile.text('Kanzlei'),
         allOf(
           contains('Kanzlei'),
           contains('erst mit „Speichern"'),
           contains('bisherige Signatur'),
+          // Seit die Vorschau die Bilder aus Outlook holt, fehlt in ihr nichts
+          // mehr — ein Satz darüber wäre eine Verwirrung.
+          isNot(contains('Bilder')),
         ),
       );
-      expect(
-        SignaturVorgemerktZeile.text('Kanzlei', mitBildern: false),
-        isNot(contains('Bilder')),
-        reason:
-            'ohne Bilder fehlt in der Vorschau nichts — dann kein Satz '
-            'dazu',
+    });
+
+    testWidgets('die Vorschau holt die Bilder der vorgemerkten Signatur '
+        'aus Outlook', (tester) async {
+      // Die Naht, an der der Fehler hing: Ohne den vorgemerkten Namen an der
+      // Bildadresse liefert der Dienst aus seiner Ablage — dort liegt unter
+      // demselben `image001.png` noch das Logo der vorigen Signatur.
+      dienst.stand = const SignaturStand(
+        text: 'Kanzlei Ahmad',
+        html: '<p>Kanzlei Ahmad</p><img src="image001.png">',
+        bilder: [
+          SignaturBild(dateiname: 'image001.png', bytes: 4096, marke: 'a1b2c3'),
+        ],
       );
+      final bloc = bauBloc();
+      await zeige(tester, bloc);
+      bloc.add(const LoadKanzleiSettingsEvent());
+      await tester.pumpAndSettle();
+
+      vorgemerkt.value = 'neu Kanzlei';
+      await tester.pumpAndSettle();
+
+      final gerendert = tester.widget<HtmlWidget>(find.byType(HtmlWidget)).html;
+      expect(gerendert, contains('ausOutlook=neu+Kanzlei'));
+      // Und die Marke, damit die Oberflaeche das Bild ueberhaupt neu holt.
+      expect(gerendert, contains('marke=a1b2c3'));
     });
   });
 
