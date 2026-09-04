@@ -5,6 +5,7 @@ import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/abteilung_auswahl.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:automation_app/features/settings/presentation/widgets/register_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/sicherungs_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
@@ -15,6 +16,17 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Eigentliches Eingabeformular der Kanzlei-/Anfragerdaten. Findet die
 /// FormControls über den umschließenden [ReactiveForm] (Context), braucht also
 /// nur den Speicher-Status und den Speichern-Callback.
+///
+/// Die Karten sind in zwei Themen geteilt, die auf einem breiten Schirm
+/// nebeneinander stehen: links die Kanzlei und ihre Akte (Anfragerdaten,
+/// Referenz, Aktensystem), rechts die drei Ordner daneben (Vorlagen, Register,
+/// Sicherung). Wird es eng, laufen sie in dieser Reihenfolge untereinander.
+///
+/// Das Aktensystem steht bewusst links, obwohl es auch ein Ordner ist: Mit ihm
+/// rechts waren die Spalten 800 zu 1230 Pixel hoch, und beim Scrollen stand
+/// neben der rechten Hälfte eine halbe Bildschirmbreite Leere. So sind es
+/// ungefähr 1040 zu 990 — und der Stammordner gehört ohnehin zur Akte, nicht
+/// zu dem, was die App *daneben* ablegt.
 class KanzleiSettingsFormBody extends StatelessWidget {
   final bool isSaving;
   final VoidCallback onSave;
@@ -30,10 +42,15 @@ class KanzleiSettingsFormBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 16,
-      children: [
+    return EinstellungenReiter(
+      aktion: ReactiveFormConsumer(
+        builder: (context, form, child) => SpeichernButton(
+          kompakt: true,
+          speichert: isSaving,
+          onSpeichern: form.valid ? onSave : null,
+        ),
+      ),
+      links: [
         FormSection(
           icon: Icons.business,
           title: 'Kanzlei- / Anfragerdaten',
@@ -119,6 +136,8 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'möglich.',
           children: const [StammordnerField()],
         ),
+      ],
+      rechts: [
         FormSection(
           icon: Icons.description_outlined,
           title: 'Vorlagen',
@@ -152,12 +171,6 @@ class KanzleiSettingsFormBody extends StatelessWidget {
               'Übernahme an — die App fragt dabei nach, bevor sie etwas '
               'ersetzt. Leer heißt: nur Sichern auf Knopfdruck.',
           children: const [SicherungsAblageFelder()],
-        ),
-        ReactiveFormConsumer(
-          builder: (context, form, child) => SpeichernButton(
-            speichert: isSaving,
-            onSpeichern: form.valid ? onSave : null,
-          ),
         ),
       ],
     );
