@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
@@ -104,13 +105,10 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
     return StandNachziehen<StandardpositionenCubit, StandardpositionenStand>(
       nachziehen: _nachziehen,
       beiUebergang: (context, stand) {
-        final meldung = stand.gespeichert
-            ? 'Standardpositionen gespeichert.'
-            : stand.meldung;
-        if (meldung != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(meldung)));
+        if (stand.gespeichert) {
+          Rueckmeldung.zeigeErfolg(context, 'Standardpositionen gespeichert.');
+        } else if (stand.meldung != null) {
+          Rueckmeldung.zeigeFehler(context, stand.meldung!);
         }
       },
       builder: (context, stand) => Column(

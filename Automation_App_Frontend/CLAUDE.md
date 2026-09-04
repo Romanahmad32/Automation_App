@@ -126,6 +126,11 @@ der Anwalt direkt nach dem Öffnen der App.
   `core/general_widgets/stand_nachziehen.dart` trennt `nachziehen` (beim Aufgehen **und** bei
   jedem Zustand) von `beiUebergang` (nur Meldungen). Dazu je ein Widget-Test nach dem Muster
   „war der Bloc schon geladen" — `test/features/mailbox/mailbox_zugang_anzeige_test.dart`.
+- **Flüchtige Meldungen nur über `Rueckmeldung`, nie `ScaffoldMessenger`/`SnackBar`.** Die App hat
+  genau einen `Scaffold` und nur nackte `AlertDialog`: Eine Snackbar landet unter der Dialogbarriere
+  und legt sich sonst unten über die Knöpfe, die der Anwalt als Nächstes drücken will.
+  `Rueckmeldung` schreibt ins Wurzel-Overlay — oben rechts, gestapelt, und Fehler bleiben stehen,
+  bis jemand sie schließt (Issue #56).
 - **Vorhandene Widgets bevorzugen.** Vor dem Neubau prüfen, ob es schon eins gibt, und dieses
   verwenden bzw. erweitern statt zu duplizieren.
 - **Datasources: Sache im Dateinamen, Technik im Klassennamen.** Datei `<sache>_datasource.dart` —
@@ -175,6 +180,9 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
   `SidebarUpdateHinweis`
 - `page_refresh/` — `PageRefreshScope`, `PageRefreshButton`, `PageRefreshController`,
   `PageRefreshInherited`
+- `rueckmeldung/` — `Rueckmeldung` (**der** Weg für Erfolgs-, Hinweis- und Fehlermeldungen), dazu
+  `RueckmeldungsAktion`, `RueckmeldungsArt`, `RueckmeldungsKarte`, `RueckmeldungsStapel`,
+  `RueckmeldungsSteuerung`
 - direkt darunter — `SeitenAppBar`, `EntitySearchBar`, `FehlerHinweis`, `AnwendungsInfo`,
   `UeberAnwendungDialog`, `UpdateHerunterladenButton`, `VersionBadge`, `DateiAblageBereich`
   (nimmt aus dem Explorer gezogene Dateien entgegen, `desktop_drop`)

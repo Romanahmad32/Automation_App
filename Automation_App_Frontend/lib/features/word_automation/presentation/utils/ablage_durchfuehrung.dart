@@ -1,5 +1,6 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/ablage_format.dart';
@@ -27,7 +28,8 @@ Future<void> starteAblage(
   required AblageFormat format,
 }) async {
   final cubit = context.read<AblageCubit>();
-  final messenger = ScaffoldMessenger.of(context);
+  // Vor dem await greifen: danach kann der BuildContext weg sein.
+  final rueckmeldung = Rueckmeldung.von(context);
   final quellen = <String>[if (format.mitWord) wordPfad];
 
   if (format.mitPdf) {
@@ -38,15 +40,13 @@ Future<void> starteAblage(
       case Right(value: final pdfPfad):
         quellen.add(pdfPfad);
       case Left(value: final failure):
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              'Die PDF-Fassung konnte nicht erstellt werden: '
-              '${failure.message}',
-            ),
-            duration: const Duration(seconds: 10),
-            showCloseIcon: true,
-          ),
+        // Bleibt stehen, bis der Anwalt sie schließt. Das Overlay des
+        // Bausteins liegt über allen Routen: Öffnet sich danach eine
+        // Rückfrage (etwa der AblageKonfliktDialog weiter unten), legt sie
+        // sich nur kurz darüber — die Meldung geht dabei nicht verloren.
+        rueckmeldung.fehler(
+          'Die PDF-Fassung konnte nicht erstellt werden: '
+          '${failure.message}',
         );
         return;
     }

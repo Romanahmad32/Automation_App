@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/verwendete_felder.dart';
@@ -159,7 +160,8 @@ class AusfuellFormular extends StatelessWidget {
   Future<void> _feldBearbeiten(BuildContext context, FieldData feld) async {
     final cubit = context.read<WizardCubit>();
     final vorlagen = context.read<FormTemplateOverviewBloc>();
-    final melder = ScaffoldMessenger.of(context);
+    // Vor dem await greifen: danach kann der BuildContext weg sein.
+    final rueckmeldung = Rueckmeldung.von(context);
 
     final geaendert = await FeldEinstellungDialog.zeige(
       context,
@@ -173,13 +175,9 @@ class AusfuellFormular extends StatelessWidget {
 
     final aenderung = await cubit.aktualisiereFeld(feld, geaendert);
     if (!aenderung.gespeichert) {
-      melder.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Die Feldeinstellung konnte nicht gespeichert werden. Die Vorlage '
-            'bleibt unverändert.',
-          ),
-        ),
+      rueckmeldung.fehler(
+        'Die Feldeinstellung konnte nicht gespeichert werden. Die Vorlage '
+        'bleibt unverändert.',
       );
       return;
     }
@@ -187,29 +185,23 @@ class AusfuellFormular extends StatelessWidget {
 
     final alterWert = aenderung.verdraengterWert;
     if (alterWert != null) {
-      melder.showSnackBar(_zurueckholenMeldung(cubit, geaendert, alterWert));
+      // Der Anwalt liest gerade das Feld, nicht den unteren Bildschirmrand —
+      // die Meldung mit Aktion steht deshalb mindestens acht Sekunden
+      // (`RueckmeldungsArt.mitAktionMindestens`). Was hier verschwindet, hat
+      // er selbst getippt.
+      rueckmeldung.hinweis(
+        '„${feld.label}" wurde aus der Vorbelegung neu befüllt.',
+        aktion: RueckmeldungsAktion(
+          text: 'Alten Wert zurückholen',
+          // Die Meldung überlebt den Wizard: Wer die Seite verlässt, während
+          // sie noch steht, drückte sonst auf einen geschlossenen Cubit.
+          beiDruck: () => cubit.isClosed
+              ? null
+              : cubit.stelleFeldWertWiederHer(feld.label, alterWert),
+        ),
+      );
     }
   }
-
-  /// Die Meldung zu einem Wert, der der Vorbelegung gewichen ist. Sie steht
-  /// länger als üblich: Der Anwalt liest gerade das Feld, nicht den unteren
-  /// Bildschirmrand — und was hier verschwindet, hat er selbst getippt.
-  static SnackBar _zurueckholenMeldung(
-    WizardCubit cubit,
-    FieldData feld,
-    String alterWert,
-  ) => SnackBar(
-    content: Text('„${feld.label}" wurde aus der Vorbelegung neu befüllt.'),
-    duration: const Duration(seconds: 8),
-    action: SnackBarAction(
-      label: 'Alten Wert zurückholen',
-      // Die Meldung überlebt den Wizard: Wer die Seite verlässt, während sie
-      // noch steht, drückte sonst auf einen geschlossenen Cubit.
-      onPressed: () => cubit.isClosed
-          ? null
-          : cubit.stelleFeldWertWiederHer(feld.label, alterWert),
-    ),
-  );
 
   /// Ob der Dialog nichts geändert hat — dann bleibt der Dienst außen vor.
   ///

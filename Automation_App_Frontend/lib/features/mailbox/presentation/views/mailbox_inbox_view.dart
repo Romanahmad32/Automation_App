@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_auswahl_signal.dart';
@@ -100,14 +101,12 @@ class _MailboxInboxViewState extends State<MailboxInboxView> {
       zielReferenz: zielReferenz,
       antwortGewinnt: antwortGewinnt,
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Vorgangsdaten übernommen. Passende Felder werden beim Ausfüllen der '
-          'Vorlage automatisch vorbelegt.',
-        ),
-        duration: Duration(seconds: 4),
-      ),
+    // Die Meldung liegt im Wurzel-Overlay (Rueckmeldung) und übersteht den
+    // Tab-Wechsel unten deshalb unbeschadet.
+    Rueckmeldung.zeigeErfolg(
+      context,
+      'Vorgangsdaten übernommen. Passende Felder werden beim Ausfüllen der '
+      'Vorlage automatisch vorbelegt.',
     );
     AutoTabsRouter.of(context).setActiveIndex(AppTabIndex.wordAutomation);
     return true;

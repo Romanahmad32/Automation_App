@@ -1,4 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/dev_simulation/domain/entities/zentralruf_antwort_typ.dart';
 import 'package:automation_app/features/dev_simulation/domain/repositories/simulation_repository.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
@@ -34,6 +35,7 @@ class SimulationMenu extends StatelessWidget {
     required ZentralrufAntwortTyp typ,
   }) async {
     String meldung;
+    var erfolgreich = true;
     try {
       await getIt<SimulationRepository>().simuliereZentralrufAntwort(
         referenz: vorgang.referenz,
@@ -45,12 +47,13 @@ class SimulationMenu extends StatelessWidget {
           'Simulierte Zentralruf-Antwort eingespeist — im Postfach prüfen '
           'und übernehmen (echter Weg).';
     } catch (_) {
+      erfolgreich = false;
       meldung =
           'Simulation fehlgeschlagen. Läuft das Backend im Development-Profil '
           '(Simulation:Enabled)?';
     }
     if (!context.mounted) return;
-    _melde(context, meldung);
+    _melde(context, meldung, erfolg: erfolgreich);
   }
 
   Future<void> _schreibenErstelltSimulieren(BuildContext context) async {
@@ -86,13 +89,19 @@ class SimulationMenu extends StatelessWidget {
           ? 'Vorgang abgeschlossen — Auftragsnummer wurde hochgezählt '
                 '(echte Backend-Transaktion).'
           : 'Abschließen fehlgeschlagen. Läuft der Hintergrunddienst?',
+      erfolg: erfolgreich,
     );
   }
 
-  void _melde(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), duration: const Duration(seconds: 4)),
-    );
+  /// [erfolg] wählt die Art: Erfolg meldet einen gelungenen Schritt, alles
+  /// andere (Fehlschlag, „Backend läuft nicht?") einen Hinweis — keiner der
+  /// Simulationsschritte ist ein Fehler, der stehen bleiben muss.
+  void _melde(BuildContext context, String text, {bool erfolg = true}) {
+    if (erfolg) {
+      Rueckmeldung.zeigeErfolg(context, text);
+    } else {
+      Rueckmeldung.zeigeHinweis(context, text);
+    }
   }
 
   Future<void> _ausfuehren(BuildContext context, SimulationAktion aktion) {

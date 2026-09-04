@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
@@ -209,9 +210,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
             if (state is FormTemplateDataSuccess) {
               context.router.maybePop(true);
             } else if (state is FormTemplateDataError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              Rueckmeldung.zeigeFehler(context, state.message);
             }
           },
           builder: (context, state) {

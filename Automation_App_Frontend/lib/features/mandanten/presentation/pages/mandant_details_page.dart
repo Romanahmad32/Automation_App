@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
@@ -130,10 +131,9 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
         if (state.status == MandantEditStatus.success) {
           context.router.maybePop(true);
         } else if (state.status == MandantEditStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message ?? 'Mandant nicht gespeichert.'),
-            ),
+          Rueckmeldung.zeigeFehler(
+            context,
+            state.message ?? 'Mandant nicht gespeichert.',
           );
         }
       },

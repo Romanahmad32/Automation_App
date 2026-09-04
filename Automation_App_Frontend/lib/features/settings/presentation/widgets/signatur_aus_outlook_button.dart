@@ -1,5 +1,6 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_auswahl_dialog.dart';
@@ -42,7 +43,7 @@ class _SignaturAusOutlookButtonState extends State<SignaturAusOutlookButton> {
 
   Future<void> _holen() async {
     setState(() => _laedt = true);
-    final melder = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
     final zugang = getIt<EmailVersandRepository>();
 
     try {
@@ -50,13 +51,9 @@ class _SignaturAusOutlookButtonState extends State<SignaturAusOutlookButton> {
       if (!mounted) return;
 
       if (gefunden.isEmpty) {
-        melder.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'In Outlook ist auf diesem Rechner keine Signatur eingerichtet. '
-              'Sie lässt sich hier auch von Hand eintragen.',
-            ),
-          ),
+        melder.hinweis(
+          'In Outlook ist auf diesem Rechner keine Signatur eingerichtet. '
+          'Sie lässt sich hier auch von Hand eintragen.',
         );
         return;
       }
@@ -69,13 +66,7 @@ class _SignaturAusOutlookButtonState extends State<SignaturAusOutlookButton> {
       widget.onGelesen(gewaehlt.name, stand);
     } catch (e) {
       if (!mounted) return;
-      melder.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Die Signatur ließ sich nicht lesen: ${ausnahmeText(e)}',
-          ),
-        ),
-      );
+      melder.fehler('Die Signatur ließ sich nicht lesen: ${ausnahmeText(e)}');
     } finally {
       if (mounted) setState(() => _laedt = false);
     }
