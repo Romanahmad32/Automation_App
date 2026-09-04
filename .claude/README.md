@@ -56,5 +56,8 @@ Präfixliste des Hooks und die des CI-Schritts dieselbe ist.
 ## `skills/` — zieht sich selbst
 
 `neuer-endpunkt` ist das Rezept für einen neuen oder geänderten HTTP-Endpunkt über beide Seiten.
+`subagent-auftrag` ist der Textbaustein, den ein koordinierender Agent jedem Subagenten mitgibt —
+Modellwahl, Umgebungsfallstricke, Regeln, Prüfumfang. `issue-loesen` ist die Ablaufcheckliste, ein
+GitHub-Issue von der Auswahl bis zum Pull Request zu lösen.
 Der Unterschied zu `commands/`: Ein Skill braucht niemanden, der ihn aufruft — genau das, was ein
 Agent mit frischem Kontext nicht weiß.
