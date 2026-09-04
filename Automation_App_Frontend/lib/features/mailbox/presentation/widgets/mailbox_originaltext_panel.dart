@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -38,13 +39,9 @@ class MailboxOriginaltextPanel extends StatelessWidget {
                     onPressed: () async {
                       await Clipboard.setData(ClipboardData(text: text));
                       if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Originaltext in die Zwischenablage kopiert.',
-                          ),
-                          duration: Duration(seconds: 2),
-                        ),
+                      Rueckmeldung.zeigeErfolg(
+                        context,
+                        'Originaltext in die Zwischenablage kopiert.',
                       );
                     },
                   ),

@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/anrede_auswahl.dart';
@@ -48,13 +49,13 @@ class _EmailVersandFormularState extends State<EmailVersandFormular> {
     BuildContext context,
     EmailEntwurfCubit cubit,
   ) async {
-    final melder = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
     final ergebnis = await cubit.anhaengeAusOutlook();
     if (!mounted || ergebnis == null) return;
 
     final meldung = OutlookGriffMeldung.fuer(ergebnis.griff, ergebnis.neu);
     if (meldung == null) return;
-    melder.showSnackBar(SnackBar(content: Text(meldung)));
+    melder.hinweis(meldung);
   }
 
   @override

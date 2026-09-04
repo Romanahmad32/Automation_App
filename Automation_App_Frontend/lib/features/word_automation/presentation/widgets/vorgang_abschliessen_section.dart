@@ -1,5 +1,6 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
@@ -58,21 +59,19 @@ class _VorgangAbschliessenSectionState
     final erfolgreich = await getIt<VorgangCubit>().abschliessen(vorgang);
     if (erfolgreich) await _arbeitsordnerRaeumen(vorgang);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          erfolgreich
-              ? 'Vorgang abgeschlossen und ins Register aufgenommen. Die '
-                    'laufende Auftragsnummer wurde hochgezählt.'
-              : 'Der Vorgang konnte nicht abgeschlossen werden — Status und '
-                    'Auftragsnummer sind unverändert. Bitte erneut versuchen.',
-        ),
-        backgroundColor: erfolgreich
-            ? null
-            : Theme.of(context).colorScheme.error,
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    if (erfolgreich) {
+      Rueckmeldung.zeigeErfolg(
+        context,
+        'Vorgang abgeschlossen und ins Register aufgenommen. Die '
+        'laufende Auftragsnummer wurde hochgezählt.',
+      );
+    } else {
+      Rueckmeldung.zeigeFehler(
+        context,
+        'Der Vorgang konnte nicht abgeschlossen werden — Status und '
+        'Auftragsnummer sind unverändert. Bitte erneut versuchen.',
+      );
+    }
   }
 
   /// Löscht die Arbeitskopien des abgeschlossenen Vorgangs. Bewusst

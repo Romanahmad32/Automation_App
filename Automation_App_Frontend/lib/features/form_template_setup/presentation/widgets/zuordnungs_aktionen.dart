@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_uebernahme.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
@@ -63,9 +64,7 @@ class ZuordnungsAktionen {
   }) async {
     final grund = PlatzhalterUebernahme.ablehnungsgrund(platzhalter, feldnamen);
     if (grund != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(grund)));
+      Rueckmeldung.zeigeHinweis(context, grund);
       return;
     }
     final wahl = await ZuordnungsDialog.fuerPlatzhalter(
@@ -95,12 +94,9 @@ class ZuordnungsAktionen {
       feldnamen,
     );
     if (offene.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'In den verknüpften Word-Dateien ist kein Platzhalter mehr frei.',
-          ),
-        ),
+      Rueckmeldung.zeigeHinweis(
+        context,
+        'In den verknüpften Word-Dateien ist kein Platzhalter mehr frei.',
       );
       return;
     }

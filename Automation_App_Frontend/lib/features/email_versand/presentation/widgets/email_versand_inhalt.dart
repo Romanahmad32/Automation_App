@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:automation_app/core/general_widgets/datei_ablage_bereich.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_state.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/outlook_griff_meldung.dart';
@@ -60,22 +61,21 @@ class EmailVersandInhalt extends StatelessWidget {
   /// Dateien liegen danach als Vorschläge in der Reihe, einer davon der
   /// gezogene.
   Future<void> _nichtsErkannt(BuildContext context) async {
-    final melder = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
     final cubit = context.read<EmailEntwurfCubit>();
     final ergebnis = await cubit.anhaengeAusOutlook();
 
     if (ergebnis == null) {
-      _zeigen(
-        melder,
+      melder.hinweis(
         'Diese Datei hat Windows nicht als Datei durchgereicht — aus Outlook '
         'gezogene Anhänge kommen so nicht an. Der Knopf „Aus der '
         'Outlook-Nachricht" holt sie.',
+        dauer: const Duration(seconds: 6),
       );
       return;
     }
 
-    _zeigen(
-      melder,
+    melder.hinweis(
       OutlookGriffMeldung.fuer(
             ergebnis.griff,
             ergebnis.neu,
@@ -84,17 +84,12 @@ class EmailVersandInhalt extends StatelessWidget {
           'Outlook gibt gezogene Anhänge nicht als Datei heraus — die Anhänge '
               'von ${ergebnis.griff.bezeichnung} liegen jetzt unten zum '
               'Anklicken bereit.',
+      dauer: const Duration(seconds: 6),
     );
   }
 
   static void _melden(BuildContext context, String text) {
-    _zeigen(ScaffoldMessenger.of(context), text);
-  }
-
-  static void _zeigen(ScaffoldMessengerState melder, String text) {
-    melder.showSnackBar(
-      SnackBar(content: Text(text), duration: const Duration(seconds: 6)),
-    );
+    Rueckmeldung.zeigeHinweis(context, text);
   }
 
   @override

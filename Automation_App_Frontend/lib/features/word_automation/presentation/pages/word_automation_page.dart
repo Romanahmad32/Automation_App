@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
@@ -90,12 +91,7 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
         BlocListener<DocumentBloc, DocumentState>(
           listenWhen: (previous, current) => current is DocumentError,
           listener: (context, state) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text((state as DocumentError).message),
-                duration: const Duration(seconds: 3),
-              ),
-            );
+            Rueckmeldung.zeigeFehler(context, (state as DocumentError).message);
           },
         ),
         // Erfolgreich erzeugtes Dokument: zur Begutachtung springen
@@ -170,17 +166,11 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                   );
                 }
               case EditedDocumentError():
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    // Laenger als die uebrigen Hinweise: hier stehen die
-                    // Meldungen des Dienstes, die sagen, was zu tun ist
-                    // ("Bitte schliessen Sie das Dokument ..."). In drei
-                    // Sekunden liest die niemand zu Ende.
-                    duration: const Duration(seconds: 10),
-                    showCloseIcon: true,
-                  ),
-                );
+                // Bleibt stehen, bis der Anwalt sie schließt: hier stehen
+                // die Meldungen des Dienstes, die sagen, was zu tun ist
+                // ("Bitte schliessen Sie das Dokument ..."). In drei
+                // Sekunden liest die niemand zu Ende.
+                Rueckmeldung.zeigeFehler(context, state.message);
               default:
                 break;
             }

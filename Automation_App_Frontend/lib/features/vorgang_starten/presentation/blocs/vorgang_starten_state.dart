@@ -73,7 +73,7 @@ final class MandantGespeichert extends VorgangStartenState {
   List<Object?> get props => [mandant, warNeu];
 }
 
-/// Etwas ist schiefgegangen; [message] steht so in der SnackBar.
+/// Etwas ist schiefgegangen; [message] steht so in der Rückmeldung.
 ///
 /// [gespeicherterMandant] ist gesetzt, wenn der Mandant vor dem Fehler bereits
 /// gespeichert wurde — etwa wenn danach das Vorbefüllen scheitert. Er liegt dann
