@@ -74,6 +74,27 @@ public static partial class OutlookSignaturHtml
     }
 
     /// <summary>
+    /// Ein einzelnes Bild aus dem Beiordner dieser Signatur, über seinen
+    /// blanken Dateinamen (§4.7) — für die Vorschau, die eine gelesene, noch
+    /// nicht übernommene Signatur zeigt.
+    ///
+    /// Gesucht wird über <see cref="Lies"/> und nicht über einen aus dem Namen
+    /// zusammengesetzten Pfad: Wie der Beiordner heißt, weiß nur das Dokument
+    /// (<c>Name-Dateien</c>, englisch <c>Name_files</c>), und was darin ein
+    /// Signaturbild ist, entscheidet dieselbe Auslese wie beim Übernehmen —
+    /// Größengrenze eingeschlossen. Ein Verweis, der aus dem Ordner hinausführt,
+    /// findet so von vornherein nichts: Verglichen wird gegen die Namen, die
+    /// beim Einsammeln entstanden sind, nicht gegen das Dateisystem.
+    /// </summary>
+    /// <returns>Null, wenn es die Signatur, ihre formatierte Fassung oder
+    /// dieses Bild darin nicht gibt.</returns>
+    public static byte[]? Bild(string htmPfad, string dateiname)
+    {
+        var blank = Path.GetFileName(dateiname.Trim());
+        return blank.Length == 0 ? null : Lies(htmPfad)?.Bilder.GetValueOrDefault(blank);
+    }
+
+    /// <summary>
     /// Der Inhalt zwischen den Body-Marken. Outlooks Kopfbereich trägt eine
     /// komplette Word-Stilvorlage; sie in jede Mail zu kopieren, würde deren
     /// Text mitformatieren — die Signatur soll unter der Mail stehen, nicht

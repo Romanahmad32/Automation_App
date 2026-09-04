@@ -53,7 +53,7 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
             try
             {
                 File.WriteAllBytes(Path.Combine(ordner, sicher), inhalt);
-                abgelegt.Add(new SignaturBild(sicher, inhalt.Length));
+                abgelegt.Add(new SignaturBild(sicher, inhalt.Length, SignaturMarke.Von(inhalt)));
             }
             catch (Exception ausnahme) when (ausnahme is IOException or UnauthorizedAccessException)
             {
@@ -74,7 +74,8 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
     /// für beide — zwei Filter nebeneinander liefen auseinander.
     /// </summary>
     public IReadOnlyList<SignaturBild> Vorschau(IReadOnlyDictionary<string, byte[]> bilder) =>
-        [.. Brauchbare(bilder).Select(paar => new SignaturBild(paar.Name, paar.Inhalt.Length))];
+        [.. Brauchbare(bilder).Select(paar =>
+            new SignaturBild(paar.Name, paar.Inhalt.Length, SignaturMarke.Von(paar.Inhalt)))];
 
     /// <summary>
     /// Die Bilder, die abgelegt werden dürfen, mit ihrem auf den blanken Namen
@@ -110,7 +111,8 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
             [
                 .. Directory.EnumerateFiles(ordner)
                     .Select(pfad => new FileInfo(pfad))
-                    .Select(datei => new SignaturBild(datei.Name, datei.Length))
+                    .Select(datei =>
+                        new SignaturBild(datei.Name, datei.Length, SignaturMarke.Von(datei)))
                     .OrderBy(bild => bild.Dateiname, StringComparer.CurrentCultureIgnoreCase),
             ];
         }

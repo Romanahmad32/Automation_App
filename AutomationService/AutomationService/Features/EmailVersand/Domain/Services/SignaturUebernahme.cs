@@ -36,8 +36,14 @@ public sealed class SignaturUebernahme(
     /// Die Bilder kommen als <b>Angabe</b> zurück, nicht als Inhalt: Sie
     /// dürfen 25 MB groß sein (<see cref="SignaturAblage.MaxBildBytes"/>) und
     /// gehen nicht über die Leitung, nur um von dort wieder zurückzukommen.
-    /// Abgelegt werden sie erst bei der Übernahme — bis dahin zeigt die
-    /// Vorschau Schrift und Farben, aber kein Logo, und sagt das.
+    /// Abgelegt werden sie erst bei der Übernahme; zu sehen sind sie
+    /// vorher — die Oberfläche holt jedes einzeln aus Outlooks Beiordner
+    /// (<see cref="OutlookSignaturen.LiesBild"/>).
+    ///
+    /// Bis zum 04.09.2026 ging sie stattdessen an die Ablage, und weil Outlook
+    /// jedes erste Bild <c>image001.png</c> nennt, bekam sie von dort das Logo
+    /// der <b>vorigen</b> Signatur geliefert — ohne dass irgendwo stand, dass
+    /// es das alte ist.
     /// </summary>
     /// <exception cref="EmailVersandException">
     /// Wenn es unter diesem Namen keine Signatur gibt.
