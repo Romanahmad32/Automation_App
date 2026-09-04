@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart';
 import 'package:file_picker/file_picker.dart';
@@ -86,12 +87,9 @@ class _ManualReplyInputState extends State<ManualReplyInput> {
     } else {
       final text = _emailTextController.text;
       if (text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Bitte zuerst den E-Mail-Text einfügen oder eine Datei laden.',
-            ),
-          ),
+        Rueckmeldung.zeigeHinweis(
+          context,
+          'Bitte zuerst den E-Mail-Text einfügen oder eine Datei laden.',
         );
         return;
       }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 import 'package:automation_app/features/backup/presentation/utils/sicherungs_zeitpunkt.dart';
@@ -90,7 +91,7 @@ class SicherungsStandZeileState extends State<SicherungsStandZeile> {
   Future<void> _uebernehmen() async {
     final angebot = _stand?.angebot;
     if (angebot == null) return;
-    final messenger = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
 
     final meldung = await UebergabeUebernahmeDialog.frageUndUebernimm(
       context,
@@ -98,9 +99,7 @@ class SicherungsStandZeileState extends State<SicherungsStandZeile> {
     );
     if (meldung == null) return;
 
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(meldung)));
+    melder.hinweis(meldung);
     await _laden();
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/template_selector.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
@@ -38,19 +39,15 @@ class WizardStepFillOut extends StatelessWidget {
     if (File(path).existsSync()) {
       documentBloc.add(SetDocumentPathEvent(path));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Die verknüpfte Word-Datei wurde nicht gefunden:\n$path',
-          ),
-          duration: const Duration(seconds: 8),
+      Rueckmeldung.zeigeFehler(
+        context,
+        'Die verknüpfte Word-Datei wurde nicht gefunden:\n$path',
+        aktion: RueckmeldungsAktion(
+          text: 'Neu verknüpfen',
           // Öffnet dieselbe Dateiauswahl wie der Knopf an der Word-Datei-
           // Zeile; die neue Wahl speichert der bestehende Listener dauerhaft
           // an der Vorlage (linkWordFileToTemplate).
-          action: SnackBarAction(
-            label: 'Neu verknüpfen',
-            onPressed: () => documentBloc.add(const SelectDocumentEvent()),
-          ),
+          beiDruck: () => documentBloc.add(const SelectDocumentEvent()),
         ),
       );
     }
@@ -66,19 +63,15 @@ class WizardStepFillOut extends StatelessWidget {
         ? template.wordFilePathMitAuflistung
         : template.wordFilePathOhneAuflistung;
     if (targetPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            value
-                ? 'Für diese Vorlage ist keine Version mit Auflistung hinterlegt. '
-                      'Bitte im Vorlagen-Management eine Datei mit Auflistung '
-                      'verknüpfen.'
-                : 'Für diese Vorlage ist keine Version ohne Auflistung '
-                      'hinterlegt. Bitte im Vorlagen-Management eine Datei ohne '
-                      'Auflistung verknüpfen.',
-          ),
-          duration: const Duration(seconds: 5),
-        ),
+      Rueckmeldung.zeigeHinweis(
+        context,
+        value
+            ? 'Für diese Vorlage ist keine Version mit Auflistung hinterlegt. '
+                  'Bitte im Vorlagen-Management eine Datei mit Auflistung '
+                  'verknüpfen.'
+            : 'Für diese Vorlage ist keine Version ohne Auflistung '
+                  'hinterlegt. Bitte im Vorlagen-Management eine Datei ohne '
+                  'Auflistung verknüpfen.',
       );
       return;
     }

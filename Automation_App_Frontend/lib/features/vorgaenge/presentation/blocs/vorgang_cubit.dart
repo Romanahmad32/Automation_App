@@ -259,7 +259,7 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
   }
 
   /// Wiederholt die fehlgeschlagene Operation aus einem gemeldeten
-  /// Persistenzfehler („Erneut versuchen" in der Snackbar).
+  /// Persistenzfehler („Erneut versuchen" in der Rückmeldung).
   Future<void> wiederhole(VorgangPersistenzFehler fehler) =>
       switch (fehler.aktion) {
         VorgangPersistenzAktion.laden => ladeErneut(),

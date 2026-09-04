@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -68,15 +69,22 @@ class EmailVersandButton extends StatelessWidget {
 
     onVersendet?.call(ergebnis);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'E-Mail an ${ergebnis.empfaenger.length} Empfänger versendet.'
-          '${ergebnis.imGesendetOrdner ? '' : ' ${ergebnis.hinweis ?? ''}'}',
-        ),
-        duration: const Duration(seconds: 5),
-      ),
-    );
+    final text =
+        'E-Mail an ${ergebnis.empfaenger.length} Empfänger versendet.'
+        '${ergebnis.imGesendetOrdner ? '' : ' ${ergebnis.hinweis ?? ''}'}';
+    final nebenbefund =
+        !ergebnis.imGesendetOrdner && (ergebnis.hinweis?.isNotEmpty ?? false);
+    if (nebenbefund) {
+      // Der Nebenbefund ist eine Handlungsanweisung, kein reiner Erfolg —
+      // deshalb länger stehen als drei Sekunden.
+      Rueckmeldung.zeigeHinweis(
+        context,
+        text,
+        dauer: const Duration(seconds: 6),
+      );
+    } else {
+      Rueckmeldung.zeigeErfolg(context, text);
+    }
   }
 
   @override
