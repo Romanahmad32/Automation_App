@@ -48,6 +48,7 @@ Vorgang vorgangAusJson(Map<String, dynamic> json) {
     entwurf: entwurfJson is Map<String, dynamic>
         ? VorgangEntwurf.fromJson(entwurfJson)
         : null,
+    schreibenNummer: (json['schreibenNummer'] as num?)?.toInt(),
     dokumentPfad: json['dokumentPfad'] as String?,
     aktenOrdner: json['aktenOrdner'] as String?,
     abgeschlossenAm: DateTime.tryParse(
@@ -78,6 +79,7 @@ extension VorgangAlsJson on Vorgang {
     'feldWerte': feldWerte,
     'schadensaufstellung': schadensaufstellung?.toJson(),
     'entwurf': entwurf?.toJson(),
+    'schreibenNummer': schreibenNummer,
     'dokumentPfad': dokumentPfad,
     'aktenOrdner': aktenOrdner,
     'abgeschlossenAm': abgeschlossenAm?.toIso8601String(),

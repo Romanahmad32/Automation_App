@@ -5,14 +5,15 @@ import 'package:automation_app/features/form_template_setup/presentation/blocs/f
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
+import 'package:automation_app/features/word_automation/domain/services/schreiben_dateiname.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
-import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/entwurf_hinweis.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/feld_einstellung_dialog.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/schreiben_nummer_hinweis.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgangsdaten_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -97,6 +98,10 @@ class AusfuellFormular extends StatelessWidget {
     );
 
     final angebot = wizardState.entwurfAngebot;
+    // Ab dem zweiten Schreiben zum Vorgang: Korrektur oder neues Schreiben?
+    // Null heisst „noch keins erzeugt" — dann ist die Nummer die 1 und es gibt
+    // nichts zu fragen (§4.9).
+    final bisherigeNummer = wizardState.selectedVorgang?.schreibenNummer;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,6 +112,14 @@ class AusfuellFormular extends StatelessWidget {
             onWeiterarbeiten: () =>
                 context.read<WizardCubit>().uebernimmEntwurf(),
             onVerwerfen: () => context.read<WizardCubit>().verwirfEntwurf(),
+          ),
+        if (bisherigeNummer != null && bisherigeNummer >= 1)
+          SchreibenNummerHinweis(
+            bisherigeNummer: bisherigeNummer,
+            letzterDokumentPfad: wizardState.selectedVorgang?.dokumentPfad,
+            neuesSchreiben: wizardState.neuesSchreiben,
+            onGeaendert: (wert) =>
+                context.read<WizardCubit>().setNeuesSchreiben(wert),
           ),
         if (sichtbarVorbelegt.isNotEmpty)
           VorgangsdatenHinweis(
@@ -227,15 +240,22 @@ class AusfuellFormular extends StatelessWidget {
     if (!await darfNeuErzeugen(context, bloc.state)) {
       return;
     }
-    final datum = ursachendatumAusFormular(template.fields, formData);
+    final vorgang = cubit.state.selectedVorgang;
     bloc.add(
       EditDocumentEvent(
         data: formData,
         damageListing: null,
         path: wordDateiPfad,
         vorsteuerabzugsberechtigt: cubit.state.vorsteuerabzugsberechtigt,
-        outputFileName: baueDateiname(wordDateiPfad, datum),
-        vorgangSchluessel: cubit.state.selectedVorgang?.referenz,
+        outputFileName: schreibenDateiname(
+          vorlagenname: template.templateName,
+          nummer: naechsteSchreibenNummer(
+            vorgang,
+            neuesSchreiben: cubit.state.neuesSchreiben,
+          ),
+          versicherer: empfaengerFuerDateiname(vorgang),
+        ),
+        vorgangSchluessel: vorgang?.referenz,
       ),
     );
   }

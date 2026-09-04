@@ -39,7 +39,7 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
 ### Die Slices
 
 - **WordAutomation** — lädt eine `.docx`-Vorlage, ersetzt `{{Platzhalter}}` (DocX/Xceed), füllt die
-  Schadensaufstellung und rechnet die RVG-Gebühren (`RvgFeeCalculator`, Geschäftsgebühr § 13 RVG).
+  Schadensaufstellung und rechnet die RVG-Gebühren (§ 13 RVG: `RvgFeeCalculator`, `RvgPlatzhalter`).
   Meldet unaufgelöste Platzhalter zurück — dieser Vertrag zählt (§4.4). Ausgabe in den Arbeitsordner
   des Vorgangs (`Generated/Arbeit/<Referenz>/`, `ArbeitsVerzeichnis`): immer derselbe Dateiname, eine
   Korrektur ersetzt also die vorige Fassung; nach der Ablage in der Akte löscht das Frontend den

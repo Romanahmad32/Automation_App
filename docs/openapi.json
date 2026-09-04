@@ -6741,6 +6741,7 @@
           "feldWerte",
           "schadensaufstellung",
           "entwurf",
+          "schreibenNummer",
           "dokumentPfad",
           "aktenOrdner",
           "abgeschlossenAm"
@@ -6877,6 +6878,15 @@
                 "$ref": "#/components/schemas/JsonElement"
               }
             ]
+          },
+          "schreibenNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           },
           "dokumentPfad": {
             "type": [

@@ -25,35 +25,26 @@ public static class DamageListingTable
     private const string DefaultHeaderColorHex = "D9D9D9";
 
     /// <summary>
-    /// Ersetzt den Platzhalter-Absatz durch die Tabelle und stellt die
-    /// RVG-Kostenkalkulation als zusätzliche Platzhalterwerte bereit.
+    /// Ersetzt den Platzhalter-Absatz durch die Tabelle.
+    ///
+    /// Die RVG-Werte setzt <see cref="RvgPlatzhalter.Setze"/> — der Aufrufer
+    /// tut das **vorher** und übergibt die Kalkulation hier herein. Bis #31
+    /// geschah beides in dieser Methode; die Kosten waren damit ein Nebenprodukt
+    /// des Tabellenbaus und blieben aus, sobald keine Tabelle entstand.
     /// </summary>
     /// <exception cref="TemplateProcessingException">
     /// Die Vorlage hat keinen Platzhalter für die Aufstellung — dann ist die
-    /// falsche Vorlage gewählt (eine "ohne Auflistung").
+    /// falsche Vorlage gewählt (eine "ohne Auflistung"). Bleibt eine Ausnahme
+    /// und wird nicht zum stillen Weglassen: Ein Anspruchsschreiben, das eine
+    /// erfasste Aufstellung nicht zeigt, fordert Beträge, die es verschweigt.
     /// </exception>
-    public static void Insert(DocX document, DamageListing listing, Dictionary<string, string> replacementValues)
+    public static void Insert(DocX document, DamageListing listing, RvgCalculation calculation)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(listing);
-        ArgumentNullException.ThrowIfNull(replacementValues);
+        ArgumentNullException.ThrowIfNull(calculation);
 
         var culture = CultureInfo.GetCultureInfo("de-DE");
-        var gegenstandswert = listing.Items.Sum(item => item.Amount);
-        var calculation = RvgFeeCalculator.Calculate(
-            gegenstandswert,
-            listing.Gebuehrensatz,
-            listing.ApplyVat,
-            listing.GeschaeftsgebuehrOverride,
-            listing.AuslagenpauschaleOverride);
-
-        replacementValues["Gegenstandswert"] = calculation.Gegenstandswert.ToString("N2", culture);
-        replacementValues["Gebuehrensatz"] = calculation.Gebuehrensatz.ToString("0.0#", culture);
-        replacementValues["Geschaeftsgebuehr"] = calculation.Geschaeftsgebuehr.ToString("N2", culture);
-        replacementValues["Auslagenpauschale"] = calculation.Auslagenpauschale.ToString("N2", culture);
-        replacementValues["RvgNetto"] = calculation.Netto.ToString("N2", culture);
-        replacementValues["RvgUmsatzsteuer"] = calculation.Umsatzsteuer.ToString("N2", culture);
-        replacementValues["RvgBrutto"] = calculation.Brutto.ToString("N2", culture);
 
         var markerParagraph = document.Paragraphs.FirstOrDefault(paragraph =>
             paragraph.Text.Contains(Placeholder, StringComparison.OrdinalIgnoreCase));

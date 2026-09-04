@@ -43,24 +43,6 @@ void main() {
     });
   });
 
-  group('baueDateiname', () {
-    test(
-      'kombiniert Vorlagenname und Datum, entfernt .docx und _gen entfällt',
-      () {
-        final name = baueDateiname(
-          r'C:\Vorlagen\Anspruchsschreiben.docx',
-          '12.05.2025',
-        );
-        expect(name, 'Anspruchsschreiben 12.05.2025');
-        expect(name, isNot(contains('_gen')));
-      },
-    );
-
-    test('ohne Datum nur der Vorlagenname', () {
-      expect(baueDateiname('/pfad/VORLAGE HGN.docx', null), 'VORLAGE HGN');
-    });
-  });
-
   group('mandantDatenAusFormular', () {
     test('liest Name und Adresse aus passenden Labels', () {
       final daten = mandantDatenAusFormular({
