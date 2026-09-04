@@ -108,7 +108,7 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   (`%APPDATA%\AutomationService\Signatur`), das HTML in `KanzleiSettings.MailSignaturHtml`; `GET signaturen/stand` meldet
   beides, `DELETE signaturen/format` wirft die Formatierung weg; **`GET signaturen/vorschau?name=` liest ohne zu schreiben**
   (§4.7) — geschrieben wird erst über `uebernehmen`, das die Oberfläche beim Speichern ruft. `GET
-  signaturen/bild?dateiname=&signatur=&marke=` liefert **ein** Bild: ohne `signatur` aus der Ablage, mit ihm aus Outlooks
+  signaturen/bild?dateiname=&ausOutlook=&marke=` liefert **ein** Bild: ohne `ausOutlook` aus der Ablage, mit ihm aus Outlooks
   Beiordner — das braucht die Vorschau, deren Bilder noch nirgends abgelegt sind; `marke` wertet der Dienst nicht aus, sie macht
   nur die Adresse eindeutig (warum beides nötig ist, steht an `SignaturMarke`). Beim Versand baut `MailRumpf` daraus HTML
   **und** Text und hängt die Bilder als `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`,

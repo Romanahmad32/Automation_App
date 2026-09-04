@@ -85,11 +85,11 @@ void main() {
       ausOutlook: 'neu Kanzlei',
     );
 
-    expect(fertig, contains('signatur=neu+Kanzlei'));
+    expect(fertig, contains('ausOutlook=neu+Kanzlei'));
     // Die gespeicherte Signatur kommt weiterhin aus der Ablage.
     expect(
       SignaturHtmlAufbereitung.fuerAnzeige(mitLogo),
-      isNot(contains('signatur=')),
+      isNot(contains('ausOutlook=')),
     );
   });
 }

@@ -52,8 +52,9 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
         {
             try
             {
-                File.WriteAllBytes(Path.Combine(ordner, sicher), inhalt);
-                abgelegt.Add(new SignaturBild(sicher, inhalt.Length, SignaturMarke.Von(inhalt)));
+                var pfad = Path.Combine(ordner, sicher);
+                File.WriteAllBytes(pfad, inhalt);
+                abgelegt.Add(Abgelegt(new FileInfo(pfad)));
             }
             catch (Exception ausnahme) when (ausnahme is IOException or UnauthorizedAccessException)
             {
@@ -96,6 +97,15 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
         }
     }
 
+    /// <summary>
+    /// Ein abgelegtes Bild, so wie die Oberfläche es zu sehen bekommt — an
+    /// einer Stelle gebaut, damit die Marke nach dem Ablegen und beim späteren
+    /// Nachsehen dieselbe ist. Liefen sie auseinander, lüde die Oberfläche
+    /// jedes Bild zweimal.
+    /// </summary>
+    private static SignaturBild Abgelegt(FileInfo datei) =>
+        new(datei.Name, datei.Length, SignaturMarke.Von(datei));
+
     /// <summary>Was gerade abgelegt ist, nach Namen sortiert.</summary>
     public IReadOnlyList<SignaturBild> Bilder()
     {
@@ -110,9 +120,7 @@ public sealed class SignaturAblage(ILogger<SignaturAblage> logger)
             return
             [
                 .. Directory.EnumerateFiles(ordner)
-                    .Select(pfad => new FileInfo(pfad))
-                    .Select(datei =>
-                        new SignaturBild(datei.Name, datei.Length, SignaturMarke.Von(datei)))
+                    .Select(pfad => Abgelegt(new FileInfo(pfad)))
                     .OrderBy(bild => bild.Dateiname, StringComparer.CurrentCultureIgnoreCase),
             ];
         }

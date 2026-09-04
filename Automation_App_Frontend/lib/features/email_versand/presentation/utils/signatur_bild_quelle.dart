@@ -34,7 +34,7 @@ abstract final class SignaturBildQuelle {
         queryParameters: {
           'dateiname': dateiname,
           if (marke.isNotEmpty) 'marke': marke,
-          if (ausOutlook.isNotEmpty) 'signatur': ausOutlook,
+          if (ausOutlook.isNotEmpty) 'ausOutlook': ausOutlook,
         },
       )
       .toString();
