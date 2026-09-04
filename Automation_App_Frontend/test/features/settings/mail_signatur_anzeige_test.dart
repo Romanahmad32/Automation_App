@@ -306,7 +306,7 @@ void main() {
       tester,
     ) async {
       expect(
-        SignaturVorgemerktZeile.text('Kanzlei', mitBildern: true),
+        SignaturVorgemerktZeile.text('Kanzlei'),
         allOf(
           contains('Kanzlei'),
           contains('erst mit „Speichern"'),
@@ -314,11 +314,11 @@ void main() {
         ),
       );
       expect(
-        SignaturVorgemerktZeile.text('Kanzlei', mitBildern: false),
+        SignaturVorgemerktZeile.text('Kanzlei'),
         isNot(contains('Bilder')),
         reason:
-            'ohne Bilder fehlt in der Vorschau nichts — dann kein Satz '
-            'dazu',
+            'seit die Vorschau die Bilder aus Outlook holt, fehlt in ihr '
+            'nichts mehr — ein Satz darüber wäre eine Verwirrung',
       );
     });
   });

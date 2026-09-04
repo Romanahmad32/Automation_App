@@ -58,21 +58,63 @@ public class EmailVersandController(
         Ok(SignaturStandDto.From(await signatur.BlockAsync(cancellationToken)));
 
     /// <summary>
-    /// Ein einzelnes Bild der übernommenen Signatur (§4.7). Die Oberfläche
-    /// zeigt damit in der Vorschau, was wirklich unter der Mail steht — den
-    /// Signaturtext allein anzuzeigen hieße, das Logo erst im Ordner
-    /// "Gesendet" zu sehen.
+    /// Ein einzelnes Bild der Signatur (§4.7). Die Oberfläche zeigt damit in
+    /// der Vorschau, was wirklich unter der Mail steht — den Signaturtext
+    /// allein anzuzeigen hieße, das Logo erst im Ordner "Gesendet" zu sehen.
     ///
-    /// Ausgeliefert wird nur, was in der Signaturablage liegt: Der Name kommt
-    /// von aussen, <see cref="SignaturAblage.PfadVon"/> lässt deshalb keinen
-    /// Pfad durch, der aus diesem einen Ordner hinausführt.
+    /// Zwei Quellen, und welche gilt, sagt <paramref name="ausOutlook"/>: ohne
+    /// ihn die <b>Ablage</b> — die übernommene Signatur, die unter den Mails
+    /// steht. Mit ihm <b>Outlooks Beiordner</b> zu dieser Signatur — die
+    /// gelesene, noch nicht gespeicherte (<c>signaturen/vorschau</c>).
+    ///
+    /// Der zweite Weg kam am 04.09.2026 dazu, und er behebt einen Fehler.
+    /// Vorher hatte die Vorschau nur den ersten: Sie zeigte das HTML der neuen
+    /// Signatur, holte die Bilder dazu aber aus der Ablage — wo noch die
+    /// vorige lag. Outlook nennt das erste Bild jeder Signatur
+    /// <c>image001.png</c>, also traf sie dort verlässlich das alte Logo und
+    /// zeigte es als das neue.
+    ///
+    /// Beide Namen kommen von aussen und werden beide auf den blanken
+    /// Dateinamen zurückgeführt (<see cref="SignaturAblage.PfadVon"/>,
+    /// <see cref="OutlookSignaturen.LiesBild"/>): Ein Verweis, der aus seinem
+    /// Ordner hinausführt, findet nichts.
     /// </summary>
+    /// <param name="dateiname">Der blanke Name des Bildes.</param>
+    /// <param name="ausOutlook">
+    /// Name der Outlook-Signatur, aus der das Bild kommt; leer heißt: aus der
+    /// Ablage. Heißt in der Adresse <c>signatur</c> — hier nicht, weil dieser
+    /// Kopf schon eine <see cref="KanzleiSignatur"/> dieses Namens führt.
+    /// </param>
+    /// <param name="marke">
+    /// Wird <b>nicht ausgewertet</b> und steht trotzdem im Vertrag: Sie macht
+    /// die Adresse eindeutig. Flutter merkt sich geladene Bilder je Adresse,
+    /// und weil jedes Logo <c>image001.png</c> heißt, zeigte die Oberfläche
+    /// nach einem Signaturwechsel weiter das vorige — bis zum Neustart der
+    /// App. Mit der Marke aus <see cref="SignaturBildDto"/> ändert sich die
+    /// Adresse genau dann, wenn sich das Bild ändert.
+    /// </param>
     [HttpGet("signaturen/bild")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult GetSignaturBild([FromQuery] string? dateiname)
+    public IActionResult GetSignaturBild(
+        [FromQuery] string? dateiname,
+        [FromQuery(Name = "signatur")] string? ausOutlook = null,
+        [FromQuery] string? marke = null)
     {
-        var pfad = signaturAblage.PfadVon(dateiname ?? string.Empty);
+        // Die Marke steht nur in der Adresse, damit ein anderes Bild eine
+        // andere hat; zu holen ist danach nichts.
+        _ = marke;
+        var name = dateiname ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(ausOutlook))
+        {
+            var inhalt = OutlookSignaturen.LiesBild(ausOutlook, name);
+            return inhalt is null
+                ? NotFound()
+                : File(inhalt, SignaturAblage.InhaltsArt(name));
+        }
+
+        var pfad = signaturAblage.PfadVon(name);
         return pfad is null
             ? NotFound()
             : PhysicalFile(pfad, SignaturAblage.InhaltsArt(pfad));
@@ -88,9 +130,12 @@ public class EmailVersandController(
     /// Geschrieben wird jetzt erst über <c>signaturen/uebernehmen</c>, und das
     /// ruft die Oberfläche beim Speichern.
     ///
-    /// Die Bilder kommen als Angabe zurück, nicht als Inhalt; auf der Platte
-    /// liegen sie erst nach der Übernahme. Bis dahin zeigt die Vorschau Schrift
-    /// und Farben, aber kein Logo.
+    /// Die Bilder kommen als Angabe zurück, nicht als Inhalt: Sie dürfen 25 MB
+    /// groß sein und gehen nicht über die Leitung, nur um von dort wieder
+    /// zurückzukommen. Zu sehen sind sie trotzdem — die Vorschau holt jedes
+    /// einzeln über <c>signaturen/bild?signatur=</c>, das dafür in Outlooks
+    /// Beiordner liest statt in der Ablage, in der noch die vorige Signatur
+    /// liegt.
     /// </summary>
     [HttpGet("signaturen/vorschau")]
     [ProducesResponseType(typeof(SignaturStandDto), StatusCodes.Status200OK)]

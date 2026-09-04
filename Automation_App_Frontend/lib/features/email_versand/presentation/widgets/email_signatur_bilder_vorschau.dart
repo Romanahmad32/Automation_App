@@ -24,11 +24,16 @@ class EmailSignaturBilderVorschau extends StatelessWidget {
   /// Höhe, auf die ein Bild höchstens gebracht wird.
   final double maxHoehe;
 
+  /// Name der Outlook-Signatur, solange sie nur gelesen und noch nicht
+  /// gespeichert ist; sonst leer. Siehe [SignaturBildQuelle].
+  final String ausOutlook;
+
   const EmailSignaturBilderVorschau({
     super.key,
     required this.bilder,
     this.weggelassen = const [],
     this.maxHoehe = 90,
+    this.ausOutlook = '',
   });
 
   @override
@@ -48,7 +53,13 @@ class EmailSignaturBilderVorschau extends StatelessWidget {
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: maxHoehe, maxWidth: 320),
               child: Image.network(
-                SignaturBildQuelle.fuer(bild.dateiname),
+                // Die Marke gehört an die Adresse: Ohne sie hält Flutter unter
+                // demselben `image001.png` das Logo der vorigen Signatur fest.
+                SignaturBildQuelle.fuer(
+                  bild.dateiname,
+                  marke: bild.marke,
+                  ausOutlook: ausOutlook,
+                ),
                 fit: BoxFit.contain,
                 // Ein Bild, das der Dienst nicht ausliefert, darf die Vorschau
                 // nicht mit einem Ausrufezeichen füllen: Es geht trotzdem

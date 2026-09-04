@@ -146,8 +146,9 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
     super.dispose();
   }
 
-  /// Fällt der vorgemerkte Name weg, ist die Übernahme durch — **erst jetzt**
-  /// liegen die Bilder im Dienst, und die Vorschau darf sie zeigen.
+  /// Fällt der vorgemerkte Name weg, ist die Übernahme durch — jetzt liegen
+  /// die Bilder im Dienst, und die Vorschau holt sie von dort statt aus
+  /// Outlook.
   void _vorgemerktGeaendert() {
     if (widget.vorgemerkt.value.isEmpty) unawaited(_standLaden());
     if (mounted) setState(() {});
@@ -301,10 +302,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
               aktiv: !speichertGerade,
             ),
             if (vorgemerkt.isNotEmpty)
-              SignaturVorgemerktZeile(
-                name: vorgemerkt,
-                mitBildern: _stand.bilder.isNotEmpty,
-              ),
+              SignaturVorgemerktZeile(name: vorgemerkt),
             TextField(
               controller: widget.controller,
               enabled: !speichertGerade,
@@ -331,6 +329,9 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
                 text: wert.text,
                 html: _stand.html,
                 bilder: _stand.bilder,
+                // Solange eine Übernahme aussteht, liegen deren Bilder noch
+                // nicht in der Ablage — sie kommen aus Outlook.
+                ausOutlook: vorgemerkt,
               ),
             ),
           ],

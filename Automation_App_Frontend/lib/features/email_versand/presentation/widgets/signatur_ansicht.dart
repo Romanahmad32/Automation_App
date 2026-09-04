@@ -29,12 +29,22 @@ class SignaturAnsicht extends StatelessWidget {
   /// Dateinamen, die bei dieser Mail nicht mitgehen.
   final List<String> weggelassen;
 
+  /// Name der Outlook-Signatur, solange sie nur **gelesen** und noch nicht
+  /// gespeichert ist; sonst leer.
+  ///
+  /// Er entscheidet, woher die Bilder kommen: aus Outlooks Beiordner statt aus
+  /// der Ablage des Dienstes. Ohne ihn zeigte die Vorschau einer neu gewählten
+  /// Signatur das Logo der vorigen — dort liegt es unter demselben Namen
+  /// (`image001.png`), und niemand sagte, dass es das alte ist.
+  final String ausOutlook;
+
   const SignaturAnsicht({
     super.key,
     this.text = '',
     this.html = '',
     this.bilder = const [],
     this.weggelassen = const [],
+    this.ausOutlook = '',
   });
 
   /// True, wenn überhaupt etwas anzuzeigen ist.
@@ -46,6 +56,8 @@ class SignaturAnsicht extends StatelessWidget {
     final aufbereitet = SignaturHtmlAufbereitung.fuerAnzeige(
       html,
       weggelassen: weggelassen,
+      bilder: bilder,
+      ausOutlook: ausOutlook,
     );
 
     if (aufbereitet.isEmpty) {
@@ -57,7 +69,11 @@ class SignaturAnsicht extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SelectableText(text.trim(), style: theme.textTheme.bodyMedium),
-          EmailSignaturBilderVorschau(bilder: bilder, weggelassen: weggelassen),
+          EmailSignaturBilderVorschau(
+            bilder: bilder,
+            weggelassen: weggelassen,
+            ausOutlook: ausOutlook,
+          ),
         ],
       );
     }

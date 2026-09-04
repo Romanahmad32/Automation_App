@@ -61,6 +61,35 @@ public static class OutlookSignaturen
         return ordner is null ? null : OutlookSignaturHtml.Lies(HtmlPfad(ordner, name));
     }
 
+    /// <summary>
+    /// Ein einzelnes Bild dieser Signatur, direkt aus Outlooks Beiordner
+    /// (§4.7, ergänzt am 04.09.2026) — für die Vorschau <b>vor</b> dem
+    /// Speichern.
+    ///
+    /// Bis dahin gab es diesen Weg nicht: Die Vorschau zeigte das neue HTML,
+    /// holte die Bilder dazu aber aus der Ablage — und dort lag noch die
+    /// vorige Signatur. Weil Outlook das erste Bild jeder Signatur
+    /// <c>image001.png</c> nennt, traf sie dort das alte Logo und zeigte es
+    /// als das neue. Wer seine Signatur wechselte, sah in der Vorschau
+    /// unverändert die alte und hatte keinen Anlass, daran zu zweifeln.
+    ///
+    /// <paramref name="dateiname"/> ist der blanke Name aus dem gekürzten
+    /// HTML; welche Datei in welchem Beiordner damit gemeint ist, weiß nur
+    /// <see cref="OutlookSignaturHtml"/> — deshalb wird über dessen Auslese
+    /// gesucht und nicht über einen zusammengesetzten Pfad. Ein Verweis wie
+    /// <c>..\..\automation.db</c> findet so von vornherein nichts, und die
+    /// Größengrenze gilt mit.
+    /// </summary>
+    /// <returns>Null, wenn es die Signatur, ihre formatierte Fassung oder
+    /// dieses Bild darin nicht gibt.</returns>
+    public static byte[]? LiesBild(string name, string dateiname)
+    {
+        var ordner = Ordner();
+        return ordner is null
+            ? null
+            : OutlookSignaturHtml.Bild(HtmlPfad(ordner, name), dateiname);
+    }
+
     /// <summary>Die Textfassung einer bestimmten Signatur, oder null.</summary>
     public static string? LiesTextVon(string name)
     {
