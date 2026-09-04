@@ -16,28 +16,44 @@ class SpeichernButton extends StatelessWidget {
 
   final String beschriftung;
 
+  /// Für die Kopfzeile eines Einstellungs-Reiters
+  /// (`EinstellungenAktionszeile`): flacher und ohne das rechtsbündige
+  /// [Align]. Der Knopf des Themes ist 56 px hoch — in einer Zeile, die selbst
+  /// nur 60 px hoch sein soll, ist er das ganze Band; und ausrichten tut ihn
+  /// dort die Zeile.
+  final bool kompakt;
+
   const SpeichernButton({
     super.key,
     required this.onSpeichern,
     this.speichert = false,
     this.beschriftung = 'Speichern',
+    this.kompakt = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: FilledButton.icon(
-        onPressed: speichert ? null : onSpeichern,
-        icon: speichert
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.save),
-        label: Text(beschriftung),
-      ),
+    final knopf = FilledButton.icon(
+      onPressed: speichert ? null : onSpeichern,
+      // Nur die Polsterung überschreiben; Form, Schrift und Farben kommen
+      // weiter aus dem `filledButtonTheme`.
+      style: kompakt
+          ? FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            )
+          : null,
+      icon: speichert
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.save),
+      label: Text(beschriftung),
     );
+
+    return kompakt
+        ? knopf
+        : Align(alignment: Alignment.centerRight, child: knopf);
   }
 }

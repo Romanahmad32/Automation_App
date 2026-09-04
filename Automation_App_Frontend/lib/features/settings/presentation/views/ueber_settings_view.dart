@@ -2,6 +2,7 @@ import 'package:automation_app/core/aktualisierung/aktualisierung_builder.dart';
 import 'package:automation_app/core/general_widgets/anwendungs_info.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/update_herunterladen_button.dart';
+import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:flutter/material.dart';
 
 /// Einstellungen-Reiter „Über": welche Version läuft und ob eine neuere
@@ -18,30 +19,24 @@ class UeberSettingsView extends StatelessWidget {
     return AktualisierungBuilder(
       builder: (context, stand) {
         final neu = stand?.neueVersion;
-        return SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: FormSection(
-                  icon: Icons.info_outline,
-                  title: 'Version',
-                  subtitle:
-                      'Welche Fassung der Anwendung auf diesem Rechner läuft. '
-                      'Nennen Sie diese Nummer bei Rückfragen.',
-                  children: [
-                    AnwendungsInfo(stand: stand),
-                    if (neu != null)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: UpdateHerunterladenButton(neueVersion: neu),
-                      ),
-                  ],
-                ),
-              ),
+        return EinstellungenReiter(
+          links: [
+            FormSection(
+              icon: Icons.info_outline,
+              title: 'Version',
+              subtitle:
+                  'Welche Fassung der Anwendung auf diesem Rechner läuft. '
+                  'Nennen Sie diese Nummer bei Rückfragen.',
+              children: [
+                AnwendungsInfo(stand: stand),
+                if (neu != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: UpdateHerunterladenButton(neueVersion: neu),
+                  ),
+              ],
             ),
-          ),
+          ],
         );
       },
     );

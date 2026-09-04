@@ -172,8 +172,12 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
   her — nie eine zweite Kennzeichenprüfung danebenbauen), `FormSection`, `FormWertBeobachter`,
   `TexteListenEditor` (Chips über einem Eingabefeld, mit `normalisiere` vor Prüfung und
   Dublettenvergleich); dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
-  (rechtsbündig, mit Ring beim Schreiben) und `HinzufuegenButton` (linksbündig, **unter**
-  der Liste — eine Handlung sieht anders aus als der Bestand, an dem sie arbeitet)
+  (rechtsbündig, mit Ring beim Schreiben; `kompakt: true` für eine Kopfzeile) und
+  `HinzufuegenButton` (linksbündig, **unter** der Liste — eine Handlung sieht anders aus
+  als der Bestand, an dem sie arbeitet)
+- `layout/` — `KartenSpalten` (legt Formularkarten je nach Platz in ein oder zwei Spalten
+  und deckelt die Breite; die Grenzen stehen dort als Konstanten) und `TraegeIndexedStack`
+  (wechselt ohne Bewegung, baut ein Kind erst beim ersten Zeigen)
 - `buttons/` — `CustomRectangularButton`; `buttons/dropdowns/` — `SearchableDropdown`
   (+ `SearchableDropdownEntry`), `ReactiveSearchableDropdown`, `TemplateSelector`
 - `drawer/` — `AppShellPage`, `AppSidebar`, `SidebarItem`, `SidebarFooter`, `SidebarThemeToggle`,

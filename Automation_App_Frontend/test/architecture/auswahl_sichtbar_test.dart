@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'dart_source_files.dart';
@@ -26,10 +28,29 @@ void main() {
   // `showSelectedIcon` gehört dem SegmentedButton, `showCheckmark` den Chips.
   final abgeschaltet = RegExp(r'show(?:SelectedIcon|Checkmark):\s*false');
 
+  /// Die begründeten Ausnahmen, je Datei mit ihrem Grund.
+  ///
+  /// Ein Eintrag hier ist **kein Muster zum Nachmachen**, sondern der
+  /// Einzelfall, in dem das Häkchen mehr kaputt macht, als es trägt — und er
+  /// muss sagen, was die Auswahl stattdessen sichtbar macht. Wer eine Stelle
+  /// einträgt, weil das Häkchen dort „stört", hat den falschen Eintrag: Dann
+  /// stimmt das Layout nicht, nicht die Regel.
+  const ausnahmen = <String, String>{
+    'lib/features/settings/presentation/widgets/einstellungen_aktionszeile.dart':
+        'Abschnittswahl der Einstellungen. Material ersetzt beim gewählten '
+        'Chip das Symbol durch das Häkchen — hier ist dieses Symbol aber die '
+        'Kennung des Abschnitts (Haus, Tabelle, Briefumschlag, …). Von sechs '
+        'Symbolen verschwände immer genau das eine, das man gerade ansieht. '
+        'Die Auswahl trägt stattdessen der Rahmen in der Primärfarbe: 1,5 px '
+        'gegen 1 px in blassem outlineVariant, also ein Unterschied in '
+        'Stärke und Farbe, der auch ohne Farbsehen bleibt.',
+  };
+
   test('kein Widget schaltet das Häkchen der Auswahl ab', () {
     final verstoesse = <String>[];
 
     for (final datei in dartQuelldateien('lib')) {
+      if (ausnahmen.containsKey(relPfad(datei))) continue;
       final zeilen = datei.readAsLinesSync();
       for (var i = 0; i < zeilen.length; i++) {
         if (abgeschaltet.hasMatch(zeilen[i])) {
@@ -48,6 +69,30 @@ void main() {
           'farbfehlsichtige Nutzer gar kein Unterschied. Die Zeile ersatzlos '
           'streichen; Material zeigt das Häkchen dann von sich aus:\n  '
           '${verstoesse.join('\n  ')}',
+    );
+  });
+
+  // Eine Ausnahmeliste, die niemand prüft, wächst und veraltet still: Wer die
+  // abschaltende Zeile entfernt, lässt den Eintrag stehen, und die nächste
+  // Änderung an derselben Datei fällt wieder durch das Netz.
+  test('jede Ausnahme wird noch gebraucht', () {
+    final unnoetig = <String>[];
+
+    for (final pfad in ausnahmen.keys) {
+      final datei = File(pfad);
+      if (!datei.existsSync()) {
+        unnoetig.add('$pfad — die Datei gibt es nicht mehr');
+      } else if (!datei.readAsLinesSync().any(abgeschaltet.hasMatch)) {
+        unnoetig.add('$pfad — schaltet das Häkchen gar nicht mehr ab');
+      }
+    }
+
+    expect(
+      unnoetig,
+      isEmpty,
+      reason:
+          'Diese Einträge in `ausnahmen` sind gegenstandslos und gehören '
+          'gestrichen:\n  ${unnoetig.join('\n  ')}',
     );
   });
 }
