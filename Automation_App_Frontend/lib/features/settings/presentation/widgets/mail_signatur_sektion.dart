@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
@@ -76,7 +77,7 @@ class MailSignaturSektion extends StatefulWidget {
     ValueNotifier<String> vorgemerkt,
   ) async {
     final bloc = context.read<KanzleiSettingsBloc>();
-    final melder = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
     final stand = bloc.state;
     if (stand is! KanzleiSettingsLoaded) return;
 
@@ -95,12 +96,8 @@ class MailSignaturSektion extends StatefulWidget {
         vorgemerkt.value = '';
       } catch (e) {
         if (!context.mounted) return;
-        melder.showSnackBar(
-          SnackBar(
-            content: Text(
-              'Die Signatur ließ sich nicht übernehmen: ${ausnahmeText(e)}',
-            ),
-          ),
+        melder.fehler(
+          'Die Signatur ließ sich nicht übernehmen: ${ausnahmeText(e)}',
         );
         return;
       }
@@ -182,11 +179,10 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       widget.controller.text = stand.text;
     });
     widget.vorgemerkt.value = name;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_leseMeldung(stand)),
-        duration: Duration(seconds: stand.uebergangen.isEmpty ? 5 : 9),
-      ),
+    Rueckmeldung.zeigeHinweis(
+      context,
+      _leseMeldung(stand),
+      dauer: Duration(seconds: stand.uebergangen.isEmpty ? 5 : 9),
     );
   }
 
@@ -210,7 +206,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
   }
 
   Future<void> _formatVerwerfen() async {
-    final melder = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
     final bloc = context.read<KanzleiSettingsBloc>();
     try {
       final stand = await getIt<EmailVersandRepository>()
@@ -219,16 +215,10 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       setState(() => _stand = stand);
       widget.vorgemerkt.value = '';
       bloc.add(const LoadKanzleiSettingsEvent());
-      melder.showSnackBar(
-        const SnackBar(
-          content: Text('Die Formatierung ist weg — der Text bleibt.'),
-        ),
-      );
+      melder.hinweis('Die Formatierung ist weg — der Text bleibt.');
     } catch (e) {
       if (mounted) {
-        melder.showSnackBar(
-          SnackBar(content: Text('Fehlgeschlagen: ${ausnahmeText(e)}')),
-        );
+        melder.fehler('Fehlgeschlagen: ${ausnahmeText(e)}');
       }
     }
   }
@@ -240,7 +230,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
   /// entfernte nur die Nur-Text-Fassung; die HTML-Fassung blieb stehen, und
   /// weil die Mail sie bevorzugt, ging die Signatur samt Logo weiter hinaus.
   Future<void> _entfernen() async {
-    final melder = ScaffoldMessenger.of(context);
+    final melder = Rueckmeldung.von(context);
     final bloc = context.read<KanzleiSettingsBloc>();
     try {
       await getIt<EmailVersandRepository>().verwirfSignaturFormat();
@@ -253,9 +243,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       bloc.add(const SaveMailSignaturEvent(''));
     } catch (e) {
       if (mounted) {
-        melder.showSnackBar(
-          SnackBar(content: Text('Fehlgeschlagen: ${ausnahmeText(e)}')),
-        );
+        melder.fehler('Fehlgeschlagen: ${ausnahmeText(e)}');
       }
     }
   }
@@ -278,9 +266,7 @@ class _MailSignaturSektionState extends State<MailSignaturSektion> {
       beiUebergang: (context, state) {
         if (state is KanzleiSettingsLoaded &&
             state.gespeichert == KanzleiSettingsBereich.signatur) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Die Signatur ist gespeichert.')),
-          );
+          Rueckmeldung.zeigeErfolg(context, 'Die Signatur ist gespeichert.');
         }
       },
       builder: (context, state) {

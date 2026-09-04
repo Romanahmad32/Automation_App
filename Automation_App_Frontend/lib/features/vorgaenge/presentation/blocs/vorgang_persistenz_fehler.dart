@@ -19,7 +19,10 @@ class VorgangPersistenzFehler extends Equatable {
   final String? referenz;
 
   /// Zeitpunkt des Fehlers — unterscheidet zwei gleiche Fehler nacheinander,
-  /// damit der Cubit beide emittiert und die Snackbar erneut erscheint.
+  /// damit der Cubit erneut emittiert. `Rueckmeldung` erkennt an Text und Art
+  /// dieselbe stehende Meldung wieder und tauscht deren Inhalt (Aktion,
+  /// Dauer) gegen diesen frischen Fehler, statt ihn zu verwerfen — „Erneut
+  /// versuchen" ruft damit immer den aktuellen Schnappschuss auf.
   final DateTime zeitpunkt;
 
   VorgangPersistenzFehler({

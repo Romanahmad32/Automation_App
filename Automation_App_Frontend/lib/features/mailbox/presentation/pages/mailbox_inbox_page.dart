@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/views/mailbox_inbox_view.dart';
@@ -30,12 +31,7 @@ class MailboxInboxPage extends StatelessWidget implements AutoRouteWrapper {
     return BlocListener<ZentralrufReplyBloc, ZentralrufReplyState>(
       listener: (context, state) {
         if (state is ZentralrufReplyError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          Rueckmeldung.zeigeFehler(context, state.message);
         }
       },
       child: Scaffold(

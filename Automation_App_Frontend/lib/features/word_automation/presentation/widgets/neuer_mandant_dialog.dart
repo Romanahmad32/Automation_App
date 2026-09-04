@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/anrede_auswahl.dart';
@@ -97,10 +98,9 @@ class _NeuerMandantDialogState extends State<NeuerMandantDialog> {
         FilledButton(
           onPressed: () {
             if (_nachname.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Der Nachname ist ein Pflichtfeld'),
-                ),
+              Rueckmeldung.zeigeHinweis(
+                context,
+                'Der Nachname ist ein Pflichtfeld',
               );
               return;
             }

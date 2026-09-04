@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
@@ -169,14 +170,10 @@ class _AppSettingsViewState extends State<AppSettingsView>
       beiUebergang: (context, state) {
         if (state is KanzleiSettingsLoaded) {
           if (state.gespeichert == KanzleiSettingsBereich.kanzlei) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Kanzleidaten gespeichert')),
-            );
+            Rueckmeldung.zeigeErfolg(context, 'Kanzleidaten gespeichert');
           }
         } else if (state is KanzleiSettingsError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          Rueckmeldung.zeigeFehler(context, state.message);
         }
       },
       builder: (context, state) {

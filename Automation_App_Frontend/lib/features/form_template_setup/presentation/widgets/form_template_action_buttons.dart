@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:flutter/material.dart';
@@ -52,13 +53,10 @@ class FormTemplateActionButtons extends StatelessWidget {
                   ? () {
                       if (wordFilePathOhneAuflistung == null &&
                           wordFilePathMitAuflistung == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Bitte mindestens eine Word-Datei verknüpfen '
-                              '(ohne und/oder mit Auflistung).',
-                            ),
-                          ),
+                        Rueckmeldung.zeigeHinweis(
+                          context,
+                          'Bitte mindestens eine Word-Datei verknüpfen '
+                          '(ohne und/oder mit Auflistung).',
                         );
                         return;
                       }

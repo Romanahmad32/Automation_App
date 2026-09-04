@@ -1,5 +1,6 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
@@ -46,7 +47,7 @@ Future<void> schliesseAblageAb(
   context.read<EditedDocumentBloc>().add(DokumentAbgelegtEvent(wordPfad));
 
   // Vor dem await greifen: danach kann der BuildContext weg sein.
-  final messenger = ScaffoldMessenger.of(context);
+  final rueckmeldung = Rueckmeldung.von(context);
   final ergebnis =
       await getIt<
         UseCase<ArbeitsordnerAufraeumung, ArbeitsordnerAufraeumenParams>
@@ -58,7 +59,7 @@ Future<void> schliesseAblageAb(
       // Nur melden, wenn wirklich etwas liegen blieb. Das abgelegte Dokument
       // ist davon nicht betroffen — kein Grund, den Erfolg zu verdecken.
       if (!aufraeumung.erfolg && meldung != null) {
-        messenger.showSnackBar(SnackBar(content: Text(meldung)));
+        rueckmeldung.hinweis(meldung);
       }
     case Left():
       // Der Dienst ist nicht erreichbar. Das Dokument liegt in der Akte; die

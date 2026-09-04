@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart';
@@ -132,13 +133,10 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
 
     if (!_form.valid) {
       _form.markAllAsTouched();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Der Postfach-Zugang ist noch unvollständig — er wurde nicht '
-            'gespeichert. Die rot markierten Felder fehlen.',
-          ),
-        ),
+      Rueckmeldung.zeigeHinweis(
+        context,
+        'Der Postfach-Zugang ist noch unvollständig — er wurde nicht '
+        'gespeichert. Die rot markierten Felder fehlen.',
       );
       return;
     }
@@ -184,9 +182,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
               'mit den neuen Werten neu.'
         : null;
     if (message != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      Rueckmeldung.zeigeErfolg(context, message);
     }
   }
 
@@ -204,9 +200,7 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
         if (state is MailboxConfigLoaded) {
           _melde(context, state);
         } else if (state is MailboxConfigError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          Rueckmeldung.zeigeFehler(context, state.message);
         }
       },
       builder: (context, state) {

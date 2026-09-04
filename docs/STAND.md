@@ -104,6 +104,9 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   und schreibt ihren Stand als frische Word- **und** PDF-Tabelle in einen Ordner aus den
   Einstellungen (`RegisterSpiegelService`, `POST api/Vorgaenge/register/export`,
   `GET …/register/stand`); die Kette steht in `docs/DATENFLUESSE.md`.
+- **Einheitliche Rückmeldungen (Issue #56, 04.09.2026)** — Baustein `Rueckmeldung` zeigt Erfolgs-,
+  Hinweis- und Fehlermeldungen oben rechts als Stapel über der Dialogbarriere (Erfolg 3 s, Hinweis
+  5 s, Fehler bis zum Schließen). Alle 52 Snackbar-Stellen umgestellt, ein Architekturtest wacht.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

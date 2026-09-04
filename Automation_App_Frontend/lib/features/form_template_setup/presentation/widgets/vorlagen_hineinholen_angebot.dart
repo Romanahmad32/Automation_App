@@ -1,5 +1,6 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_hineinholen.dart';
 import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart';
 import 'package:flutter/material.dart';
@@ -59,13 +60,10 @@ class VorlagenHineinholenAngebot {
     );
     if (neuerPfad == null) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Im Vorlagenordner liegt bereits eine gleichnamige Datei — '
-              'nichts wurde überschrieben, der gewählte Pfad bleibt.',
-            ),
-          ),
+        Rueckmeldung.zeigeHinweis(
+          context,
+          'Im Vorlagenordner liegt bereits eine gleichnamige Datei — '
+          'nichts wurde überschrieben, der gewählte Pfad bleibt.',
         );
       }
       return path;
