@@ -109,7 +109,8 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   5 s, Fehler bis zum Schließen). Alle 52 Snackbar-Stellen umgestellt, ein Architekturtest wacht.
 - **Schriftgrad angehoben (Issue #57, 05.09.2026)** — TextTheme-Rollen zentral um 2 px angehoben
   (`Schriftskala`, `lib/core/theme/presentation/schriftskala.dart`), gilt für Standard- und
-  Kanzlei-Design, hell und dunkel. Regel gegen freistehende `fontSize` als Architekturtest
+  Kanzlei-Design, hell und dunkel; in den Einstellungen dreistufig wählbar (Normal / Größer /
+  Am größten), Vorgabe Größer. Regel gegen freistehende `fontSize` als Architekturtest
   (`test/architecture/schriftgroesse_test.dart`). Sichtprüfung am echten Bildschirm mit dem
   Anwalt steht noch aus.
 

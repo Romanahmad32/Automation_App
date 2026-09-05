@@ -25,14 +25,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Standard-Design (blaues Material-Theme) und Kanzlei-Design (Variante A)
-    // werden beide aufgebaut; die aktive Familie wählt der ThemeBloc.
-    final MaterialTheme standardTheme = MaterialTheme(
-      createTextTheme(context, 'Inter', 'Inter'),
-    );
-    final MaterialTheme kanzleiTheme = KanzleiMaterialTheme(
-      createKanzleiTextTheme(context),
-    );
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -41,9 +33,22 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, state) {
+          // Das Theme entsteht **im** Builder, nicht davor: Seit Issue #57
+          // die Schriftgröße wählbar macht, hängt nicht mehr nur die Auswahl
+          // zwischen zwei fertigen Themes am Zustand, sondern die Skala, aus
+          // der sie gebaut werden. Zwei vorab gebaute Objekte trügen für
+          // immer die Stufe, die beim ersten Bild galt — der Anwalt stellte
+          // um und nichts geschähe. Gebaut wird nur die aktive Familie; die
+          // andere kostet hier nichts.
           final MaterialTheme theme = state.variant == AppThemeVariant.kanzlei
-              ? kanzleiTheme
-              : standardTheme;
+              ? KanzleiMaterialTheme(
+                  createKanzleiTextTheme(context),
+                  schriftstufe: state.schriftstufe,
+                )
+              : MaterialTheme(
+                  createTextTheme(context, 'Inter', 'Inter'),
+                  schriftstufe: state.schriftstufe,
+                );
           return MaterialApp.router(
             debugShowCheckedModeBanner: false,
             routerConfig: _router.config(),

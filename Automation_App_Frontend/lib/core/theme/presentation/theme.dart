@@ -1,3 +1,4 @@
+import "package:automation_app/core/theme/domain/schriftstufe.dart";
 import "package:flutter/material.dart";
 
 import "auswahl_themes.dart";
@@ -11,7 +12,16 @@ export "extended_color.dart";
 class MaterialTheme {
   final TextTheme textTheme;
 
-  const MaterialTheme(this.textTheme);
+  /// Der gewählte Schriftgrad (Issue #57). Als Feld und nicht als Konstante,
+  /// weil die Wahl in den Einstellungen liegt: `main.dart` baut das Theme neu,
+  /// sobald der `ThemeBloc` eine andere Stufe meldet. Der Vorgabewert hält
+  /// jeden Aufrufer am Leben, der die Stufe nicht kennt — vor allem die Tests.
+  final Schriftstufe schriftstufe;
+
+  const MaterialTheme(
+    this.textTheme, {
+    this.schriftstufe = Schriftstufe.vorgabe,
+  });
 
   ThemeData light() => theme(LightSchemes.standard());
 
@@ -43,13 +53,13 @@ class MaterialTheme {
         ? colorScheme.surfaceContainerHigh
         : colorScheme.surfaceContainerHighest;
 
-    // Zuerst der Schriftgrad: [Schriftskala.anheben] hebt jede Rolle um
-    // denselben Zuschlag an (Issue #57). Der Aufruf steht hier und nicht in
-    // den beiden Theme-Familien, weil jede von ihnen durch diese Methode
-    // läuft — eine Stelle, vier Fassungen (Standard/Kanzlei × hell/dunkel).
-    // Danach die Farben und etwas kräftigere Überschriften für klare
-    // Hierarchie (App- und Sektionstitel), Fließtext bleibt unverändert.
-    final baseText = Schriftskala.anheben(textTheme).apply(
+    // Zuerst der Schriftgrad: [Schriftskala.anheben] hebt jede Rolle um den
+    // Zuschlag der gewählten [schriftstufe] an (Issue #57). Der Aufruf steht
+    // hier und nicht in den beiden Theme-Familien, weil jede von ihnen durch
+    // diese Methode läuft — eine Stelle, vier Fassungen (Standard/Kanzlei ×
+    // hell/dunkel). Danach die Farben und etwas kräftigere Überschriften für
+    // klare Hierarchie (App- und Sektionstitel), Fließtext bleibt unverändert.
+    final baseText = Schriftskala.anheben(textTheme, schriftstufe).apply(
       bodyColor: colorScheme.onSurface,
       displayColor: colorScheme.onSurface,
     );

@@ -145,9 +145,9 @@ der Anwalt direkt nach dem Öffnen der App.
   Domain-Typen und `Failure`s. Braucht ein Feature diese Übersetzung nicht, entfällt die Schicht
   ganz und die Datasource setzt das Repository direkt um (`@Injectable(as: VorgangRepository)`).
   Beides ist erlaubt — nur nicht dieselbe Rolle unter zwei Namen.
-- **Schriftgrößen kommen aus den Theme-Rollen**, kein eigenes `fontSize`. Drehknopf ist
-  `Schriftskala.anhebung` in `lib/core/theme/presentation/schriftskala.dart`; Überläufe durch
-  größere Schrift werden im Layout gelöst (Umbruch, Ellipsis, Scroll), nie durch kleinere Schrift.
+- **Schriftgrößen kommen aus den Theme-Rollen**, kein eigenes `fontSize`. Den Grad wählt der Anwalt
+  (`Schriftstufe`, Reiter „Darstellung"); `Schriftskala.anhebung` ist nur die Schrittweite. Überläufe
+  durch größere Schrift werden im Layout gelöst (Umbruch, Ellipsis, Scroll), nie durch kleinere.
 
 ### Erzwungen von (Dart-Seite)
 

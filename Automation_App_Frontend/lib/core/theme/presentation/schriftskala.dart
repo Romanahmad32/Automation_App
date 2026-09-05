@@ -1,3 +1,4 @@
+import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:flutter/material.dart';
 
 /// Der eine Drehknopf für den Schriftgrad der gesamten Oberfläche (Issue #57).
@@ -12,7 +13,16 @@ import 'package:flutter/material.dart';
 /// bliebe dabei zurück und risse ein Loch in die Hierarchie — darüber wacht
 /// `test/architecture/schriftgroesse_test.dart`.
 ///
-/// Was die Anhebung aus den Material-3-Rollen macht:
+/// **Drei Stufen, eine Schrittweite.** Wie weit angehoben wird, wählt der
+/// Anwalt im Reiter „Darstellung" ([Schriftstufe]); die Skala rechnet daraus
+/// mit [zuschlag] den Zuwachs in Pixeln. Die Stufen liegen gleichmäßig auf
+/// [anhebung]: `normal` = 0 (blanke Material-3-Vorgabe), `groesser` = ein
+/// Schritt, `amGroessten` = zwei. Ein ungleichmäßiger dritter Schritt wäre
+/// nirgends abzulesen — so ist die Zahl unten die einzige, an der jemand je
+/// drehen muss.
+///
+/// Was die Vorgabestufe ([Schriftstufe.groesser], ein Schritt) aus den
+/// Material-3-Rollen macht:
 ///
 /// | Rolle         | vorher | nachher |
 /// |---------------|--------|---------|
@@ -43,12 +53,22 @@ import 'package:flutter/material.dart';
 /// Abstand an `textTheme.titleLarge!.fontSize` ausrichtet, rechnete weiter mit
 /// der alten Zahl, und die Oberfläche wüchse nur halb mit.
 abstract final class Schriftskala {
-  /// Zuschlag in logischen Pixeln auf jede Rolle des `TextTheme`. Der eine
-  /// Drehknopf für Issue #57 — wer die Oberfläche insgesamt größer oder
-  /// wieder kleiner haben will, ändert diese Zahl und sonst nichts.
+  /// **Schrittweite** einer Stufe, in logischen Pixeln auf jede Rolle des
+  /// `TextTheme`. Der eine Drehknopf für Issue #57 — wer die Abstufung
+  /// insgesamt grober oder feiner haben will, ändert diese Zahl und sonst
+  /// nichts. Welchen Schritt die Oberfläche gerade nimmt, sagt dagegen die
+  /// [Schriftstufe] aus den Einstellungen.
   static const double anhebung = 2;
 
-  /// Wendet die Anhebung auf [textTheme] an.
+  /// Der Zuwachs, den [stufe] auf jede Rolle legt — null, ein oder zwei
+  /// [anhebung]-Schritte.
+  static double zuschlag(Schriftstufe stufe) => switch (stufe) {
+    Schriftstufe.normal => 0,
+    Schriftstufe.groesser => anhebung,
+    Schriftstufe.amGroessten => 2 * anhebung,
+  };
+
+  /// Wendet den Zuschlag der [stufe] auf [textTheme] an.
   ///
   /// Farben bleiben Sache des Aufrufers: Welche Rolle welche
   /// `onSurface`-Variante bekommt, hängt am Farbschema und wird in
@@ -67,7 +87,10 @@ abstract final class Schriftskala {
   /// Größen mitbringt (im Betrieb: `createTextTheme` und
   /// `createKanzleiTextTheme`, beide auf `Theme.of` aufgebaut), behält seine:
   /// [TextTheme.merge] lässt die Werte des Aufrufers gewinnen.
-  static TextTheme anheben(TextTheme textTheme) => Typography.englishLike2021
+  static TextTheme anheben(
+    TextTheme textTheme, [
+    Schriftstufe stufe = Schriftstufe.vorgabe,
+  ]) => Typography.englishLike2021
       .merge(textTheme)
-      .apply(fontSizeDelta: anhebung);
+      .apply(fontSizeDelta: zuschlag(stufe));
 }

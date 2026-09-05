@@ -1,17 +1,17 @@
 # settings — Kanzleistammdaten und App-Einstellungen
 
 **Zweck:** Anfragerdaten für die Zentralruf-Anfrage, Postfach-Zugang samt Mail-Signatur, Akten-Stammordner,
-Vorlagen-, Register- und Sicherungsablage (§7.2), Auftragsnummer samt Abteilung, Erscheinungsbild.
+Vorlagen-, Register- und Sicherungsablage (§7.2), Auftragsnummer samt Abteilung, Erscheinungsbild samt Schriftgröße.
 **Anforderung:** `REQUIREMENTS.md` §7.1
 **Einstieg:** `presentation/pages/settings_page.dart`
 **Zustand:** `KanzleiSettingsBloc`
 (`presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart`); der Reiter „Darstellung"
-schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme_bloc.dart`).
+schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme_bloc.dart`): Design, Hell/Dunkel, Schriftstufe.
 **Domain:** `KanzleiSettings` (ein einziger Satz für die ganze App) · `GetKanzleiSettings`,
 `SaveKanzleiSettings`, `ErhoeheAuftragsnummer`
 **Backend:** `Features/Settings/` · `GET /api/Settings`, `PUT /api/Settings`,
 `POST /api/Settings/auftragsnummer/erhoehe`
-**Tests:** `test/features/settings/` (Kanzleidaten- und Signatur-Anzeige, Speichern) · indirekt
+**Tests:** `test/features/settings/` (Kanzleidaten- und Signatur-Anzeige, Speichern, Schriftgröße) · indirekt
 `test/features/vorgang_starten/vorgang_starten_bloc_test.dart`, das `GetKanzleiSettings` fälscht
 
 **Fallstricke**
