@@ -18,6 +18,7 @@ import 'package:automation_app/features/form_template_setup/presentation/widgets
 import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_aktionen.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_dialog.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_hineinholen_angebot.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_verlassen_wache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -66,21 +67,17 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     fields.addAll(initial.fields);
     _nextFieldIndex = initial.nextFieldIndex;
 
-    // Bei bereits verknüpften Word-Dateien die Platzhalter direkt laden.
-    if (_wordFilePathOhne != null) {
+    // Bei bereits verknüpften Word-Dateien die Platzhalter direkt laden. Als
+    // Schleife über beide Slots statt zweimal derselbe Block: Der Editor
+    // behandelt sie durchweg gleich, und der Platz gehört hier dem, was die
+    // Seite wirklich unterscheidet.
+    for (final (pfad, slot) in [
+      (_wordFilePathOhne, TemplateFileSlot.ohneAuflistung),
+      (_wordFilePathMit, TemplateFileSlot.mitAuflistung),
+    ]) {
+      if (pfad == null) continue;
       context.read<TemplatePlaceholdersBloc>().add(
-        LoadTemplatePlaceholders(
-          _wordFilePathOhne!,
-          TemplateFileSlot.ohneAuflistung,
-        ),
-      );
-    }
-    if (_wordFilePathMit != null) {
-      context.read<TemplatePlaceholdersBloc>().add(
-        LoadTemplatePlaceholders(
-          _wordFilePathMit!,
-          TemplateFileSlot.mitAuflistung,
-        ),
+        LoadTemplatePlaceholders(pfad, slot),
       );
     }
   }
@@ -208,82 +205,104 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
         child: BlocConsumer<FormTemplateDataBloc, FormTemplateDataState>(
           listener: (context, state) {
             if (state is FormTemplateDataSuccess) {
-              context.router.maybePop(true);
+              // `pop` statt `maybePop`: Der Pop selbst soll die Wache
+              // übergehen. Gespeichert ist gespeichert — nach dem Erfolg gibt
+              // es nichts mehr zu verwerfen, und eine Rückfrage stünde dem
+              // Anwalt nur im Weg. `true` heißt „es hat sich etwas geändert"
+              // und lässt die Übersicht neu laden.
+              Navigator.of(context).pop(true);
             } else if (state is FormTemplateDataError) {
               Rueckmeldung.zeigeFehler(context, state.message);
             }
           },
           builder: (context, state) {
-            return ReactiveForm(
+            // Die Wache sitzt **innerhalb** des Consumers, weil sie den
+            // Schreibzustand kennen muss: Solange geschrieben wird, darf
+            // nichts aufgehen, was der Erfolgs-Pop oben sonst statt der Seite
+            // träfe (siehe `VorlagenVerlassenWache.gesperrt`).
+            return VorlagenVerlassenWache(
               formGroup: formGroup,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15.0,
-                  vertical: 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 16,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        isEditing
-                            ? 'Vorlage bearbeiten'
-                            : 'Neue Vorlage erstellen',
-                        // `headlineSmall` statt `titleLarge` mit fester Größe:
-                        // Die Seitenüberschrift soll größer sein als ein
-                        // Sektionstitel, und die passende Rolle dafür wächst
-                        // mit der Schriftskala mit (Issue #57).
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+              fields: fields,
+              pfadOhneAuflistung: _wordFilePathOhne,
+              pfadMitAuflistung: _wordFilePathMit,
+              gesperrt: state is SubmittingFormTemplateData,
+              child: ReactiveForm(
+                formGroup: formGroup,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15.0,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 16,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          isEditing
+                              ? 'Vorlage bearbeiten'
+                              : 'Neue Vorlage erstellen',
+                          // `headlineSmall` statt `titleLarge` mit fester Größe:
+                          // Die Seitenüberschrift soll größer sein als ein
+                          // Sektionstitel, und die passende Rolle dafür wächst
+                          // mit der Schriftskala mit (Issue #57).
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
 
-                    const TemplateNameCard(),
+                      const TemplateNameCard(),
 
-                    TemplateFileSlots(
-                      pfadOhneAuflistung: _wordFilePathOhne,
-                      pfadMitAuflistung: _wordFilePathMit,
-                      fields: fields,
-                      onPick: _pickFile,
-                      onRemove: _removeFile,
-                      onPlaceholderSelected: _addFieldFromPlaceholder,
-                      onAlleUebernehmen: _alleUebernehmen,
-                    ),
+                      TemplateFileSlots(
+                        pfadOhneAuflistung: _wordFilePathOhne,
+                        pfadMitAuflistung: _wordFilePathMit,
+                        fields: fields,
+                        onPick: _pickFile,
+                        onRemove: _removeFile,
+                        onPlaceholderSelected: _addFieldFromPlaceholder,
+                        onAlleUebernehmen: _alleUebernehmen,
+                      ),
 
-                    // Direkt unter den Chips: Dort steht der Anwalt vor einem
-                    // Platzhalter, den er nicht anklicken kann, und fragt sich,
-                    // warum (#31).
-                    const AppEigenePlatzhalterListe(),
+                      // Direkt unter den Chips: Dort steht der Anwalt vor einem
+                      // Platzhalter, den er nicht anklicken kann, und fragt sich,
+                      // warum (#31).
+                      const AppEigenePlatzhalterListe(),
 
-                    TemplateFieldsCard(
-                      fields: fields,
-                      formGroup: formGroup,
-                      onAddField: _addNewField,
-                      onReorder: _reorderFields,
-                      onTypeChanged: _aenderungen.typ,
-                      onDatenquelleChanged: _aenderungen.datenquelle,
-                      onRequiredChanged: _aenderungen.pflicht,
-                      onVorbelegungChanged: _aenderungen.vorbelegung,
-                      onDelete: _aenderungen.loeschen,
-                      onZuordnen: _feldZuordnen,
-                    ),
+                      TemplateFieldsCard(
+                        fields: fields,
+                        formGroup: formGroup,
+                        onAddField: _addNewField,
+                        onReorder: _reorderFields,
+                        onTypeChanged: _aenderungen.typ,
+                        onDatenquelleChanged: _aenderungen.datenquelle,
+                        onRequiredChanged: _aenderungen.pflicht,
+                        onVorbelegungChanged: _aenderungen.vorbelegung,
+                        onDelete: _aenderungen.loeschen,
+                        onZuordnen: _feldZuordnen,
+                      ),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        FormTemplateActionButtons(
-                          onCancel: () => context.router.maybePop(true),
-                          fields: fields,
-                          existingItemId: widget.formTemplate?.id,
-                          wordFilePathOhneAuflistung: _wordFilePathOhne,
-                          wordFilePathMitAuflistung: _wordFilePathMit,
-                        ),
-                      ],
-                    ),
-                  ],
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          FormTemplateActionButtons(
+                            // Über `maybePop`, damit die Wache dazwischengeht:
+                            // ohne Änderungen ist die Seite sofort weg, mit
+                            // Änderungen fragt sie erst. Und `false` statt des
+                            // früheren `true` — Abbrechen hat nichts geändert,
+                            // die Übersicht musste bisher grundlos neu laden.
+                            onCancel: () =>
+                                Navigator.of(context).maybePop(false),
+                            fields: fields,
+                            existingItemId: widget.formTemplate?.id,
+                            wordFilePathOhneAuflistung: _wordFilePathOhne,
+                            wordFilePathMitAuflistung: _wordFilePathMit,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

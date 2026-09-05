@@ -81,6 +81,26 @@ passierte.
   lebt nur in Dart, ein unbekannter `inputType` wirft beim Laden (`InputType.fromValue`). Tot:
   `FormTemplateField` (gemeint ist `FieldData`) und `getFormTemplateByName`.
 
+## Vollständigkeitsrechnung über beide Dateien
+
+`VorlagenStand` (`domain/services/`) sagt in **einer** Rechnung über **beide** Word-Dateien, was einer
+Vorlage noch fehlt (#104). Vorher zählten zwei Dienste dieselbe Sache aus zwei Richtungen und je Datei
+getrennt: `PlatzhalterUebernahme.uebernehmbare` (Platzhalter ohne Feld) und `FeldVorkommen` (Feld ohne
+Platzhalter).
+
+- **Eine Rechnung statt zwei, weil sonst über die Dateigrenze hinweg doppelt gezählt wird.** Wer je
+  Datei getrennt fragte, zählte einen Platzhalter, der in der Datei ohne **und** der Datei mit
+  Auflistung steht, zweimal — und bekam nie eine Aussage über die Vorlage als Ganzes.
+- **Ein Feld ohne Vorkommen ist nur eine Warnung, kein Mangel.** Es bleibt wirkungslos, aber das
+  erzeugte Dokument sieht deswegen nicht falsch aus — anders als ein Platzhalter ohne Feld: Der bliebe
+  als rohes `{{…}}` im Brief stehen und macht die Vorlage unvollständig.
+- **App-eigene Platzhalter zählen nie als offen** — `PlatzhalterUebernahme` filtert sie aus der Liste
+  „Platzhalter ohne Feld" heraus, denn die füllt das Backend beim Erzeugen selbst, ohne dass der
+  Anwalt ihnen ein Feld gibt.
+- **Auslegung: Das gilt nicht umgekehrt.** Trägt ein Feld den Namen eines app-eigenen Platzhalters, der
+  Platzhalter kommt in keiner Datei vor, warnt `VorlagenStand` trotzdem — die Ausnahme betrifft nur den
+  Platzhalter (er braucht kein Feld), nicht ein Feld, das wirkungslos bleibt.
+
 ## Vorbelegung der Datumsfelder
 
 `DatumsVorbelegung` (`domain/entities/`) sagt je Datumsfeld, um wie viel es beim Ausfüllen in die
@@ -123,6 +143,41 @@ andere heute; eine andere Frist ging nur über den Quellcode.
   selbst mit, statt an zwei Stellen nachgetragen werden zu müssen. Bewacht von
   `datums_vorbelegung_speicherweg_test.dart`, das den Weg hinein und heraus am Knopf prüft — samt
   der Gegenprobe, dass ein Feld ohne Einstellung den Schlüssel weiterhin nicht schreibt.
+
+## Verlassen mit ungespeicherten Änderungen
+
+`VorlagenVerlassenWache` (`presentation/widgets/`) umschließt den Inhalt der Detailseite und fragt
+über ein `PopScope` nach, bevor der Editor mit ungespeicherten Änderungen zugeht (#104, §1.3).
+Verglichen wird ein Schnappschuss: `VorlagenEntwurf` (`domain/services/`) beim Aufgehen gegen den
+jeweils aktuellen Stand.
+
+- **`formGroup.dirty` reicht dafür nicht** — er kennt nur den Vorlagennamen und die Feldnamen.
+  Feldtyp, Datenquelle, Pflichthaken, Datums-Vorbelegung, Reihenfolge und die beiden Word-Pfade
+  liegen im Zustand der Seite und laufen komplett an ihm vorbei. Wer nur den Pflichthaken setzt und
+  die Seite verlässt, verlöre seine Änderung wortlos. Deshalb der Schnappschuss über *alles*.
+- **Der Vergleich muss die Feldnamen auflösen.** Solange die Seite offen ist, hält `FieldData.label`
+  den Control-Schlüssel (`field_0`, siehe oben) — und der ändert sich beim Umbenennen nie. Ein
+  Vergleich über die Schlüssel wäre also blind für genau die Änderung, die der Anwalt am häufigsten
+  macht. `VorlagenEntwurf.aufnehmen` bekommt deshalb eine Auflösungsfunktion und nimmt den Wert des
+  Controls auf. Verglichen wird exakt (ein Leerzeichen am Namensende ist eine Änderung, es landet
+  ja auch so in der Vorlage); nur `null` und `''` gelten als derselbe leere Stand.
+- **Abbrechen liefert jetzt `false`, nicht mehr `true`.** Der Rückgabewert der Detailseite heißt
+  „es hat sich etwas geändert" und lässt die Übersicht neu laden (`form_template_row.dart`,
+  `form_template_management_page.dart`). Abbrechen hat nichts geändert — das frühere `true` liess
+  die Liste bei jedem Blick in eine Vorlage grundlos neu laden. Nur der Erfolgsweg gibt `true`.
+- **Speichern geht über `Navigator.pop`, Abbrechen über `Navigator.maybePop`.** Das ist der
+  Unterschied, an dem die Wache hängt: `maybePop` fragt `PopScope`, `pop` nicht. Nach erfolgreichem
+  Speichern gibt es nichts mehr zu verwerfen, also darf der Pop durchgehen. Wer den Erfolgsweg auf
+  `maybePop` umstellt, bekommt die Verwerfen-Frage nach dem Speichern zu sehen;
+  `test/features/form_template_setup/vorlagen_verlassen_test.dart` hält beide Wege fest.
+- Die Wache **belauscht die `FormGroup`**: Tippen im Namensfeld baut die Seite nicht neu auf. Ohne
+  den Horcher stünde `canPop` auf dem Stand des letzten Aufbaus, und die frische Umbenennung ginge
+  beim Verlassen ohne Rückfrage verloren.
+- **Während des Speicherns ist die Wache gesperrt** (`gesperrt: true`, aus dem Bloc-Zustand
+  `SubmittingFormTemplateData`), und Abbrechen wie Speichern sind aus. Sonst könnte der Anwalt
+  während der laufenden Anfrage Abbrechen drücken, die Verwerfen-Frage stünde offen, und der
+  Erfolgs-`pop(true)` träfe den Dialog statt der Seite — die Seite meldete dann `false`, obwohl
+  gespeichert wurde. Gesperrt kann kein Dialog offen sein, wenn der Erfolg eintrifft.
 
 ## Zustand
 

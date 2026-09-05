@@ -8,10 +8,10 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 `presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart`,
 `presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`
 **Domain:** `FormTemplate`, `FieldData`, `DatumsVorbelegung`, `InputType`, `FeldDatenquelle` (+ `platzhalter`, `gruppe`,
-`frueher`), `PlatzhalterGruppe`, `PlatzhalterEintrag`, `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung`
-(+ `DatenquelleVorschlag`), `PlatzhalterKatalog`, `AppEigenePlatzhalter`, `PlatzhalterUebernahme`,
-`FeldVorkommen`, `PlatzhalterZuordnung`, `VerwendeteFelder` (welche Felder die aktive Word-Datei einsetzt, #82);
-`GetFormTemplates`, `CreateFormTemplate`, `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
+`frueher`), `PlatzhalterGruppe`, `PlatzhalterEintrag`, `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung` (+
+`DatenquelleVorschlag`), `PlatzhalterKatalog`, `AppEigenePlatzhalter`, `PlatzhalterUebernahme`, `FeldVorkommen`,
+`PlatzhalterZuordnung`, `VerwendeteFelder` (welche Felder die aktive Word-Datei einsetzt, #82), `VorlagenStand`,
+`VorlagenEntwurf`; `GetFormTemplates`, `CreateFormTemplate`, `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
 **Backend:** `Features/FormTemplates/` · `GET /api/FormTemplates`, `POST /api/FormTemplates`,
 `PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
 `Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
@@ -20,21 +20,20 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 
 **Fallstricke**
 
-- **`FeldDatenquelle.platzhalter` ist der Rückweg** und muss ihn einhalten: Jeder angebotene Name
-  muss über `FeldDatenquelleErkennung` wieder auf **seinen** Eintrag auflösen — das erzwingt
-  `feld_datenquelle_test.dart` über alle Werte. Wer eine Datenquelle ergänzt, gibt ihr einen Namen
-  oder begründet im Test, warum sie keinen hat; zwei Quellen sind heute namentlich ausgenommen,
-  weil sie über einen Namen nicht erreichbar sind (§4.7, ergänzt am 02.09.2026).
-- Der Feldname **ist** der Platzhaltername: beim Ausfüllen wird `FieldData.label` zum Schlüssel in
-  `replacePatterns` und ersetzt `{{label}}` (ohne Groß-/Kleinschreibung). Ein Platzhalter ohne Feld
-  bleibt als `{{…}}` im Dokument stehen und kommt als Warnung zurück — gewollt; ein Feld ohne
-  Platzhalter bleibt wirkungslos. Beides wird beim **Einrichten** gemeldet und über den
-  `ZuordnungsDialog` repariert (#36), statt erst nach dem Erzeugen aufzufallen.
-- Solange die Detailseite offen ist, hält `FieldData.label` **nicht** den Feldnamen, sondern den
-  Schlüssel des reactive_forms-Controls (`field_0`, `field_1`, …); der Name steht im Wert des
-  Controls und wird erst beim Speichern in `FormTemplateActionButtons` zurückgetauscht, am fortgeschriebenen Feld (#105).
+- **`FeldDatenquelle.platzhalter` ist der Rückweg** und muss ihn einhalten: Jeder angebotene Name muss über
+  `FeldDatenquelleErkennung` wieder auf **seinen** Eintrag auflösen — das erzwingt `feld_datenquelle_test.dart` über alle
+  Werte. Wer eine Datenquelle ergänzt, gibt ihr einen Namen oder begründet im Test, warum sie keinen hat; zwei Quellen sind
+  heute namentlich ausgenommen, weil sie über einen Namen nicht erreichbar sind (§4.7, ergänzt am 02.09.2026).
+- Der Feldname **ist** der Platzhaltername: beim Ausfüllen wird `FieldData.label` zum Schlüssel in `replacePatterns` und
+  ersetzt `{{label}}` (ohne Groß-/Kleinschreibung). Ein Platzhalter ohne Feld bleibt als `{{…}}` im Dokument stehen und kommt
+  als Warnung zurück — gewollt; ein Feld ohne Platzhalter bleibt wirkungslos. Beides wird beim **Einrichten** gemeldet und
+  über den `ZuordnungsDialog` repariert (#36), statt erst nach dem Erzeugen aufzufallen.
+- **`VorlagenVerlassenWache`** (#104, §1.3) fragt beim Verlassen der Detailseite nach, wenn der aktuelle Stand vom
+  `VorlagenEntwurf`-Schnappschuss abweicht. Solange die Seite offen ist, hält `FieldData.label` **nicht** den Feldnamen, sondern
+  den Control-Schlüssel (`field_0`, `field_1`, …) — `VorlagenEntwurf.aufnehmen` löst ihn wie `FormTemplateActionButtons`
+  beim Speichern zum echten Namen auf.
 - Beim Übernehmen eines Platzhalters schlägt `FeldDatenquelleErkennung` Feldtyp und Datenquelle
   vor — sichtbar im Dropdown und änderbar, nie stillschweigend gesetzt (§1.3). Dieselbe Erkennung
   löst zur Laufzeit die Felder auf, an denen nie eine Quelle gesetzt wurde.
-- Der lange Rest steht in `FALLSTRICKE.md` daneben: Erkennungsregeln, mehrdeutige Namen, erlaubte
-  Zeichen im Platzhalter, Slot „mit Auflistung“, Word-Pfad, `FormTemplateOverviewBloc`, Vorbelegung.
+- Der lange Rest steht in `FALLSTRICKE.md` daneben: Erkennungsregeln, mehrdeutige Namen, erlaubte Zeichen im Platzhalter, Slot
+  „mit Auflistung“, Word-Pfad, `FormTemplateOverviewBloc`, Vorbelegung, Verlassen-Wache.
