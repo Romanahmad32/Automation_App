@@ -6554,7 +6554,9 @@
           "angebot",
           "eigenerStandGesichertAm",
           "letzteSicherung",
-          "ablageOrdner"
+          "ablageOrdner",
+          "eigeneArchive",
+          "aeltestesArchiv"
         ],
         "type": "object",
         "properties": {
@@ -6591,6 +6593,23 @@
           "ablageOrdner": {
             "type": "string",
             "description": "Der eingestellte Ordner; leer hei\u00DFt abgeschaltet."
+          },
+          "eigeneArchive": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Wie viele Archive dieses Rechners im Ablageordner liegen (#112) \u2014 die\r\nAuskunft, die aus der gestaffelten Aufbewahrung erst eine \u00FCberpr\u00FCfbare macht.",
+            "format": "int32"
+          },
+          "aeltestesArchiv": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Wie weit die eigene Historie zur\u00FCckreicht; \u0060null\u0060, wenn nichts liegt.",
+            "format": "date-time"
           }
         },
         "description": "Auskunft f\u00FCr den Start der App (\u00A77.2, #39): Gibt es einen neueren Stand am\r\nanderen Arbeitsplatz, und wie ist die letzte automatische Sicherung\r\nausgegangen? Beides in einer Abfrage, weil beides an derselben Stelle\r\ngezeigt wird \u2014 bevor die Oberfl\u00E4che aufgeht."

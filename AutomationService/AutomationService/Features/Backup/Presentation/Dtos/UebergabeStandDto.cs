@@ -15,17 +15,28 @@ namespace AutomationService.Features.Backup.Presentation.Dtos;
 /// </param>
 /// <param name="LetzteSicherung">Ausgang des letzten automatischen Laufs.</param>
 /// <param name="AblageOrdner">Der eingestellte Ordner; leer heißt abgeschaltet.</param>
+/// <param name="EigeneArchive">
+/// Wie viele Archive dieses Rechners im Ablageordner liegen (#112) — die
+/// Auskunft, die aus der gestaffelten Aufbewahrung erst eine überprüfbare macht.
+/// </param>
+/// <param name="AeltestesArchiv">
+/// Wie weit die eigene Historie zurückreicht; <c>null</c>, wenn nichts liegt.
+/// </param>
 public sealed record UebergabeStandDto(
     UebergabeAngebotDto? Angebot,
     DateTime? EigenerStandGesichertAm,
     LetzteSicherungDto? LetzteSicherung,
-    string AblageOrdner)
+    string AblageOrdner,
+    int EigeneArchive,
+    DateTime? AeltestesArchiv)
 {
     public static UebergabeStandDto From(UebergabeStand stand) => new(
         UebergabeAngebotDto.From(stand.Angebot),
         stand.EigenerStand?.GesichertAm,
         LetzteSicherungDto.From(stand.LetzterLauf),
-        stand.AblageOrdner);
+        stand.AblageOrdner,
+        stand.Bestand.Anzahl,
+        stand.Bestand.Aeltestes);
 }
 
 /// <summary>Der Arbeitsplatz, dessen Stand zur Übernahme bereitliegt.</summary>

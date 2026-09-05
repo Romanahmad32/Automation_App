@@ -1,6 +1,4 @@
-using System.Globalization;
 using AutomationService.Core.Ablage;
-using AutomationService.Core.Persistence;
 
 namespace AutomationService.Features.Backup.Domain.Services;
 
@@ -18,7 +16,17 @@ namespace AutomationService.Features.Backup.Domain.Services;
 /// Der Dateiname trägt den Rechnernamen. Damit gehört jede Sicherung sichtbar
 /// einem Arbeitsplatz, und die Aufräumregel kann sich auf die <em>eigenen</em>
 /// beschränken: Ein Rechner, der die Historie des anderen wegräumt, nähme ihm
-/// genau das, was er zur Übergabe braucht.
+/// genau das, was er zur Übergabe braucht. Wie lange die eigenen liegen bleiben,
+/// entscheidet die <see cref="Aufbewahrungsregel"/> — nach Alter gestaffelt und
+/// nicht nach Anzahl, seit der <c>SicherungsZeitgeber</c> halbstündlich sichert
+/// (§7.2, #112).
+/// </para>
+///
+/// <para>
+/// <b>Es läuft immer nur ein Lauf.</b> Zeitgeber, Vorgangsabschluss und Beenden
+/// stoßen dieselbe Sicherung an und können sich überlappen; die
+/// <see cref="Schleuse"/> reiht sie hintereinander. Ohne sie schrieben zwei Läufe
+/// im selben Moment in denselben Ordner und räumten sich gegenseitig auf.
 /// </para>
 ///
 /// <para>
@@ -45,15 +53,15 @@ public sealed class AutomatischeSicherung(
     ILogger<AutomatischeSicherung> logger) : IAutomatischeSicherung
 {
     /// <summary>
-    /// So viele automatische Sicherungen bleiben <em>je Rechner</em> liegen.
-    /// Dieselbe Groessenordnung wie bei den Sicherungen vor einer Migration
-    /// (<c>DatabaseMigrationService.AufbewahrteSicherungen</c>); bei einer
-    /// Sicherung je Sitzung deckt das gut eine Arbeitswoche ab.
+    /// Reiht die Laeufe hintereinander. Statisch, weil sie den Ordner schuetzt
+    /// und nicht die Instanz: Der Ablageordner ist derselbe, gleich welcher
+    /// Aufrufer gerade sichert.
     /// </summary>
-    public const int AufbewahrteSicherungen = 10;
+    static readonly SemaphoreSlim Schleuse = new(1, 1);
 
     /// <summary>Namensmuster der Archive: <c>automation-&lt;Rechner&gt;-&lt;Zeitstempel&gt;.zip</c>.</summary>
-    public static string SuchmusterFuer(string rechnername) => $"automation-{rechnername}-*.zip";
+    public static string SuchmusterFuer(string rechnername) =>
+        SicherungsDateiname.Suchmuster(rechnername);
 
     public async Task<LetzteSicherung?> SchreibeAsync(CancellationToken cancellationToken = default)
     {
@@ -64,17 +72,23 @@ public sealed class AutomatischeSicherung(
         }
 
         string? gebaut = null;
+        var eingetreten = false;
         try
         {
+            // Vor dem ersten Handgriff anstellen: Wartet hier ein zweiter Lauf,
+            // ist das kein Fehler, sondern der Normalfall beim Beenden waehrend
+            // des Zeitgebers. Ein Abbruch beim Warten faellt in denselben catch.
+            await Schleuse.WaitAsync(cancellationToken);
+            eingetreten = true;
+
             gebaut = await sicherung.CreateBackupFileAsync(cancellationToken);
             var zeitpunkt = DateTime.Now;
-            var dateiname = Dateiname(zeitpunkt);
+            var dateiname = SicherungsDateiname.Baue(ArbeitsplatzAkte.DieserRechner, zeitpunkt);
             AtomareAblage.Ersetze(gebaut, Path.Combine(ordner, dateiname));
             gebaut = null;
 
             ArbeitsplatzAkte.MerkeSicherung(ordner, zeitpunkt, dateiname);
-            SqliteSicherung.RaeumeAelteSicherungenAuf(
-                ordner, SuchmusterFuer(ArbeitsplatzAkte.DieserRechner), AufbewahrteSicherungen);
+            SicherungsAufraeumung.RaeumeAuf(ordner, ArbeitsplatzAkte.DieserRechner, zeitpunkt);
 
             merker.MerkeErfolg(zeitpunkt, dateiname);
             logger.LogInformation("Automatische Sicherung abgelegt: {Ordner}\\{Datei}", ordner, dateiname);
@@ -97,6 +111,11 @@ public sealed class AutomatischeSicherung(
         }
         finally
         {
+            if (eingetreten)
+            {
+                Schleuse.Release();
+            }
+
             if (gebaut is not null)
             {
                 TryDelete(gebaut);
@@ -154,11 +173,6 @@ public sealed class AutomatischeSicherung(
         merker.MerkeFehler(zeitpunkt, meldung);
         return new LetzteSicherung(zeitpunkt, false, null, meldung, FehlerQuittiert: false);
     }
-
-    static string Dateiname(DateTime zeitpunkt) =>
-        $"automation-{ArbeitsplatzAkte.DieserRechner}-"
-        + zeitpunkt.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)
-        + ".zip";
 
     static void TryDelete(string pfad)
     {

@@ -19,11 +19,19 @@ class UebergabeStand extends Equatable {
   /// Der eingestellte Ablageordner; leer heißt: automatische Sicherung aus.
   final String ablageOrdner;
 
+  /// Anzahl der Archive dieses Rechners in der Ablage (§7.2).
+  final int eigeneArchive;
+
+  /// Zeitpunkt des ältesten eigenen Archivs; null ohne eigene Archive.
+  final DateTime? aeltestesArchiv;
+
   const UebergabeStand({
     this.angebot,
     this.eigenerStandGesichertAm,
     this.letzteSicherung,
     this.ablageOrdner = '',
+    this.eigeneArchive = 0,
+    this.aeltestesArchiv,
   });
 
   /// Nichts anzuzeigen — der Start geht ohne Zwischenbild weiter.
@@ -43,6 +51,10 @@ class UebergabeStand extends Equatable {
       ),
       letzteSicherung: lauf == null ? null : LetzteSicherung.fromJson(lauf),
       ablageOrdner: json['ablageOrdner'] as String? ?? '',
+      eigeneArchive: json['eigeneArchive'] as int? ?? 0,
+      aeltestesArchiv: DateTime.tryParse(
+        json['aeltestesArchiv'] as String? ?? '',
+      ),
     );
   }
 
@@ -52,5 +64,7 @@ class UebergabeStand extends Equatable {
     eigenerStandGesichertAm,
     letzteSicherung,
     ablageOrdner,
+    eigeneArchive,
+    aeltestesArchiv,
   ];
 }

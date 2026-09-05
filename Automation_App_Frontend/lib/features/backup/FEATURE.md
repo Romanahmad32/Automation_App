@@ -17,9 +17,11 @@ Dateizugriff + Fehlerübersetzung liegen in `BackupRepositoryImpl`) sowie `ueber
 `uebernehmeStand`/`quittiereSicherungsfehler`
 **Backend:** `Features/Backup/` · `GET|POST /api/Backup/export|import`,
 `GET /api/Backup/uebergabe`, `POST /api/Backup/uebergabe/uebernehmen`,
-`POST /api/Backup/sicherungsstand/quittieren`
+`POST /api/Backup/sicherungsstand/quittieren`; `SicherungsZeitgeber` (30 Min, nur bei Änderung) und
+`Aufbewahrungsregel` (Staffel Tag/Woche/Monat statt Anzahl) ergänzen die Sicherung.
 **Tests:** `test/features/backup/arbeitsplatz_uebergabe_test.dart`,
-`test/features/backup/sicherungs_zeitpunkt_test.dart`
+`test/features/backup/sicherungs_zeitpunkt_test.dart`,
+`test/features/backup/sicherungs_stand_zeile_test.dart`
 
 **Fallstricke** — die ausführliche Fassung steht in `FALLSTRICKE.md` daneben.
 

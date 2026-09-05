@@ -89,27 +89,43 @@ public sealed class AutomatischeSicherungTests : IDisposable
     /// <summary>
     /// Beide Arbeitsplätze legen in denselben Ordner. Räumte einer nach Alter
     /// auf, nähme er dem anderen genau das weg, was dieser zur Übergabe braucht.
+    ///
+    /// <para>
+    /// Aufgeräumt wird seit #112 nach der <see cref="Aufbewahrungsregel"/> statt
+    /// nach Anzahl: Von zwölf Archiven aus demselben Monat vor einem Jahr bleibt
+    /// das jüngste. Ein Name, den dieser Rechner nie geschrieben haben kann
+    /// (Tag 00), wird weder gezählt noch gelöscht.
+    /// </para>
     /// </summary>
     [Fact]
-    public async Task Aufgeraeumt_werden_nur_die_eigenen_Sicherungen()
+    public async Task Aufgeraeumt_wird_nach_Alter_und_nur_bei_den_eigenen()
     {
         await LegeDatenbankAn();
         Directory.CreateDirectory(_ablage);
         var fremd = Path.Combine(_ablage, "automation-LAPTOP-20260101-120000.zip");
         await File.WriteAllTextAsync(fremd, "gehoert dem anderen Rechner");
-        for (var i = 0; i < AutomatischeSicherung.AufbewahrteSicherungen + 1; i++)
+        var unlesbar = Path.Combine(
+            _ablage, $"automation-{ArbeitsplatzAkte.DieserRechner}-20260100-120010.zip");
+        await File.WriteAllTextAsync(unlesbar, "Tag 00 gibt es nicht");
+
+        var vorEinemJahr = DateTime.Now.AddYears(-1).Date.AddHours(9);
+        var eigeneAlt = new List<string>();
+        for (var i = 0; i < 12; i++)
         {
-            var alt = Path.Combine(
-                _ablage, $"automation-{ArbeitsplatzAkte.DieserRechner}-2026010{i % 10}-1200{i:00}.zip");
+            var alt = Path.Combine(_ablage, SicherungsDateiname.Baue(
+                ArbeitsplatzAkte.DieserRechner, vorEinemJahr.AddMinutes(i)));
             await File.WriteAllTextAsync(alt, "alt");
-            File.SetCreationTimeUtc(alt, new DateTime(2026, 1, 1, 0, i, 0, DateTimeKind.Utc));
+            eigeneAlt.Add(alt);
         }
 
         await Dienst().SchreibeAsync();
 
         File.Exists(fremd).Should().BeTrue("fremde Staende gehen diesen Rechner nichts an");
+        File.Exists(unlesbar).Should().BeTrue(
+            "was dieser Rechner nicht geschrieben haben kann, loescht er auch nicht");
+        File.Exists(eigeneAlt[^1]).Should().BeTrue("je Monat bleibt das juengste liegen");
         Directory.GetFiles(_ablage, AutomatischeSicherung.SuchmusterFuer(ArbeitsplatzAkte.DieserRechner))
-            .Should().HaveCount(AutomatischeSicherung.AufbewahrteSicherungen);
+            .Should().HaveCount(3, "die neue Sicherung, der Monatsvertreter und die unlesbare Datei");
     }
 
     /// <summary>

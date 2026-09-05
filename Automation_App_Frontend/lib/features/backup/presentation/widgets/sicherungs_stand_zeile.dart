@@ -20,6 +20,43 @@ class SicherungsStandZeile extends StatefulWidget {
 
   @override
   State<SicherungsStandZeile> createState() => SicherungsStandZeileState();
+
+  static String satz(UebergabeStand stand) {
+    if (stand.ablageOrdner.isEmpty) {
+      return 'Nicht eingerichtet. In den Kanzleidaten unter „Sicherungsablage" '
+          'einen Ordner wählen — dann sichert die App beim Beenden von selbst '
+          'dorthin.';
+    }
+
+    final lauf = stand.letzteSicherung;
+    if (lauf == null) {
+      return 'Eingerichtet (${stand.ablageOrdner}), aber noch nie gelaufen. '
+          'Die erste Sicherung entsteht beim Beenden der App.';
+    }
+    if (!lauf.gelungen) {
+      return 'Zuletzt fehlgeschlagen '
+          '${SicherungsZeitpunkt.beschreibe(lauf.zeitpunkt)}: '
+          '${lauf.meldung ?? 'Grund unbekannt.'}';
+    }
+    final basis =
+        'Zuletzt gesichert ${SicherungsZeitpunkt.beschreibe(lauf.zeitpunkt)} '
+        'nach ${stand.ablageOrdner}.';
+    final archivSatz = _archivSatz(stand);
+    return archivSatz.isEmpty ? basis : '$basis $archivSatz';
+  }
+
+  /// Wie viele Archive dieses Rechners liegen und wie weit die Historie
+  /// zurückreicht — leer, solange keins existiert, damit „gelungen" ohne
+  /// Bestand nicht nach einer nie gelaufenen Aufräumung klingt.
+  static String _archivSatz(UebergabeStand stand) {
+    final anzahl = stand.eigeneArchive;
+    if (anzahl <= 0) return '';
+    if (anzahl == 1) return '1 Sicherung dieses Rechners.';
+    final aeltestes = stand.aeltestesArchiv;
+    if (aeltestes == null) return '$anzahl Sicherungen dieses Rechners.';
+    return '$anzahl Sicherungen dieses Rechners, älteste vom '
+        '${SicherungsZeitpunkt.datum(aeltestes)}.';
+  }
 }
 
 class SicherungsStandZeileState extends State<SicherungsStandZeile> {
@@ -54,7 +91,10 @@ class SicherungsStandZeileState extends State<SicherungsStandZeile> {
         const Divider(height: 32),
         Text('Automatische Sicherung', style: theme.textTheme.titleSmall),
         const SizedBox(height: 4),
-        Text(_satz(stand), style: theme.textTheme.bodySmall),
+        Text(
+          SicherungsStandZeile.satz(stand),
+          style: theme.textTheme.bodySmall,
+        ),
         if (stand.angebot != null) ...[
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -65,27 +105,6 @@ class SicherungsStandZeileState extends State<SicherungsStandZeile> {
         ],
       ],
     );
-  }
-
-  String _satz(UebergabeStand stand) {
-    if (stand.ablageOrdner.isEmpty) {
-      return 'Nicht eingerichtet. In den Kanzleidaten unter „Sicherungsablage" '
-          'einen Ordner wählen — dann sichert die App beim Beenden von selbst '
-          'dorthin.';
-    }
-
-    final lauf = stand.letzteSicherung;
-    if (lauf == null) {
-      return 'Eingerichtet (${stand.ablageOrdner}), aber noch nie gelaufen. '
-          'Die erste Sicherung entsteht beim Beenden der App.';
-    }
-    if (!lauf.gelungen) {
-      return 'Zuletzt fehlgeschlagen '
-          '${SicherungsZeitpunkt.beschreibe(lauf.zeitpunkt)}: '
-          '${lauf.meldung ?? 'Grund unbekannt.'}';
-    }
-    return 'Zuletzt gesichert ${SicherungsZeitpunkt.beschreibe(lauf.zeitpunkt)} '
-        'nach ${stand.ablageOrdner}.';
   }
 
   Future<void> _uebernehmen() async {
