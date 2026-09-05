@@ -185,12 +185,16 @@ import 'package:automation_app/features/settings/data/repositories/kanzlei_setti
     as _i366;
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart'
     as _i609;
+import 'package:automation_app/features/settings/domain/entities/ordner_zustand.dart'
+    as _i972;
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart'
     as _i849;
 import 'package:automation_app/features/settings/domain/usecases/erhoehe_auftragsnummer.dart'
     as _i299;
 import 'package:automation_app/features/settings/domain/usecases/get_kanzlei_settings.dart'
     as _i706;
+import 'package:automation_app/features/settings/domain/usecases/get_ordner_zustand.dart'
+    as _i461;
 import 'package:automation_app/features/settings/domain/usecases/save_kanzlei_settings.dart'
     as _i104;
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart'
@@ -525,6 +529,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i308.FormTemplateDatasource>(),
         gh<_i651.WordTemplateDatasource>(),
       ),
+    );
+    gh.factory<_i223.UseCase<List<_i972.OrdnerZustand>, _i223.NoParams>>(
+      () => _i461.GetOrdnerZustand(gh<_i849.KanzleiSettingsRepository>()),
     );
     gh.factory<
       _i223.UseCase<

@@ -170,6 +170,9 @@ void main() {
     'lib/features/settings/domain/entities/kanzlei_settings.dart': [
       'KanzleiSettingsDto',
     ],
+    'lib/features/settings/domain/entities/ordner_zustand.dart': [
+      'OrdnerZustandDto',
+    ],
     'lib/features/versicherer/domain/entities/versicherer.dart': [
       'VersichererDto',
     ],

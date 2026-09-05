@@ -111,6 +111,25 @@ class KanzleiSettings extends Equatable {
   /// Rechner meinen denselben Ordner, aber unter verschiedenen Pfaden.
   final String sicherungsAblageOrdner;
 
+  /// Der **eine** Ordner, unter dem die App ablegt, was sie selbst verwaltet:
+  /// Vorlagen, Register-Spiegel und Sicherungen. Gedacht ist ein Ordner im
+  /// synchronisierten Bereich (OneDrive) — dann steht auf dem zweiten
+  /// Arbeitsplatz alles von selbst richtig, weil der Dienst ihn relativ zur
+  /// erkannten OneDrive-Wurzel ablegt. Leer heißt: nichts wird abgeleitet, es
+  /// gilt allein, was in den drei Einzelfeldern steht.
+  ///
+  /// [vorlagenOrdner], [registerAblageOrdner] und [sicherungsAblageOrdner]
+  /// gehen weiterhin vor — ein Bestand, der sie gesetzt hat, arbeitet
+  /// unverändert weiter. Dieser Ordner ist ein Angebot, kein Umzug.
+  ///
+  /// **Was hier steht, ist ein anzeigbarer Pfad.** Der Dienst löst die
+  /// gespeicherte Form beim Lesen auf und rechnet sie beim Schreiben zurück;
+  /// das Frontend rechnet nie um — dieselbe Arbeitsteilung wie bei den
+  /// Vorlagenpfaden. Lässt sich ein relativ abgelegter Ordner auf diesem
+  /// Rechner nicht auflösen, kommt die Speicherform unverändert an; was davon
+  /// tatsächlich gilt, sagt `GET /api/Settings/ordner` (`OrdnerZustand`).
+  final String appDatenOrdner;
+
   /// Die formatierte Fassung derselben Signatur (§4.7): Schrift, Farben, Logo.
   /// Die App **reicht sie nur durch** — übernommen und geändert wird sie im
   /// Dienst (`POST api/EmailVersand/signaturen/uebernehmen`), weil dabei auch
@@ -138,6 +157,7 @@ class KanzleiSettings extends Equatable {
     this.registerExportFilter = registerFilterAlle,
     this.vorlagenOrdner = '',
     this.sicherungsAblageOrdner = '',
+    this.appDatenOrdner = '',
   });
 
   static const KanzleiSettings empty = KanzleiSettings();
@@ -162,6 +182,7 @@ class KanzleiSettings extends Equatable {
     String? registerExportFilter,
     String? vorlagenOrdner,
     String? sicherungsAblageOrdner,
+    String? appDatenOrdner,
   }) {
     return KanzleiSettings(
       personentyp: personentyp ?? this.personentyp,
@@ -186,6 +207,7 @@ class KanzleiSettings extends Equatable {
       vorlagenOrdner: vorlagenOrdner ?? this.vorlagenOrdner,
       sicherungsAblageOrdner:
           sicherungsAblageOrdner ?? this.sicherungsAblageOrdner,
+      appDatenOrdner: appDatenOrdner ?? this.appDatenOrdner,
     );
   }
 
@@ -222,6 +244,7 @@ class KanzleiSettings extends Equatable {
           json['registerExportFilter'] as String? ?? registerFilterAlle,
       vorlagenOrdner: json['vorlagenOrdner'] as String? ?? '',
       sicherungsAblageOrdner: json['sicherungsAblageOrdner'] as String? ?? '',
+      appDatenOrdner: json['appDatenOrdner'] as String? ?? '',
     );
   }
 
@@ -245,6 +268,7 @@ class KanzleiSettings extends Equatable {
     'registerExportFilter': registerExportFilter,
     'vorlagenOrdner': vorlagenOrdner,
     'sicherungsAblageOrdner': sicherungsAblageOrdner,
+    'appDatenOrdner': appDatenOrdner,
   };
 
   @override
@@ -268,5 +292,6 @@ class KanzleiSettings extends Equatable {
     registerExportFilter,
     vorlagenOrdner,
     sicherungsAblageOrdner,
+    appDatenOrdner,
   ];
 }

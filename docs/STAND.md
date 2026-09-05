@@ -89,21 +89,35 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   **offen** im Formular — mit Stelle, Folge und Grund („im Mandantenregister nicht erfasst",
   „kein Feld dieses Namens") —, und ein Dialog stellt Vorlage und Ergebnis zeilenweise gegenüber.
 - **Sicherung** — das `backup`-Feature schreibt Datenbank und Vorlagen als ZIP
-  (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`). Ist in den Einstellungen eine
-  **Sicherungsablage** gewählt (gedacht: ein OneDrive-Ordner), sichert die App zusätzlich beim
+  (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`). Ist eine **Sicherungsablage**
+  eigens gewählt oder aus dem App-Daten-Ordner abgeleitet (`SicherungsAblageVorgabe`, #103; ohne
+  beides bleibt sie abgeschaltet — gedacht: ein OneDrive-Ordner), sichert die App zusätzlich beim
   Beenden und nach jedem Vorgangsabschluss von selbst dorthin — und der **zweite Arbeitsplatz**
   bietet diesen Stand beim Öffnen zur Übernahme an, nach Rückfrage und mit sichtbarem Vergleich
   beider Stände. Die Kette steht in `docs/DATENFLUESSE.md`. **Bewusst nicht gebaut:** ein
   Zusammenführen zweier gleichzeitig bearbeiteter Stände — übergeben wird eine Datei, nicht
   verschmolzen.
+- **Ein Ordner für alle App-Daten, relative OneDrive-Pfade (#103)** — statt vier Ordner einzeln zu
+  wählen, legt der Anwalt einen **App-Daten-Ordner** fest (Vorschlag: ein erkannter
+  OneDrive-Ordner, `SynchronisierterWurzelOrdner`); Vorlagen-, Register- und Sicherungsablage
+  leiten sich daraus ab (`AppDatenOrdnerVorgabe`, `VorlagenOrdnerVorgabe`, `RegisterAblageVorgabe`,
+  `SicherungsAblageVorgabe`) und lassen sich weiterhin einzeln abweichend einstellen. Liegt ein
+  gewählter Ordner unter dem erkannten OneDrive-Wurzelordner, speichert das Backend ihn **relativ
+  mit festgehaltenem Anker** (`%OneDriveCommercial%\…`, `AppOrdnerPfad`) statt absolut — damit er
+  bei der Übernahme (#39) mit dem zweiten Arbeitsplatz mitkommt, während ein Ordner außerhalb
+  absolut und maschinengebunden bleibt. `GET /api/Settings/ordner` liefert je Ordner einen
+  sprechenden Zustand (nicht gesetzt/abgeleitet/Standard/bereit/Ordner fehlt/Anker fehlt) statt
+  eines Pfads ins Leere. Bestand mit vier absolut gesetzten Ordnern läuft nach der Migration
+  unverändert weiter, nichts wird verschoben.
 - **Postfachantworten** liegen in derselben Datenbank (`DbReceivedReplyStore`, Tabelle
   `ReceivedReplies`). Jeder Treffer wird nach bestem Wissen über die Referenz einem Vorgang
   zugeordnet (`VorgangId`/`Zugeordnet`), **ohne** den Vorgang zu verändern — die Übernahme
   bleibt der bestätigte Schritt im Frontend.
 - **Word-Export des Sachgebiete-/Auftragsregisters (§6.2)** — die App ist das führende Register
   und schreibt ihren Stand als frische Word- **und** PDF-Tabelle in einen Ordner aus den
-  Einstellungen (`RegisterSpiegelService`, `POST api/Vorgaenge/register/export`,
-  `GET …/register/stand`); die Kette steht in `docs/DATENFLUESSE.md`.
+  Einstellungen — eigens gewählt oder aus dem App-Daten-Ordner abgeleitet (`RegisterSpiegelService`,
+  `RegisterAblageVorgabe`, #103, `POST api/Vorgaenge/register/export`, `GET …/register/stand`);
+  die Kette steht in `docs/DATENFLUESSE.md`.
 - **Einheitliche Rückmeldungen (Issue #56, 04.09.2026)** — Baustein `Rueckmeldung` zeigt Erfolgs-,
   Hinweis- und Fehlermeldungen oben rechts als Stapel über der Dialogbarriere (Erfolg 3 s, Hinweis
   5 s, Fehler bis zum Schließen). Alle 52 Snackbar-Stellen umgestellt, ein Architekturtest wacht.

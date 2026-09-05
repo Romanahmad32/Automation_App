@@ -34,6 +34,7 @@ void main() {
     abteilung: 'VU',
     vorlagenOrdner: r'C:\Kanzlei\Vorlagen',
     sicherungsAblageOrdner: r'C:\OneDrive\Kanzlei-Sicherungen',
+    appDatenOrdner: r'C:\OneDrive\Kanzlei App Daten',
   );
 
   /// Der Wert, der beim Speichern gelesen wird — nicht irgendein Text auf dem
@@ -83,6 +84,14 @@ void main() {
     expect(
       imFeld(tester, 'sicherungsAblageOrdner'),
       gespeichert.sicherungsAblageOrdner,
+    );
+    expect(
+      imFeld(tester, 'appDatenOrdner'),
+      gespeichert.appDatenOrdner,
+      reason:
+          'Der eine Ordner (#103) hängt an derselben Kette wie die anderen: '
+          'FormGroup, _patch, _save. Fehlt eine der drei Stellen, schreibt '
+          'Speichern ihn leer zurück.',
     );
   });
 
