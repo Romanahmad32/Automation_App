@@ -28,15 +28,12 @@ class InitialTemplateForm {
     int index = 0;
     for (final element in template?.fields ?? const <FieldData>[]) {
       final fieldKey = 'field_$index';
-      fields.add(
-        FieldData(
-          order: index,
-          label: fieldKey,
-          required: element.required,
-          inputType: element.inputType,
-          datenquelle: element.datenquelle,
-        ),
-      );
+      // Das gespeicherte Feld fortschreiben, nicht neu bauen: `copyWith`
+      // bringt die Datums-Vorbelegung mit (§5.3, #105). Ein Neubau liesse sie
+      // fallen, und der Editor einer Bestandsvorlage stünde immer auf „nicht
+      // eingestellt", obwohl etwas gespeichert ist. Getauscht wird nur das
+      // Label: Solange die Seite offen ist, steht dort der Control-Schlüssel.
+      fields.add(element.copyWith(order: index, label: fieldKey));
       controls[fieldKey] = FormControl<String>(
         value: element.label,
         validators: element.required ? [Validators.required] : [],

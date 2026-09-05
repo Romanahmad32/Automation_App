@@ -60,18 +60,27 @@ class FormTemplateActionButtons extends StatelessWidget {
                         );
                         return;
                       }
-                      final List<FieldData> formData = fields.map((field) {
-                        final labelValue =
-                            formGroup.control(field.label).value as String;
-                        return FieldData(
-                          order: fields.indexOf(field),
-                          label: labelValue,
-                          required: field.required,
-                          // 5. Fixed to use actual field state instead of hardcoded 'true'
-                          inputType: field.inputType,
-                          datenquelle: field.datenquelle,
-                        );
-                      }).toList();
+                      // Das vorhandene Feld **fortschreiben**, nicht neu
+                      // bauen: `copyWith` reicht die Datums-Vorbelegung
+                      // ausdrücklich durch, ein Neubau liesse sie still fallen
+                      // — und weil `toJson` den Schlüssel dann gar nicht
+                      // schreibt, wäre der Verlust von „nie eingestellt" nicht
+                      // zu unterscheiden (§5.3, #105).
+                      //
+                      // Der Laufindex ist zugleich die Reihenfolge; das
+                      // frühere `indexOf` suchte jedes Feld unnötig erneut
+                      // in der Liste (quadratischer Aufwand).
+                      final List<FieldData> formData = [
+                        for (final (index, field) in fields.indexed)
+                          field.copyWith(
+                            order: index,
+                            // Solange die Seite offen ist, steht in
+                            // `field.label` der Control-Schlüssel; der echte
+                            // Feldname liegt im Wert des Controls.
+                            label:
+                                formGroup.control(field.label).value as String,
+                          ),
+                      ];
 
                       context.read<FormTemplateDataBloc>().add(
                         SubmitFormTemplateDataEvent(
