@@ -21,7 +21,8 @@ class WizardStepChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final circleColor = isActive
         ? colorScheme.primary
         : isEnabled
@@ -44,12 +45,21 @@ class WizardStepChip extends StatelessWidget {
             CircleAvatar(
               radius: 16,
               backgroundColor: circleColor,
-              child: Text('$number', style: TextStyle(color: numberColor)),
+              // Theme-Rolle statt nacktem [TextStyle]: `CircleAvatar` setzt
+              // sonst `titleMedium` als Vorgabe, und die Ziffer sprengte den
+              // Kreis, sobald die Schriftskala steigt (Issue #57).
+              child: Text(
+                '$number',
+                style: theme.textTheme.labelLarge?.copyWith(color: numberColor),
+              ),
             ),
             const SizedBox(width: 8),
+            // Der Schritt-Titel las bisher die Vorgabe aus dem umgebenden
+            // [DefaultTextStyle] — also `bodyMedium`, nur eben ohne den
+            // Theme-Bezug, an dem man das sieht. Jetzt steht die Rolle da.
             Text(
               title,
-              style: TextStyle(
+              style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 color: isEnabled ? null : colorScheme.outline,
               ),

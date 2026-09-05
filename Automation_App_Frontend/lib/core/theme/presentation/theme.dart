@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 
 import "auswahl_themes.dart";
 import "extended_color.dart";
+import "schriftskala.dart";
 import "theme_schemes_dark.dart";
 import "theme_schemes_light.dart";
 
@@ -42,9 +43,13 @@ class MaterialTheme {
         ? colorScheme.surfaceContainerHigh
         : colorScheme.surfaceContainerHighest;
 
-    // Etwas kräftigere Überschriften für klare Hierarchie (App- und
-    // Sektionstitel), Fließtext bleibt unverändert.
-    final baseText = textTheme.apply(
+    // Zuerst der Schriftgrad: [Schriftskala.anheben] hebt jede Rolle um
+    // denselben Zuschlag an (Issue #57). Der Aufruf steht hier und nicht in
+    // den beiden Theme-Familien, weil jede von ihnen durch diese Methode
+    // läuft — eine Stelle, vier Fassungen (Standard/Kanzlei × hell/dunkel).
+    // Danach die Farben und etwas kräftigere Überschriften für klare
+    // Hierarchie (App- und Sektionstitel), Fließtext bleibt unverändert.
+    final baseText = Schriftskala.anheben(textTheme).apply(
       bodyColor: colorScheme.onSurface,
       displayColor: colorScheme.onSurface,
     );
@@ -103,9 +108,11 @@ class MaterialTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radius),
           ),
+          // Nur das Gewicht, keine Größe: Hier stand bis Issue #57 ein festes
+          // `fontSize: 15`, das den Knopf von der Skala abgekoppelt hätte.
+          // Der angehobene `labelLarge` trägt ihn selbst.
           textStyle: styledText.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            fontSize: 15,
           ),
         ),
       ),
