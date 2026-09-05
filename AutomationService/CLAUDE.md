@@ -144,7 +144,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   `RegisterSpiegelService` schreibt danach das Register als Word- und PDF-Datei in einen Ordner aus
   den Einstellungen (§6.2, `…/register/export|stand`); die Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
-  doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier.
+  doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier. Dazu die
+  Paket-Buchführung des Imports: Tabelle `ImportPakete`, `GET`/`POST api/ImportPakete` (#108).
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST api/Settings/auftragsnummer/erhoehe`
   und die Standardpositionen der Schadensaufstellung (§4.4, `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle =
   Vorgabe, leeres Speichern setzt zurück). Dazu die fünf Ordnerpfade (#103): `AppDatenOrdner` trägt Vorlagen, Register und

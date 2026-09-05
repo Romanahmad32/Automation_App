@@ -8,6 +8,7 @@ public static class MandantenInjection
     {
         services.AddScoped<IMandantenRepository, MandantenRepository>();
         services.AddScoped<IOrdnerStatusRegister, OrdnerStatusRegister>();
+        services.AddScoped<IImportPaketBuch, ImportPaketBuch>();
         services.AddScoped<IMandantenImport, MandantenImport>();
         return services;
     }

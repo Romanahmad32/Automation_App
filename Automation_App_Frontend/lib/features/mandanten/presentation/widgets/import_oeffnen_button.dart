@@ -24,7 +24,10 @@ class ImportOeffnenButton extends StatelessWidget {
 
   Future<void> _oeffnen(BuildContext context) async {
     final bloc = context.read<MandantenOverviewBloc>();
-    await context.router.push(const MandantenImportRoute());
+    // Ohne `vorgabe`: von hier aus wählt der Anwalt seine Datei selbst. Die
+    // Route trägt seit der Übergabe aus dem Zuordnungsstapel Argumente und ist
+    // deshalb nicht mehr konstant.
+    await context.router.push(MandantenImportRoute());
     // Der Import ändert Register und Vermerke, am Dateisystem aber nichts —
     // der teure Akten-Scan bleibt deshalb stehen.
     bloc.add(const LoadMandantenUebersichtEvent(nurRegister: true));

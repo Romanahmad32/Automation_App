@@ -63,6 +63,92 @@ Den fertigen Arbeitsauftrag für den Erzeuger hält die App zum Kopieren bereit
 (*Aus Datei übernehmen* → **Auftrag für den Erzeuger kopieren**); der Wortlaut liegt in
 `Automation_App_Frontend/lib/features/mandanten/presentation/utils/import_anleitung.dart`.
 
+## Arbeitspakete: die Zuordnung entsteht portionsweise
+
+Bei rund 4040 offenen Ordnern ist selbst der beste Zuordnungsstapel keine Sitzung, sondern viele.
+Ein Agent, dem man den ganzen Bestand auf einmal vorlegt, arbeitet halb oder gar nicht — die
+Antwort ist deshalb nicht „kleiner denken", sondern die Arbeit in Portionen zu schneiden, die er in
+einem Zug schafft.
+
+Ein **Arbeitspaket** (`ArbeitspaketBauen.baue`) ist eine solche Portion: die nächsten N offenen
+**Mandanten** samt **allen** ihren Aktenordnern, plus alles, was der Agent zum Zuordnen braucht.
+Vorgabe ist N = 200, gedeckelt auf 1000 (`ArbeitspaketBauen.vorgabeAnzahl`/`hoechsteAnzahl`).
+
+**Warum nach Mandanten geschnitten wird, nicht nach Ordnern:** Viele Mandanten haben mehrere
+Aktenordner. Ein Paket, das nach Ordnern schneidet, zerreißt dieselbe Person über zwei Sitzungen —
+der Agent sieht sie im zweiten Paket wieder, hält sie für neu und legt sie doppelt an. Genau das ist
+die Dublette, die der Import verhindern soll. Nach Mandanten geschnitten kann sie gar nicht erst
+auftreten: **ein Mandant liegt nie in zwei Paketen**, und zwischen zwei Sitzungen braucht es deshalb
+keine Dublettensuche. Ordner ohne erkennbaren Namen bilden eine eigene Gruppe über ihren
+Ordnernamen — sie fallen nicht unter den Tisch und ziehen auch keine fremden Ordner an sich.
+
+### Das Dateiformat des Arbeitspakets
+
+Eigene Fassung, unabhängig von der Importdatei — beide zählen ihre Fassungsnummer getrennt:
+
+```json
+{
+  "version": 1,
+  "paket": 3,
+  "erstelltAm": "2026-09-05T10:12:00.000Z",
+  "stammordner": "D:/Akten",
+  "anleitung": "<Text aus ImportAnleitung.paketText>",
+  "bekannteMandanten": [
+    {
+      "anzeigename": "Karl Schmidt",
+      "aktenOrdnernamen": ["Strafsache Schmidt, Karl"],
+      "kennzeichen": ["HG-E 1427"]
+    }
+  ],
+  "ordner": [
+    {
+      "ordnername": "VUnfallursache Meier, Anna",
+      "aktentyp": "verkehrsunfall",
+      "nameVorschlagVorname": "Meier,",
+      "nameVorschlagNachname": "Anna",
+      "bekannterMandant": "Anna Meier",
+      "begruendung": "Nachname gleich"
+    }
+  ]
+}
+```
+
+| Feld | Bedeutung |
+|---|---|
+| `version` | derzeit `1`, eigene Zählung — unabhängig von der Fassung der Importdatei |
+| `paket` | vom Backend vergebene Paketnummer; reist **nicht** in die Importdatei zurück |
+| `stammordner` | der Akten-Stammordner, unter dem `ordner` liegen |
+| `anleitung` | `ImportAnleitung.paketText` — reist mit, damit das Paket auch Tage später verständlich bleibt |
+| `bekannteMandanten` | schon erfasste Mandanten (Name, Ordner, Kennzeichen), damit der Agent nicht dupliziert |
+| `ordner[].aktentyp` | Name aus `Aktentyp`: `verkehrsunfall`, `bussgeld`, `straf`, `familie`, `ohnePraefix` |
+| `ordner[].nameVorschlagVorname`/`nachname` | unverändert aus `nameVorschlagAusOrdner`, **nicht** nachgebessert |
+| `ordner[].bekannterMandant`/`begruendung` | fehlen ganz, wenn `MandantErkennung` nichts findet |
+
+Die Ordner stehen **nach Mandanten gebündelt und alphabetisch** in der Liste — Gruppen mit einem
+Verkehrsunfall-Kandidaten zuerst, denn eine Verkehrsunfall-App braucht aus Straf-, Bußgeld- und
+Familiensachen keine Stammdaten (`ArbeitspaketBauen.vergleicheGruppen`).
+
+**Die Fassung der Importdatei selbst bleibt unverändert 1.** Das Arbeitspaket ist die Eingabe für
+den Agenten, die Importdatei (oben) seine Antwort — beide Formate zählen ihre Fassung getrennt, und
+die Paketnummer reist nicht mit: Welches Paket eine abgegebene Datei beendet, rechnet die App selbst
+aus den Ordnernamen aus (siehe „Fortschritt" unten). Der Anwalt wird dazu nie gefragt.
+
+## Fortschritt: die App rechnet, es wird nichts gefragt
+
+Jedes verbuchte Paket (`POST /api/ImportPakete`) merkt sich seine Ordnernamen
+(`ImportPaketEntity.OrdnernamenJson`). Ein Ordner gilt als **erledigt**, sobald er einem Mandanten
+zugeordnet ist **oder** einen Vermerk „ohne Mandantenbezug" trägt — dieselbe Rechnung wie im
+Zuordnungsstapel, nur andersherum. Wird ein Paket dadurch **vollständig** erledigt, setzt der
+nächste erfolgreiche Import-Schreiblauf `EingelesenAm` und `Zeilen` von selbst
+(`MandantenImport.FuehreAusAsync` ruft danach `SchreibeFortschrittAsync`); ein nur teilweise
+abgearbeitetes Paket bleibt offen, und der Anwalt sieht am Zähler `erledigt`, wie weit es ist.
+
+`OrdnernamenJson` ist deshalb **kein toter Ballast**, obwohl kein DTO die Liste ausliefert
+(`ImportPaketDto` zeigt nur `AnzahlOrdner`/`Erledigt`): Genau darüber wird der Fortschritt
+berechnet, ohne den Anwalt zu fragen, welche Datei zu welchem Paket gehört — und ein Ordner, der
+später wieder frei wird, senkt die Zahl von selbst. Es gibt keinen gespeicherten Stand, der
+veralten kann.
+
 ## Was die App damit macht
 
 `POST /api/MandantenImport` prüft, `POST /api/MandantenImport?uebernehmen=true` schreibt. **Beide
@@ -97,6 +183,21 @@ Vier Regeln, die zusammen dafür sorgen, dass ein zweiter Lauf derselben Datei h
 
 Geschrieben wird in **einer** Transaktion: entweder die ganze Datei oder nichts.
 
+## Unbekannte Ordnernamen sperren die Übernahme
+
+Die Datei entsteht maschinell — ein Agent kann einen Ordnernamen erfinden, verschreiben oder aus
+einem Aktentext ableiten, der nie so auf der Platte stand. Deshalb werden Ordnernamen im
+Bearbeiten-Dialog **ausgewählt statt getippt** (Suchfeld mit Vorschlägen aus dem gescannten
+Bestand), und die Vorschau markiert jede Zeile, die einen Ordner nennt, den es im Stammordner nicht
+gibt — auch in `ohneMandantenbezug`. **Solche Zeilen blockieren die Übernahme**
+(`OrdnerPruefung.unbekannteZeilen`/`unbekannteOhneBezug`): `kannUebernehmen` ist falsch, solange
+eine unbekannte Ordnerangabe in der Datei steht. Ein Band über der Liste sagt, wie viele Zeilen
+betroffen sind, und filtert auf Klick darauf; der Anwalt berichtigt sie im Dialog oder lässt sie weg.
+
+**Ausnahme: Liegt kein Scan vor** (leere Ordnerliste, etwa weil der Stammordner auf diesem
+Arbeitsplatz nicht erreichbar ist), wird **nicht** blockiert — sonst wäre der Import auf einer
+Maschine ohne Stammordner unbenutzbar. Vergleich überall case-insensitiv über `OrdnernamenMenge`.
+
 ## Zeilen berichtigen, bevor etwas geschrieben wird
 
 Eine maschinell erzeugte Datei enthält Fehler. Ohne einen Weg, eine einzelne Zeile richtigzustellen,
@@ -130,6 +231,24 @@ Liste keine Prüfung, sondern nur der Beweis, dass man nicht geprüft hat. Ab hi
 Was danach noch offen ist, steht wieder im Zuordnungsstapel (Mandanten → *Ordner zuordnen*) und
 wird dort von Hand entschieden. Der Import soll den Stapel klein machen, nicht ersetzen.
 
-Die Gegenstücke im Code: Backend `Features/Mandanten/Domain/Services/MandantenImport.cs`, Frontend
+## Sichere Treffer: ein Stapelvorschlag ohne Agent
+
+„Sichere Treffer übernehmen" erledigt den Teil der Zuordnung, für den kein Agent nötig ist. Die
+Definition ist eng und wird nicht aufgeweicht (`SichereTreffer.finde`): der Namensvorschlag aus dem
+Ordnernamen liefert einen nicht leeren Vor- **und** Nachnamen, `MandantErkennung.finde` liefert
+**genau einen** Vorschlag, und dieser stimmt in Vor- **und** Nachname nach Normalisierung **exakt**
+überein — kein Tippfehler-Treffer, kein Präfix-Treffer, kein reiner Kennzeichen-Treffer. Alles
+andere bleibt dem Agenten.
+
+Der Vorschlag **baut keinen neuen Weg**: Er stellt aus den sicheren Treffern eine
+`MandantenImportDatei` im Arbeitsspeicher zusammen (`SichereTreffer.alsImportdatei`) und schickt sie
+durch **denselben** Import wie eine Datei vom Kanzleirechner. Damit gelten unverändert Vorschau vor
+dem Schreiben, „Ergänzen nie überschreiben", kein Ordner wird umgehängt, eine Transaktion, und der
+Paket-Fortschritt wird mitgezogen. Die erzeugten Zeilen tragen nur Name und `aktenOrdnernamen` —
+keine erfundenen Stammdaten, damit „Ergänzen nie überschreiben" nichts zu überschreiben versucht.
+
+Die Gegenstücke im Code: Backend `Features/Mandanten/Domain/Services/MandantenImport.cs` und
+`Features/Mandanten/Domain/Services/ImportPaketBuch.cs`, Frontend
+`Automation_App_Frontend/lib/features/mandanten/domain/services/arbeitspaket_bauen.dart` und
 `Automation_App_Frontend/lib/features/mandanten/FALLSTRICKE.md`. Der HTTP-Vertrag steht wie immer in
 `docs/openapi.json`.

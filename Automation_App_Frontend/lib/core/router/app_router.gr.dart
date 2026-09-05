@@ -26,6 +26,8 @@ import 'package:automation_app/features/mailbox/presentation/pages/mailbox_inbox
     as _i6;
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart'
     as _i20;
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart'
+    as _i21;
 import 'package:automation_app/features/mandanten/presentation/pages/mandant_details_page.dart'
     as _i7;
 import 'package:automation_app/features/mandanten/presentation/pages/mandanten_import_page.dart'
@@ -275,18 +277,67 @@ class MandantDetailsRouteArgs {
 
 /// generated route for
 /// [_i8.MandantenImportPage]
-class MandantenImportRoute extends _i17.PageRouteInfo<void> {
-  const MandantenImportRoute({List<_i17.PageRouteInfo>? children})
-    : super(MandantenImportRoute.name, initialChildren: children);
+class MandantenImportRoute
+    extends _i17.PageRouteInfo<MandantenImportRouteArgs> {
+  MandantenImportRoute({
+    _i18.Key? key,
+    _i21.MandantenImportDatei? vorgabe,
+    String herkunft = '',
+    List<_i17.PageRouteInfo>? children,
+  }) : super(
+         MandantenImportRoute.name,
+         args: MandantenImportRouteArgs(
+           key: key,
+           vorgabe: vorgabe,
+           herkunft: herkunft,
+         ),
+         initialChildren: children,
+       );
 
   static const String name = 'MandantenImportRoute';
 
   static _i17.PageInfo page = _i17.PageInfo(
     name,
     builder: (data) {
-      return _i17.WrappedRoute(child: const _i8.MandantenImportPage());
+      final args = data.argsAs<MandantenImportRouteArgs>(
+        orElse: () => const MandantenImportRouteArgs(),
+      );
+      return _i17.WrappedRoute(
+        child: _i8.MandantenImportPage(
+          key: args.key,
+          vorgabe: args.vorgabe,
+          herkunft: args.herkunft,
+        ),
+      );
     },
   );
+}
+
+class MandantenImportRouteArgs {
+  const MandantenImportRouteArgs({this.key, this.vorgabe, this.herkunft = ''});
+
+  final _i18.Key? key;
+
+  final _i21.MandantenImportDatei? vorgabe;
+
+  final String herkunft;
+
+  @override
+  String toString() {
+    return 'MandantenImportRouteArgs{key: $key, vorgabe: $vorgabe, herkunft: $herkunft}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! MandantenImportRouteArgs) return false;
+    return key == other.key &&
+        vorgabe == other.vorgabe &&
+        herkunft == other.herkunft;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ vorgabe.hashCode ^ herkunft.hashCode;
 }
 
 /// generated route for

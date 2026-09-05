@@ -56,6 +56,12 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
   /// ist.
   final String? fehler;
 
+  /// Die Historie der herausgegebenen Arbeitspakete, neueste Nummer zuerst —
+  /// für die Stand-Karte über der Filterleiste. Ihr Fortschritt wird beim
+  /// Lesen berechnet und kann nicht veralten; ein Fehlschlag beim Laden lässt
+  /// den bisherigen Stand stehen (siehe [MandantenStandAbruf.lade]).
+  final List<ImportPaket> importPakete;
+
   late final OrdnernamenMenge _zugeordnet = OrdnernamenMenge(
     zugeordneteOrdnernamen,
   );
@@ -77,6 +83,7 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
     this.neuLadend = false,
     this.mehrLadend = false,
     this.fehler,
+    this.importPakete = const [],
   });
 
   /// [fehlerVerwerfen] statt eines `null` in [fehler]: „nicht angegeben" und
@@ -95,6 +102,7 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
     bool? mehrLadend,
     String? fehler,
     bool fehlerVerwerfen = false,
+    List<ImportPaket>? importPakete,
   }) {
     return MandantenOverviewLoaded(
       mandanten: mandanten ?? this.mandanten,
@@ -109,6 +117,7 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
       neuLadend: neuLadend ?? this.neuLadend,
       mehrLadend: mehrLadend ?? this.mehrLadend,
       fehler: fehlerVerwerfen ? null : (fehler ?? this.fehler),
+      importPakete: importPakete ?? this.importPakete,
     );
   }
 
@@ -195,14 +204,32 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
         ohneMandantenbezug: ohneMandantenbezug,
       );
 
-  /// Noch zu entscheidende Ordner: weder zugeordnet noch vermerkt. Das ist die
-  /// Zahl, die auf null gehen kann und darum auf der Übersicht steht.
-  int get offeneOrdnerAnzahl {
+  /// Noch zu entscheidende Ordner: weder zugeordnet noch vermerkt — der
+  /// Arbeitsvorrat für ein Arbeitspaket (§5.1/§6.1, Issue #108). Unabhängig
+  /// vom gerade gewählten Topf: Bußgeld-, Straf- und Familiensachen zählen
+  /// mit, ein Arbeitspaket lässt nichts unter den Tisch fallen.
+  List<Akte> get offeneOrdnerFuerPaket {
     final vermerkt = ohneMandantenbezug;
     return nichtZugeordneteAkten
         .where((a) => !vermerkt.enthaelt(a.ordnername))
-        .length;
+        .toList();
   }
+
+  /// Noch zu entscheidende Ordner: weder zugeordnet noch vermerkt. Das ist die
+  /// Zahl, die auf null gehen kann und darum auf der Übersicht steht.
+  int get offeneOrdnerAnzahl => offeneOrdnerFuerPaket.length;
+
+  /// Alle im Stammordner gescannten Ordner — der „gesamt"-Zähler der
+  /// Stand-Karte.
+  int get gesamtOrdnerAnzahl => akten.length;
+
+  /// Gescannte Ordner, die bereits einem Mandanten gehören.
+  int get zugeordneteOrdnerAnzahl =>
+      akten.length - nichtZugeordneteAkten.length;
+
+  /// Gescannte Ordner mit dem Vermerk „ohne Mandantenbezug".
+  int get ohneBezugOrdnerAnzahl =>
+      ordnerZaehlerUngefiltert[OrdnerAnsicht.ohneBezug] ?? 0;
 
   /// Die zu einem Mandanten gehörenden Akten (über die verknüpften Ordnernamen).
   List<Akte> aktenFuer(Mandant mandant) {
@@ -228,6 +255,7 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
     neuLadend,
     mehrLadend,
     fehler,
+    importPakete,
   ];
 }
 

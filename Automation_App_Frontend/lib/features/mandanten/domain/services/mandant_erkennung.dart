@@ -27,6 +27,18 @@ class MandantErkennung {
   /// Maximal so viele Vorschläge, damit der Hinweis kompakt bleibt.
   static const int maxVorschlaege = 3;
 
+  /// Ab dieser Länge des eingegebenen Nachnamens zählt ein Tippbeginn
+  /// (Präfix in eine der beiden Richtungen) als Treffer.
+  static const int minPraefixLaenge = 3;
+
+  /// Ab dieser Länge — auf **beiden** Seiten — zählt ein einzelner Tippfehler
+  /// als Treffer. Kürzere Namen unterscheiden sich zu oft nur um ein Zeichen,
+  /// ohne dasselbe zu meinen.
+  static const int minTippfehlerLaenge = 4;
+
+  /// Der kürzeste Nachname, zu dem überhaupt gesucht wird.
+  static const int minNachnameLaenge = 2;
+
   /// Liefert die passenden Registereinträge zu den aktuellen Eingaben,
   /// Kennzeichen-Treffer zuerst. Leer, wenn nichts (sicher genug) passt.
   static List<MandantVorschlag> finde({
@@ -38,11 +50,11 @@ class MandantErkennung {
     final ergebnis = <MandantVorschlag>[];
     final gesehen = <int>{};
 
-    final kz = _normalisiereKennzeichen(kennzeichen);
+    final kz = normalisiereKennzeichen(kennzeichen);
     if (kz.length >= 4) {
       for (final mandant in mandanten) {
         final passt = mandant.kennzeichen.any(
-          (k) => _normalisiereKennzeichen(k) == kz,
+          (k) => normalisiereKennzeichen(k) == kz,
         );
         if (passt && gesehen.add(mandant.id)) {
           ergebnis.add(
@@ -57,15 +69,15 @@ class MandantErkennung {
       }
     }
 
-    final nach = _normalisiereName(nachname);
-    if (nach.length >= 2) {
-      final vor = _normalisiereName(vorname);
+    final nach = normalisiereName(nachname);
+    if (nach.length >= minNachnameLaenge) {
+      final vor = normalisiereName(vorname);
       for (final mandant in mandanten) {
         if (gesehen.contains(mandant.id)) continue;
-        if (!_nachnamePasst(nach, _normalisiereName(mandant.nachname))) {
+        if (!_nachnamePasst(nach, normalisiereName(mandant.nachname))) {
           continue;
         }
-        if (!_vornamePasst(vor, _normalisiereName(mandant.vorname))) continue;
+        if (!_vornamePasst(vor, normalisiereName(mandant.vorname))) continue;
         if (gesehen.add(mandant.id)) {
           ergebnis.add(
             MandantVorschlag(
@@ -88,11 +100,12 @@ class MandantErkennung {
   static bool _nachnamePasst(String eingabe, String gespeichert) {
     if (gespeichert.isEmpty) return false;
     if (eingabe == gespeichert) return true;
-    if (eingabe.length >= 3 &&
+    if (eingabe.length >= minPraefixLaenge &&
         (gespeichert.startsWith(eingabe) || eingabe.startsWith(gespeichert))) {
       return true;
     }
-    if (eingabe.length >= 4 && gespeichert.length >= 4) {
+    if (eingabe.length >= minTippfehlerLaenge &&
+        gespeichert.length >= minTippfehlerLaenge) {
       return _levenshtein(eingabe, gespeichert) <= 1;
     }
     return false;
@@ -107,10 +120,14 @@ class MandantErkennung {
 
   /// Kennzeichen auf die reinen Zeichen reduzieren (Bindestrich/Leerzeichen
   /// egal): „HG-E 1427" und „hge1427" gelten als gleich.
-  static String _normalisiereKennzeichen(String kennzeichen) =>
+  static String normalisiereKennzeichen(String kennzeichen) =>
       kennzeichen.toUpperCase().replaceAll(RegExp(r'[^A-ZÄÖÜ0-9]'), '');
 
-  static String _normalisiereName(String name) => name
+  /// Namen vergleichbar machen: getrimmt, kleingeschrieben, Umlaute
+  /// aufgelöst. Öffentlich, weil `ImportAehnlichkeit` seinen Vorfilter über
+  /// **dieselbe** Schreibweise legt — eine zweite Normalisierung daneben
+  /// schlösse Namen aus, die [finde] gefunden hätte.
+  static String normalisiereName(String name) => name
       .trim()
       .toLowerCase()
       .replaceAll('ä', 'ae')

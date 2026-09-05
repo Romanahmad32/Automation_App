@@ -99,9 +99,11 @@ eine dazu: Wert in `OrdnerStatusArten` **und** in `OrdnerStatusArt` (Dart) ergä
 Frontend unbekannter Status fällt sonst auf `ohneMandantenbezug` zurück, damit eine ältere
 Oberfläche den Vermerk nicht verliert und der Ordner still in den Stapel zurückfällt.
 
-Offen bleibt aus Paket 3 von Issue #19: Namensvorschlag je Zeile statt Dialog und Mehrfachauswahl.
-`nameVorschlagAusOrdner` und `MandantErkennung` liegen dafür bereit und sind auf dieser Seite nur
-noch nicht zusammengeschaltet.
+Der Punkt „Namensvorschlag je Zeile statt Dialog und Mehrfachauswahl" aus Paket 3 von Issue #19 ist
+mit #108 erledigt: `nameVorschlagAusOrdner` und `MandantErkennung` sind zusammengeschaltet — im
+Arbeitspaket trägt jede Zeile ihren Namensvorschlag und den `MandantErkennung`-Treffer
+(`bekannterMandant`/`begruendung`), und `SichereTreffer.finde` nutzt dieselbe Kombination, um
+eindeutige Fälle ganz ohne Agenten zu erledigen.
 
 ## Import: die Zuordnung kommt von außen
 
@@ -152,6 +154,28 @@ wo die Akten liegen, und kommt als Datei herein. **Das Format steht in
 - Der Auftrag für den Erzeuger der Datei liegt als Text in `presentation/utils/import_anleitung.dart`
   und ist in der App kopierbar. Er beschreibt dasselbe Format wie die Doku — ändert sich das Format,
   ändern sich **beide**.
+
+## Arbeitspakete und sichere Treffer (#108)
+
+Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die vier Fallen aus dem Bau.
+
+- **`Clipboard.setData` hängt im Widget-Test.** Im `flutter_tester` gibt es keinen
+  Zwischenablage-Eigentümer; der Aufruf auf `SystemChannels.platform` wird auf manchen Läufen nie
+  beantwortet, und `pumpAndSettle()` läuft dann in seinen eigenen Zehn-Minuten-Zeitrahmen. Jede
+  Testdatei, die den Paket-Speicherweg widget-testet, braucht deshalb eine
+  Mock-Method-Call-Handler-Attrappe für `SystemChannels.platform` — das hat in diesem Bau eine
+  Stunde gekostet.
+- **Die Reihenfolge beim Paket-Holen ist Absicht:** bauen → Speichern-Dialog → schreiben → **erst
+  dann** verbuchen (`POST /api/ImportPakete`). Bricht der Anwalt den Speichern-Dialog ab, darf kein
+  Paket in der Historie stehen — sonst wäre eine Nummer vergeben für ein Paket, das niemand hat.
+- **`SichereTreffer.finde` bekommt `nameVorschlagAusOrdner` von außen gereicht**, weil die Funktion
+  in `presentation/utils/` liegt und `domain` nicht auf `presentation` zeigen darf — dieselbe
+  Schnittregel, der auch `ArbeitspaketBauen` folgt. Nicht in die Domain kopieren: Es gibt genau eine
+  Präfixtabelle, und eine zweite Auslegung liefe beim nächsten Sonderfall auseinander.
+- **Der Namensvorschlag wird nicht nachgebessert.** `nameVorschlagAusOrdner` teilt am ersten
+  Leerzeichen; bei Ordnern der Form „Nachname, Vorname" sieht das Ergebnis schief aus. Statt hier
+  eine zweite Heuristik nachzuschieben, liefert das Arbeitspaket dem Agenten zusätzlich den rohen
+  Ordnernamen (`ArbeitspaketOrdner.ordnername`), damit er selbst entscheiden kann.
 
 ## Ablage
 

@@ -3,6 +3,7 @@ using AutomationService.Features.Mandanten.Domain.Persistence;
 using AutomationService.Features.Mandanten.Domain.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutomationService.Tests.Unit;
 
@@ -20,6 +21,16 @@ public sealed class MandantenImportAufbau : IDisposable
 
     public OrdnerStatusRegister OrdnerStatus { get; }
 
+    public MandantenRepository Register { get; }
+
+    /// <summary>
+    /// Die Paket-Buchführung an derselben Datenbank. Sie hängt am Import, weil
+    /// ein Schreiblauf offene Pakete schließt — geprüft wird das über die
+    /// echten Tabellen und nicht über eine Attrappe, denn die Frage lautet
+    /// gerade, ob Zuordnung, Vermerk und Paket denselben Ordner meinen.
+    /// </summary>
+    public ImportPaketBuch PaketBuch { get; }
+
     public MandantenImport Import { get; }
 
     public MandantenImportAufbau()
@@ -32,7 +43,10 @@ public sealed class MandantenImportAufbau : IDisposable
         Db = new AutomationDbContext(optionen);
         Db.Database.EnsureCreated();
         OrdnerStatus = new OrdnerStatusRegister(Db);
-        Import = new MandantenImport(Db, OrdnerStatus);
+        Register = new MandantenRepository(Db);
+        PaketBuch = new ImportPaketBuch(Db, Register, OrdnerStatus);
+        Import = new MandantenImport(
+            Db, OrdnerStatus, PaketBuch, NullLogger<MandantenImport>.Instance);
     }
 
     /// <summary>Ein Mandant, der vor dem Import schon im Register steht.</summary>
