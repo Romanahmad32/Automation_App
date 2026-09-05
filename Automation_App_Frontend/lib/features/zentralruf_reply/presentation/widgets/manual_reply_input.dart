@@ -102,39 +102,46 @@ class _ManualReplyInputState extends State<ManualReplyInput> {
   Widget build(BuildContext context) {
     final state = context.watch<ZentralrufReplyBloc>().state;
 
+    // SingleChildScrollView statt eines starr hohen Panels: Bei "Am größten"
+    // (Issue #57) wachsen Titel, Erklärtext und die Knopfzeile in der Höhe,
+    // sobald das Panel schmal wird (mehr Zeilenumbrüche) — ohne eigenes
+    // Scrollen lief die Spalte dann unten über. Das Eingabefeld bekommt dafür
+    // eine Mindesthöhe (`minLines`) statt `Expanded`: Ein `Expanded` bräuchte
+    // eine von außen begrenzte Höhe, die eine scrollende Spalte nicht mehr
+    // liefert.
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Antwortmail des Zentralrufs',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Fügen Sie den vollständigen Text der Antwortmail ein oder laden Sie '
-            'sie als Datei (.txt oder .eml). Die App extrahiert daraus die Daten '
-            'der gegnerischen Versicherung.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 16),
-          if (_emlFileName case final fileName?) ...[
-            InputChip(
-              avatar: const Icon(Icons.mail_outline),
-              label: Text(fileName),
-              onDeleted: () => setState(() {
-                _emlBase64 = null;
-                _emlFileName = null;
-              }),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Antwortmail des Zentralrufs',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-          ],
-          Expanded(
-            child: TextField(
+            Text(
+              'Fügen Sie den vollständigen Text der Antwortmail ein oder laden '
+              'Sie sie als Datei (.txt oder .eml). Die App extrahiert daraus '
+              'die Daten der gegnerischen Versicherung.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            if (_emlFileName case final fileName?) ...[
+              InputChip(
+                avatar: const Icon(Icons.mail_outline),
+                label: Text(fileName),
+                onDeleted: () => setState(() {
+                  _emlBase64 = null;
+                  _emlFileName = null;
+                }),
+              ),
+              const SizedBox(height: 8),
+            ],
+            TextField(
               controller: _emailTextController,
+              minLines: 8,
               maxLines: null,
-              expands: true,
               textAlignVertical: TextAlignVertical.top,
               onChanged: (_) {
                 // Manuelle Eingabe ersetzt eine geladene .eml-Datei.
@@ -152,48 +159,68 @@ class _ManualReplyInputState extends State<ManualReplyInput> {
                     : 'Die geladene .eml-Datei wird ausgewertet.',
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          // Wrap statt Row: Bei der Stufe "Am größten" (Issue #57) sind die
-          // drei Knöpfe auf einem schmalen Fenster breiter als das Fenster
-          // selbst — eine Row überläuft dann rechts, weil sie ihre Kinder nie
-          // umbrechen kann. Der `Spacer` half hier ohnehin nicht: er verteilt
-          // nur überschüssigen Platz, lässt aber keinen Knopf schrumpfen. Der
-          // äußere Wrap trennt die beiden Lade-Knöpfe (links) vom
-          // "Daten extrahieren"-Knopf (rechts) wie zuvor der Spacer; reicht
-          // der Platz nicht, bricht die zweite Gruppe in eine neue Zeile um.
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  TextButton.icon(
-                    onPressed: _loadFromFile,
-                    icon: const Icon(Icons.file_open),
-                    label: const Text('Aus Datei laden'),
-                  ),
-                  TextButton.icon(
-                    onPressed: _pasteFromClipboard,
-                    icon: const Icon(Icons.paste),
-                    label: const Text('Aus Zwischenablage'),
-                  ),
-                ],
-              ),
-              CustomRectangularButton(
-                label: state is ZentralrufReplyLoading
-                    ? const Text('Wird ausgewertet …')
-                    : const Text('Daten extrahieren'),
-                onPressed: state is ZentralrufReplyLoading ? null : _extract,
-              ),
-            ],
-          ),
-        ],
+            const SizedBox(height: 12),
+            // Wrap statt Row: Bei der Stufe "Am größten" (Issue #57) sind die
+            // drei Knöpfe auf einem schmalen Fenster breiter als das Fenster
+            // selbst — eine Row überläuft dann rechts, weil sie ihre Kinder
+            // nie umbrechen kann. Der `Spacer` half hier ohnehin nicht: er
+            // verteilt nur überschüssigen Platz, lässt aber keinen Knopf
+            // schrumpfen. Der äußere Wrap trennt die beiden Lade-Knöpfe
+            // (links) vom "Daten extrahieren"-Knopf (rechts) wie zuvor der
+            // Spacer; reicht der Platz nicht, bricht die zweite Gruppe in
+            // eine neue Zeile um. `softWrap: false` + Ellipsis an den
+            // Beschriftungen verhindert zusätzlich, dass eine einzelne
+            // Beschriftung selbst in mehrere Zeilen zerfällt ("Aus / Datei /
+            // laden") und den Knopf unnötig hoch macht.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _loadFromFile,
+                      icon: const Icon(Icons.file_open),
+                      label: const Text(
+                        'Aus Datei laden',
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _pasteFromClipboard,
+                      icon: const Icon(Icons.paste),
+                      label: const Text(
+                        'Aus Zwischenablage',
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                CustomRectangularButton(
+                  label: state is ZentralrufReplyLoading
+                      ? const Text(
+                          'Wird ausgewertet …',
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      : const Text(
+                          'Daten extrahieren',
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                  onPressed: state is ZentralrufReplyLoading ? null : _extract,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
