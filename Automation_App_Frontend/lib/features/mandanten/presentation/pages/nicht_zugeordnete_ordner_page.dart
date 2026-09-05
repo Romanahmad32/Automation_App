@@ -6,6 +6,8 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_o
 import 'package:automation_app/features/mandanten/presentation/views/nicht_zugeordnete_ordner_view.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_oeffnen_button.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_zustands_bereich.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/paket_holen_button.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/paket_sichere_treffer_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -37,7 +39,12 @@ class NichtZugeordneteOrdnerPage extends StatelessWidget
         titel: 'Ordner zuordnen',
         icon: Icons.rule_folder_outlined,
         untertitel: 'Gefundene Akten-Ordner einem Mandanten zuordnen',
-        aktionen: [ImportOeffnenButton(), PageRefreshButton()],
+        aktionen: [
+          PaketHolenButton(),
+          PaketSichereTrefferButton(),
+          ImportOeffnenButton(),
+          PageRefreshButton(),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

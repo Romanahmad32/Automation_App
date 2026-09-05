@@ -1,12 +1,30 @@
+import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
+import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'mandanten_testaufbau.dart';
 
 void main() {
+  // `schreibeUndVerbucheArbeitspaket` legt die Anleitung per
+  // `Clipboard.setData` ab — das braucht eine initialisierte Flutter-Bindung
+  // auch in reinen `test()`-Fällen ohne `testWidgets`, UND eine Attrappe für
+  // den Kanal: ohne sie geht der Aufruf auf den echten
+  // `SystemChannels.platform`-Kanal, der im `flutter_tester` (kein eigenes
+  // Fenster, kein Zwischenablage-Eigentümer) auf manchen Läufen nie
+  // antwortet — das hat einen Testlauf zehn Minuten lang hängen lassen
+  // (Befund des Masters).
+  TestWidgetsFlutterBinding.ensureInitialized();
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'Clipboard.setData') return null;
+        return null;
+      });
+
   late MandantenTestaufbau aufbau;
 
   MandantenTestaufbau mit({List<String> ordnerAmMandanten = const []}) =>
@@ -286,5 +304,120 @@ void main() {
       (s) => s is MandantenOverviewLoaded && !s.neuLadend,
     );
     expect((neu as MandantenOverviewLoaded).zuordnungFilter.query, 'Mark');
+  });
+
+  // Issue #108: die Paket-Historie für die Stand-Karte kommt beim Laden mit.
+  group('Arbeitspaket (Issue #108)', () {
+    test('die Paket-Historie kommt beim Laden mit', () async {
+      await aufbau.close();
+      aufbau = MandantenTestaufbau(
+        importPakete: [
+          ImportPaket(nummer: 1, geholtAm: angelegt, anzahlOrdner: 5),
+        ],
+      );
+
+      final geladen = await aufbau.laden();
+
+      expect(geladen.importPakete, hasLength(1));
+      expect(geladen.importPakete.single.nummer, 1);
+    });
+
+    test(
+      'baueArbeitspaket baut aus den offenen Ordnern mit der nächsten Nummer',
+      () async {
+        await aufbau.close();
+        aufbau = MandantenTestaufbau(
+          akten: [akte('VUnfallursache Mark'), akte('VUnfallursache Anna')],
+          importPakete: [
+            ImportPaket(nummer: 2, geholtAm: angelegt, anzahlOrdner: 10),
+          ],
+        );
+        await aufbau.laden();
+
+        final paket = await aufbau.bloc.baueArbeitspaket(200);
+
+        expect(paket.paket, 3);
+        expect(paket.stammordner, 'C:/Akten');
+        expect(paket.ordnernamen, [
+          'VUnfallursache Anna',
+          'VUnfallursache Mark',
+        ]);
+      },
+    );
+
+    // Befund aus dem Code Review zu Issue #108: `baue` sucht seit der
+    // Umstellung auf `MandantenNamensindex` nicht mehr gegen den vollen
+    // Bestand, sondern über den Vorfilter. Der Index darf nichts ausschließen,
+    // was `MandantErkennung.finde` gefunden hätte — dieser Test belegt das an
+    // einem Ordner, der vorher einen `bekannterMandant` bekam.
+    test(
+      'baueArbeitspaket findet weiterhin den bekannten Mandanten je Ordner',
+      () async {
+        await aufbau.close();
+        aufbau = MandantenTestaufbau(
+          register: [mandant(1, 'Mustermann', vorname: 'Max')],
+          akten: [
+            akte('VUnfallursache Max Mustermann'),
+            akte('VUnfallursache Anna Unbekannt'),
+          ],
+        );
+        await aufbau.laden();
+
+        final paket = await aufbau.bloc.baueArbeitspaket(200);
+
+        final treffer = paket.ordner.firstWhere(
+          (o) => o.ordnername == 'VUnfallursache Max Mustermann',
+        );
+        expect(treffer.bekannterMandant, 'Max Mustermann');
+        expect(treffer.begruendung, isNotNull);
+
+        final ohneTreffer = paket.ordner.firstWhere(
+          (o) => o.ordnername == 'VUnfallursache Anna Unbekannt',
+        );
+        expect(ohneTreffer.bekannterMandant, isNull);
+      },
+    );
+
+    test('schreibeUndVerbucheArbeitspaket schreibt, verbucht und aktualisiert '
+        'die Historie', () async {
+      await aufbau.close();
+      aufbau = MandantenTestaufbau(akten: [akte('VUnfallursache Mark')]);
+      await aufbau.laden();
+
+      final paket = await aufbau.bloc.baueArbeitspaket(200);
+      final ergebnis = await aufbau.bloc.schreibeUndVerbucheArbeitspaket(
+        paket: paket,
+        pfad: 'C:/Ablage/arbeitspaket-1.json',
+      );
+
+      expect(ergebnis, isA<Right>());
+      expect(aufbau.arbeitspaketDatei.schreibAufrufe, 1);
+      expect(
+        aufbau.arbeitspaketDatei.letzterPfad,
+        'C:/Ablage/arbeitspaket-1.json',
+      );
+      expect(aufbau.paketeSpeicher.notiereAufrufe, 1);
+
+      final aktuell = aufbau.bloc.state as MandantenOverviewLoaded;
+      expect(aktuell.importPakete, hasLength(1));
+      expect(aktuell.importPakete.single.nummer, 1);
+    });
+
+    test('schreibeUndVerbucheArbeitspaket verbucht nicht, wenn das Schreiben '
+        'scheitert', () async {
+      await aufbau.close();
+      aufbau = MandantenTestaufbau(akten: [akte('VUnfallursache Mark')]);
+      await aufbau.laden();
+      aufbau.arbeitspaketDatei.fehlerBeimSchreiben = 'Datenträger voll';
+
+      final paket = await aufbau.bloc.baueArbeitspaket(200);
+      final ergebnis = await aufbau.bloc.schreibeUndVerbucheArbeitspaket(
+        paket: paket,
+        pfad: 'C:/Ablage/arbeitspaket-1.json',
+      );
+
+      expect(ergebnis, isA<Left>());
+      expect(aufbau.paketeSpeicher.notiereAufrufe, 0);
+    });
   });
 }

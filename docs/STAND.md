@@ -157,6 +157,15 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Vorschau und Übernahme sind derselbe Aufruf; ergänzt wird nur, überschrieben nie, und ein zweiter
   Lauf derselben Datei ändert nichts. Der Auftrag für den Erzeuger der Datei ist in der App
   kopierbar.
+- Bei diesem Umfang lässt sich die Zuordnung zusätzlich in **Arbeitspakete** zerlegen (#108): Die App
+  gibt die nächsten N offenen **Mandanten** samt aller ihrer Ordner als JSON-Datei heraus
+  (`ArbeitspaketBauen`, `POST /api/ImportPakete`), führt darüber Buch und rechnet den Fortschritt
+  selbst aus den gespeicherten Ordnernamen aus — der Anwalt wird nie gefragt, zu welchem Paket eine
+  Importdatei gehört. Ein Ordnername, den der Stammordner nicht kennt, sperrt die Übernahme der
+  betroffenen Zeile (Ausnahme: kein Scan verfügbar). **Sichere Treffer übernehmen** schlägt zusätzlich
+  Ordner vor, deren Namensvorschlag exakt und eindeutig auf einen erfassten Mandanten passt, und
+  schickt sie ohne neuen Weg durch denselben Import (`SichereTreffer`,
+  [`docs/MANDANTEN_IMPORT.md`](MANDANTEN_IMPORT.md)).
 - Der Backend-Slice `Versicherer` lernt Kontaktdaten aus jeder Antwort und füllt damit
   Lücken in `missingFields`, mit Herkunftshinweis.
 - Zuordnung Antwort → Vorgang fällt notfalls auf Gegner-Kennzeichen + Unfalldatum zurück

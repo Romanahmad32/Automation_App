@@ -14,8 +14,11 @@ namespace AutomationService.Features.Mandanten.Domain.Services;
 /// zu gehen wäre naheliegend, wäre bei viertausend Zeilen aber viertausend
 /// Speichervorgänge und viertausend Dublettenprüfungen über den ganzen Bestand.
 /// </summary>
-public sealed class MandantenImport(AutomationDbContext db, IOrdnerStatusRegister ordnerStatus)
-    : IMandantenImport
+public sealed class MandantenImport(
+    AutomationDbContext db,
+    IOrdnerStatusRegister ordnerStatus,
+    IImportPaketBuch paketBuch,
+    ILogger<MandantenImport> logger) : IMandantenImport
 {
     public async Task<MandantenImportBefund> FuehreAusAsync(
         MandantenImportAuftrag auftrag,
@@ -43,7 +46,36 @@ public sealed class MandantenImport(AutomationDbContext db, IOrdnerStatusRegiste
         if (auftrag.NurPruefen) return lauf.Ergebnis(angewendet: false);
 
         await SchreibeAsync(lauf, cancellationToken);
+        await VerbucheFortschrittAsync(auftrag.Mandanten.Count, cancellationToken);
         return lauf.Ergebnis(angewendet: true);
+    }
+
+    /// <summary>
+    /// Trägt nach, welche Arbeitspakete dieser Import geschlossen hat.
+    ///
+    /// Bewusst <b>außerhalb</b> der Transaktion und hinter einem Fangnetz: Der
+    /// Import ist die Hauptsache, die Buchführung die Nebensache. Wären beide
+    /// verbunden, machte ein Fehler in der Nebensache die viertausend soeben
+    /// geschriebenen Mandanten wieder zunichte — oder meldete dem Anwalt einen
+    /// Fehlschlag, den es nicht gab, und ließe ihn dieselbe Datei ein zweites
+    /// Mal einlesen. Ein nicht geschlossenes Paket kostet dagegen nichts: Der
+    /// erledigt-Zähler wird bei jedem Lesen neu gerechnet und zeigt den
+    /// Fortschritt auch dann richtig an.
+    /// </summary>
+    async Task VerbucheFortschrittAsync(int zeilen, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await paketBuch.SchreibeFortschrittAsync(zeilen, cancellationToken);
+        }
+        catch (Exception ausnahme) when (ausnahme is not OperationCanceledException)
+        {
+            logger.LogWarning(
+                ausnahme,
+                "Der Import über {Zeilen} Zeilen ist geschrieben, die Arbeitspakete " +
+                "ließen sich aber nicht fortschreiben.",
+                zeilen);
+        }
     }
 
     async Task SchreibeAsync(MandantenImportLauf lauf, CancellationToken cancellationToken)

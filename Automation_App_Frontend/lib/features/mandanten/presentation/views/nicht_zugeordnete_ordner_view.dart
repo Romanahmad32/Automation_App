@@ -4,6 +4,7 @@ import 'package:automation_app/features/mandanten/presentation/widgets/mandanten
 import 'package:automation_app/features/mandanten/presentation/widgets/nicht_zugeordneter_ordner_kachel.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/ordner_filter_leiste.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/ordner_massenaktion.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/stand_karte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,6 +28,13 @@ class NichtZugeordneteOrdnerView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 12,
       children: [
+        StandKarte(
+          gesamt: state.gesamtOrdnerAnzahl,
+          zugeordnet: state.zugeordneteOrdnerAnzahl,
+          ohneBezug: state.ohneBezugOrdnerAnzahl,
+          offen: state.offeneOrdnerAnzahl,
+          pakete: state.importPakete,
+        ),
         OrdnerFilterLeiste(
           filter: filter,
           zaehler: state.ordnerZaehler,
