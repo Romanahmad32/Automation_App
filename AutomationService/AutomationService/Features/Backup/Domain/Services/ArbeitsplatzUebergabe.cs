@@ -36,11 +36,17 @@ public sealed class ArbeitsplatzUebergabe(
         var letzterLauf = merker.Lies();
         if (ordner.Length == 0)
         {
-            return new UebergabeStand(null, null, letzterLauf, string.Empty);
+            return new UebergabeStand(
+                null, null, letzterLauf, string.Empty, SicherungsBestand.Leer);
         }
 
         var eigener = ArbeitsplatzAkte.LiesEigene(ordner);
-        return new UebergabeStand(SucheAngebot(ordner, eigener), eigener, letzterLauf, ordner);
+        return new UebergabeStand(
+            SucheAngebot(ordner, eigener),
+            eigener,
+            letzterLauf,
+            ordner,
+            SicherungsBestand.Lies(ordner, ArbeitsplatzAkte.DieserRechner));
     }
 
     public async Task<UebernahmeErgebnis> UebernehmenAsync(

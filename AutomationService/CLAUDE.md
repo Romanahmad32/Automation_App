@@ -156,7 +156,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   (per `VACUUM INTO`, WAL-sicher) und `Vorlagen/*.docx`; ältere blanke `.db`-Sicherungen bleiben
   einspielbar. Der Import validiert, sichert den alten Stand daneben und hebt auf den Schemastand.
   Dazu die **Arbeitsplatz-Übergabe** (§7.2, `AutomatischeSicherung`/`ArbeitsplatzAkte`/
-  `ArbeitsplatzUebergabe`, `api/Backup/uebergabe`); die Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
+  `ArbeitsplatzUebergabe`, `api/Backup/uebergabe`), seit #112 auch `SicherungsZeitgeber` (30 Min,
+  nur bei Änderung) und `Aufbewahrungsregel` (Alter statt Anzahl); Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 
 ## Core/ — querschnittlich, kein Slice
 
