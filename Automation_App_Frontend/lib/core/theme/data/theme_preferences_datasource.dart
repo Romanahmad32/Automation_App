@@ -5,9 +5,10 @@ import 'package:automation_app/core/general_classes/exceptions/custom_exceptions
 import 'package:automation_app/core/theme/domain/theme_preferences.dart';
 import 'package:path_provider_windows/path_provider_windows.dart';
 
-/// Lädt und speichert die Darstellungs-Einstellungen (Theme-Familie + Modus)
-/// lokal als JSON im Anwendungsordner — analog zu den Kanzlei-Einstellungen,
-/// inklusive atomarem Schreiben mit `.bak`-Rücksicherung.
+/// Lädt und speichert die Darstellungs-Einstellungen (Theme-Familie + Modus
+/// + Schriftstufe) lokal als JSON im Anwendungsordner — analog zu den
+/// Kanzlei-Einstellungen, inklusive atomarem Schreiben mit
+/// `.bak`-Rücksicherung.
 abstract class ThemePreferencesDatasource {
   Future<ThemePreferences> load();
 

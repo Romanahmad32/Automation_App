@@ -38,6 +38,7 @@ für `dotnet run`, eine veröffentlichte Exe würde sonst stillschweigend auf Po
 |---|---|---|---|
 | `%LOCALAPPDATA%\Programs\Automation App` | Programm, `backend\`, mitgelieferte Vorlagen | wird ersetzt | wird entfernt |
 | `%APPDATA%\AutomationService` | `automation.db`, `Vorlagen\`, `mailbox_config.json`, MSAL-Token-Cache, `Sicherungen\` | **unberührt** | **unberührt** |
+| gewählter **App-Daten-Ordner** (Einstellungen; kein Standardpfad, meist ein OneDrive-Ordner) | `Vorlagen\`, `Register\`, `Sicherungen\` — je nur, wenn nicht einzeln abweichend eingestellt | **unberührt** | **unberührt** |
 
 Diese Trennung ist der Kern: alles, was dem Anwalt gehört, liegt außerhalb des
 Installationsverzeichnisses. Deshalb installiert das Setup **je Benutzer**
@@ -84,10 +85,15 @@ Seine echten Vorlagen kommen deshalb auf anderem Weg auf den Rechner: einmal in
 
 Eine Sicherung ist ein ZIP aus `automation.db` **und** `Vorlagen/*.docx`
 (`SicherungsArchiv`). Die Vorlagen müssen mit, weil die Datenbank zu jeder
-Formularvorlage *absolute* Pfade auf `.docx`-Dateien speichert — eine
-Wiederherstellung auf einem neuen Rechner ergäbe sonst Vorlagenverweise ins
-Leere. Ältere Sicherungen (blanke `.db`) bleiben einspielbar; das Format wird am
-Dateiinhalt erkannt, nicht an der Endung, weil Anwender Dateien umbenennen.
+Formularvorlage einen Pfad auf eine `.docx`-Datei speichert — seit #33
+*relativ zum eingestellten Vorlagenordner* (`VorlagenPfad`), nicht mehr
+absolut; seit #103 kann zusätzlich der Vorlagenordner selbst *relativ zum
+OneDrive-Wurzelordner* mit festgehaltenem Anker gespeichert sein
+(`AppOrdnerPfad`). Ohne die Dateien im Archiv ergäbe eine Wiederherstellung auf
+einem neuen Rechner trotzdem Vorlagenverweise ins Leere — die Vorlagen selbst
+liegen nirgendwo sonst. Ältere Sicherungen (blanke `.db`) bleiben einspielbar;
+das Format wird am Dateiinhalt erkannt, nicht an der Endung, weil Anwender
+Dateien umbenennen.
 
 Stehen beim Start Datenbank-Migrationen an, sichert `DatabaseMigrationService`
 vorher automatisch nach `%APPDATA%\AutomationService\Sicherungen\` (die fünf

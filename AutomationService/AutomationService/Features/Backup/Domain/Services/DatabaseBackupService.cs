@@ -1,6 +1,7 @@
 using System.Globalization;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Settings.Domain.Persistence;
+using AutomationService.Features.Settings.Domain.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -214,18 +215,33 @@ public sealed class DatabaseBackupService(
     }
 
     /// <summary>
-    /// Setzt nach dem Import die maschinenabhängigen Pfadfelder auf die Werte
-    /// dieses Rechners zurück: ein Ordnerpfad des anderen Rechners zeigt hier
-    /// ins Leere. Gab es lokal keinen Einstellungssatz, werden die Felder
-    /// geleert — fremde Maschinenpfade dürfen den Import nicht überleben.
-    /// Läuft nach der Migration, weil eine ältere Sicherung die Spalten
-    /// VorlagenOrdner und SicherungsAblageOrdner erst danach hat.
+    /// Setzt nach dem Import die maschinen<em>abhängigen</em> Pfadfelder auf die
+    /// Werte dieses Rechners zurück. Gab es lokal keinen Einstellungssatz,
+    /// werden sie geleert — fremde Maschinenpfade dürfen den Import nicht
+    /// überleben. Läuft nach der Migration, weil eine ältere Sicherung die
+    /// Spalten VorlagenOrdner, SicherungsAblageOrdner und AppDatenOrdner erst
+    /// danach hat.
     ///
-    /// Die Sicherungsablage steht ausdrücklich mit auf der Liste (#39): Zwar
-    /// zeigen beide Rechner auf <em>denselben</em> synchronisierten Ordner, aber
-    /// unter verschiedenen Pfaden. Würde der fremde Pfad übernommen, legte
-    /// dieser Rechner seine Sicherungen woanders ab, als er sein Angebot liest —
-    /// die Übergabe wäre nach dem ersten Einspielen still kaputt.
+    /// Maßgeblich ist seit #103 die <b>Form</b> des Werts, nicht mehr das Feld
+    /// (<see cref="AppOrdnerPfad"/>):
+    ///
+    /// * <b>absolut</b> (<c>C:\Users\Meier\OneDrive - Kanzlei\…</c>) —
+    ///   ausgenommen wie bisher. Zwar zeigen beide Rechner auf <em>denselben</em>
+    ///   synchronisierten Ordner, aber unter verschiedenen Pfaden. Würde der
+    ///   fremde übernommen, legte dieser Rechner seine Sicherungen woanders ab,
+    ///   als er sein Angebot liest — die Übergabe wäre nach dem ersten
+    ///   Einspielen still kaputt.
+    /// * <b>relativ mit Anker</b> (<c>%OneDriveCommercial%\Kanzlei App
+    ///   Daten</c>) — kommt mit. Genau dafür ist die Form da: Sie trägt keinen
+    ///   Benutzernamen und kein Laufwerk, sondern den Namen der Variable, die
+    ///   der OneDrive-Client auf jedem Rechner selbst setzt. Sie auszunehmen
+    ///   hieße, den zweiten Arbeitsplatz wieder alles einstellen zu lassen —
+    ///   der Grund, aus dem #103 überhaupt existiert.
+    ///
+    /// Ist der Anker auf diesem Rechner nicht gesetzt, wird der Wert trotzdem
+    /// übernommen: Er bleibt richtig, sobald das Konto eingerichtet ist, und bis
+    /// dahin sagt <c>GET api/Settings/ordner</c>, was fehlt. Ihn zu verwerfen
+    /// wäre stiller Datenverlust an einer behebbaren Lage.
     /// </summary>
     async Task SchuetzeMaschinenPfadeAsync(KanzleiSettingsEntity? lokal, CancellationToken ct)
     {
@@ -237,12 +253,19 @@ public sealed class DatabaseBackupService(
             return;
         }
 
-        eingespielt.AktenStammordner = lokal?.AktenStammordner ?? string.Empty;
-        eingespielt.RegisterAblageOrdner = lokal?.RegisterAblageOrdner ?? string.Empty;
-        eingespielt.VorlagenOrdner = lokal?.VorlagenOrdner ?? string.Empty;
-        eingespielt.SicherungsAblageOrdner = lokal?.SicherungsAblageOrdner ?? string.Empty;
+        eingespielt.AppDatenOrdner = Uebernommen(eingespielt.AppDatenOrdner, lokal?.AppDatenOrdner);
+        eingespielt.AktenStammordner = Uebernommen(eingespielt.AktenStammordner, lokal?.AktenStammordner);
+        eingespielt.RegisterAblageOrdner =
+            Uebernommen(eingespielt.RegisterAblageOrdner, lokal?.RegisterAblageOrdner);
+        eingespielt.VorlagenOrdner = Uebernommen(eingespielt.VorlagenOrdner, lokal?.VorlagenOrdner);
+        eingespielt.SicherungsAblageOrdner =
+            Uebernommen(eingespielt.SicherungsAblageOrdner, lokal?.SicherungsAblageOrdner);
         await context.SaveChangesAsync(ct);
     }
+
+    /// <summary>Der eingespielte Wert, wenn er relativ ist — sonst der lokale.</summary>
+    static string Uebernommen(string eingespielt, string? lokal) =>
+        AppOrdnerPfad.IstRelativ(eingespielt) ? eingespielt.Trim() : lokal ?? string.Empty;
 
     AutomationDbContext OeffneKontext()
     {

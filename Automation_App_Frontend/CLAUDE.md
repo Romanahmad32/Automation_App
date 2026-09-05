@@ -145,6 +145,9 @@ der Anwalt direkt nach dem Öffnen der App.
   Domain-Typen und `Failure`s. Braucht ein Feature diese Übersetzung nicht, entfällt die Schicht
   ganz und die Datasource setzt das Repository direkt um (`@Injectable(as: VorgangRepository)`).
   Beides ist erlaubt — nur nicht dieselbe Rolle unter zwei Namen.
+- **Schriftgrößen kommen aus den Theme-Rollen**, kein eigenes `fontSize`. Den Grad wählt der Anwalt
+  (`Schriftstufe`, Reiter „Darstellung"); `Schriftskala.anhebung` ist nur die Schrittweite. Überläufe
+  durch größere Schrift werden im Layout gelöst (Umbruch, Ellipsis, Scroll), nie durch kleinere.
 
 ### Erzwungen von (Dart-Seite)
 
@@ -153,6 +156,7 @@ der Anwalt direkt nach dem Öffnen der App.
 | Dateilänge ≤ 250 Anweisungszeilen, ≤ 450 gesamt | `test/architecture/file_length_test.dart` |
 | Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
 | Benennung Datasources/Repositories | `test/architecture/benennung_test.dart` |
+| Kein `fontSize` außerhalb des Themes | `test/architecture/schriftgroesse_test.dart` |
 | Schichten `domain`/`data`/`presentation` (vier Regeln) | `test/architecture/clean_architecture_test.dart` |
 | HTTP-Vertrag gegen `docs/openapi.json` (Wurzel-`CLAUDE.md`) | `test/architecture/http_vertrag_test.dart` |
 | Steckbrief je Feature, Feature-Tabelle, Zeilenbudget der `CLAUDE.md`, lebende Verweise | `test/architecture/dokumentation_test.dart` |

@@ -6,10 +6,8 @@ import 'package:automation_app/core/general_widgets/form/general_text_field.dart
 import 'package:automation_app/features/sachgebiete/presentation/widgets/abteilung_auswahl.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
-import 'package:automation_app/features/settings/presentation/widgets/register_ablage_felder.dart';
-import 'package:automation_app/features/settings/presentation/widgets/sicherungs_ablage_felder.dart';
-import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
-import 'package:automation_app/features/settings/presentation/widgets/vorlagen_ordner_feld.dart';
+import 'package:automation_app/features/settings/presentation/widgets/ordner_sektion.dart';
+import 'package:automation_app/features/settings/presentation/widgets/register_spiegel_felder.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -18,15 +16,17 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// nur den Speicher-Status und den Speichern-Callback.
 ///
 /// Die Karten sind in zwei Themen geteilt, die auf einem breiten Schirm
-/// nebeneinander stehen: links die Kanzlei und ihre Akte (Anfragerdaten,
-/// Referenz, Aktensystem), rechts die drei Ordner daneben (Vorlagen, Register,
-/// Sicherung). Wird es eng, laufen sie in dieser Reihenfolge untereinander.
+/// nebeneinander stehen: links **wer** die Kanzlei ist (Anfragerdaten,
+/// Referenz), rechts **wo** ihre Dateien liegen (`OrdnerSektion`, dazu die
+/// Einstellungen des Register-Spiegels). Wird es eng, laufen sie in dieser
+/// Reihenfolge untereinander.
 ///
-/// Das Aktensystem steht bewusst links, obwohl es auch ein Ordner ist: Mit ihm
-/// rechts waren die Spalten 800 zu 1230 Pixel hoch, und beim Scrollen stand
-/// neben der rechten Hälfte eine halbe Bildschirmbreite Leere. So sind es
-/// ungefähr 1040 zu 990 — und der Stammordner gehört ohnehin zur Akte, nicht
-/// zu dem, was die App *daneben* ablegt.
+/// Bis #103 stand jeder der vier Ordner in einer eigenen Karte, der
+/// Akten-Stammordner sogar in der linken Spalte — verteilt über zwei Spalten
+/// war die Einrichtung eine Suche danach, welcher Ordner wozu gehört. Jetzt
+/// steht die Ordnerwahl an genau einer Stelle; die Höhen der beiden Spalten
+/// gleichen sich dadurch nicht mehr so genau aus wie vorher, und das ist der
+/// bewusst gezahlte Preis.
 class KanzleiSettingsFormBody extends StatelessWidget {
   final bool isSaving;
   final VoidCallback onSave;
@@ -125,52 +125,21 @@ class KanzleiSettingsFormBody extends StatelessWidget {
             const AbteilungAuswahl(),
           ],
         ),
-        FormSection(
-          icon: Icons.folder_special,
-          title: 'Aktensystem',
-          subtitle:
-              'Stammordner, unter dem pro Mandant eine Akte '
-              '(Unterordner) liegt. Die fertigen Dokumente '
-              'werden hier automatisch abgelegt. Ohne '
-              'Stammordner ist nur das manuelle Speichern '
-              'möglich.',
-          children: const [StammordnerField()],
-        ),
       ],
-      rechts: [
-        FormSection(
-          icon: Icons.description_outlined,
-          title: 'Vorlagen',
-          subtitle:
-              'Ordner, in dem die Word-Vorlagen liegen. Er wird bei jeder '
-              'Sicherung mitgenommen; Vorlagenpfade werden relativ zu ihm '
-              'gespeichert, damit dieselbe Sicherung auch auf einem zweiten '
-              'Rechner funktioniert. Leer heißt: die App verwaltet die '
-              'Vorlagen selbst (AppData).',
-          children: const [VorlagenOrdnerFeld()],
-        ),
+      rechts: const [
+        OrdnerSektion(),
         FormSection(
           icon: Icons.cloud_sync_outlined,
-          title: 'Register-Ablage',
+          title: 'Register-Spiegel',
           subtitle:
-              'Das Sachgebiete-Register wird zusätzlich als Word- und '
-              'PDF-Datei in diesen Ordner geschrieben. Liegt er im '
-              'synchronisierten Bereich (z. B. OneDrive), ist das Register '
-              'unterwegs lesbar — die App spricht dabei mit keiner Cloud, sie '
-              'legt nur eine Datei ab. Gepflegt wird das Register weiterhin '
-              'ausschließlich hier in der App; die Datei dort ist ein Spiegel.',
-          children: const [RegisterAblageFelder()],
-        ),
-        FormSection(
-          icon: Icons.backup_outlined,
-          title: 'Sicherungsablage',
-          subtitle:
-              'Beim Beenden legt die App den gesamten Stand als Sicherung in '
-              'diesen Ordner. Liegt er im synchronisierten Bereich (z. B. '
-              'OneDrive), bietet der zweite Rechner ihn beim Öffnen zur '
-              'Übernahme an — die App fragt dabei nach, bevor sie etwas '
-              'ersetzt. Leer heißt: nur Sichern auf Knopfdruck.',
-          children: const [SicherungsAblageFelder()],
+              'Das Sachgebiete-Register entsteht zusätzlich als Word- und '
+              'PDF-Datei — unter dem Ordner für die App-Daten, sofern oben '
+              'kein eigener gewählt ist. Liegt er im synchronisierten Bereich, '
+              'ist das Register unterwegs lesbar; die App spricht dabei mit '
+              'keiner Cloud, sie legt nur eine Datei ab. Gepflegt wird das '
+              'Register ausschließlich hier in der App, die Datei dort ist ein '
+              'Spiegel.',
+          children: [RegisterSpiegelFelder()],
         ),
       ],
     );

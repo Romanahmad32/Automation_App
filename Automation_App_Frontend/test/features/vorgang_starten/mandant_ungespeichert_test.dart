@@ -70,7 +70,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: MaterialTheme(const TextTheme()).light(),
+        // Realistische Eingabe wie im Betrieb (`createTextTheme` baut
+        // ebenfalls auf `Theme.of(context).textTheme` auf) statt eines
+        // leeren `TextTheme()` — seit `Schriftskala.anheben` zuerst mit
+        // `Typography.englishLike2021` mischt, macht ein leeres TextTheme den
+        // Test nicht mehr blind für Größenänderungen (Issue #57), es wäre nur
+        // eine unrealistische Eingabe.
+        theme: MaterialTheme(ThemeData.light().textTheme).light(),
         home: Scaffold(
           body: BlocProvider.value(
             value: bloc,

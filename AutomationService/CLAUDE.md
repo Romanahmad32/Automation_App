@@ -145,9 +145,11 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   den Einstellungen (§6.2, `…/register/export|stand`); die Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
   doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier.
-- **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu
-  `POST api/Settings/auftragsnummer/erhoehe` und die Standardpositionen der Schadensaufstellung
-  (§4.4, `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle = Vorgabe, leeres Speichern setzt zurück).
+- **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST api/Settings/auftragsnummer/erhoehe`
+  und die Standardpositionen der Schadensaufstellung (§4.4, `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle =
+  Vorgabe, leeres Speichern setzt zurück). Dazu die fünf Ordnerpfade (#103): `AppDatenOrdner` trägt Vorlagen, Register und
+  Sicherungen als **abgeleitete** Unterordner (je eine `…Vorgabe`; die Verbraucher hängen daran, nicht am Feld), gespeichert
+  wird relativ mit Anker und aufgelöst **nur hier** (`AppOrdnerPfad`); `GET api/Settings/ordner` meldet den Zustand.
 - **FormTemplates** — benutzerdefinierte Formularvorlagen (Feldbeschreibung zu einer Word-Vorlage),
   CRUD mit Namenskonflikt-Prüfung.
 - **Backup** — Export/Import einer Sicherung. `SicherungsArchiv` ist ein ZIP aus `automation.db`
