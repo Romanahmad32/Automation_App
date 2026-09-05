@@ -33,21 +33,44 @@ public class SettingsController(
         [FromBody] KanzleiSettingsDto dto,
         CancellationToken cancellationToken)
     {
-        var vorherigerOrdner = (await repository.GetAsync(cancellationToken)).VorlagenOrdner.Trim();
-        var saved = await repository.SaveAsync(dto.ToEntity(), cancellationToken);
+        // Der *wirksame* Ordner, nicht das rohe Feld: Seit #103 aendert ihn auch,
+        // wer nur den App-Daten-Ordner setzt oder umstellt — das Vorlagenfeld
+        // bliebe dabei leer und die Umstellung unterbliebe.
+        var vorher = VorlagenOrdnerVorgabe.Ermittle(db);
+
+        // Der bisher gespeicherte Satz geht je Feld in ToEntity ein, damit ein
+        // unveraendert zurueckgeschicktes Feld seinen Anker behaelt statt bei
+        // jedem Speichern neu gegen die Vorzugsreihenfolge geprueft zu werden
+        // (Anker-Drift, siehe AppOrdnerPfad.MacheRelativ).
+        var bisher = await repository.GetAsync(cancellationToken);
+        var saved = await repository.SaveAsync(dto.ToEntity(bisher), cancellationToken);
+        var nachher = VorlagenOrdnerVorgabe.Ermittle(db);
 
         // Einmalige Umstellung des Bestands (#33): Waehlt der Anwalt den
         // Vorlagenordner (neu), werden absolute Pfade darin ab sofort relativ
         // gespeichert — sonst hilft der einstellbare Ordner niemandem, dessen
         // Datenbank weiter auf C:\Users\<Name>\... zeigt.
-        if (saved.VorlagenOrdner.Trim() != vorherigerOrdner)
+        if (!string.Equals(nachher, vorher, StringComparison.OrdinalIgnoreCase))
         {
-            await VorlagenPfadUmstellung.StelleUmAsync(
-                db, VorlagenOrdnerVorgabe.Ermittle(db), cancellationToken);
+            await VorlagenPfadUmstellung.StelleUmAsync(db, nachher, cancellationToken);
         }
 
         return Ok(KanzleiSettingsDto.From(saved));
     }
+
+    /// <summary>
+    /// Die Lage aller fünf Ordner (#103): was gespeichert steht, was der Dienst
+    /// benutzt, und woran es liegt, wenn beides auseinanderfällt.
+    ///
+    /// Immer 200 — auch ohne erkennbares OneDrive und ohne einen einzigen
+    /// gesetzten Ordner. Die Einstellungsseite muss sich gerade dann öffnen
+    /// lassen, wenn etwas fehlt; sie ist die Seite, auf der man es
+    /// richtigstellt.
+    /// </summary>
+    [HttpGet("ordner")]
+    [ProducesResponseType(typeof(IReadOnlyList<OrdnerZustandDto>), StatusCodes.Status200OK)]
+    public ActionResult<IReadOnlyList<OrdnerZustandDto>> GetOrdner() =>
+        Ok(OrdnerZustaende.Ermittle(db).Select(OrdnerZustandDto.From).ToList());
 
     /// <summary>Erhöht die laufende Auftragsnummer um eins (nach Vorgangsabschluss).</summary>
     [HttpPost("auftragsnummer/erhoehe")]

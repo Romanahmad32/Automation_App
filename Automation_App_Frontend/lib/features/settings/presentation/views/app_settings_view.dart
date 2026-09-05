@@ -54,11 +54,17 @@ class _AppSettingsViewState extends State<AppSettingsView>
     // "Schadensaufstellung" (StandardpositionenSettingsView) und speichert
     // dort für sich (SaveTabellenkopfFarbeEvent).
     'aktenStammordner': FormControl<String>(),
-    // Vorlagenordner (#33), ohne Validator: Leer heißt App-Ordner des
-    // Backends unter %APPDATA% — der Stand vor dieser Einstellung.
+    // Der eine Ordner für alles, was die App selbst ablegt (#103). Ohne
+    // Validator: Leer heißt, es gilt allein, was in den drei Feldern darunter
+    // steht — ein Bestand von vor dieser Einstellung läuft unverändert weiter.
+    'appDatenOrdner': FormControl<String>(),
+    // Vorlagenordner (#33), ohne Validator: Leer heißt "Vorlagen" unter dem
+    // Ordner für die App-Daten, und ohne den der App-Ordner des Backends unter
+    // %APPDATA% — der Stand vor beiden Einstellungen.
     'vorlagenOrdner': FormControl<String>(),
     // Register-Spiegel (§6.2). Der Ablageordner ist bewusst ohne Validator:
-    // Er darf leer bleiben — dann wird keine Datei geschrieben.
+    // Er darf leer bleiben — dann entsteht die Datei unter dem Ordner für die
+    // App-Daten, und ohne den gar nicht.
     'registerAblageOrdner': FormControl<String>(),
     'registerDateiname': FormControl<String>(
       value: KanzleiSettings.defaultRegisterDateiname,
@@ -88,6 +94,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
       'laufendeAuftragsnummer': settings.laufendeAuftragsnummer.toString(),
       'abteilung': settings.abteilung,
       'aktenStammordner': settings.aktenStammordner,
+      'appDatenOrdner': settings.appDatenOrdner,
       'vorlagenOrdner': settings.vorlagenOrdner,
       'registerAblageOrdner': settings.registerAblageOrdner,
       'registerDateiname': settings.registerDateiname,
@@ -129,6 +136,7 @@ class _AppSettingsViewState extends State<AppSettingsView>
           // auf beiden Seiten still.
           abteilung: AbteilungKuerzel.normalisiere(read('abteilung')),
           aktenStammordner: read('aktenStammordner'),
+          appDatenOrdner: read('appDatenOrdner'),
           vorlagenOrdner: read('vorlagenOrdner'),
           registerAblageOrdner: read('registerAblageOrdner'),
           // Leerer Name heißt Vorgabe: Ein Spiegel ohne Dateinamen wäre eine

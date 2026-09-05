@@ -97,10 +97,17 @@ public sealed class RegisterSpiegelService(
     {
         var (einstellungen, zeilen) = await UeberblickAsync(cancellationToken);
         var letzter = stand.Lesen();
-        if (string.IsNullOrWhiteSpace(einstellungen.RegisterAblageOrdner))
+
+        // Der Ordner kommt seit #103 aus der Vorgabe und nicht mehr aus dem
+        // Feld: Er kann relativ gespeichert sein (%OneDriveCommercial%\...) und
+        // er kann aus dem App-Daten-Ordner abgeleitet sein, ohne dass im
+        // Registerfeld etwas steht. Wer hier das rohe Feld laese, schriebe den
+        // Spiegel entweder gar nicht oder in einen Ordner namens "%OneDrive%".
+        var ordner = RegisterAblageVorgabe.Ermittle(db);
+        if (ordner.Length == 0)
             return RegisterSpiegelErgebnis.Uebersprungen(KeinOrdner, zeilen, letzter?.GeschriebenAm);
 
-        var ablage = AblageFuer(einstellungen);
+        var ablage = new RegisterSpiegelAblage(ordner, einstellungen.RegisterDateiname);
 
         // Schon beim Öffnen der Seite melden und nicht erst beim Schreiben:
         // Der Lauf nach dem Vorgangsabschluss meldet nur ins Protokoll, der
@@ -130,10 +137,11 @@ public sealed class RegisterSpiegelService(
         var (einstellungen, zeilen) = await LadeAsync(cancellationToken);
         var letzter = stand.Lesen();
 
-        if (string.IsNullOrWhiteSpace(einstellungen.RegisterAblageOrdner))
+        var ordner = RegisterAblageVorgabe.Ermittle(db);
+        if (ordner.Length == 0)
             return RegisterSpiegelErgebnis.Uebersprungen(KeinOrdner, zeilen.Count, letzter?.GeschriebenAm);
 
-        var ablage = AblageFuer(einstellungen);
+        var ablage = new RegisterSpiegelAblage(ordner, einstellungen.RegisterDateiname);
 
         if (FremdeZieldatei(letzter, ablage))
         {
@@ -319,7 +327,4 @@ public sealed class RegisterSpiegelService(
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == KanzleiSettingsEntity.SingletonId, cancellationToken)
         ?? KanzleiSettingsRepository.CreateDefault();
-
-    static RegisterSpiegelAblage AblageFuer(KanzleiSettingsEntity einstellungen) =>
-        new(einstellungen.RegisterAblageOrdner.Trim(), einstellungen.RegisterDateiname);
 }

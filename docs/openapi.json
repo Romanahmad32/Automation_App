@@ -1293,6 +1293,45 @@
         }
       }
     },
+    "/api/Settings/ordner": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Die Lage aller f\u00FCnf Ordner (#103): was gespeichert steht, was der Dienst\r\nbenutzt, und woran es liegt, wenn beides auseinanderf\u00E4llt.\r\n\r\nImmer 200 \u2014 auch ohne erkennbares OneDrive und ohne einen einzigen\r\ngesetzten Ordner. Die Einstellungsseite muss sich gerade dann \u00F6ffnen\r\nlassen, wenn etwas fehlt; sie ist die Seite, auf der man es\r\nrichtigstellt.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerZustandDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerZustandDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdnerZustandDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Settings/auftragsnummer/erhoehe": {
       "post": {
         "tags": [
@@ -5172,6 +5211,7 @@
           "laufendeAuftragsnummer",
           "abteilung",
           "tabellenkopfFarbeHex",
+          "appDatenOrdner",
           "aktenStammordner",
           "mailSignatur",
           "mailSignaturHtml",
@@ -5219,6 +5259,9 @@
           "tabellenkopfFarbeHex": {
             "type": "string"
           },
+          "appDatenOrdner": {
+            "type": "string"
+          },
           "aktenStammordner": {
             "type": "string"
           },
@@ -5247,7 +5290,7 @@
             "type": "string"
           }
         },
-        "description": "\u00DCbertragungsformat der Kanzlei-Einstellungen. Die PascalCase-Properties werden\r\nvon ASP.NET Core als camelCase serialisiert und passen damit 1:1 zum JSON der\r\nFlutter-Entit\u00E4t \u0060KanzleiSettings\u0060 (personentyp, strasseHausnummer, \u2026)."
+        "description": "\u00DCbertragungsformat der Kanzlei-Einstellungen. Die PascalCase-Properties werden\r\nvon ASP.NET Core als camelCase serialisiert und passen damit 1:1 zum JSON der\r\nFlutter-Entit\u00E4t \u0060KanzleiSettings\u0060 (personentyp, strasseHausnummer, \u2026).\r\n\r\nHier liegt seit #103 die Umrechnungsgrenze der f\u00FCnf Ordnerpfade \u2014 dieselbe\r\nArbeitsteilung wie bei den Word-Pfaden (#33, \u0060FormTemplatesController\u0060):\r\nhinaus gehen sie \u003Cem\u003Eaufgel\u00F6st\u003C/em\u003E, hinein kommende werden relativ zum\r\nsynchronisierten Wurzelordner gespeichert, wenn sie darunter liegen. Das\r\nFrontend rechnet nie um; es zeigt an, was es bekommt, und schickt es zur\u00FCck."
       },
       "LetzteSicherungDto": {
         "required": [
@@ -5672,6 +5715,34 @@
           }
         },
         "description": "Ein Ordner, f\u00FCr den entschieden ist, dass er keinem Mandanten geh\u00F6rt."
+      },
+      "OrdnerZustandDto": {
+        "required": [
+          "feld",
+          "gespeichert",
+          "wirksam",
+          "zustand",
+          "anker"
+        ],
+        "type": "object",
+        "properties": {
+          "feld": {
+            "type": "string"
+          },
+          "gespeichert": {
+            "type": "string"
+          },
+          "wirksam": {
+            "type": "string"
+          },
+          "zustand": {
+            "type": "string"
+          },
+          "anker": {
+            "type": "string"
+          }
+        },
+        "description": "Was in den Einstellungen \u00FCber einen der f\u00FCnf Ordner zu sagen ist (#103):\r\ndie Speicherform, der wirksame Ordner, und in einem Wort, warum die beiden\r\ngleich oder verschieden sind.\r\n\r\nDie Oberfl\u00E4che formt daraus einen Satz in Klartext (\u201EOneDrive-Konto\r\n(OneDriveCommercial) auf diesem Rechner nicht vorhanden\u0022) \u2014 deshalb gehen\r\nhier Zust\u00E4nde hinaus und keine fertigen Meldungen: Der Dienst kennt die\r\nLage, die Oberfl\u00E4che die Worte."
       },
       "OutlookAnhaengeDto": {
         "required": [
