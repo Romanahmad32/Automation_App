@@ -21,7 +21,7 @@ schreibt stattdessen in den `ThemeBloc` (`lib/core/theme/presentation/bloc/theme
 - `PUT /api/Settings` ersetzt **alle** Felder, und `AppSettingsView` füllt das Formular wegen `_initialized` nur einmal: Wurde die
   Auftragsnummer zwischenzeitlich durch einen Abschluss erhöht, schreibt „Speichern" den alten Stand zurück.
 - Jeder Reiter zeichnet seine Kopfzeile selbst (`EinstellungenReiter` → `EinstellungenAktionszeile`): links die Abschnittswahl,
-  rechts sein Speichern-Knopf. Ohne `DefaultTabController` darum (Widgettest) bleibt die Wahl weg, der Reiter bleibt bedienbar.
+  rechts fest `aktionsbreite`, auch ohne Knopf. Ohne `DefaultTabController` fehlt die Wahl, der Reiter bleibt bedienbar.
 - `KanzleiSettingsBloc` ist `@injectable`, also eine Factory. `word_automation_page.dart` erzeugt eine eigene Instanz und lädt
   selbst; eine Änderung in den Einstellungen erreicht bereits offene Seiten nicht.
 - Fremdabhängigkeiten: `mandanten` liest `aktenStammordner`, `vorgang_starten` liest `laufendeAuftragsnummer`/`abteilung`. Beide
