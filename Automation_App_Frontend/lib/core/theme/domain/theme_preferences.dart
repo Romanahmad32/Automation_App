@@ -1,3 +1,4 @@
+import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
@@ -19,31 +20,60 @@ enum AppThemeVariant {
   }
 }
 
-/// Persistierte Darstellungs-Einstellungen: gewählte Theme-Familie und der
-/// Hell-/Dunkel-/System-Modus. Wird lokal als JSON abgelegt (siehe
-/// `ThemePreferencesDatasource`).
+/// Persistierte Darstellungs-Einstellungen: gewählte Theme-Familie, der
+/// Hell-/Dunkel-/System-Modus und der Schriftgrad. Wird lokal als JSON
+/// abgelegt (siehe `ThemePreferencesDatasource`).
 @immutable
 class ThemePreferences extends Equatable {
   final AppThemeVariant variant;
   final ThemeMode mode;
 
-  const ThemePreferences({required this.variant, required this.mode});
+  /// Der gewählte Schriftgrad (Issue #57). Er liegt hier und nicht neben dem
+  /// Theme-Code, weil er dasselbe Schicksal teilt wie Variante und Modus: Der
+  /// Anwalt stellt ihn einmal ein und erwartet ihn beim nächsten Start wieder.
+  final Schriftstufe schriftstufe;
 
-  /// Werkseinstellung: Variante A (Kanzlei-Design) im Systemmodus.
+  const ThemePreferences({
+    required this.variant,
+    required this.mode,
+    this.schriftstufe = Schriftstufe.vorgabe,
+  });
+
+  /// Werkseinstellung: Variante A (Kanzlei-Design) im Systemmodus, Schrift
+  /// eine Stufe größer.
   static const ThemePreferences defaults = ThemePreferences(
     variant: AppThemeVariant.kanzlei,
     mode: ThemeMode.system,
+    schriftstufe: Schriftstufe.vorgabe,
   );
 
-  ThemePreferences copyWith({AppThemeVariant? variant, ThemeMode? mode}) {
+  ThemePreferences copyWith({
+    AppThemeVariant? variant,
+    ThemeMode? mode,
+    Schriftstufe? schriftstufe,
+  }) {
     return ThemePreferences(
       variant: variant ?? this.variant,
       mode: mode ?? this.mode,
+      schriftstufe: schriftstufe ?? this.schriftstufe,
     );
   }
 
-  Map<String, dynamic> toJson() => {'variant': variant.name, 'mode': mode.name};
+  Map<String, dynamic> toJson() => {
+    'variant': variant.name,
+    'mode': mode.name,
+    'schriftstufe': schriftstufe.jsonWert,
+  };
 
+  /// Liest den Stand zurück, **ohne** auf Vollständigkeit zu bestehen.
+  ///
+  /// Jede `theme_preferences.json`, die vor Issue #57 geschrieben wurde, hat
+  /// den Schlüssel `schriftstufe` nicht. Ein Sturz darüber wäre der teuerste
+  /// denkbare Umgang damit: `LocalThemePreferencesDatasource.load` fängt jeden
+  /// Fehler ab und fällt auf die Werkseinstellung zurück — die Datei ginge
+  /// also nicht kaputt, aber Variante und Modus des Anwalts wären beim ersten
+  /// Start nach dem Update trotzdem weg. Fehlender oder unbekannter Wert
+  /// heißt deshalb schlicht [Schriftstufe.vorgabe].
   factory ThemePreferences.fromJson(Map<String, dynamic> json) {
     return ThemePreferences(
       variant: AppThemeVariant.fromName(json['variant'] as String?),
@@ -51,9 +81,11 @@ class ThemePreferences extends Equatable {
         (m) => m.name == json['mode'],
         orElse: () => ThemeMode.system,
       ),
+      schriftstufe:
+          Schriftstufe.ausJson(json['schriftstufe']) ?? Schriftstufe.vorgabe,
     );
   }
 
   @override
-  List<Object?> get props => [variant, mode];
+  List<Object?> get props => [variant, mode, schriftstufe];
 }

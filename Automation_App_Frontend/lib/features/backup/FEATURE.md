@@ -32,3 +32,5 @@ Dateizugriff + Fehlerübersetzung liegen in `BackupRepositoryImpl`) sowie `ueber
   wegautomatisiert werden.
 - Die Kette Beenden → Ablage → Start → Übernahme läuft über mehrere Features und steht in
   [`docs/DATENFLUESSE.md`](../../../../docs/DATENFLUESSE.md).
+- Bei der Übernahme kommen **relativ mit Anker gespeicherte** Ordnerpfade mit, absolute bleiben
+  beim Wert dieses Rechners (#103) — Einzelheiten in `FALLSTRICKE.md`.

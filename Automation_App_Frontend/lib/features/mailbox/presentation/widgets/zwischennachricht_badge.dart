@@ -25,10 +25,19 @@ class ZwischennachrichtBadge extends StatelessWidget {
             color: theme.colorScheme.onTertiaryContainer,
           ),
           const SizedBox(width: 4),
-          Text(
-            'Zwischennachricht — Antwort folgt',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onTertiaryContainer,
+          // Flexible statt eines unbeschränkten Text: Das Badge sitzt in der
+          // engen Trefferspalte (§ mailbox_reply_list.dart) — bei "Am
+          // größten" (Issue #57) reicht dort der Platz nicht mehr für Icon
+          // plus vollen Text. Ellipsis statt Umbruch: Ein Badge bleibt
+          // einzeilig.
+          Flexible(
+            child: Text(
+              'Zwischennachricht — Antwort folgt',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onTertiaryContainer,
+              ),
             ),
           ),
         ],

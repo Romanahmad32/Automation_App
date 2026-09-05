@@ -6,6 +6,7 @@ import 'package:automation_app/features/mailbox/domain/entities/received_reply.d
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_auswahl_signal.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_detail_pane.dart';
+import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_list_und_panel.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_reply_list.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_status_banner.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_versand_leiste.dart';
@@ -157,34 +158,26 @@ class _MailboxInboxViewState extends State<MailboxInboxView> {
             MailboxVersandLeiste(ausgewaehlt: selected),
             const Divider(height: 1),
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: MailboxReplyList(
-                      replies: replies,
-                      selectedId: _selectedId,
-                      manualSelected: _manualMode,
-                      loading: state.loading && replies.isEmpty,
-                      status: state.status,
-                      onSelect: (id) => setState(() {
-                        _selectedId = id;
-                        _manualMode = false;
-                      }),
-                      onManual: _manuellOeffnen,
-                    ),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(
-                    child: MailboxDetailPane(
-                      manualMode: _manualMode,
-                      selected: selected,
-                      onTrefferUebernehmen: _treffferUebernehmen,
-                      onManuellUebernehmen: _manuellUebernehmen,
-                    ),
-                  ),
-                ],
+              child: MailboxListUndPanel(
+                listeLeer: replies.isEmpty,
+                list: MailboxReplyList(
+                  replies: replies,
+                  selectedId: _selectedId,
+                  manualSelected: _manualMode,
+                  loading: state.loading && replies.isEmpty,
+                  status: state.status,
+                  onSelect: (id) => setState(() {
+                    _selectedId = id;
+                    _manualMode = false;
+                  }),
+                  onManual: _manuellOeffnen,
+                ),
+                panel: MailboxDetailPane(
+                  manualMode: _manualMode,
+                  selected: selected,
+                  onTrefferUebernehmen: _treffferUebernehmen,
+                  onManuellUebernehmen: _manuellUebernehmen,
+                ),
               ),
             ),
           ],

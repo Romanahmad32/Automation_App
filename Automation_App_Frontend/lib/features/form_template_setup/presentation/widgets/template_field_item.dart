@@ -154,30 +154,7 @@ class TemplateFieldItem extends StatelessWidget {
         ),
       ),
 
-      Expanded(
-        flex: 2,
-        child: InkWell(
-          onTap: () => onRequiredChanged.call(!fieldData.required),
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          child: Row(
-            children: [
-              Checkbox(
-                value: fieldData.required,
-                activeColor: theme.colorScheme.primary,
-                onChanged: onRequiredChanged,
-              ),
-              Text(
-                'ERFORDERLICH',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      Expanded(flex: 2, child: _erforderlichSpalte(theme)),
 
       IconButton(
         icon: Icon(Icons.delete, color: theme.colorScheme.error),
@@ -185,4 +162,57 @@ class TemplateFieldItem extends StatelessWidget {
       ),
     ];
   }
+
+  /// Checkbox „Erforderlich" mit Beschriftung.
+  ///
+  /// Bei angehobener Schrift (Issue #57) und schmaler Spalte reicht der Platz
+  /// oft nicht für Checkbox **und** „ERFORDERLICH" nebeneinander — die
+  /// Beschriftung lief in den Löschen-Knopf rechts daneben. `Flexible` mit
+  /// Ellipsis allein hätte nur ein abgeschnittenes „ERFORD…" gezeigt; unter
+  /// [_mindestbreiteBeschriftung] entfällt die Beschriftung deshalb ganz und
+  /// die Checkbox trägt ihren Zweck als Tooltip. Der `LayoutBuilder` misst
+  /// genau die Breite, die diese Spalte vom `Expanded` bekommt — dieselbe
+  /// Breite, die vorher überlief.
+  Widget _erforderlichSpalte(ThemeData theme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final genugPlatz = constraints.maxWidth >= _mindestbreiteBeschriftung;
+        final checkbox = Checkbox(
+          value: fieldData.required,
+          activeColor: theme.colorScheme.primary,
+          onChanged: onRequiredChanged,
+        );
+        final inhalt = Row(
+          children: [
+            checkbox,
+            if (genugPlatz)
+              Flexible(
+                child: Text(
+                  'ERFORDERLICH',
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+          ],
+        );
+        return InkWell(
+          onTap: () => onRequiredChanged.call(!fieldData.required),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          child: genugPlatz
+              ? inhalt
+              : Tooltip(message: 'Erforderlich', child: inhalt),
+        );
+      },
+    );
+  }
+
+  /// Ab hier passen Checkbox und Beschriftung noch nebeneinander (empirisch an
+  /// der größten Schriftstufe ermittelt — siehe `felder_karte_schmal_test.dart`).
+  static const double _mindestbreiteBeschriftung = 150;
 }

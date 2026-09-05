@@ -19,3 +19,11 @@ final class ChangeThemeVariantEvent extends ThemeEvent {
 
   ChangeThemeVariantEvent(this.variant);
 }
+
+/// Wechselt den Schriftgrad der gesamten Oberfläche (Issue #57). Gilt für
+/// beide Theme-Familien und beide Helligkeiten.
+final class ChangeSchriftstufeEvent extends ThemeEvent {
+  final Schriftstufe stufe;
+
+  ChangeSchriftstufeEvent(this.stufe);
+}

@@ -560,6 +560,10 @@ namespace AutomationService.Core.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AppDatenOrdner")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("EmailAdresse")
                         .IsRequired()
                         .HasColumnType("TEXT");

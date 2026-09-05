@@ -3,6 +3,7 @@ import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/settings/data/datasources/kanzlei_settings_datasource.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/settings/domain/entities/ordner_zustand.dart';
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -27,6 +28,12 @@ class KanzleiSettingsRepositoryImpl implements KanzleiSettingsRepository {
   @override
   Future<Either<Failure, KanzleiSettings>> erhoeheAuftragsnummer() => alsEither(
     () => _datasource.erhoeheAuftragsnummer(),
+    uebersetzen: _serverFailure,
+  );
+
+  @override
+  Future<Either<Failure, List<OrdnerZustand>>> ordnerZustand() => alsEither(
+    () => _datasource.ladeOrdnerZustand(),
     uebersetzen: _serverFailure,
   );
 
