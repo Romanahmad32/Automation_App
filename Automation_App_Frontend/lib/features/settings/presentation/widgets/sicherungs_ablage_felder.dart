@@ -22,9 +22,8 @@ class SicherungsAblageFelder extends StatelessWidget {
         dialogTitel: 'Ordner für die automatischen Sicherungen wählen',
         icon: Icons.backup_outlined,
         hinweisOhneOrdner:
-            'Ohne Ablageordner sichert die App nur auf Knopfdruck. Ein Ordner '
-            'im synchronisierten Bereich macht den Stand auf dem zweiten '
-            'Rechner verfügbar.',
+            'Ohne eigene Wahl sichert die App unter den Ordner für die '
+            'App-Daten. Fehlt auch der, sichert sie nur auf Knopfdruck.',
       ),
       SizedBox(height: 8),
       SynchronisierterOrdnerVorschlag(

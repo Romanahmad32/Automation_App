@@ -21,10 +21,21 @@ class SynchronisierterOrdnerVorschlag extends StatefulWidget {
   /// Unterordner unter dem erkannten OneDrive-Pfad.
   final String unterordner;
 
+  /// Was stattdessen dasteht, wenn **kein** synchronisierter Ordner erkennbar
+  /// ist. `null` heißt: gar nichts — richtig für die Felder, die ohnehin nur
+  /// eine Bequemlichkeit anbieten.
+  ///
+  /// Für den Ordner der App-Daten (#103) ist es umgekehrt: Dort ist der
+  /// Vorschlag der Regelweg, und sein Ausbleiben ist die Erklärung, warum
+  /// hier von Hand zu wählen ist. Ein leerer Fleck sähe aus wie ein Fehler
+  /// der App.
+  final String? hinweisOhneVorschlag;
+
   const SynchronisierterOrdnerVorschlag({
     super.key,
     required this.formControlName,
     required this.unterordner,
+    this.hinweisOhneVorschlag,
   });
 
   @override
@@ -42,13 +53,30 @@ class SynchronisierterOrdnerVorschlagState
   Widget build(BuildContext context) => FutureBuilder<String?>(
     future: _gesucht,
     builder: (context, ergebnis) {
-      final vorschlag = ergebnis.data;
       // Solange gesucht wird, steht hier nichts: Ein Platzhalter für einen
       // Knopf, den es vielleicht gar nicht gibt, liesse das Formular springen.
-      if (vorschlag == null) return const SizedBox.shrink();
+      // Deshalb wird der Suchstand abgefragt und nicht nur das Ergebnis — beim
+      // Warten ist es genauso null wie bei „nichts gefunden".
+      if (ergebnis.connectionState != ConnectionState.done) {
+        return const SizedBox.shrink();
+      }
+      final vorschlag = ergebnis.data;
+      if (vorschlag == null) return _hinweis(context);
       return _knopf(vorschlag);
     },
   );
+
+  Widget _hinweis(BuildContext context) {
+    final text = widget.hinweisOhneVorschlag;
+    if (text == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Text(
+      text,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.outline,
+      ),
+    );
+  }
 
   Widget _knopf(String vorschlag) {
     return ReactiveValueListenableBuilder<String>(

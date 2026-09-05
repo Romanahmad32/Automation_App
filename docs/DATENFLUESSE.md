@@ -155,10 +155,17 @@ davor schützt: die Frage selbst (sie nennt Rechner, Zeitpunkt und den eigenen S
 Vor-Import-Sicherung des Backends — und dass die Frage kommt, bevor irgendeine Ansicht Daten
 geladen hat.
 
-**Die dritte Naht — maschinenabhängige Pfade.** Aktenstammordner, Vorlagen-, Register- und
-Sicherungsordner überleben den Import mit den Werten *dieses* Rechners
-(`DatabaseBackupService.SchuetzeMaschinenPfadeAsync`). Der fremde Sicherungsordner wäre der
-schlimmste: Der Rechner legte danach seine Sicherungen woanders ab, als er sein Angebot liest.
+**Die dritte Naht — maschinenabhängige Pfade.** Fünf Ordnerfelder (App-Daten-, Akten-, Vorlagen-,
+Register- und Sicherungsordner) überleben den Import seit #103 **je nach Speicherform**, nicht
+mehr alle gleich (`DatabaseBackupService.SchuetzeMaschinenPfadeAsync`, `AppOrdnerPfad`): Ein
+**relativ mit Anker** gespeicherter Pfad (`%OneDriveCommercial%\Kanzlei App Daten`) kommt mit — er
+trägt keinen Benutzernamen und kein Laufwerk, sondern den Namen der Variable, die der
+OneDrive-Client auf jedem Rechner selbst setzt. Ein **absoluter** Pfad bleibt beim Wert *dieses*
+Rechners: Der fremde Sicherungsordner wäre der schlimmste, weil beide Rechner zwar denselben
+synchronisierten Ordner meinen, aber unter verschiedenen Pfaden — der Rechner legte danach seine
+Sicherungen woanders ab, als er sein Angebot liest. Fehlt der Anker eines übernommenen relativen
+Pfads auf diesem Rechner, wird trotzdem übernommen statt verworfen: Er wird richtig, sobald das
+Konto eingerichtet ist, und bis dahin sagt `GET api/Settings/ordner`, was fehlt.
 
 Und die Rückmeldung: Beim Beenden sieht niemand mehr zu, deshalb merkt sich jeder Lauf sein Ergebnis
 lokal (`letzte-sicherung.json`, neben der Datenbank statt darin — ein Import ersetzt die Datenbank).

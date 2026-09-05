@@ -10,6 +10,7 @@ import 'package:automation_app/features/mandanten/domain/repositories/mandanten_
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/settings/domain/entities/ordner_zustand.dart';
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -66,6 +67,10 @@ class _NichtGebrauchteSettings implements KanzleiSettingsRepository {
 
   @override
   Future<Either<Failure, KanzleiSettings>> erhoeheAuftragsnummer() =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, List<OrdnerZustand>>> ordnerZustand() =>
       throw UnimplementedError();
 }
 

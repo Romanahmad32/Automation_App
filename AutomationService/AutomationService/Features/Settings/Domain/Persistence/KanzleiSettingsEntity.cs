@@ -23,6 +23,29 @@ public class KanzleiSettingsEntity
     public int LaufendeAuftragsnummer { get; set; }
     public string Abteilung { get; set; } = string.Empty;
     public string TabellenkopfFarbeHex { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Der eine Ordner, unter dem die App alles ablegt, was sie ablegt (#103).
+    /// Darunter entstehen beim ersten Schreiben die Unterordner Vorlagen,
+    /// Register und Sicherungen (<c>AppDatenOrdnerVorgabe</c>); die drei
+    /// Einzelfelder daneben bleiben als Ausweg fuer den, dessen Vorlagen
+    /// anderswo liegen. Leer heisst: nicht gesetzt, dann gilt je Feld der
+    /// bisherige Rueckfall.
+    ///
+    /// Zur Speicherform gilt fuer alle fuenf Ordnerfelder dasselbe: absolut
+    /// (<c>C:\Daten\Akten</c>) oder relativ mit Anker
+    /// (<c>%OneDriveCommercial%\Kanzlei App Daten</c>). Gerechnet wird
+    /// ausschliesslich im Backend (<c>AppOrdnerPfad</c>) — das Frontend zeigt
+    /// nur den aufgeloesten Pfad an.
+    /// </summary>
+    public string AppDatenOrdner { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Stammordner der gewachsenen Aktenablage der Kanzlei (§6.1). Bleibt
+    /// bewusst eine eigene Wahl neben dem <see cref="AppDatenOrdner"/>: Die
+    /// rund 4000 vorhandenen Ordner (#19) gehoeren nicht unter einen neu
+    /// angelegten App-Ordner.
+    /// </summary>
     public string AktenStammordner { get; set; } = string.Empty;
 
     /// <summary>
@@ -43,35 +66,44 @@ public class KanzleiSettingsEntity
     public string MailSignaturHtml { get; set; } = string.Empty;
 
     /// <summary>
-    /// Zielordner des Register-Spiegels (§6.2, #40). Gedacht ist ein Ordner im
-    /// synchronisierten Bereich (OneDrive), damit das Register unterwegs lesbar
-    /// ist — gespeichert wird aber ein ganz gewoehnlicher Pfad: die App kennt
-    /// keine Cloud, sie legt eine Datei ab und der Client synchronisiert.
-    /// Leer heisst: kein Spiegel, der Export laeuft nur auf Knopfdruck.
+    /// Abweichender Zielordner des Register-Spiegels (§6.2, #40). Gedacht ist
+    /// ein Ordner im synchronisierten Bereich (OneDrive), damit das Register
+    /// unterwegs lesbar ist — die App kennt aber keine Cloud, sie legt eine
+    /// Datei ab und der Client synchronisiert.
+    ///
+    /// Leer heisst seit #103 nicht mehr „kein Spiegel", sondern
+    /// <c>&lt;AppDatenOrdner&gt;\Register</c>, und erst ohne den: kein Spiegel,
+    /// der Export laeuft nur auf Knopfdruck (<c>RegisterAblageVorgabe</c>).
     /// </summary>
     public string RegisterAblageOrdner { get; set; } = string.Empty;
 
     /// <summary>
-    /// Ordner, in dem die Word-Vorlagen des Anwalts liegen (#33). Leer heisst:
-    /// der App-Ordner unter %APPDATA% (<c>AppDataPaths.EnsureVorlagenDirectory</c>)
-    /// — der Stand vor dieser Einstellung. Maschinenabhaengig wie
-    /// <see cref="AktenStammordner"/>: wird beim Einspielen einer Sicherung
-    /// nicht uebernommen, denn ein Pfad des einen Rechners zeigt auf dem
-    /// anderen ins Leere.
+    /// Abweichender Ordner, in dem die Word-Vorlagen des Anwalts liegen (#33).
+    /// Leer heisst seit #103: <c>&lt;AppDatenOrdner&gt;\Vorlagen</c> — und ohne
+    /// den der App-Ordner unter %APPDATA%
+    /// (<c>AppDataPaths.EnsureVorlagenDirectory</c>), der Stand vor dieser
+    /// Einstellung.
+    ///
+    /// Ob der Wert beim Einspielen einer Sicherung uebernommen wird, haengt an
+    /// seiner Form, nicht mehr am Feld: relativ gespeichert ist er
+    /// maschinenunabhaengig und kommt mit, absolut zeigt er auf dem anderen
+    /// Rechner ins Leere und bleibt ausgenommen (#39, #103).
     /// </summary>
     public string VorlagenOrdner { get; set; } = string.Empty;
 
     /// <summary>
-    /// Ordner, in den die App beim Beenden selbsttaetig eine Sicherung legt
-    /// (§7.2, #39). Gedacht ist ein Ordner im synchronisierten Bereich: von dort
-    /// bietet der zweite Arbeitsplatz den Stand beim Oeffnen zur Uebernahme an.
-    /// Leer heisst: keine automatische Sicherung — wie beim
-    /// <see cref="RegisterAblageOrdner"/> schaltet der Ordner die Funktion ein.
+    /// Abweichender Ordner, in den die App beim Beenden selbsttaetig eine
+    /// Sicherung legt (§7.2, #39). Gedacht ist ein Ordner im synchronisierten
+    /// Bereich: von dort bietet der zweite Arbeitsplatz den Stand beim Oeffnen
+    /// zur Uebernahme an. Leer heisst seit #103:
+    /// <c>&lt;AppDatenOrdner&gt;\Sicherungen</c> — und erst ohne den keine
+    /// automatische Sicherung (<c>SicherungsAblageVorgabe</c>).
     ///
-    /// Maschinenabhaengig wie <see cref="AktenStammordner"/>: Der Pfad zu
-    /// <em>demselben</em> OneDrive-Ordner lautet auf jedem Rechner anders. Wuerde
-    /// er beim Einspielen mituebernommen, legte der zweite Rechner seine
-    /// Sicherungen woanders ab, als er sein Angebot liest.
+    /// Ein <em>absoluter</em> Pfad zu demselben OneDrive-Ordner lautet auf
+    /// jedem Rechner anders. Wuerde er beim Einspielen mituebernommen, legte
+    /// dieser Rechner seine Sicherungen woanders ab, als er sein Angebot liest;
+    /// deshalb bleibt er ausgenommen. Die relative Form traegt den Anker mit
+    /// und meint auf beiden Rechnern denselben Ordner — sie kommt mit (#103).
     /// </summary>
     public string SicherungsAblageOrdner { get; set; } = string.Empty;
 
