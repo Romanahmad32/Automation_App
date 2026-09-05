@@ -46,15 +46,16 @@ class UebergabeStand extends Equatable {
     final lauf = json['letzteSicherung'] as Map<String, dynamic>?;
     return UebergabeStand(
       angebot: angebot == null ? null : UebergabeAngebot.fromJson(angebot),
+      // `toLocal()`: der Dienst sendet mit Zeitzonenversatz, angezeigt wird Ortszeit.
       eigenerStandGesichertAm: DateTime.tryParse(
         json['eigenerStandGesichertAm'] as String? ?? '',
-      ),
+      )?.toLocal(),
       letzteSicherung: lauf == null ? null : LetzteSicherung.fromJson(lauf),
       ablageOrdner: json['ablageOrdner'] as String? ?? '',
       eigeneArchive: json['eigeneArchive'] as int? ?? 0,
       aeltestesArchiv: DateTime.tryParse(
         json['aeltestesArchiv'] as String? ?? '',
-      ),
+      )?.toLocal(),
     );
   }
 
