@@ -378,6 +378,30 @@ void main() {
       },
     );
 
+    // Der Regelfall im Produktivbestand: der Ordner trägt nur den Nachnamen.
+    // Landete der im Vornamenfeld, suchte `MandantenNamensindex.kandidaten`
+    // mit leerem Nachnamen, fände nichts — und der Dublettenhinweis im Paket
+    // wäre bei jedem echten Ordner leer.
+    test(
+      'baueArbeitspaket findet den Mandanten auch zu einem reinen Nachnamen',
+      () async {
+        await aufbau.close();
+        aufbau = MandantenTestaufbau(
+          register: [mandant(1, 'Albrecht', vorname: 'Anna')],
+          akten: [akte('VUnfallursache Albrecht')],
+        );
+        await aufbau.laden();
+
+        final paket = await aufbau.bloc.baueArbeitspaket(200);
+
+        final ordner = paket.ordner.single;
+        expect(ordner.nameVorschlagVorname, isEmpty);
+        expect(ordner.nameVorschlagNachname, 'Albrecht');
+        expect(ordner.bekannterMandant, 'Anna Albrecht');
+        expect(ordner.begruendung, isNotNull);
+      },
+    );
+
     test('schreibeUndVerbucheArbeitspaket schreibt, verbucht und aktualisiert '
         'die Historie', () async {
       await aufbau.close();

@@ -157,7 +157,7 @@ wo die Akten liegen, und kommt als Datei herein. **Das Format steht in
 
 ## Arbeitspakete und sichere Treffer (#108)
 
-Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die vier Fallen aus dem Bau.
+Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die Fallen aus dem Bau.
 
 - **`Clipboard.setData` hängt im Widget-Test.** Im `flutter_tester` gibt es keinen
   Zwischenablage-Eigentümer; der Aufruf auf `SystemChannels.platform` wird auf manchen Läufen nie
@@ -172,10 +172,25 @@ Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die vier Fa
   in `presentation/utils/` liegt und `domain` nicht auf `presentation` zeigen darf — dieselbe
   Schnittregel, der auch `ArbeitspaketBauen` folgt. Nicht in die Domain kopieren: Es gibt genau eine
   Präfixtabelle, und eine zweite Auslegung liefe beim nächsten Sonderfall auseinander.
-- **Der Namensvorschlag wird nicht nachgebessert.** `nameVorschlagAusOrdner` teilt am ersten
-  Leerzeichen; bei Ordnern der Form „Nachname, Vorname" sieht das Ergebnis schief aus. Statt hier
-  eine zweite Heuristik nachzuschieben, liefert das Arbeitspaket dem Agenten zusätzlich den rohen
-  Ordnernamen (`ArbeitspaketOrdner.ordnername`), damit er selbst entscheiden kann.
+- **Ein einzelnes Wort ist der Nachname, nicht der Vorname.** Die echten Aktenordner der Kanzlei
+  heißen `VUnfallursache <Nachname>` — nur der Nachname, kein Vorname, kein Komma; im eingestellten
+  Stammordner an 61 von 61 Ordnern belegt. `nameVorschlagAusOrdner` teilt am ersten Leerzeichen und
+  legt ein einzelnes Wort deshalb in den **Nachnamen**. Wer das umdreht, dreht drei Dinge auf einmal
+  ab: `SichereTreffer` bricht bei leerem Nachnamen ab und findet auf echten Daten ausnahmslos
+  nichts, `MandantenNamensindex.kandidaten` sucht mit leerer Zeichenkette und lässt
+  `ArbeitspaketOrdner.bekannterMandant` immer leer, und das Anlegen aus der Kachel belegt das
+  Vornamenfeld mit dem Nachnamen vor.
+- **Nachgebessert wird trotzdem nicht.** Keine Komma-Heuristik für „Nachname, Vorname" — die Ordner
+  geben das nicht her, und sie wäre eine zweite Auslegung derselben Präfixtabelle. Was der
+  Vorschlag nicht auflöst, entscheidet der Agent: Das Arbeitspaket liefert ihm den rohen
+  Ordnernamen (`ArbeitspaketOrdner.ordnername`) daneben.
+- **`SichereTreffer` verlangt ohne Vornamen einen im Register eindeutigen Nachnamen.** Der Nachname
+  bleibt Pflicht; ein fehlender Vorname ist zulässig, und der Vergleich prüft ihn nur, wenn der
+  Ordner einen liefert. „Beide exakt" wäre bei Ordnern ohne Vornamen prinzipiell unerfüllbar
+  gewesen — eine Regel, die nie zuschlägt, ist nicht streng, sondern wirkungslos. Die
+  Schadensrichtung (lieber übersehen als falsch zuordnen) trägt dann allein
+  `vorschlaege.length != 1`: zwei „Albrecht" im Register sind zwei Vorschläge, und weil
+  `MandantErkennung` auch Tippfehler-Nachbarn mitzählt, ist das eng genug.
 
 ## Ablage
 

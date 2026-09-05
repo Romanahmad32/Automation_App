@@ -38,11 +38,47 @@ void main() {
       expect(treffer.single.mandant, annaMeier);
     });
 
+    // Der Regelfall im Produktivbestand: die Ordner tragen **nur** den
+    // Nachnamen. Waere ein fehlender Vorname ein Ausschlussgrund, faende
+    // „Sichere Treffer uebernehmen" dort ausnahmslos nichts.
+    test('ein Ordner mit nur einem Nachnamen trifft den einen Eintrag', () {
+      final annaAlbrecht = mandant(6, 'Albrecht', vorname: 'Anna');
+
+      final treffer = finde(
+        ['VUnfallursache Albrecht'],
+        [annaAlbrecht, karlSchmidt],
+      );
+
+      expect(treffer, hasLength(1));
+      expect(treffer.single.ordnername, 'VUnfallursache Albrecht');
+      expect(treffer.single.mandant, annaAlbrecht);
+    });
+
+    // Die Eindeutigkeit traegt allein `vorschlaege.length != 1`, sobald der
+    // Ordner keinen Vornamen liefert: zwei „Albrecht" im Register sind zwei
+    // Personen, und welche hier gemeint ist, sagt der Ordnername nicht.
+    test('zwei gleiche Nachnamen sind ohne Vornamen kein sicherer Treffer', () {
+      final annaAlbrecht = mandant(6, 'Albrecht', vorname: 'Anna');
+      final ottoAlbrecht = mandant(7, 'Albrecht', vorname: 'Otto');
+
+      expect(
+        finde(['VUnfallursache Albrecht'], [annaAlbrecht, ottoAlbrecht]),
+        isEmpty,
+      );
+    });
+
     // „Schmitt" und „Schmidt" liegen einen Tippfehler auseinander. Fuer den
     // Hinweis „Meinten Sie …?" reicht das; fuer eine Zuordnung ohne Rueckfrage
     // nicht.
     test('ein Tippfehler-Treffer ist kein sicherer Treffer', () {
       expect(finde(['VUnfallursache Karl Schmitt'], [karlSchmidt]), isEmpty);
+    });
+
+    // Liefert der Ordner einen Vornamen, wird er unveraendert streng
+    // verglichen: „Karla" faengt mit „Karl" an und ergibt deshalb einen
+    // Vorschlag — ein sicherer Treffer ist es trotzdem nicht.
+    test('ein Tippfehler im Vornamen ist kein sicherer Treffer', () {
+      expect(finde(['VUnfallursache Karla Schmidt'], [karlSchmidt]), isEmpty);
     });
 
     test('zwei Vorschlaege sind kein sicherer Treffer', () {
@@ -68,13 +104,16 @@ void main() {
       expect(finde(['VUnfallursache HG-E 1427'], [halter]), isEmpty);
     });
 
-    test('ein Ordner ohne beide Namensteile ist kein sicherer Treffer', () {
-      expect(finde(['VUnfallursache Meier'], [annaMeier]), isEmpty);
-      expect(finde(['Buchhaltung'], [annaMeier]), isEmpty);
+    // Der Nachname bleibt Pflicht: ohne ihn gibt es nichts zu vergleichen,
+    // und der Namensindex liefert gar keine Kandidaten.
+    test('ein Ordner ohne Nachnamen ist kein sicherer Treffer', () {
+      expect(finde(['VUnfallursache'], [annaMeier]), isEmpty);
+      expect(finde(['Strafsache'], [annaMeier]), isEmpty);
     });
 
     test('ein Ordner ohne jeden Registerbezug bleibt liegen', () {
       expect(finde(['VUnfallursache Otto Fremd'], [annaMeier]), isEmpty);
+      expect(finde(['Buchhaltung'], [annaMeier]), isEmpty);
     });
 
     test('ohne Register gibt es keine sicheren Treffer', () {

@@ -235,10 +235,17 @@ wird dort von Hand entschieden. Der Import soll den Stapel klein machen, nicht e
 
 „Sichere Treffer übernehmen" erledigt den Teil der Zuordnung, für den kein Agent nötig ist. Die
 Definition ist eng und wird nicht aufgeweicht (`SichereTreffer.finde`): der Namensvorschlag aus dem
-Ordnernamen liefert einen nicht leeren Vor- **und** Nachnamen, `MandantErkennung.finde` liefert
-**genau einen** Vorschlag, und dieser stimmt in Vor- **und** Nachname nach Normalisierung **exakt**
-überein — kein Tippfehler-Treffer, kein Präfix-Treffer, kein reiner Kennzeichen-Treffer. Alles
-andere bleibt dem Agenten.
+Ordnernamen liefert einen nicht leeren **Nachnamen**, `MandantErkennung.finde` liefert **genau
+einen** Vorschlag, und dieser stimmt im Nachnamen nach Normalisierung **exakt** überein — im
+Vornamen ebenso, **sofern** der Ordner einen liefert. Kein Tippfehler-Treffer, kein Präfix-Treffer,
+kein reiner Kennzeichen-Treffer. Alles andere bleibt dem Agenten.
+
+**Der Vorname darf fehlen**, weil die echten Aktenordner der Kanzlei keinen tragen
+(`VUnfallursache <Nachname>`). „Beide exakt" wäre dort prinzipiell unerfüllbar gewesen — eine
+Regel, die auf dem Produktivbestand ausnahmslos nichts findet, sieht nur streng aus. Die
+Schadensrichtung bleibt gewahrt: Ohne Vornamen trägt die Eindeutigkeit allein „genau ein
+Vorschlag", und der zählt auch Tippfehler-Nachbarn mit — zwei „Albrecht" im Register sind zwei
+Vorschläge und damit kein sicherer Treffer.
 
 Der Vorschlag **baut keinen neuen Weg**: Er stellt aus den sicheren Treffern eine
 `MandantenImportDatei` im Arbeitsspeicher zusammen (`SichereTreffer.alsImportdatei`) und schickt sie

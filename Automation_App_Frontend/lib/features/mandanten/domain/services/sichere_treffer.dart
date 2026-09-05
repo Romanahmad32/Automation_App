@@ -29,11 +29,21 @@ class SichererTreffer extends Equatable {
 ///
 /// **„Sicher" ist eng gemeint und wird nicht aufgeweicht:**
 ///
-/// * der Namensvorschlag aus dem Ordnernamen liefert einen nicht leeren Vor-
-///   **und** Nachnamen,
+/// * der Namensvorschlag aus dem Ordnernamen liefert einen nicht leeren
+///   **Nachnamen** — ein Vorname darf fehlen,
 /// * [MandantErkennung.finde] liefert **genau einen** Vorschlag,
-/// * und dieser stimmt in Vor- **und** Nachname nach Normalisierung **genau**
-///   überein.
+/// * und dieser stimmt im Nachnamen nach Normalisierung **genau** überein; im
+///   Vornamen ebenso, **sofern** der Ordner einen liefert.
+///
+/// **Warum der Vorname fehlen darf.** Die echten Aktenordner der Kanzlei
+/// heißen `VUnfallursache <Nachname>` und tragen gar keinen Vornamen. „Beide
+/// exakt" wäre dort prinzipiell unerfüllbar — die Regel hätte auf dem
+/// Produktivbestand ausnahmslos nichts gefunden und damit nur so ausgesehen,
+/// als sei sie streng. Die Schadensrichtung bleibt trotzdem gewahrt: Fehlt der
+/// Vorname, trägt die Eindeutigkeit allein „**genau ein** Vorschlag", und
+/// dieser Vorschlag zählt auch Tippfehler-Nachbarn mit. Zwei „Albrecht" im
+/// Register — oder ein „Albrecht" neben einem „Albrccht" — sind damit zwei
+/// Vorschläge und kein sicherer Treffer.
 ///
 /// Alles andere — Tippfehler, Tippbeginn, ein reiner Kennzeichen-Treffer, zwei
 /// Vorschläge — ist kein sicherer Treffer und bleibt dem Agenten. Der Grund ist
@@ -97,7 +107,9 @@ class SichereTreffer {
   }) {
     final vorname = MandantErkennung.normalisiereName(vorschlag.vorname);
     final nachname = MandantErkennung.normalisiereName(vorschlag.nachname);
-    if (vorname.isEmpty || nachname.isEmpty) return null;
+    // Der Nachname bleibt Pflicht — ohne ihn gäbe es nichts zu vergleichen.
+    // Der Vorname darf fehlen: die echten Ordner tragen keinen.
+    if (nachname.isEmpty) return null;
 
     final kandidaten = index.kandidaten(nachname: vorschlag.nachname);
     if (kandidaten.isEmpty) return null;
@@ -109,12 +121,19 @@ class SichereTreffer {
       vorname: vorschlag.vorname,
       nachname: vorschlag.nachname,
     );
+    // Die ganze Eindeutigkeit, sobald der Ordner keinen Vornamen liefert:
+    // zwei Namensvettern im Register sind zwei Vorschläge und damit kein
+    // sicherer Treffer.
     if (vorschlaege.length != 1) return null;
 
     final mandant = vorschlaege.single.mandant;
+    // Der Vorname wird verglichen, **wenn** der Ordner einen liefert. Sonst
+    // verlangte die Prüfung eine Angabe, die der Ordnername gar nicht macht —
+    // und lehnte jeden echten Ordner ab.
     final passt =
-        MandantErkennung.normalisiereName(mandant.vorname) == vorname &&
-        MandantErkennung.normalisiereName(mandant.nachname) == nachname;
+        MandantErkennung.normalisiereName(mandant.nachname) == nachname &&
+        (vorname.isEmpty ||
+            MandantErkennung.normalisiereName(mandant.vorname) == vorname);
     return passt ? mandant : null;
   }
 
