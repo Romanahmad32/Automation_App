@@ -2,14 +2,20 @@ import 'package:automation_app/features/word_automation/domain/entities/standard
 import 'package:automation_app/features/word_automation/domain/repositories/standard_schadenspositionen_repository.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_editor.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_entwurf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Standardpositionen-Editor in den Einstellungen (§4.4): zeigt den
 /// geladenen Stand — auch wenn der Cubit beim Aufgehen schon geladen war —,
-/// speichert die komplette Liste und zeigt in der Vorschau, wie die
-/// Aufstellung damit startet.
+/// meldet den getippten Stand an den Entwurf der Seite und zeigt in der
+/// Vorschau, wie die Aufstellung damit startet.
+///
+/// Gespeichert wird seit Issue #106 nicht mehr hier: Der Knopf steht in der
+/// Kopfzeile des Reiters, seine Erwartungen stehen in
+/// `standardpositionen_settings_view_test.dart`. Was hier bleibt, ist die
+/// Übergabe dorthin — der Entwurf.
 class FakeStandardpositionenRepository
     implements StandardSchadenspositionenRepository {
   FakeStandardpositionenRepository(this.bestand);
@@ -40,11 +46,16 @@ void main() {
   String textIn(WidgetTester tester, Finder feld) =>
       tester.widget<TextField>(feld).controller!.text;
 
-  Future<void> zeigeEditor(
+  /// Hängt den Editor mit dem Entwurf auf, aus dem in der App der
+  /// Speichern-Knopf der Kopfzeile liest, und gibt ihn zurück: Er ist hier das
+  /// Prüfglas auf das, was der Editor nach oben meldet.
+  Future<StandardpositionenEntwurf> zeigeEditor(
     WidgetTester tester,
     FakeStandardpositionenRepository repository, {
     bool vorGeladen = false,
   }) async {
+    final entwurf = StandardpositionenEntwurf();
+    addTearDown(entwurf.dispose);
     final cubit = StandardpositionenCubit(repository);
     if (vorGeladen) {
       // Der Fall aus stand_nachziehen.dart: Der Bloc steht beim Mounten schon
@@ -56,14 +67,15 @@ void main() {
         home: Scaffold(
           body: BlocProvider.value(
             value: cubit..laden(),
-            child: const SingleChildScrollView(
-              child: StandardpositionenEditor(),
+            child: SingleChildScrollView(
+              child: StandardpositionenEditor(entwurf: entwurf),
             ),
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+    return entwurf;
   }
 
   const mietwagen = StandardSchadensposition(
@@ -92,21 +104,23 @@ void main() {
     expect(textIn(tester, bezeichnungsfeld(0)), 'Mietwagenkosten');
   });
 
-  testWidgets('Speichern übergibt die Zeilen mit geparstem Betrag', (
+  /// Was der Knopf in der Kopfzeile speichert, steht im Entwurf — mit
+  /// geparstem Betrag, nicht als getippter Text. Dass der Knopf ihn hinausgibt,
+  /// prüft `standardpositionen_settings_view_test.dart`.
+  testWidgets('der Entwurf trägt die Zeilen mit geparstem Betrag', (
     tester,
   ) async {
     final repository = FakeStandardpositionenRepository([mietwagen]);
-    await zeigeEditor(tester, repository);
+    final entwurf = await zeigeEditor(tester, repository);
 
     await tester.enterText(betragsfeld(0), '1.250,75');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Speichern'));
-    await tester.pumpAndSettle();
 
-    expect(repository.zuletztGespeichert, const [
+    expect(entwurf.positionen, const [
       StandardSchadensposition(bezeichnung: 'Mietwagenkosten', betrag: 1250.75),
     ]);
-    expect(find.text('Standardpositionen gespeichert.'), findsOneWidget);
+    expect(entwurf.beanstandet, isFalse);
+    expect(repository.zuletztGespeichert, isNull);
   });
 
   testWidgets('die Vorschau zeigt die Zeile im Dokument-Format', (
@@ -118,16 +132,19 @@ void main() {
     expect(find.text('412,50'), findsOneWidget);
   });
 
-  testWidgets('ein negativer Betrag sperrt das Speichern', (tester) async {
+  /// Der Editor sperrt nicht selbst — er meldet die Beanstandung, und der
+  /// Knopf in der Kopfzeile bleibt daraufhin zu (View-Test).
+  testWidgets('ein negativer Betrag wird im Entwurf beanstandet', (
+    tester,
+  ) async {
     final repository = FakeStandardpositionenRepository([mietwagen]);
-    await zeigeEditor(tester, repository);
+    final entwurf = await zeigeEditor(tester, repository);
 
     await tester.enterText(betragsfeld(0), '-250');
     await tester.pumpAndSettle();
 
     expect(find.text('Betrag darf nicht negativ sein'), findsOneWidget);
-    await tester.tap(find.text('Speichern'));
-    await tester.pumpAndSettle();
+    expect(entwurf.beanstandet, isTrue);
     expect(repository.zuletztGespeichert, isNull);
   });
 

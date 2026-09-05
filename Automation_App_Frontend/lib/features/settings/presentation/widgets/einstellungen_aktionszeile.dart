@@ -24,11 +24,26 @@ import 'package:flutter/material.dart';
 /// `TraegeIndexedStack` ohne Bewegung wechselt, sieht man davon nichts.
 class EinstellungenAktionszeile extends StatelessWidget {
   /// Rechts in der Zeile, üblicherweise der `SpeichernButton` des Reiters.
-  /// `null` heißt: Dieser Abschnitt speichert sofort beim Ändern (Darstellung,
-  /// Schadensaufstellung) oder speichert gar nichts (Über).
+  /// `null` heißt: Dieser Abschnitt speichert sofort beim Ändern
+  /// (Darstellung), trägt seine Aktionen im Inhalt statt in der Kopfzeile
+  /// (Datensicherung) oder speichert gar nichts (Über). Der Platz rechts
+  /// bleibt trotzdem frei — siehe [aktionsbreite].
   final Widget? aktion;
 
   const EinstellungenAktionszeile({super.key, this.aktion});
+
+  /// Breite, die rechts **immer** frei bleibt, auch auf Reitern ohne Knopf.
+  ///
+  /// Ohne diese Reservierung bekäme das `Expanded` links auf einem Reiter ohne
+  /// [aktion] die volle Breite, der `Wrap` bräche später um — und die Chips
+  /// sprängen beim Reiterwechsel an eine andere Stelle, je nachdem ob der
+  /// Reiter einen Speichern-Knopf hat (Issue #106). Mit der festen Breite hat
+  /// der `Wrap` auf jedem Reiter dieselbe Breite und bricht überall gleich um.
+  ///
+  /// Der Wert fasst einen `SpeichernButton(kompakt: true)` mit der
+  /// Beschriftung „Speichern" im App-Theme samt Luft; dass er das noch tut,
+  /// hält `test/features/settings/einstellungen_reiter_test.dart` fest.
+  static const double aktionsbreite = 220;
 
   /// Die Abschnitte in der Reihenfolge, in der `SettingsPage` ihre Ansichten
   /// aufhängt. **Beim Umsortieren beides mitpflegen** — hier steht die
@@ -63,7 +78,10 @@ class EinstellungenAktionszeile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Row(
           // Bricht die Auswahl auf schmalen Fenstern um, bleibt die Aktion an
-          // der ersten Zeile — sie soll nicht mit nach unten rutschen.
+          // der ersten Zeile — sie soll nicht mit nach unten rutschen. Ihr
+          // Platz steht dabei immer bereit, auch ohne Knopf: Sonst hinge die
+          // Breite der Auswahl daran, ob der offene Reiter speichert
+          // (siehe [aktionsbreite]).
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
@@ -76,7 +94,14 @@ class EinstellungenAktionszeile extends StatelessWidget {
                       builder: (context, _) => _auswahl(controller),
                     ),
             ),
-            if (aktion case final knopf?) ...[const SizedBox(width: 16), knopf],
+            const SizedBox(width: 16),
+            // Ohne [aktion] bleibt das Feld leer, aber es bleibt — `Align`
+            // ohne Kind ist genau so hoch wie nichts und so breit wie der
+            // reservierte Platz.
+            SizedBox(
+              width: aktionsbreite,
+              child: Align(alignment: Alignment.centerRight, child: aktion),
+            ),
           ],
         ),
       ),
