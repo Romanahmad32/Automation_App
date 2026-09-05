@@ -2,21 +2,20 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
-import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/app_eigene_platzhalter_liste.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_aenderungen.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_action_buttons.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/initial_template_form.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_fehler_melder.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slots.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_name_card.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_editor_kopf.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_stand_bereich.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_aktionen.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_dialog.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_hineinholen_angebot.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_verlassen_wache.dart';
 import 'package:flutter/material.dart';
@@ -47,11 +46,10 @@ class FormTemplateDetailsPage extends StatefulWidget
 }
 
 class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
-  List<FieldData> fields = [];
-  late FormGroup formGroup;
-  String? _wordFilePathOhne;
-  String? _wordFilePathMit;
-  int _nextFieldIndex = 0;
+  /// Der ganze veränderliche Stand des Editors. Die Seite hält ihn, ändert ihn
+  /// aber nie selbst: Jede Mutation liegt in [VorlagenBearbeitung], hier steht
+  /// nur das `setState` darum (#104).
+  late final VorlagenBearbeitung _bearbeitung;
 
   // Helper getter to determine the current mode
   bool get isEditing => widget.formTemplate != null;
@@ -59,22 +57,14 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _wordFilePathOhne = widget.formTemplate?.wordFilePathOhneAuflistung;
-    _wordFilePathMit = widget.formTemplate?.wordFilePathMitAuflistung;
-
-    final initial = InitialTemplateForm.fromTemplate(widget.formTemplate);
-    formGroup = initial.formGroup;
-    fields.addAll(initial.fields);
-    _nextFieldIndex = initial.nextFieldIndex;
+    _bearbeitung = VorlagenBearbeitung.fuer(widget.formTemplate);
 
     // Bei bereits verknüpften Word-Dateien die Platzhalter direkt laden. Als
     // Schleife über beide Slots statt zweimal derselbe Block: Der Editor
     // behandelt sie durchweg gleich, und der Platz gehört hier dem, was die
     // Seite wirklich unterscheidet.
-    for (final (pfad, slot) in [
-      (_wordFilePathOhne, TemplateFileSlot.ohneAuflistung),
-      (_wordFilePathMit, TemplateFileSlot.mitAuflistung),
-    ]) {
+    for (final slot in TemplateFileSlot.values) {
+      final pfad = _bearbeitung.pfad(slot);
       if (pfad == null) continue;
       context.read<TemplatePlaceholdersBloc>().add(
         LoadTemplatePlaceholders(pfad, slot),
@@ -82,123 +72,75 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     }
   }
 
-  void _reorderFields(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) newIndex--;
-      final field = fields.removeAt(oldIndex);
-      fields.insert(newIndex, field);
-    });
-  }
-
-  void _addNewField({String? initialLabel, bool required = false}) {
-    setState(() {
-      final fieldKey = 'field_${_nextFieldIndex++}';
-      formGroup.addAll({
-        fieldKey: FormControl<String>(
-          value: initialLabel,
-          validators: [Validators.required],
-        ),
-      });
-      // Feldtyp und Datenquelle aus dem Platzhalternamen vorschlagen — sichtbar
-      // im Dropdown und änderbar, nichts wird stillschweigend gebunden (§1.3).
-      fields.add(
-        FeldDatenquelleErkennung.neuesFeld(
-          order: fields.length,
-          controlKey: fieldKey,
-          platzhalter: initialLabel,
-          required: required,
-        ),
-      );
-    });
-  }
-
-  /// „Alle übernehmen" (#35 Teil 3): Die Chips liefern bereits nur, was
-  /// übernehmbar ist ([PlatzhalterUebernahme.uebernehmbare]). Die Felder
-  /// entstehen als Pflichtfelder — gefahrlos, weil die Pflicht beim Ausfüllen
-  /// je gewählter Word-Datei abgeleitet wird (Teil 2) und ein Feld ohne
-  /// Platzhalter dort nichts sperrt.
-  void _alleUebernehmen(List<String> placeholders) {
-    for (final placeholder in placeholders) {
-      _addNewField(initialLabel: placeholder, required: true);
-    }
-  }
-
-  /// Beide Wege der Zuordnung (#36) — sie arbeiten auf dem aktuellen Stand von
-  /// [fields] und [formGroup] und werden deshalb je Klick frisch gebaut.
+  /// Beide Wege der Zuordnung (#36) — sie arbeiten auf dem aktuellen Stand und
+  /// werden deshalb je Klick frisch gebaut.
   ZuordnungsAktionen get _zuordnung => ZuordnungsAktionen.ausZustand(
     context.read<TemplatePlaceholdersBloc>().state,
-    fields: fields,
-    formGroup: formGroup,
+    bearbeitung: _bearbeitung,
   );
 
+  /// Alle Änderungen an einer Feldzeile — wie [_zuordnung] je Klick frisch
+  /// gebaut.
+  FeldAenderungen get _aenderungen =>
+      FeldAenderungen(bearbeitung: _bearbeitung, onGeaendert: _neuAufbauen);
+
+  void _neuAufbauen() => setState(() {});
+
+  void _feldHinzufuegen({String? name, bool pflicht = false}) => setState(
+    () => _bearbeitung.feldHinzufuegen(name: name, pflicht: pflicht),
+  );
+
+  void _alleUebernehmen(List<String> platzhalter) =>
+      setState(() => _bearbeitung.alleUebernehmen(platzhalter));
+
+  void _verschiebe(int alterIndex, int neuerIndex) =>
+      setState(() => _bearbeitung.verschiebe(alterIndex, neuerIndex));
+
   /// Klick auf einen offenen Chip: Statt blind ein Feld anzulegen, fragt der
-  /// [ZuordnungsDialog] erst, ob ein vorhandenes gemeint ist (#36) —
+  /// `ZuordnungsDialog` erst, ob ein vorhandenes gemeint ist (#36) —
   /// `{{Verkehrsunfalldatum}}` neben einem Feld `Unfalldatum` ergäbe sonst ein
   /// zweites Feld, das der Anwalt zusätzlich tippt und das doch ins Leere geht.
-  Future<void> _addFieldFromPlaceholder(String placeholder) {
-    return _zuordnung.vomPlatzhalter(
-      context,
-      placeholder,
-      onNeuesFeld: () => _addNewField(initialLabel: placeholder),
-    );
-  }
+  Future<void> _addFieldFromPlaceholder(String placeholder) =>
+      _zuordnung.vomPlatzhalter(
+        context,
+        placeholder,
+        onNeuesFeld: () => _feldHinzufuegen(name: placeholder),
+      );
 
   /// Klick auf das Kennzeichen „in keiner Datei" einer Feldzeile — derselbe
   /// Dialog aus der anderen Richtung.
   Future<void> _feldZuordnen(int index) =>
-      _zuordnung.vomFeld(context, fields[index]);
+      _zuordnung.vomFeld(context, _bearbeitung.fields[index]);
 
   Future<void> _pickFile(TemplateFileSlot slot) async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['docx'],
     );
-    var path = result?.files.firstOrNull?.path;
-    if (path == null || !mounted) {
+    final gewaehlt = result?.files.firstOrNull?.path;
+    if (gewaehlt == null || !mounted) {
       return;
     }
     // Außerhalb des Vorlagenordners gewählte Dateien hineinholen (#33).
-    path = await VorlagenHineinholenAngebot.bieteAn(context, path);
+    final pfad = await VorlagenHineinholenAngebot.bieteAn(context, gewaehlt);
     if (!mounted) {
       return;
     }
-    setState(() {
-      if (slot == TemplateFileSlot.ohneAuflistung) {
-        _wordFilePathOhne = path;
-      } else {
-        _wordFilePathMit = path;
-      }
-    });
+    setState(() => _bearbeitung.setzePfad(slot, pfad));
     context.read<TemplatePlaceholdersBloc>().add(
-      LoadTemplatePlaceholders(path, slot),
+      LoadTemplatePlaceholders(pfad, slot),
     );
   }
 
   void _removeFile(TemplateFileSlot slot) {
-    setState(() {
-      if (slot == TemplateFileSlot.ohneAuflistung) {
-        _wordFilePathOhne = null;
-      } else {
-        _wordFilePathMit = null;
-      }
-    });
+    setState(() => _bearbeitung.setzePfad(slot, null));
     context.read<TemplatePlaceholdersBloc>().add(
       ClearTemplatePlaceholders(slot),
     );
   }
 
-  /// Alle Änderungen an einer Feldzeile — wie [_zuordnung] je Klick frisch
-  /// gebaut, weil sie auf dem aktuellen Stand von [fields] arbeiten.
-  FeldAenderungen get _aenderungen => FeldAenderungen(
-    fields: fields,
-    formGroup: formGroup,
-    onGeaendert: () => setState(() {}),
-  );
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(),
       body: PlatzhalterFehlerMelder(
@@ -221,13 +163,10 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
             // nichts aufgehen, was der Erfolgs-Pop oben sonst statt der Seite
             // träfe (siehe `VorlagenVerlassenWache.gesperrt`).
             return VorlagenVerlassenWache(
-              formGroup: formGroup,
-              fields: fields,
-              pfadOhneAuflistung: _wordFilePathOhne,
-              pfadMitAuflistung: _wordFilePathMit,
+              bearbeitung: _bearbeitung,
               gesperrt: state is SubmittingFormTemplateData,
               child: ReactiveForm(
-                formGroup: formGroup,
+                formGroup: _bearbeitung.formGroup,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 15.0,
@@ -237,31 +176,23 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 16,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          isEditing
-                              ? 'Vorlage bearbeiten'
-                              : 'Neue Vorlage erstellen',
-                          // `headlineSmall` statt `titleLarge` mit fester Größe:
-                          // Die Seitenüberschrift soll größer sein als ein
-                          // Sektionstitel, und die passende Rolle dafür wächst
-                          // mit der Schriftskala mit (Issue #57).
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      VorlagenEditorKopf(bearbeiten: isEditing),
 
                       const TemplateNameCard(),
 
                       TemplateFileSlots(
-                        pfadOhneAuflistung: _wordFilePathOhne,
-                        pfadMitAuflistung: _wordFilePathMit,
-                        fields: fields,
+                        bearbeitung: _bearbeitung,
                         onPick: _pickFile,
                         onRemove: _removeFile,
                         onPlaceholderSelected: _addFieldFromPlaceholder,
+                      ),
+
+                      // Unter den Dateien, über allem Weiteren: Was der
+                      // Vorlage fehlt, steht an **einer** Stelle statt als
+                      // Zählzeile je Datei (#104). In Stufe 3 wandert die
+                      // Karte in die linke Spalte.
+                      VorlagenStandBereich(
+                        bearbeitung: _bearbeitung,
                         onAlleUebernehmen: _alleUebernehmen,
                       ),
 
@@ -270,36 +201,50 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                       // warum (#31).
                       const AppEigenePlatzhalterListe(),
 
-                      TemplateFieldsCard(
-                        fields: fields,
-                        formGroup: formGroup,
-                        onAddField: _addNewField,
-                        onReorder: _reorderFields,
-                        onTypeChanged: _aenderungen.typ,
-                        onDatenquelleChanged: _aenderungen.datenquelle,
-                        onRequiredChanged: _aenderungen.pflicht,
-                        onVorbelegungChanged: _aenderungen.vorbelegung,
-                        onDelete: _aenderungen.loeschen,
-                        onZuordnen: _feldZuordnen,
+                      // Derselbe Weg wie VorlagenStandBereich: Der Stand
+                      // hängt vom TemplatePlaceholdersBloc UND vom Formular
+                      // ab — Umbenennen (Tippen, Zuordnungsdialog) läuft nur
+                      // über die FormGroup, ohne setState der Seite. Ohne den
+                      // ReactiveFormConsumer hinkten Filter und Zähler der
+                      // Karte jeder Umbenennung hinterher.
+                      BlocBuilder<
+                        TemplatePlaceholdersBloc,
+                        TemplatePlaceholdersState
+                      >(
+                        builder: (context, zustand) => ReactiveFormConsumer(
+                          builder: (context, _, _) => TemplateFieldsCard(
+                            fields: _bearbeitung.fields,
+                            formGroup: _bearbeitung.formGroup,
+                            onAddField: _feldHinzufuegen,
+                            onReorder: _verschiebe,
+                            onTypeChanged: _aenderungen.typ,
+                            onDatenquelleChanged: _aenderungen.datenquelle,
+                            onRequiredChanged: _aenderungen.pflicht,
+                            onVorbelegungChanged: _aenderungen.vorbelegung,
+                            onDelete: _aenderungen.loeschen,
+                            onZuordnen: _feldZuordnen,
+                            stand: _bearbeitung.stand(zustand),
+                            feldname: _bearbeitung.feldname,
+                          ),
+                        ),
                       ),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          FormTemplateActionButtons(
-                            // Über `maybePop`, damit die Wache dazwischengeht:
-                            // ohne Änderungen ist die Seite sofort weg, mit
-                            // Änderungen fragt sie erst. Und `false` statt des
-                            // früheren `true` — Abbrechen hat nichts geändert,
-                            // die Übersicht musste bisher grundlos neu laden.
-                            onCancel: () =>
-                                Navigator.of(context).maybePop(false),
-                            fields: fields,
-                            existingItemId: widget.formTemplate?.id,
-                            wordFilePathOhneAuflistung: _wordFilePathOhne,
-                            wordFilePathMitAuflistung: _wordFilePathMit,
-                          ),
-                        ],
+                      Align(
+                        alignment: Alignment.centerRight,
+                        // Über `maybePop`, damit die Wache dazwischengeht:
+                        // ohne Änderungen ist die Seite sofort weg, mit
+                        // Änderungen fragt sie erst. Und `false` statt des
+                        // früheren `true` — Abbrechen hat nichts geändert,
+                        // die Übersicht musste bisher grundlos neu laden.
+                        child: FormTemplateActionButtons(
+                          onCancel: () => Navigator.of(context).maybePop(false),
+                          fields: _bearbeitung.fields,
+                          existingItemId: widget.formTemplate?.id,
+                          wordFilePathOhneAuflistung:
+                              _bearbeitung.pfadOhneAuflistung,
+                          wordFilePathMitAuflistung:
+                              _bearbeitung.pfadMitAuflistung,
+                        ),
                       ),
                     ],
                   ),

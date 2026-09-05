@@ -4,24 +4,31 @@ import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/presentation/theme.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_stand.dart';
 import 'package:automation_app/features/form_template_setup/domain/usecases/get_template_placeholders.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/felder_spalten.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
-/// Bei `Schriftstufe.amGroessten` (Issue #57) und rund 700 px Inhaltsbreite
-/// (Notebook neben einer zweiten Spalte) lief die Felderkarte an drei Stellen
-/// über: die Kopfzeile mit dem „Neues Feld hinzufügen"-Knopf, der
-/// Tabellenkopf (Wörter brachen mitten durch) und die Feldzeile
-/// („ERFORDERLICH" überlappte den Löschen-Knopf). Ein `takeException()` deckt
-/// alle drei aus derselben Karte ab.
+/// Der Überlaufwächter der Felderkarte (Issue #57): Bei
+/// `Schriftstufe.amGroessten` und rund 700 px Inhaltsbreite (Notebook neben
+/// einer zweiten Spalte) lief sie an drei Stellen über — Kartenkopf,
+/// Tabellenkopf und Feldzeile.
 ///
-/// Liefert je Slot unterschiedliche Platzhalter, damit in der Feldzeile auch
-/// die Kennzeichen „beide" und „in keiner Datei" auftauchen (#35 Teil 3) —
-/// nicht nur die leere Karte ohne jedes Kennzeichen.
+/// Mit der neuen Feldzeile (#104) prüft er dieselbe Eigenschaft an anderer
+/// Gestalt. Die alten Erwartungen benannten die Kopfzeile Wort für Wort
+/// („BEZEICHNUNG" bricht nicht um, „ERFORDERLICH" steht dreimal) — beides gibt
+/// es nicht mehr: Die Aufschriften kommen jetzt aus [FelderSpalten], und die
+/// Pflichtspalte trägt nur noch eine Checkbox, weil ihre Überschrift im
+/// Tabellenkopf steht statt achtzehnmal in den Zeilen. Der Wächter liest die
+/// Aufschriften deshalb aus [FelderSpalten] und hält nicht länger Literale
+/// nach; was er sichert, ist unverändert: **kein Überlauf** bei 700 px und
+/// größter Schrift, und bei 1600 px steht jede Aufschrift ungekürzt da.
 class FestePlatzhalterJeSlot
     implements UseCase<List<String>, GetTemplatePlaceholdersParams> {
   @override
@@ -38,6 +45,12 @@ class FestePlatzhalterJeSlot
 /// Baut die Karte mit drei Feldern auf — Namen und Pflicht wie im
 /// Fehlerscreenshot — und pumpt sie in der angegebenen Fenstergröße und
 /// Schriftstufe.
+///
+/// Der Stand ist vollständig: Dann steht der Filter auf „Alle", alle drei
+/// Zeilen sind zu sehen, und die Auswahl im Kartenkopf ist trotzdem da. Ein
+/// Feld („Kennzeichen") kommt in keiner Datei vor und trägt deshalb die
+/// Warnung neben dem Namen — genau der Fall, der die breiteste Spalte
+/// zusätzlich belastet.
 Future<void> pumpeKarte(
   WidgetTester tester, {
   required Size fenstergroesse,
@@ -60,6 +73,7 @@ Future<void> pumpeKarte(
         TemplateFileSlot.mitAuflistung,
       ),
     );
+  addTearDown(bloc.close);
 
   final formGroup = FormGroup({
     'field_0': FormControl<String>(value: 'Versicherungsnummer'),
@@ -86,6 +100,13 @@ Future<void> pumpeKarte(
       inputType: InputType.text,
     ),
   ];
+  final stand = VorlagenStand.bestimme(
+    hatDateiOhne: true,
+    hatDateiMit: true,
+    platzhalterOhne: const ['Versicherungsnummer', 'Mandant'],
+    platzhalterMit: const ['Versicherungsnummer'],
+    feldnamen: const ['Versicherungsnummer', 'Kennzeichen', 'Mandant'],
+  );
 
   await tester.pumpWidget(
     MaterialApp(
@@ -102,12 +123,14 @@ Future<void> pumpeKarte(
               child: TemplateFieldsCard(
                 fields: fields,
                 formGroup: formGroup,
+                stand: stand,
                 onAddField: () {},
                 onReorder: (_, _) {},
                 onTypeChanged: (_, _) {},
                 onDatenquelleChanged: (_, _) {},
                 onRequiredChanged: (_, _) {},
                 onDelete: (_) {},
+                feldname: (key) => formGroup.control(key).value as String?,
               ),
             ),
           ),
@@ -116,7 +139,14 @@ Future<void> pumpeKarte(
     ),
   );
   await tester.pump();
+  await tester.pump();
 }
+
+/// Die Aufschriften des Tabellenkopfs — aus der Spaltenbeschreibung, nicht aus
+/// einer zweiten Liste hier.
+Iterable<String> aufschriften() => FelderSpalten.alle
+    .map((spalte) => spalte.beschriftung)
+    .where((text) => text.isNotEmpty);
 
 void main() {
   testWidgets(
@@ -129,17 +159,13 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Neues Feld hinzufügen'), findsOneWidget);
-
-      // Der Tabellenkopf brach Wörter wie „BEZEICHNUNG" sonst mitten durch
-      // (kein RenderFlex-Überlauf, deshalb hier gezielt geprüft statt über
-      // takeException).
-      final bezeichnung = tester.widget<Text>(find.text('BEZEICHNUNG'));
-      expect(bezeichnung.softWrap, isFalse);
-      expect(bezeichnung.overflow, TextOverflow.ellipsis);
-      final anforderung = tester.widget<Text>(find.text('ANFORDERUNG'));
-      expect(anforderung.softWrap, isFalse);
-      expect(anforderung.overflow, TextOverflow.ellipsis);
+      // Die Karte zeigt dabei wirklich alles, was Platz braucht: drei Zeilen,
+      // eine davon mit Warnung, dazu Filter und ⋯-Menü im Kopf.
+      expect(find.text('Felder (3)'), findsOneWidget);
+      expect(find.text('in keiner Datei'), findsOneWidget);
+      for (final text in aufschriften()) {
+        expect(find.text(text), findsOneWidget, reason: text);
+      }
     },
   );
 
@@ -153,9 +179,12 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      // Genug Platz: Die Beschriftung neben der Checkbox bleibt sichtbar,
-      // statt vorsorglich in jeder Fensterbreite zu verschwinden.
-      expect(find.text('ERFORDERLICH'), findsNWidgets(3));
+      // Genug Platz: Jede Aufschrift steht ungekürzt da, statt vorsorglich in
+      // jeder Fensterbreite mit Auslassung abgeschnitten zu werden.
+      for (final text in aufschriften()) {
+        final absatz = tester.renderObject<RenderParagraph>(find.text(text));
+        expect(absatz.didExceedMaxLines, isFalse, reason: text);
+      }
     },
   );
 }

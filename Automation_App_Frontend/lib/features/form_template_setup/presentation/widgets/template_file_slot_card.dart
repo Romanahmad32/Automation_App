@@ -17,10 +17,8 @@ class TemplateFileSlotCard extends StatelessWidget {
   final ValueChanged<String> onPlaceholderSelected;
 
   /// Die aktuell eingetragenen Feldnamen — durchgereicht an die Chips
-  /// (Optik „übernommen", Zählzeile, „Alle übernehmen"; #35 Teil 3).
+  /// (Optik „übernommen"; #35 Teil 3).
   final Iterable<String?> vorhandeneNamen;
-
-  final void Function(List<String> placeholders)? onAlleUebernehmen;
 
   const TemplateFileSlotCard({
     super.key,
@@ -32,7 +30,6 @@ class TemplateFileSlotCard extends StatelessWidget {
     required this.onRemove,
     required this.onPlaceholderSelected,
     this.vorhandeneNamen = const [],
-    this.onAlleUebernehmen,
   });
 
   @override
@@ -119,7 +116,6 @@ class TemplateFileSlotCard extends StatelessWidget {
                 slot: slot,
                 onPlaceholderSelected: onPlaceholderSelected,
                 vorhandeneNamen: vorhandeneNamen,
-                onAlleUebernehmen: onAlleUebernehmen,
               ),
           ],
         ),

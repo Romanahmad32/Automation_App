@@ -100,6 +100,57 @@ Platzhalter).
 - **Auslegung: Das gilt nicht umgekehrt.** Trägt ein Feld den Namen eines app-eigenen Platzhalters, der
   Platzhalter kommt in keiner Datei vor, warnt `VorlagenStand` trotzdem — die Ausnahme betrifft nur den
   Platzhalter (er braucht kein Feld), nicht ein Feld, das wirkungslos bleibt.
+- **`VorlagenStandKarte` (`presentation/widgets/`) zeigt diese Rechnung jetzt an einer Stelle** unter den
+  Datei-Slots (#104 Stufe 2) und ersetzt die zwei Zählzeilen, die bis dahin unter jeder `PlatzhalterChips`-Liste
+  standen: eine rote Warnzeile und ein „14 von 18 übernommen", je Word-Datei getrennt gezählt. Bei zwei
+  verknüpften Dateien las der Anwalt vier Zahlen, von denen keine für die Vorlage als Ganzes galt — derselbe
+  Platzhalter in beiden Dateien zählte doppelt. Die Karte liest dieselbe `VorlagenStand`-Rechnung wie die
+  Feldertabelle und zählt ihn einmal; „Alle übernehmen" lebt seither nur noch hier, nicht mehr unter den Chips.
+
+## Feldzeile und Tabelle
+
+`FelderSpalten` (`presentation/widgets/`) ist **die eine** Spaltenbeschreibung der Feldertabelle (#104 Stufe 2):
+Tabellenkopf (`TemplateFieldsTableHeader`) und Feldzeile (`TemplateFieldItem`) bauen beide über
+`FelderSpalten.zeile(...)` aus derselben Liste. Vorher stand die Aufteilung zweimal da — eine Flex-Liste im
+Tabellenkopf, eine zweite in der Feldzeile, dazu je eigene Platzhalter für Ziehgriff und Löschen-Knopf. Die beiden
+liefen bei jeder Änderung auseinander: Der Kopf „ANFORDERUNG" stand irgendwann über der Datenquelle, weil nur eine
+der beiden Listen angepasst wurde. `FelderSpalten.zeile` besteht per `assert` darauf, dass Kopf und Zeile gleich
+viele Zellen liefern.
+
+- **Alles Seltene liegt im Aufklapper** (`FeldAufklappInhalt`): die Datums-Vorbelegung und `FeldNameHinweis`.
+  Zugeklappt ist jede Zeile gleich hoch (`FelderSpalten.zeilenHoehe`, Mindest- nicht Festhöhe wegen der
+  Schriftskala, Issue #57). Vorher stand beides **immer** unter der Zeile — bei achtzehn Feldern verschwand die
+  eine Zeile mit dem Hinweis in siebzehn ohne Inhalt.
+- **Der Chevron schaltet ab, wenn `FeldAufklappInhalt.hatInhalt` `false` liefert** — ein Knopf, der eine leere
+  Fläche öffnet, ist eine Enttäuschung. Eine Zeile geht **offen** auf, wenn ihr Name mehrdeutig ist (dieselbe
+  Regel wie bei „Zu prüfen" unten): Das ist ein Befund, den der Anwalt sehen muss, kein Angebot, das er suchen
+  muss. Klappt er sie zu, gewinnt seine Entscheidung über den Vorschlag, bis die Zeile neu aufgebaut wird.
+- **`DatumsVorbelegungEditor` braucht einen `ValueKey`, der am Feld hängt, nicht an der Position.** Er ist ein
+  `StatefulWidget` mit vier `TextEditingController`n, und beim Zu-/Aufklappen wechselt seine Stelle im Baum. Ohne
+  eigenen Schlüssel gliche Flutter ihn gegen ein anderes Widget derselben Art ab — die Eingabe des Anwalts stünde
+  dann in der falschen Zeile.
+- **Nur noch ein Vorkommens-Kennzeichen: „in keiner Datei"** (`FeldVorkommenPille` in `feld_bezeichnung_zelle.dart`,
+  ausgelöst über `FeldVorkommenBeobachter`). Vorher zeigte `FeldVorkommenBadge` alle vier Werte aus
+  `FeldVorkommen` — *beide · nur HGN · nur Auflistung · in keiner Datei*. Die ersten drei waren reine Auskunft und
+  standen an **jeder** Zeile, ohne dass der Anwalt je etwas damit tat: Achtzehn Kennzeichen, die sagen, dass
+  alles in Ordnung ist, verstecken das eine, das es nicht ist. `FeldVorkommen` selbst bleibt vierwertig
+  (`feld_vorkommen_test.dart` prüft weiter alle vier Werte) — nur die Anzeige zeigt jetzt ausschließlich den
+  Befund, der etwas kostet und zugleich der Weg zur Reparatur ist (Klick öffnet die Zuordnung, #36).
+- **`FelderFilter`** (`domain/services/`) sagt, welche Feldzeilen sichtbar sind — *Alle · Nur offene · Zu
+  prüfen*. Die Regeln stehen bewusst dort und nicht im Widget: „offen" ist `VorlagenStand.felderOhneVorkommen`
+  (siehe oben), „zu prüfen" ist **dieselbe Bedingung wie `FeldNameHinweis`** — ein mehrdeutiger Name
+  (`FeldDatenquelleErkennung.erkenne(name).hinweis` ist gesetzt) **und** keine Datenquelle gewählt. Eine zweite
+  Regel danebenzustellen hieße, dass der Filter etwas anderes zählt, als die Zeile darunter zeigt.
+  `FelderFilter.start` öffnet die Karte auf „Nur offene", solange die Vorlage unvollständig ist, sonst auf „Alle".
+- **Bei aktivem Filter ist Umsortieren gesperrt** (`umsortierenMoeglich` an `TemplateFieldItem`, gesetzt aus
+  `_filter == FelderFilter.alle` in `TemplateFieldsCard`): Die Liste zeigt dann eine Auswahl, und der Index, den
+  der Ziehgriff der `ReorderableListView` meldet, ist der Index in dieser Auswahl, nicht im Feldbestand — ein Zug
+  verschöbe das Feld an eine Stelle, die der Anwalt gar nicht sieht. Der Griff bleibt sichtbar, nur grau und mit
+  erklärendem Tooltip, statt zu verschwinden.
+- **Das Häkchen vor der gewählten Filter-Aufschrift bleibt an** (`SegmentedButton.selected`, bewacht von
+  `auswahl_sichtbar_test.dart`): Es ist die einzige Markierung, die auch bei geringem Farbkontrast trägt. Den
+  Platz bei der größten Schriftstufe (Issue #57) löst das `Flexible` um den Knopf, nicht das Abschalten des
+  Häkchens.
 
 ## Vorbelegung der Datumsfelder
 
@@ -178,6 +229,29 @@ jeweils aktuellen Stand.
   während der laufenden Anfrage Abbrechen drücken, die Verwerfen-Frage stünde offen, und der
   Erfolgs-`pop(true)` träfe den Dialog statt der Seite — die Seite meldete dann `false`, obwohl
   gespeichert wurde. Gesperrt kann kein Dialog offen sein, wenn der Erfolg eintrifft.
+
+## VorlagenBearbeitung
+
+`VorlagenBearbeitung` (`presentation/widgets/`) hält den veränderlichen Stand des Editors — `FormGroup`,
+Feldliste, beide Word-Pfade, `nextFieldIndex` — und jede Mutation darauf. Aus `form_template_details_page.dart`
+herausgezogen (#104 Stufe 2), wie zuvor schon `FeldAenderungen` und `ZuordnungsAktionen`: Die Seite stand mit der
+neuen Feldzeile am Zeilenbudget.
+
+- **Grund ist das Zeilenbudget** (`file_length_test.dart`, 250 Anweisungszeilen handgeschrieben): Ohne die
+  Auslagerung hätte die Detailseite es gerissen. `FeldAenderungen`, `ZuordnungsAktionen`, `TemplateFileSlots` und
+  `VorlagenVerlassenWache` nehmen jetzt eine `VorlagenBearbeitung`-Instanz statt einzelner Parameter — was die
+  Seite zusammensetzt, bleibt auf der Seite; was sich am Stand ändert, liegt hier.
+- **`feldname(controlKey)` ist die eine Stelle, die `field_n` zum echten Namen auflöst** — sie liest den **Wert**
+  des Controls, nicht `FieldData.label` (siehe oben, „Vom Namen zur Datenquelle"). `FelderFilter`,
+  `TemplateFieldItem` und `VorlagenStand` (über `feldnamen`) rufen alle dieselbe Methode; ohne sie baute sich
+  jede Stelle die Auflösung einzeln, mit dem Risiko, dass eine davon `FieldData.label` direkt läse und wieder auf
+  `field_0` statt auf den echten Namen liefe.
+- **Keine Widget-Abhängigkeit**: Die Methoden ändern nur `fields`, `formGroup` und die Pfade und geben nichts
+  Anzeigbares zurück — die Seite ruft sie und baut danach mit `setState` neu auf. Deshalb kommt
+  `vorlagen_bearbeitung_test.dart` ohne `WidgetTester` aus und prüft jede Mutation für sich.
+- **Die Objekte sind veränderlich und geteilt, nicht kopiert**: `fields` ist dieselbe Liste, die die Karten zu
+  sehen bekommen, `formGroup` dasselbe Formular. `VorlagenVerlassenWache` und die Chips bauen genau darauf — eine
+  Kopie hier hieße, dass sie auf einem veralteten Stand verglichen.
 
 ## Zustand
 

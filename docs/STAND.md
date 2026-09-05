@@ -134,9 +134,19 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   noch fehlt: `VorlagenStand` zählt Platzhalter ohne Feld, Felder ohne Vorkommen (nur Warnung) und die
   Vollständigkeit über beide Word-Dateien zusammen, statt sie wie bisher getrennt und damit doppelt zu
   zählen. Beim Verlassen der Detailseite mit ungespeicherten Änderungen fragt `VorlagenVerlassenWache`
-  nach (§1.3), erkannt am Schnappschuss `VorlagenEntwurf` gegen den Stand beim Öffnen. **Noch offen
-  (§5.3):** die Feldzeile als Tabelle, die zweispaltige Ansicht mit Datei-zuerst-Ablauf im Editor,
-  sowie Kennzeichen und Duplizieren in der Vorlagenübersicht — folgen in weiteren Stufen.
+  nach (§1.3), erkannt am Schnappschuss `VorlagenEntwurf` gegen den Stand beim Öffnen.
+- **Vorlageneditor, Stufe 2 „Feldzeile und Tabelle" (Issue #104, 06.09.2026)** — Kopfzeile und Feldzeile
+  bauen aus **einer** Spaltenbeschreibung (`FelderSpalten`) statt aus zwei unabhängigen Listen; Seltenes
+  (Datums-Vorbelegung, mehrdeutiger Name) liegt im Aufklapper der Zeile (`FeldAufklappInhalt`), zugeklappt
+  bleiben alle Zeilen gleich hoch. Ein Filter über der Tabelle (`FelderFilter`: Alle / Nur offene / Zu
+  prüfen) blendet auf das Wesentliche; bei aktivem Filter ist Umsortieren gesperrt. Das
+  Vorkommens-Kennzeichen an der Feldzeile zeigt nur noch „in keiner Datei" — die drei anderen Auskünfte
+  ohne eigene Handlung sind entfallen. `VorlagenStandKarte` zeigt die Vollständigkeitsrechnung aus Stufe 1
+  jetzt an einer Stelle unter den Datei-Slots und ersetzt die Zählzeilen, die vorher unter jeder
+  Platzhalter-Chip-Liste standen. **Noch offen (§5.3):** die zweispaltige Ansicht mit Datei-zuerst-Ablauf,
+  ein sticky Tabellenkopf mit Virtualisierung für lange Feldlisten, ein Abgleich-Dialog zwischen den
+  beiden Word-Dateien, sowie Kennzeichen und Duplizieren in der Vorlagenübersicht — folgen in weiteren
+  Stufen.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
