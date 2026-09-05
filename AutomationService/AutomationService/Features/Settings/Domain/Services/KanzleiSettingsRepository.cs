@@ -79,6 +79,7 @@ public sealed class KanzleiSettingsRepository(AutomationDbContext db)
         target.LaufendeAuftragsnummer = source.LaufendeAuftragsnummer;
         target.Abteilung = source.Abteilung;
         target.TabellenkopfFarbeHex = source.TabellenkopfFarbeHex;
+        target.AppDatenOrdner = source.AppDatenOrdner;
         target.AktenStammordner = source.AktenStammordner;
         target.MailSignatur = source.MailSignatur;
         target.MailSignaturHtml = source.MailSignaturHtml;

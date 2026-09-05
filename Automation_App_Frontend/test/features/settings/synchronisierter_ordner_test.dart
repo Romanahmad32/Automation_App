@@ -102,6 +102,67 @@ void main() {
     );
   });
 
+  /// Für den einen Ordner der App-Daten (#103) reicht der Pfad nicht: Zum
+  /// relativ abgelegten Ordner gehört der Anker, sonst löst derselbe Pfad auf
+  /// einem Rechner mit anderem Konto still in einem anderen Baum auf.
+  test('liefert Wurzel und Variable, gegen die gerechnet wurde', () async {
+    final wurzel = await SynchronisierterOrdner.sucheWurzel(
+      umgebung: {'OneDriveConsumer': r'C:\Users\anwalt\OneDrive-privat'},
+      existiert: alleDa([]),
+    );
+
+    expect(wurzel?.variable, 'OneDriveConsumer');
+    expect(
+      wurzel?.pfad,
+      r'C:\Users\anwalt\OneDrive-privat',
+      reason: 'Die Wurzel selbst, ohne Unterordner — den hängt suche() an.',
+    );
+  });
+
+  test('nimmt auch bei der Wurzel das Geschäftskonto zuerst', () async {
+    final wurzel = await SynchronisierterOrdner.sucheWurzel(
+      umgebung: {
+        'OneDrive': r'C:\Users\anwalt\OneDrive',
+        'OneDriveConsumer': r'C:\Users\anwalt\OneDrive-privat',
+        'OneDriveCommercial': r'C:\Users\anwalt\OneDrive - Kanzlei',
+      },
+      existiert: alleDa([]),
+    );
+
+    expect(wurzel?.variable, 'OneDriveCommercial');
+    expect(wurzel?.pfad, r'C:\Users\anwalt\OneDrive - Kanzlei');
+  });
+
+  test('liefert keine Wurzel, wenn kein OneDrive erkennbar ist', () async {
+    expect(
+      await SynchronisierterOrdner.sucheWurzel(
+        umgebung: const {},
+        existiert: alleDa([]),
+      ),
+      isNull,
+      reason:
+          'Dann steht im Formular ein Hinweis statt eines Vorschlags — die App '
+          'drängt niemanden in die Cloud.',
+    );
+  });
+
+  /// Der Vorschlag für die eine Ordnerwahl: ein Ordner mit sprechendem Namen
+  /// in der Wurzel der Synchronisierung, kein Unterordner eines Unterordners.
+  test('schlägt den Ordner für die App-Daten in der Wurzel vor', () async {
+    final vorschlag = await SynchronisierterOrdner.suche(
+      unterordner: SynchronisierterOrdner.appDatenUnterordner,
+      umgebung: {'OneDriveCommercial': r'C:\Users\anwalt\OneDrive - Kanzlei'},
+      existiert: alleDa([]),
+    );
+
+    expect(
+      vorschlag,
+      r'C:\Users\anwalt\OneDrive - Kanzlei'
+      '${Platform.pathSeparator}'
+      'Kanzlei App Daten',
+    );
+  });
+
   /// Register-Spiegel und Sicherungen liegen im selben synchronisierten
   /// Bereich, aber nicht im selben Ordner: Das eine wird gelesen, das andere
   /// soll niemand anfassen (§7.2, #39).

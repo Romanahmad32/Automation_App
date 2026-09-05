@@ -7,6 +7,12 @@ namespace AutomationService.Features.Settings.Presentation.Dtos;
 /// Übertragungsformat der Kanzlei-Einstellungen. Die PascalCase-Properties werden
 /// von ASP.NET Core als camelCase serialisiert und passen damit 1:1 zum JSON der
 /// Flutter-Entität <c>KanzleiSettings</c> (personentyp, strasseHausnummer, …).
+///
+/// Hier liegt seit #103 die Umrechnungsgrenze der fünf Ordnerpfade — dieselbe
+/// Arbeitsteilung wie bei den Word-Pfaden (#33, <c>FormTemplatesController</c>):
+/// hinaus gehen sie <em>aufgelöst</em>, hinein kommende werden relativ zum
+/// synchronisierten Wurzelordner gespeichert, wenn sie darunter liegen. Das
+/// Frontend rechnet nie um; es zeigt an, was es bekommt, und schickt es zurück.
 /// </summary>
 public sealed record KanzleiSettingsDto(
     string Personentyp,
@@ -19,6 +25,7 @@ public sealed record KanzleiSettingsDto(
     int LaufendeAuftragsnummer,
     string Abteilung,
     string TabellenkopfFarbeHex,
+    string AppDatenOrdner,
     string AktenStammordner,
     string MailSignatur,
     string MailSignaturHtml,
@@ -29,7 +36,15 @@ public sealed record KanzleiSettingsDto(
     string VorlagenOrdner,
     string SicherungsAblageOrdner)
 {
-    public static KanzleiSettingsDto From(KanzleiSettingsEntity e) => new(
+    /// <inheritdoc cref="From(KanzleiSettingsEntity, Func{string, string?})"/>
+    public static KanzleiSettingsDto From(KanzleiSettingsEntity e) =>
+        From(e, AppOrdnerPfad.Umgebung);
+
+    /// <summary>
+    /// Anzeigeform: Jeder Ordnerpfad geht aufgelöst hinaus, damit die
+    /// Oberfläche zeigen kann, wo der Ordner auf <em>diesem</em> Rechner liegt.
+    /// </summary>
+    public static KanzleiSettingsDto From(KanzleiSettingsEntity e, Func<string, string?> umgebung) => new(
         e.Personentyp,
         e.Name,
         e.StrasseHausnummer,
@@ -40,17 +55,40 @@ public sealed record KanzleiSettingsDto(
         e.LaufendeAuftragsnummer,
         e.Abteilung,
         e.TabellenkopfFarbeHex,
-        e.AktenStammordner,
+        Anzeigeform(e.AppDatenOrdner, umgebung),
+        Anzeigeform(e.AktenStammordner, umgebung),
         e.MailSignatur,
         e.MailSignaturHtml,
-        e.RegisterAblageOrdner,
+        Anzeigeform(e.RegisterAblageOrdner, umgebung),
         e.RegisterDateiname,
         e.RegisterNachAbschlussSchreiben,
         e.RegisterExportFilter,
-        e.VorlagenOrdner,
-        e.SicherungsAblageOrdner);
+        Anzeigeform(e.VorlagenOrdner, umgebung),
+        Anzeigeform(e.SicherungsAblageOrdner, umgebung));
 
-    public KanzleiSettingsEntity ToEntity() => new()
+    /// <inheritdoc cref="ToEntity(KanzleiSettingsEntity?, Func{string, string?})"/>
+    public KanzleiSettingsEntity ToEntity() => ToEntity(null, AppOrdnerPfad.Umgebung);
+
+    /// <inheritdoc cref="ToEntity(KanzleiSettingsEntity?, Func{string, string?})"/>
+    public KanzleiSettingsEntity ToEntity(Func<string, string?> umgebung) => ToEntity(null, umgebung);
+
+    /// <inheritdoc cref="ToEntity(KanzleiSettingsEntity?, Func{string, string?})"/>
+    public KanzleiSettingsEntity ToEntity(KanzleiSettingsEntity? bisher) => ToEntity(bisher, AppOrdnerPfad.Umgebung);
+
+    /// <summary>
+    /// Speicherform: Jeder Ordnerpfad, der unter dem synchronisierten
+    /// Wurzelordner liegt, wird auf <c>%Var%\Rest</c> verkürzt — sonst bleibt
+    /// er absolut.
+    ///
+    /// <paramref name="bisher"/> ist der zuletzt gespeicherte Einstellungssatz
+    /// (vor diesem Speichern geladen) — gegen Anker-Drift: Er kommt hier als
+    /// aufgelöster absoluter Pfad hinein (<see cref="From(KanzleiSettingsEntity,
+    /// Func{string, string?})"/>) und würde ohne den bisherigen gespeicherten
+    /// Wert je Feld bei jedem Speichern neu gegen die Vorzugsreihenfolge
+    /// geprüft, siehe <see cref="AppOrdnerPfad.MacheRelativ(string?, string?,
+    /// Func{string, string?})"/>.
+    /// </summary>
+    public KanzleiSettingsEntity ToEntity(KanzleiSettingsEntity? bisher, Func<string, string?> umgebung) => new()
     {
         Id = KanzleiSettingsEntity.SingletonId,
         Personentyp = Personentyp,
@@ -63,16 +101,29 @@ public sealed record KanzleiSettingsDto(
         LaufendeAuftragsnummer = LaufendeAuftragsnummer,
         Abteilung = Abteilung,
         TabellenkopfFarbeHex = TabellenkopfFarbeHex,
-        AktenStammordner = AktenStammordner,
+        AppDatenOrdner = AppOrdnerPfad.MacheRelativ(AppDatenOrdner, bisher?.AppDatenOrdner, umgebung),
+        AktenStammordner = AppOrdnerPfad.MacheRelativ(AktenStammordner, bisher?.AktenStammordner, umgebung),
         MailSignatur = MailSignatur,
         MailSignaturHtml = MailSignaturHtml,
-        RegisterAblageOrdner = RegisterAblageOrdner,
+        RegisterAblageOrdner = AppOrdnerPfad.MacheRelativ(RegisterAblageOrdner, bisher?.RegisterAblageOrdner, umgebung),
         RegisterDateiname = RegisterDateiname,
         RegisterNachAbschlussSchreiben = RegisterNachAbschlussSchreiben,
         RegisterExportFilter = GespeicherterFilter(RegisterExportFilter),
-        VorlagenOrdner = VorlagenOrdner,
-        SicherungsAblageOrdner = SicherungsAblageOrdner,
+        VorlagenOrdner = AppOrdnerPfad.MacheRelativ(VorlagenOrdner, bisher?.VorlagenOrdner, umgebung),
+        SicherungsAblageOrdner = AppOrdnerPfad.MacheRelativ(SicherungsAblageOrdner, bisher?.SicherungsAblageOrdner, umgebung),
     };
+
+    /// <summary>
+    /// Der aufgelöste Pfad — oder, wenn er sich hier nicht auflösen lässt, die
+    /// Speicherform unverändert.
+    ///
+    /// Das ist Absicht und kein Notbehelf: Ein Ordner, dessen Anker auf diesem
+    /// Rechner fehlt, darf nicht als leeres Feld erscheinen, sonst überschriebe
+    /// das nächste Speichern eine gültige Einstellung des anderen Rechners mit
+    /// nichts. Was daran fehlt, sagt <c>GET api/Settings/ordner</c>.
+    /// </summary>
+    static string Anzeigeform(string gespeichert, Func<string, string?> umgebung) =>
+        AppOrdnerPfad.LoeseAuf(gespeichert, umgebung) ?? gespeichert.Trim();
 
     /// <summary>
     /// Legt den Filter auf einen der beiden bekannten Werte fest, bevor er in

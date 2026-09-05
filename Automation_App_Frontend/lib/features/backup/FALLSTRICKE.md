@@ -58,3 +58,22 @@ den eigenen Stand daneben; das Backend legt vor dem Einspielen eine vollständig
 bisherigen Standes an; und die Frage kommt, bevor irgendeine Ansicht Daten geladen hat. Scheitert
 die Übernahme, bleibt der Bildschirm stehen — das Backend spielt alles oder nichts ein, der eigene
 Stand ist dann unberührt.
+
+## Bei der Übernahme kommt mit, was relativ gespeichert ist — nicht, was absolut ist
+
+Seit #103 unterscheidet `DatabaseBackupService.SchuetzeMaschinenPfadeAsync` nicht mehr nach Feld,
+sondern nach **Speicherform** (`AppOrdnerPfad`): Ein Ordnerpfad, der relativ zum
+OneDrive-Wurzelordner mit festgehaltenem Anker steht (`%OneDriveCommercial%\Kanzlei App Daten`),
+kommt aus der eingespielten Sicherung mit — er trägt keinen Benutzernamen und kein Laufwerk, nur
+den Namen der Variable, die der OneDrive-Client auf jedem Rechner selbst setzt. Ein absoluter Pfad
+bleibt dagegen beim Wert *dieses* Rechners: Beide Rechner meinen zwar denselben synchronisierten
+Ordner, aber unter verschiedenen Pfaden — der fremde Sicherungsordner wäre der schlimmste, weil
+dieser Rechner seine Sicherungen danach woanders ablegte, als er sein eigenes Übernahme-Angebot
+liest. Betroffen sind alle fünf Ordnerfelder gleich (App-Daten-, Akten-, Vorlagen-, Register- und
+Sicherungsordner), nicht nur die Sicherungsablage.
+
+Fehlt der Anker eines übernommenen relativen Pfads auf diesem Rechner (kein passendes
+OneDrive-Konto eingerichtet), wird er **trotzdem** übernommen, nicht verworfen: Der Pfad wird
+richtig, sobald das Konto eingerichtet ist, und bis dahin sagt `GET api/Settings/ordner` (Zustand
+`ankerFehlt`), was fehlt. Ihn zu verwerfen wäre stiller Datenverlust an einer Lage, die sich von
+selbst behebt, sobald der Anwalt das zweite Konto einrichtet.
