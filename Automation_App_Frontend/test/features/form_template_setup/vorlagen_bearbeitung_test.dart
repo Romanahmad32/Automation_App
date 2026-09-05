@@ -188,6 +188,220 @@ void main() {
     });
   });
 
+  group('Namensvorschlag aus der Datei', () {
+    test('das leere Namensfeld bekommt den Vorschlag samt Herkunft', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+
+      final gesetzt = bearbeitung.nameVorschlagen(
+        r'C:\Vorlagen\VORLAGE Anspruchsschreiben ohne Auflistung.docx',
+      );
+
+      expect(gesetzt, isTrue);
+      expect(
+        bearbeitung.formGroup.control('templateName').value,
+        'Anspruchsschreiben',
+      );
+      expect(bearbeitung.nameWurdeVorgeschlagen, isTrue);
+      expect(
+        bearbeitung.nameVorschlagQuelle,
+        'VORLAGE Anspruchsschreiben ohne Auflistung.docx',
+      );
+    });
+
+    test('was der Anwalt getippt hat, gewinnt immer', () {
+      // Auch gegen den besseren Vorschlag — und auch, wenn er die Datei
+      // danach noch einmal tauscht (§1.3).
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+      bearbeitung.formGroup.control('templateName').updateValue('Mein Name');
+
+      final gesetzt = bearbeitung.nameVorschlagen(r'C:\V\HGN.docx');
+
+      expect(gesetzt, isFalse);
+      expect(bearbeitung.formGroup.control('templateName').value, 'Mein Name');
+      expect(bearbeitung.nameWurdeVorgeschlagen, isFalse);
+      expect(bearbeitung.nameVorschlagQuelle, isNull);
+    });
+
+    test('ergibt der Dateiname keinen Namen, bleibt das Feld leer', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+
+      expect(bearbeitung.nameVorschlagen(r'C:\V\VORLAGE.docx'), isFalse);
+      expect(bearbeitung.formGroup.control('templateName').value, isNull);
+    });
+  });
+
+  group('Datei zuerst', () {
+    test('eine neue Vorlage ist neu und leer, eine bestehende nicht', () {
+      expect(VorlagenBearbeitung.fuer(null).istNeu, isTrue);
+      expect(VorlagenBearbeitung.fuer(null).istLeer, isTrue);
+      expect(VorlagenBearbeitung.fuer(vorlage).istNeu, isFalse);
+      expect(VorlagenBearbeitung.fuer(vorlage).istLeer, isFalse);
+    });
+
+    test('Felder aus Platzhaltern anlegen zählt die neuen und lässt die '
+        'app-eigenen weg', () {
+      // {{Schadensaufstellung}} füllt das Backend selbst — ein Eingabefeld
+      // dafür sperrte das Formular dauerhaft.
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+
+      final anzahl = bearbeitung.felderAusPlatzhalternAnlegen([
+        'Frist',
+        'Schadensaufstellung',
+        'Zeichen',
+        'frist',
+      ]);
+
+      expect(anzahl, 2);
+      expect(bearbeitung.feldnamen, ['Frist', 'Zeichen']);
+      expect(bearbeitung.fields.every((f) => f.required), isTrue);
+    });
+
+    test('nach dem ersten Einlesen übernimmt eine neue Vorlage von selbst — '
+        'je Slot nur einmal', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+
+      expect(
+        bearbeitung.sollAutomatischUebernehmen(TemplateFileSlot.ohneAuflistung),
+        isTrue,
+      );
+      final erste = bearbeitung.automatischUebernehmen(
+        TemplateFileSlot.ohneAuflistung,
+        ['Kennzeichen', 'Frist'],
+      );
+
+      expect(erste, 2);
+      expect(bearbeitung.feldnamen, ['Kennzeichen', 'Frist']);
+      expect(
+        bearbeitung.sollAutomatischUebernehmen(TemplateFileSlot.ohneAuflistung),
+        isFalse,
+      );
+      // Der zweite Slot ist davon unberührt: Er ist eine eigene Datei.
+      expect(
+        bearbeitung.sollAutomatischUebernehmen(TemplateFileSlot.mitAuflistung),
+        isTrue,
+      );
+    });
+
+    test('ein gelöschtes Feld kommt beim erneuten Einlesen nicht zurück', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+      bearbeitung.automatischUebernehmen(TemplateFileSlot.ohneAuflistung, [
+        'Kennzeichen',
+      ]);
+      bearbeitung.felderEntfernen(['Kennzeichen']);
+
+      final zweite = bearbeitung.automatischUebernehmen(
+        TemplateFileSlot.ohneAuflistung,
+        ['Kennzeichen'],
+      );
+
+      expect(zweite, 0);
+      expect(bearbeitung.feldnamen, isEmpty);
+    });
+
+    test('eine andere Datei im selben Slot übernimmt wieder von selbst', () {
+      // „Zuerst die falsche Datei gewählt" ist beim Anlegen der häufige Weg;
+      // für die richtige soll „Datei zuerst → Felder von selbst" weiter
+      // gelten. Deshalb hängt die Vormerkung am Pfad, nicht am Slot.
+      final bearbeitung = VorlagenBearbeitung.fuer(null)
+        ..setzePfad(TemplateFileSlot.ohneAuflistung, 'C:/Vorlagen/Falsch.docx');
+      bearbeitung.automatischUebernehmen(TemplateFileSlot.ohneAuflistung, [
+        'Kennzeichen',
+      ]);
+
+      bearbeitung.setzePfad(
+        TemplateFileSlot.ohneAuflistung,
+        'C:/Vorlagen/Richtig.docx',
+      );
+
+      expect(
+        bearbeitung.sollAutomatischUebernehmen(TemplateFileSlot.ohneAuflistung),
+        isTrue,
+      );
+      final zweite = bearbeitung.automatischUebernehmen(
+        TemplateFileSlot.ohneAuflistung,
+        ['Kennzeichen', 'Summe'],
+      );
+
+      // „Kennzeichen" steht schon, nur „Summe" kommt hinzu.
+      expect(zweite, 1);
+      expect(bearbeitung.feldnamen, ['Kennzeichen', 'Summe']);
+    });
+
+    test('dieselbe Datei noch einmal gelesen übernimmt nicht erneut', () {
+      // Ein zweiter Anlauf auf derselben Datei brächte nur zurück, was der
+      // Anwalt inzwischen gelöscht hat.
+      final bearbeitung = VorlagenBearbeitung.fuer(null)
+        ..setzePfad(TemplateFileSlot.ohneAuflistung, 'C:/Vorlagen/HGN.docx');
+      bearbeitung.automatischUebernehmen(TemplateFileSlot.ohneAuflistung, [
+        'Kennzeichen',
+      ]);
+      bearbeitung.felderEntfernen(['Kennzeichen']);
+
+      // Derselbe Pfad noch einmal gesetzt — das ist kein Wechsel.
+      bearbeitung.setzePfad(
+        TemplateFileSlot.ohneAuflistung,
+        'C:/Vorlagen/HGN.docx',
+      );
+
+      expect(
+        bearbeitung.sollAutomatischUebernehmen(TemplateFileSlot.ohneAuflistung),
+        isFalse,
+      );
+      expect(
+        bearbeitung.automatischUebernehmen(TemplateFileSlot.ohneAuflistung, [
+          'Kennzeichen',
+        ]),
+        0,
+      );
+      expect(bearbeitung.feldnamen, isEmpty);
+    });
+
+    test('eine bestehende Vorlage übernimmt nie von selbst', () {
+      // Das wäre ein Eingriff in Handarbeit, die schon dasteht.
+      final bearbeitung = VorlagenBearbeitung.fuer(vorlage);
+
+      final anzahl = bearbeitung.automatischUebernehmen(
+        TemplateFileSlot.ohneAuflistung,
+        ['Frist'],
+      );
+
+      expect(anzahl, 0);
+      expect(bearbeitung.feldnamen, ['Kennzeichen', 'Unfalldatum']);
+    });
+  });
+
+  group('Felder entfernen', () {
+    test('Feld und Control gehen zusammen', () {
+      // Bliebe das Control stehen, hinge sein Pflicht-Validator ohne Feld im
+      // Formular und hielte den Speichern-Knopf grau.
+      final bearbeitung = VorlagenBearbeitung.fuer(vorlage);
+
+      bearbeitung.felderEntfernen(['Unfalldatum']);
+
+      expect(bearbeitung.feldnamen, ['Kennzeichen']);
+      expect(bearbeitung.formGroup.contains('field_1'), isFalse);
+    });
+
+    test('mehrere auf einmal, ohne Rücksicht auf Groß-/Kleinschreibung und '
+        'Randleerzeichen', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(vorlage);
+      bearbeitung.feldHinzufuegen(name: 'Frist');
+
+      bearbeitung.felderEntfernen(['  kennzeichen ', 'FRIST']);
+
+      expect(bearbeitung.feldnamen, ['Unfalldatum']);
+    });
+
+    test('ein unbekannter Name ändert nichts', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(vorlage);
+
+      bearbeitung.felderEntfernen(['Gibt es nicht']);
+      bearbeitung.felderEntfernen(const []);
+
+      expect(bearbeitung.feldnamen, ['Kennzeichen', 'Unfalldatum']);
+    });
+  });
+
   group('Stand', () {
     test(
       'rechnet über beide Dateien und zählt einen Platzhalter nur einmal',

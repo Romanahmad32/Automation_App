@@ -143,10 +143,17 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Vorkommens-Kennzeichen an der Feldzeile zeigt nur noch „in keiner Datei" — die drei anderen Auskünfte
   ohne eigene Handlung sind entfallen. `VorlagenStandKarte` zeigt die Vollständigkeitsrechnung aus Stufe 1
   jetzt an einer Stelle unter den Datei-Slots und ersetzt die Zählzeilen, die vorher unter jeder
-  Platzhalter-Chip-Liste standen. **Noch offen (§5.3):** die zweispaltige Ansicht mit Datei-zuerst-Ablauf,
-  ein sticky Tabellenkopf mit Virtualisierung für lange Feldlisten, ein Abgleich-Dialog zwischen den
-  beiden Word-Dateien, sowie Kennzeichen und Duplizieren in der Vorlagenübersicht — folgen in weiteren
-  Stufen.
+  Platzhalter-Chip-Liste standen.
+- **Vorlageneditor, Stufe 3 „Seite und Ablauf" (Issue #104, 06.09.2026)** — `VorlagenEditorLayout` stellt die
+  Detailseite ab 1180 px Inhaltsbreite zweispaltig (links 400 px fest: Dateien, Stand-Karte, zugeklappte
+  Platzhalter-Chips, app-eigene Platzhalter; rechts die Feldertabelle mit eigenem, echt virtualisiertem
+  Scrollbereich), darunter gestapelt wie bisher; die Knopfzeile steht jetzt oben im Kopf. Neue Vorlagen
+  starten im Leerzustand `VorlagenLeerzustand` („Womit fängt diese Vorlage an?", beide Word-Dateien
+  gleichwertig) statt mit leerem Namensfeld — Ablauf **Datei zuerst**: `VorlagennameVorschlag` schlägt den
+  Namen aus dem Dateinamen vor, `EinleseReaktion` übernimmt gelesene Platzhalter beim Anlegen automatisch
+  zu Feldern (je Slot einmal) und fragt über `FeldAbgleich`/`AbgleichDialog` gesammelt nach, wenn ein
+  Dateiwechsel Felder ins Leere laufen liess. **Noch offen (§5.3), nur noch Stufe 4:** das Kennzeichen
+  „unvollständig" in der Vorlagenübersicht und das Duplizieren einer Vorlage.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

@@ -3,7 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 class TemplateNameCard extends StatelessWidget {
-  const TemplateNameCard({super.key});
+  /// Eine Zeile unter dem Namensfeld — null heißt: keine.
+  ///
+  /// Gedacht für den Namensvorschlag aus dem Dateinamen („Vorschlag aus
+  /// HGN.docx — bei Bedarf anpassen", #104 Stufe 3c). Der Aufrufer entscheidet,
+  /// wann er steht; die Karte zeigt nur an, was sie bekommt — sonst müsste sie
+  /// den Stand des Editors kennen, um eine Textzeile zu setzen.
+  final String? hinweis;
+
+  const TemplateNameCard({super.key, this.hinweis});
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +38,28 @@ class TemplateNameCard extends StatelessWidget {
             ),
             SizedBox(
               width: 400,
-              child: GeneralTextField(
-                formControlName: 'templateName',
-                validationMessages: {
-                  ValidationMessage.required: (_) =>
-                      'Der Vorlagenname darf nicht leer sein.',
-                },
+              // Der Hinweis steht **unter** dem Feld und in dessen Breite: Er
+              // gehört zu dem, was darin steht, nicht zur Karte.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                spacing: 6,
+                children: [
+                  GeneralTextField(
+                    formControlName: 'templateName',
+                    validationMessages: {
+                      ValidationMessage.required: (_) =>
+                          'Der Vorlagenname darf nicht leer sein.',
+                    },
+                  ),
+                  if (hinweis != null)
+                    Text(
+                      hinweis!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
