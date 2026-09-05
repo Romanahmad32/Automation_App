@@ -27,11 +27,20 @@ class FormTemplateActionButtons extends StatelessWidget {
     final theme = Theme.of(context);
     final isEditing = existingItemId != null; // 3. Helper to check mode
 
+    // Solange geschrieben wird, ist kein Knopf mehr zu drücken. Beim Speichern
+    // wäre das nur eine Doppelanfrage; beim Abbrechen ist es ein stiller
+    // Datenfehler: Der Verwerfen-Dialog stünde dann offen, wenn der Erfolg
+    // eintrifft, und der Pop der Seite träfe ihn statt der Seite
+    // (siehe `VorlagenVerlassenWache.gesperrt`).
+    final laeuft =
+        context.watch<FormTemplateDataBloc>().state
+            is SubmittingFormTemplateData;
+
     return Row(
       spacing: 15,
       children: [
         CustomRectangularButton(
-          onPressed: onCancel,
+          onPressed: laeuft ? null : onCancel,
           buttonStyle: ElevatedButton.styleFrom(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4.0),
@@ -49,7 +58,7 @@ class FormTemplateActionButtons extends StatelessWidget {
               label: Text(
                 isEditing ? 'Vorlage speichern' : 'Vorlage erstellen',
               ),
-              onPressed: formGroup.valid
+              onPressed: formGroup.valid && !laeuft
                   ? () {
                       if (wordFilePathOhneAuflistung == null &&
                           wordFilePathMitAuflistung == null) {
