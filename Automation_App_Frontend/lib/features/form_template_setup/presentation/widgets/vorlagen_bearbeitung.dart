@@ -1,7 +1,9 @@
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_uebernahme.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_stand.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/vorlagenname_vorschlag.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/initial_template_form.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -30,6 +32,7 @@ class VorlagenBearbeitung {
     required this.nextFieldIndex,
     required this.pfadOhneAuflistung,
     required this.pfadMitAuflistung,
+    this.istNeu = false,
   });
 
   /// Der Ausgangsstand zu einer bestehenden Vorlage — oder zu keiner, dann ist
@@ -42,6 +45,7 @@ class VorlagenBearbeitung {
       nextFieldIndex: anfang.nextFieldIndex,
       pfadOhneAuflistung: vorlage?.wordFilePathOhneAuflistung,
       pfadMitAuflistung: vorlage?.wordFilePathMitAuflistung,
+      istNeu: vorlage == null,
     );
   }
 
@@ -59,6 +63,70 @@ class VorlagenBearbeitung {
   /// sonst zeigten zwei Felder nacheinander auf dasselbe Control.
   int nextFieldIndex;
 
+  /// Hier entsteht eine **neue** Vorlage (`.fuer(null)`) — nicht dasselbe wie
+  /// [istLeer]: Eine bestehende Vorlage kann feldlos sein, und eine neue hat
+  /// nach dem ersten Einlesen schon Felder.
+  ///
+  /// Daran hängt der Ablauf „Datei zuerst": Nur beim Anlegen werden die
+  /// gelesenen Platzhalter von selbst zu Feldern. In einer bestehenden Vorlage
+  /// wäre dasselbe ein Eingriff in Handarbeit, die schon dasteht.
+  final bool istNeu;
+
+  /// Je Slot der **Pfad**, für den die Platzhalter schon automatisch zu
+  /// Feldern geworden sind. Ohne dieses Gedächtnis liefe die Übernahme bei
+  /// jedem erneuten Einlesen derselben Datei wieder an — und ein Feld, das der
+  /// Anwalt inzwischen gelöscht hat, käme von selbst zurück.
+  ///
+  /// Gemerkt wird der Pfad und nicht bloß der Slot, weil ein **echter**
+  /// Dateiwechsel den Slot wieder freigeben soll: „zuerst die falsche Datei
+  /// gewählt" ist beim Anlegen der häufige Weg, und für die richtige Datei
+  /// soll „Datei zuerst → Felder von selbst" weiter gelten. Dieselbe Datei
+  /// noch einmal einzulesen gibt dagegen nichts frei.
+  final Map<TemplateFileSlot, String?> automatischUebernommen = {};
+
+  bool _nameVorgeschlagen = false;
+  String? _nameVorschlag;
+  String? _nameVorschlagQuelle;
+
+  /// Die Vorlage hat noch kein einziges Feld — der Leerzustand
+  /// (`VorlagenLeerzustand`) hängt daran.
+  bool get istLeer => fields.isEmpty;
+
+  /// Keine der beiden Word-Dateien ist verknüpft.
+  bool get ohneDatei => pfadOhneAuflistung == null && pfadMitAuflistung == null;
+
+  /// Die Seite zeigt statt des Editors die eine Frage „Womit fängt diese
+  /// Vorlage an?" (`VorlagenLeerzustand`, #104 Stufe 3c).
+  ///
+  /// Nur beim **Anlegen** und nur, solange keine Datei da ist: Eine bestehende
+  /// Vorlage ohne Datei ist ein Mangel, den `VorlagenStandBereich` benennt —
+  /// ihren Namen und ihre Felder deshalb wegzublenden nähme dem Anwalt genau
+  /// das, was er reparieren will. Sobald ein Pfad steht, ist der Leerzustand
+  /// vorbei; er kommt auch dann nicht wieder, wenn die Datei wieder entfernt
+  /// wird, denn dann steht schon etwas da.
+  bool get zeigtLeerzustand => istNeu && ohneDatei;
+
+  /// Ob der Vorlagenname aus einem Dateinamen stammt und nicht vom Anwalt.
+  /// Trägt den Hinweis „aus … vorgeschlagen" unter dem Namensfeld.
+  bool get nameWurdeVorgeschlagen => _nameVorgeschlagen;
+
+  /// Der zuletzt vorgeschlagene Name — null, solange nichts vorgeschlagen
+  /// wurde. Er steht hier, damit [nameZeigtVorschlag] ihn vergleichen kann,
+  /// ohne ihn neu zu rechnen.
+  String? get nameVorschlag => _nameVorschlag;
+
+  /// Der Dateiname, aus dem der Vorschlag stammt (`HGN.docx`) — null, solange
+  /// nichts vorgeschlagen wurde.
+  String? get nameVorschlagQuelle => _nameVorschlagQuelle;
+
+  /// Im Namensfeld steht **noch** der Vorschlag, unverändert. Genau dann trägt
+  /// die Namenskarte ihren Hinweis „Vorschlag aus … — bei Bedarf anpassen":
+  /// Sobald der Anwalt ein Zeichen ändert, ist es sein Name, und ein Hinweis
+  /// auf die Herkunft wäre falsch.
+  bool get nameZeigtVorschlag =>
+      _nameVorgeschlagen &&
+      formGroup.control('templateName').value == _nameVorschlag;
+
   String? pfad(TemplateFileSlot slot) => slot == TemplateFileSlot.ohneAuflistung
       ? pfadOhneAuflistung
       : pfadMitAuflistung;
@@ -71,6 +139,27 @@ class VorlagenBearbeitung {
     } else {
       pfadMitAuflistung = pfad;
     }
+  }
+
+  /// Schlägt den Vorlagennamen aus dem Dateinamen von [pfad] vor und liefert
+  /// true, wenn er dadurch gesetzt wurde.
+  ///
+  /// **Nur in ein leeres Namensfeld.** Was der Anwalt getippt hat, gewinnt
+  /// immer — auch gegen den besseren Vorschlag und auch, wenn er die Datei
+  /// danach noch einmal tauscht (§1.3 „Vorschlagen statt entscheiden").
+  /// Ergibt der Dateiname keinen Namen ([VorlagennameVorschlag.ausPfad] ist
+  /// leer), passiert nichts.
+  bool nameVorschlagen(String pfad) {
+    final control = formGroup.control('templateName');
+    final bisher = control.value as String?;
+    if (bisher != null && bisher.trim().isNotEmpty) return false;
+    final vorschlag = VorlagennameVorschlag.ausPfad(pfad);
+    if (vorschlag.isEmpty) return false;
+    control.updateValue(vorschlag);
+    _nameVorgeschlagen = true;
+    _nameVorschlag = vorschlag;
+    _nameVorschlagQuelle = VorlagennameVorschlag.dateiname(pfad);
+    return true;
   }
 
   /// Der Feldname zu einem Control-Schlüssel (`field_0`, …) — **die eine**
@@ -108,16 +197,55 @@ class VorlagenBearbeitung {
     );
   }
 
-  /// „Alle übernehmen" (#35 Teil 3): [platzhalter] kommt bereits gefiltert
-  /// herein ([VorlagenStand.platzhalterOhneFeld] bzw.
-  /// `PlatzhalterUebernahme.uebernehmbare`) — hier entsteht daraus je ein
-  /// Pflichtfeld. Gefahrlos, weil die Pflicht beim Ausfüllen je gewählter
+  /// Legt zu [platzhalter] je ein Pflichtfeld an und liefert, wie viele es
+  /// wurden. Gefahrlos pflichtig, weil die Pflicht beim Ausfüllen je gewählter
   /// Word-Datei abgeleitet wird und ein Feld ohne Platzhalter dort nichts
   /// sperrt.
-  void alleUebernehmen(List<String> platzhalter) {
-    for (final name in platzhalter) {
+  ///
+  /// **Gefiltert wird hier**, über [PlatzhalterUebernahme.uebernehmbare]:
+  /// keine app-eigenen Platzhalter (die füllt das Backend selbst und sie
+  /// bekommen nie ein Feld), keine Namensgleichen, keine Doppelten. Der Filter
+  /// steht hier und nicht beim Aufrufer, weil die Liste aus zwei Richtungen
+  /// kommt — von der Stand-Karte bereits gefiltert (dann ist er wirkungslos)
+  /// und beim ersten Einlesen einer neuen Vorlage roh aus dem Bloc.
+  int felderAusPlatzhalternAnlegen(List<String> platzhalter) {
+    final neu = PlatzhalterUebernahme.uebernehmbare(platzhalter, feldnamen);
+    for (final name in neu) {
       feldHinzufuegen(name: name, pflicht: true);
     }
+    return neu.length;
+  }
+
+  /// „Alle übernehmen" (#35 Teil 3) — der Knopf der Stand-Karte. Dieselbe
+  /// Handlung wie [felderAusPlatzhalternAnlegen], nur ohne Zahl: Der Knopf
+  /// zählt nicht, er legt an.
+  void alleUebernehmen(List<String> platzhalter) =>
+      felderAusPlatzhalternAnlegen(platzhalter);
+
+  /// Ob die Platzhalter von [slot] von selbst zu Feldern werden dürfen: nur
+  /// beim Anlegen einer neuen Vorlage ([istNeu]) und je **Datei** nur einmal.
+  ///
+  /// Verglichen wird gegen den vorgemerkten Pfad, nicht gegen den blossen
+  /// Slot: Eine andere Datei fängt von vorn an, dieselbe nicht (siehe
+  /// [automatischUebernommen]). `containsKey` statt eines Vergleichs auf
+  /// `null`, weil „noch nie übernommen" und „für eine Vorlage ohne Pfad
+  /// übernommen" zwei verschiedene Dinge sind.
+  bool sollAutomatischUebernehmen(TemplateFileSlot slot) =>
+      istNeu &&
+      (!automatischUebernommen.containsKey(slot) ||
+          automatischUebernommen[slot] != pfad(slot));
+
+  /// Der Ablauf „Datei zuerst" in einem Aufruf: prüft
+  /// [sollAutomatischUebernehmen], merkt die Datei vor und legt die Felder an
+  /// — 0, wenn nichts zu tun war.
+  ///
+  /// Vorgemerkt wird **auch dann**, wenn keine Felder entstanden sind: Die
+  /// Datei ist gelesen, und ein zweiter Anlauf brächte nur zurück, was der
+  /// Anwalt inzwischen gelöscht hat.
+  int automatischUebernehmen(TemplateFileSlot slot, List<String> platzhalter) {
+    if (!sollAutomatischUebernehmen(slot)) return 0;
+    automatischUebernommen[slot] = pfad(slot);
+    return felderAusPlatzhalternAnlegen(platzhalter);
   }
 
   /// Zieht das Feld von [alterIndex] nach [neuerIndex] — die Zählweise von
@@ -127,6 +255,35 @@ class VorlagenBearbeitung {
     if (neuerIndex > alterIndex) neuerIndex--;
     final feld = fields.removeAt(alterIndex);
     fields.insert(neuerIndex, feld);
+  }
+
+  /// Entfernt das Feld an [index] samt seinem Control. Zu jedem Feld gehört
+  /// eines, dessen Schlüssel in `FieldData.label` steht, solange die Seite
+  /// offen ist — bliebe es stehen, hinge ein Pflicht-Validator ohne Feld im
+  /// Formular und hielte den Speichern-Knopf grau.
+  ///
+  /// Die eine Stelle dafür: `FeldAenderungen.loeschen` (Löschknopf der Zeile)
+  /// und [felderEntfernen] (Abgleich nach Dateiwechsel) rufen beide hier.
+  void feldLoeschen(int index) {
+    formGroup.removeControl(fields[index].label);
+    fields.removeAt(index);
+  }
+
+  /// Entfernt die Felder mit diesen [namen] — der Weg des Abgleichs nach einem
+  /// Dateiwechsel (`FeldAbgleich`, `AbgleichDialog`).
+  ///
+  /// Verglichen wird über den **aufgelösten** Feldnamen, ohne
+  /// Groß-/Kleinschreibung und ohne Randleerzeichen, wie überall sonst.
+  /// Rückwärts durch die Liste, damit die Indizes der noch zu prüfenden Felder
+  /// gültig bleiben.
+  void felderEntfernen(Iterable<String> namen) {
+    final gesucht = {for (final name in namen) name.trim().toLowerCase()};
+    if (gesucht.isEmpty) return;
+    for (var i = fields.length - 1; i >= 0; i--) {
+      final name = feldname(fields[i].label)?.trim().toLowerCase();
+      if (name == null || !gesucht.contains(name)) continue;
+      feldLoeschen(i);
+    }
   }
 
   /// Was der Vorlage nach dem aktuellen Stand noch fehlt — die eine Rechnung

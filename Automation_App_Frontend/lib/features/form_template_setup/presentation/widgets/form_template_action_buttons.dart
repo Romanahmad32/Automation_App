@@ -13,6 +13,15 @@ class FormTemplateActionButtons extends StatelessWidget {
   final String? wordFilePathOhneAuflistung;
   final String? wordFilePathMitAuflistung;
 
+  /// Nur Abbrechen zeigen — der Leerzustand einer neuen Vorlage (#104 Stufe
+  /// 3c), in dem es noch nichts zu speichern gibt.
+  ///
+  /// Weg statt grau: Ein grauer „Vorlage erstellen"-Knopf über einer Seite mit
+  /// genau einer Handlung („Datei wählen") liest sich wie ein kaputtes
+  /// Formular — der Anwalt sucht dann, was er ausgelassen hat. Abbrechen
+  /// bleibt, sonst gäbe es keinen Weg zurück.
+  final bool nurAbbrechen;
+
   const FormTemplateActionButtons({
     super.key,
     required this.onCancel,
@@ -20,6 +29,7 @@ class FormTemplateActionButtons extends StatelessWidget {
     this.existingItemId, // 2. Add to constructor
     this.wordFilePathOhneAuflistung,
     this.wordFilePathMitAuflistung,
+    this.nurAbbrechen = false,
   });
 
   @override
@@ -51,64 +61,67 @@ class FormTemplateActionButtons extends StatelessWidget {
           ),
           label: const Text('Abbrechen'),
         ),
-        ReactiveFormConsumer(
-          builder: (context, formGroup, child) {
-            return CustomRectangularButton(
-              // 4. Dynamically change the button label
-              label: Text(
-                isEditing ? 'Vorlage speichern' : 'Vorlage erstellen',
-              ),
-              onPressed: formGroup.valid && !laeuft
-                  ? () {
-                      if (wordFilePathOhneAuflistung == null &&
-                          wordFilePathMitAuflistung == null) {
-                        Rueckmeldung.zeigeHinweis(
-                          context,
-                          'Bitte mindestens eine Word-Datei verknüpfen '
-                          '(ohne und/oder mit Auflistung).',
-                        );
-                        return;
-                      }
-                      // Das vorhandene Feld **fortschreiben**, nicht neu
-                      // bauen: `copyWith` reicht die Datums-Vorbelegung
-                      // ausdrücklich durch, ein Neubau liesse sie still fallen
-                      // — und weil `toJson` den Schlüssel dann gar nicht
-                      // schreibt, wäre der Verlust von „nie eingestellt" nicht
-                      // zu unterscheiden (§5.3, #105).
-                      //
-                      // Der Laufindex ist zugleich die Reihenfolge; das
-                      // frühere `indexOf` suchte jedes Feld unnötig erneut
-                      // in der Liste (quadratischer Aufwand).
-                      final List<FieldData> formData = [
-                        for (final (index, field) in fields.indexed)
-                          field.copyWith(
-                            order: index,
-                            // Solange die Seite offen ist, steht in
-                            // `field.label` der Control-Schlüssel; der echte
-                            // Feldname liegt im Wert des Controls.
-                            label:
-                                formGroup.control(field.label).value as String,
-                          ),
-                      ];
+        if (!nurAbbrechen)
+          ReactiveFormConsumer(
+            builder: (context, formGroup, child) {
+              return CustomRectangularButton(
+                // 4. Dynamically change the button label
+                label: Text(
+                  isEditing ? 'Vorlage speichern' : 'Vorlage erstellen',
+                ),
+                onPressed: formGroup.valid && !laeuft
+                    ? () {
+                        if (wordFilePathOhneAuflistung == null &&
+                            wordFilePathMitAuflistung == null) {
+                          Rueckmeldung.zeigeHinweis(
+                            context,
+                            'Bitte mindestens eine Word-Datei verknüpfen '
+                            '(ohne und/oder mit Auflistung).',
+                          );
+                          return;
+                        }
+                        // Das vorhandene Feld **fortschreiben**, nicht neu
+                        // bauen: `copyWith` reicht die Datums-Vorbelegung
+                        // ausdrücklich durch, ein Neubau liesse sie still fallen
+                        // — und weil `toJson` den Schlüssel dann gar nicht
+                        // schreibt, wäre der Verlust von „nie eingestellt" nicht
+                        // zu unterscheiden (§5.3, #105).
+                        //
+                        // Der Laufindex ist zugleich die Reihenfolge; das
+                        // frühere `indexOf` suchte jedes Feld unnötig erneut
+                        // in der Liste (quadratischer Aufwand).
+                        final List<FieldData> formData = [
+                          for (final (index, field) in fields.indexed)
+                            field.copyWith(
+                              order: index,
+                              // Solange die Seite offen ist, steht in
+                              // `field.label` der Control-Schlüssel; der echte
+                              // Feldname liegt im Wert des Controls.
+                              label:
+                                  formGroup.control(field.label).value
+                                      as String,
+                            ),
+                        ];
 
-                      context.read<FormTemplateDataBloc>().add(
-                        SubmitFormTemplateDataEvent(
-                          existingItemId: existingItemId,
-                          // 6. Pass the ID to the BLoC event
-                          templateName:
-                              formGroup.control('templateName').value
-                                  as String?,
-                          formData: formData,
-                          wordFilePathOhneAuflistung:
-                              wordFilePathOhneAuflistung,
-                          wordFilePathMitAuflistung: wordFilePathMitAuflistung,
-                        ),
-                      );
-                    }
-                  : null,
-            );
-          },
-        ),
+                        context.read<FormTemplateDataBloc>().add(
+                          SubmitFormTemplateDataEvent(
+                            existingItemId: existingItemId,
+                            // 6. Pass the ID to the BLoC event
+                            templateName:
+                                formGroup.control('templateName').value
+                                    as String?,
+                            formData: formData,
+                            wordFilePathOhneAuflistung:
+                                wordFilePathOhneAuflistung,
+                            wordFilePathMitAuflistung:
+                                wordFilePathMitAuflistung,
+                          ),
+                        );
+                      }
+                    : null,
+              );
+            },
+          ),
       ],
     );
   }

@@ -1,11 +1,17 @@
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_chips.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_status_zeile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Zeigt die in der verknüpften Word-Datei eines [slot] erkannten
 /// {{Platzhalter}} als Chips an. Ein Klick auf einen Chip übernimmt den
 /// Platzhalter als neues Eingabefeld.
+///
+/// Seit Stufe 3a (#104) steht die Ansicht nicht mehr in der Dateikarte,
+/// sondern im zugeklappten `PlatzhalterAbschnitt`; „wird gelesen …" und die
+/// Fehlermeldung teilt sie sich über [PlatzhalterStatusZeile] mit der
+/// Dateikarte, wo diese Auskunft weiterhin hingehört.
 class TemplatePlaceholdersView extends StatelessWidget {
   final TemplateFileSlot slot;
   final void Function(String placeholder) onPlaceholderSelected;
@@ -28,26 +34,12 @@ class TemplatePlaceholdersView extends StatelessWidget {
 
     return BlocBuilder<TemplatePlaceholdersBloc, TemplatePlaceholdersState>(
       builder: (context, state) {
-        switch (state.forSlot(slot)) {
+        final ergebnis = state.forSlot(slot);
+        switch (ergebnis) {
           case SlotPlaceholdersInitial():
-            return const SizedBox.shrink();
           case SlotPlaceholdersLoading():
-            return const Row(
-              spacing: 10,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                Text('Platzhalter werden gelesen …'),
-              ],
-            );
-          case SlotPlaceholdersError(message: final message):
-            return Text(
-              message,
-              style: TextStyle(color: theme.colorScheme.error),
-            );
+          case SlotPlaceholdersError():
+            return PlatzhalterStatusZeile(zustand: ergebnis);
           case SlotPlaceholdersLoaded(placeholders: final placeholders):
             if (placeholders.isEmpty) {
               return Text(

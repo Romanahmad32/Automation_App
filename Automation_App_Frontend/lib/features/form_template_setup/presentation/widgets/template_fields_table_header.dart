@@ -8,9 +8,10 @@ import 'package:flutter/material.dart';
 /// darunter. Vorher standen zwei Listen nebeneinander, und der Kopf verschob
 /// sich gegen die Zeile, sobald jemand nur eine von beiden anfasste.
 ///
-/// Er steht als eigenes Widget **über** der Liste, nicht in ihr — in Stufe 3
-/// bekommt die Liste einen eigenen Scrollbereich, und dann bleibt der Kopf
-/// beim Scrollen stehen, ohne dass sich hier etwas ändern muss.
+/// Er steht als eigenes Widget **über** der Liste, nicht in ihr. Seit Stufe 3a
+/// zahlt sich das aus: Zweispaltig hat die Liste ihren eigenen Scrollbereich,
+/// und der Kopf bleibt beim Scrollen von selbst stehen — er ist gar nicht Teil
+/// dessen, was scrollt, und hier musste sich dafür nichts ändern.
 class TemplateFieldsTableHeader extends StatelessWidget {
   const TemplateFieldsTableHeader({super.key});
 

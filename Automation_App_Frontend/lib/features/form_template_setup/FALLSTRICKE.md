@@ -230,6 +230,96 @@ jeweils aktuellen Stand.
   Erfolgs-`pop(true)` träfe den Dialog statt der Seite — die Seite meldete dann `false`, obwohl
   gespeichert wurde. Gesperrt kann kein Dialog offen sein, wenn der Erfolg eintrifft.
 
+## Zweispaltiges Layout
+
+`VorlagenEditorLayout` (`presentation/widgets/`) ist die einzige Stelle, die die Breite der
+Detailseite kennt, und entscheidet allein über zwei Spalten oder einen Stapel (#104 Stufe 3a).
+
+- **Die Schwelle ist eine Inhaltsbreite, keine Fensterbreite** — `zweiSpaltenAb` (1180) vergleicht
+  gegen die Breite *nach* Abzug von `VorlagenEditorLayout.seitenrand`. Wer stattdessen die
+  Fensterbreite hineinreicht, misst zu großzügig und schaltet auf zwei Spalten um, bevor tatsächlich
+  Platz dafür ist.
+- **Warum 1180**: Die Zahl folgt aus der rechten Spalte, nicht aus der linken. Die Felderkarte ist
+  bei `Schriftstufe.amGroessten` bis 700 px hinunter überlauffrei (`felder_karte_schmal_test.dart`,
+  tiefer ist es nicht geprüft). 1180 − 400 (linke Spalte) − 16 (Spalt) lässt ihr 764 px, also noch
+  Luft über dem geprüften Rand.
+- **Kein gemeinsamer Baustein in `core/general_widgets/layout/`, obwohl `EmailVersandInhalt`
+  dieselbe Zahl 1180 verwendet.** Das ist ein Zufall aus derselben Rechnung (schmale linke Spalte +
+  geprüfte Kartenbreite), kein gemeinsamer Beschluss — `KartenSpalten` rechnet mit 1080, einer
+  dritten Zahl aus einer dritten Rechnung. Eine geteilte Schwelle wäre eine Zahl, um die sich drei
+  Seiten streiten, sobald eine von ihnen ihre Kartenbreite ändert.
+- **Zweispaltig braucht eine begrenzte Höhe**, wie `EmailVersandInhalt`: Zwei für sich scrollende
+  Spalten brauchen einen Rahmen, in dem sie sich ausdehnen können. Unter einem `Scaffold`-Rumpf ist
+  das gegeben; wer das Layout in einen Scrollbereich hängt, bekommt zu Recht einen Fehler.
+- **`TemplateFieldsCard` kennt zwei Anordnungen über `eigenerScrollbereich`**, nicht zwei Karten:
+  Zweispaltig (`true`) füllt die Karte die Höhe, die ihr das Layout gibt, Kartenkopf und
+  Tabellenkopf bleiben beim Scrollen stehen, und nur die Zeilen laufen — echt virtualisiert,
+  `shrinkWrap: false`. Gestapelt (`false`, Vorgabe) wächst die Karte mit ihrem Inhalt und scrollt mit
+  der Seite, `shrinkWrap: true`. Eine `ReorderableListView` mit `shrinkWrap: true` baut **alle**
+  Zeilen auf einmal — in der schmalen Fassung hinnehmbar, in der breiten mit eigenem Scrollbereich
+  nicht mehr nötig.
+- **Die Chips der `PlatzhalterAbschnitt` sind zugeklappt, mit einer Zählzeile über beide Dateien** —
+  derselbe Griff wie bei `AppEigenePlatzhalterListe`. Gezählt wird über beide Word-Dateien zusammen
+  und jeder Name nur einmal, dieselbe Regel wie in `VorlagenStand` (siehe oben): Ein Platzhalter, der
+  in beiden Dateien steht, ist ein Platzhalter, nicht zwei. `TemplateFileSlotCard` zeigt seit
+  Stufe 3a nur noch die Datei selbst — die Chips zu ihr stehen jetzt im Abschnitt darunter, nicht
+  mehr in der Karte.
+
+## Datei zuerst und Abgleich
+
+Der Ablauf, mit dem eine **neue** Vorlage anfängt (#104 Stufe 3b/3c): erst eine Word-Datei wählen,
+danach leitet die App Name und erste Felder daraus ab. `VorlagenLeerzustand`,
+`VorlagennameVorschlag`, `EinleseReaktion` und `FeldAbgleich` (`presentation/widgets/` bzw.
+`domain/services/`) tragen die Stücke.
+
+- **Der Leerzustand gilt nur bei `istNeu && ohneDatei`** (`VorlagenBearbeitung.zeigtLeerzustand`) —
+  nicht bei einer bestehenden Vorlage ohne Datei: Das ist ein Mangel, den `VorlagenStandBereich`
+  benennt, und ihren Namen samt Feldern wegzublenden nähme dem Anwalt genau das, was er reparieren
+  will. Und er kommt **nicht zurück**, sobald einmal ein Pfad gesetzt war, auch wenn die Datei danach
+  wieder entfernt wird — dann steht schon ein Name oder ein Feld da, und der Leerzustand wäre eine
+  Lüge über den Stand der Vorlage.
+- **Namensvorschlag**: `VorlagennameVorschlag.ausPfad` schneidet das Präfix „VORLAGE" (nur als
+  ganzes Wort) und die Suffixe „ohne/mit Auflistung", „ohne/mit Schadensaufstellung", „SA" ab —
+  wiederholt, bis keines mehr passt, weil eine Datei mehrere davon tragen kann (`… SA ohne
+  Auflistung`). Beide Word-Dateien einer Vorlage ergeben denselben Vorschlag, weil die Suffixliste
+  beide Seiten kennt — das ist Absicht: welche der beiden Dateien der Anwalt zuerst wählt, darf den
+  Namen nicht bestimmen. Vorgeschlagen wird **nur in ein leeres Namensfeld**
+  (`VorlagenBearbeitung.nameVorschlagen`); was der Anwalt tippt, gewinnt immer, auch gegen einen
+  späteren Dateiwechsel. Der Hinweis unter dem Namensfeld (`TemplateNameCard.hinweis`) steht nur,
+  solange das Feld noch unverändert den Vorschlag trägt (`nameZeigtVorschlag`) — ein geändertes
+  Zeichen, und er ist weg.
+- **Automatische Übernahme nur beim Anlegen, und je Slot nur einmal pro Datei**:
+  `sollAutomatischUebernehmen` prüft `istNeu` und ob für den Slot schon **dieser Pfad** in
+  `automatischUebernommen` (Slot → Pfad) vorgemerkt ist; `automatischUebernehmen` merkt den Pfad
+  **auch dann**, wenn keine Felder entstanden sind — sonst brächte ein zweiter Lesevorgang derselben
+  Datei zurück, was der Anwalt inzwischen gelöscht hat. Ein **echter Dateiwechsel** (anderer Pfad)
+  gibt den Slot wieder frei: „Zuerst die falsche Datei gewählt" ist beim Anlegen der häufige Weg, und
+  „Datei zuerst → Felder von selbst" soll dann weiter gelten. Bewusst eine Map statt eines Löschens
+  in `setzePfad`: Datei entfernen und dieselbe wieder verknüpfen ist kein Wechsel und darf gelöschte
+  Felder nicht zurückbringen. In einer bestehenden Vorlage passiert die Übernahme nie: Dort stünde
+  sie gegen Handarbeit, die schon da ist.
+- **Der Abgleich-Dialog fragt nur bei einem echten Loading→Loaded-Übergang**, nicht bei jedem
+  Bloc-Zustand: `EinleseReaktion._geradeFertig` führt ein eigenes Set `_ladend` mit und meldet einen
+  Slot erst als „fertig", wenn er vorher darin stand. Ohne diese Fortschreibung liefe die Rückfrage
+  bei jedem `TemplatePlaceholdersState` erneut an, auch beim blossen Aufgehen der Seite.
+- **`_letzterStand` merkt sich nur bekannte Stände** (`!platzhalterUnbekannt`) — ein
+  `SlotPlaceholdersLoading`-Zwischenstand darf ihn nicht überschreiben, sonst wäre beim nächsten
+  `Loaded` das „vorher" weg, gegen das verglichen werden müsste, und der Abgleich käme nie zustande.
+  Aus demselben Grund gibt es beim allerersten Aufbau der Seite kein „vorher" und also keine Frage.
+- **Der Dialog steht nie, wenn die Seite gesperrt ist** (`EinleseReaktion.gesperrt`, gespeist aus
+  `SubmittingFormTemplateData`) oder schon einer offen ist (`_dialogOffen`) — dieselbe Wache wie bei
+  `VorlagenVerlassenWache.gesperrt`: Ein offener Dialog beim Eintreffen des Speichern-Erfolgs finge
+  den `pop(true)` der Seite ab, und die Seite meldete fälschlich `false`.
+- **Im Leerzustand fehlt der Speichern-Knopf, statt grau zu sein**
+  (`FormTemplateActionButtons.nurAbbrechen`): Ein grauer Knopf über einer Seite mit genau einer
+  Handlung liest sich wie ein kaputtes Formular; Abbrechen bleibt, sonst gäbe es keinen Weg zurück.
+- **Die Dateiwahl ist eine Test-Naht**: `VorlagenDateiwahl.waehle` ist ein statisches
+  **veränderliches** Feld, kein fester Verweis — der Dateidialog ist ein Plattformkanal, den ein
+  Widget-Test nicht bedienen kann, und ein zusätzlicher Konstruktorparameter an der Detailseite hätte
+  die generierte `auto_route`-Route (`app_router.gr.dart`) verändert und bei jeder Anpassung einen
+  build_runner-Lauf verlangt. Ein Test setzt das Feld und stellt es über
+  `VorlagenDateiwahl.zuruecksetzen()` in einem `addTearDown` zurück.
+
 ## VorlagenBearbeitung
 
 `VorlagenBearbeitung` (`presentation/widgets/`) hält den veränderlichen Stand des Editors — `FormGroup`,
@@ -252,6 +342,13 @@ neuen Feldzeile am Zeilenbudget.
 - **Die Objekte sind veränderlich und geteilt, nicht kopiert**: `fields` ist dieselbe Liste, die die Karten zu
   sehen bekommen, `formGroup` dasselbe Formular. `VorlagenVerlassenWache` und die Chips bauen genau darauf — eine
   Kopie hier hieße, dass sie auf einem veralteten Stand verglichen.
+- **Stufe 3 legt den Zustand für „Datei zuerst" dazu**: `istNeu` (aus `.fuer`, wenn keine Vorlage übergeben
+  wurde), `zeigtLeerzustand`, die drei Namensvorschlag-Leser `nameVorschlag`/`nameVorschlagQuelle`/
+  `nameZeigtVorschlag` neben der Mutation `nameVorschlagen`, dazu `automatischUebernehmen`/
+  `sollAutomatischUebernehmen` (merkt den Slot in `automatischUebernommen`) und `felderEntfernen` für den
+  Abgleich (siehe oben, „Datei zuerst und Abgleich"). **Löschen liegt jetzt nur noch hier** (`feldLoeschen`):
+  `FeldAenderungen.loeschen` ruft ihn nur noch auf und meldet danach weiter — zwei Fassungen desselben
+  Entfernens liefen sonst auseinander, sobald der Abgleich seinen eigenen Löschweg gebraucht hätte.
 
 ## Zustand
 

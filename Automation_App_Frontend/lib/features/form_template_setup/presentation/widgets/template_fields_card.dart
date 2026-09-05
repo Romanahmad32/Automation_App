@@ -20,6 +20,11 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// der Ansicht, keine der Vorlage — die Seite müsste ihn sonst durchreichen,
 /// speichern und beim Verlassen vergleichen, obwohl sich durch ihn nichts
 /// ändert.
+///
+/// Die Karte kann **zwei Anordnungen** ([eigenerScrollbereich]) statt zwei
+/// Karten zu sein: Zwei Fassungen desselben Kartenkopfs, desselben Filters und
+/// derselben Zeile liefen bei der nächsten Änderung auseinander — dieselbe
+/// Falle, aus der `FelderSpalten` entstand.
 class TemplateFieldsCard extends StatefulWidget {
   final List<FieldData> fields;
   final FormGroup formGroup;
@@ -46,6 +51,17 @@ class TemplateFieldsCard extends StatefulWidget {
   /// Löst einen Control-Schlüssel (`field_0`, …) zum echten Feldnamen auf.
   final String? Function(String controlKey) feldname;
 
+  /// `true` in der zweispaltigen Anordnung: Die Karte füllt die Höhe, die ihr
+  /// `VorlagenEditorLayout` gibt, Kartenkopf und Tabellenkopf bleiben beim
+  /// Scrollen stehen, und nur die Zeilen laufen — echt virtualisiert, also
+  /// ohne `shrinkWrap`. Bei achtzehn Feldern baut die Liste dann noch die
+  /// sichtbaren statt aller.
+  ///
+  /// `false` (Vorgabe) im gestapelten Fall: Die Karte wächst mit ihrem Inhalt
+  /// und scrollt mit der Seite. Ein Scrollbereich in einem Scrollbereich hätte
+  /// dort keine eigene Höhe.
+  final bool eigenerScrollbereich;
+
   const TemplateFieldsCard({
     super.key,
     required this.fields,
@@ -60,6 +76,7 @@ class TemplateFieldsCard extends StatefulWidget {
     this.onZuordnen,
     required this.stand,
     required this.feldname,
+    this.eigenerScrollbereich = false,
   });
 
   @override
@@ -105,9 +122,14 @@ class _TemplateFieldsCardState extends State<TemplateFieldsCard> {
             if (widget.fields.isEmpty)
               const Center(child: Text('Keine Felder hinzugefügt'))
             else ...[
+              // Der Tabellenkopf steht **außerhalb** der Liste. Mit eigenem
+              // Scrollbereich bleibt er dadurch von selbst stehen — er ist gar
+              // nicht Teil dessen, was scrollt.
               const TemplateFieldsTableHeader(),
               if (sichtbare.isEmpty)
                 _leereAuswahl(theme)
+              else if (widget.eigenerScrollbereich)
+                Expanded(child: _liste(sichtbare))
               else
                 _liste(sichtbare),
             ],
@@ -121,8 +143,15 @@ class _TemplateFieldsCardState extends State<TemplateFieldsCard> {
 
   Widget _liste(List<int> sichtbare) {
     return ReorderableListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      // Gestapelt trägt die Seite den Scrollbereich, die Liste baut alle
+      // Zeilen und rührt sich nicht. Zweispaltig ist es umgekehrt: eigene
+      // Physik in begrenzter Höhe, und `shrinkWrap` **aus** — sonst baute die
+      // Liste trotz Scrollbereich jede Zeile, und die Virtualisierung wäre nur
+      // dem Namen nach eine.
+      shrinkWrap: !widget.eigenerScrollbereich,
+      physics: widget.eigenerScrollbereich
+          ? null
+          : const NeverScrollableScrollPhysics(),
       buildDefaultDragHandles: false,
       onReorder: widget.onReorder,
       // Das gezogene Element wird in ein Overlay außerhalb des ReactiveForm

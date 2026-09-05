@@ -10,8 +10,9 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Feldnamen aus der `FormGroup`.
 ///
 /// Getrennt von der Karte, damit die Karte reine Anzeige bleibt und ohne Bloc
-/// und ohne Formular prüfbar ist — und weil die Karte in Stufe 3 in die linke
-/// Spalte wandert, dieses Stück Verdrahtung aber gleich bleibt.
+/// und ohne Formular prüfbar ist. Die Trennung hat sich mit Stufe 3a bewährt:
+/// Die Karte ist in die linke Spalte gewandert, dieses Stück Verdrahtung ist
+/// unverändert mitgekommen.
 ///
 /// Der [ReactiveFormConsumer] ist kein Beiwerk: Die Feldnamen leben in den
 /// Controls, und wer im Namensfeld tippt, baut die Seite nicht neu auf. Ohne

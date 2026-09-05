@@ -40,11 +40,12 @@ class FeldAenderungen {
   void vorbelegung(int i, DatumsVorbelegung? wert) =>
       _ersetze(i, _fields[i].mitVorbelegung(wert));
 
+  /// Das Entfernen selbst (Feld **und** Control) liegt in
+  /// [VorlagenBearbeitung.feldLoeschen] — hier steht nur die Meldung darum.
+  /// Der Abgleich nach einem Dateiwechsel löscht über denselben Weg, und zwei
+  /// Fassungen davon liefen bei der nächsten Änderung auseinander.
   void loeschen(int i) {
-    // Zu jedem Feld gehört ein Control, dessen Schlüssel in `FieldData.label`
-    // steht, solange die Seite offen ist.
-    bearbeitung.formGroup.removeControl(_fields[i].label);
-    _fields.removeAt(i);
+    bearbeitung.feldLoeschen(i);
     onGeaendert();
   }
 
