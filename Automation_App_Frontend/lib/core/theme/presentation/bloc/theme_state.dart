@@ -10,6 +10,8 @@ class ThemeState extends Equatable {
 
   ThemeMode get mode => preferences.mode;
 
+  Schriftstufe get schriftstufe => preferences.schriftstufe;
+
   @override
   List<Object?> get props => [preferences];
 }

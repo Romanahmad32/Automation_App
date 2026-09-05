@@ -1,4 +1,5 @@
 import 'package:automation_app/core/theme/data/theme_preferences_datasource.dart';
+import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/domain/theme_preferences.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +9,9 @@ import 'package:injectable/injectable.dart';
 part 'theme_event.dart';
 part 'theme_state.dart';
 
-/// Verwaltet die aktive Theme-Familie (Kanzlei / Standard) und den Hell-/
-/// Dunkel-/System-Modus. Die Auswahl wird lokal persistiert, damit sie über
-/// App-Starts hinweg erhalten bleibt.
+/// Verwaltet die aktive Theme-Familie (Kanzlei / Standard), den Hell-/
+/// Dunkel-/System-Modus und den Schriftgrad. Die Auswahl wird lokal
+/// persistiert, damit sie über App-Starts hinweg erhalten bleibt.
 @singleton
 class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   final ThemePreferencesDatasource _datasource;
@@ -20,6 +21,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     on<LoadThemeEvent>(_onLoad);
     on<ChangeThemeModeEvent>(_onChangeMode);
     on<ChangeThemeVariantEvent>(_onChangeVariant);
+    on<ChangeSchriftstufeEvent>(_onChangeSchriftstufe);
   }
 
   Future<void> _onLoad(LoadThemeEvent event, Emitter<ThemeState> emit) async {
@@ -39,6 +41,13 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     Emitter<ThemeState> emit,
   ) async {
     await _persist(emit, state.preferences.copyWith(variant: event.variant));
+  }
+
+  Future<void> _onChangeSchriftstufe(
+    ChangeSchriftstufeEvent event,
+    Emitter<ThemeState> emit,
+  ) async {
+    await _persist(emit, state.preferences.copyWith(schriftstufe: event.stufe));
   }
 
   Future<void> _persist(Emitter<ThemeState> emit, ThemePreferences next) async {

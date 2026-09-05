@@ -1,3 +1,4 @@
+import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/presentation/kanzlei_theme.dart';
 import 'package:automation_app/core/theme/presentation/schriftskala.dart';
 import 'package:automation_app/core/theme/presentation/theme.dart';
@@ -81,6 +82,69 @@ void main() {
         // einzige Bausteine auf der alten Größe stehen.
         expect(thema.chipTheme.labelStyle?.fontSize, text.labelLarge?.fontSize);
       });
+    });
+  });
+
+  // Seit Issue #57 wählt der Anwalt die Stufe selbst (Reiter „Darstellung").
+  // Die Durchläufe oben prüfen die Vorgabe; hier geht es um die beiden
+  // anderen Stufen — und darum, dass die Vorgabe genau die mittlere bleibt.
+  group('Schriftstufe', () {
+    test('der Zuschlag steigt gleichmaessig um die Schrittweite', () {
+      expect(Schriftskala.zuschlag(Schriftstufe.normal), 0);
+      expect(Schriftskala.zuschlag(Schriftstufe.groesser), 2);
+      expect(Schriftskala.zuschlag(Schriftstufe.amGroessten), 4);
+    });
+
+    test('"Normal" laesst die Material-3-Vorgaben unangetastet', () {
+      // Der Nullpunkt der Skala: Wer die Anhebung nicht will, bekommt genau
+      // das, was Material 3 vorsieht — kein Rest von 0,5 px, der beim
+      // Zurückstellen hängen bleibt.
+      final text = MaterialTheme(
+        schrift,
+        schriftstufe: Schriftstufe.normal,
+      ).light().textTheme;
+
+      expect(text.bodySmall?.fontSize, 12);
+      expect(text.bodyMedium?.fontSize, 14);
+      expect(text.titleLarge?.fontSize, 22);
+    });
+
+    test('"Am groessten" legt zwei Schritte drauf', () {
+      final text = MaterialTheme(
+        schrift,
+        schriftstufe: Schriftstufe.amGroessten,
+      ).light().textTheme;
+
+      expect(text.bodySmall?.fontSize, 16);
+      expect(text.bodyMedium?.fontSize, 18);
+      expect(text.titleLarge?.fontSize, 26);
+    });
+
+    test('ohne Angabe gilt die Vorgabestufe', () {
+      // Die vier Durchläufe oben bauen ihre Themes ohne Stufe. Ginge die
+      // Vorgabe still auf `normal`, wären sie es, die rot würden — nicht
+      // diese Zeile. Sie steht trotzdem hier, weil dieselbe Vorgabe auch die
+      // gespeicherten Einstellungen und den Bloc-Anfangszustand trägt.
+      expect(Schriftstufe.vorgabe, Schriftstufe.groesser);
+      expect(
+        MaterialTheme(schrift).light().textTheme.bodySmall?.fontSize,
+        MaterialTheme(
+          schrift,
+          schriftstufe: Schriftstufe.vorgabe,
+        ).light().textTheme.bodySmall?.fontSize,
+      );
+    });
+
+    test('die Kanzlei-Familie nimmt die Stufe genauso an', () {
+      // `KanzleiMaterialTheme` reicht die Stufe über `super` weiter. Fiele
+      // der Parameter dort weg, bliebe ausgerechnet das Standard-Design der
+      // App auf der Vorgabe stehen, während das andere folgt.
+      final text = KanzleiMaterialTheme(
+        schrift,
+        schriftstufe: Schriftstufe.amGroessten,
+      ).dark().textTheme;
+
+      expect(text.bodyMedium?.fontSize, 18);
     });
   });
 }
