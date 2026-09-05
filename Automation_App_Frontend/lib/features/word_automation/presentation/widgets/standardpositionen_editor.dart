@@ -1,4 +1,3 @@
-import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
@@ -6,19 +5,31 @@ import 'package:automation_app/features/word_automation/presentation/blocs/stand
 import 'package:automation_app/features/word_automation/presentation/utils/betrag_eingabe.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/schadenspositionen_pruefung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_entwurf.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_vorschau.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Editor der Standardpositionen in den Einstellungen (§4.4): Bezeichnung und
 /// optional ein vorbelegter Betrag je Zeile, darunter die Vorschau, wie die
 /// Schadensaufstellung damit startet. Gespeichert wird die komplette Liste
 /// über den [StandardpositionenCubit].
+///
+/// Der Speichern-Knopf steht **nicht** hier, sondern in der Kopfzeile des
+/// Reiters (`StandardpositionenSettingsView`). Was er speichert, meldet dieser
+/// Editor über den [entwurf] nach oben.
 class StandardpositionenEditor extends StatefulWidget {
   /// Titelzeilen-Farbe für die Vorschau (aus den Kanzlei-Einstellungen).
   final String? headerColorHex;
 
-  const StandardpositionenEditor({super.key, this.headerColorHex});
+  /// Der Entwurf der Seite, aus dem ihr Speichern-Knopf liest. Optional, damit
+  /// der Editor auch für sich aufgehängt werden kann (Widgettests).
+  final StandardpositionenEntwurf? entwurf;
+
+  const StandardpositionenEditor({
+    super.key,
+    this.headerColorHex,
+    this.entwurf,
+  });
 
   @override
   State<StandardpositionenEditor> createState() =>
@@ -74,7 +85,22 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
     if (_uebernommen && !stand.gespeichert) return;
     _uebernommen = _uebernommen || stand.geladen;
     _fuelle(stand.positionen);
+    // Erst nach dem Bild: `_nachziehen` läuft beim Aufgehen mitten im Aufbau
+    // (siehe stand_nachziehen.dart), und die Kopfzeile mit dem Speichern-Knopf
+    // ist in diesem Bild schon gebaut — sie jetzt zu benachrichtigen wäre
+    // „setState() or markNeedsBuild() called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _melde();
+    });
   }
+
+  /// Sagt dem Entwurf der Seite, was gerade in den Feldern steht. Von jeder
+  /// Stelle aus zu rufen, die Zeilen ändert — sonst speichert der Knopf in der
+  /// Kopfzeile einen Stand, den der Anwalt so nicht mehr vor sich hat.
+  void _melde() => widget.entwurf?.uebernimm(
+    _positionen(),
+    beanstandet: _hatBeanstandetenBetrag,
+  );
 
   List<StandardSchadensposition> _positionen() => [
     for (final zeile in _zeilen)
@@ -111,7 +137,7 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
           Rueckmeldung.zeigeFehler(context, stand.meldung!);
         }
       },
-      builder: (context, stand) => Column(
+      builder: (context, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final (index, zeile) in _zeilen.indexed)
@@ -127,7 +153,10 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
                         labelText: 'Schadensposition',
                         border: OutlineInputBorder(),
                       ),
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) {
+                        setState(() {});
+                        _melde();
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -143,15 +172,20 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) {
+                        setState(() {});
+                        _melde();
+                      },
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline),
                     tooltip: 'Position entfernen',
                     onPressed: _zeilen.length > 1
-                        ? () =>
-                              setState(() => _zeilen.removeAt(index).dispose())
+                        ? () {
+                            setState(() => _zeilen.removeAt(index).dispose());
+                            _melde();
+                          }
                         : null,
                   ),
                 ],
@@ -163,32 +197,27 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
               TextButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('Position hinzufügen'),
-                onPressed: () =>
-                    setState(() => _zeilen.add(DamageItemControllers())),
+                onPressed: () {
+                  setState(() => _zeilen.add(DamageItemControllers()));
+                  _melde();
+                },
               ),
               // Füllt nur die Felder — gespeichert ist erst nach „Speichern".
               TextButton.icon(
                 icon: const Icon(Icons.settings_backup_restore),
                 label: const Text('Auf die üblichen fünf zurücksetzen'),
-                onPressed: () =>
-                    setState(() => _fuelle(StandardSchadenspositionen.vorgabe)),
+                onPressed: () {
+                  setState(() => _fuelle(StandardSchadenspositionen.vorgabe));
+                  _melde();
+                },
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Derselbe Knopf wie in jeder anderen Einstellungsmaske
-          // (Kanzleidaten, Postfach): rechtsbündig, mit Ring während des
-          // Schreibens. Hier stand vorher ein CustomRectangularButton, und
-          // damit sah der Speichern-Knopf der Schadensaufstellung als
-          // einziger anders aus als der Rest der Einstellungen.
-          SpeichernButton(
-            speichert: stand.speichert,
-            onSpeichern: _hatBeanstandetenBetrag
-                ? null
-                : () => context.read<StandardpositionenCubit>().speichern(
-                    _positionen(),
-                  ),
-          ),
+          // Hier stand bis Issue #106 der Speichern-Knopf. Er sitzt jetzt in
+          // der Kopfzeile des Reiters (`StandardpositionenSettingsView`) und
+          // liest über den Entwurf, was hier eingetippt wurde — wer oben eine
+          // Zeile ändert, muss zum Speichern nicht mehr an der Vorschau
+          // vorbei nach unten scrollen.
           const SizedBox(height: 24),
           Text(
             'Vorschau',

@@ -69,10 +69,20 @@ class MailboxStatusBanner extends StatelessWidget {
           ),
           if (status.lastReplyAt case final last?) ...[
             const SizedBox(width: 12),
-            Text(
-              'Letzter Empfang: ${formatMailboxDateTime(last)}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: tone.foreground,
+            // Flexible statt eines unbeschränkten Text: Bei "Am größten"
+            // (Issue #57) und schmalem Fenster reicht der Platz neben dem
+            // bereits in Expanded gefassten Statustext nicht mehr für diesen
+            // zweiten, festen Textblock — ohne Flex-Kind lief er rechts über.
+            // Ellipsis statt Umbruch: Es ist eine kurze Statuszeile, keine
+            // zweite Zeile soll die Höhe der Leiste verändern.
+            Flexible(
+              child: Text(
+                'Letzter Empfang: ${formatMailboxDateTime(last)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: tone.foreground,
+                ),
               ),
             ),
           ],

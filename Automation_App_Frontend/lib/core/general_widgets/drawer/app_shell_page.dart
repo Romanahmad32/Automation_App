@@ -16,7 +16,14 @@ class _AppShellPageState extends State<AppShellPage> {
   bool _isExtended = false;
 
   static const _collapsedWidth = 72.0;
-  static const _expandedWidth = 220.0;
+
+  // 16 px breiter als früher (204 -> 220 -> 236 Innenraum): Bei der Stufe
+  // „Am größten" (Issue #57) lief „Vorlagen Verwalten" um rund 8 px über den
+  // rechten Rand. Das Ellipsis in `SidebarItem` fängt einen Überlauf zwar
+  // sicher ab, aber die längste Beschriftung soll vollständig lesbar bleiben
+  // statt beschnitten zu werden — ein paar Pixel mehr Breite sind der
+  // günstigere Tausch als eine gekürzte Beschriftung im Alltag.
+  static const _expandedWidth = 236.0;
   static const _animationDuration = Duration(milliseconds: 200);
 
   @override
