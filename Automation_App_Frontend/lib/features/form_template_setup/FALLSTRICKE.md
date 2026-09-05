@@ -112,6 +112,17 @@ andere heute; eine andere Frist ging nur über den Quellcode.
   („ergibt heute: …") zeigt darum das gerechnete Datum und nicht bloß die Zahlen.
 - Der Editor steht in der Feldzeile der Detailseite und liest den Feldnamen aus dem **Control**,
   nicht aus `FieldData.label` (siehe oben, `field_0`). Sonst leitete er aus `field_0` ab.
+- **Ein Feld wird fortgeschrieben, nie neu gebaut** — an beiden Enden des Editors. Zweimal
+  wechselt ein `FieldData` unterwegs das Label: `InitialTemplateForm.fromTemplate` tauscht beim
+  Öffnen den Namen gegen den Control-Schlüssel, `FormTemplateActionButtons` beim Speichern zurück.
+  Beide Stellen bauten dafür ein neues `FieldData` aus fünf Feldern zusammen und liessen die
+  Vorbelegung als sechstes stillschweigend liegen (#105). Sichtbar war das nicht: `toJson` schreibt
+  den Schlüssel bei `null` gar nicht, der Verlust sah also aus wie „nie eingestellt", und
+  aufgefallen wäre er erst am falschen Datum im nächsten Schreiben. Beide Stellen gehen deshalb
+  über `element.copyWith(order: …, label: …)`; jedes neue Feld an `FieldData` kommt damit von
+  selbst mit, statt an zwei Stellen nachgetragen werden zu müssen. Bewacht von
+  `datums_vorbelegung_speicherweg_test.dart`, das den Weg hinein und heraus am Knopf prüft — samt
+  der Gegenprobe, dass ein Feld ohne Einstellung den Schlüssel weiterhin nicht schreibt.
 
 ## Zustand
 
