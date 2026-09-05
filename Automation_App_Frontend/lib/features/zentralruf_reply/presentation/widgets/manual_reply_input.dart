@@ -154,20 +154,37 @@ class _ManualReplyInputState extends State<ManualReplyInput> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          // Wrap statt Row: Bei der Stufe "Am größten" (Issue #57) sind die
+          // drei Knöpfe auf einem schmalen Fenster breiter als das Fenster
+          // selbst — eine Row überläuft dann rechts, weil sie ihre Kinder nie
+          // umbrechen kann. Der `Spacer` half hier ohnehin nicht: er verteilt
+          // nur überschüssigen Platz, lässt aber keinen Knopf schrumpfen. Der
+          // äußere Wrap trennt die beiden Lade-Knöpfe (links) vom
+          // "Daten extrahieren"-Knopf (rechts) wie zuvor der Spacer; reicht
+          // der Platz nicht, bricht die zweite Gruppe in eine neue Zeile um.
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
-              TextButton.icon(
-                onPressed: _loadFromFile,
-                icon: const Icon(Icons.file_open),
-                label: const Text('Aus Datei laden'),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  TextButton.icon(
+                    onPressed: _loadFromFile,
+                    icon: const Icon(Icons.file_open),
+                    label: const Text('Aus Datei laden'),
+                  ),
+                  TextButton.icon(
+                    onPressed: _pasteFromClipboard,
+                    icon: const Icon(Icons.paste),
+                    label: const Text('Aus Zwischenablage'),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: _pasteFromClipboard,
-                icon: const Icon(Icons.paste),
-                label: const Text('Aus Zwischenablage'),
-              ),
-              const Spacer(),
               CustomRectangularButton(
                 label: state is ZentralrufReplyLoading
                     ? const Text('Wird ausgewertet …')
