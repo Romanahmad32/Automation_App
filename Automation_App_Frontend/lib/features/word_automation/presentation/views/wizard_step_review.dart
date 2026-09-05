@@ -35,17 +35,27 @@ class WizardStepReview extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(Icons.warning_amber, color: Colors.orange),
                     const SizedBox(width: 8),
-                    Text(
-                      'Bitte prüfen — das Dokument enthält Warnungen:',
-                      // Feste dunkle Schrift: der Container ist immer hellamber,
-                      // daher darf die Farbe nicht aus dem (im Dark Mode hellen)
-                      // Theme kommen, sonst hell-auf-hell und unlesbar.
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    // Expanded statt eines unbeschränkten Text: Bei "Am
+                    // größten" (Issue #57) und schmalem Fenster war die
+                    // Überschrift allein schon breiter als die verfügbare
+                    // Zeile — eine Row ohne Flex-Kind kann nicht umbrechen und
+                    // lief rechts über. Mehrzeilig statt Ellipsis, denn der
+                    // Warnhinweis soll vollständig lesbar bleiben.
+                    Expanded(
+                      child: Text(
+                        'Bitte prüfen — das Dokument enthält Warnungen:',
+                        softWrap: true,
+                        // Feste dunkle Schrift: der Container ist immer hellamber,
+                        // daher darf die Farbe nicht aus dem (im Dark Mode hellen)
+                        // Theme kommen, sonst hell-auf-hell und unlesbar.
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ],
@@ -70,40 +80,60 @@ class WizardStepReview extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          // Wrap statt Row: Bei der Stufe "Am größten" (Issue #57) sind vier
+          // Knöpfe in einer Zeile auf einem schmalen Fenster breiter als das
+          // Fenster selbst — eine Row überläuft dann rechts, weil sie ihre
+          // Kinder nie umbrechen kann. Der äußere Wrap trennt die Gruppe
+          // "Navigation/Vorschau" (links) vom "Bestätigen"-Knopf (rechts) wie
+          // zuvor der Spacer — passt beides in eine Zeile, bleibt der Abstand
+          // maximal; reicht der Platz nicht, bricht die zweite Gruppe in eine
+          // neue Zeile um, statt über den Rand zu laufen. Ein `Spacer` selbst
+          // ginge hier nicht: er verlangt einen `Flex`-Elternteil, den `Wrap`
+          // nicht ist.
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
-              CustomRectangularButton(
-                onPressed: () =>
-                    context.read<WizardCubit>().goToStep(WizardStep.fillOut),
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Zurück zum Ändern'),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  CustomRectangularButton(
+                    onPressed: () => context.read<WizardCubit>().goToStep(
+                      WizardStep.fillOut,
+                    ),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Zurück zum Ändern'),
+                  ),
+                  CustomRectangularButton(
+                    // Über den Windows-Shell-Befehl "start" statt
+                    // url_launcher: launchUrl öffnete die Datei erst beim
+                    // zweiten Klick.
+                    onPressed: outputPath != null
+                        ? () => Process.run('cmd', [
+                            '/c',
+                            'start',
+                            '',
+                            outputPath,
+                          ], runInShell: false)
+                        : null,
+                    icon: const Icon(Icons.edit_document),
+                    label: const Text('In Word öffnen'),
+                  ),
+                  CustomRectangularButton(
+                    onPressed: outputPath != null
+                        ? () => context.read<ResultPdfPreviewBloc>().add(
+                            LoadPdfPreviewEvent(outputPath),
+                          )
+                        : null,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Vorschau aktualisieren'),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              CustomRectangularButton(
-                // Über den Windows-Shell-Befehl "start" statt url_launcher:
-                // launchUrl öffnete die Datei erst beim zweiten Klick.
-                onPressed: outputPath != null
-                    ? () => Process.run('cmd', [
-                        '/c',
-                        'start',
-                        '',
-                        outputPath,
-                      ], runInShell: false)
-                    : null,
-                icon: const Icon(Icons.edit_document),
-                label: const Text('In Word öffnen'),
-              ),
-              const SizedBox(width: 12),
-              CustomRectangularButton(
-                onPressed: outputPath != null
-                    ? () => context.read<ResultPdfPreviewBloc>().add(
-                        LoadPdfPreviewEvent(outputPath),
-                      )
-                    : null,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Vorschau aktualisieren'),
-              ),
-              const Spacer(),
               CustomRectangularButton(
                 onPressed: outputPath != null
                     ? () =>

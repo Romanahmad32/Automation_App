@@ -54,17 +54,32 @@ class TemplateFieldsCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              spacing: 10,
+            // Wrap statt Row mit Spacer: Bei angehobener Schrift (Issue #57)
+            // und schmalem Fenster reicht die Breite nicht mehr für Titel
+            // **und** Knopf nebeneinander — ein Spacer kann dann nicht auf
+            // negative Breite schrumpfen und die Karte läuft rechts über.
+            // Der Knopf rutscht stattdessen unter den Titel.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Icon(Icons.input, color: theme.colorScheme.primaryContainer),
-                Text(
-                  'Eingabefelder der Vorlage',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 10,
+                  children: [
+                    Icon(
+                      Icons.input,
+                      color: theme.colorScheme.primaryContainer,
+                    ),
+                    Text(
+                      'Eingabefelder der Vorlage',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
                 CustomRectangularButton(
                   icon: const Icon(Icons.add),
                   label: const Text('Neues Feld hinzufügen'),

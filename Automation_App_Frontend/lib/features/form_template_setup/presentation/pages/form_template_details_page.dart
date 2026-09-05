@@ -231,8 +231,11 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                         isEditing
                             ? 'Vorlage bearbeiten'
                             : 'Neue Vorlage erstellen',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontSize: 25,
+                        // `headlineSmall` statt `titleLarge` mit fester Größe:
+                        // Die Seitenüberschrift soll größer sein als ein
+                        // Sektionstitel, und die passende Rolle dafür wächst
+                        // mit der Schriftskala mit (Issue #57).
+                        style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),

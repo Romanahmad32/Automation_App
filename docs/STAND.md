@@ -107,6 +107,12 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 - **Einheitliche Rückmeldungen (Issue #56, 04.09.2026)** — Baustein `Rueckmeldung` zeigt Erfolgs-,
   Hinweis- und Fehlermeldungen oben rechts als Stapel über der Dialogbarriere (Erfolg 3 s, Hinweis
   5 s, Fehler bis zum Schließen). Alle 52 Snackbar-Stellen umgestellt, ein Architekturtest wacht.
+- **Schriftgrad angehoben (Issue #57, 05.09.2026)** — TextTheme-Rollen zentral um 2 px angehoben
+  (`Schriftskala`, `lib/core/theme/presentation/schriftskala.dart`), gilt für Standard- und
+  Kanzlei-Design, hell und dunkel; in den Einstellungen dreistufig wählbar (Normal / Größer /
+  Am größten), Vorgabe Größer. Regel gegen freistehende `fontSize` als Architekturtest
+  (`test/architecture/schriftgroesse_test.dart`). Sichtprüfung am echten Bildschirm mit dem
+  Anwalt steht noch aus.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

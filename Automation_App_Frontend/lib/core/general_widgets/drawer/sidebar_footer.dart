@@ -44,15 +44,21 @@ class SidebarFooter extends StatelessWidget {
                   width: collapsedWidth - 1,
                   child: const Center(child: SidebarThemeToggle()),
                 ),
-                ClipRect(
-                  child: AnimatedAlign(
-                    duration: animationDuration,
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.centerLeft,
-                    widthFactor: isExtended ? 1 : 0,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: VersionBadge(stand: stand),
+                // Flexible statt eines unbeschränkten Row-Kindes, siehe
+                // dieselbe Begründung in `side_bar_item.dart`: Ohne das
+                // wächst das Badge auf seine natürliche Breite und reißt die
+                // Row bei größerer Schrift über den rechten Rand.
+                Flexible(
+                  child: ClipRect(
+                    child: AnimatedAlign(
+                      duration: animationDuration,
+                      curve: Curves.easeInOut,
+                      alignment: Alignment.centerLeft,
+                      widthFactor: isExtended ? 1 : 0,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: VersionBadge(stand: stand),
+                      ),
                     ),
                   ),
                 ),
