@@ -15,8 +15,8 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 **Backend:** `Features/FormTemplates/` · `GET /api/FormTemplates`, `POST /api/FormTemplates`,
 `PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
 `Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
-**Tests:** `test/features/form_template_setup/` — `feld_datenquelle_erkennung_test.dart`,
-`feld_vorkommen_test.dart`, `feld_vorkommen_badge_test.dart`, `verwendete_felder_test.dart`, `datums_vorbelegung_test.dart`
+**Tests:** `test/features/form_template_setup/` — `feld_vorkommen_badge_test.dart`, `datums_vorbelegung_speicherweg_test.dart`,
+`feld_datenquelle_erkennung_test.dart`, `feld_vorkommen_test.dart`, `verwendete_felder_test.dart`, `datums_vorbelegung_test.dart`
 
 **Fallstricke**
 
@@ -32,7 +32,7 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
   `ZuordnungsDialog` repariert (#36), statt erst nach dem Erzeugen aufzufallen.
 - Solange die Detailseite offen ist, hält `FieldData.label` **nicht** den Feldnamen, sondern den
   Schlüssel des reactive_forms-Controls (`field_0`, `field_1`, …); der Name steht im Wert des
-  Controls und wird erst beim Speichern in `FormTemplateActionButtons` zurückgetauscht.
+  Controls und wird erst beim Speichern in `FormTemplateActionButtons` zurückgetauscht, am fortgeschriebenen Feld (#105).
 - Beim Übernehmen eines Platzhalters schlägt `FeldDatenquelleErkennung` Feldtyp und Datenquelle
   vor — sichtbar im Dropdown und änderbar, nie stillschweigend gesetzt (§1.3). Dieselbe Erkennung
   löst zur Laufzeit die Felder auf, an denen nie eine Quelle gesetzt wurde.
