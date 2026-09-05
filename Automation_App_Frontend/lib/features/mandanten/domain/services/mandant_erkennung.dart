@@ -9,6 +9,39 @@ class MandantVorschlag {
   const MandantVorschlag({required this.mandant, required this.begruendung});
 }
 
+/// Eine Zeile, zu der ein Vorschlag gesucht wird: die Nummer, unter der der
+/// Aufrufer sie wiederfindet, und die beiden Namensteile.
+class AehnlichkeitsZeile {
+  final int zeile;
+  final String vorname;
+  final String nachname;
+
+  const AehnlichkeitsZeile({
+    required this.zeile,
+    this.vorname = '',
+    this.nachname = '',
+  });
+}
+
+/// Register und Zeilen in **einem** Argument — die Form, die
+/// [MandantErkennung.findeZuZeilen] in einem eigenen Isolate (`compute`)
+/// aufrufbar macht.
+///
+/// Der Anlass ist die Größenordnung des Imports: eine Datei über den ganzen
+/// Bestand hat viertausend Zeilen, und jede läuft über mehrere tausend
+/// Registereinträge mit Levenshtein-Vergleich. Im Oberflächen-Isolat gerechnet
+/// steht die App dabei still — ein Fehler, der in der Kanzlei auffällt und
+/// nicht in der Prüfkette.
+class AehnlichkeitsAuftrag {
+  final List<Mandant> mandanten;
+  final List<AehnlichkeitsZeile> zeilen;
+
+  const AehnlichkeitsAuftrag({
+    this.mandanten = const [],
+    this.zeilen = const [],
+  });
+}
+
 /// Erkennt beim freien Erfassen im „Vorgang starten"-Formular, ob die Eingaben
 /// zu einem bereits gespeicherten Mandanten passen — bevor versehentlich ein
 /// Duplikat entsteht. Zwei Signale:
@@ -82,6 +115,26 @@ class MandantErkennung {
         : ergebnis.sublist(0, maxVorschlaege);
   }
 
+  /// [finde] über viele Zeilen auf einmal — ein Argument, ein Rückgabewert,
+  /// damit der Aufruf durch `compute` in ein eigenes Isolate passt.
+  ///
+  /// Geliefert werden nur Zeilen **mit** Treffer: eine Karte voller leerer
+  /// Listen kostete bei viertausend Zeilen Platz und sagte nichts.
+  static Map<int, List<MandantVorschlag>> findeZuZeilen(
+    AehnlichkeitsAuftrag auftrag,
+  ) {
+    final ergebnis = <int, List<MandantVorschlag>>{};
+    for (final zeile in auftrag.zeilen) {
+      final treffer = finde(
+        mandanten: auftrag.mandanten,
+        vorname: zeile.vorname,
+        nachname: zeile.nachname,
+      );
+      if (treffer.isNotEmpty) ergebnis[zeile.zeile] = treffer;
+    }
+    return ergebnis;
+  }
+
   /// Nachname passt bei Gleichheit, Tippbeginn (in beide Richtungen ab drei
   /// Zeichen) oder genau einem Tippfehler — inklusive Buchstabendreher —
   /// (ab vier Zeichen).
@@ -93,6 +146,11 @@ class MandantErkennung {
       return true;
     }
     if (eingabe.length >= 4 && gespeichert.length >= 4) {
+      // Abkürzung ohne Bedeutungsänderung: Unterscheiden sich die Längen um
+      // mehr als 1, kostet allein das Angleichen schon mehr als einen Schritt —
+      // der Abstand kann dann nicht ≤ 1 sein. Das erspart die volle Matrix im
+      // häufigsten Fall und zählt beim Import über viertausend Zeilen.
+      if ((eingabe.length - gespeichert.length).abs() > 1) return false;
       return _levenshtein(eingabe, gespeichert) <= 1;
     }
     return false;

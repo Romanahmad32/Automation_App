@@ -1,6 +1,9 @@
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
+import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/aehnlicher_mandant_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_formular.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -31,10 +34,14 @@ class ImportEintragDialog extends StatefulWidget {
   /// Der Datensatz aus der Datei, der hier bearbeitet wird.
   final ImportMandantEintrag datensatz;
 
+  /// Registereinträge mit ähnlichem Namen. Leer heißt: kein Hinweis.
+  final List<MandantVorschlag> aehnliche;
+
   const ImportEintragDialog({
     super.key,
     required this.befund,
     required this.datensatz,
+    this.aehnliche = const [],
   });
 
   @override
@@ -82,6 +89,13 @@ class _ImportEintragDialogState extends State<ImportEintragDialog> {
               spacing: 16,
               children: [
                 _herkunft(theme),
+                // Derselbe Hinweis wie an der Zeile. Wer eine verdächtige
+                // Zeile öffnet, soll die Übernahme nicht wieder zuklappen
+                // müssen, um sie zu erreichen.
+                AehnlicherMandantHinweis(
+                  vorschlaege: widget.aehnliche,
+                  onUebernehmen: _namenUebernehmen,
+                ),
                 ImportEintragFormular(
                   initialAnrede: _anrede,
                   initialOrdnernamen: _ordnernamen,
@@ -121,6 +135,13 @@ class _ImportEintragDialogState extends State<ImportEintragDialog> {
         ],
       ),
     );
+  }
+
+  /// Trägt die Schreibweise des Registers in die Namensfelder ein. Bewusst nur
+  /// ins Formular: Geschrieben wird auch hier erst mit „Änderung übernehmen".
+  void _namenUebernehmen(Mandant mandant) {
+    _form.control('vorname').value = mandant.vorname;
+    _form.control('nachname').value = mandant.nachname;
   }
 
   /// Woher die Angaben stammen und was der Dienst daran auszusetzen hatte —

@@ -1,3 +1,4 @@
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:equatable/equatable.dart';
 
 /// Eine Importdatei mit dem, was außerhalb der App über den Aktenbestand
@@ -115,11 +116,15 @@ class ImportMandantEintrag extends Equatable {
     this.bearbeitet = false,
   });
 
-  /// Derselbe Eintrag, als von Hand geändert vermerkt.
-  ImportMandantEintrag alsBearbeitet() => ImportMandantEintrag(
+  /// Derselbe Eintrag mit einzelnen geänderten Feldern.
+  ImportMandantEintrag copyWith({
+    String? vorname,
+    String? nachname,
+    bool? bearbeitet,
+  }) => ImportMandantEintrag(
     anrede: anrede,
-    vorname: vorname,
-    nachname: nachname,
+    vorname: vorname ?? this.vorname,
+    nachname: nachname ?? this.nachname,
     strasseHausnummer: strasseHausnummer,
     postleitzahl: postleitzahl,
     ort: ort,
@@ -130,8 +135,21 @@ class ImportMandantEintrag extends Equatable {
     kennzeichen: kennzeichen,
     quelle: quelle,
     sicherheit: sicherheit,
-    bearbeitet: true,
+    bearbeitet: bearbeitet ?? this.bearbeitet,
   );
+
+  /// Derselbe Eintrag, als von Hand geändert vermerkt.
+  ImportMandantEintrag alsBearbeitet() => copyWith(bearbeitet: true);
+
+  /// Derselbe Eintrag mit der Schreibweise eines Registereintrags im Namen —
+  /// das, was „Übernehmen" am Ähnlichkeitshinweis tut.
+  ///
+  /// Mehr passiert dabei bewusst nicht: Ob daraus eine Ergänzung des
+  /// vorhandenen Mandanten wird, entscheidet der Dienst beim nächsten Prüflauf
+  /// über die **ganze** Datei. Hier zuzuordnen wäre eine zweite Auslegung
+  /// derselben Regeln, und die beiden liefen früher oder später auseinander.
+  ImportMandantEintrag mitNamenAus(Mandant mandant) =>
+      copyWith(vorname: mandant.vorname, nachname: mandant.nachname);
 
   String get anzeigename => '$vorname $nachname'.trim();
 

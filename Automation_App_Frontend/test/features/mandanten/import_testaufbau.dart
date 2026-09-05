@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/importiere_mandanten.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/lies_import_datei.dart';
@@ -78,11 +79,32 @@ class FesteImportDatei
   }
 }
 
+/// Das Register, gegen das die Vorschau ihre Ähnlichkeiten rechnet. Leer ist
+/// der Normalfall der älteren Tests — dann fällt der Vergleich aus.
+class FestesRegister implements UseCase<List<Mandant>, NoParams> {
+  final List<Mandant> mandanten;
+  int aufrufe = 0;
+
+  FestesRegister(this.mandanten);
+
+  @override
+  Future<Either<Failure, List<Mandant>>> call(NoParams params) async {
+    aufrufe++;
+    return Right(mandanten);
+  }
+}
+
 /// Merkt sich, ob geprüft oder geschrieben wurde — der Kern der Sache: vor der
 /// ersten Vorschau darf nichts geschrieben werden.
 class AufzeichnenderImport
     implements UseCase<ImportBericht, ImportiereMandantenParams> {
   final ImportBericht antwort;
+
+  /// Antwortet abhängig von der geschickten Datei, wenn gesetzt — für die
+  /// Fälle, in denen eine berichtigte Zeile einen **anderen** Bericht ergeben
+  /// muss (aus `neu` wird `ergaenzt`). Der Dienst rechnet ja neu; eine feste
+  /// Antwort verstellte genau das, was geprüft werden soll.
+  ImportBericht Function(MandantenImportDatei datei)? berichtFuer;
 
   /// Ob der jeweilige Aufruf schreiben sollte — in der Reihenfolge.
   final List<bool> aufrufe = [];
@@ -105,19 +127,20 @@ class AufzeichnenderImport
     gesendet.add(params.datei);
     final grund = fehler;
     if (grund != null) return Left(LocalFailure(message: grund));
+    final gewaehlt = berichtFuer?.call(params.datei) ?? antwort;
     return Right(
       params.uebernehmen
           ? ImportBericht(
-              eintraege: antwort.eintraege,
-              neu: antwort.neu,
-              ergaenzt: antwort.ergaenzt,
-              unveraendert: antwort.unveraendert,
-              abgelehnt: antwort.abgelehnt,
-              ordnerZugeordnet: antwort.ordnerZugeordnet,
-              ohneMandantenbezug: antwort.ohneMandantenbezug,
+              eintraege: gewaehlt.eintraege,
+              neu: gewaehlt.neu,
+              ergaenzt: gewaehlt.ergaenzt,
+              unveraendert: gewaehlt.unveraendert,
+              abgelehnt: gewaehlt.abgelehnt,
+              ordnerZugeordnet: gewaehlt.ordnerZugeordnet,
+              ohneMandantenbezug: gewaehlt.ohneMandantenbezug,
               angewendet: true,
             )
-          : antwort,
+          : gewaehlt,
     );
   }
 }
@@ -126,22 +149,26 @@ class AufzeichnenderImport
 class ImportTestaufbau {
   final FesteImportDatei lesen;
   final AufzeichnenderImport importieren;
+  final FestesRegister register;
   final MandantenImportCubit cubit;
 
-  ImportTestaufbau._(this.lesen, this.importieren, this.cubit);
+  ImportTestaufbau._(this.lesen, this.importieren, this.register, this.cubit);
 
   factory ImportTestaufbau({
     MandantenImportDatei? inhalt,
     ImportBericht? antwort,
+    List<Mandant> mandanten = const [],
   }) {
     final lesen = FesteImportDatei(inhalt ?? datei());
     final importieren = AufzeichnenderImport(
       antwort ?? bericht(eintraege: [eintrag(0)], neu: 1, ordnerZugeordnet: 1),
     );
+    final register = FestesRegister(mandanten);
     return ImportTestaufbau._(
       lesen,
       importieren,
-      MandantenImportCubit(lesen, importieren),
+      register,
+      MandantenImportCubit(lesen, importieren, register),
     );
   }
 

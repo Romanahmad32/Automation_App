@@ -1,6 +1,8 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/views/mandanten_import_view.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/aehnlicher_mandant_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_datei_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_kachel.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'import_testaufbau.dart';
+import 'mandanten_testaufbau.dart';
 
 Widget seite(MandantenImportCubit cubit) => MaterialApp(
   home: Scaffold(
@@ -234,5 +237,75 @@ void main() {
       ),
     );
     expect(knopf.onPressed, isNull);
+  });
+
+  // Der Fall, um dessentwillen der Hinweis gebaut ist: Innerhalb einer Datei
+  // sieht der Erzeuger „Schmitt" und „Schmidt" nebeneinander und führt sie
+  // zusammen — über zwei Sitzungen hinweg sieht er nur den zweiten.
+  testWidgets('eine Zeile mit ähnlichem Namen trägt den Hinweis', (
+    tester,
+  ) async {
+    final aufbau = ImportTestaufbau(
+      inhalt: MandantenImportDatei(
+        mandanten: const [
+          ImportMandantEintrag(
+            vorname: 'Mark',
+            nachname: 'Schmitt',
+            aktenOrdnernamen: ['VUnfallursache Schmitt'],
+          ),
+        ],
+      ),
+      antwort: bericht(
+        eintraege: [eintrag(0, name: 'Mark Schmitt')],
+        neu: 1,
+        ordnerZugeordnet: 1,
+      ),
+      mandanten: [mandant(1, 'Schmidt', vorname: 'Mark')],
+    );
+    addTearDown(aufbau.close);
+    await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
+
+    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AehnlicherMandantHinweis), findsOneWidget);
+    expect(find.text('Ähnlicher Name im Register:'), findsOneWidget);
+  });
+
+  testWidgets('Übernehmen schickt die Zeile mit dem Registernamen erneut', (
+    tester,
+  ) async {
+    final aufbau = ImportTestaufbau(
+      inhalt: MandantenImportDatei(
+        mandanten: const [
+          ImportMandantEintrag(
+            vorname: 'Mark',
+            nachname: 'Schmitt',
+            aktenOrdnernamen: ['VUnfallursache Schmitt'],
+          ),
+        ],
+      ),
+      antwort: bericht(
+        eintraege: [eintrag(0, name: 'Mark Schmitt')],
+        neu: 1,
+        ordnerZugeordnet: 1,
+      ),
+      mandanten: [mandant(1, 'Schmidt', vorname: 'Mark')],
+    );
+    addTearDown(aufbau.close);
+    await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
+
+    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Übernehmen'));
+    await tester.pumpAndSettle();
+
+    // Nicht örtlich zugeordnet, sondern die berichtigte Datei erneut geprüft —
+    // aus `neu` macht erst der Dienst ein `ergaenzt`.
+    final zuletzt = aufbau.importieren.gesendet.last.mandanten.single;
+    expect(zuletzt.nachname, 'Schmidt');
+    expect(zuletzt.vorname, 'Mark');
+    expect(zuletzt.bearbeitet, isTrue);
+    expect(aufbau.importieren.schreibendeAufrufe, 0);
   });
 }

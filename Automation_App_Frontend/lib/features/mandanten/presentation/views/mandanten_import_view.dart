@@ -53,6 +53,7 @@ class MandantenImportView extends StatelessWidget {
                     befund: sichtbar[i],
                     datensatz: state.eintragAus(sichtbar[i].zeile),
                     bearbeitbar: !state.laufend && !state.uebernommen,
+                    aehnliche: state.aehnlicheZu(sichtbar[i].zeile),
                   ),
                 ),
         ),

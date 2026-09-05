@@ -16,13 +16,20 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_o
 /// von Bloc-Test und Widget-Test gemeinsam genutzt.
 final DateTime angelegt = DateTime(2026, 1, 1);
 
-Mandant mandant(int id, String nachname, {List<String> ordner = const []}) =>
-    Mandant(
-      id: id,
-      nachname: nachname,
-      aktenOrdnernamen: ordner,
-      erstelltAm: angelegt,
-    );
+Mandant mandant(
+  int id,
+  String nachname, {
+  String vorname = '',
+  List<String> ordner = const [],
+  List<String> kennzeichen = const [],
+}) => Mandant(
+  id: id,
+  vorname: vorname,
+  nachname: nachname,
+  aktenOrdnernamen: ordner,
+  kennzeichen: kennzeichen,
+  erstelltAm: angelegt,
+);
 
 Akte akte(String ordnername) =>
     Akte(ordnername: ordnername, pfad: 'C:/Akten/$ordnername');

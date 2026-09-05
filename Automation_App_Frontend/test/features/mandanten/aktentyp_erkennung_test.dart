@@ -1,6 +1,6 @@
 import 'package:automation_app/features/mandanten/domain/entities/aktentyp.dart';
 import 'package:automation_app/features/mandanten/domain/services/aktentyp_erkennung.dart';
-import 'package:automation_app/features/mandanten/presentation/utils/ordnername_vorschlag.dart';
+import 'package:automation_app/features/mandanten/domain/services/ordnername_vorschlag.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -70,10 +70,19 @@ void main() {
       expect(vorschlag.nachname, 'Mustermann');
     });
 
-    test('ein einzelnes Wort wird zum Vornamen', () {
-      final vorschlag = nameVorschlagAusOrdner('Strafsache Mark');
-      expect(vorschlag.vorname, 'Mark');
-      expect(vorschlag.nachname, isEmpty);
+    // Diese Erwartung war bis zum 05.09.2026 umgekehrt („ein einzelnes Wort
+    // wird zum Vornamen") und wurde auf ausdrücklichen Auftrag gedreht — nicht,
+    // um einen roten Test grün zu bekommen, sondern weil sie den Aktenbestand
+    // falsch beschrieb: `docs/MANDANTEN_IMPORT.md` führt den Mandanten „Mark
+    // Schmidt" mit den Ordnern „VUnfallursache Schmidt" und „Bußgeldsache
+    // Schmidt". Das einzelne Wort hinter dem Präfix ist in dieser Kanzlei der
+    // Nachname. Als Vorname gelesen fand der Vorschlag im Register nie einen
+    // Treffer, weil `MandantErkennung` am Nachnamen wiedererkennt — und genau
+    // darauf baut die Beschriftung der Arbeitspakete (Issue #108).
+    test('ein einzelnes Wort ist der Nachname', () {
+      final vorschlag = nameVorschlagAusOrdner('Strafsache Schmidt');
+      expect(vorschlag.vorname, isEmpty);
+      expect(vorschlag.nachname, 'Schmidt');
     });
 
     test('nur ein Präfix ergibt keinen Vorschlag', () {

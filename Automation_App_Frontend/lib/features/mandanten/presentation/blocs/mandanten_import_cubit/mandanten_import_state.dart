@@ -21,6 +21,18 @@ class MandantenImportState extends Equatable {
   final String? fehler;
   final ImportFilter filter;
 
+  /// Das Mandantenregister, gegen das verglichen wird. Es trägt den
+  /// Ähnlichkeitshinweis und die Übernahme im Eintrags-Dialog.
+  final List<Mandant> mandanten;
+
+  /// Zeile → ähnlich geschriebene Registereinträge, nur für Zeilen der Art
+  /// `neu`. Genau die Auskunft, die der Erzeuger der Datei nicht hat: Innerhalb
+  /// einer Sitzung sieht er „Schmidt" und „Schmitt" nebeneinander, über zwei
+  /// Sitzungen hinweg nur den zweiten.
+  ///
+  /// Enthalten sind nur Zeilen **mit** Treffer.
+  final Map<int, List<MandantVorschlag>> aehnliche;
+
   const MandantenImportState({
     this.dateiPfad,
     this.datei,
@@ -28,6 +40,8 @@ class MandantenImportState extends Equatable {
     this.laufend = false,
     this.fehler,
     this.filter = const ImportFilter(),
+    this.mandanten = const [],
+    this.aehnliche = const {},
   });
 
   bool get uebernommen => bericht?.angewendet ?? false;
@@ -56,11 +70,14 @@ class MandantenImportState extends Equatable {
     return mandanten[zeile];
   }
 
+  /// Die Ähnlichkeitstreffer einer Zeile — leer, wenn es keine gibt.
+  List<MandantVorschlag> aehnlicheZu(int zeile) => aehnliche[zeile] ?? const [];
+
   List<ImportEintrag> get sichtbar =>
-      filter.anwenden(bericht?.eintraege ?? const []);
+      filter.anwenden(bericht?.eintraege ?? const [], aehnliche: aehnliche);
 
   Map<ImportSicht, int> get zaehler =>
-      filter.zaehlen(bericht?.eintraege ?? const []);
+      filter.zaehlen(bericht?.eintraege ?? const [], aehnliche: aehnliche);
 
   /// Nicht übergebene Felder bleiben stehen. [fehler] und [bericht] müssen sich
   /// auch wieder leeren lassen — dafür die beiden Schalter, weil `null` hier
@@ -72,6 +89,8 @@ class MandantenImportState extends Equatable {
     bool? laufend,
     String? fehler,
     ImportFilter? filter,
+    List<Mandant>? mandanten,
+    Map<int, List<MandantVorschlag>>? aehnliche,
     bool fehlerLoeschen = false,
     bool berichtLoeschen = false,
   }) => MandantenImportState(
@@ -81,6 +100,8 @@ class MandantenImportState extends Equatable {
     laufend: laufend ?? this.laufend,
     fehler: fehlerLoeschen ? null : fehler ?? this.fehler,
     filter: filter ?? this.filter,
+    mandanten: mandanten ?? this.mandanten,
+    aehnliche: aehnliche ?? this.aehnliche,
   );
 
   @override
@@ -91,5 +112,7 @@ class MandantenImportState extends Equatable {
     laufend,
     fehler,
     filter,
+    mandanten,
+    aehnliche,
   ];
 }

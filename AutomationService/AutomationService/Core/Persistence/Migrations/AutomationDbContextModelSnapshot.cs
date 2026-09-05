@@ -278,6 +278,36 @@ namespace AutomationService.Core.Persistence.Migrations
                     b.ToTable("ReceivedReplies");
                 });
 
+            modelBuilder.Entity("AutomationService.Features.Mandanten.Domain.Persistence.ArbeitspaketEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("EingelesenAm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ErledigtAnzahl")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("GeholtAm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Nummer")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OrdnernamenJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nummer")
+                        .IsUnique();
+
+                    b.ToTable("Arbeitspakete");
+                });
+
             modelBuilder.Entity("AutomationService.Features.Mandanten.Domain.Persistence.MandantEntity", b =>
                 {
                     b.Property<int>("Id")
