@@ -98,6 +98,18 @@ denselben Vorlagennamen; unterschieden werden sie allein durch die Nummer.
   Titelzeilen-Farbe der Tabelle (`TabellenkopfFarbeField` aus `settings`): Sie speichert **sofort
   beim Auswählen** für sich (`SaveTabellenkopfFarbeEvent`, auf dem geladenen Stand), und die
   Vorschau folgt dem Farbfeld live — auch einem noch ungespeicherten Wert.
+- **Der Speichern-Knopf der Positionen sitzt seit #106 in der Kopfzeile des Reiters, nicht mehr im
+  Editor** (`StandardpositionenSettingsView` übergibt ihn als `aktion` an `EinstellungenReiter`). Er
+  liest aus dem `StandardpositionenEntwurf`: einem `ChangeNotifier`, den die Seite hält und dem der
+  Editor bei jeder Zeilenänderung den ungespeicherten Stand meldet (Positionen, ob ein Betrag
+  beanstandet ist). Bewusst **nicht** der `StandardpositionenCubit` — dessen Zustand steuert über
+  `StandNachziehen` das Nachziehen der Editor-Felder **und** über `geladen` den `ValueKey` des
+  Formulars im Wizard-Schritt; liefe jeder Tastendruck durch den Cubit, baute sich die
+  Schadensaufstellung des Wizards beim Tippen neu auf, und der Editor überschriebe sich selbst — eine
+  Rückkopplung, die der Entwurf gar nicht erst aufmacht. **Die erste Meldung an den Entwurf muss
+  `addPostFrameCallback` abwarten:** `StandNachziehen` ruft `nachziehen` bereits in `initState`, mitten
+  im Aufbau des Elternteils, und die Kopfzeile mit dem Knopf ist in diesem Bild schon fertig gebaut —
+  ihr sofort etwas zu melden wäre „setState() or markNeedsBuild() called during build".
 - Die Geldgrenzen der Backend-DTOs (`DamageItemDto.Amount`, `RvgCalculationRequestDto.Gegenstandswert`)
   brauchen ihre **Nachkommastellen**: `[Range(0, …)]` bindet `RangeAttribute(int, int)`, rundet den
   Betrag vor dem Vergleich und lässt `-0,49` durch; jenseits von `int.MaxValue` wird aus 400 ein 500.
