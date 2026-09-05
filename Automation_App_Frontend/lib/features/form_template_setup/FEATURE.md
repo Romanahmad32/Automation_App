@@ -10,7 +10,7 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 **Domain:** `FormTemplate`, `FieldData`, `DatumsVorbelegung`, `InputType`, `FeldDatenquelle` (+ `platzhalter`, `gruppe`,
 `frueher`), `PlatzhalterGruppe`, `PlatzhalterEintrag`, `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung` (+
 `DatenquelleVorschlag`), `PlatzhalterKatalog`, `AppEigenePlatzhalter`, `PlatzhalterUebernahme`, `FeldVorkommen`,
-`PlatzhalterZuordnung`, `VerwendeteFelder` (welche Felder die aktive Word-Datei einsetzt, #82), `VorlagenStand`,
+`PlatzhalterZuordnung`, `VerwendeteFelder` (welche Felder die aktive Word-Datei einsetzt, #82), `VorlagenStand`, `FelderFilter`,
 `VorlagenEntwurf`; `GetFormTemplates`, `CreateFormTemplate`, `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
 **Backend:** `Features/FormTemplates/` · `GET /api/FormTemplates`, `POST /api/FormTemplates`,
 `PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
@@ -32,8 +32,8 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
   `VorlagenEntwurf`-Schnappschuss abweicht. Solange die Seite offen ist, hält `FieldData.label` **nicht** den Feldnamen, sondern
   den Control-Schlüssel (`field_0`, `field_1`, …) — `VorlagenEntwurf.aufnehmen` löst ihn wie `FormTemplateActionButtons`
   beim Speichern zum echten Namen auf.
-- Beim Übernehmen eines Platzhalters schlägt `FeldDatenquelleErkennung` Feldtyp und Datenquelle
-  vor — sichtbar im Dropdown und änderbar, nie stillschweigend gesetzt (§1.3). Dieselbe Erkennung
-  löst zur Laufzeit die Felder auf, an denen nie eine Quelle gesetzt wurde.
+- Beim Übernehmen eines Platzhalters schlägt `FeldDatenquelleErkennung` Feldtyp und Datenquelle vor — sichtbar im Dropdown,
+  änderbar, nie stillschweigend gesetzt (§1.3); dieselbe Erkennung greift zur Laufzeit an Feldern ohne Quelle.
 - Der lange Rest steht in `FALLSTRICKE.md` daneben: Erkennungsregeln, mehrdeutige Namen, erlaubte Zeichen im Platzhalter, Slot
-  „mit Auflistung“, Word-Pfad, `FormTemplateOverviewBloc`, Vorbelegung, Verlassen-Wache.
+  „mit Auflistung“, Word-Pfad, `FormTemplateOverviewBloc`, Vorbelegung, Verlassen-Wache, Spaltenbeschreibung, Aufklapper,
+  `VorlagenBearbeitung`.

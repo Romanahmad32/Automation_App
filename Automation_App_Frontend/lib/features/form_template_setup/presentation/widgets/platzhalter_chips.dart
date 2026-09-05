@@ -2,14 +2,22 @@ import 'package:automation_app/features/form_template_setup/domain/services/app_
 import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_uebernahme.dart';
 import 'package:flutter/material.dart';
 
-/// Die erkannten {{Platzhalter}} einer Word-Datei als Chips, mit Zählzeile
-/// und „Alle übernehmen" (#35 Teil 3). Drei Zustände je Chip:
+/// Die erkannten {{Platzhalter}} einer Word-Datei als Chips. Drei Zustände je
+/// Chip:
 ///
 /// - **offen**: Platzhalter ohne Feld — Klick führt zur Zuordnung (#36).
-///   Wie viele das sind und was es kostet, sagt die Warnzeile darunter.
 /// - **übernommen** (Name existiert schon als Feld): Häkchen, nicht klickbar.
 /// - **app-eigen** ([AppEigenePlatzhalter]): füllt die App beim Erzeugen
 ///   selbst — nie klickbar, der Tooltip sagt warum.
+///
+/// **Gezählt wird hier nicht mehr** (#104): Unter den Chips standen bis Stufe 2
+/// eine rote Warnzeile („3 Platzhalter ohne Feld …") und ein „14 von 18
+/// übernommen" — je Word-Datei einmal. Bei zwei verknüpften Dateien las der
+/// Anwalt vier Zahlen, von denen keine für die Vorlage galt: Derselbe
+/// Platzhalter in beiden Dateien zählte doppelt. Beides sagt jetzt
+/// `VorlagenStandKarte` in einer Rechnung über beide Dateien, und „Alle
+/// übernehmen" steht dort daneben. Der Chip bleibt, was er immer war — der
+/// Weg zu **diesem** Platzhalter.
 class PlatzhalterChips extends StatelessWidget {
   final List<String> placeholders;
 
@@ -18,69 +26,19 @@ class PlatzhalterChips extends StatelessWidget {
 
   final void Function(String placeholder) onPlaceholderSelected;
 
-  /// Wird mit den tatsächlich zu übernehmenden Platzhaltern gerufen
-  /// ([PlatzhalterUebernahme.uebernehmbare]). Null blendet den Knopf aus.
-  final void Function(List<String> placeholders)? onAlleUebernehmen;
-
   const PlatzhalterChips({
     super.key,
     required this.placeholders,
     required this.onPlaceholderSelected,
     this.vorhandeneNamen = const [],
-    this.onAlleUebernehmen,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final uebernehmbar = PlatzhalterUebernahme.uebernehmbare(
-      placeholders,
-      vorhandeneNamen,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
       spacing: 8,
-      children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final placeholder in placeholders) _chip(placeholder),
-          ],
-        ),
-        // Was ein offener Chip kostet, steht als Satz da statt nur als
-        // fehlendes Häkchen (#36): Ein Platzhalter ohne Feld bleibt im Brief
-        // stehen — heute fällt das erst im Begutachten-Schritt auf, nach
-        // Erzeugung und PDF-Umwandlung.
-        if (uebernehmbar.isNotEmpty)
-          Text(
-            uebernehmbar.length == 1
-                ? '1 Platzhalter ohne Feld — er bleibt beim Erzeugen roh im '
-                      'Dokument stehen.'
-                : '${uebernehmbar.length} Platzhalter ohne Feld — sie bleiben '
-                      'beim Erzeugen roh im Dokument stehen.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.error,
-            ),
-          ),
-        Row(
-          spacing: 12,
-          children: [
-            Text(_zaehlzeile, style: theme.textTheme.bodySmall),
-            if (onAlleUebernehmen != null)
-              TextButton.icon(
-                icon: const Icon(Icons.playlist_add, size: 18),
-                label: const Text('Alle übernehmen'),
-                // Nichts mehr zu holen: Knopf sichtbar lassen, aber stumm —
-                // so sieht der Anwalt, dass „alle" schon erledigt ist.
-                onPressed: uebernehmbar.isEmpty
-                    ? null
-                    : () => onAlleUebernehmen!(uebernehmbar),
-              ),
-          ],
-        ),
-      ],
+      runSpacing: 8,
+      children: [for (final placeholder in placeholders) _chip(placeholder)],
     );
   }
 
@@ -113,23 +71,5 @@ class PlatzhalterChips extends StatelessWidget {
           'stehen. Anklicken, um ihn zuzuordnen.',
       onPressed: () => onPlaceholderSelected(placeholder),
     );
-  }
-
-  /// „14 von 18 übernommen" — gezählt wird nur, was übernehmbar ist:
-  /// app-eigene Platzhalter sind nie Eingabefeld und zählen nicht mit.
-  String get _zaehlzeile {
-    final zaehlbar = [
-      for (final placeholder in placeholders)
-        if (!AppEigenePlatzhalter.istAppEigen(placeholder)) placeholder,
-    ];
-    final uebernommen = zaehlbar
-        .where(
-          (placeholder) => PlatzhalterUebernahme.istUebernommen(
-            placeholder,
-            vorhandeneNamen,
-          ),
-        )
-        .length;
-    return '$uebernommen von ${zaehlbar.length} übernommen';
   }
 }

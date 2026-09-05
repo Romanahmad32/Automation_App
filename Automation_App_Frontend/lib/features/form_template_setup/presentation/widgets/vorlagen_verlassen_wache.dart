@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
-import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_entwurf.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
 import 'package:flutter/material.dart';
-import 'package:reactive_forms/reactive_forms.dart';
 
 /// Hält den Vorlageneditor fest, solange ungespeicherte Änderungen darin
 /// stehen: Wer die Seite verlässt, wird gefragt, ob er sie verwerfen will
@@ -36,28 +35,22 @@ class VorlagenVerlassenWache extends StatefulWidget {
   /// passieren.
   final bool gesperrt;
 
-  /// Trägt Vorlagenname und Feldnamen. Sie wird **nicht** nur gelesen, sondern
-  /// auch belauscht: Tippen im Namensfeld baut die Seite nicht neu auf, und
-  /// ohne den Horcher stünde `canPop` auf dem Stand des letzten Aufbaus — die
-  /// Umbenennung ginge beim Verlassen wortlos verloren.
-  final FormGroup formGroup;
-
-  /// Die Feldliste der Seite. Dieselbe Instanz, die die Seite in place ändert
-  /// (Reihenfolge, Typ, Pflicht, …); sie baut danach neu auf und die Wache
-  /// bekommt den neuen Stand zu sehen.
-  final List<FieldData> fields;
-
-  final String? pfadOhneAuflistung;
-  final String? pfadMitAuflistung;
+  /// Der veränderliche Stand des Editors: Vorlagenname und Feldnamen aus der
+  /// `FormGroup`, dazu Feldliste und die beiden Word-Pfade. Es ist **dieselbe**
+  /// Instanz, die die Seite ändert — die Wache sieht damit jede Änderung, ohne
+  /// dass sie ihr gemeldet werden müsste.
+  ///
+  /// Die `FormGroup` wird **nicht** nur gelesen, sondern auch belauscht: Tippen
+  /// im Namensfeld baut die Seite nicht neu auf, und ohne den Horcher stünde
+  /// `canPop` auf dem Stand des letzten Aufbaus — die Umbenennung ginge beim
+  /// Verlassen wortlos verloren.
+  final VorlagenBearbeitung bearbeitung;
 
   final Widget child;
 
   const VorlagenVerlassenWache({
     super.key,
-    required this.formGroup,
-    required this.fields,
-    required this.pfadOhneAuflistung,
-    required this.pfadMitAuflistung,
+    required this.bearbeitung,
     required this.gesperrt,
     required this.child,
   });
@@ -82,7 +75,7 @@ class VorlagenVerlassenWacheState extends State<VorlagenVerlassenWache> {
   void initState() {
     super.initState();
     _beimOeffnen = _aktuell;
-    _horcher = widget.formGroup.valueChanges.listen((_) {
+    _horcher = widget.bearbeitung.formGroup.valueChanges.listen((_) {
       if (mounted) setState(() {});
     });
   }
@@ -93,13 +86,14 @@ class VorlagenVerlassenWacheState extends State<VorlagenVerlassenWache> {
     super.dispose();
   }
 
+  VorlagenBearbeitung get _stand => widget.bearbeitung;
+
   VorlagenEntwurf get _aktuell => VorlagenEntwurf.aufnehmen(
-    vorlagenname: widget.formGroup.control('templateName').value as String?,
-    pfadOhneAuflistung: widget.pfadOhneAuflistung,
-    pfadMitAuflistung: widget.pfadMitAuflistung,
-    fields: widget.fields,
-    feldname: (controlKey) =>
-        widget.formGroup.control(controlKey).value as String?,
+    vorlagenname: _stand.formGroup.control('templateName').value as String?,
+    pfadOhneAuflistung: _stand.pfadOhneAuflistung,
+    pfadMitAuflistung: _stand.pfadMitAuflistung,
+    fields: _stand.fields,
+    feldname: _stand.feldname,
   );
 
   /// Ob der Editor etwas trägt, was noch nicht in der Datenbank steht.
