@@ -36,17 +36,24 @@ class VorgangAktionsleiste extends StatelessWidget {
                 return ReactiveFormConsumer(
                   builder: (context, formGroup, child) {
                     final aktiv = formGroup.valid && !isLoading;
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    // OverflowBar statt Row: Bei "Am größten" (Issue #57) sind
+                    // beide Beschriftungen auf einem schmalen Fenster
+                    // zusammen breiter als die verfügbaren ~900 px — eine Row
+                    // liefe rechts über, weil sie ihre Kinder nie umbrechen
+                    // kann. OverflowBar stapelt sie stattdessen untereinander,
+                    // rechtsbündig wie zuvor die Row.
+                    return OverflowBar(
+                      alignment: MainAxisAlignment.end,
+                      overflowAlignment: OverflowBarAlignment.end,
+                      spacing: 12,
+                      overflowSpacing: 8,
                       children: [
-                        if (zeigeZentralruf) ...[
+                        if (zeigeZentralruf)
                           OutlinedButton.icon(
                             icon: const Icon(Icons.open_in_browser),
                             label: const Text('Zentralruf-Formular ausfüllen'),
                             onPressed: aktiv ? onZentralruf : null,
                           ),
-                          const SizedBox(width: 12),
-                        ],
                         FilledButton.icon(
                           icon: isLoading
                               ? const SizedBox(

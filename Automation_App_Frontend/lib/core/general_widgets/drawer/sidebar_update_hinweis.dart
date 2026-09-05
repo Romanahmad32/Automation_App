@@ -44,20 +44,27 @@ class SidebarUpdateHinweis extends StatelessWidget {
                 width: collapsedWidth - 1,
                 child: Center(child: Icon(Icons.system_update, color: farbe)),
               ),
-              ClipRect(
-                child: AnimatedAlign(
-                  duration: animationDuration,
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.centerLeft,
-                  widthFactor: isExtended ? 1 : 0,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Text(
-                      'Update verfügbar',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.labelLarge?.copyWith(color: farbe),
-                      overflow: TextOverflow.ellipsis,
+              // Flexible statt eines unbeschränkten Row-Kindes, siehe
+              // dieselbe Begründung in `side_bar_item.dart`: Ohne das
+              // misst Align den Hinweis in seiner natürlichen Breite, und bei
+              // größerer Schrift reißt das die Row über den rechten Rand.
+              Flexible(
+                child: ClipRect(
+                  child: AnimatedAlign(
+                    duration: animationDuration,
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.centerLeft,
+                    widthFactor: isExtended ? 1 : 0,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Text(
+                        'Update verfügbar',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.labelLarge?.copyWith(color: farbe),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                 ),
