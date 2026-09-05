@@ -62,4 +62,91 @@ Regeln
 - Außer "vorname"/"nachname" darf jedes Feld leer bleiben.
 - Die Datei darf mehrfach eingelesen werden; ein zweiter Lauf ändert nichts.
 ''';
+
+  /// Der Auftrag im **Paketbetrieb** — er reist in der Paketdatei selbst mit
+  /// (`ArbeitspaketBau`), statt daneben zu liegen.
+  ///
+  /// Er ersetzt [text] nicht, sondern setzt darauf auf: Das Paket ist die
+  /// Eingabe, die Antwort bleibt das dort beschriebene Format der Fassung 1.
+  /// Der Unterschied ist der Zuschnitt — statt 4040 Ordner in einer Sitzung
+  /// bearbeitet der Erzeuger rund 200, und für einen großen Teil davon steht
+  /// die Antwort schon in der Datei.
+  static const paketText = r'''
+Aufgabe: Bearbeite dieses Arbeitspaket und erzeuge daraus eine Importdatei für
+die Kanzlei-App (Format der Fassung 1, unten).
+
+Die Liste unter "ordner" ist GESCHLOSSEN
+- Bearbeite genau diese Ordner. Keine anderen, auch wenn sie danebenliegen.
+- Erfinde keinen Ordner dazu. Was nicht in der Liste steht, gehört in ein
+  anderes Paket, und die App führt darüber Buch.
+- Der "ordnername" ist das einzige Band zur App. Übernimm ihn ZEICHENGENAU in
+  "aktenOrdnernamen" — nicht umschreiben, nicht trimmen, Groß- und
+  Kleinschreibung und Leerzeichen unverändert lassen. Ein geänderter Name
+  trifft auf der Platte keinen Ordner mehr.
+
+Was schon in der Datei steht (und nicht noch einmal gesucht werden muss)
+- "aktentyp": aus dem Präfix des Ordnernamens erkannt.
+- "vorschlagVorname"/"vorschlagNachname": aus dem Ordnernamen abgeleitet.
+- "mandantImRegister": der Mandant, den die App zu diesem Ordner schon kennt.
+  Ist er gefüllt, genügt es, den Ordner diesem Mandanten anzuhängen — eine
+  Zeile mit dessen Namen und dem Ordnernamen. Stammdaten brauchst du dafür
+  nicht zu suchen; die App ergänzt nie über einen vorhandenen Wert hinweg.
+
+Wo NICHT gelesen werden muss
+- Bei Straf-, Bußgeld- und Familiensachen: Diese App bearbeitet
+  Verkehrsunfallsachen. Aus solchen Ordnern werden in aller Regel keine
+  Stammdaten gebraucht — Name und Ordner reichen.
+- Bei jedem Ordner mit "mandantImRegister" (siehe oben).
+Lies die Schreiben im Ordner nur dort, wo Vorname oder Anschrift fehlen und
+der Ordner eine Verkehrsunfallsache ist. Das Lesen ist der teure Teil.
+
+"bekannteMandanten" zuerst prüfen
+- Bevor du einen Mandanten neu anlegst, sieh in "bekannteMandanten" nach:
+  Name, bisherige Ordner und Kennzeichen stehen dort.
+- Passt eine Schreibvariante desselben Menschen ("Schmitt"/"Schmidt",
+  "Dr. Schmidt"), führe sie DORTHIN zusammen und schreibe den Namen so, wie er
+  in "bekannteMandanten" steht. Ein zweiter Eintrag wäre eine Dublette, die
+  hinterher von Hand aufgelöst werden muss.
+- Mehrere Ordner desselben Mandanten ergeben EINEN Eintrag mit mehreren Namen
+  in "aktenOrdnernamen".
+
+Die Antwortdatei
+Sie bleibt das bekannte Format der Fassung 1 — dasselbe, das die App ohne
+Paketbetrieb erwartet: ein Objekt mit "version": 1, "mandanten" und
+"ohneMandantenbezug". Das Paket ist nur die Eingabe und wird nicht
+zurückgeschickt.
+
+Format (Version 1)
+{
+  "version": 1,
+  "mandanten": [
+    {
+      "anrede": "herr",
+      "vorname": "Mark",
+      "nachname": "Schmidt",
+      "strasseHausnummer": "Hauptstraße 12",
+      "postleitzahl": "61348",
+      "ort": "Bad Homburg",
+      "emailAdresse": "",
+      "telefonnummer": "",
+      "notiz": "",
+      "aktenOrdnernamen": ["VUnfallursache Schmidt"],
+      "kennzeichen": ["HG-E 1427"],
+      "quelle": "VUnfallursache Schmidt/Unfall v. 12.05.2019/Schreiben.docx",
+      "sicherheit": "hoch"
+    }
+  ],
+  "ohneMandantenbezug": ["Buchhaltung 2019", "Vorlagen"]
+}
+
+Regeln
+- "anrede": "herr", "frau" oder "keine".
+- "kennzeichen": mit Bindestrich, z. B. "HG-E 1427".
+- "sicherheit": "hoch", "mittel" oder "niedrig".
+- "aktenOrdnernamen": nur der Ordnername, kein Pfad, zeichengenau aus "ordner".
+- Rate nichts: ein leeres Feld ist besser als ein falsches.
+- Ordner ohne Mandantenbezug (Buchhaltung, Vorlagen, Muster, Ablage) kommen
+  nach "ohneMandantenbezug" statt in "mandanten".
+- Die Datei darf mehrfach eingelesen werden; ein zweiter Lauf ändert nichts.
+''';
 }

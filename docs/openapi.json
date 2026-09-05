@@ -1544,6 +1544,132 @@
         }
       }
     },
+    "/api/Arbeitspakete": {
+      "get": {
+        "tags": [
+          "Arbeitspakete"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ArbeitspaketDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ArbeitspaketDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ArbeitspaketDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Arbeitspakete"
+        ],
+        "summary": "Gibt das n\u00E4chste Paket heraus und schreibt es ins Buch. Bewusst\r\nschreibend und damit ein \u0060POST\u0060: \u201Egeholt am\u0022 ist die halbe Auskunft,\r\ndie das Buch \u00FCberhaupt geben soll.\r\n\r\nIst nichts mehr offen, kommt 409 statt eines leeren Pakets \u2014 die\r\nKeineOffenenOrdnerException \u00FCbersetzt der\r\n\u0060FachExceptionHandler\u0060, wie den Namenskonflikt nebenan auch.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArbeitspaketAnfrageDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArbeitspaketAnfrageDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ArbeitspaketAnfrageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArbeitspaketDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArbeitspaketDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArbeitspaketDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Mandanten": {
       "get": {
         "tags": [
@@ -4487,6 +4613,89 @@
           }
         },
         "description": "Anfrage an \u0060POST api/WordAutomation/arbeitsordner/aufraeumen\u0060: welcher\r\nArbeitsordner nach der Ablage in der Akte verschwinden soll."
+      },
+      "ArbeitspaketAnfrageDto": {
+        "required": [
+          "ordnernamen",
+          "anzahl"
+        ],
+        "type": "object",
+        "properties": {
+          "ordnernamen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "anzahl": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Die Anfrage nach dem n\u00E4chsten Arbeitspaket. IReadOnlyList\u0026lt;string\u0026gt;? ArbeitspaketAnfrageDto.Ordnernamen ist der\r\nBestand, den das Frontend im Akten-Stammordner gefunden hat: das Backend\r\nkennt ihn nicht \u2014 dort liegen nur die Zust\u00E4nde (zugeordnet, vermerkt), und\r\nerst aus beidem zusammen ergibt sich, was offen ist."
+      },
+      "ArbeitspaketDto": {
+        "required": [
+          "nummer",
+          "geholtAm",
+          "eingelesenAm",
+          "ordnerAnzahl",
+          "erledigtAnzahl",
+          "ordnernamen"
+        ],
+        "type": "object",
+        "properties": {
+          "nummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "geholtAm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eingelesenAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "ordnerAnzahl": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "erledigtAnzahl": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ordnernamen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Ein Paket im Buch. int ArbeitspaketDto.OrdnerAnzahl steht neben\r\nIReadOnlyList\u0026lt;string\u0026gt; ArbeitspaketDto.Ordnernamen, damit die \u00DCbersicht die Zahl zeigen kann, ohne\r\njedes Mal die ganze Liste zu z\u00E4hlen."
       },
       "ConvertFromPathRequest": {
         "type": "object",
@@ -7438,6 +7647,9 @@
     },
     {
       "name": "PdfConversion"
+    },
+    {
+      "name": "Arbeitspakete"
     },
     {
       "name": "Mandanten"

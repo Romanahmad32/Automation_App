@@ -1,8 +1,10 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/import_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'import_testaufbau.dart';
+import 'mandanten_testaufbau.dart';
 
 void main() {
   late ImportTestaufbau aufbau;
@@ -98,5 +100,99 @@ void main() {
     aufbau.cubit.filtern(const ImportFilter(sicht: ImportSicht.alle));
     expect(aufbau.cubit.state.sichtbar, hasLength(2));
     expect(aufbau.cubit.state.bericht?.eintraege, hasLength(2));
+  });
+
+  // Genau die Auskunft, die der Erzeuger nicht hat: Innerhalb einer Sitzung
+  // sähe er „Schmidt" und „Schmitt" nebeneinander, über zwei Sitzungen hinweg
+  // nur den zweiten. Der Import selbst vergleicht getrimmt und kleingeschrieben
+  // — für ihn sind das zwei Menschen.
+  group('ähnlicher Name im Register', () {
+    /// Eine Datei mit genau einer Zeile, deren Nachname der Test bestimmt.
+    MandantenImportDatei zeile(String nachname) => MandantenImportDatei(
+      mandanten: [
+        ImportMandantEintrag(
+          vorname: 'Mark',
+          nachname: nachname,
+          aktenOrdnernamen: const ['VUnfallursache Mark Schmitt'],
+        ),
+      ],
+    );
+
+    /// Der Dienst rechnet bei jeder Änderung neu: Trägt die Zeile den Namen
+    /// aus dem Register, wird aus `neu` ein `ergaenzt`.
+    ImportBericht berichtZu(MandantenImportDatei datei) {
+      final eintragsname = datei.mandanten.single.nachname;
+      final vorhanden = eintragsname == 'Schmidt';
+      return bericht(
+        eintraege: [
+          eintrag(
+            0,
+            name: 'Mark $eintragsname',
+            art: vorhanden ? ImportArt.ergaenzt : ImportArt.neu,
+          ),
+        ],
+        neu: vorhanden ? 0 : 1,
+        ergaenzt: vorhanden ? 1 : 0,
+        ordnerZugeordnet: 1,
+      );
+    }
+
+    setUp(() {
+      aufbau = ImportTestaufbau(
+        inhalt: zeile('Schmitt'),
+        mandanten: [mandant(1, 'Schmidt', vorname: 'Mark')],
+      );
+      aufbau.importieren.berichtFuer = berichtZu;
+    });
+
+    test(
+      '„Schmitt" bekommt den Hinweis auf den vorhandenen „Schmidt"',
+      () async {
+        await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
+
+        expect(
+          aufbau.cubit.state.aehnlicheZu(0).single.mandant.anzeigename,
+          'Mark Schmidt',
+        );
+      },
+    );
+
+    // Ohne das versteckte die Voreinstellung „zu prüfen" genau die Zeile, um
+    // derentwillen der Hinweis gebaut wird: sie ist ja weder abgelehnt noch
+    // sonst auffällig.
+    test('die Zeile steht damit in „zu prüfen"', () async {
+      await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
+
+      expect(aufbau.cubit.state.sichtbar.single.zeile, 0);
+      expect(aufbau.cubit.state.zaehler[ImportSicht.zuPruefen], 1);
+    });
+
+    test(
+      'nach der Berichtigung ist der Hinweis weg und die Zeile ergänzt',
+      () async {
+        await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
+        await aufbau.cubit.eintragErsetzen(
+          0,
+          zeile('Schmidt').mandanten.single,
+        );
+
+        expect(
+          aufbau.cubit.state.bericht?.eintraege.single.art,
+          ImportArt.ergaenzt,
+        );
+        expect(aufbau.cubit.state.aehnlicheZu(0), isEmpty);
+        expect(aufbau.cubit.state.sichtbar, isEmpty);
+      },
+    );
+
+    test('ohne Register bleibt es beim Bericht des Dienstes', () async {
+      aufbau = ImportTestaufbau(inhalt: zeile('Schmitt'));
+      aufbau.importieren.berichtFuer = berichtZu;
+
+      await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
+
+      expect(aufbau.cubit.state.aehnliche, isEmpty);
+      expect(aufbau.cubit.state.sichtbar, isEmpty);
+    });
   });
 }

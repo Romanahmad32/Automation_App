@@ -1,6 +1,9 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
+import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/aehnlicher_mandant_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,11 +25,16 @@ class ImportEintragKachel extends StatelessWidget {
   /// Änderung träfe sonst einen Bericht, der gerade neu entsteht.
   final bool bearbeitbar;
 
+  /// Registereinträge mit ähnlichem Namen — „Schmitt" bei vorhandenem
+  /// „Schmidt". Leer heißt: kein Hinweis.
+  final List<MandantVorschlag> aehnliche;
+
   const ImportEintragKachel({
     super.key,
     required this.befund,
     required this.datensatz,
     this.bearbeitbar = false,
+    this.aehnliche = const [],
   });
 
   bool get _aenderbar => bearbeitbar && datensatz != null;
@@ -60,6 +68,11 @@ class ImportEintragKachel extends StatelessWidget {
               hinweis,
               style: theme.textTheme.bodySmall?.copyWith(color: farben.error),
             ),
+          if (_aenderbar)
+            AehnlicherMandantHinweis(
+              vorschlaege: aehnliche,
+              onUebernehmen: (mandant) => _namenUebernehmen(context, mandant),
+            ),
         ],
       ),
       trailing: Row(
@@ -89,6 +102,16 @@ class ImportEintragKachel extends StatelessWidget {
     );
   }
 
+  /// Schreibt die Zeile auf die Schreibweise des Registers um. Zugeordnet wird
+  /// dadurch nichts: Der nächste Prüflauf über die ganze Datei macht daraus von
+  /// selbst ein `ergaenzt`.
+  Future<void> _namenUebernehmen(BuildContext context, Mandant mandant) {
+    return context.read<MandantenImportCubit>().eintragErsetzen(
+      befund.zeile,
+      datensatz!.mitNamenAus(mandant),
+    );
+  }
+
   Future<void> _bearbeiten(BuildContext context) async {
     // Der Dialog liegt auf einer eigenen Route und sieht den BlocProvider der
     // Seite nicht — deshalb wird der Cubit vorher gefasst und das Ergebnis
@@ -96,8 +119,11 @@ class ImportEintragKachel extends StatelessWidget {
     final cubit = context.read<MandantenImportCubit>();
     final entscheidung = await showDialog<ImportEintragEntscheidung>(
       context: context,
-      builder: (_) =>
-          ImportEintragDialog(befund: befund, datensatz: datensatz!),
+      builder: (_) => ImportEintragDialog(
+        befund: befund,
+        datensatz: datensatz!,
+        aehnliche: aehnliche,
+      ),
     );
     if (entscheidung == null) return;
 

@@ -14,8 +14,10 @@ namespace AutomationService.Features.Mandanten.Domain.Services;
 /// zu gehen wäre naheliegend, wäre bei viertausend Zeilen aber viertausend
 /// Speichervorgänge und viertausend Dublettenprüfungen über den ganzen Bestand.
 /// </summary>
-public sealed class MandantenImport(AutomationDbContext db, IOrdnerStatusRegister ordnerStatus)
-    : IMandantenImport
+public sealed class MandantenImport(
+    AutomationDbContext db,
+    IOrdnerStatusRegister ordnerStatus,
+    IArbeitspaketBuch arbeitspakete) : IMandantenImport
 {
     public async Task<MandantenImportBefund> FuehreAusAsync(
         MandantenImportAuftrag auftrag,
@@ -65,6 +67,16 @@ public sealed class MandantenImport(AutomationDbContext db, IOrdnerStatusRegiste
                 OrdnerStatusArten.OhneMandantenbezug,
                 cancellationToken);
         }
+
+        // Erst jetzt steht fest, welche Ordner erledigt sind — und nur ein
+        // Import trägt das im Paketbuch nach, nie die Handarbeit im
+        // Zuordnungsstapel: „eingelesen" soll heißen, dass die Datei zum Paket
+        // angekommen ist. Innerhalb der Transaktion, damit ein gescheitertes
+        // Schreiben das Buch nicht mit einem Fortschritt zurücklässt, den es
+        // nicht gibt.
+        await arbeitspakete.MarkiereEingelesenAsync(
+            await ErledigteOrdner.LiesAsync(db, ordnerStatus, cancellationToken),
+            cancellationToken);
 
         await transaktion.CommitAsync(cancellationToken);
     }

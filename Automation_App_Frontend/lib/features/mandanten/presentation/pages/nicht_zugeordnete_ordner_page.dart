@@ -2,8 +2,10 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
+import 'package:automation_app/features/mandanten/presentation/blocs/arbeitspaket_cubit/arbeitspaket_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/views/nicht_zugeordnete_ordner_view.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/arbeitspaket_button.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_oeffnen_button.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_zustands_bereich.dart';
 import 'package:flutter/material.dart';
@@ -21,10 +23,19 @@ class NichtZugeordneteOrdnerPage extends StatelessWidget
   @override
   Widget wrappedRoute(BuildContext context) {
     return PageRefreshScope(
-      builder: (context) => BlocProvider(
-        create: (context) =>
-            getIt<MandantenOverviewBloc>()
-              ..add(const LoadMandantenUebersichtEvent()),
+      builder: (context) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) =>
+                getIt<MandantenOverviewBloc>()
+                  ..add(const LoadMandantenUebersichtEvent()),
+          ),
+          // Die Paket-Buchführung hängt nicht am Aktenbestand: Sie kommt aus
+          // der Datenbank und steht auch dann, wenn der Scan noch läuft.
+          BlocProvider(
+            create: (context) => getIt<ArbeitspaketCubit>()..laden(),
+          ),
+        ],
         child: this,
       ),
     );
@@ -37,7 +48,12 @@ class NichtZugeordneteOrdnerPage extends StatelessWidget
         titel: 'Ordner zuordnen',
         icon: Icons.rule_folder_outlined,
         untertitel: 'Gefundene Akten-Ordner einem Mandanten zuordnen',
-        aktionen: [ImportOeffnenButton(), PageRefreshButton()],
+        // Erst holen, dann übernehmen — die Reihenfolge des Vorgangs.
+        aktionen: [
+          ArbeitspaketButton(),
+          ImportOeffnenButton(),
+          PageRefreshButton(),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

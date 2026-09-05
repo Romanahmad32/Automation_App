@@ -105,6 +105,10 @@ import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox
     as _i431;
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart'
     as _i431;
+import 'package:automation_app/features/mandanten/data/datasources/arbeitspaket_datasource.dart'
+    as _i119;
+import 'package:automation_app/features/mandanten/data/datasources/arbeitspaket_datei_datasource.dart'
+    as _i268;
 import 'package:automation_app/features/mandanten/data/datasources/import_datei_datasource.dart'
     as _i552;
 import 'package:automation_app/features/mandanten/data/datasources/mandant_datasource.dart'
@@ -113,12 +117,16 @@ import 'package:automation_app/features/mandanten/data/datasources/mandanten_imp
     as _i668;
 import 'package:automation_app/features/mandanten/data/datasources/ordner_status_datasource.dart'
     as _i764;
+import 'package:automation_app/features/mandanten/data/repositories/arbeitspaket_repository_impl.dart'
+    as _i221;
 import 'package:automation_app/features/mandanten/data/repositories/mandanten_repository_impl.dart'
     as _i683;
 import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart'
     as _i10;
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart'
     as _i119;
+import 'package:automation_app/features/mandanten/domain/entities/arbeitspaket.dart'
+    as _i250;
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart'
     as _i295;
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart'
@@ -133,6 +141,8 @@ import 'package:automation_app/features/mandanten/domain/entities/mandanten_seit
     as _i171;
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart'
     as _i736;
+import 'package:automation_app/features/mandanten/domain/repositories/arbeitspaket_repository.dart'
+    as _i748;
 import 'package:automation_app/features/mandanten/domain/repositories/mandanten_repository.dart'
     as _i763;
 import 'package:automation_app/features/mandanten/domain/usecases/create_mandant.dart'
@@ -143,6 +153,8 @@ import 'package:automation_app/features/mandanten/domain/usecases/get_akten.dart
     as _i965;
 import 'package:automation_app/features/mandanten/domain/usecases/get_akten_ordnernamen.dart'
     as _i392;
+import 'package:automation_app/features/mandanten/domain/usecases/get_arbeitspakete.dart'
+    as _i447;
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart'
     as _i684;
 import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten.dart'
@@ -151,12 +163,16 @@ import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_
     as _i733;
 import 'package:automation_app/features/mandanten/domain/usecases/get_ordner_status.dart'
     as _i482;
+import 'package:automation_app/features/mandanten/domain/usecases/hole_arbeitspaket.dart'
+    as _i84;
 import 'package:automation_app/features/mandanten/domain/usecases/importiere_mandanten.dart'
     as _i486;
 import 'package:automation_app/features/mandanten/domain/usecases/lege_dokument_ab.dart'
     as _i698;
 import 'package:automation_app/features/mandanten/domain/usecases/lies_import_datei.dart'
     as _i675;
+import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket_datei.dart'
+    as _i697;
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart'
     as _i86;
 import 'package:automation_app/features/mandanten/domain/usecases/update_mandant.dart'
@@ -165,6 +181,8 @@ import 'package:automation_app/features/mandanten/domain/usecases/verknuepfe_ord
     as _i443;
 import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubit/ablage_cubit.dart'
     as _i202;
+import 'package:automation_app/features/mandanten/presentation/blocs/arbeitspaket_cubit/arbeitspaket_cubit.dart'
+    as _i293;
 import 'package:automation_app/features/mandanten/presentation/blocs/mandant_edit_cubit/mandant_edit_cubit.dart'
     as _i993;
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart'
@@ -324,6 +342,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i829.MailboxDatasource>(
       () => _i829.ApiMailboxDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i268.ArbeitspaketDateiDatasource>(
+      () => _i268.FilesystemArbeitspaketDateiDatasource(),
+    );
     gh.factory<_i738.RegisterSpiegelRepository>(
       () => _i412.ApiRegisterSpiegelDatasource(gh<_i361.Dio>()),
     );
@@ -341,6 +362,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i469.MailboxRepository>(
       () => _i943.MailboxRepositoryImpl(gh<_i829.MailboxDatasource>()),
+    );
+    gh.factory<_i119.ArbeitspaketDatasource>(
+      () => _i119.ApiArbeitspaketDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i668.MandantenImportDatasource>(
       () => _i668.ApiMandantenImportDatasource(gh<_i361.Dio>()),
@@ -399,6 +423,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i782.VersichererCubit>(
       () => _i782.VersichererCubit(gh<_i9.VersichererRepository>()),
+    );
+    gh.factory<_i748.ArbeitspaketRepository>(
+      () => _i221.ArbeitspaketRepositoryImpl(
+        gh<_i119.ArbeitspaketDatasource>(),
+        gh<_i268.ArbeitspaketDateiDatasource>(),
+      ),
     );
     gh.factory<_i770.WordAutomationRepository>(
       () => _i405.WordAutomationRepositoryImpl(
@@ -469,16 +499,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i161.LetzteVersaendeCubit>(
       () => _i161.LetzteVersaendeCubit(gh<_i67.EmailVersandRepository>()),
     );
-    gh.factory<_i54.MandantenImportCubit>(
-      () => _i54.MandantenImportCubit(
-        gh<
-          _i223.UseCase<_i578.MandantenImportDatei, _i675.LiesImportDateiParams>
-        >(),
-        gh<
-          _i223.UseCase<_i659.ImportBericht, _i486.ImportiereMandantenParams>
-        >(),
-      ),
-    );
     gh.factory<_i865.MailboxConfigBloc>(
       () => _i865.MailboxConfigBloc(gh<_i469.MailboxRepository>()),
     );
@@ -494,6 +514,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i579.MailboxPushNotifier>(),
       ),
     );
+    gh.factory<_i223.UseCase<_i250.Arbeitspaket, _i84.HoleArbeitspaketParams>>(
+      () => _i84.HoleArbeitspaket(gh<_i748.ArbeitspaketRepository>()),
+    );
     gh.factory<_i285.BackupRepository>(
       () => _i1012.BackupRepositoryImpl(gh<_i182.BackupDatasource>()),
     );
@@ -507,6 +530,9 @@ extension GetItInjectableX on _i174.GetIt {
         repository: gh<_i770.WordAutomationRepository>(),
       ),
     );
+    gh.factory<_i223.UseCase<List<_i250.Arbeitspaket>, _i223.NoParams>>(
+      () => _i447.GetArbeitspakete(gh<_i748.ArbeitspaketRepository>()),
+    );
     gh.factory<_i299.ErhoeheAuftragsnummer>(
       () => _i299.ErhoeheAuftragsnummer(gh<_i849.KanzleiSettingsRepository>()),
     );
@@ -514,6 +540,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i445.ErzeugePdfFassung(
         repository: gh<_i770.WordAutomationRepository>(),
       ),
+    );
+    gh.factory<_i223.UseCase<void, _i697.SchreibeArbeitspaketDateiParams>>(
+      () => _i697.SchreibeArbeitspaketDatei(gh<_i748.ArbeitspaketRepository>()),
     );
     gh.factory<_i1026.RvgCalculationBloc>(
       () => _i1026.RvgCalculationBloc(
@@ -609,6 +638,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<
       _i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>
     >(() => _i297.UpdateFormTemplate(gh<_i211.FormTemplateRepository>()));
+    gh.factory<_i293.ArbeitspaketCubit>(
+      () => _i293.ArbeitspaketCubit(
+        gh<_i223.UseCase<List<_i250.Arbeitspaket>, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i250.Arbeitspaket, _i84.HoleArbeitspaketParams>>(),
+        gh<_i223.UseCase<void, _i697.SchreibeArbeitspaketDateiParams>>(),
+      ),
+    );
     gh.factory<_i223.UseCase<_i258.Mandant, _i443.VerknuepfeOrdnerParams>>(
       () => _i443.VerknuepfeOrdnerMitMandant(gh<_i763.MandantenRepository>()),
     );
@@ -628,6 +664,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
         gh<_i223.UseCase<_i10.AblageErgebnis, _i763.LegeDokumentAbParams>>(),
         gh<_i849.KanzleiSettingsRepository>(),
+      ),
+    );
+    gh.factory<_i54.MandantenImportCubit>(
+      () => _i54.MandantenImportCubit(
+        gh<
+          _i223.UseCase<_i578.MandantenImportDatei, _i675.LiesImportDateiParams>
+        >(),
+        gh<
+          _i223.UseCase<_i659.ImportBericht, _i486.ImportiereMandantenParams>
+        >(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
       ),
     );
     gh.factory<_i1040.EditedDocumentBloc>(

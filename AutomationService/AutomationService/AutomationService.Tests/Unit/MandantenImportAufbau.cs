@@ -22,6 +22,14 @@ public sealed class MandantenImportAufbau : IDisposable
 
     public MandantenImport Import { get; }
 
+    /// <summary>
+    /// Das Paketbuch am selben Kontext. Es hängt am Import (jeder Schreiblauf
+    /// trägt dort nach), also gehört es in denselben Aufbau — ein zweiter
+    /// danebengestellter Aufbau hätte eine zweite Datenbank und damit genau
+    /// das Zusammenspiel nicht, um das es geht.
+    /// </summary>
+    public ArbeitspaketBuch Buch { get; }
+
     public MandantenImportAufbau()
     {
         _verbindung = new SqliteConnection("DataSource=:memory:");
@@ -32,8 +40,13 @@ public sealed class MandantenImportAufbau : IDisposable
         Db = new AutomationDbContext(optionen);
         Db.Database.EnsureCreated();
         OrdnerStatus = new OrdnerStatusRegister(Db);
-        Import = new MandantenImport(Db, OrdnerStatus);
+        Buch = new ArbeitspaketBuch(Db, OrdnerStatus);
+        Import = new MandantenImport(Db, OrdnerStatus, Buch);
     }
+
+    /// <summary>Die Ordnernamen eines Arbeitspakets.</summary>
+    public static List<string> Ordner(ArbeitspaketEntity paket) =>
+        MandantListen.Lies(paket.OrdnernamenJson);
 
     /// <summary>Ein Mandant, der vor dem Import schon im Register steht.</summary>
     public MandantEntity Vorhanden(
