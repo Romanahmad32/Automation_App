@@ -747,6 +747,14 @@ Konfigurierbar sein müssen mindestens:
   aus einer Sicherung wiederherstellen können — ohne IT-Kenntnisse.
 - **[M] Robuste Wiederherstellung:** Eine ungültige oder beschädigte Sicherung darf den vorhandenen
   Datenbestand nicht zerstören; der Nutzer wird auf das Problem hingewiesen.
+- **[M] Sicherung während der Arbeit:** Die App sichert von selbst in einem festen Abstand während
+  der Arbeit, sobald sich seit der letzten Sicherung etwas geändert hat, außerdem beim Beenden und
+  nach jedem Vorgangsabschluss. Ein Absturz kostet damit höchstens diesen Abstand, nicht den ganzen
+  Arbeitstag.
+- **[M] Aufbewahrung nach Alter:** Ältere Sicherungen bleiben nach einer Tag/Woche/Monat-Staffel
+  erreichbar statt nur die letzten paar: engmaschig für die letzten Tage, gröber für die Wochen und
+  Monate danach, insgesamt begrenzt. So reicht die Historie Monate zurück, ohne dass der Anwalt
+  Sicherungen von Hand verwaltet.
 - **[S] Dauerhaft eindeutige Kennung:** Jeder Datensatz (Vorgang, Mandant, Antwort, Vorlage) trägt
   eine Kennung, die dauerhaft und über Installationsgrenzen hinweg eindeutig bleibt — nicht nur
   innerhalb des aktuellen Bestands. Nur so lassen sich Daten aus mehreren Quellen zusammenführen

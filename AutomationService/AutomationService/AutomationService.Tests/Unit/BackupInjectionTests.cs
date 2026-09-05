@@ -1,8 +1,10 @@
 using AutomationService.Features.Backup.Domain.Services;
 using AutomationService.Features.Backup.Presentation.DependencyInjection;
+using AutomationService.Features.Backup.Presentation.HostedServices;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 
 namespace AutomationService.Tests.Unit;
@@ -42,6 +44,26 @@ public sealed class BackupInjectionTests
     {
         Anbieter(eingeschaltet: false)
             .GetRequiredService<IArbeitsplatzUebergabe>().Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// Beim Zeitgeber (#112) ist die Registrierung ausnahmsweise selbst die
+    /// Frage: Er ist der einzige Schreibweg, den niemand auslöst. Bliebe er unter
+    /// dem Not-Aus registriert, liefe in jedem Testhost ein Halbstundentakt mit,
+    /// der in den OneDrive-Ordner des Anwalts schreiben will.
+    /// </summary>
+    [Fact]
+    public void Abgeschaltet_laeuft_kein_Zeitgeber_mit()
+    {
+        Anbieter(eingeschaltet: false).GetServices<IHostedService>()
+            .OfType<SicherungsZeitgeber>().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Eingeschaltet_sichert_der_Zeitgeber_waehrend_der_Arbeit()
+    {
+        Anbieter(eingeschaltet: true).GetServices<IHostedService>()
+            .OfType<SicherungsZeitgeber>().Should().ContainSingle();
     }
 
     [Fact]

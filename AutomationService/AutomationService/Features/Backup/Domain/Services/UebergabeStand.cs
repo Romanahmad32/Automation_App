@@ -19,8 +19,14 @@ namespace AutomationService.Features.Backup.Domain.Services;
 /// Der eingestellte Ordner, leer wenn abgeschaltet. Steht in der Auskunft, weil
 /// eine Fehlermeldung über einen Ordner ohne dessen Namen nicht zu gebrauchen ist.
 /// </param>
+/// <param name="Bestand">
+/// Wie viele eigene Archive liegen und wie weit sie zurückreichen (#112). Gehört
+/// in dieselbe Auskunft, weil es an derselben Stelle gezeigt wird: „zuletzt
+/// gesichert am …" allein sagt nicht, ob man auf vorgestern zurückkann.
+/// </param>
 public sealed record UebergabeStand(
     ArbeitsplatzEintrag? Angebot,
     ArbeitsplatzEintrag? EigenerStand,
     LetzteSicherung? LetzterLauf,
-    string AblageOrdner);
+    string AblageOrdner,
+    SicherungsBestand Bestand);

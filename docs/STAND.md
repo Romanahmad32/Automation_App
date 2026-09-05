@@ -92,11 +92,14 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   (§7.2, `SicherungsArchiv`; Begründung in `docs/RELEASE.md`). Ist eine **Sicherungsablage**
   eigens gewählt oder aus dem App-Daten-Ordner abgeleitet (`SicherungsAblageVorgabe`, #103; ohne
   beides bleibt sie abgeschaltet — gedacht: ein OneDrive-Ordner), sichert die App zusätzlich beim
-  Beenden und nach jedem Vorgangsabschluss von selbst dorthin — und der **zweite Arbeitsplatz**
-  bietet diesen Stand beim Öffnen zur Übernahme an, nach Rückfrage und mit sichtbarem Vergleich
-  beider Stände. Die Kette steht in `docs/DATENFLUESSE.md`. **Bewusst nicht gebaut:** ein
-  Zusammenführen zweier gleichzeitig bearbeiteter Stände — übergeben wird eine Datei, nicht
-  verschmolzen.
+  Beenden, nach jedem Vorgangsabschluss und seit #112 alle 30 Minuten bei Änderung
+  (`SicherungsZeitgeber`) von selbst dorthin — und der **zweite Arbeitsplatz** bietet diesen Stand
+  beim Öffnen zur Übernahme an, nach Rückfrage und mit sichtbarem Vergleich beider Stände.
+  Aufgehoben wird seither nach einer Tag/Woche/Monat-Staffel statt nach fester Anzahl
+  (`Aufbewahrungsregel`, #112); der Reiter „Datensicherung" zeigt dazu, wie viele eigene Archive
+  liegen und wie weit ihre Historie zurückreicht. Die Kette steht in `docs/DATENFLUESSE.md`.
+  **Bewusst nicht gebaut:** ein Zusammenführen zweier gleichzeitig bearbeiteter Stände — übergeben
+  wird eine Datei, nicht verschmolzen.
 - **Ein Ordner für alle App-Daten, relative OneDrive-Pfade (#103)** — statt vier Ordner einzeln zu
   wählen, legt der Anwalt einen **App-Daten-Ordner** fest (Vorschlag: ein erkannter
   OneDrive-Ordner, `SynchronisierterWurzelOrdner`); Vorlagen-, Register- und Sicherungsablage
