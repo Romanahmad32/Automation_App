@@ -125,28 +125,80 @@ class RegisterFilterLeiste extends StatelessWidget {
     required List<T> werte,
     required String Function(T) beschriftung,
     required ValueChanged<T?> onGewaehlt,
-  }) => SizedBox(
-    width: 200,
-    child: DropdownButtonFormField<T?>(
-      initialValue: wert,
-      isDense: true,
-      decoration: InputDecoration(
-        labelText: hinweis,
-        border: const OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      items: [
-        DropdownMenuItem<T?>(
-          value: null,
-          child: Text('Alle ${hinweis.toLowerCase()}'),
-        ),
-        for (final eintrag in werte)
-          DropdownMenuItem<T?>(
-            value: eintrag,
-            child: Text(beschriftung(eintrag)),
+  }) {
+    final allesText = 'Alle ${hinweis.toLowerCase()}';
+    return SizedBox(
+      width: _dropdownBreite(context, [allesText, ...werte.map(beschriftung)]),
+      child: DropdownButtonFormField<T?>(
+        initialValue: wert,
+        isDense: true,
+        // Ohne `isExpanded` bekommt der Text hier keine Breitenbegrenzung von
+        // seiner Zeile und lief mit der angehobenen Schrift (Issue #57) unter
+        // den Pfeil hinaus, statt sich einzuordnen — `_dropdownBreite` bemisst
+        // das Feld zwar so, dass der längste Eintrag ohnehin passt, aber erst
+        // `isExpanded` macht das eine Zusicherung statt eines Zufalls.
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: hinweis,
+          border: const OutlineInputBorder(),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
           ),
-      ],
-      onChanged: onGewaehlt,
-    ),
-  );
+        ),
+        items: [
+          DropdownMenuItem<T?>(
+            value: null,
+            child: Text(allesText, overflow: TextOverflow.ellipsis),
+          ),
+          for (final eintrag in werte)
+            DropdownMenuItem<T?>(
+              value: eintrag,
+              child: Text(
+                beschriftung(eintrag),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+        onChanged: onGewaehlt,
+      ),
+    );
+  }
+
+  /// Breite, die den längsten Eintrag (samt „Alle …") ohne Kürzung zeigt.
+  /// Eine feste Breite passte nicht mehr zu jeder Schriftgröße und jedem
+  /// Katalog — sie reichte für „Alle rechtsgebiet" bei der angehobenen
+  /// Schrift (Issue #57) nicht mehr, und ein neuer, langer Katalogeintrag
+  /// hätte dieselbe Lücke wieder aufgerissen. Gemessen wird mit
+  /// `titleMedium`, dem Stil, den `DropdownButtonFormField` ohne eigenes
+  /// `style` selbst für seinen Text verwendet (siehe `dropdown.dart`,
+  /// `_textStyle`).
+  double _dropdownBreite(BuildContext context, List<String> texte) {
+    final style = Theme.of(context).textTheme.titleMedium;
+    final painter = TextPainter(
+      textDirection: Directionality.of(context),
+      // Ohne die ambiente Textskala misst das Feld enger, als es zeichnet,
+      // sobald Windows die Schrift vergrößert — der gerenderte Dropdown-Text
+      // nutzt genau diese Skala über `MediaQuery.textScalerOf`.
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    );
+    var textBreite = 0.0;
+    try {
+      for (final text in texte) {
+        painter.text = TextSpan(text: text, style: style);
+        painter.layout();
+        if (painter.width > textBreite) textBreite = painter.width;
+      }
+    } finally {
+      painter.dispose();
+    }
+    // Innenpolster (12+12) + Pfeil samt Abstand + Sicherheitszuschlag —
+    // `isExpanded` würde einen zu knappen Wert notfalls per Ellipsis auffangen,
+    // soll das im Regelfall aber nicht müssen.
+    const chrome = 88.0;
+    const mindestbreite = 160.0;
+    final breite = textBreite + chrome;
+    return breite < mindestbreite ? mindestbreite : breite;
+  }
 }

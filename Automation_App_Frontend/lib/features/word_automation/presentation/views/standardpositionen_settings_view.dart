@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
+import 'package:automation_app/core/general_widgets/form/speichern_button.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/stand_nachziehen.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:automation_app/features/settings/presentation/widgets/tabellenkopf_farbe_field.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_editor.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_entwurf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -20,6 +23,9 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// beim Auswählen sofort, wie die Wahl im Reiter „Darstellung"), darunter der
 /// Editor der Standardpositionen mit der Tabellen-Vorschau. Die Vorschau folgt
 /// dem Farbfeld **live** — auch einem noch ungespeicherten Wert.
+///
+/// Der Speichern-Knopf der Positionen sitzt in der Kopfzeile des Reiters und
+/// liest aus dem [StandardpositionenEntwurf], den diese Seite hält.
 class StandardpositionenSettingsView extends StatefulWidget {
   const StandardpositionenSettingsView({super.key});
 
@@ -41,6 +47,11 @@ class _StandardpositionenSettingsViewState
   );
   late final FormGroup _form = FormGroup({'tabellenkopfFarbeHex': _farbe});
 
+  /// Die Positionen gehören der Seite, nicht ihrem Abschnitt: Der eine
+  /// Speichern-Knopf in der Kopfzeile liest daraus (wie die Signatur in
+  /// `MailboxAccessView`).
+  final StandardpositionenEntwurf _entwurf = StandardpositionenEntwurf();
+
   bool _farbeUebernommen = false;
   StreamSubscription<String?>? _farbAbo;
 
@@ -53,6 +64,7 @@ class _StandardpositionenSettingsViewState
   @override
   void dispose() {
     _farbAbo?.cancel();
+    _entwurf.dispose();
     super.dispose();
   }
 
@@ -101,6 +113,24 @@ class _StandardpositionenSettingsViewState
         // Tabelle so, wie sie im Dokument steht — in 760 px bricht sie um und
         // die Vorschau taugt nicht mehr als Vorschau.
         child: EinstellungenReiter(
+          // Der BlocBuilder umschließt nur den Knopf, nicht den Reiter: Jedes
+          // Speichern schickt zwei Zustände (speichert / gespeichert), und um
+          // den Reiter gelegt baute er dabei den Editor samt seiner Textfelder
+          // und der Vorschau neu auf — mitten in der Eingabe des Anwalts.
+          aktion: BlocBuilder<StandardpositionenCubit, StandardpositionenStand>(
+            builder: (context, stand) => ListenableBuilder(
+              listenable: _entwurf,
+              builder: (context, _) => SpeichernButton(
+                kompakt: true,
+                speichert: stand.speichert,
+                onSpeichern: _entwurf.beanstandet
+                    ? null
+                    : () => context.read<StandardpositionenCubit>().speichern(
+                        _entwurf.positionen,
+                      ),
+              ),
+            ),
+          ),
           breiteEinspaltig: 1000,
           links: [
             const FormSection(
@@ -135,6 +165,7 @@ class _StandardpositionenSettingsViewState
                         : null;
                     return StandardpositionenEditor(
                       headerColorHex: headerColorHex,
+                      entwurf: _entwurf,
                     );
                   },
                 ),

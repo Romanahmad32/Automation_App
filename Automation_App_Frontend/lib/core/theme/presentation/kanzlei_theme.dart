@@ -11,7 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 /// (Karten, Eingabefelder, Buttons) und unterscheiden sich nur in Farben und
 /// Typografie.
 class KanzleiMaterialTheme extends MaterialTheme {
-  const KanzleiMaterialTheme(super.textTheme);
+  const KanzleiMaterialTheme(super.textTheme, {super.schriftstufe});
 
   @override
   ThemeData light() => theme(KanzleiPalette.lightScheme());

@@ -6,6 +6,7 @@ import 'package:automation_app/features/word_automation/domain/entities/standard
 import 'package:automation_app/features/word_automation/domain/repositories/standard_schadenspositionen_repository.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/views/standardpositionen_settings_view.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +15,11 @@ import 'package:flutter_test/flutter_test.dart';
 /// speichert beim Auswählen **für sich** (auf dem geladenen Stand, damit die
 /// Kanzleidaten daneben stehen bleiben) — und die Vorschau übernimmt die
 /// gewählte Farbe sofort, noch bevor das Backend geantwortet hat.
+///
+/// Seit Issue #106 steht hier auch der Speichern-Knopf der Standardpositionen:
+/// in der Kopfzeile, gespeist aus dem Entwurf, den diese Seite hält, und beim
+/// Scrollen stehenbleibend. Was der Editor darunter in den Entwurf meldet,
+/// prüft `standardpositionen_editor_test.dart`.
 class FesteKanzleiSettings implements UseCase<KanzleiSettings, NoParams> {
   FesteKanzleiSettings(this.settings);
 
@@ -36,6 +42,10 @@ class MerkendeKanzleiSpeicherung
 }
 
 class VorgabenRepository implements StandardSchadenspositionenRepository {
+  /// Merkt sich, was der Speichern-Knopf hinausgegeben hat — `null` heißt: Es
+  /// wurde gar nicht gespeichert.
+  List<StandardSchadensposition>? zuletztGespeichert;
+
   @override
   Future<List<StandardSchadensposition>> lade() async =>
       StandardSchadenspositionen.vorgabe;
@@ -43,7 +53,10 @@ class VorgabenRepository implements StandardSchadenspositionenRepository {
   @override
   Future<List<StandardSchadensposition>> speichere(
     List<StandardSchadensposition> positionen,
-  ) async => positionen;
+  ) async {
+    zuletztGespeichert = positionen;
+    return positionen;
+  }
 }
 
 void main() {
@@ -53,9 +66,11 @@ void main() {
   );
 
   late MerkendeKanzleiSpeicherung speicherung;
+  late VorgabenRepository positionen;
 
   Future<void> zeigeReiter(WidgetTester tester) async {
     speicherung = MerkendeKanzleiSpeicherung();
+    positionen = VorgabenRepository();
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
@@ -66,8 +81,7 @@ void main() {
             )..add(const LoadKanzleiSettingsEvent()),
           ),
           BlocProvider(
-            create: (_) =>
-                StandardpositionenCubit(VorgabenRepository())..laden(),
+            create: (_) => StandardpositionenCubit(positionen)..laden(),
           ),
         ],
         child: const MaterialApp(
@@ -120,5 +134,89 @@ void main() {
     await tester.pump();
 
     expect(kopfzeilenFarbe(tester), const Color(0xFFFFE699));
+  });
+
+  /// Nur die Felder des Editors, nicht das Farbfeld daneben: Die Reihenfolge
+  /// über `find.byType(TextField)` allein hinge daran, welcher Abschnitt oben
+  /// steht.
+  Finder betragsfeld(int zeile) => find
+      .descendant(
+        of: find.byType(StandardpositionenEditor),
+        matching: find.byType(TextField),
+      )
+      .at(zeile * 2 + 1);
+
+  testWidgets('der Speichern-Knopf gibt die getippten Zeilen hinaus', (
+    tester,
+  ) async {
+    await zeigeReiter(tester);
+
+    await tester.enterText(betragsfeld(0), '1.250,75');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Speichern'));
+    await tester.pumpAndSettle();
+
+    expect(
+      positionen.zuletztGespeichert?.first,
+      const StandardSchadensposition(
+        bezeichnung: 'Reparaturkosten netto nach Gutachten',
+        betrag: 1250.75,
+      ),
+    );
+    expect(find.text('Standardpositionen gespeichert.'), findsOneWidget);
+  });
+
+  testWidgets('ein negativer Betrag sperrt den Speichern-Knopf', (
+    tester,
+  ) async {
+    await zeigeReiter(tester);
+
+    await tester.enterText(betragsfeld(0), '-250');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Betrag darf nicht negativ sein'), findsOneWidget);
+    await tester.tap(find.text('Speichern'));
+    await tester.pumpAndSettle();
+
+    expect(positionen.zuletztGespeichert, isNull);
+  });
+
+  testWidgets('der Speichern-Knopf steht in der Kopfzeile und bleibt beim '
+      'Scrollen stehen', (tester) async {
+    await zeigeReiter(tester);
+
+    expect(
+      find.text('Speichern'),
+      findsOneWidget,
+      reason:
+          'Genau einer: Der zweite Knopf unter dem Editor ist mit Issue #106 '
+          'entfallen. Zwei Speichern-Knöpfe auf einer Seite lassen niemanden '
+          'raten, wo die Grenze zwischen ihnen verläuft.',
+    );
+
+    final knopfVorher = tester.getTopLeft(find.text('Speichern'));
+    final inhaltVorher = tester.getTopLeft(find.text('Vorschau'));
+
+    // Am Scrollbereich ziehen, nicht am Inhalt: Der reicht weit über das
+    // Fenster hinaus, der Griff ginge sonst ins Leere.
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -300),
+    );
+    await tester.pump();
+
+    expect(
+      tester.getTopLeft(find.text('Vorschau')).dy,
+      lessThan(inhaltVorher.dy),
+      reason: 'Ohne tatsächliche Bewegung sagt der Vergleich darunter nichts.',
+    );
+    expect(
+      tester.getTopLeft(find.text('Speichern')),
+      knopfVorher,
+      reason:
+          'Der Knopf gehört in die Kopfzeile über dem Scrollbereich. Rutscht '
+          'er hinein, ist der Gewinn der Umstellung weg: Wer eine Position '
+          'ändert, müsste zum Speichern an der Vorschau vorbei nach unten.',
+    );
   });
 }

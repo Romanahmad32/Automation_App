@@ -13,9 +13,11 @@ import 'package:flutter_test/flutter_test.dart';
 /// eine Regel, die nur gegen eine der beiden Paletten geprüft wird, sieht in
 /// der anderen anders aus, und niemand merkt es, bis der Anwalt umschaltet.
 void main() {
-  // Eine echte Schrift-Skala statt `TextTheme()`: Die Chip-Beschriftung baut
-  // auf `labelLarge` auf, und mit einem leeren TextTheme wäre sie null — der
-  // Test liefe grün, ohne je eine Farbe angesehen zu haben.
+  // Das Theme durchläuft zuerst `Schriftskala.anheben`, die fehlende Größen
+  // aus `Typography.englishLike2021` ergänzt — ein leeres `TextTheme()` ließe
+  // die Chip-Beschriftung deshalb längst nicht mehr null werden. Trotzdem die
+  // echte Skala: Sie ist die realistischere Eingabe, so wie sie im Betrieb
+  // über `createTextTheme` tatsächlich ankommt.
   final schrift = ThemeData.light().textTheme;
 
   final familien = <String, ThemeData>{
