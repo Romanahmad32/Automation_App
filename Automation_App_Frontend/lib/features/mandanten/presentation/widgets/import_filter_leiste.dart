@@ -34,14 +34,25 @@ class ImportFilterLeiste extends StatelessWidget {
           runSpacing: 8,
           children: [
             for (final sicht in ImportSicht.values)
-              FilterChip(
-                selected: filter.sicht == sicht,
-                onSelected: (_) => cubit.filtern(filter.copyWith(sicht: sicht)),
-                label: Text('${sicht.bezeichnung} (${zaehler[sicht] ?? 0})'),
-              ),
+              if (zeigt(sicht))
+                FilterChip(
+                  selected: filter.sicht == sicht,
+                  onSelected: (_) =>
+                      cubit.filtern(filter.copyWith(sicht: sicht)),
+                  label: Text('${sicht.bezeichnung} (${zaehler[sicht] ?? 0})'),
+                ),
           ],
         ),
       ],
     );
   }
+
+  /// „Ordner unbekannt" erscheint nur, wenn es solche Zeilen gibt — im
+  /// Normalfall ist es kein Ausschnitt, den man wählen möchte, sondern ein
+  /// Alarm. Ein Umschalter mit `(0)`, der in neunundneunzig von hundert Fällen
+  /// dasteht, macht die Leiste länger und sagt nichts.
+  bool zeigt(ImportSicht sicht) =>
+      sicht != ImportSicht.unbekannterOrdner ||
+      filter.sicht == sicht ||
+      (zaehler[sicht] ?? 0) > 0;
 }

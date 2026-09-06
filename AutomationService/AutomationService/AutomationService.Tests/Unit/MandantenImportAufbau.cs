@@ -3,6 +3,7 @@ using AutomationService.Features.Mandanten.Domain.Persistence;
 using AutomationService.Features.Mandanten.Domain.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutomationService.Tests.Unit;
 
@@ -20,15 +21,17 @@ public sealed class MandantenImportAufbau : IDisposable
 
     public OrdnerStatusRegister OrdnerStatus { get; }
 
-    public MandantenImport Import { get; }
+    public MandantenRepository Register { get; }
 
     /// <summary>
-    /// Das Paketbuch am selben Kontext. Es hängt am Import (jeder Schreiblauf
-    /// trägt dort nach), also gehört es in denselben Aufbau — ein zweiter
-    /// danebengestellter Aufbau hätte eine zweite Datenbank und damit genau
-    /// das Zusammenspiel nicht, um das es geht.
+    /// Die Paket-Buchführung an derselben Datenbank. Sie hängt am Import, weil
+    /// ein Schreiblauf offene Pakete schließt — geprüft wird das über die
+    /// echten Tabellen und nicht über eine Attrappe, denn die Frage lautet
+    /// gerade, ob Zuordnung, Vermerk und Paket denselben Ordner meinen.
     /// </summary>
-    public ArbeitspaketBuch Buch { get; }
+    public ImportPaketBuch PaketBuch { get; }
+
+    public MandantenImport Import { get; }
 
     public MandantenImportAufbau()
     {
@@ -40,13 +43,11 @@ public sealed class MandantenImportAufbau : IDisposable
         Db = new AutomationDbContext(optionen);
         Db.Database.EnsureCreated();
         OrdnerStatus = new OrdnerStatusRegister(Db);
-        Buch = new ArbeitspaketBuch(Db, OrdnerStatus);
-        Import = new MandantenImport(Db, OrdnerStatus, Buch);
+        Register = new MandantenRepository(Db);
+        PaketBuch = new ImportPaketBuch(Db, Register, OrdnerStatus);
+        Import = new MandantenImport(
+            Db, OrdnerStatus, PaketBuch, NullLogger<MandantenImport>.Instance);
     }
-
-    /// <summary>Die Ordnernamen eines Arbeitspakets.</summary>
-    public static List<string> Ordner(ArbeitspaketEntity paket) =>
-        MandantListen.Lies(paket.OrdnernamenJson);
 
     /// <summary>Ein Mandant, der vor dem Import schon im Register steht.</summary>
     public MandantEntity Vorhanden(

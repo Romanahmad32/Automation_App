@@ -3,9 +3,11 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
+import 'package:automation_app/features/mandanten/domain/entities/arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
+import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
@@ -67,6 +69,27 @@ abstract class MandantenRepository {
   Future<Either<Failure, ImportBericht>> importiereMandanten({
     required MandantenImportDatei datei,
     required bool uebernehmen,
+  });
+
+  /// Die Historie der herausgegebenen Arbeitspakete, neueste Nummer zuerst.
+  /// Der Fortschritt je Paket wird beim Lesen berechnet — er kann nicht
+  /// veralten.
+  Future<Either<Failure, List<ImportPaket>>> getImportPakete();
+
+  /// Verbucht ein herausgegebenes Arbeitspaket über seine [ordnernamen]; die
+  /// Nummer vergibt das Backend. **Erst nach** dem erfolgreichen Speichern der
+  /// Datei aufrufen: bricht der Anwalt den Speichern-Dialog ab, ist kein Paket
+  /// heraus und darf auch keines gezählt werden.
+  Future<Either<Failure, ImportPaket>> notiereImportPaket(
+    List<String> ordnernamen,
+  );
+
+  /// Schreibt das Arbeitspaket als JSON-Datei nach [pfad] — die Eingabe für den
+  /// Agenten, der die Importdatei erzeugt. Den Pfad hat der Anwalt im
+  /// Speichern-Dialog bestimmt.
+  Future<Either<Failure, void>> schreibeArbeitspaket({
+    required Arbeitspaket paket,
+    required String pfad,
   });
 
   /// Ordnet einem Mandanten einen vorhandenen Akten-Ordner zu (manuelle

@@ -12,12 +12,14 @@ class MandantenStandAbruf {
   final UseCase<List<String>, NoParams> getAktenOrdnernamen;
   final UseCase<List<OrdnerStatus>, NoParams> getOrdnerStatus;
   final UseCase<List<Akte>, NoParams> getAkten;
+  final UseCase<List<ImportPaket>, NoParams> getImportPakete;
 
   const MandantenStandAbruf({
     required this.getSeite,
     required this.getAktenOrdnernamen,
     required this.getOrdnerStatus,
     required this.getAkten,
+    required this.getImportPakete,
   });
 
   /// Eine Seite des Registers — für Suche und Nachladen.
@@ -83,9 +85,20 @@ class MandantenStandAbruf {
       Left() => alt?.ordnerStatus ?? const <OrdnerStatus>[],
     };
 
+    // Die Paket-Historie ist Zusatzinformation für die Stand-Karte — ihr
+    // Fortschritt wird ohnehin bei jedem Lesen neu berechnet. Ein Fehlschlag
+    // hier blockiert die Seite nicht; der bisherige Stand bleibt stehen.
+    final paketeResult = await getImportPakete(const NoParams());
+    final pakete = switch (paketeResult) {
+      Right(value: final p) => p,
+      Left() => alt?.importPakete ?? const <ImportPaket>[],
+    };
+
     if (nurRegister && alt != null) {
       return Right(
-        alt.mitSeite(gefunden, zugeordnet).copyWith(ordnerStatus: vermerke),
+        alt
+            .mitSeite(gefunden, zugeordnet)
+            .copyWith(ordnerStatus: vermerke, importPakete: pakete),
       );
     }
 
@@ -107,6 +120,7 @@ class MandantenStandAbruf {
         ordnerStatus: vermerke,
         query: alt?.query ?? '',
         zuordnungFilter: alt?.zuordnungFilter ?? const ZuordnungFilter(),
+        importPakete: pakete,
       ),
     );
   }

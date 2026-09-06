@@ -3,6 +3,7 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_i
 import 'package:automation_app/features/mandanten/presentation/widgets/import_datei_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_kachel.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_filter_leiste.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/import_unbekannte_ordner_band.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_zusammenfassung.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_fehler.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_hinweis.dart';
@@ -36,6 +37,13 @@ class MandantenImportView extends StatelessWidget {
           kannUebernehmen: state.kannUebernehmen,
           laufend: state.laufend,
         ),
+        // Über der Filterleiste, nicht darin: Es ist keine weitere Ansicht zur
+        // Auswahl, sondern der Grund, warum „Übernehmen" grau ist.
+        if (state.befund.sperrtUebernahme)
+          ImportUnbekannteOrdnerBand(
+            befund: state.befund,
+            filter: state.filter,
+          ),
         ImportFilterLeiste(filter: state.filter, zaehler: state.zaehler),
         Text(
           '${sichtbar.length} von ${bericht.eintraege.length} Zeilen in dieser '
@@ -53,7 +61,12 @@ class MandantenImportView extends StatelessWidget {
                     befund: sichtbar[i],
                     datensatz: state.eintragAus(sichtbar[i].zeile),
                     bearbeitbar: !state.laufend && !state.uebernommen,
-                    aehnliche: state.aehnlicheZu(sichtbar[i].zeile),
+                    ordnerUnbekannt: state.befund.unbekannteZeilen.contains(
+                      sichtbar[i].zeile,
+                    ),
+                    aehnlicherName: state.befund.aehnliche.containsKey(
+                      sichtbar[i].zeile,
+                    ),
                   ),
                 ),
         ),

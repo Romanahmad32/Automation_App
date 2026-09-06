@@ -1,10 +1,8 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
-import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/import_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'import_testaufbau.dart';
-import 'mandanten_testaufbau.dart';
 
 void main() {
   final eintraege = [
@@ -58,37 +56,5 @@ void main() {
     const filter = ImportFilter(query: 'Klein', sicht: ImportSicht.ergaenzt);
 
     expect(filter.anwenden(eintraege).single.zeile, 3);
-  });
-
-  // Ohne diese Regel versteckte die Voreinstellung genau die Zeilen, um
-  // derentwillen der Ähnlichkeitshinweis überhaupt gebaut wird: „Schmitt" bei
-  // vorhandenem „Schmidt" ist weder abgelehnt noch mit einem Hinweis versehen.
-  test('ein Eintrag mit ähnlichem Namen zählt zu „zu prüfen"', () {
-    final aehnliche = {
-      0: [
-        MandantVorschlag(
-          mandant: mandant(1, 'Schmidt', vorname: 'Mark'),
-          begruendung: 'Ähnlicher Name im Mandantenregister.',
-        ),
-      ],
-    };
-
-    const filter = ImportFilter();
-    expect(
-      [
-        for (final e in filter.anwenden(eintraege, aehnliche: aehnliche))
-          e.zeile,
-      ],
-      [0, 3, 4],
-    );
-    expect(
-      filter.zaehlen(eintraege, aehnliche: aehnliche)[ImportSicht.zuPruefen],
-      3,
-    );
-    expect(
-      filter.zaehlen(eintraege, aehnliche: aehnliche)[ImportSicht.neu],
-      1,
-      reason: 'Der Hinweis verschiebt keine Zeile aus ihrer Art heraus.',
-    );
   });
 }

@@ -1,11 +1,10 @@
-import 'package:automation_app/features/mandanten/presentation/blocs/arbeitspaket_cubit/arbeitspaket_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/nicht_zugeordneter_ordner_kachel.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/ordner_filter_leiste.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/ordner_massenaktion.dart';
-import 'package:automation_app/features/mandanten/presentation/widgets/zuordnung_stand_band.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/stand_karte.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -25,24 +24,16 @@ class NichtZugeordneteOrdnerView extends StatelessWidget {
     final imTopf = state.ordnerZaehlerUngefiltert[filter.ansicht] ?? 0;
     final vermerkt = state.ohneMandantenbezug;
 
-    // Einmal gerechnet und weitergereicht: `nichtZugeordneteAkten` läuft über
-    // alle gescannten Ordner, und im Produktivbestand sind das rund viertausend.
-    final offeneAkten = state.nichtZugeordneteAkten;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 12,
       children: [
-        BlocBuilder<ArbeitspaketCubit, ArbeitspaketState>(
-          builder: (context, paketStand) => ZuordnungStandBand(
-            gesamt: state.akten.length,
-            zugeordnet: state.akten.length - offeneAkten.length,
-            ohneBezug: offeneAkten
-                .where((a) => vermerkt.enthaelt(a.ordnername))
-                .length,
-            offen: state.offeneOrdnerAnzahl,
-            historie: paketStand.historie,
-          ),
+        StandKarte(
+          gesamt: state.gesamtOrdnerAnzahl,
+          zugeordnet: state.zugeordneteOrdnerAnzahl,
+          ohneBezug: state.ohneBezugOrdnerAnzahl,
+          offen: state.offeneOrdnerAnzahl,
+          pakete: state.importPakete,
         ),
         OrdnerFilterLeiste(
           filter: filter,

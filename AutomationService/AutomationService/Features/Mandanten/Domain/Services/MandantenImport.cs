@@ -17,7 +17,8 @@ namespace AutomationService.Features.Mandanten.Domain.Services;
 public sealed class MandantenImport(
     AutomationDbContext db,
     IOrdnerStatusRegister ordnerStatus,
-    IArbeitspaketBuch arbeitspakete) : IMandantenImport
+    IImportPaketBuch paketBuch,
+    ILogger<MandantenImport> logger) : IMandantenImport
 {
     public async Task<MandantenImportBefund> FuehreAusAsync(
         MandantenImportAuftrag auftrag,
@@ -45,7 +46,36 @@ public sealed class MandantenImport(
         if (auftrag.NurPruefen) return lauf.Ergebnis(angewendet: false);
 
         await SchreibeAsync(lauf, cancellationToken);
+        await VerbucheFortschrittAsync(auftrag.Mandanten.Count, cancellationToken);
         return lauf.Ergebnis(angewendet: true);
+    }
+
+    /// <summary>
+    /// Trägt nach, welche Arbeitspakete dieser Import geschlossen hat.
+    ///
+    /// Bewusst <b>außerhalb</b> der Transaktion und hinter einem Fangnetz: Der
+    /// Import ist die Hauptsache, die Buchführung die Nebensache. Wären beide
+    /// verbunden, machte ein Fehler in der Nebensache die viertausend soeben
+    /// geschriebenen Mandanten wieder zunichte — oder meldete dem Anwalt einen
+    /// Fehlschlag, den es nicht gab, und ließe ihn dieselbe Datei ein zweites
+    /// Mal einlesen. Ein nicht geschlossenes Paket kostet dagegen nichts: Der
+    /// erledigt-Zähler wird bei jedem Lesen neu gerechnet und zeigt den
+    /// Fortschritt auch dann richtig an.
+    /// </summary>
+    async Task VerbucheFortschrittAsync(int zeilen, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await paketBuch.SchreibeFortschrittAsync(zeilen, cancellationToken);
+        }
+        catch (Exception ausnahme) when (ausnahme is not OperationCanceledException)
+        {
+            logger.LogWarning(
+                ausnahme,
+                "Der Import über {Zeilen} Zeilen ist geschrieben, die Arbeitspakete " +
+                "ließen sich aber nicht fortschreiben.",
+                zeilen);
+        }
     }
 
     async Task SchreibeAsync(MandantenImportLauf lauf, CancellationToken cancellationToken)
@@ -67,16 +97,6 @@ public sealed class MandantenImport(
                 OrdnerStatusArten.OhneMandantenbezug,
                 cancellationToken);
         }
-
-        // Erst jetzt steht fest, welche Ordner erledigt sind — und nur ein
-        // Import trägt das im Paketbuch nach, nie die Handarbeit im
-        // Zuordnungsstapel: „eingelesen" soll heißen, dass die Datei zum Paket
-        // angekommen ist. Innerhalb der Transaktion, damit ein gescheitertes
-        // Schreiben das Buch nicht mit einem Fortschritt zurücklässt, den es
-        // nicht gibt.
-        await arbeitspakete.MarkiereEingelesenAsync(
-            await ErledigteOrdner.LiesAsync(db, ordnerStatus, cancellationToken),
-            cancellationToken);
 
         await transaktion.CommitAsync(cancellationToken);
     }

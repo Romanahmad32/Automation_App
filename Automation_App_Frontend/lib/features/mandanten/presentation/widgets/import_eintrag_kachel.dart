@@ -1,9 +1,6 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
-import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
-import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
-import 'package:automation_app/features/mandanten/presentation/widgets/aehnlicher_mandant_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,16 +22,22 @@ class ImportEintragKachel extends StatelessWidget {
   /// Änderung träfe sonst einen Bericht, der gerade neu entsteht.
   final bool bearbeitbar;
 
-  /// Registereinträge mit ähnlichem Namen — „Schmitt" bei vorhandenem
-  /// „Schmidt". Leer heißt: kein Hinweis.
-  final List<MandantVorschlag> aehnliche;
+  /// Diese Zeile nennt einen Ordner, den es im Stammordner nicht gibt — der
+  /// Grund, warum die Übernahme gesperrt ist.
+  final bool ordnerUnbekannt;
+
+  /// Zu dieser Zeile steht ein ähnlicher Name im Register. Der Hinweis steht
+  /// schon hier und nicht erst im Dialog, damit der Anwalt die Zeilen findet,
+  /// ohne jede einzelne zu öffnen.
+  final bool aehnlicherName;
 
   const ImportEintragKachel({
     super.key,
     required this.befund,
     required this.datensatz,
     this.bearbeitbar = false,
-    this.aehnliche = const [],
+    this.ordnerUnbekannt = false,
+    this.aehnlicherName = false,
   });
 
   bool get _aenderbar => bearbeitbar && datensatz != null;
@@ -68,10 +71,20 @@ class ImportEintragKachel extends StatelessWidget {
               hinweis,
               style: theme.textTheme.bodySmall?.copyWith(color: farben.error),
             ),
-          if (_aenderbar)
-            AehnlicherMandantHinweis(
-              vorschlaege: aehnliche,
-              onUebernehmen: (mandant) => _namenUebernehmen(context, mandant),
+          // Beides steht in der Unterzeile und nicht als Chip rechts: dort
+          // stehen schon bis zu drei, und die Kachel bricht bei größerer
+          // Schrift ohnehin knapp.
+          if (ordnerUnbekannt)
+            Text(
+              'Nennt einen Ordner, den es im Stammordner nicht gibt.',
+              style: theme.textTheme.bodySmall?.copyWith(color: farben.error),
+            ),
+          if (aehnlicherName)
+            Text(
+              'Ähnlicher Name im Register — beim Bearbeiten prüfen.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: farben.tertiary,
+              ),
             ),
         ],
       ),
@@ -102,27 +115,21 @@ class ImportEintragKachel extends StatelessWidget {
     );
   }
 
-  /// Schreibt die Zeile auf die Schreibweise des Registers um. Zugeordnet wird
-  /// dadurch nichts: Der nächste Prüflauf über die ganze Datei macht daraus von
-  /// selbst ein `ergaenzt`.
-  Future<void> _namenUebernehmen(BuildContext context, Mandant mandant) {
-    return context.read<MandantenImportCubit>().eintragErsetzen(
-      befund.zeile,
-      datensatz!.mitNamenAus(mandant),
-    );
-  }
-
   Future<void> _bearbeiten(BuildContext context) async {
     // Der Dialog liegt auf einer eigenen Route und sieht den BlocProvider der
     // Seite nicht — deshalb wird der Cubit vorher gefasst und das Ergebnis
-    // hier angewendet, statt im Dialog danach zu suchen.
+    // hier angewendet, statt im Dialog danach zu suchen. Aus demselben Grund
+    // kommen Vorschläge und Ordnerbestand von hier: der Dialog holt sich
+    // nichts selbst.
     final cubit = context.read<MandantenImportCubit>();
+    final stand = cubit.state;
     final entscheidung = await showDialog<ImportEintragEntscheidung>(
       context: context,
       builder: (_) => ImportEintragDialog(
         befund: befund,
         datensatz: datensatz!,
-        aehnliche: aehnliche,
+        vorschlaege: stand.befund.aehnliche[befund.zeile] ?? const [],
+        vorhandeneOrdner: stand.umfeld.ordnernamen,
       ),
     );
     if (entscheidung == null) return;

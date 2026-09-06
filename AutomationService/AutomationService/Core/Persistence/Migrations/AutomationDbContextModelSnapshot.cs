@@ -278,17 +278,17 @@ namespace AutomationService.Core.Persistence.Migrations
                     b.ToTable("ReceivedReplies");
                 });
 
-            modelBuilder.Entity("AutomationService.Features.Mandanten.Domain.Persistence.ArbeitspaketEntity", b =>
+            modelBuilder.Entity("AutomationService.Features.Mandanten.Domain.Persistence.ImportPaketEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("AnzahlOrdner")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("EingelesenAm")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("ErledigtAnzahl")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("GeholtAm")
                         .HasColumnType("TEXT");
@@ -298,14 +298,19 @@ namespace AutomationService.Core.Persistence.Migrations
 
                     b.Property<string>("OrdnernamenJson")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("[]");
+
+                    b.Property<int?>("Zeilen")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Nummer")
                         .IsUnique();
 
-                    b.ToTable("Arbeitspakete");
+                    b.ToTable("ImportPakete");
                 });
 
             modelBuilder.Entity("AutomationService.Features.Mandanten.Domain.Persistence.MandantEntity", b =>

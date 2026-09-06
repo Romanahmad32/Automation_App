@@ -21,17 +21,13 @@ class MandantenImportState extends Equatable {
   final String? fehler;
   final ImportFilter filter;
 
-  /// Das Mandantenregister, gegen das verglichen wird. Es trägt den
-  /// Ähnlichkeitshinweis und die Übernahme im Eintrags-Dialog.
-  final List<Mandant> mandanten;
+  /// Der gescannte Ordnerbestand und das Register — das, woran die Datei
+  /// gemessen wird. Überlebt „Andere Datei": der Scan gehört zur Maschine,
+  /// nicht zur Datei.
+  final ImportUmfeld umfeld;
 
-  /// Zeile → ähnlich geschriebene Registereinträge, nur für Zeilen der Art
-  /// `neu`. Genau die Auskunft, die der Erzeuger der Datei nicht hat: Innerhalb
-  /// einer Sitzung sieht er „Schmidt" und „Schmitt" nebeneinander, über zwei
-  /// Sitzungen hinweg nur den zweiten.
-  ///
-  /// Enthalten sind nur Zeilen **mit** Treffer.
-  final Map<int, List<MandantVorschlag>> aehnliche;
+  /// Was die Oberfläche aus [umfeld] und dem Bericht abgeleitet hat.
+  final ImportBefund befund;
 
   const MandantenImportState({
     this.dateiPfad,
@@ -40,18 +36,20 @@ class MandantenImportState extends Equatable {
     this.laufend = false,
     this.fehler,
     this.filter = const ImportFilter(),
-    this.mandanten = const [],
-    this.aehnliche = const {},
+    this.umfeld = const ImportUmfeld(),
+    this.befund = const ImportBefund(),
   });
 
   bool get uebernommen => bericht?.angewendet ?? false;
 
   /// Übernehmen ist erst möglich, wenn eine Vorschau vorliegt, sie etwas
-  /// bewirkt und sie noch nicht geschrieben wurde.
+  /// bewirkt, sie noch nicht geschrieben wurde — und keine Ordnerangabe darin
+  /// ins Leere zeigt (siehe [ImportBefund.sperrtUebernahme]).
   bool get kannUebernehmen =>
       !laufend &&
       !uebernommen &&
       datei != null &&
+      !befund.sperrtUebernahme &&
       (bericht?.bewirktEtwas ?? false);
 
   /// Wie viele Zeilen der Anwalt von Hand berichtigt hat.
@@ -70,14 +68,28 @@ class MandantenImportState extends Equatable {
     return mandanten[zeile];
   }
 
-  /// Die Ähnlichkeitstreffer einer Zeile — leer, wenn es keine gibt.
-  List<MandantVorschlag> aehnlicheZu(int zeile) => aehnliche[zeile] ?? const [];
+  List<ImportEintrag> get sichtbar => filter.anwenden(
+    bericht?.eintraege ?? const [],
+    unbekannteZeilen: befund.unbekannteZeilen,
+  );
 
-  List<ImportEintrag> get sichtbar =>
-      filter.anwenden(bericht?.eintraege ?? const [], aehnliche: aehnliche);
+  Map<ImportSicht, int> get zaehler => filter.zaehlen(
+    bericht?.eintraege ?? const [],
+    unbekannteZeilen: befund.unbekannteZeilen,
+  );
 
-  Map<ImportSicht, int> get zaehler =>
-      filter.zaehlen(bericht?.eintraege ?? const [], aehnliche: aehnliche);
+  /// Der Ausgangszustand für die nächste Datei — [umfeld] bleibt stehen.
+  ///
+  /// „Andere Datei" wirft die Datei weg, nicht den Akten-Scan über viertausend
+  /// Ordner: der beschreibt die Maschine und ändert sich davon nicht.
+  MandantenImportState zurueckgesetzt({
+    String? dateiPfad,
+    bool laufend = false,
+  }) => MandantenImportState(
+    dateiPfad: dateiPfad,
+    laufend: laufend,
+    umfeld: umfeld,
+  );
 
   /// Nicht übergebene Felder bleiben stehen. [fehler] und [bericht] müssen sich
   /// auch wieder leeren lassen — dafür die beiden Schalter, weil `null` hier
@@ -89,8 +101,8 @@ class MandantenImportState extends Equatable {
     bool? laufend,
     String? fehler,
     ImportFilter? filter,
-    List<Mandant>? mandanten,
-    Map<int, List<MandantVorschlag>>? aehnliche,
+    ImportUmfeld? umfeld,
+    ImportBefund? befund,
     bool fehlerLoeschen = false,
     bool berichtLoeschen = false,
   }) => MandantenImportState(
@@ -100,8 +112,8 @@ class MandantenImportState extends Equatable {
     laufend: laufend ?? this.laufend,
     fehler: fehlerLoeschen ? null : fehler ?? this.fehler,
     filter: filter ?? this.filter,
-    mandanten: mandanten ?? this.mandanten,
-    aehnliche: aehnliche ?? this.aehnliche,
+    umfeld: umfeld ?? this.umfeld,
+    befund: befund ?? this.befund,
   );
 
   @override
@@ -112,7 +124,7 @@ class MandantenImportState extends Equatable {
     laufend,
     fehler,
     filter,
-    mandanten,
-    aehnliche,
+    umfeld,
+    befund,
   ];
 }
