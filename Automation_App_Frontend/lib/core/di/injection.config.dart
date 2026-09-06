@@ -87,6 +87,8 @@ import 'package:automation_app/features/form_template_setup/presentation/blocs/f
     as _i244;
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart'
     as _i702;
+import 'package:automation_app/features/form_template_setup/presentation/blocs/vorlagen_kopie_cubit/vorlagen_kopie_cubit.dart'
+    as _i901;
 import 'package:automation_app/features/mailbox/data/datasources/mailbox_datasource.dart'
     as _i829;
 import 'package:automation_app/features/mailbox/data/datasources/mailbox_hub.dart'
@@ -622,6 +624,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(
       () => _i965.GetAkten(gh<_i763.MandantenRepository>()),
+    );
+    gh.factory<_i901.VorlagenKopieCubit>(
+      () => _i901.VorlagenKopieCubit(
+        gh<_i223.UseCase<void, _i22.CreateFormTemplateRequest>>(),
+      ),
     );
     gh.factory<_i223.UseCase<void, _i63.DeleteMandantParams>>(
       () => _i63.DeleteMandant(gh<_i763.MandantenRepository>()),

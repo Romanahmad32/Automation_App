@@ -4,12 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// App-eigene Platzhalter (#35 Teil 1) haben keinen klickbaren Chip: Ein Klick
 /// darf kein Eingabefeld erzeugen, das sich von Hand nie füllen lässt.
+///
+/// Was hier **nicht** mehr steht: die Erwartungen an die beiden Zählzeilen
+/// unter den Chips („n Platzhalter ohne Feld — sie bleiben …", „14 von 18
+/// übernommen") und an „Alle übernehmen". Beides ist mit Stufe 2 von #104 in
+/// die `VorlagenStandKarte` gewandert, die über **beide** Word-Dateien
+/// zusammen rechnet — je Datei gezählt war ein Platzhalter, der in beiden
+/// steht, doppelt dabei. Geprüft wird das dort
+/// (`vorlagen_stand_karte_test.dart`); der Baustein wurde ersetzt, nicht die
+/// Regel gelockert. Der letzte Test unten wacht darüber, dass hier keine neue
+/// Zählung entsteht.
 void main() {
   Future<List<String>> zeigeUndKlickeAlle(
     WidgetTester tester,
     List<String> placeholders, {
     List<String> vorhandeneNamen = const [],
-    void Function(List<String>)? onAlleUebernehmen,
   }) async {
     final uebernommen = <String>[];
     await tester.pumpWidget(
@@ -19,7 +28,6 @@ void main() {
             placeholders: placeholders,
             vorhandeneNamen: vorhandeneNamen,
             onPlaceholderSelected: uebernommen.add,
-            onAlleUebernehmen: onAlleUebernehmen,
           ),
         ),
       ),
@@ -42,8 +50,7 @@ void main() {
     expect(uebernommen, ['Kennzeichen']);
   });
 
-  testWidgets('ein übernommener Chip ist nicht mehr klickbar und die '
-      'Zählzeile zählt nur Übernehmbares', (tester) async {
+  testWidgets('ein übernommener Chip ist nicht mehr klickbar', (tester) async {
     final uebernommen = await zeigeUndKlickeAlle(
       tester,
       ['Kennzeichen', 'Frist', 'Schadensaufstellung'],
@@ -51,39 +58,11 @@ void main() {
     );
 
     expect(uebernommen, ['Frist']);
-    // Schadensaufstellung ist app-eigen und zählt nicht mit.
-    expect(find.text('1 von 2 übernommen'), findsOneWidget);
   });
 
-  testWidgets('„Alle übernehmen" liefert nur Übernehmbares in '
-      'Dokumentreihenfolge', (tester) async {
-    List<String>? geliefert;
-    await zeigeUndKlickeAlle(
-      tester,
-      ['Frist', 'Schadensaufstellung', 'Kennzeichen', 'frist'],
-      vorhandeneNamen: ['Kennzeichen'],
-      onAlleUebernehmen: (platzhalter) => geliefert = platzhalter,
-    );
-
-    await tester.tap(find.text('Alle übernehmen'));
-    expect(geliefert, ['Frist']);
-  });
-
-  testWidgets('nichts mehr zu übernehmen: der Knopf ist stumm', (tester) async {
-    var gerufen = false;
-    await zeigeUndKlickeAlle(
-      tester,
-      ['Kennzeichen'],
-      vorhandeneNamen: ['Kennzeichen'],
-      onAlleUebernehmen: (_) => gerufen = true,
-    );
-
-    await tester.tap(find.text('Alle übernehmen'));
-    expect(gerufen, isFalse);
-    expect(find.text('1 von 1 übernommen'), findsOneWidget);
-  });
-
-  testWidgets('offene Chips sagen, was sie kosten (#36)', (tester) async {
+  testWidgets('ein offener Chip sagt im Tooltip, was er kostet (#36)', (
+    tester,
+  ) async {
     await zeigeUndKlickeAlle(
       tester,
       ['Kennzeichen', 'Frist', 'Schadensaufstellung'],
@@ -91,31 +70,12 @@ void main() {
     );
 
     expect(
-      find.text(
-        '1 Platzhalter ohne Feld — er bleibt beim Erzeugen roh im Dokument '
-        'stehen.',
-      ),
-      findsOne,
-    );
-    expect(
       find.byTooltip(
         'Platzhalter ohne Feld — bleibt beim Erzeugen roh im Dokument '
         'stehen. Anklicken, um ihn zuzuordnen.',
       ),
       findsOne,
     );
-  });
-
-  testWidgets('ist jeder Platzhalter versorgt, schweigt die Warnung', (
-    tester,
-  ) async {
-    await zeigeUndKlickeAlle(
-      tester,
-      ['Kennzeichen', 'Schadensaufstellung'],
-      vorhandeneNamen: ['Kennzeichen'],
-    );
-
-    expect(find.textContaining('ohne Feld'), findsNothing);
   });
 
   testWidgets('der app-eigene Chip erklärt sich im Tooltip', (tester) async {
@@ -127,5 +87,20 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('unter den Chips wird nicht mehr gezählt', (tester) async {
+    // Der Stand steht an einer Stelle. Käme hier wieder eine Zählung dazu,
+    // stünden bei zwei verknüpften Dateien zwei Zahlen neben einer dritten,
+    // und keine der drei gälte für die Vorlage.
+    await zeigeUndKlickeAlle(
+      tester,
+      ['Kennzeichen', 'Frist', 'Schadensaufstellung'],
+      vorhandeneNamen: ['Kennzeichen'],
+    );
+
+    expect(find.textContaining('ohne Feld'), findsNothing);
+    expect(find.textContaining('übernommen'), findsNothing);
+    expect(find.text('Alle übernehmen'), findsNothing);
   });
 }

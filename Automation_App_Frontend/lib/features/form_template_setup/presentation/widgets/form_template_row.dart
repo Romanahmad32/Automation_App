@@ -3,13 +3,16 @@ import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
+import 'package:automation_app/features/form_template_setup/presentation/blocs/vorlagen_kopie_cubit/vorlagen_kopie_cubit.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/auflistung_badge.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_table_layout.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_stand_kennzeichen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Eine Zeile der Vorlagen-Tabelle: Name, hinterlegte Word-Dateien (als
-/// [AuflistungBadge]), Feldzahl und die Aktionen (bearbeiten/löschen).
+/// [AuflistungBadge]), der Stand ([VorlagenStandKennzeichen]), Feldzahl und die
+/// Aktionen (bearbeiten/duplizieren/löschen).
 class FormTemplateRow extends StatelessWidget {
   final FormTemplate template;
 
@@ -74,6 +77,16 @@ class FormTemplateRow extends StatelessWidget {
                 ],
               ),
             ),
+            // Stand — was der Editor beim letzten Speichern festgehalten hat.
+            // Im `Wrap` wie die Dateibadges: Der bindet seine Kinder an die
+            // Spaltenbreite, statt sie bei angehobener Schrift (Issue #57)
+            // darüber hinauslaufen zu lassen.
+            Expanded(
+              flex: flexStand,
+              child: Wrap(
+                children: [VorlagenStandKennzeichen(stand: template.stand)],
+              ),
+            ),
             // Felder
             Expanded(
               flex: flexFields,
@@ -106,6 +119,11 @@ class FormTemplateRow extends StatelessWidget {
                     tooltip: 'Vorlage bearbeiten',
                   ),
                   IconButton(
+                    onPressed: () => _dupliziere(context),
+                    icon: const Icon(Icons.content_copy),
+                    tooltip: 'Duplizieren',
+                  ),
+                  IconButton(
                     onPressed: () => _showDeleteDialog(context, template.id),
                     icon: const Icon(Icons.delete_outline),
                     color: scheme.error,
@@ -127,6 +145,24 @@ class FormTemplateRow extends StatelessWidget {
     if (didChange == true && context.mounted) {
       context.read<FormTemplateOverviewBloc>().add(LoadFormTemplatesEvent());
     }
+  }
+
+  /// „Duplizieren" — die Feldarbeit einer Vorlage noch einmal, unter neuem
+  /// Namen und ohne die Word-Dateien (#104 Stufe 4).
+  ///
+  /// Die schon **geladene** Liste liefert die belegten Namen. Sie ist ohnehin
+  /// da (die Zeile ist Teil davon), und sie zu befragen kostet keine Anfrage;
+  /// die letzte Instanz bleibt der Dienst, der eine Dublette mit 409 abweist —
+  /// die Meldung kommt dann über `VorlagenKopieCubit` als Rückmeldung an.
+  void _dupliziere(BuildContext context) {
+    final uebersicht = context.read<FormTemplateOverviewBloc>().state;
+    final vorhandene = uebersicht is FormTemplateOverviewLoaded
+        ? [for (final vorlage in uebersicht.formTemplates) vorlage.templateName]
+        : [template.templateName];
+    context.read<VorlagenKopieCubit>().dupliziere(
+      template,
+      vorhandeneNamen: vorhandene,
+    );
   }
 
   Future<void> _showDeleteDialog(BuildContext context, int templateId) async {

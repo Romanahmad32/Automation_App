@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Fragt mit einem `AlertDialog` „Abbrechen"/[bestaetigung] nach und liefert
+/// Fragt mit einem `AlertDialog` [abbruch]/[bestaetigung] nach und liefert
 /// `true`, wenn zugestimmt wurde — sonst `false` (auch beim Wegtippen neben
 /// den Dialog). Deckt die reinen Ja/Nein-Rückfragen ab (Löschen, Verwerfen,
 /// Überschreiben); für Dialoge mit Eingabefeldern, Listen oder mehr als zwei
@@ -10,6 +10,7 @@ Future<bool> bestaetigen(
   required String titel,
   required String text,
   String bestaetigung = 'OK',
+  String abbruch = 'Abbrechen',
   bool destruktiv = false,
   IconData? icon,
 }) async {
@@ -19,6 +20,7 @@ Future<bool> bestaetigen(
       titel: titel,
       text: text,
       bestaetigung: bestaetigung,
+      abbruch: abbruch,
       destruktiv: destruktiv,
       icon: icon,
     ),
@@ -31,6 +33,15 @@ class BestaetigungsDialog extends StatelessWidget {
   final String titel;
   final String text;
   final String bestaetigung;
+
+  /// Beschriftung des ablehnenden Knopfes. „Abbrechen" passt überall dort, wo
+  /// die Rückfrage vor einer Handlung steht („Löschen?" → abbrechen heißt: gar
+  /// nicht löschen). Beim Verlassen einer Seite mit ungespeicherten Änderungen
+  /// stimmt das nicht mehr: Dort ist die Ablehnung selbst eine Handlung
+  /// („Weiter bearbeiten"), und „Abbrechen" liesse offen, was abgebrochen wird
+  /// — das Verlassen oder das Bearbeiten.
+  final String abbruch;
+
   final bool destruktiv;
   final IconData? icon;
 
@@ -39,6 +50,7 @@ class BestaetigungsDialog extends StatelessWidget {
     required this.titel,
     required this.text,
     this.bestaetigung = 'OK',
+    this.abbruch = 'Abbrechen',
     this.destruktiv = false,
     this.icon,
   });
@@ -55,7 +67,7 @@ class BestaetigungsDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Abbrechen'),
+          child: Text(abbruch),
         ),
         FilledButton(
           style: destruktiv

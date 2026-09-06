@@ -39,13 +39,13 @@ Vier Dinge daran sind leicht wieder kaputtzumachen:
   `word_automation_page.dart`. Rechnete eine davon anders, trüge die Datei eine andere Zahl als
   der Vorgang, und das nächste Schreiben setzte auf der falschen auf.
 - **Ohne Versicherer fällt das „an" mit weg**, statt eine Lücke zu lassen: „Anspruchsschreiben  1
-  HGN" mit doppeltem Leerzeichen sieht aus wie ein Fehler und ist einer. Vorgänge ohne
+  HGn" mit doppeltem Leerzeichen sieht aus wie ein Fehler und ist einer. Vorgänge ohne
   Zentralruf-Antwort sind der Normalfall, solange die Antwort aussteht.
 
 Was **nicht** mehr im Namen steht: das Unfalldatum (es trägt der Fall-Ordner, §6.1) und das
 Zeichen (§4.2 — der Ablagepfad führt bereits zum Vorgang). Und `{Vorlagenname}` ist
 `FormTemplate.templateName`, **nicht** der Dateiname der Word-Datei: sonst stünde „VORLAGE" im
-fertigen Schreiben. Folge davon — die HGN- und die Auflistungs-Fassung derselben Vorlage tragen
+fertigen Schreiben. Folge davon — die HGn- und die Auflistungs-Fassung derselben Vorlage tragen
 denselben Vorlagennamen; unterschieden werden sie allein durch die Nummer.
 
 ## Vorgang und Berechnung
@@ -220,7 +220,7 @@ schon beim Verknüpfen der Datei.
   Feldliste; was nur in der anderen Datei als `{{Platzhalter}}` steht, verwirft die Ersetzung
   wortlos. Die Controls müssen trotzdem in der `FormGroup` bleiben: `onWerteGeaendert` schreibt
   `formGroup.value` in den Entwurf, ein fehlendes Feld fiele beim nächsten Tastendruck heraus —
-  und wer HGN ausfüllt, zur Auflistungs-Fassung wechselt und zurückkommt, verlöre die Eingaben
+  und wer HGn ausfüllt, zur Auflistungs-Fassung wechselt und zurückkommt, verlöre die Eingaben
   der jeweils anderen Seite.
 - **Die unbekannte Platzhaltermenge fällt für Pflicht und Sichtbarkeit in entgegengesetzte
   Richtungen.** Die leere Menge (Datei nicht lesbar) macht *nichts* zur Pflicht — „solange nichts

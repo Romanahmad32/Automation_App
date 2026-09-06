@@ -1,18 +1,39 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
-import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/datums_vorbelegung_editor.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_name_hinweis.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_vorkommen_badge.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/felder_filter.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_aufklapp_inhalt.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_bezeichnung_zelle.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/felder_spalten.dart';
 import 'package:flutter/material.dart';
-import 'package:reactive_forms/reactive_forms.dart';
 
-class TemplateFieldItem extends StatelessWidget {
+/// Eine Feldzeile im Vorlageneditor: Ziehgriff, Bezeichnung, Typ,
+/// Datenquelle, Pflicht, Aufklapp-Chevron, Löschen — in den Spalten aus
+/// [FelderSpalten], denselben, die der Tabellenkopf benutzt.
+///
+/// **Alles Seltene liegt im Aufklapper** ([FeldAufklappInhalt]): die
+/// Datums-Vorbelegung und der Hinweis zu einem mehrdeutigen Namen. Zugeklappt
+/// ist jede Zeile gleich hoch, und die Tabelle bleibt von oben nach unten
+/// lesbar. Zu ist deshalb der Normalfall — mit einer Ausnahme: Ein
+/// mehrdeutiger Name ist ein Befund, den der Anwalt sehen **muss**, also geht
+/// diese Zeile offen auf. Klappt er sie zu, gewinnt seine Entscheidung.
+class TemplateFieldItem extends StatefulWidget {
+  /// Stelle in der **angezeigten** Liste — was der Ziehgriff der
+  /// `ReorderableListView` melden muss. Bei aktivem Filter ist das nicht der
+  /// Index im Feldbestand, deshalb ist Umsortieren dann aus
+  /// ([umsortierenMoeglich]).
   final int index;
+
   final FieldData fieldData;
+
+  /// Der **aufgelöste** Feldname (der Wert des Controls), nur zur Frage, ob
+  /// die Zeile offen aufgeht. Was live mitlaufen muss — Warnung, Hinweis,
+  /// Ableitung der Vorbelegung — hört selbst am Control; hier genügt der
+  /// Stand beim Aufbau.
+  final String? feldname;
+
   final ValueChanged<InputType?> onTypeChanged;
   final ValueChanged<FeldDatenquelle?> onDatenquelleChanged;
   final ValueChanged<bool?> onRequiredChanged;
@@ -23,8 +44,13 @@ class TemplateFieldItem extends StatelessWidget {
 
   final VoidCallback onDelete;
 
-  /// Klick auf das Kennzeichen „in keiner Datei" — führt zur Zuordnung (#36).
+  /// Klick auf die Warnung „in keiner Datei" — führt zur Zuordnung (#36).
   final VoidCallback? onZuordnen;
+
+  /// Ob der Ziehgriff zieht. Bei aktivem Filter nicht: Die Liste zeigt dann
+  /// eine Auswahl, und ein Zug darin verschöbe das Feld an eine Stelle, die
+  /// der Anwalt gar nicht sieht.
+  final bool umsortierenMoeglich;
 
   const TemplateFieldItem({
     super.key,
@@ -35,8 +61,31 @@ class TemplateFieldItem extends StatelessWidget {
     required this.onRequiredChanged,
     required this.onVorbelegungChanged,
     required this.onDelete,
+    this.feldname,
     this.onZuordnen,
+    this.umsortierenMoeglich = true,
   });
+
+  @override
+  State<TemplateFieldItem> createState() => _TemplateFieldItemState();
+}
+
+class _TemplateFieldItemState extends State<TemplateFieldItem> {
+  /// Was der Anwalt am Chevron entschieden hat. Null heißt „noch nichts" —
+  /// dann entscheidet der Inhalt, ob die Zeile offen aufgeht.
+  bool? _gewaehlt;
+
+  bool get _mussZeigen => FelderFilter.istZuPruefen(
+    widget.feldname,
+    datenquelleGesetzt: widget.fieldData.datenquelle.istGesetzt,
+  );
+
+  bool get _hatInhalt => FeldAufklappInhalt.hatInhalt(
+    widget.fieldData,
+    nameMehrdeutig: _mussZeigen,
+  );
+
+  bool get _offen => _hatInhalt && (_gewaehlt ?? _mussZeigen);
 
   @override
   Widget build(BuildContext context) {
@@ -49,170 +98,101 @@ class TemplateFieldItem extends StatelessWidget {
         border: Border.all(color: theme.colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(2.0),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(spacing: 10, children: _zeile(theme)),
-          // Kennzeichen „beide · nur HGN · nur Auflistung · in keiner Datei"
-          // (#35 Teil 3) — sagt, welches Schreiben dieses Feld braucht, und
-          // führt bei „in keiner Datei" zur Zuordnung (#36).
-          FeldVorkommenBadge(
-            formControlName: fieldData.label,
-            onZuordnen: onZuordnen,
+          // Mindest-, nicht Festhöhe: siehe FelderSpalten.zeilenHoehe.
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: FelderSpalten.zeilenHoehe,
+            ),
+            child: FelderSpalten.zeile(_zellen(theme)),
           ),
-          FeldNameHinweis(
-            formControlName: fieldData.label,
-            datenquelleGesetzt: fieldData.datenquelle.istGesetzt,
-          ),
-          // Eine Vorbelegung hat nur ein Datumsfeld (§5.3).
-          if (fieldData.inputType == InputType.date) _vorbelegung(),
+          if (_offen)
+            FeldAufklappInhalt(
+              fieldData: widget.fieldData,
+              onVorbelegungChanged: widget.onVorbelegungChanged,
+            ),
         ],
       ),
     );
   }
 
-  /// Der Vorbelegungs-Einsteller unter der Feldzeile.
-  ///
-  /// Er hängt am **Wert** des Controls, nicht an `fieldData.label`: Solange
-  /// die Detailseite offen ist, hält das Label nur den Control-Schlüssel
-  /// (`field_0`, …, siehe FEATURE.md). Ohne den Umweg leitete die Namensregel
-  /// aus „field_0" ab statt aus „Zahlungsfrist" — und der Anwalt sähe beim
-  /// Umbenennen nie, dass sich die Ableitung mitändert.
-  Widget _vorbelegung() {
-    return ReactiveValueListenableBuilder<String>(
-      formControlName: fieldData.label,
-      builder: (context, control, _) => Padding(
-        padding: const EdgeInsets.fromLTRB(46, 0, 8, 8),
-        child: DatumsVorbelegungEditor(
-          vorbelegung: fieldData.vorbelegung,
-          feldname: control.value ?? '',
-          onChanged: onVorbelegungChanged,
-        ),
+  /// Je Spalte eine Zelle, in der Reihenfolge von [FelderSpalten.alle].
+  List<Widget> _zellen(ThemeData theme) => [
+    _griff(theme),
+    FeldBezeichnungZelle(
+      formControlName: widget.fieldData.label,
+      onZuordnen: widget.onZuordnen,
+    ),
+    SearchableDropdown<InputType>(
+      value: widget.fieldData.inputType,
+      hintText: 'Typ wählen',
+      entries: [
+        for (final type in InputType.values)
+          SearchableDropdownEntry(value: type, label: type.displayName),
+      ],
+      onChanged: widget.onTypeChanged,
+    ),
+    SearchableDropdown<FeldDatenquelle>(
+      value: widget.fieldData.datenquelle,
+      hintText: 'Quelle wählen',
+      entries: [
+        for (final quelle in FeldDatenquelle.values)
+          SearchableDropdownEntry(value: quelle, label: quelle.displayName),
+      ],
+      onChanged: widget.onDatenquelleChanged,
+    ),
+    _pflicht(theme),
+    _chevron(),
+    IconButton(
+      tooltip: 'Feld löschen',
+      icon: Icon(Icons.delete, color: theme.colorScheme.error),
+      onPressed: widget.onDelete,
+    ),
+  ];
+
+  Widget _griff(ThemeData theme) {
+    final symbol = Icon(
+      Icons.drag_indicator,
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    if (!widget.umsortierenMoeglich) {
+      return Tooltip(
+        message: 'Zum Umsortieren den Filter auf „Alle" stellen',
+        child: Opacity(opacity: 0.38, child: symbol),
+      );
+    }
+    return ReorderableDragStartListener(
+      index: widget.index,
+      child: MouseRegion(cursor: SystemMouseCursors.grab, child: symbol),
+    );
+  }
+
+  /// Nur die Checkbox: Was sie bedeutet, steht als Aufschrift im
+  /// Tabellenkopf. Vorher trug jede Zeile ihr eigenes „ERFORDERLICH" und
+  /// musste es bei angehobener Schrift (Issue #57) messen und wegblenden,
+  /// damit es nicht in den Löschen-Knopf lief — eine Spaltenüberschrift, die
+  /// achtzehnmal wiederholt wird, ist keine.
+  Widget _pflicht(ThemeData theme) {
+    return Tooltip(
+      message: 'Erforderlich — ohne diese Angabe wird nicht erzeugt',
+      child: Checkbox(
+        value: widget.fieldData.required,
+        activeColor: theme.colorScheme.primary,
+        onChanged: widget.onRequiredChanged,
       ),
     );
   }
 
-  /// Die eigentliche Feldzeile: Ziehgriff, Name, Typ, Datenquelle, Pflicht,
-  /// Löschen. Als Liste herausgezogen, damit der Hinweis darunter passt, ohne
-  /// die Zeile selbst zu verschachteln.
-  List<Widget> _zeile(ThemeData theme) {
-    return [
-      ReorderableDragStartListener(
-        index: index,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.grab,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Icon(
-              Icons.drag_indicator,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ),
-      const SizedBox(width: 8),
-
-      Expanded(
-        flex: 3,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0),
-          child: GeneralTextField(
-            formControlName: fieldData.label,
-            inputDecoration: const InputDecoration(border: InputBorder.none),
-            validationMessages: {
-              ValidationMessage.required: (_) =>
-                  'Der Feldname darf nicht leer sein.',
-            },
-          ),
-        ),
-      ),
-
-      Expanded(
-        flex: 2,
-        child: SearchableDropdown<InputType>(
-          value: fieldData.inputType,
-          hintText: 'Typ suchen oder auswählen',
-          entries: [
-            for (final type in InputType.values)
-              SearchableDropdownEntry(value: type, label: type.displayName),
-          ],
-          onChanged: onTypeChanged,
-        ),
-      ),
-
-      Expanded(
-        flex: 3,
-        child: SearchableDropdown<FeldDatenquelle>(
-          value: fieldData.datenquelle,
-          hintText: 'Datenquelle suchen oder auswählen',
-          entries: [
-            for (final quelle in FeldDatenquelle.values)
-              SearchableDropdownEntry(value: quelle, label: quelle.displayName),
-          ],
-          onChanged: onDatenquelleChanged,
-        ),
-      ),
-
-      Expanded(flex: 2, child: _erforderlichSpalte(theme)),
-
-      IconButton(
-        icon: Icon(Icons.delete, color: theme.colorScheme.error),
-        onPressed: onDelete,
-      ),
-    ];
-  }
-
-  /// Checkbox „Erforderlich" mit Beschriftung.
-  ///
-  /// Bei angehobener Schrift (Issue #57) und schmaler Spalte reicht der Platz
-  /// oft nicht für Checkbox **und** „ERFORDERLICH" nebeneinander — die
-  /// Beschriftung lief in den Löschen-Knopf rechts daneben. `Flexible` mit
-  /// Ellipsis allein hätte nur ein abgeschnittenes „ERFORD…" gezeigt; unter
-  /// [_mindestbreiteBeschriftung] entfällt die Beschriftung deshalb ganz und
-  /// die Checkbox trägt ihren Zweck als Tooltip. Der `LayoutBuilder` misst
-  /// genau die Breite, die diese Spalte vom `Expanded` bekommt — dieselbe
-  /// Breite, die vorher überlief.
-  Widget _erforderlichSpalte(ThemeData theme) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final genugPlatz = constraints.maxWidth >= _mindestbreiteBeschriftung;
-        final checkbox = Checkbox(
-          value: fieldData.required,
-          activeColor: theme.colorScheme.primary,
-          onChanged: onRequiredChanged,
-        );
-        final inhalt = Row(
-          children: [
-            checkbox,
-            if (genugPlatz)
-              Flexible(
-                child: Text(
-                  'ERFORDERLICH',
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-          ],
-        );
-        return InkWell(
-          onTap: () => onRequiredChanged.call(!fieldData.required),
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          child: genugPlatz
-              ? inhalt
-              : Tooltip(message: 'Erforderlich', child: inhalt),
-        );
-      },
+  Widget _chevron() {
+    return IconButton(
+      tooltip: _hatInhalt
+          ? (_offen ? 'Einzelheiten zuklappen' : 'Einzelheiten aufklappen')
+          : 'Zu diesem Feld gibt es nichts weiter einzustellen',
+      icon: Icon(_offen ? Icons.expand_less : Icons.expand_more),
+      onPressed: _hatInhalt ? () => setState(() => _gewaehlt = !_offen) : null,
     );
   }
-
-  /// Ab hier passen Checkbox und Beschriftung noch nebeneinander (empirisch an
-  /// der größten Schriftstufe ermittelt — siehe `felder_karte_schmal_test.dart`).
-  static const double _mindestbreiteBeschriftung = 150;
 }

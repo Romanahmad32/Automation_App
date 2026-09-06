@@ -16,7 +16,7 @@ public sealed class OutputFileNamingTests
     {
         OutputFileNaming.BuildFileName(
                 "Anspruchsschreiben an Allianz 1 Vorfahrtverletzung STOP 205",
-                "VORLAGE HGN")
+                "VORLAGE HGn")
             .Should().Be("Anspruchsschreiben an Allianz 1 Vorfahrtverletzung STOP 205.docx");
     }
 
@@ -36,7 +36,7 @@ public sealed class OutputFileNamingTests
     public void UnzulaessigeZeichen_WerdenErsetztStattAbgeschnitten(
         string gewuenscht, string erwartet)
     {
-        OutputFileNaming.BuildFileName(gewuenscht, "VORLAGE HGN")
+        OutputFileNaming.BuildFileName(gewuenscht, "VORLAGE HGn")
             .Should().Be(erwartet);
     }
 
@@ -90,8 +90,8 @@ public sealed class OutputFileNamingTests
     [InlineData("  ...  ")]
     public void OhneBrauchbarenNamen_GreiftDerRueckfall(string gewuenscht)
     {
-        OutputFileNaming.BuildFileName(gewuenscht, "VORLAGE HGN")
-            .Should().StartWith("VORLAGE HGN_")
+        OutputFileNaming.BuildFileName(gewuenscht, "VORLAGE HGn")
+            .Should().StartWith("VORLAGE HGn_")
             .And.EndWith(".docx");
     }
 }

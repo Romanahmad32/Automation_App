@@ -130,6 +130,44 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Am größten), Vorgabe Größer. Regel gegen freistehende `fontSize` als Architekturtest
   (`test/architecture/schriftgroesse_test.dart`). Sichtprüfung am echten Bildschirm mit dem
   Anwalt steht noch aus.
+- **Vorlageneditor, Stufe 1 „Fundament" (Issue #104, 05.09.2026)** — eine Rechnung sagt je Vorlage, was
+  noch fehlt: `VorlagenStand` zählt Platzhalter ohne Feld, Felder ohne Vorkommen (nur Warnung) und die
+  Vollständigkeit über beide Word-Dateien zusammen, statt sie wie bisher getrennt und damit doppelt zu
+  zählen. Beim Verlassen der Detailseite mit ungespeicherten Änderungen fragt `VorlagenVerlassenWache`
+  nach (§1.3), erkannt am Schnappschuss `VorlagenEntwurf` gegen den Stand beim Öffnen.
+- **Vorlageneditor, Stufe 2 „Feldzeile und Tabelle" (Issue #104, 06.09.2026)** — Kopfzeile und Feldzeile
+  bauen aus **einer** Spaltenbeschreibung (`FelderSpalten`) statt aus zwei unabhängigen Listen; Seltenes
+  (Datums-Vorbelegung, mehrdeutiger Name) liegt im Aufklapper der Zeile (`FeldAufklappInhalt`), zugeklappt
+  bleiben alle Zeilen gleich hoch. Ein Filter über der Tabelle (`FelderFilter`: Alle / Nur offene / Zu
+  prüfen) blendet auf das Wesentliche; bei aktivem Filter ist Umsortieren gesperrt. Das
+  Vorkommens-Kennzeichen an der Feldzeile zeigt nur noch „in keiner Datei" — die drei anderen Auskünfte
+  ohne eigene Handlung sind entfallen. `VorlagenStandKarte` zeigt die Vollständigkeitsrechnung aus Stufe 1
+  jetzt an einer Stelle unter den Datei-Slots und ersetzt die Zählzeilen, die vorher unter jeder
+  Platzhalter-Chip-Liste standen.
+- **Vorlageneditor, Stufe 3 „Seite und Ablauf" (Issue #104, 06.09.2026)** — `VorlagenEditorLayout` stellt die
+  Detailseite ab 1180 px Inhaltsbreite zweispaltig (links 400 px fest: Dateien, Stand-Karte, zugeklappte
+  Platzhalter-Chips, app-eigene Platzhalter; rechts die Feldertabelle mit eigenem, echt virtualisiertem
+  Scrollbereich), darunter gestapelt wie bisher; die Knopfzeile steht jetzt oben im Kopf. Neue Vorlagen
+  starten im Leerzustand `VorlagenLeerzustand` („Womit fängt diese Vorlage an?", beide Word-Dateien
+  gleichwertig) statt mit leerem Namensfeld — Ablauf **Datei zuerst**: `VorlagennameVorschlag` schlägt den
+  Namen aus dem Dateinamen vor, `EinleseReaktion` übernimmt gelesene Platzhalter beim Anlegen automatisch
+  zu Feldern (je Slot einmal) und fragt über `FeldAbgleich`/`AbgleichDialog` gesammelt nach, wenn ein
+  Dateiwechsel Felder ins Leere laufen liess.
+- **Vorlageneditor, Stufe 4 „Übersicht und Duplizieren" (Issue #104, 06.09.2026)** — die Vorlagenübersicht
+  zeigt eine Spalte „Stand" (`VorlagenStandKennzeichen`): „Unvollständig · N offen", „Vollständig" oder
+  „Noch nicht geprüft". Geschrieben wird der Stand beim Speichern im Editor und im opaken `fields`-JSON
+  mitgeführt (`GespeicherterStand`, kein neues Feld im HTTP-Vertrag) — die Übersicht rechnet ihn **nie**
+  nach. Bestandsvorlagen von vor Stufe 4 zeigen deshalb „Noch nicht geprüft", bis sie einmal im Editor
+  gespeichert werden. Duplizieren (`VorlagenKopieCubit`, über den vorhandenen Anlege-Weg) legt eine Kopie
+  mit Namen „… (Kopie)" (`KopieName`, zählt bei Dopplung hoch) und denselben Feldern an, aber **ohne**
+  Word-Dateien — wer dupliziert, will die Feldarbeit wiederverwenden, nicht die Datei doppelt verknüpfen.
+- **Vorlageneditor, Stufe 5 „Beide Dateien wählen, Vorkommen zeigen" (Issue #104, 06.09.2026)** — die
+  Auswahlseite einer neuen Vorlage bleibt stehen, bis „Weiter" gedrückt ist (`auswahlAbgeschlossen`); jede
+  Kachel zeigt Dateiname, Anzahl der erkannten Platzhalter, „In Word öffnen" (`DateiOeffner` in `core/`,
+  vorher `AnhangOeffner` in `email_versand`) und „Andere Datei wählen". „Weiter" ist grau ohne Datei oder
+  während des Einlesens. Jede Feldzeile trägt wieder ihr Vorkommen — *beide · nur HGn · nur Auflistung*
+  ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
+  Grunde nach).
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

@@ -47,15 +47,15 @@ void main() {
     /// „Anspruchsschreiben an  1 …" — ein doppeltes Leerzeichen, das aussieht
     /// wie ein Fehler und einer ist.
     test('ohne Versicherer kein doppeltes Leerzeichen', () {
-      final name = schreibenDateiname(vorlagenname: 'HGN', nummer: 1);
-      expect(name, 'Anspruchsschreiben 1 HGN');
+      final name = schreibenDateiname(vorlagenname: 'HGn', nummer: 1);
+      expect(name, 'Anspruchsschreiben 1 HGn');
       expect(name, isNot(contains('  ')));
     });
 
     test('leerer Versicherername zählt wie keiner', () {
       expect(
-        schreibenDateiname(vorlagenname: 'HGN', nummer: 1, versicherer: '   '),
-        'Anspruchsschreiben 1 HGN',
+        schreibenDateiname(vorlagenname: 'HGn', nummer: 1, versicherer: '   '),
+        'Anspruchsschreiben 1 HGn',
       );
     });
 

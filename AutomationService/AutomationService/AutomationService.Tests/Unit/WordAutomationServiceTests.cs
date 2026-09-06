@@ -154,14 +154,14 @@ public sealed class WordAutomationServiceTests : IDisposable
         var ersterVorgang = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
-            OutputFileName = "VORLAGE HGN 12.06.2026",
+            OutputFileName = "VORLAGE HGn 12.06.2026",
             VorgangSchluessel = "84/26 C03_GG-XY 123",
             ReplacePatterns = new Dictionary<string, string> { ["Name"] = "Müller" }
         });
         var zweiterVorgang = service.GenerateReplacedDocument(new WordReplacementRequest
         {
             TemplateFilePath = templatePath,
-            OutputFileName = "VORLAGE HGN 12.06.2026",
+            OutputFileName = "VORLAGE HGn 12.06.2026",
             VorgangSchluessel = "85/26 C03_HG-E 1427",
             ReplacePatterns = new Dictionary<string, string> { ["Name"] = "Schmidt" }
         });

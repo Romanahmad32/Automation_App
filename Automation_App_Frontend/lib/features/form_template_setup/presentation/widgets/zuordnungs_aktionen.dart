@@ -2,9 +2,9 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.da
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_uebernahme.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:reactive_forms/reactive_forms.dart';
 
 /// Die beiden Wege in den [ZuordnungsDialog] (#36) — aus der Detailseite
 /// herausgezogen, weil sie dort das Zeilenbudget sprengten und weil sie
@@ -16,15 +16,15 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// siehe FEATURE.md). Deshalb reicht zum Umbenennen ein `updateValue`: Typ,
 /// Datenquelle, Pflicht und Reihenfolge des Feldes bleiben unberührt.
 class ZuordnungsAktionen {
-  final List<FieldData> fields;
-  final FormGroup formGroup;
+  /// Der veränderliche Stand des Editors — Feldliste, Formular und die
+  /// Auflösung der Feldnamen kommen von dort.
+  final VorlagenBearbeitung bearbeitung;
 
   /// Die Platzhalter beider verknüpfter Word-Dateien, so weit gelesen.
   final List<String> allePlatzhalter;
 
   const ZuordnungsAktionen({
-    required this.fields,
-    required this.formGroup,
+    required this.bearbeitung,
     required this.allePlatzhalter,
   });
 
@@ -33,12 +33,10 @@ class ZuordnungsAktionen {
   /// vorhanden" — dann fällt der Abgleich weg, statt falsch zu melden.
   factory ZuordnungsAktionen.ausZustand(
     TemplatePlaceholdersState zustand, {
-    required List<FieldData> fields,
-    required FormGroup formGroup,
+    required VorlagenBearbeitung bearbeitung,
   }) {
     return ZuordnungsAktionen(
-      fields: fields,
-      formGroup: formGroup,
+      bearbeitung: bearbeitung,
       allePlatzhalter: [
         for (final slot in TemplateFileSlot.values)
           if (zustand.forSlot(slot) case SlotPlaceholdersLoaded(
@@ -50,9 +48,7 @@ class ZuordnungsAktionen {
   }
 
   /// Die aktuell eingetragenen Feldnamen.
-  List<String?> get feldnamen => [
-    for (final field in fields) formGroup.control(field.label).value as String?,
-  ];
+  List<String?> get feldnamen => bearbeitung.feldnamen;
 
   /// Klick auf einen offenen Chip: Der Platzhalter hat kein Feld. Ist ein
   /// vorhandenes Feld gemeint, wird es umbenannt; sonst legt [onNeuesFeld] es
@@ -88,7 +84,7 @@ class ZuordnungsAktionen {
   /// dieses Feldes wird beim Erzeugen verworfen. Zur Wahl stehen die
   /// Platzhalter, die heute kein Feld haben.
   Future<void> vomFeld(BuildContext context, FieldData feld) async {
-    final control = formGroup.control(feld.label);
+    final control = bearbeitung.formGroup.control(feld.label);
     final offene = PlatzhalterUebernahme.uebernehmbare(
       allePlatzhalter,
       feldnamen,
@@ -113,8 +109,8 @@ class ZuordnungsAktionen {
   /// Benennt das Feld mit dem Namen [alt] in [neu] um.
   void umbenennen(String alt, String neu) {
     final gesucht = alt.trim().toLowerCase();
-    for (final field in fields) {
-      final control = formGroup.control(field.label);
+    for (final field in bearbeitung.fields) {
+      final control = bearbeitung.formGroup.control(field.label);
       if ((control.value as String?)?.trim().toLowerCase() != gesucht) {
         continue;
       }

@@ -107,7 +107,7 @@ class SchadensaufstellungSchritt {
     final umgebung = WizardUmgebung();
     umgebung.wizard.setFormData({'Name': 'Mustermann'});
     final dokument = DocumentBloc(_FakeVorlagenUebersicht());
-    dokument.add(const SetDocumentPathEvent(r'C:\Vorlagen\HGN.docx'));
+    dokument.add(const SetDocumentPathEvent(r'C:\Vorlagen\HGn.docx'));
     _umgebung = umgebung;
     _document = dokument;
 

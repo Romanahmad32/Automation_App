@@ -40,7 +40,7 @@ class ZuordnungsVorschlag {
   /// Der Kandidat trifft heute schon einen Platzhalter — ihn umzubenennen
   /// tauscht einen Waisen gegen einen anderen und heilt nichts.
   ///
-  /// Genau der Produktivfall aus #36: Die HGN-Datei sagt
+  /// Genau der Produktivfall aus #36: Die HGn-Datei sagt
   /// `{{Verkehrsunfalldatum}}`, die Auflistungs-Datei `{{Unfalldatum}}`. Ein
   /// Feld kann nur einen der beiden Namen tragen; die Dateien selbst
   /// geradezuziehen ist die einzige Reparatur. Solche Kandidaten werden

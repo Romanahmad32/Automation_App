@@ -4,8 +4,14 @@
 /// Name („in keiner Datei") beim Einrichten auffällt statt im Brief.
 enum FeldVorkommen {
   beide('beide', 'Kommt in beiden Word-Dateien vor.'),
-  nurHgn('nur HGN', 'Kommt nur in der Datei ohne Auflistung (HGN) vor.'),
-  nurAuflistung('nur Auflistung', 'Kommt nur in der Datei mit Auflistung vor.'),
+  nurHgn(
+    'nur HGn',
+    'Kommt nur in der Datei ohne Schadensaufstellung (HGn) vor.',
+  ),
+  nurAuflistung(
+    'nur Auflistung',
+    'Kommt nur in der Datei mit Schadensaufstellung vor.',
+  ),
   inKeinerDatei(
     'in keiner Datei',
     'Kommt in keiner der Word-Dateien vor — Tippfehler im Namen? '

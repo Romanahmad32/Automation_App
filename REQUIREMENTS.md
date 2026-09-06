@@ -187,7 +187,7 @@ Es existieren zwei Arten von Word-Vorlagen; der Nutzer wählt pro Schreiben aus
 1. **[M] Vorlage mit Auflistung:** Enthält eine Tabelle (Schadensaufstellung), die automatisch
    befüllt wird. Die **RVG-Anwaltskostenkalkulation** (Geschäftsgebühr nach Gegenstandswert gemäß
    § 13 RVG, aktueller Gebührenstand) wird im Dokument berechnet und eingetragen.
-2. **[M] Vorlage ohne Auflistung:** Enthält stattdessen eine **HGN-Sektion** (Haftung dem Grunde
+2. **[M] Vorlage ohne Auflistung:** Enthält stattdessen eine **HGn-Sektion** (Haftung dem Grunde
    nach).
 
 Zur Vorlage mit Auflistung:

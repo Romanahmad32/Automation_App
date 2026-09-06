@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 /// der Tippstand: Die Controls bleiben in der `FormGroup`, damit
 /// `onWerteGeaendert` weiter deren vollständigen Stand meldet. Fiele ein Feld
 /// aus der Gruppe, fiele sein Wert beim nächsten Tastendruck aus dem Entwurf —
-/// wer das HGN-Schreiben ausfüllt, zur Auflistungs-Fassung wechselt und
+/// wer das HGn-Schreiben ausfüllt, zur Auflistungs-Fassung wechselt und
 /// zurückkommt, verlöre die Eingaben der jeweils anderen Seite.
 ///
 /// Gestaltet wie die anderen aufklappbaren Flächen der App
