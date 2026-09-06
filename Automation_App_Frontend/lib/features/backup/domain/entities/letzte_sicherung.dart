@@ -31,16 +31,19 @@ class LetzteSicherung extends Equatable {
   /// Ein Fehlschlag, der dem Anwalt noch gezeigt werden muss.
   bool get offenerFehler => !gelungen && !fehlerQuittiert;
 
-  factory LetzteSicherung.fromJson(Map<String, dynamic> json) =>
-      LetzteSicherung(
-        zeitpunkt:
-            DateTime.tryParse(json['zeitpunkt'] as String? ?? '') ??
-            DateTime.now(),
-        gelungen: json['gelungen'] as bool? ?? false,
-        datei: json['datei'] as String?,
-        meldung: json['meldung'] as String?,
-        fehlerQuittiert: json['fehlerQuittiert'] as bool? ?? false,
-      );
+  factory LetzteSicherung.fromJson(
+    Map<String, dynamic> json,
+  ) => LetzteSicherung(
+    // Der Dienst sendet den Zeitpunkt mit Zeitzonenversatz; ohne
+    // `toLocal()` stünde in der Anzeige die UTC-Uhrzeit (zwei Stunden früher).
+    zeitpunkt:
+        DateTime.tryParse(json['zeitpunkt'] as String? ?? '')?.toLocal() ??
+        DateTime.now(),
+    gelungen: json['gelungen'] as bool? ?? false,
+    datei: json['datei'] as String?,
+    meldung: json['meldung'] as String?,
+    fehlerQuittiert: json['fehlerQuittiert'] as bool? ?? false,
+  );
 
   @override
   List<Object?> get props => [

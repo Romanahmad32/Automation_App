@@ -92,6 +92,35 @@ public sealed class ArbeitsplatzUebergabeTests : IDisposable
         stand.Angebot.Should().BeNull();
         stand.AblageOrdner.Should().BeEmpty();
         stand.LetzterLauf!.OffenerFehler.Should().BeTrue();
+        stand.Bestand.Should().Be(SicherungsBestand.Leer);
+    }
+
+    /// <summary>
+    /// Der Reiter „Datensicherung" nennt neben „zuletzt gesichert am …" auch, wie
+    /// viele eigene Archive liegen und wie weit sie zurückreichen (#112) — sonst
+    /// bleibt die gestaffelte Aufbewahrung für den Anwalt unüberprüfbar. Gezählt
+    /// werden nur die eigenen: Das fremde Archiv gehört dem anderen Arbeitsplatz.
+    /// </summary>
+    [Fact]
+    public async Task Der_Stand_nennt_Anzahl_und_Alter_der_eigenen_Archive()
+    {
+        await LegeDatenbankAn(_dbPfad, "Meine Kanzlei");
+        await LegeFremdeSicherungAn(gesichertAm: DateTime.Now);
+        var frueh = new DateTime(2026, 2, 3, 8, 15, 0, DateTimeKind.Unspecified);
+        var spaet = new DateTime(2026, 5, 4, 17, 30, 0, DateTimeKind.Unspecified);
+        foreach (var zeitpunkt in new[] { frueh, spaet })
+        {
+            await File.WriteAllTextAsync(
+                Path.Combine(_ablage, SicherungsDateiname.Baue(
+                    ArbeitsplatzAkte.DieserRechner, zeitpunkt)),
+                "Archiv");
+        }
+
+        var bestand = Uebergabe().Stand().Bestand;
+
+        bestand.Anzahl.Should().Be(2);
+        bestand.Aeltestes.Should().Be(frueh);
+        bestand.Neuestes.Should().Be(spaet);
     }
 
     /// <summary>
