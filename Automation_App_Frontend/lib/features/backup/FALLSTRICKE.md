@@ -77,3 +77,72 @@ OneDrive-Konto eingerichtet), wird er **trotzdem** übernommen, nicht verworfen:
 richtig, sobald das Konto eingerichtet ist, und bis dahin sagt `GET api/Settings/ordner` (Zustand
 `ankerFehlt`), was fehlt. Ihn zu verwerfen wäre stiller Datenverlust an einer Lage, die sich von
 selbst behebt, sobald der Anwalt das zweite Konto einrichtet.
+
+## Aufbewahrung nach Alter statt nach Anzahl — und der Zeitpunkt kommt aus dem Dateinamen
+
+„Die letzten 10" (#39) und „alle 30 Minuten sichern" (#112) passen nicht zusammen: Sichert die App
+öfter, deckt eine feste Anzahl nur noch wenige Stunden ab — der Fall, für den man eine Sicherung
+eigentlich braucht („vorgestern war der Bestand noch in Ordnung"), wäre gerade nicht mehr abgedeckt.
+`Aufbewahrungsregel` staffelt deshalb nach Alter (heute alles, dann je Kalendertag, dann je Woche,
+dann je Monat, dort begrenzt), damit die Anzahl beschränkt bleibt, während die Historie Monate
+zurückreicht.
+
+Die Regel rechnet dabei mit dem Zeitpunkt **im Dateinamen** (`SicherungsDateiname`), nicht mit dem
+Änderungsdatum der Datei: Ein Synchronisierer (OneDrive) setzt `LastWriteTime` beim Herunterladen
+auf dem zweiten Rechner neu — dann sähe jedes übernommene Archiv aus, als wäre es gerade eben
+entstanden, und die Staffel würfe alte Archive für neue.
+
+## Warum der Fingerabdruck über Dateien läuft, nicht über `PRAGMA data_version` oder `GeaendertAm`
+
+Zwei naheliegende Änderungsmerkmale scheiden aus. `PRAGMA data_version` bräuchte eine offene
+Verbindung, die über die Laufzeit eines einzelnen Zeitgeber-Ticks hinaus bestehen bliebe — genau das
+bricht `DatabaseBackupService.ErsetzeDatenbankdatei` (Zeilen 186–194): Der Import löscht alle
+gepoolten Verbindungen (`SqliteConnection.ClearAllPools()`) und tauscht die Datei aus; eine
+dauerhaft offene Verbindung stünde dem im Weg. Einen `GeaendertAm`-Zeitstempel je Datensatz gibt es
+nicht: §7.2 „Nachvollziehbarer Änderungsstand" ist als **[S]** noch offen, nicht gebaut. Was bleibt
+und tatsächlich für jede Änderung mitzieht: ein Datei-Fingerabdruck aus `(Length,
+LastWriteTimeUtc)` von `automation.db`, `-wal` und `-shm` (`AenderungsMerkmal`) — SQLite schreibt im
+WAL-Modus in diese drei Dateien, nicht nur in die Hauptdatei.
+
+## Die Schleuse — Zeitgeber und Beenden dürfen nicht gleichzeitig schreiben
+
+Ein Semaphor um `AutomatischeSicherung.SchreibeAsync` verhindert, dass der 30-Minuten-Zeitgeber und
+das Beenden der App gleichzeitig ein Archiv bauen. Beenden wartet dadurch notfalls auf einen
+laufenden Zeitgeber-Lauf und schreibt danach selbst — zwei Archive mit unterschiedlichem Zeitstempel
+sind dabei in Kauf genommen, ein halb geschriebenes nicht. Damit der Zeitgeber beim Beenden nicht
+noch einen neuen Lauf anstößt, prüft er `stoppingToken`, bevor er startet. Der Dateiname löst nur
+Sekunden auf: fallen zwei Läufe in dieselbe Sekunde, ersetzt der zweite das Archiv des ersten
+(`AtomareAblage.Ersetze`). Das ist kein Verlust — beide tragen denselben Stand — und der Test prüft
+deshalb, dass jedes vorhandene Archiv vollständig ist, nicht wie viele es sind.
+
+## Warum das neueste Archiv nie gelöscht wird
+
+`Aufbewahrungsregel.ZuLoeschen` nimmt das global neueste Archiv immer aus, unabhängig davon, was die
+Staffel sonst sagt. Ohne diese Ausnahme könnte ein Rechner, der seit Monaten nicht mehr lief, beim
+nächsten Aufräumen sein einziges Archiv verlieren, weil es rechnerisch längst in die Monats-Stufe
+gerutscht ist und dort die Obergrenze reißt.
+
+## Der Zeitgeber sichert mit `CancellationToken.None`, nicht mit seinem `stoppingToken`
+
+`SicherungsZeitgeber` ruft `SchreibeAsync` bewusst mit `CancellationToken.None`: Ein laufender
+Sicherungslauf, der beim Herunterfahren mitten im Schreiben abgebrochen wird, hinterließe im
+schlimmsten Fall eine unvollständige Datei. Bricht nichts ab, kostet ein Fehlschlag höchstens eine
+Meldung beim nächsten Start (`LetzteSicherungAkte`) — nie einen beschädigten Bestand.
+
+## Lokale Zeit im Dateinamen, und die Sommerzeit-Kante
+
+`SicherungsDateiname` schreibt und liest lokale Zeit, nicht UTC — der Anwalt vergleicht Zeitpunkte
+im Reiter „Datensicherung" gegen seine Wanduhr, nicht gegen UTC. An der Umstellung selbst kann
+dadurch rechnerisch eine Stunde fehlen oder doppelt vorkommen; das ist hingenommen, weil die Staffel
+ohnehin nur den *jüngsten* Zeitpunkt je Tag/Woche/Monat behält — eine verschobene Stunde ändert
+nichts daran, welches Archiv das ist.
+
+## Der Rechnername kann selbst einen Bindestrich tragen — deshalb wird vom Ende gelesen
+
+Windows vergibt Rechnernamen häufig nach einem Schema mit Bindestrich (`DESKTOP-AB12CD3`), und der
+Dateiname selbst trennt Rechnername und Zeitstempel ebenfalls mit einem Bindestrich
+(`automation-<Rechner>-<yyyyMMdd-HHmmss>.zip`). `SicherungsDateiname.Zeitpunkt` liest deshalb **vom
+Ende her**: `.zip` abschneiden, die letzten 15 Zeichen als Zeitstempel parsen, erst danach prüfen,
+ob der Rest mit `automation-<Rechner>-` beginnt. Ein Parser, der stattdessen am ersten Bindestrich
+nach `automation-` trennte, zerlegte einen bindestrichhaltigen Rechnernamen selbst und läse nie
+einen gültigen Zeitpunkt.

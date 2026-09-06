@@ -73,6 +73,21 @@ public static class BackupInjection
                 sp.GetRequiredService<ILogger<ArbeitsplatzUebergabe>>()));
 
         services.AddHostedService<ArbeitsplatzDienst>();
+
+        // Der Zeitgeber haengt am Not-Aus, obwohl es die Sicherung dahinter
+        // ohnehin tut: Er ist der einzige Schreibweg ohne Zutun des Anwalts und
+        // liefe in jedem Testhost im Halbstundentakt mit. Nach dem
+        // ArbeitsplatzDienst registriert, damit der Arbeitsplatz-Eintrag steht,
+        // bevor der erste Takt sichern kann (Hosted Services starten in
+        // Registrierungsreihenfolge).
+        if (eingeschaltet)
+        {
+            services.AddHostedService(sp => new SicherungsZeitgeber(
+                sp.GetRequiredService<IAutomatischeSicherung>(),
+                AppDataPaths.DatabaseFilePath,
+                sp.GetRequiredService<ILogger<SicherungsZeitgeber>>()));
+        }
+
         return services;
     }
 
