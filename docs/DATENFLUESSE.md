@@ -129,8 +129,8 @@ entfernt — der Rückfall selbst bleibt.
 ## 5. Der Stand wechselt den Arbeitsplatz
 
 ```
-App beenden ──▶ Sicherung im synchronisierten Ordner ──▶ App am zweiten Rechner starten
-                (automation-<Rechner>.zip + arbeitsplatz-<Rechner>.json)   └──▶ Rückfrage
+Beenden / Vorgangsabschluss / Zeitgeber ──▶ Sicherung im synchronisierten Ordner ──▶ App am zweiten Rechner starten
+                        (automation-<Rechner>-<yyyyMMdd-HHmmss>.zip + arbeitsplatz-<Rechner>.json)   └──▶ Rückfrage
 ```
 
 Der Anwalt arbeitet im Büro und zu Hause; die Datenbank selbst darf dabei **nicht** in den
@@ -142,6 +142,16 @@ eingestellten Ordner und daneben die eigene `arbeitsplatz-<Rechner>.json`. Beim 
 `ArbeitsplatzUebergabe` alle *fremden* Akten; ist eine davon neuer, fragt die App **vor** der
 Oberfläche nach (`ArbeitsplatzUebergabeGate` → `GET api/Backup/uebergabe`), und erst auf Klick
 spielt sie ein — über denselben Import wie eine Sicherung von Hand.
+
+Seit #112 kommt ein dritter Auslöser dazu: `SicherungsZeitgeber` prüft alle 30 Minuten einen
+Fingerabdruck über `automation.db`/`-wal`/`-shm` (`AenderungsMerkmal`) und schreibt nur, wenn sich
+seit der letzten Sicherung etwas geändert hat — ein Absturz kostet damit höchstens diesen Abstand,
+nicht den ganzen Arbeitstag. Aufgeräumt wird seither nach Alter statt nach Anzahl
+(`Aufbewahrungsregel`, ausgeführt von `SicherungsAufraeumung`): Der Zeitpunkt kommt aus dem
+Dateinamen (`SicherungsDateiname`), nicht aus dem Änderungsdatum der Datei — ein Synchronisierer
+setzt das beim Herunterladen neu —, betroffen sind nur die eigenen Archive (fremde Rechner bleiben
+unberührt), und das jeweils neueste Archiv wird nie gelöscht. `SicherungsBestand` liefert Anzahl und
+ältesten Zeitpunkt der eigenen Archive für die Auskunft im Reiter „Datensicherung".
 
 **Die Naht — zwei Zeitpunkte, nicht einer:** Die Akte trennt `zuletztGearbeitet` von `gesichertAm`.
 Das Angebot entscheidet sich am zweiten, der Satz auf dem Bildschirm nennt den ersten. Wer beide
