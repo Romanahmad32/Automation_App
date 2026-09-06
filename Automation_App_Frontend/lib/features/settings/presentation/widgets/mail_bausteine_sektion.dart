@@ -60,7 +60,7 @@ class _MailBausteineSektionState extends State<MailBausteineSektion> {
 
     return FormSection(
       icon: Icons.handyman_outlined,
-      title: 'Mail-Werkzeugkasten',
+      title: 'Mail-Vorlagen',
       subtitle:
           'Woraus der Versanddialog eine Mail baut: die Textvorlage, die '
           'Anrede darin und der Zusatzgruß darunter.',
