@@ -20,12 +20,22 @@ import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefil
 /// alles Übrige löst `VorgangPrefillMatcher` auf — dieselbe Kette wie beim
 /// Ausfüllen einer Word-Vorlage.
 ///
-/// **Ein Platzhalter ohne Wert nimmt seine Zeile mit.** Eine Vorlage darf
-/// deshalb Zeilen enthalten, die nur manchmal erscheinen — der Zusatzgruß ist
-/// genau so eine. Bliebe stattdessen eine leere Zeile stehen, hätte jede Mail
-/// ohne gewählten Gruß eine Lücke unter der Anrede. Was dabei übersprungen
-/// wurde, bleibt trotzdem auffindbar: [befunde] trägt Stelle und Folge jedes
-/// leeren Platzhalters, damit der Dialog auf die Lücke zeigen kann.
+/// **Zwei Sorten Platzhalter, zwei Regeln** (§4.7, geändert am 06.09.2026):
+///
+/// - **Anrede und Zusatzgruß** werden im Versanddialog gewählt. Bleibt einer
+///   ohne Wert, ist das eine getroffene Wahl und keine fehlende Angabe — er
+///   **nimmt seine Zeile mit**. Eine Vorlage darf deshalb Zeilen enthalten, die
+///   nur manchmal erscheinen; bliebe stattdessen eine leere Zeile stehen, hätte
+///   jede Mail ohne gewählten Gruß eine Lücke unter der Anrede.
+/// - **Alles Übrige** kommt aus Mandanten-, Vorgangs- oder Versichererdaten.
+///   Bleibt so einer ohne Wert, steht er **unverändert als `{{Name}}`** da und
+///   nimmt seine Zeile nicht mehr mit. Das ist Absicht: Eine stillschweigend
+///   entfernte Zeile verbarg eine lückenhafte Angabe im fertigen Anschreiben,
+///   und `VersandVoraussetzungen` hält die Mail an genau diesem `{{...}}` auf.
+///
+/// Was dabei übersprungen oder offen geblieben ist, bleibt auffindbar:
+/// [befunde] trägt Stelle und Folge jedes leeren Platzhalters, damit der Dialog
+/// darauf zeigen kann.
 class MailVorlagenFueller {
   final Vorgang? vorgang;
   final Mandant? mandant;
@@ -126,22 +136,37 @@ class MailVorlagenFueller {
   String fuelleBetreff(String vorlage) =>
       MailBetreffAufbau.gefuellt(vorlage, _ersetzeInZeile);
 
-  /// Die Zeile mit eingesetzten Werten, oder null, wenn sie entfallen soll:
-  /// Sie trug mindestens einen Platzhalter, und **keiner** davon hatte einen
-  /// Wert.
+  /// Die Zeile mit eingesetzten Werten, oder null, wenn sie entfallen soll.
+  ///
+  /// Entfallen tut sie nur noch im **einen** Fall (§4.7, geändert am
+  /// 06.09.2026): Sie trug ausschließlich Platzhalter, die der Versand selbst
+  /// beantwortet ([MailPlatzhalter.istEigen] — Anrede und Zusatzgruß), und
+  /// keiner davon hatte einen Wert. Ein offener **Daten**-Platzhalter hält die
+  /// Zeile dagegen am Leben und bleibt als `{{Name}}` sichtbar darin stehen;
+  /// erkennbar zu sein ist der ganze Zweck.
   String? _ersetzeInZeile(String zeile) {
     var gesehen = 0;
     var gefuellt = 0;
+    var offeneDaten = 0;
 
     final ersetzt = zeile.replaceAllMapped(MailPlatzhalter.muster, (treffer) {
       gesehen++;
-      final wert = _wertFuer(treffer.group(1)!)?.trim() ?? '';
-      if (wert.isNotEmpty) gefuellt++;
-      return wert;
+      final name = treffer.group(1)!;
+      final wert = _wertFuer(name)?.trim() ?? '';
+      if (wert.isNotEmpty) {
+        gefuellt++;
+        return wert;
+      }
+      if (MailPlatzhalter.istEigen(name)) return '';
+      offeneDaten++;
+      // Wörtlich zurück, samt der Schreibweise, die dasteht: Wer
+      // `{{ Referenz }}` mit Leerzeichen getippt hat, soll genau das
+      // wiederfinden, wenn er den Namen sucht.
+      return treffer.group(0)!;
     });
 
     if (gesehen == 0) return zeile;
-    if (gefuellt == 0) return null;
+    if (gefuellt == 0 && offeneDaten == 0) return null;
     // Wo ein Platzhalter leer blieb, steht sonst sein Zwischenraum noch da —
     // am Zeilenende ein unsichtbares Leerzeichen, das mit hinausginge.
     return ersetzt.trimRight();
@@ -211,6 +236,9 @@ class MailVorlagenFueller {
       herkunft: wert.isEmpty ? '' : _herkunftFuer(name),
       zeile: zeile,
       zeileEntfaellt: entfallene.contains(zeile),
+      // Entscheidet, welche der beiden Regeln für ihn gilt — und damit, ob ein
+      // leerer Befund eine Zeile mitnimmt oder den Versand aufhält (§4.7).
+      istEigen: MailPlatzhalter.istEigen(name),
       bezeichnung: PlatzhalterFehlstelle.bezeichnungFuer(name),
       // Nur im leeren Fall: Wo ein Wert steht, ist nichts zu erklaeren.
       fehlstelle: wert.isEmpty

@@ -29,6 +29,27 @@ import 'package:flutter/material.dart';
 /// die Kartenfläche), dort trägt das Häkchen. Dass die Kanzlei-Container
 /// für eine Auswahlmarkierung generell zu blass sind, ist ein Thema der
 /// Palette und wird hier bewusst nicht angefasst.
+///
+/// ## Welche Bauform wofür (festgelegt am 06.09.2026, §4.7)
+///
+/// Der Versanddialog trug vier Chip-Sorten nebeneinander, und welche Fläche
+/// eine Wahl, welche eine Handlung und welche ein Vorschlag ist, musste man
+/// lernen. Das Vokabular steht deshalb hier, bei den Regeln, die diese Chips
+/// zeichnen — nicht in einem der Widgets, die es anwenden:
+///
+/// - **[ChoiceChip] = Wahl.** Eine aus mehreren Möglichkeiten, genau eine gilt:
+///   Anredeart, Anrede, Zusatzgruß. Sie trägt das Häkchen.
+/// - **[ActionChip] = Handlung.** Ein Klick *tut* etwas und wählt nichts aus:
+///   einen Platzhalter einfügen, eine vorgeschlagene Adresse übernehmen. Sie
+///   hat keinen ausgewählten Zustand.
+/// - **[InputChip] = ein Stück Eingabe, entfernbar.** Was der Anwalt selbst
+///   hineingegeben hat und wieder herausnehmen kann: Empfängeradressen, die
+///   Einträge der Mail-Bestände. Sie trägt das ✕.
+/// - **[FilterChip]** meint „mehrere gleichzeitig an/aus" — im Versand kommt
+///   das nicht vor; wo einer stand, war eine Wahl gemeint.
+/// - **[SegmentedButton] = Ansicht oder Reiter.** Eine Wahl, die den ganzen
+///   Bereich darunter austauscht (Bearbeiten ↔ Vorschau, die drei Reiter des
+///   Mail-Werkzeugkastens) — nicht eine Angabe im Formular.
 abstract final class AuswahlThemes {
   /// Der ausgewählte Zustand eines [SegmentedButton].
   ///

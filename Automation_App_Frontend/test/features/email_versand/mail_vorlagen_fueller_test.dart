@@ -183,36 +183,59 @@ void main() {
       expect(gefuellt.text, 'Unser Zeichen: 84/26 C03_GG-XY 123');
     });
 
-    test('eine Zeile, in der jeder Platzhalter leer bleibt, entfällt', () {
+    // Geändert am 06.09.2026 (§4.7, „Ein offener Platzhalter sperrt den
+    // Versand"): Bis dahin nahm ein leerer Daten-Platzhalter seine Zeile mit,
+    // und die Mail ging ohne sie hinaus — eine lückenhafte Angabe verschwand
+    // damit unbemerkt im fertigen Anschreiben. Jetzt bleibt er sichtbar
+    // stehen, und `VersandVoraussetzungen` hält die Mail daran auf.
+    test('ein leerer Daten-Platzhalter bleibt als {{…}} in seiner Zeile', () {
       final text = fuellerFuer(mandantMit(''), const []).fuelleText(
         'Erste Zeile\n'
         'Polizei: {{PolizeiVorgangsnummer}}\n'
         'Letzte Zeile',
       );
 
-      expect(text, 'Erste Zeile\nLetzte Zeile');
+      expect(
+        text,
+        'Erste Zeile\n'
+        'Polizei: {{PolizeiVorgangsnummer}}\n'
+        'Letzte Zeile',
+      );
     });
 
-    test('eine Zeile mit einem gefüllten Platzhalter bleibt stehen', () {
+    test('er steht auch neben einem gefüllten Platzhalter noch da', () {
       final text = fuellerFuer(
         mandantMit(''),
         const [],
       ).fuelleText('{{MandantName}} ./. {{PolizeiVorgangsnummer}}');
 
-      expect(text, 'Klaus Müller ./.');
+      expect(text, 'Klaus Müller ./. {{PolizeiVorgangsnummer}}');
     });
 
-    test('bleibt vom Betreff nichts übrig, bleibt er leer', () {
+    test('und im Betreff ebenso — dort ist er am teuersten', () {
+      // Ein sichtbares {{…}} in der Betreffzeile beim Versicherer wäre
+      // peinlich; genau deshalb geht die Mail so gar nicht erst hinaus. Vorher
+      // blieb der Betreff wortlos leer, und das sah aus wie ein Versehen des
+      // Anwalts.
       final betreff = fuellerFuer(
         mandantMit(''),
         const [],
       ).fuelleBetreff('Vorgang {{PolizeiVorgangsnummer}}');
 
-      expect(
-        betreff,
-        isEmpty,
-        reason: 'eine erfundene Betreffzeile wäre schlimmer',
+      expect(betreff, 'Vorgang {{PolizeiVorgangsnummer}}');
+    });
+
+    test('Anrede und Zusatzgruß nehmen ihre Zeile weiter mit', () {
+      // Die Ausnahme, und sie steht ausdrücklich in §4.7: Beide werden im
+      // Dialog gewählt, und „keiner" ist dort eine getroffene Wahl, keine
+      // fehlende Angabe.
+      final text = fuellerFuer(mandantMit(''), const []).fuelleText(
+        'Erste Zeile\n'
+        '{{Zusatzgruß}}\n'
+        'Letzte Zeile',
       );
+
+      expect(text, 'Erste Zeile\nLetzte Zeile');
     });
   });
 
@@ -243,7 +266,11 @@ void main() {
       expect(gruss.folge, 'bleibt leer — Zeile 2 entfällt');
     });
 
-    test('ein leerer Platzhalter im Betreff sagt das statt einer Zeile', () {
+    test('ein offener Daten-Platzhalter sagt, dass er stehen bleibt', () {
+      // Geändert am 06.09.2026: Vorher hiess die Auskunft „bleibt leer — fällt
+      // aus dem Betreff". Sie beschrieb damit ein Verschwinden, das es nicht
+      // mehr gibt — der Name steht jetzt sichtbar im Betreff und hält den
+      // Versand auf (§4.7).
       final befunde = fuellerFuer(mandantMit(''), const []).befunde(vorlage);
 
       final polizei = befunde.firstWhere(
@@ -251,12 +278,12 @@ void main() {
       );
       expect(polizei.imBetreff, isTrue);
       expect(polizei.zeile, 0);
+      expect(polizei.zeileEntfaellt, isFalse);
+      expect(polizei.bleibtOffen, isTrue);
       expect(
-        polizei.zeileEntfaellt,
-        isFalse,
-        reason: '{{MandantName}} haelt die Betreffzeile am Leben',
+        polizei.folge,
+        'bleibt offen — {{PolizeiVorgangsnummer}} steht so im Betreff',
       );
-      expect(polizei.folge, 'bleibt leer — fällt aus dem Betreff');
     });
 
     test('ein gefüllter Befund nennt seine Herkunft und bleibt ohne Folge', () {
@@ -401,7 +428,16 @@ void main() {
 
       final befund = befunde.single;
       expect(befund.istLeer, isTrue);
-      expect(befund.zeileEntfaellt, isTrue);
+      expect(
+        befund.zeileEntfaellt,
+        isFalse,
+        reason:
+            'geändert am 06.09.2026: Eine misslungene Beugung ist kein im '
+            'Dialog gewählter Baustein, sondern ein Schreibfehler in der '
+            'Vorlage — sie bleibt sichtbar stehen und hält den Versand auf '
+            '(§4.7), statt die Zeile stillschweigend mitzunehmen',
+      );
+      expect(befund.bleibtOffen, isTrue);
       expect(befund.fehlstelle, contains('Beugung unvollständig'));
       expect(
         befund.fehlstelle,
@@ -429,13 +465,17 @@ void main() {
       mandant: mandantMit(''),
     );
 
-    test('ein leerer Abschnitt nimmt sein Trennzeichen mit', () {
-      // Der behobene Fehler: Die Zeilenregel liess eine Zeile schon bei
+    test('ein leerer Gruß-Abschnitt nimmt sein Trennzeichen mit', () {
+      // Der behobene Fehler: Die Zeilenregel liess einen Abschnitt schon bei
       // **einem** gefüllten Platzhalter stehen. Im Betreff gibt es keine
       // Nachbarzeile, die den Satz weiterträgt — hinaus ging wörtlich
-      // „Sache Klaus Müller ./. · Gruß:".
+      // „Sache Klaus Müller · Gruß:".
+      //
+      // Angepasst am 06.09.2026: Geprüft wird jetzt der Abschnitt mit dem
+      // **Zusatzgruß**, denn nur Anrede und Gruß dürfen noch verschwinden. Der
+      // Versicherername bleibt als {{…}} stehen — siehe der Fall darunter.
       final betreff = fuellerOhne().fuelleBetreff(
-        'Sache {{MandantName}} ./. {{VersichererName}} · Gruß: {{Zusatzgruß}}',
+        'Sache {{MandantName}} · Gruß: {{Zusatzgruß}}',
       );
 
       expect(betreff, 'Sache Klaus Müller');
@@ -443,12 +483,13 @@ void main() {
       expect(betreff, isNot(endsWith(':')));
     });
 
-    test('bleibt nichts übrig, bleibt der Betreff leer', () {
+    test('ein offener Daten-Abschnitt bleibt dagegen im Betreff stehen', () {
+      // Geändert am 06.09.2026: Vorher blieb der Betreff hier leer, und das
+      // leere Feld war von einem vergessenen nicht zu unterscheiden. Jetzt
+      // steht der Name da, mit Grund im Formular und gesperrtem Versand.
       expect(
         fuellerOhne().fuelleBetreff('Zeichen: {{VersichererName}}'),
-        isEmpty,
-        reason:
-            'eine erfundene Betreffzeile wäre schlimmer als ein leeres Feld',
+        'Zeichen: {{VersichererName}}',
       );
     });
 
