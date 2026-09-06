@@ -350,8 +350,77 @@ neuen Feldzeile am Zeilenbudget.
   `FeldAenderungen.loeschen` ruft ihn nur noch auf und meldet danach weiter — zwei Fassungen desselben
   Entfernens liefen sonst auseinander, sobald der Abgleich seinen eigenen Löschweg gebraucht hätte.
 
+## Übersicht und Duplizieren
+
+Stufe 4 von #104 arbeitet an der Tabelle statt am Editor: Sie bekommt ein Kennzeichen
+„unvollständig", und jede Vorlage lässt sich duplizieren.
+
+- **Der Stand in der Übersicht ist gespeichert, nicht gerechnet.** `VorlagenStand` braucht die
+  Platzhalter der verknüpften Word-Dateien; die Übersicht hat sie nicht und dürfte sie sich auch
+  nicht holen — sie müsste beim Öffnen des Tabs für jede Vorlage ein Word-Dokument einlesen lassen.
+  Der Editor kennt sie ohnehin und schreibt sein Ergebnis deshalb beim Speichern mit
+  (`GespeicherterStand`, `domain/services/`). Die Übersicht liest nur. **Eine zweite Rechnung wäre
+  genau die Sache, die Stufe 1 beseitigt hat** — `GespeicherterStand.aus` nimmt den fertigen
+  `VorlagenStand` entgegen und rechnet nichts nach.
+- **Wo der Stand steht: in der opaken `fields`-Spalte.** Das Backend reicht sie als `JsonElement`
+  verlustfrei durch (`FormTemplateDto.Fields`), und die Datenbank hält sie als Textspalte
+  (`FormTemplateEntity.FieldsJson`). Stufe 4 kommt damit ohne Änderung am HTTP-Vertrag
+  (`docs/openapi.json`), an der Datenbank und am Dienst aus. Die Spalte trägt seither zwei Formen,
+  und beide werden gelesen: die **nackte Liste** `[ {Feld}, … ]` (Bestand vor Stufe 4) und das
+  **Objekt** `{"felder": [ … ], "stand": {"version": 1, …}}`. Geschrieben wird die zweite Form nur,
+  wenn wirklich ein Stand vorliegt — `GespeicherterStand.verpacke(felder, null)` gibt die nackte
+  Liste zurück, das JSON bleibt dann byteidentisch zu vorher.
+- **„Noch nicht geprüft" ist nicht „unvollständig".** Fehlt der Eintrag, ist über die Vorlage
+  nichts bekannt — sie deshalb anzumahnen hiesse, jedem Bestand ohne Not einen Mangel anzuhängen.
+  Dasselbe gilt für einen Eintrag mit fremder `version`: Er wird nicht ausgelegt, sondern als
+  unbekannt behandelt. Der Fall steht namentlich in `gespeicherter_stand_test.dart`.
+- **`FormTemplate.copyWith` gibt den Stand auf, sobald sich seine Grundlage ändert** — sowie
+  `fields` oder ein Word-Pfad mitgegeben wird. Das trifft die beiden Griffe aus „Word Automation"
+  (`WizardCubit.aktualisiereFeld`, `.linkWordFileToTemplate`): Sie schreiben die Vorlage fort, ohne
+  die Platzhalter beider Dateien zu kennen. Den alten Stand mitzuschleppen hiesse, eine Zusage
+  weiterzugeben, für die niemand mehr geradesteht; „Noch nicht geprüft" ist ehrlich und heilt beim
+  nächsten Speichern im Editor. Wer den neuen Stand kennt, gibt ihn ausdrücklich mit.
+- **Gerechnet wird beim Klick, nicht beim Aufbau** (`FormTemplateActionButtons.standErmitteln` als
+  Rückruf): Der Stand hängt an den gelesenen Platzhaltern **und** an den Feldnamen, und die stehen
+  bis zuletzt nur in den Controls der `FormGroup` (siehe FEATURE.md). Ein beim Aufbau übergebener
+  Wert wäre veraltet, sobald jemand ein Feld umbenennt.
+- **Duplizieren geht über den vorhandenen Anlege-Weg** (`CreateFormTemplate` →
+  `POST /api/FormTemplates`) — kein neuer Endpunkt. Damit gilt für die Kopie dieselbe
+  Fehlerbehandlung wie fürs Anlegen, einschließlich der Namens-Dublette: `ApiFormTemplateDatasource`
+  übersetzt 409 in eine `FormTemplateException` mit dem Text des Dienstes, und der landet als
+  `Rueckmeldung.zeigeFehler` auf der Verwaltungsseite.
+- **Die Kopie bekommt die Felder, nicht die Word-Dateien.** Zwei Vorlagen auf derselben Datei wären
+  zwei Beschreibungen desselben Dokuments; wer dupliziert, will die Feldarbeit wiederverwenden. Die
+  Kopie ist damit unvollständig, und genau das steht in ihrem Stand: `vollstaendig: false`,
+  `offen: 0` — ohne Datei sind keine Platzhalter bekannt, es ist also nichts zu zählen
+  (`GespeicherterStand.ohneDatei`).
+- **`KopieName` (`domain/services/`) vergleicht schärfer als das Backend**: ohne
+  Groß-/Kleinschreibung und ohne Randleerzeichen. SQLite vergleicht `TemplateName` binär, `Brief
+  (Kopie)` und `brief (kopie)` dürften also nebeneinander stehen — für den Anwalt wären sie
+  dieselbe Vorlage. Heisst das Original schon `… (Kopie)` oder `… (Kopie 7)`, wird am **Stamm**
+  weitergezählt statt ein zweites `(Kopie)` anzuhängen; nur *ein* Anhängsel wird abgeschnitten,
+  weil ein von Hand vergebener Name sonst zerlegt würde. Der Vorschlag ist die Bequemlichkeit, die
+  Sicherung bleibt der 409 des Dienstes.
+- **Die Zeile kann nicht melden, was sie auslöst.** Nach einer erfolgreichen Kopie lädt die
+  Übersicht neu — die Zeile, die den Knopf trug, ist dann abgebaut. Erfolg und Fehler hängen
+  deshalb an einem `BlocListener` in `FormTemplateManagementPage`, nicht in `FormTemplateRow`.
+- **Kein Überlauf bei 700 px und größter Schrift** (Issue #57): Die Zeile trägt seit Stufe 4 eine
+  Spalte und eine Aktion mehr. Das Kennzeichen steht wie die Dateibadges in einem `Wrap` — der
+  bindet seine Kinder an die Spaltenbreite, statt sie darüber hinauslaufen zu lassen —, und
+  `AuflistungBadge` kürzt seinen Text einzeilig mit Auslassung, damit die Zeilenhöhe nicht springt.
+  `actionsWidth` ist von 112 auf 160 px gewachsen: Ein `IconButton` misst 48 px unabhängig von der
+  Schriftstufe, drei also 144. Bewacht von `vorlagen_tabelle_schmal_test.dart` (mit 100 px dort
+  meldet der Test 44 px Überlauf — die Grenze ist gemessen, nicht geschätzt).
+
 ## Zustand
 
 - `FormTemplateOverviewBloc` ist bewusst `@lazySingleton` (Verwaltung und Wizard-Dropdown teilen
   ihn): per `BlocProvider.value` einbinden, sonst schließt ihn die Seite beim Verlassen; nach der
   Rückkehr aus der Detailseite braucht es ein `LoadFormTemplatesEvent`.
+- **Duplizieren liegt bewusst *nicht* in diesem Bloc**, sondern in `VorlagenKopieCubit`
+  (`presentation/blocs/vorlagen_kopie_cubit/`, `@injectable`, an die Verwaltungsseite gebunden).
+  Zwei Gründe: Sein Fehlerzustand `FormTemplateOverviewError` **ersetzt** die geladene Liste — ein
+  Namenskonflikt beim Duplizieren nähme dem Wizard mitten im Ausfüllen die Vorlagenwahl weg. Und
+  eine dritte Abhängigkeit im Konstruktor eines Singletons, den zwei Features anfassen, ist eine
+  Änderung, die beide zu tragen hätten. Der Overview-Bloc bleibt lesen und löschen; nach einer
+  Kopie lädt er neu, wie nach dem Anlegen auch.
