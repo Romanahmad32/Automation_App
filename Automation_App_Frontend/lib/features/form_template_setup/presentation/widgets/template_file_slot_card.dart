@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_status_zeile.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_datei_oeffnen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -52,7 +53,7 @@ class TemplateFileSlotCard extends StatelessWidget {
             ),
             Text(subtitle, style: theme.textTheme.bodySmall),
             _dateizeile(theme),
-            _knoepfe(),
+            _knoepfe(context),
             if (path != null)
               BlocBuilder<TemplatePlaceholdersBloc, TemplatePlaceholdersState>(
                 builder: (context, zustand) => _auskunft(theme, zustand),
@@ -76,31 +77,47 @@ class TemplateFileSlotCard extends StatelessWidget {
     ],
   );
 
-  /// Die beiden Handlungen. `Wrap` statt `Row`, und in einer **eigenen** Zeile
-  /// unter dem Dateinamen: Die Karte steht seit Stufe 3a in einer 400 px
-  /// schmalen Spalte, und „Andere Datei wählen" ist bei angehobener Schrift
-  /// (Issue #57) allein schon breiter als der Platz neben einem Pfad.
-  Widget _knoepfe() => Wrap(
-    alignment: WrapAlignment.end,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    spacing: 8,
-    runSpacing: 8,
-    children: [
-      if (path != null)
-        IconButton(
-          tooltip: 'Verknüpfung entfernen',
-          icon: const Icon(Icons.close),
-          onPressed: onRemove,
+  /// Die Handlungen an dieser Datei. `Wrap` statt `Row`, und in einer
+  /// **eigenen** Zeile unter dem Dateinamen: Die Karte steht seit Stufe 3a in
+  /// einer 400 px schmalen Spalte, und „Andere Datei wählen" ist bei
+  /// angehobener Schrift (Issue #57) allein schon breiter als der Platz neben
+  /// einem Pfad.
+  ///
+  /// „In Word öffnen" steht seit Stufe 5 auch hier — dieselbe Aufschrift und
+  /// dasselbe Symbol wie auf der Auswahlseite und wie in
+  /// `WizardStepReview`: Wer beim Einrichten einen falsch geschriebenen
+  /// Platzhalter findet, reparierte ihn bisher nur, indem er die Datei im
+  /// Explorer suchte.
+  Widget _knoepfe(BuildContext context) {
+    final pfad = path;
+    return Wrap(
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (pfad != null)
+          IconButton(
+            tooltip: 'Verknüpfung entfernen',
+            icon: const Icon(Icons.close),
+            onPressed: onRemove,
+          ),
+        if (pfad != null)
+          CustomRectangularButton(
+            icon: const Icon(Icons.edit_document),
+            label: const Text('In Word öffnen'),
+            onPressed: () => VorlagenDateiOeffnen.inWord(context, pfad),
+          ),
+        CustomRectangularButton(
+          icon: const Icon(Icons.file_open),
+          label: Text(
+            pfad == null ? 'Word-Datei verknüpfen' : 'Andere Datei wählen',
+          ),
+          onPressed: onPick,
         ),
-      CustomRectangularButton(
-        icon: const Icon(Icons.file_open),
-        label: Text(
-          path == null ? 'Word-Datei verknüpfen' : 'Andere Datei wählen',
-        ),
-        onPressed: onPick,
-      ),
-    ],
-  );
+      ],
+    );
+  }
 
   /// Lesezustand und – nur beim Mit-Slot – die fehlende
   /// {{Schadensaufstellung}}.

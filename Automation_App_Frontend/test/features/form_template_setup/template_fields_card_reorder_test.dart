@@ -13,8 +13,8 @@ import 'package:reactive_forms/reactive_forms.dart';
 
 /// Beim Ziehen hebt die ReorderableListView die Zeile in ein Overlay
 /// **außerhalb** von ReactiveForm und Bloc-Providern der Seite. Der
-/// proxyDecorator muss beides neu umschließen — ohne den Bloc warf das
-/// FeldVorkommenBadge in der gezogenen Zeile eine ProviderNotFoundException.
+/// proxyDecorator muss beides neu umschließen — ohne den Bloc warf die
+/// FeldVorkommenPille in der gezogenen Zeile eine ProviderNotFoundException.
 class FestePlatzhalter
     implements UseCase<List<String>, GetTemplatePlaceholdersParams> {
   @override

@@ -236,6 +236,62 @@ void main() {
       expect(aufbauten, 1);
     });
 
+    testWidgets('beide Dateien nacheinander gewählt fragen nichts', (
+      tester,
+    ) async {
+      // Der Regelweg auf der Auswahlseite (#104 Stufe 5): Der Anwalt
+      // verknüpft erst die eine, dann die andere Datei. Die Felder der ersten
+      // kommen **in ihr** weiter vor — nichts ist verloren, also darf keine
+      // Rückfrage aufgehen. Ohne diese Zusage stünde mitten in der Auswahl ein
+      // Dialog, der das Löschen gerade angelegter Felder vorschlägt.
+      await baueSeite(tester);
+      final bearbeitung = VorlagenBearbeitung.fuer(null)
+        ..setzePfad(TemplateFileSlot.ohneAuflistung, pfad);
+      final reagiert = reaktion(antwort: const ['Kennzeichen', 'Frist']);
+
+      await reagiert.verarbeite(kontext, bearbeitung, laedt());
+      await reagiert.verarbeite(
+        kontext,
+        bearbeitung,
+        geladen(['Kennzeichen', 'Frist']),
+      );
+      expect(bearbeitung.feldnamen, ['Kennzeichen', 'Frist']);
+
+      // Die zweite Datei kommt dazu, die erste bleibt verknüpft.
+      bearbeitung.setzePfad(TemplateFileSlot.mitAuflistung, pfadMit);
+      await reagiert.verarbeite(
+        kontext,
+        bearbeitung,
+        beide(
+          const SlotPlaceholdersLoaded(['Kennzeichen', 'Frist']),
+          const SlotPlaceholdersLoading(),
+        ),
+      );
+      await reagiert.verarbeite(
+        kontext,
+        bearbeitung,
+        beide(
+          const SlotPlaceholdersLoaded(['Kennzeichen', 'Frist']),
+          const SlotPlaceholdersLoaded(['Summe', 'Restwert']),
+        ),
+      );
+
+      expect(gefragtNach, isNull);
+      expect(gefragteFelder, isNull);
+      // Und die Felder beider Dateien stehen da.
+      expect(bearbeitung.feldnamen, [
+        'Kennzeichen',
+        'Frist',
+        'Summe',
+        'Restwert',
+      ]);
+
+      // Die Meldungen der beiden Übernahmen stehen noch aus: Ohne ein Bild
+      // dazu wird ihr Stapel nie gebaut, und seine Timer laufen über das
+      // Testende hinaus weiter.
+      await tester.pump();
+    });
+
     testWidgets('„Behalten" lässt jedes Feld stehen', (tester) async {
       await baueSeite(tester);
       final bearbeitung = VorlagenBearbeitung.fuer(vorlage);

@@ -158,6 +158,11 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
     );
   }
 
+  /// „Weiter" auf der Auswahlseite — von hier an steht der Editor, und die
+  /// Auswahl kommt nicht wieder (siehe
+  /// `VorlagenBearbeitung.auswahlAbgeschlossen`).
+  void _weiter() => setState(_bearbeitung.weiter);
+
   void _removeFile(TemplateFileSlot slot) {
     setState(() => _bearbeitung.setzePfad(slot, null));
     context.read<TemplatePlaceholdersBloc>().add(
@@ -219,6 +224,13 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                           _bearbeitung.pfadOhneAuflistung,
                       wordFilePathMitAuflistung: _bearbeitung.pfadMitAuflistung,
                       nurAbbrechen: _bearbeitung.zeigtLeerzustand,
+                      onWeiter: _weiter,
+                      // `watch` und nicht `read`: „Weiter" ist grau, solange
+                      // eine gewählte Datei noch gelesen wird, und das Ende
+                      // des Lesevorgangs baut die Seite sonst nicht neu auf.
+                      weiterMoeglich: _bearbeitung.weiterMoeglich(
+                        context.watch<TemplatePlaceholdersBloc>().state,
+                      ),
                       standErmitteln: _standJetzt,
                     ),
                     // Solange der Name noch der Vorschlag aus dem Dateinamen
@@ -234,10 +246,15 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                             : null,
                       ),
                     ),
-                    // Neue Vorlage, noch keine Datei: Statt eines leeren
-                    // Formulars steht die eine Frage da, mit der alles anfängt.
+                    // Neue Vorlage: Statt eines leeren Formulars steht die
+                    // Auswahl der Word-Dateien da, mit der alles anfängt — und
+                    // sie bleibt, bis „Weiter" gedrückt ist.
                     leerzustand: _bearbeitung.zeigtLeerzustand
-                        ? VorlagenLeerzustand(onDateiWaehlen: _pickFile)
+                        ? VorlagenLeerzustand(
+                            bearbeitung: _bearbeitung,
+                            onDateiWaehlen: _pickFile,
+                            onDateiEntfernen: _removeFile,
+                          )
                         : null,
                     linkeSpalte: [
                       TemplateFileSlots(

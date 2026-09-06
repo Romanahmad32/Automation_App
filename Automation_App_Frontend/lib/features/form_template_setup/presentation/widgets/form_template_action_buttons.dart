@@ -8,20 +8,43 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 class FormTemplateActionButtons extends StatelessWidget {
+  /// Schlüssel des „Weiter"-Knopfes. Er trägt keine eigene Aufschrift, an der
+  /// ein Test ihn festmachen könnte, ohne über die Knopfart zu reden — und ob
+  /// er **grau** ist, ist gerade die Aussage (`weiterMoeglich`).
+  static const Key weiterSchluessel = ValueKey('vorlagen_weiter');
+
   final VoidCallback onCancel;
   final List<FieldData> fields;
   final int? existingItemId; // 1. Added optional ID
   final String? wordFilePathOhneAuflistung;
   final String? wordFilePathMitAuflistung;
 
-  /// Nur Abbrechen zeigen — der Leerzustand einer neuen Vorlage (#104 Stufe
-  /// 3c), in dem es noch nichts zu speichern gibt.
+  /// Kein Speichern zeigen — die Auswahlseite einer neuen Vorlage (#104 Stufe
+  /// 3c), auf der es noch nichts zu speichern gibt. Statt seiner steht dort
+  /// [onWeiter].
   ///
-  /// Weg statt grau: Ein grauer „Vorlage erstellen"-Knopf über einer Seite mit
-  /// genau einer Handlung („Datei wählen") liest sich wie ein kaputtes
+  /// Weg statt grau: Ein grauer „Vorlage erstellen"-Knopf über einer Seite,
+  /// auf der es nur Dateien zu wählen gibt, liest sich wie ein kaputtes
   /// Formular — der Anwalt sucht dann, was er ausgelassen hat. Abbrechen
   /// bleibt, sonst gäbe es keinen Weg zurück.
   final bool nurAbbrechen;
+
+  /// „Weiter" — der Weg von der Auswahlseite in den Editor (#104 Stufe 5).
+  /// Null heißt: kein solcher Knopf (der Editor selbst hat keinen).
+  ///
+  /// Der Knopf steht hier und nicht in einem zweiten Knopfbaustein, weil es
+  /// **eine** Knopfzeile der Seite gibt: `VorlagenEditorLayout` hat genau
+  /// einen Platz dafür, und zwei Bausteine dafür wären zwei Fassungen des
+  /// Abbrechen-Knopfes daneben.
+  final VoidCallback? onWeiter;
+
+  /// Ob „Weiter" gedrückt werden darf (`VorlagenBearbeitung.weiterMoeglich`:
+  /// mindestens eine Datei, kein offener Lesevorgang).
+  ///
+  /// Grau statt weg — anders als beim Speichern-Knopf: „Weiter" ist auf dieser
+  /// Seite der nächste Schritt, und ein Schritt, der zeitweise nicht geht,
+  /// muss trotzdem zu sehen sein, sonst sucht der Anwalt ihn.
+  final bool weiterMoeglich;
 
   /// Der Stand, der mitgespeichert wird (#104 Stufe 4) — als **Rückruf**, weil
   /// er im Augenblick des Klicks zu rechnen ist: Er hängt an den gelesenen
@@ -39,6 +62,8 @@ class FormTemplateActionButtons extends StatelessWidget {
     this.wordFilePathOhneAuflistung,
     this.wordFilePathMitAuflistung,
     this.nurAbbrechen = false,
+    this.onWeiter,
+    this.weiterMoeglich = false,
     this.standErmitteln,
   });
 
@@ -71,6 +96,16 @@ class FormTemplateActionButtons extends StatelessWidget {
           ),
           label: const Text('Abbrechen'),
         ),
+        if (nurAbbrechen && onWeiter != null)
+          // `FilledButton` und nicht `CustomRectangularButton`: „Weiter" ist
+          // die eine Handlung, auf die diese Seite hinausläuft, und ein Pfeil
+          // nach rechts sagt, dass es danach weitergeht statt fertig ist.
+          FilledButton.icon(
+            key: weiterSchluessel,
+            onPressed: laeuft || !weiterMoeglich ? null : onWeiter,
+            icon: const Icon(Icons.arrow_forward),
+            label: const Text('Weiter'),
+          ),
         if (!nurAbbrechen)
           ReactiveFormConsumer(
             builder: (context, formGroup, child) {

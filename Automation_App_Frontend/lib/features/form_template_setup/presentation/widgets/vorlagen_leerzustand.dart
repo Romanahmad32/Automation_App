@@ -1,6 +1,8 @@
-import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
+import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_datei_kachel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der erste Bildschirm einer neuen Vorlage: „Womit fängt diese Vorlage an?"
 /// (#104, §5.3) — der Einstieg in den Ablauf **Datei zuerst**.
@@ -9,17 +11,32 @@ import 'package:flutter/material.dart';
 /// Dateiauswahl. Der Anwalt musste sich einen Namen ausdenken, bevor er die
 /// Datei gewählt hatte, aus deren Namen er ohnehin abschreiben würde — und
 /// eine leere Feldertabelle daneben sah aus, als sei etwas kaputt. Hier gibt
-/// es genau eine Handlung: eine der beiden Word-Dateien wählen. Alles Weitere
-/// (Name, Felder) leitet die App daraus ab.
+/// es genau eine Aufgabe: die Word-Dateien wählen, mit denen diese Vorlage
+/// arbeitet. Alles Weitere (Name, Felder) leitet die App daraus ab.
+///
+/// **Die Seite bleibt stehen, bis der Anwalt „Weiter" drückt** (Stufe 5).
+/// Bis dahin verschwand sie mit dem ersten gesetzten Pfad, und die zweite
+/// Datei war nur noch im Editor zu finden — obwohl beide gleichwertig sind und
+/// zusammen gewählt werden wollen. Wann Schluss ist, sagt jetzt
+/// `VorlagenBearbeitung.auswahlAbgeschlossen`, nicht mehr der Zustand der
+/// Pfade.
 ///
 /// **Die beiden Wahlflächen sind gleich groß und gleich gestaltet**, weil die
 /// beiden Word-Dateien gleichwertig sind. Keine ist „die zweite" oder
 /// optional, keine steht oben und die andere klein darunter — welche der
-/// Anwalt zuerst hat, ist Zufall der Ablage.
+/// Anwalt zuerst hat, ist Zufall der Ablage. Was in einer Fläche steht,
+/// gehört [VorlagenDateiKachel].
 class VorlagenLeerzustand extends StatelessWidget {
+  /// Der Stand des Editors — hier gebraucht werden die beiden Word-Pfade.
+  final VorlagenBearbeitung bearbeitung;
+
   /// Ruft den Dateidialog für diesen Slot — dieselbe Auswahl wie an der
   /// `TemplateFileSlotCard`, nur an der Stelle, an der der Anwalt anfängt.
   final void Function(TemplateFileSlot slot) onDateiWaehlen;
+
+  /// Löst die Verknüpfung wieder — „doch die falsche Datei" ist beim Anlegen
+  /// der häufige Weg, und ohne diesen Knopf führte er nur über den Editor.
+  final void Function(TemplateFileSlot slot) onDateiEntfernen;
 
   /// Ab dieser Breite stehen die beiden Flächen nebeneinander. Darunter
   /// untereinander — nicht schmaler: Bei der größten Schriftstufe (#57)
@@ -27,7 +44,12 @@ class VorlagenLeerzustand extends StatelessWidget {
   /// Fläche läuft, ist schlimmer als ein zweiter Blattwechsel.
   static const double zweispaltigAb = 520;
 
-  const VorlagenLeerzustand({super.key, required this.onDateiWaehlen});
+  const VorlagenLeerzustand({
+    super.key,
+    required this.bearbeitung,
+    required this.onDateiWaehlen,
+    required this.onDateiEntfernen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +68,18 @@ class VorlagenLeerzustand extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            LayoutBuilder(
-              builder: (context, constraints) =>
-                  _wahlflaechen(context, constraints.maxWidth),
+            // Einmal für beide Flächen gehorcht: Der Lesezustand kommt je Slot
+            // aus demselben Bloc, und zwei Horcher übereinander wären zwei
+            // Neuaufbauten für dasselbe Ereignis.
+            BlocBuilder<TemplatePlaceholdersBloc, TemplatePlaceholdersState>(
+              builder: (context, zustand) => LayoutBuilder(
+                builder: (context, constraints) =>
+                    _wahlflaechen(zustand, constraints.maxWidth),
+              ),
             ),
             Text(
-              'Eine der beiden Dateien genügt. Platzhalter im Format {{Name}} '
-              'werden erkannt und zu Feldern.',
+              'Eine der beiden Dateien genügt – beide sind gleichwertig. '
+              'Platzhalter im Format {{Name}} werden erkannt und zu Feldern.',
               style: theme.textTheme.bodySmall,
             ),
           ],
@@ -61,16 +88,19 @@ class VorlagenLeerzustand extends StatelessWidget {
     );
   }
 
-  Widget _wahlflaechen(BuildContext context, double breite) {
+  Widget _wahlflaechen(TemplatePlaceholdersState zustand, double breite) {
     final kacheln = [
       _wahl(
-        context,
+        zustand,
         slot: TemplateFileSlot.ohneAuflistung,
-        titel: 'Ohne Schadensaufstellung',
+        // Der Zusatz „(HGn)" ist der Kanzleiname dieser Datei und steht
+        // ebenso an der Dateikarte des Editors — dieselbe Datei darf nicht an
+        // zwei Stellen zwei Namen tragen.
+        titel: 'Ohne Schadensaufstellung (HGn)',
         erklaerung: 'Anspruchsschreiben ohne Positionsliste',
       ),
       _wahl(
-        context,
+        zustand,
         slot: TemplateFileSlot.mitAuflistung,
         titel: 'Mit Schadensaufstellung',
         erklaerung: 'Anspruchsschreiben mit {{Schadensaufstellung}}-Tabelle',
@@ -100,54 +130,19 @@ class VorlagenLeerzustand extends StatelessWidget {
   }
 
   Widget _wahl(
-    BuildContext context, {
+    TemplatePlaceholdersState zustand, {
     required TemplateFileSlot slot,
     required String titel,
     required String erklaerung,
   }) {
-    final theme = Theme.of(context);
-    return Container(
-      // Der Schlüssel benennt die Fläche für den Test — zwei gleich
-      // beschriftete Knöpfe sind sonst nicht auseinanderzuhalten.
-      key: ValueKey(slot),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        spacing: 10,
-        children: [
-          Row(
-            spacing: 10,
-            children: [
-              Icon(
-                Icons.description_outlined,
-                color: theme.colorScheme.primary,
-              ),
-              Expanded(
-                child: Text(
-                  titel,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Text(erklaerung, style: theme.textTheme.bodySmall),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: CustomRectangularButton(
-              icon: const Icon(Icons.file_open),
-              label: const Text('Datei wählen…'),
-              onPressed: () => onDateiWaehlen(slot),
-            ),
-          ),
-        ],
-      ),
+    return VorlagenDateiKachel(
+      slot: slot,
+      titel: titel,
+      erklaerung: erklaerung,
+      pfad: bearbeitung.pfad(slot),
+      zustand: zustand.forSlot(slot),
+      onWaehlen: () => onDateiWaehlen(slot),
+      onEntfernen: () => onDateiEntfernen(slot),
     );
   }
 }

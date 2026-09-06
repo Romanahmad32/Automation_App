@@ -161,6 +161,13 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   gespeichert werden. Duplizieren (`VorlagenKopieCubit`, über den vorhandenen Anlege-Weg) legt eine Kopie
   mit Namen „… (Kopie)" (`KopieName`, zählt bei Dopplung hoch) und denselben Feldern an, aber **ohne**
   Word-Dateien — wer dupliziert, will die Feldarbeit wiederverwenden, nicht die Datei doppelt verknüpfen.
+- **Vorlageneditor, Stufe 5 „Beide Dateien wählen, Vorkommen zeigen" (Issue #104, 06.09.2026)** — die
+  Auswahlseite einer neuen Vorlage bleibt stehen, bis „Weiter" gedrückt ist (`auswahlAbgeschlossen`); jede
+  Kachel zeigt Dateiname, Anzahl der erkannten Platzhalter, „In Word öffnen" (`DateiOeffner` in `core/`,
+  vorher `AnhangOeffner` in `email_versand`) und „Andere Datei wählen". „Weiter" ist grau ohne Datei oder
+  während des Einlesens. Jede Feldzeile trägt wieder ihr Vorkommen — *beide · nur HGn · nur Auflistung*
+  ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
+  Grunde nach).
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

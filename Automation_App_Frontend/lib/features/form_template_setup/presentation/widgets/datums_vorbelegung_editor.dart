@@ -196,7 +196,7 @@ class _DatumsVorbelegungEditorState extends State<DatumsVorbelegungEditor> {
   }
 
   /// Solange nichts eingestellt ist, sagt dieses Kennzeichen, dass die Werte
-  /// aus der Namensregel stammen — in der Optik von `FeldVorkommenBadge`
+  /// aus der Namensregel stammen — in der Optik von `FeldVorkommenPille`
   /// (schmaler Rahmen, `labelSmall`, dieselbe Rundung), damit es zu den
   /// übrigen Kennzeichen der Karte passt.
   static Widget _ableitungsBadge(ThemeData theme) {

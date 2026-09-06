@@ -88,23 +88,61 @@ class VorlagenBearbeitung {
   String? _nameVorschlag;
   String? _nameVorschlagQuelle;
 
-  /// Die Vorlage hat noch kein einziges Feld — der Leerzustand
-  /// (`VorlagenLeerzustand`) hängt daran.
+  /// Die Vorlage hat noch kein einziges Feld — nicht dasselbe wie [istNeu]
+  /// und nicht dasselbe wie [zeigtLeerzustand]: Nach dem ersten Einlesen ist
+  /// eine neue Vorlage nicht mehr leer, und eine bestehende darf es sein.
   bool get istLeer => fields.isEmpty;
 
   /// Keine der beiden Word-Dateien ist verknüpft.
   bool get ohneDatei => pfadOhneAuflistung == null && pfadMitAuflistung == null;
 
-  /// Die Seite zeigt statt des Editors die eine Frage „Womit fängt diese
-  /// Vorlage an?" (`VorlagenLeerzustand`, #104 Stufe 3c).
+  /// Die Seite zeigt statt des Editors die Auswahlseite „Womit fängt diese
+  /// Vorlage an?" (`VorlagenLeerzustand`, #104 Stufe 3c/5).
   ///
-  /// Nur beim **Anlegen** und nur, solange keine Datei da ist: Eine bestehende
-  /// Vorlage ohne Datei ist ein Mangel, den `VorlagenStandBereich` benennt —
-  /// ihren Namen und ihre Felder deshalb wegzublenden nähme dem Anwalt genau
-  /// das, was er reparieren will. Sobald ein Pfad steht, ist der Leerzustand
-  /// vorbei; er kommt auch dann nicht wieder, wenn die Datei wieder entfernt
-  /// wird, denn dann steht schon etwas da.
-  bool get zeigtLeerzustand => istNeu && ohneDatei;
+  /// Nur beim **Anlegen**: Eine bestehende Vorlage ohne Datei ist ein Mangel,
+  /// den `VorlagenStandBereich` benennt — ihren Namen und ihre Felder deshalb
+  /// wegzublenden nähme dem Anwalt genau das, was er reparieren will.
+  bool get zeigtLeerzustand => istNeu && !_auswahlAbgeschlossen;
+
+  /// Der Anwalt hat die Auswahlseite mit „Weiter" verlassen.
+  ///
+  /// **Ein eigener Zustand und nicht aus [ohneDatei] abgeleitet** (bis Stufe 4
+  /// war es das): Die Auswahl endet, wenn der Anwalt sie beendet, nicht wenn
+  /// der erste Pfad steht. Sonst sprang die Seite nach der ersten Datei in den
+  /// Editor, und die zweite — gleichwertige — Datei war nur noch dort zu
+  /// verknüpfen.
+  ///
+  /// **Kein Rückweg.** Ist die Auswahl einmal abgeschlossen, kommt sie auch
+  /// dann nicht wieder, wenn beide Dateien wieder entfernt werden: Dann stehen
+  /// schon ein Name und Felder da, und „Womit fängt diese Vorlage an?" wäre
+  /// eine Lüge über den Stand der Vorlage. Was dann fehlt, benennt
+  /// `VorlagenStandBereich` — an derselben Stelle wie bei einer bestehenden
+  /// Vorlage.
+  bool get auswahlAbgeschlossen => _auswahlAbgeschlossen;
+
+  bool _auswahlAbgeschlossen = false;
+
+  /// „Weiter" auf der Auswahlseite — der einzige Weg in den Editor.
+  void weiter() => _auswahlAbgeschlossen = true;
+
+  /// Ob „Weiter" gedrückt werden darf: mindestens eine Datei verknüpft und
+  /// kein Lesevorgang offen.
+  ///
+  /// Die wartende Datei ist der Grund für die zweite Bedingung: Die Felder
+  /// entstehen erst, wenn ihre Platzhalter gelesen sind (`EinleseReaktion`).
+  /// Wer währenddessen weiterklickt, sähe einen leeren Editor und gleich
+  /// darauf eine Meldung über Felder, die er nicht angelegt hat.
+  ///
+  /// Ein **Lesefehler** hält nicht auf: Er steht in der Kachel, und die
+  /// Vorlage lässt sich trotzdem einrichten — die Platzhalter sind dann eben
+  /// von Hand zu benennen.
+  bool weiterMoeglich(TemplatePlaceholdersState zustand) =>
+      !ohneDatei &&
+      !TemplateFileSlot.values.any(
+        (slot) =>
+            pfad(slot) != null &&
+            zustand.forSlot(slot) is SlotPlaceholdersLoading,
+      );
 
   /// Ob der Vorlagenname aus einem Dateinamen stammt und nicht vom Anwalt.
   /// Trägt den Hinweis „aus … vorgeschlagen" unter dem Namensfeld.

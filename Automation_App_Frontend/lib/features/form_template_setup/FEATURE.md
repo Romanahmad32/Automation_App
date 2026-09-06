@@ -3,7 +3,7 @@
 **Zweck:** Der Anwalt verknüpft je Vorlage bis zu zwei Word-Dateien (ohne und mit
 Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Automation“ das Formular.
 **Anforderung:** `REQUIREMENTS.md` §5.3
-**Einstieg:** `presentation/pages/form_template_details_page.dart` — Ablauf **Datei zuerst**, leer via `VorlagenLeerzustand`.
+**Einstieg:** `presentation/pages/form_template_details_page.dart` — **Datei zuerst**: `VorlagenLeerzustand` steht bis „Weiter".
 **Zustand:** `presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart`,
 `presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart`,
 `presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`,
@@ -16,7 +16,7 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 `GetFormTemplates`, `CreateFormTemplate`, `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
 **Backend:** `Features/FormTemplates/` · `GET`/`POST /api/FormTemplates`, `PUT`/`DELETE /api/FormTemplates/{id}`;
 Platzhalter-Erkennung aus `Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
-**Tests:** `test/features/form_template_setup/` — `feld_vorkommen_badge_test.dart`, `datums_vorbelegung_speicherweg_test.dart`,
+**Tests:** `test/features/form_template_setup/` — `feld_vorkommen_pille_test.dart`, `datums_vorbelegung_speicherweg_test.dart`,
 `feld_datenquelle_erkennung_test.dart`, `feld_vorkommen_test.dart`, `verwendete_felder_test.dart`, `datums_vorbelegung_test.dart`
 
 **Fallstricke**
