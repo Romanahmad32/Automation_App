@@ -12,11 +12,28 @@ import 'package:flutter/material.dart';
 /// und Chips entweder verloren gegangen oder zweimal dagestanden.
 ///
 /// Geladen und „noch nichts geladen" sind beide still: Dann sagen die Chips
-/// bzw. die leere Dateizeile schon alles.
+/// bzw. die leere Dateizeile schon alles. **Ausnahme ist [zeigtAnzahl]** — auf
+/// der Auswahlseite einer neuen Vorlage stehen weder Chips noch Feldertabelle
+/// daneben, und „nichts" sähe dort aus, als sei die Datei nicht gelesen
+/// worden.
 class PlatzhalterStatusZeile extends StatelessWidget {
   final SlotPlaceholders zustand;
 
-  const PlatzhalterStatusZeile({super.key, required this.zustand});
+  /// Ob eine fertig gelesene Datei ihre Zahl nennt („14 Platzhalter
+  /// erkannt").
+  ///
+  /// Vorgabe false: An der Dateikarte des Editors und im aufgeklappten
+  /// `PlatzhalterAbschnitt` steht die Zahl schon woanders (Stand-Karte, Chips),
+  /// und zweimal dieselbe Zahl übereinander liest sich wie zwei Aussagen.
+  /// True setzt die Auswahlseite (`VorlagenDateiKachel`), die sonst nach dem
+  /// Lesen nichts zu berichten hätte.
+  final bool zeigtAnzahl;
+
+  const PlatzhalterStatusZeile({
+    super.key,
+    required this.zustand,
+    this.zeigtAnzahl = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +61,30 @@ class PlatzhalterStatusZeile extends StatelessWidget {
             color: theme.colorScheme.error,
           ),
         );
+      case SlotPlaceholdersLoaded(placeholders: final erkannt) when zeigtAnzahl:
+        return Row(
+          spacing: 10,
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              size: 16,
+              color: theme.colorScheme.primary,
+            ),
+            Expanded(child: Text(_erkannt(erkannt.length))),
+          ],
+        );
       case SlotPlaceholdersInitial():
       case SlotPlaceholdersLoaded():
         return const SizedBox.shrink();
     }
   }
+
+  /// Null Platzhalter sind kein Fehler, aber auch keine Zahl, die man vorliest
+  /// — eine Word-Datei ohne `{{…}}` ergibt eine Vorlage ohne Felder, und das
+  /// benennt danach die Stand-Karte.
+  String _erkannt(int anzahl) => switch (anzahl) {
+    0 => 'Keine Platzhalter erkannt',
+    1 => '1 Platzhalter erkannt',
+    _ => '$anzahl Platzhalter erkannt',
+  };
 }

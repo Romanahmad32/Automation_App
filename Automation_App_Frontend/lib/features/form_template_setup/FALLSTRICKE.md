@@ -63,6 +63,21 @@ passierte.
   Erzeugung fehl; die Karte warnt nur, sie blockiert das Speichern nicht. Der Chip zu diesem
   Platzhalter wird trotzdem angeboten — als Eingabefeld übernehmen wäre falsch, die Tabelle setzt
   ihn selbst ein.
+- **„In Word öffnen" läuft über `DateiOeffner` (`lib/core/dateien/`)** — an der Auswahlkachel und an
+  der Dateikarte des Editors, mit derselben Aufschrift und demselben `Icons.edit_document` wie in
+  `WizardStepReview`. Wer beim Einrichten einen falsch geschriebenen Platzhalter findet, muss ihn in
+  Word reparieren; bisher hieß das, die Datei im Explorer zu suchen. Die Mechanik ist
+  `Process.start('rundll32', ['url.dll,FileProtocolHandler', pfad])` und **nicht** `cmd /c start`:
+  Der Pfad geht dann nicht durch die Shell, und ein `&` im Ordnernamen zerlegt den Aufruf nicht. Und
+  **nicht** `url_launcher`: `wizard_step_review.dart` hält fest, dass `launchUrl` die Datei erst beim
+  zweiten Klick öffnete. Die Klasse lag bis Stufe 5 als `AnhangOeffner` in
+  `email_versand/presentation/utils/`; sie steht jetzt in `core/`, weil die Mechanik nichts mit
+  Mailversand zu tun hat und der Vorlageneditor sich sonst quer über eine fremde `presentation`-Schicht
+  bedient hätte. `oeffne` und `zeigeImOrdner` sind **veränderliche Felder** — dieselbe Naht wie
+  `VorlagenDateiwahl.waehle`: Ein Widget-Test darf keinen Prozess starten, und `zuruecksetzen()` gehört
+  in ein `addTearDown`. Schlägt das Öffnen fehl, meldet `VorlagenDateiOeffnen.inWord` „Die Datei wurde
+  nicht gefunden: <Dateiname>" samt Aktion „Im Ordner zeigen" — der **Dateiname**, nicht der Pfad,
+  denn daran erkennt der Anwalt, welche der beiden Dateien gemeint ist.
 - **Zuordnen heißt umbenennen, nicht die `.docx` anfassen** (#36): `PlatzhalterZuordnung` schlägt
   zu einem Namen ohne Gegenstück Kandidaten der anderen Seite vor — gleich nach
   `FeldDatenquelleErkennung.normalisiere` (`Versicherungsschein-Nr` ↔ `{{VersicherungsscheinNr}}`,
@@ -129,13 +144,16 @@ viele Zellen liefern.
   `StatefulWidget` mit vier `TextEditingController`n, und beim Zu-/Aufklappen wechselt seine Stelle im Baum. Ohne
   eigenen Schlüssel gliche Flutter ihn gegen ein anderes Widget derselben Art ab — die Eingabe des Anwalts stünde
   dann in der falschen Zeile.
-- **Nur noch ein Vorkommens-Kennzeichen: „in keiner Datei"** (`FeldVorkommenPille` in `feld_bezeichnung_zelle.dart`,
-  ausgelöst über `FeldVorkommenBeobachter`). Vorher zeigte `FeldVorkommenBadge` alle vier Werte aus
-  `FeldVorkommen` — *beide · nur HGn · nur Auflistung · in keiner Datei*. Die ersten drei waren reine Auskunft und
-  standen an **jeder** Zeile, ohne dass der Anwalt je etwas damit tat: Achtzehn Kennzeichen, die sagen, dass
-  alles in Ordnung ist, verstecken das eine, das es nicht ist. `FeldVorkommen` selbst bleibt vierwertig
-  (`feld_vorkommen_test.dart` prüft weiter alle vier Werte) — nur die Anzeige zeigt jetzt ausschließlich den
-  Befund, der etwas kostet und zugleich der Weg zur Reparatur ist (Klick öffnet die Zuordnung, #36).
+- **Alle vier Vorkommens-Kennzeichen an jeder Zeile, auf Wunsch des Anwalts** (`FeldVorkommenPille` in
+  `feld_bezeichnung_zelle.dart`, ausgelöst über `FeldVorkommenBeobachter`). Stufe 2 hatte die drei Auskunftsfälle
+  *beide · nur HGn · nur Auflistung* abgeschafft, weil sie an jeder Zeile standen, ohne dass der Anwalt je etwas
+  damit tat. Der Anwalt wollte sie zurück: Die beiden Word-Dateien sind gleichwertig, und er will an **jeder**
+  Zeile sehen, welches Feld welche Datei bedient — nicht erst im Fehlerfall danach suchen.
+  Das alte Argument („achtzehn Kennzeichen verstecken das eine, das zählt") trägt eine Hierarchie aus, statt die
+  drei Fälle wegzulassen: Die Auskunftsfälle bleiben **ruhig** (`AuflistungBadge` mit
+  `colorScheme.onSurfaceVariant` — `outline` als Schrift käme auf der Tönung nur auf 1,9:1 Kontrast; kein Klickweg), nur „in keiner Datei" trägt die Fehlerfarbe und bleibt der einzige Fall, der auf einen Klick
+  reagiert (Zuordnung, #36). Je Fall ein eigenes Icon (`FeldVorkommenIcon`-Extension), damit die Zeile auch ohne
+  Text unterscheidbar bleibt. `FeldVorkommen` selbst blieb über beide Entscheidungen hinweg vierwertig.
 - **`FelderFilter`** (`domain/services/`) sagt, welche Feldzeilen sichtbar sind — *Alle · Nur offene · Zu
   prüfen*. Die Regeln stehen bewusst dort und nicht im Widget: „offen" ist `VorlagenStand.felderOhneVorkommen`
   (siehe oben), „zu prüfen" ist **dieselbe Bedingung wie `FeldNameHinweis`** — ein mehrdeutiger Name
@@ -272,12 +290,27 @@ danach leitet die App Name und erste Felder daraus ab. `VorlagenLeerzustand`,
 `VorlagennameVorschlag`, `EinleseReaktion` und `FeldAbgleich` (`presentation/widgets/` bzw.
 `domain/services/`) tragen die Stücke.
 
-- **Der Leerzustand gilt nur bei `istNeu && ohneDatei`** (`VorlagenBearbeitung.zeigtLeerzustand`) —
-  nicht bei einer bestehenden Vorlage ohne Datei: Das ist ein Mangel, den `VorlagenStandBereich`
-  benennt, und ihren Namen samt Feldern wegzublenden nähme dem Anwalt genau das, was er reparieren
-  will. Und er kommt **nicht zurück**, sobald einmal ein Pfad gesetzt war, auch wenn die Datei danach
-  wieder entfernt wird — dann steht schon ein Name oder ein Feld da, und der Leerzustand wäre eine
-  Lüge über den Stand der Vorlage.
+- **Die Auswahlseite steht, bis „Weiter" gedrückt ist** (`VorlagenBearbeitung.auswahlAbgeschlossen`,
+  #104 Stufe 5) — nicht mehr nur, bis der erste Pfad gesetzt ist. Der Grund ist die Gleichwertigkeit
+  der beiden Word-Dateien: Der Anwalt will sie an **einer** Stelle verknüpfen, und die alte Ableitung
+  aus `ohneDatei` sprang nach der ersten Datei in den Editor, wo die zweite nur noch in einer Karte
+  der linken Spalte zu finden war. `zeigtLeerzustand` ist deshalb `istNeu && !auswahlAbgeschlossen`;
+  `weiter()` ist die einzige Stelle, die den Zustand setzt. Jede Fläche (`VorlagenDateiKachel`) trägt
+  bis dahin ihren eigenen Stand — Dateiname, „14 Platzhalter erkannt", „In Word öffnen", „Andere Datei
+  wählen", „Verknüpfung entfernen". Nicht bei einer bestehenden Vorlage ohne Datei: Das ist ein
+  Mangel, den `VorlagenStandBereich` benennt, und ihren Namen samt Feldern wegzublenden nähme dem
+  Anwalt genau das, was er reparieren will.
+- **„Weiter" ist grau, solange keine Datei verknüpft ist oder ein Lesevorgang läuft**
+  (`weiterMoeglich`): Die Felder entstehen erst, wenn die Platzhalter gelesen sind, und wer
+  währenddessen weiterklickt, sähe einen leeren Editor und gleich darauf eine Meldung über Felder,
+  die er nicht angelegt hat. Ein Lesefehler hält dagegen nicht auf — er steht in der Kachel, und die
+  Vorlage lässt sich trotzdem einrichten. Grau statt weg, anders als beim Speichern-Knopf: „Weiter" ist
+  der nächste Schritt dieser Seite, und einen Schritt, der zeitweise nicht geht, muss man trotzdem
+  sehen. **Kein Rückweg:** Ist die Auswahl abgeschlossen, kommt sie auch dann nicht wieder, wenn beide
+  Dateien wieder entfernt werden — dann stehen schon Name und Felder da, und „Womit fängt diese
+  Vorlage an?" wäre eine Lüge über den Stand. Ein Abgleich-Dialog geht während der Auswahl nur bei
+  einem echten Dateiwechsel auf: Beide Dateien nacheinander zu wählen verliert nichts, weil
+  `FeldAbgleich` über **beide** Slots rechnet und die Felder der ersten Datei in ihr weiter vorkommen.
 - **Namensvorschlag**: `VorlagennameVorschlag.ausPfad` schneidet das Präfix „VORLAGE" (nur als
   ganzes Wort) und die Suffixe „ohne/mit Auflistung", „ohne/mit Schadensaufstellung", „SA" ab —
   wiederholt, bis keines mehr passt, weil eine Datei mehrere davon tragen kann (`… SA ohne

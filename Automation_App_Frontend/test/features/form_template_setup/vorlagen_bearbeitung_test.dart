@@ -230,6 +230,96 @@ void main() {
     });
   });
 
+  group('Auswahlseite', () {
+    test('sie steht, solange die Auswahl nicht abgeschlossen ist — auch mit '
+        'Datei', () {
+      // Bis Stufe 4 verschwand sie mit dem ersten gesetzten Pfad. Der Anwalt
+      // will beide gleichwertigen Dateien an einer Stelle verknüpfen, deshalb
+      // endet die Auswahl erst mit „Weiter".
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+      expect(bearbeitung.zeigtLeerzustand, isTrue);
+      expect(bearbeitung.auswahlAbgeschlossen, isFalse);
+
+      bearbeitung.setzePfad(TemplateFileSlot.ohneAuflistung, 'HGn.docx');
+      expect(bearbeitung.zeigtLeerzustand, isTrue);
+    });
+
+    test('„Weiter" schließt sie ab — und es gibt keinen Rückweg', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(null)
+        ..setzePfad(TemplateFileSlot.ohneAuflistung, 'HGn.docx')
+        ..weiter();
+
+      expect(bearbeitung.auswahlAbgeschlossen, isTrue);
+      expect(bearbeitung.zeigtLeerzustand, isFalse);
+
+      // Datei wieder weg: Der Editor bleibt. Dann stehen schon Name und
+      // Felder da, und „Womit fängt diese Vorlage an?" wäre eine Lüge.
+      bearbeitung.setzePfad(TemplateFileSlot.ohneAuflistung, null);
+      expect(bearbeitung.zeigtLeerzustand, isFalse);
+    });
+
+    test('eine bestehende Vorlage sieht sie nie', () {
+      // Eine bestehende Vorlage ohne Datei ist ein Mangel, den der
+      // Stand-Bereich benennt — ihre Felder wegzublenden nähme dem Anwalt
+      // genau das, was er reparieren will.
+      final bearbeitung = VorlagenBearbeitung.fuer(vorlage)
+        ..setzePfad(TemplateFileSlot.ohneAuflistung, null);
+
+      expect(bearbeitung.zeigtLeerzustand, isFalse);
+    });
+
+    test('„Weiter" braucht eine Datei und einen fertigen Lesevorgang', () {
+      final bearbeitung = VorlagenBearbeitung.fuer(null);
+      // Ohne Datei gibt es nichts, womit der Editor arbeiten könnte.
+      expect(
+        bearbeitung.weiterMoeglich(const TemplatePlaceholdersState()),
+        isFalse,
+      );
+
+      bearbeitung.setzePfad(TemplateFileSlot.ohneAuflistung, 'HGn.docx');
+      // Wird noch gelesen: Die Felder entstehen erst danach.
+      expect(
+        bearbeitung.weiterMoeglich(
+          const TemplatePlaceholdersState().withSlot(
+            TemplateFileSlot.ohneAuflistung,
+            const SlotPlaceholdersLoading(),
+          ),
+        ),
+        isFalse,
+      );
+
+      expect(bearbeitung.weiterMoeglich(zustandMit(ohne: ['Frist'])), isTrue);
+    });
+
+    test('ein Lesefehler hält „Weiter" nicht auf', () {
+      // Er steht in der Kachel; die Vorlage lässt sich trotzdem einrichten,
+      // die Platzhalter sind dann von Hand zu benennen.
+      final bearbeitung = VorlagenBearbeitung.fuer(null)
+        ..setzePfad(TemplateFileSlot.ohneAuflistung, 'HGn.docx');
+
+      final zustand = const TemplatePlaceholdersState().withSlot(
+        TemplateFileSlot.ohneAuflistung,
+        const SlotPlaceholdersError('Die Datei ist in Word geöffnet.'),
+      );
+
+      expect(bearbeitung.weiterMoeglich(zustand), isTrue);
+    });
+
+    test('ein Ladezustand ohne Pfad hält „Weiter" nicht auf', () {
+      // Der Bloc behält das Ergebnis eines entfernten Slots; ohne die
+      // Pfadprüfung bliebe „Weiter" nach dem Entfernen grau.
+      final bearbeitung = VorlagenBearbeitung.fuer(null)
+        ..setzePfad(TemplateFileSlot.mitAuflistung, 'SA.docx');
+
+      final zustand = zustandMit(mit: ['Summe']).withSlot(
+        TemplateFileSlot.ohneAuflistung,
+        const SlotPlaceholdersLoading(),
+      );
+
+      expect(bearbeitung.weiterMoeglich(zustand), isTrue);
+    });
+  });
+
   group('Datei zuerst', () {
     test('eine neue Vorlage ist neu und leer, eine bestehende nicht', () {
       expect(VorlagenBearbeitung.fuer(null).istNeu, isTrue);

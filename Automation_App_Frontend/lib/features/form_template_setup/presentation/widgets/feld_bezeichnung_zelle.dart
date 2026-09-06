@@ -5,19 +5,20 @@ import 'package:automation_app/features/form_template_setup/presentation/widgets
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
-/// Die breiteste Zelle der Feldzeile: der Feldname, und daneben — nur wenn es
-/// etwas zu melden gibt — die Warnung „in keiner Datei".
+/// Die breiteste Zelle der Feldzeile: der Feldname, und daneben — sobald das
+/// Vorkommen bekannt ist — das Kennzeichen, in welcher Word-Datei der
+/// Platzhalter steht.
 ///
 /// Der Name ist zugleich der Platzhaltername; was hier steht, sucht das
-/// Backend beim Erzeugen in der Word-Datei. Deshalb gehört die Warnung genau
-/// hierher und nicht unter die Zeile: Sie sagt etwas über **diesen** Text.
+/// Backend beim Erzeugen in der Word-Datei. Deshalb gehört das Kennzeichen
+/// genau hierher und nicht unter die Zeile: Es sagt etwas über **diesen**
+/// Text.
 ///
 /// Warum die Zelle das Vorkommen selbst beobachtet, statt einfach ein
 /// [FeldVorkommenBeobachter]-Kennzeichen danebenzustellen: Nur wer vor dem
 /// Aufbau weiß, ob die Pille kommt, kann dem Eingabefeld den ganzen Rest der
-/// Spalte geben. Ein Platzhalter „für den Fall der Fälle" liesse in der
-/// Normallage — Feld in Ordnung, keine Warnung — ein Fünftel der breitesten
-/// Spalte leer stehen.
+/// Spalte geben. Ein Platzhalter „für den Fall der Fälle" liesse leer stehen,
+/// solange Name oder Platzhalterlisten noch fehlen.
 class FeldBezeichnungZelle extends StatelessWidget {
   /// Schlüssel des reactive_forms-Controls, in dem der Feldname steht.
   final String formControlName;
@@ -52,7 +53,7 @@ class FeldBezeichnungZelle extends StatelessWidget {
                 },
               ),
             ),
-            if (vorkommen == FeldVorkommen.inKeinerDatei)
+            if (vorkommen != null)
               ConstrainedBox(
                 // Die Pille darf höchstens gut die Hälfte der Spalte nehmen.
                 // Eine feste Obergrenze allein reichte nicht: Bei 700 px
@@ -64,8 +65,13 @@ class FeldBezeichnungZelle extends StatelessWidget {
                   maxWidth: grenzen.maxWidth * _pillenAnteil,
                 ),
                 child: FeldVorkommenPille(
-                  vorkommen: vorkommen!,
-                  onZuordnen: onZuordnen,
+                  vorkommen: vorkommen,
+                  // Der Klickweg zur Zuordnung (#36) gilt nur dem Befund, der
+                  // etwas kostet — die drei anderen Fälle sind reine
+                  // Auskunft und bleiben stumm.
+                  onZuordnen: vorkommen == FeldVorkommen.inKeinerDatei
+                      ? onZuordnen
+                      : null,
                 ),
               ),
           ],
