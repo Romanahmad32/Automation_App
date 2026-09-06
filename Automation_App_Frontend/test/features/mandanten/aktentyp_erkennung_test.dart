@@ -1,6 +1,6 @@
 import 'package:automation_app/features/mandanten/domain/entities/aktentyp.dart';
 import 'package:automation_app/features/mandanten/domain/services/aktentyp_erkennung.dart';
-import 'package:automation_app/features/mandanten/presentation/utils/ordnername_vorschlag.dart';
+import 'package:automation_app/features/mandanten/domain/services/ordnername_vorschlag.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

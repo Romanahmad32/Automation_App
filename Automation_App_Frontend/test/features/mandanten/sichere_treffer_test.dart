@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/domain/services/sichere_treffer.dart';
-import 'package:automation_app/features/mandanten/presentation/utils/ordnername_vorschlag.dart';
+import 'package:automation_app/features/mandanten/domain/services/ordnername_vorschlag.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'mandanten_testaufbau.dart';
