@@ -106,6 +106,11 @@ class MandantErkennung {
     }
     if (eingabe.length >= minTippfehlerLaenge &&
         gespeichert.length >= minTippfehlerLaenge) {
+      // Abkürzung ohne Bedeutungsänderung: Unterscheiden sich die Längen um
+      // mehr als 1, kostet allein das Angleichen schon mehr als einen Schritt —
+      // der Abstand kann dann nicht ≤ 1 sein. Das erspart die volle Matrix im
+      // häufigsten Fall und zählt beim Import über viertausend Zeilen.
+      if ((eingabe.length - gespeichert.length).abs() > 1) return false;
       return _levenshtein(eingabe, gespeichert) <= 1;
     }
     return false;

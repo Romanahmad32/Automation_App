@@ -21,7 +21,7 @@ import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbei
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/verknuepfe_ordner_mit_mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/import_anleitung.dart';
-import 'package:automation_app/features/mandanten/presentation/utils/ordnername_vorschlag.dart';
+import 'package:automation_app/features/mandanten/domain/services/ordnername_vorschlag.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:bloc/bloc.dart';
