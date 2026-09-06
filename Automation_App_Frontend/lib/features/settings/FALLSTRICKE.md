@@ -83,9 +83,13 @@ daneben, den Ordner für die App-Daten eingeschlossen.
 
 Einen **eigenen Knopf** hat sie trotzdem nicht: Den einen des Reiters ruft `MailboxAccessView._save`,
 er schreibt beides (`speichereWennGeaendert`) — zwei Knöpfe „Speichern" sahen aus wie zwei
-Formulare. Daneben stehen `MailVorlagenSektion`, `AnredebausteineSektion` und `GrussformelnSektion`;
-alle gehören `email_versand`, und jeder Eintrag dort ist ein eigener Satz im Bestand, sofort
-geschrieben.
+Formulare. Daneben steht seit dem 06.09.2026 **eine** Karte statt dreier: `MailBausteineSektion`
+hängt `MailVorlagenSektion`, `AnredebausteineSektion` und `GrussformelnSektion` unter gemeinsame
+Reiter. Alle drei gehören fachlich `email_versand` — sie sind zusammen der Werkzeugkasten des
+Versanddialogs (die Anrede steht *in* der Vorlage, der Gruß ebenso), und als drei gleichartige
+Karten untereinander sah man ihnen das nicht an. Jeder Eintrag dort ist ein eigener Satz im
+Bestand, sofort geschrieben; die drei `…SektionInhalt`-Widgets tragen deshalb **keine** eigene
+`FormSection` mehr, sondern nur ihre Liste samt `HinzufuegenButton`.
 
 `mailSignaturHtml` wird **nur durchgereicht**: gelesen, übernommen und verworfen wird sie im Dienst
 (`GET/POST/DELETE api/EmailVersand/signaturen/…`). Der Import **schreibt nicht** — er füllt das Feld

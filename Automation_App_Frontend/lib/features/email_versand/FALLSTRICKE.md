@@ -88,9 +88,19 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
   ist nur der **Hinweis** an der Auswahl und sperrt nichts; ohne bekannte Mandantenadresse bleibt
   es falsch, statt auf Verdacht zu warnen.
 - **Anrede und Zusatzgruß sind Platzhalter der Vorlage**, keine Vorspann-Zeilen: So bestimmt
-  jede Vorlage selbst, ob und wie angeredet wird. Ein Platzhalter ohne Wert nimmt **seine ganze
-  Zeile** mit (`MailVorlagenFueller`), und wo dadurch zwei Leerzeilen aufeinanderträfen, bleibt
-  eine — sonst hätte jede Mail ohne gewählten Gruß eine Lücke unter der Anrede.
+  jede Vorlage selbst, ob und wie angeredet wird. **Nur diese beiden** nehmen ohne Wert ihre
+  ganze Zeile mit (`MailVorlagenFueller`), und wo dadurch zwei Leerzeilen aufeinanderträfen,
+  bleibt eine — sonst hätte jede Mail ohne gewählten Gruß eine Lücke unter der Anrede. Beide
+  werden im Dialog gewählt; „keiner" ist dort eine getroffene Wahl, keine fehlende Angabe.
+- **Jeder andere Platzhalter ohne Wert bleibt als `{{...}}` stehen und sperrt den Versand**
+  (§4.7, geändert am 06.09.2026). Vorher entfiel auch seine Zeile stillschweigend, und Senden
+  blieb möglich: Die Lücke verschwand unbemerkt im fertigen Anschreiben. Wer prüft, ob eine
+  Vorlagenzeile entfällt, prüft deshalb `MailPlatzhalter.istEigen` mit —
+  `PlatzhalterBefund.bleibtOffen` trägt die Unterscheidung nach oben.
+  Angehalten wird in `VersandVoraussetzungen.offeneIn`, und zwar am **Entwurf**, nicht an der
+  Vorlage: Was dort noch als `{{...}}` steht, geht wörtlich hinaus — auch ein von Hand
+  hineingeschriebenes. Der `Vorgang` geht nur für die **Begründung** mit; ohne ihn hiesse sie an
+  jedem Namen „kein Vorgang gewählt", auch wenn einer gewählt ist.
   Damit die Zeile nicht **wortlos** verschwindet, trägt jeder `PlatzhalterBefund` seine Stelle
   (Betreff = Zeile 0, sonst die Zeilennummer), `zeileEntfaellt` und die **Fehlstelle**
   (`PlatzhalterFehlstelle`): warum leer, und wo die Angabe gepflegt wird. Der Unterschied zwischen
@@ -360,6 +370,12 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
 - `OutlookVerbindung` hält die Outlook-Instanz am Leben, der Dialog wärmt sie beim Öffnen vor
   (`waermeEntwurfVor`) — ohne das bezahlt der erste Entwurf den Outlook-Kaltstart, während der
   Anwalt wartet statt tippt.
+- **Drei Stellen brauchen das klassische Outlook**: Entwurf, Anhang-Griff und Signatur-Übernahme.
+  Das neue (Store-App) hat kein COM und liesse sie wortlos leer ausgehen. `OutlookStand` (der
+  Dienst sieht beim Start einmal nach, `outlook/stand`) trägt den Grund, jede der drei Stellen
+  schreibt ihn hin (`OutlookHinweisZeile`) — der **Direktversand** ist davon nicht betroffen.
+  *(Stand hier bis zum 06.09.2026 im Steckbrief — der ist auf 40 Zeilen begrenzt, diese Datei
+  nicht.)*
 
 ## Versandprotokoll
 
@@ -370,14 +386,33 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
 
 ## Oberfläche
 
+- **Drei benannte Abschnitte** statt fünfzehn Blöcken untereinander (`VersandAbschnitt`, neu
+  geordnet am 06.09.2026): „Empfänger" (Vorgang, An, Kopie), „Inhalt" (Vorlage, Anredeart,
+  Anrede, Zusatzgruß, Platzhalter, Betreff, Text, Platzhalterhilfe), „Anhänge" (Anhänge,
+  Signaturbilder, Größe). Vorher trennte sie nur `SizedBox(height: 16)`, und wo man gerade ist,
+  war ohne Scrollen nicht zu sagen. **Anrede und Gruß gehören zu „Inhalt"**, direkt über dem
+  Nachrichtenfeld: Sie sind Textbausteine dieser Mail, keine Angabe über den Fall.
 - **„Senden" ist immer anfassbar**, solange ein Postfach-Zugang da ist; geprüft wird beim
   Drücken (`istVersandbereit`), was fehlt steht danach am Feld (`state.markiert`). Daher
   `offenAn`/`offenKopie` im Zustand: eine getippte, nicht übernommene Adresse ginge sonst
   verloren.
+  **Der erste offene Punkt steht seit dem 06.09.2026 schon vorher da** —
+  `VersandBereitschaftZeile` über den Knöpfen, im grünen Fall ebenso wie im offenen. Eine Zeile,
+  die nur bei einem Mangel erschiene, verschöbe die Knöpfe genau dann, wenn jemand auf sie zielt.
 - Ein **Klick** auf eine Empfängerkachel holt sie zum Berichtigen zurück ins Feld (übernimmt
   vorher die angefangene Eingabe); das Kreuz löscht.
-- Die Vorschau läuft ab 1180 px als Seitenspalte mit (`EmailVersandInhalt.zweispaltig`) und
-  scrollt **als Ganzes**, damit die Leiste am Rand sitzt.
+- **Die Vorschau steckt nicht mehr hinter einem zweiten Fenster** (`AnsichtUmschalter`, geändert
+  am 06.09.2026). Ab 1180 px läuft sie als Seitenspalte mit (`EmailVersandInhalt.zweispaltig`)
+  und scrollt **als Ganzes**, damit die Leiste am Rand sitzt; darunter ist sie ein Segmentklick
+  entfernt und erscheint **an der Stelle des Formulars**, im selben Dialog. Der frühere
+  `EmailVorschauDialog` ist entfallen: Wer prüfen wollte, verliess dafür das Formular, und §4.7
+  verlangt die Sichtprüfung, *während* geschrieben wird.
+  Der Rumpf ist deshalb `Flexible` + `ConstrainedBox(maxHeight:)` und **kein** `SizedBox(height:)`
+  — im niedrigen Fenster schöbe eine feste Höhe die Statuszeile samt Knöpfen aus dem Dialog.
+- **Ein festes Chip-Vokabular** (§4.7, `AuswahlThemes`): `ChoiceChip` = Wahl (Anredeart, Anrede,
+  Zusatzgruß), `ActionChip` = Handlung (Platzhalter einfügen, Adressvorschlag übernehmen),
+  `InputChip` = entfernbare Eingabe (Empfänger, Bestandseinträge), `SegmentedButton` = Ansicht
+  oder Reiter. Vier Sorten im selben Dialog hiessen: Welche Fläche was tut, muss man lernen.
 - Ein **aus Outlook** gezogener Anhang kommt als *leeres* Ablegen an (Windows reicht ihn als
   virtuelle Datei durch, `desktop_drop` liest nur `CF_HDROP`) — `onNichtsErkannt` fragt dann
   Outlook nach derselben Nachricht.
@@ -418,3 +453,37 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
   stünde derselbe Platzhalter in beiden, meldete es nur den Betreff, und die ebenfalls entfallene
   Textzeile stand nirgends. Die übrigen kommen als `weitereEntfallene` mit — die Liste bleibt kurz,
   die Auskunft vollständig.
+
+## Vorlagen-Oberfläche
+
+Sie steht in den **Einstellungen** (Reiter „E-Mail", also in `settings`), gehört fachlich aber
+hierher: Was dort gepflegt wird, ist der Werkzeugkasten des Versanddialogs. Neu geordnet am
+06.09.2026 (Issue #107).
+
+- **Editor und Versanddialog teilen ihre Bausteine.** `BetreffTextFelder` (beide Felder samt
+  sichtbarem Einfügeziel), `PlatzhalterAuswahl` (offen, nicht zugeklappt) und `EmailVorschau`
+  stehen an beiden Stellen. Vorher waren es zwei Fassungen derselben Sache — einmal 640 px ohne
+  Vorschau, einmal bis 1160 px mit —, und jede Änderung an der einen ging an der anderen vorbei.
+- **Das Einfügeziel führt `PlatzhalterEinfuegeZiel`**, ein `ChangeNotifier` neben den zwei
+  Controllern. Vorher merkte sich der Editor das zuletzt fokussierte Feld in einem stillen `bool`:
+  Nichts sagte, wohin der nächste Klick einfügt, und wer nirgends stand, schrieb in den Text,
+  obwohl er den Betreff meinte. Die Fokusknoten gehören dem Ziel — ein Klick auf einen Chip nimmt
+  dem Textfeld den Fokus, die Schreibmarke im Controller bleibt aber stehen.
+  **Die zwei Rückrufe sind kein Beiwerk:** Ein programmatisch gesetzter `controller.value` löst
+  **kein** `onChanged` aus; ohne sie landete der eingefügte Name im Feld und nie im Entwurf.
+- **Die Vorschau des Editors läuft über Beispieldaten** (`MailVorlageBeispiel`) und über denselben
+  `MailVorlagenFueller` wie der Versand. Erfundene Daten mit Absicht: Ein echter Vorgang stünde
+  hier weit weg von seiner Akte, und die Vorschau sähe aus wie ein Entwurf an einen echten
+  Mandanten. Gefüllt ist der Beispielvorgang trotzdem **vollständig** — sonst zeigte die Vorschau
+  offene Platzhalter, die in Wahrheit keine sind. Die Fußzeile setzt der Editor selbst
+  (`signaturHinweis` an der Vorschau): „Es ist keine Signatur hinterlegt" wäre dort eine Auskunft
+  über die falsche Sache.
+- **Die Mängel- und Beugungsauskunft steckt hinter dem „?"-Knopf** (`VorlagenHinweiseKnopf`).
+  `VorlagenHinweise` und `VorlagenPruefung` sind unverändert — nur die Hülle ist neu: Der Block
+  stand fest zwischen Nachrichtenfeld und Platzhalterhilfe und schob bei drei Mängeln ausgerechnet
+  die Liste aus dem Fenster, die sie behebt. Das Abzeichen am Knopf trägt die Zahl, damit die
+  Auskunft nicht ganz verschwindet.
+- **Die Übersicht sagt je Vorlage, ob sie fertig ist** (`MailVorlageZustand`: „Ohne Text",
+  „N Platzhalter offen", „Vollständig"). „Offen" heisst hier **löst auf kein Feld auf** — ob eine
+  Angabe am *Vorgang* fehlt, kann die Liste nicht wissen, in den Einstellungen gibt es keinen.
+  Gerechnet wird in `VorlagenPruefung`, derselben Stelle, die den Editor speist.

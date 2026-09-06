@@ -1,6 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
-import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/hinzufuegen_button.dart';
 import 'package:automation_app/features/email_versand/domain/entities/grussformel.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
@@ -9,14 +8,21 @@ import 'package:automation_app/features/settings/presentation/widgets/grussforme
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Die Verwaltung der Zusatzgrüße (§4.7, §7.1) — im Reiter
-/// „E-Mail", neben den Textvorlagen, in die sie eingesetzt werden.
+/// Die Verwaltung der Zusatzgrüße (§4.7, §7.1) — ein Reiter des gemeinsamen
+/// Werkzeugkastens (`MailBausteineSektion`), neben den Textvorlagen, in die sie
+/// eingesetzt werden.
 ///
 /// **Eine Liste von Textbausteinen, kein Merkmal von Personen.** Sie hängt an
 /// keinem Mandanten und ordnet niemanden ein; gewählt wird sie je Mail beim
 /// Verfassen. Wie viele es gibt, bestimmt der Anwalt.
 class GrussformelnSektion extends StatelessWidget {
   const GrussformelnSektion({super.key});
+
+  /// Was der Reiter beantwortet — steht über der Liste.
+  static const String erklaerung =
+      'Zur Auswahl beim Verfassen — eingesetzt überall, wo eine Textvorlage '
+      'den Platzhalter {{Zusatzgruß}} trägt. Textbausteine: sie hängen an '
+      'keinem Mandanten.';
 
   @override
   Widget build(BuildContext context) {
@@ -65,21 +71,11 @@ class GrussformelnSektionInhalt extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<GrussformelnCubit, GrussformelnState>(
       builder: (context, stand) {
-        return FormSection(
-          icon: Icons.waving_hand_outlined,
-          title: 'Zusatzgrüße',
-          subtitle:
-              'Zur Auswahl beim Verfassen — eingesetzt überall, wo eine '
-              'Textvorlage den Platzhalter {{Zusatzgruß}} trägt. '
-              'Textbausteine: sie hängen an keinem Mandanten.',
-          trailing: stand.laedt
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : null,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 12,
           children: [
+            if (stand.laedt) const LinearProgressIndicator(minHeight: 2),
             if (stand.fehler != null)
               Text(
                 stand.fehler!,

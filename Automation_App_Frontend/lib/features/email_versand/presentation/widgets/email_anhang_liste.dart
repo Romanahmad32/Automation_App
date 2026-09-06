@@ -96,8 +96,9 @@ class EmailAnhangListe extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Anhänge', style: theme.textTheme.labelLarge),
-        const SizedBox(height: 6),
+        // Ohne eigene Überschrift: Seit dem 06.09.2026 steht „Anhänge" als
+        // Abschnittsüberschrift darüber (`VersandAbschnitt`), und zweimal
+        // dasselbe Wort untereinander liest sich wie zwei Listen.
         if (anhangPfade.isEmpty)
           Text(
             'Keine Anhänge. Das Anspruchsschreiben gehört üblicherweise als PDF dazu.',
