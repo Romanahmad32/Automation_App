@@ -1,5 +1,4 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
-import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:equatable/equatable.dart';
 
 /// Welcher Ausschnitt des Berichts gezeigt wird.
@@ -10,6 +9,7 @@ import 'package:equatable/equatable.dart';
 /// wozu ein Mensch etwas zu sagen hat.
 enum ImportSicht {
   zuPruefen('Zu prüfen'),
+  unbekannterOrdner('Ordner unbekannt'),
   neu('Neu'),
   ergaenzt('Ergänzt'),
   unveraendert('Unverändert'),
@@ -30,16 +30,15 @@ class ImportFilter extends Equatable {
   ImportFilter copyWith({String? query, ImportSicht? sicht}) =>
       ImportFilter(query: query ?? this.query, sicht: sicht ?? this.sicht);
 
-  /// [aehnliche] sind die Ähnlichkeitstreffer je Zeile (`MandantErkennung`):
-  /// Zeilen, zu denen es einen ähnlich geschriebenen Mandanten im Register
-  /// gibt. Sie zählen zusätzlich zu „zu prüfen" — ohne das versteckte die
-  /// Voreinstellung genau die Zeilen, um derentwillen der Hinweis gebaut wird.
+  /// [unbekannteZeilen] kommt von außen, weil der Bericht des Dienstes davon
+  /// nichts weiß: welche Ordner es im Stammordner wirklich gibt, weiß allein
+  /// das Frontend (`OrdnerPruefung` über den Akten-Scan).
   List<ImportEintrag> anwenden(
     List<ImportEintrag> eintraege, {
-    Map<int, List<MandantVorschlag>> aehnliche = const {},
+    Set<int> unbekannteZeilen = const {},
   }) => [
     for (final eintrag in eintraege)
-      if (passtZurSicht(eintrag, sicht, aehnliche: aehnliche) &&
+      if (passtZurSicht(eintrag, sicht, unbekannteZeilen: unbekannteZeilen) &&
           _passtZurSuche(eintrag))
         eintrag,
   ];
@@ -48,26 +47,28 @@ class ImportFilter extends Equatable {
   /// gefilterten: sonst zeigte jeder Umschalter nur noch sich selbst.
   Map<ImportSicht, int> zaehlen(
     List<ImportEintrag> eintraege, {
-    Map<int, List<MandantVorschlag>> aehnliche = const {},
+    Set<int> unbekannteZeilen = const {},
   }) => {
     for (final sicht in ImportSicht.values)
       sicht: eintraege
-          .where((e) => passtZurSicht(e, sicht, aehnliche: aehnliche))
+          .where(
+            (e) => passtZurSicht(e, sicht, unbekannteZeilen: unbekannteZeilen),
+          )
           .length,
   };
 
   static bool passtZurSicht(
     ImportEintrag eintrag,
     ImportSicht sicht, {
-    Map<int, List<MandantVorschlag>> aehnliche = const {},
+    Set<int> unbekannteZeilen = const {},
   }) => switch (sicht) {
     ImportSicht.alle => true,
     // Abgelehnte Zeilen fallen immer hierher: sie sind der Teil, den der
-    // Import nicht entscheiden konnte. Dazu die Zeilen mit ähnlichem Namen
-    // im Register — die sieht der Erzeuger über Sitzungsgrenzen hinweg nicht,
-    // und genau deshalb muss ein Mensch sie sehen.
-    ImportSicht.zuPruefen =>
-      eintrag.istAuffaellig || (aehnliche[eintrag.zeile]?.isNotEmpty ?? false),
+    // Import nicht entscheiden konnte.
+    ImportSicht.zuPruefen => eintrag.istAuffaellig,
+    // Die einzige Sicht, die der Bericht nicht selbst hergibt — und die
+    // einzige, die die Übernahme aufhält, solange sie nicht leer ist.
+    ImportSicht.unbekannterOrdner => unbekannteZeilen.contains(eintrag.zeile),
     ImportSicht.neu => eintrag.art == ImportArt.neu,
     ImportSicht.ergaenzt => eintrag.art == ImportArt.ergaenzt,
     ImportSicht.unveraendert => eintrag.art == ImportArt.unveraendert,

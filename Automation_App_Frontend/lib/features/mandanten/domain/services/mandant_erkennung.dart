@@ -9,39 +9,6 @@ class MandantVorschlag {
   const MandantVorschlag({required this.mandant, required this.begruendung});
 }
 
-/// Eine Zeile, zu der ein Vorschlag gesucht wird: die Nummer, unter der der
-/// Aufrufer sie wiederfindet, und die beiden Namensteile.
-class AehnlichkeitsZeile {
-  final int zeile;
-  final String vorname;
-  final String nachname;
-
-  const AehnlichkeitsZeile({
-    required this.zeile,
-    this.vorname = '',
-    this.nachname = '',
-  });
-}
-
-/// Register und Zeilen in **einem** Argument — die Form, die
-/// [MandantErkennung.findeZuZeilen] in einem eigenen Isolate (`compute`)
-/// aufrufbar macht.
-///
-/// Der Anlass ist die Größenordnung des Imports: eine Datei über den ganzen
-/// Bestand hat viertausend Zeilen, und jede läuft über mehrere tausend
-/// Registereinträge mit Levenshtein-Vergleich. Im Oberflächen-Isolat gerechnet
-/// steht die App dabei still — ein Fehler, der in der Kanzlei auffällt und
-/// nicht in der Prüfkette.
-class AehnlichkeitsAuftrag {
-  final List<Mandant> mandanten;
-  final List<AehnlichkeitsZeile> zeilen;
-
-  const AehnlichkeitsAuftrag({
-    this.mandanten = const [],
-    this.zeilen = const [],
-  });
-}
-
 /// Erkennt beim freien Erfassen im „Vorgang starten"-Formular, ob die Eingaben
 /// zu einem bereits gespeicherten Mandanten passen — bevor versehentlich ein
 /// Duplikat entsteht. Zwei Signale:
@@ -60,6 +27,18 @@ class MandantErkennung {
   /// Maximal so viele Vorschläge, damit der Hinweis kompakt bleibt.
   static const int maxVorschlaege = 3;
 
+  /// Ab dieser Länge des eingegebenen Nachnamens zählt ein Tippbeginn
+  /// (Präfix in eine der beiden Richtungen) als Treffer.
+  static const int minPraefixLaenge = 3;
+
+  /// Ab dieser Länge — auf **beiden** Seiten — zählt ein einzelner Tippfehler
+  /// als Treffer. Kürzere Namen unterscheiden sich zu oft nur um ein Zeichen,
+  /// ohne dasselbe zu meinen.
+  static const int minTippfehlerLaenge = 4;
+
+  /// Der kürzeste Nachname, zu dem überhaupt gesucht wird.
+  static const int minNachnameLaenge = 2;
+
   /// Liefert die passenden Registereinträge zu den aktuellen Eingaben,
   /// Kennzeichen-Treffer zuerst. Leer, wenn nichts (sicher genug) passt.
   static List<MandantVorschlag> finde({
@@ -71,11 +50,11 @@ class MandantErkennung {
     final ergebnis = <MandantVorschlag>[];
     final gesehen = <int>{};
 
-    final kz = _normalisiereKennzeichen(kennzeichen);
+    final kz = normalisiereKennzeichen(kennzeichen);
     if (kz.length >= 4) {
       for (final mandant in mandanten) {
         final passt = mandant.kennzeichen.any(
-          (k) => _normalisiereKennzeichen(k) == kz,
+          (k) => normalisiereKennzeichen(k) == kz,
         );
         if (passt && gesehen.add(mandant.id)) {
           ergebnis.add(
@@ -90,15 +69,15 @@ class MandantErkennung {
       }
     }
 
-    final nach = _normalisiereName(nachname);
-    if (nach.length >= 2) {
-      final vor = _normalisiereName(vorname);
+    final nach = normalisiereName(nachname);
+    if (nach.length >= minNachnameLaenge) {
+      final vor = normalisiereName(vorname);
       for (final mandant in mandanten) {
         if (gesehen.contains(mandant.id)) continue;
-        if (!_nachnamePasst(nach, _normalisiereName(mandant.nachname))) {
+        if (!_nachnamePasst(nach, normalisiereName(mandant.nachname))) {
           continue;
         }
-        if (!_vornamePasst(vor, _normalisiereName(mandant.vorname))) continue;
+        if (!_vornamePasst(vor, normalisiereName(mandant.vorname))) continue;
         if (gesehen.add(mandant.id)) {
           ergebnis.add(
             MandantVorschlag(
@@ -115,37 +94,18 @@ class MandantErkennung {
         : ergebnis.sublist(0, maxVorschlaege);
   }
 
-  /// [finde] über viele Zeilen auf einmal — ein Argument, ein Rückgabewert,
-  /// damit der Aufruf durch `compute` in ein eigenes Isolate passt.
-  ///
-  /// Geliefert werden nur Zeilen **mit** Treffer: eine Karte voller leerer
-  /// Listen kostete bei viertausend Zeilen Platz und sagte nichts.
-  static Map<int, List<MandantVorschlag>> findeZuZeilen(
-    AehnlichkeitsAuftrag auftrag,
-  ) {
-    final ergebnis = <int, List<MandantVorschlag>>{};
-    for (final zeile in auftrag.zeilen) {
-      final treffer = finde(
-        mandanten: auftrag.mandanten,
-        vorname: zeile.vorname,
-        nachname: zeile.nachname,
-      );
-      if (treffer.isNotEmpty) ergebnis[zeile.zeile] = treffer;
-    }
-    return ergebnis;
-  }
-
   /// Nachname passt bei Gleichheit, Tippbeginn (in beide Richtungen ab drei
   /// Zeichen) oder genau einem Tippfehler — inklusive Buchstabendreher —
   /// (ab vier Zeichen).
   static bool _nachnamePasst(String eingabe, String gespeichert) {
     if (gespeichert.isEmpty) return false;
     if (eingabe == gespeichert) return true;
-    if (eingabe.length >= 3 &&
+    if (eingabe.length >= minPraefixLaenge &&
         (gespeichert.startsWith(eingabe) || eingabe.startsWith(gespeichert))) {
       return true;
     }
-    if (eingabe.length >= 4 && gespeichert.length >= 4) {
+    if (eingabe.length >= minTippfehlerLaenge &&
+        gespeichert.length >= minTippfehlerLaenge) {
       // Abkürzung ohne Bedeutungsänderung: Unterscheiden sich die Längen um
       // mehr als 1, kostet allein das Angleichen schon mehr als einen Schritt —
       // der Abstand kann dann nicht ≤ 1 sein. Das erspart die volle Matrix im
@@ -165,10 +125,14 @@ class MandantErkennung {
 
   /// Kennzeichen auf die reinen Zeichen reduzieren (Bindestrich/Leerzeichen
   /// egal): „HG-E 1427" und „hge1427" gelten als gleich.
-  static String _normalisiereKennzeichen(String kennzeichen) =>
+  static String normalisiereKennzeichen(String kennzeichen) =>
       kennzeichen.toUpperCase().replaceAll(RegExp(r'[^A-ZÄÖÜ0-9]'), '');
 
-  static String _normalisiereName(String name) => name
+  /// Namen vergleichbar machen: getrimmt, kleingeschrieben, Umlaute
+  /// aufgelöst. Öffentlich, weil `ImportAehnlichkeit` seinen Vorfilter über
+  /// **dieselbe** Schreibweise legt — eine zweite Normalisierung daneben
+  /// schlösse Namen aus, die [finde] gefunden hätte.
+  static String normalisiereName(String name) => name
       .trim()
       .toLowerCase()
       .replaceAll('ä', 'ae')

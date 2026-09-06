@@ -146,12 +146,12 @@ void main() {
     'lib/features/mailbox/domain/entities/received_reply.dart': [
       'ReceivedReplyDto',
     ],
-    'lib/features/mandanten/domain/entities/arbeitspaket.dart': [
-      'ArbeitspaketDto',
-    ],
     'lib/features/mandanten/domain/entities/import_bericht.dart': [
       'ImportBerichtDto',
       'ImportEintragDto',
+    ],
+    'lib/features/mandanten/domain/entities/import_paket.dart': [
+      'ImportPaketDto',
     ],
     'lib/features/mandanten/domain/entities/mandant.dart': [
       'MandantDto',

@@ -1,14 +1,15 @@
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
+import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
-import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/importiere_mandanten.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/lies_import_datei.dart';
+import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/import_befund.dart';
+import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/import_umfeld.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/import_filter.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 part 'mandanten_import_state.dart';
@@ -32,23 +33,65 @@ part 'mandanten_import_state.dart';
 class MandantenImportCubit extends Cubit<MandantenImportState> {
   final UseCase<MandantenImportDatei, LiesImportDateiParams> _liesDatei;
   final UseCase<ImportBericht, ImportiereMandantenParams> _importiere;
+  final UseCase<List<Akte>, NoParams> _getAkten;
   final UseCase<List<Mandant>, NoParams> _getMandanten;
 
-  MandantenImportCubit(this._liesDatei, this._importiere, this._getMandanten)
-    : super(const MandantenImportState());
+  MandantenImportCubit(
+    this._liesDatei,
+    this._importiere,
+    this._getAkten,
+    this._getMandanten,
+  ) : super(const MandantenImportState());
+
+  /// Holt einmal, woran die Datei gemessen wird: den Akten-Scan und das
+  /// Register. Läuft neben dem Aufbau der Seite und hält nichts auf — die
+  /// Dateiauswahl ist ohne beides bedienbar.
+  ///
+  /// Scheitert eines von beiden, bleibt es leer und wird **nicht** gemeldet.
+  /// Das ist kein Fehlerschlucken, sondern die Rangfolge: Der Import ist die
+  /// Hauptsache. Ohne Scan wird keine Ordnerangabe beanstandet
+  /// (`OrdnerPruefung`), ohne Register gibt es keinen Ähnlichkeitshinweis —
+  /// eine rote Meldung darüber hielte den Anwalt von einer Arbeit ab, die er
+  /// sehr wohl tun kann.
+  Future<void> umfeldLaden() async {
+    final akten = await _getAkten(const NoParams());
+    final register = await _getMandanten(const NoParams());
+    if (isClosed) return;
+
+    final umfeld = ImportUmfeld(
+      ordnernamen: switch (akten) {
+        Right(value: final gefunden) => [
+          for (final akte in gefunden) akte.ordnername,
+        ],
+        Left() => const [],
+      },
+      mandanten: switch (register) {
+        Right(value: final gefunden) => gefunden,
+        Left() => const [],
+      },
+    );
+    emit(state.copyWith(umfeld: umfeld, befund: _befundZu(umfeld)));
+  }
+
+  /// Nimmt eine im Arbeitsspeicher zusammengestellte Datei an, als wäre sie
+  /// gewählt worden, und fährt dieselbe Vorschau. [herkunft] steht dann
+  /// anstelle eines Dateipfads über der Liste.
+  ///
+  /// Ausdrücklich **kein** zweiter Weg ins Register: Vorschau vor dem
+  /// Schreiben, „Ergänzen nie überschreiben", eine Transaktion und die
+  /// Paket-Buchführung gelten damit unverändert. Wer hier abkürzte, hätte eine
+  /// zweite Zuordnungslogik, die beim ersten Sonderfall auseinanderliefe.
+  Future<void> uebernimmDatei(
+    MandantenImportDatei datei, {
+    String herkunft = '',
+  }) async {
+    emit(state.zurueckgesetzt(dateiPfad: herkunft, laufend: true));
+    await _pruefeOderSchreibe(datei, uebernehmen: false);
+  }
 
   /// Liest die gewählte Datei und holt sofort die Vorschau dazu.
   Future<void> dateiWaehlen(String pfad) async {
-    emit(MandantenImportState(dateiPfad: pfad, laufend: true));
-
-    // Das Register einmal je Datei holen: Es trägt den Ähnlichkeitsvergleich
-    // und die Übernahme im Dialog. Scheitert der Abruf, läuft der Import
-    // trotzdem weiter — dann fehlt der Hinweis, was allemal besser ist als
-    // gar keine Vorschau.
-    final register = await _getMandanten(const NoParams());
-    if (register case Right(value: final mandanten)) {
-      emit(state.copyWith(mandanten: mandanten));
-    }
+    emit(state.zurueckgesetzt(dateiPfad: pfad, laufend: true));
 
     final gelesen = await _liesDatei(LiesImportDateiParams(pfad: pfad));
     switch (gelesen) {
@@ -87,8 +130,8 @@ class MandantenImportCubit extends Cubit<MandantenImportState> {
 
   void filtern(ImportFilter filter) => emit(state.copyWith(filter: filter));
 
-  /// Zurück auf Anfang — für die nächste Datei.
-  void zuruecksetzen() => emit(const MandantenImportState());
+  /// Zurück auf Anfang — für die nächste Datei. Der Akten-Scan bleibt stehen.
+  void zuruecksetzen() => emit(state.zurueckgesetzt());
 
   Future<void> _mitGeaenderterDatei(
     int zeile,
@@ -122,6 +165,7 @@ class MandantenImportCubit extends Cubit<MandantenImportState> {
     final ergebnis = await _importiere(
       ImportiereMandantenParams(datei: datei, uebernehmen: uebernehmen),
     );
+    if (isClosed) return;
 
     switch (ergebnis) {
       case Left(value: final failure):
@@ -131,52 +175,25 @@ class MandantenImportCubit extends Cubit<MandantenImportState> {
           state.copyWith(
             datei: datei,
             bericht: bericht,
-            aehnliche: await _aehnlichkeiten(datei, bericht),
             laufend: false,
             fehlerLoeschen: true,
+            befund: ImportBefund.zu(
+              umfeld: state.umfeld,
+              datei: datei,
+              bericht: bericht,
+            ),
           ),
         );
     }
   }
 
-  /// Die Ähnlichkeitstreffer zu den Zeilen, die der Dienst als `neu` einstuft
-  /// — „Schmitt" bei vorhandenem „Schmidt". Nach **jedem** Bericht neu
-  /// gerechnet: Ein berichtigter Name soll seinen Hinweis auch wieder
-  /// verlieren.
-  ///
-  /// Nur `neu` zählt: Bei `ergaenzt` und `unveraendert` hat der Import den
-  /// Mandanten ja schon getroffen, da wäre der Hinweis nur Lärm.
-  ///
-  /// Gerechnet wird in einem **eigenen Isolate** (`compute`). Der Vergleich
-  /// läuft je Zeile über den ganzen Bestand und rechnet Levenshtein; bei einer
-  /// Datei über den ganzen Aktenbestand sind das viertausend Zeilen mal
-  /// mehrere tausend Registereinträge. Im Oberflächen-Isolat gerechnet stünde
-  /// die App dabei still — ein Fehler, der in der Kanzlei auffällt und nicht
-  /// in der Prüfkette.
-  Future<Map<int, List<MandantVorschlag>>> _aehnlichkeiten(
-    MandantenImportDatei datei,
-    ImportBericht bericht,
-  ) async {
-    if (state.mandanten.isEmpty) return const {};
-
-    final zeilen = <AehnlichkeitsZeile>[
-      for (final eintrag in bericht.eintraege)
-        if (eintrag.art == ImportArt.neu &&
-            eintrag.zeile >= 0 &&
-            eintrag.zeile < datei.mandanten.length)
-          AehnlichkeitsZeile(
-            zeile: eintrag.zeile,
-            vorname: datei.mandanten[eintrag.zeile].vorname,
-            nachname: datei.mandanten[eintrag.zeile].nachname,
-          ),
-    ];
-    // Ohne Zeilen kein Isolate: Ein Isolat zu starten, um eine leere Karte
-    // zurückzubekommen, kostet mehr als die Rechnung selbst.
-    if (zeilen.isEmpty) return const {};
-
-    return compute(
-      MandantErkennung.findeZuZeilen,
-      AehnlichkeitsAuftrag(mandanten: state.mandanten, zeilen: zeilen),
-    );
+  /// Die Befunde zum Stand, den der Zustand gerade hält — für den Fall, dass
+  /// das Umfeld erst eintrifft, während schon eine Vorschau steht. Ohne Datei
+  /// oder Bericht gibt es nichts zu rechnen.
+  ImportBefund _befundZu(ImportUmfeld umfeld) {
+    final datei = state.datei;
+    final bericht = state.bericht;
+    if (datei == null || bericht == null) return const ImportBefund();
+    return ImportBefund.zu(umfeld: umfeld, datei: datei, bericht: bericht);
   }
 }

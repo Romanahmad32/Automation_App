@@ -3,7 +3,7 @@ import 'package:automation_app/features/mandanten/domain/entities/import_bericht
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
-import 'package:automation_app/features/mandanten/presentation/widgets/aehnlicher_mandant_hinweis.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/import_aehnlichkeits_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_formular.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -34,14 +34,20 @@ class ImportEintragDialog extends StatefulWidget {
   /// Der Datensatz aus der Datei, der hier bearbeitet wird.
   final ImportMandantEintrag datensatz;
 
-  /// Registereinträge mit ähnlichem Namen. Leer heißt: kein Hinweis.
-  final List<MandantVorschlag> aehnliche;
+  /// Registereinträge mit ähnlichem Namen — der Hinweis, dass diese Zeile
+  /// womöglich eine Dublette anlegt. Nur Zeilen mit [ImportArt.neu] haben
+  /// welche; für alle anderen hat der Dienst den Mandanten längst gefunden.
+  final List<MandantVorschlag> vorschlaege;
+
+  /// Der gescannte Ordnerbestand, aus dem die Akten-Ordner gewählt werden.
+  final List<String> vorhandeneOrdner;
 
   const ImportEintragDialog({
     super.key,
     required this.befund,
     required this.datensatz,
-    this.aehnliche = const [],
+    this.vorschlaege = const [],
+    this.vorhandeneOrdner = const [],
   });
 
   @override
@@ -52,6 +58,10 @@ class _ImportEintragDialogState extends State<ImportEintragDialog> {
   late Anrede _anrede = Anrede.fromValue(widget.datensatz.anrede);
   late List<String> _ordnernamen = List.of(widget.datensatz.aktenOrdnernamen);
   late List<String> _kennzeichen = List.of(widget.datensatz.kennzeichen);
+
+  /// Ob der Anwalt einen der Vorschläge schon übernommen hat. Danach steht der
+  /// Name im Formular, und der Hinweis daneben hätte nichts mehr zu sagen.
+  bool _vorschlagUebernommen = false;
 
   late final FormGroup _form = FormGroup({
     'vorname': FormControl<String>(value: widget.datensatz.vorname),
@@ -89,17 +99,16 @@ class _ImportEintragDialogState extends State<ImportEintragDialog> {
               spacing: 16,
               children: [
                 _herkunft(theme),
-                // Derselbe Hinweis wie an der Zeile. Wer eine verdächtige
-                // Zeile öffnet, soll die Übernahme nicht wieder zuklappen
-                // müssen, um sie zu erreichen.
-                AehnlicherMandantHinweis(
-                  vorschlaege: widget.aehnliche,
-                  onUebernehmen: _namenUebernehmen,
-                ),
+                if (widget.vorschlaege.isNotEmpty && !_vorschlagUebernommen)
+                  ImportAehnlichkeitsHinweis(
+                    vorschlaege: widget.vorschlaege,
+                    onUebernehmen: _vorschlagUebernehmen,
+                  ),
                 ImportEintragFormular(
                   initialAnrede: _anrede,
                   initialOrdnernamen: _ordnernamen,
                   initialKennzeichen: _kennzeichen,
+                  vorhandeneOrdner: widget.vorhandeneOrdner,
                   onAnrede: (wert) => _anrede = wert,
                   onOrdnernamen: (werte) => _ordnernamen = werte,
                   onKennzeichen: (werte) => _kennzeichen = werte,
@@ -137,13 +146,6 @@ class _ImportEintragDialogState extends State<ImportEintragDialog> {
     );
   }
 
-  /// Trägt die Schreibweise des Registers in die Namensfelder ein. Bewusst nur
-  /// ins Formular: Geschrieben wird auch hier erst mit „Änderung übernehmen".
-  void _namenUebernehmen(Mandant mandant) {
-    _form.control('vorname').value = mandant.vorname;
-    _form.control('nachname').value = mandant.nachname;
-  }
-
   /// Woher die Angaben stammen und was der Dienst daran auszusetzen hatte —
   /// beides steht hier, weil sonst nicht zu erkennen ist, was zu berichtigen
   /// wäre.
@@ -176,6 +178,27 @@ class _ImportEintragDialogState extends State<ImportEintragDialog> {
         ],
       ),
     );
+  }
+
+  /// Übernimmt den Namen des vorgeschlagenen Mandanten in die Zeile.
+  ///
+  /// Übernommen wird **nur der Name**, keine Kennung. Die Importdatei kennt
+  /// keine Schlüssel — die vergibt die Datenbank —, und der Dienst findet den
+  /// Mandanten über denselben Namensvergleich wieder, mit dem das Register
+  /// seine Dubletten erkennt. Aus der Zeile wird damit regelkonform
+  /// „ergänzt", ohne dass die Oberfläche eine zweite Zuordnungslogik
+  /// mitbrächte.
+  ///
+  /// Die Anschrift bleibt stehen, wie sie in der Datei steht: „Ergänzen, nie
+  /// überschreiben" entscheidet darüber im Dienst, nicht dieser Klick. Und
+  /// `quelle`/`sicherheit` fasst er ohnehin nicht an — sie beschreiben den
+  /// Fund, nicht den Mandanten.
+  void _vorschlagUebernehmen(Mandant mandant) {
+    setState(() {
+      _form.control('vorname').value = mandant.vorname;
+      _form.control('nachname').value = mandant.nachname;
+      _vorschlagUebernommen = true;
+    });
   }
 
   void _speichern() {

@@ -102,97 +102,136 @@ void main() {
     expect(aufbau.cubit.state.bericht?.eintraege, hasLength(2));
   });
 
-  // Genau die Auskunft, die der Erzeuger nicht hat: Innerhalb einer Sitzung
-  // sähe er „Schmidt" und „Schmitt" nebeneinander, über zwei Sitzungen hinweg
-  // nur den zweiten. Der Import selbst vergleicht getrimmt und kleingeschrieben
-  // — für ihn sind das zwei Menschen.
-  group('ähnlicher Name im Register', () {
-    /// Eine Datei mit genau einer Zeile, deren Nachname der Test bestimmt.
-    MandantenImportDatei zeile(String nachname) => MandantenImportDatei(
-      mandanten: [
-        ImportMandantEintrag(
-          vorname: 'Mark',
-          nachname: nachname,
-          aktenOrdnernamen: const ['VUnfallursache Mark Schmitt'],
-        ),
-      ],
-    );
-
-    /// Der Dienst rechnet bei jeder Änderung neu: Trägt die Zeile den Namen
-    /// aus dem Register, wird aus `neu` ein `ergaenzt`.
-    ImportBericht berichtZu(MandantenImportDatei datei) {
-      final eintragsname = datei.mandanten.single.nachname;
-      final vorhanden = eintragsname == 'Schmidt';
-      return bericht(
-        eintraege: [
-          eintrag(
-            0,
-            name: 'Mark $eintragsname',
-            art: vorhanden ? ImportArt.ergaenzt : ImportArt.neu,
+  // Die Datei kommt von einem Programm, das einen Ordnernamen erfinden kann.
+  // Gespeichert wäre er nie wieder auffindbar — und sähe wie eine erledigte
+  // Zuordnung aus.
+  test('eine Zeile mit unbekanntem Ordner sperrt die Übernahme', () async {
+    aufbau = ImportTestaufbau(
+      inhalt: const MandantenImportDatei(
+        mandanten: [
+          ImportMandantEintrag(
+            vorname: 'Mark',
+            nachname: 'Schmidt',
+            aktenOrdnernamen: ['VUnfallursache Erfunden'],
           ),
         ],
-        neu: vorhanden ? 0 : 1,
-        ergaenzt: vorhanden ? 1 : 0,
+      ),
+      ordner: const ['VUnfallursache Schmidt'],
+    );
+
+    await aufbau.geoeffnet();
+
+    expect(aufbau.cubit.state.befund.unbekannteZeilen, {0});
+    expect(aufbau.cubit.state.befund.sperrtUebernahme, isTrue);
+    expect(
+      aufbau.cubit.state.kannUebernehmen,
+      isFalse,
+      reason: 'der Bericht bewirkt etwas — aufgehalten wird nur der Ordner',
+    );
+  });
+
+  // Ohne Scan wäre die Sperre eine Behauptung über Ordner, die niemand kennt:
+  // der Import muss auch dort laufen, wo der Stammordner gerade fehlt.
+  test('ohne Scan sperrt eine unbekannte Ordnerangabe nicht', () async {
+    aufbau = ImportTestaufbau(
+      inhalt: const MandantenImportDatei(
+        mandanten: [
+          ImportMandantEintrag(
+            vorname: 'Mark',
+            nachname: 'Schmidt',
+            aktenOrdnernamen: ['VUnfallursache Erfunden'],
+          ),
+        ],
+      ),
+    );
+
+    await aufbau.geoeffnet();
+
+    expect(aufbau.cubit.state.umfeld.ordnernamen, isEmpty);
+    expect(aufbau.cubit.state.befund.unbekannteZeilen, isEmpty);
+    expect(aufbau.cubit.state.kannUebernehmen, isTrue);
+  });
+
+  test('ein Vermerk auf einen unbekannten Ordner sperrt ebenso', () async {
+    aufbau = ImportTestaufbau(
+      inhalt: const MandantenImportDatei(
+        mandanten: [
+          ImportMandantEintrag(
+            vorname: 'Mark',
+            nachname: 'Schmidt',
+            aktenOrdnernamen: ['VUnfallursache Schmidt'],
+          ),
+        ],
+        ohneMandantenbezug: ['Buchhaltung 2019'],
+      ),
+      ordner: const ['VUnfallursache Schmidt'],
+    );
+
+    await aufbau.geoeffnet();
+
+    expect(aufbau.cubit.state.befund.unbekannteZeilen, isEmpty);
+    expect(aufbau.cubit.state.befund.unbekannteOhneBezug, ['Buchhaltung 2019']);
+    expect(aufbau.cubit.state.kannUebernehmen, isFalse);
+  });
+
+  // Der Weg aus dem Zuordnungsstapel: eine im Arbeitsspeicher zusammengestellte
+  // Datei läuft durch dieselbe Vorschau wie jede Datei von der Platte.
+  test('uebernimmDatei fährt die Vorschau ohne Dateiauswahl', () async {
+    await aufbau.cubit.uebernimmDatei(
+      datei(mandanten: 2),
+      herkunft: 'Sichere Treffer aus 380 Ordnern',
+    );
+
+    expect(aufbau.lesen.aufrufe, 0, reason: 'nichts von der Platte gelesen');
+    expect(aufbau.importieren.aufrufe, [
+      false,
+    ], reason: 'geprüft, nicht geschrieben');
+    expect(aufbau.importieren.gesendet.single.mandanten, hasLength(2));
+    expect(aufbau.cubit.state.dateiPfad, 'Sichere Treffer aus 380 Ordnern');
+    expect(aufbau.cubit.state.kannUebernehmen, isTrue);
+  });
+
+  test('der Akten-Scan läuft einmal, nicht je geprüfter Datei', () async {
+    aufbau = ImportTestaufbau(ordner: const ['VUnfallursache Schmidt 0']);
+
+    await aufbau.geoeffnet();
+    await aufbau.cubit.eintragVerwerfen(0);
+    aufbau.cubit.zuruecksetzen();
+
+    expect(aufbau.scan.aufrufe, 1);
+    expect(
+      aufbau.cubit.state.umfeld.ordnernamen,
+      ['VUnfallursache Schmidt 0'],
+      reason: '„Andere Datei" wirft die Datei weg, nicht den Scan',
+    );
+  });
+
+  // Wo der Dienst den Mandanten schon gefunden hat, wäre ein Vorschlag daneben
+  // bestenfalls Lärm.
+  test('der Ähnlichkeitshinweis gilt nur für neue Zeilen', () async {
+    ImportTestaufbau mitArt(ImportArt art) => ImportTestaufbau(
+      inhalt: const MandantenImportDatei(
+        mandanten: [ImportMandantEintrag(vorname: 'Mark', nachname: 'Schmitt')],
+      ),
+      antwort: bericht(
+        eintraege: [eintrag(0, name: 'Mark Schmitt', art: art)],
+        neu: art == ImportArt.neu ? 1 : 0,
+        ergaenzt: art == ImportArt.ergaenzt ? 1 : 0,
         ordnerZugeordnet: 1,
-      );
-    }
-
-    setUp(() {
-      aufbau = ImportTestaufbau(
-        inhalt: zeile('Schmitt'),
-        mandanten: [mandant(1, 'Schmidt', vorname: 'Mark')],
-      );
-      aufbau.importieren.berichtFuer = berichtZu;
-    });
-
-    test(
-      '„Schmitt" bekommt den Hinweis auf den vorhandenen „Schmidt"',
-      () async {
-        await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
-
-        expect(
-          aufbau.cubit.state.aehnlicheZu(0).single.mandant.anzeigename,
-          'Mark Schmidt',
-        );
-      },
+      ),
+      register: [mandant(7, 'Schmidt', vorname: 'Mark')],
     );
 
-    // Ohne das versteckte die Voreinstellung „zu prüfen" genau die Zeile, um
-    // derentwillen der Hinweis gebaut wird: sie ist ja weder abgelehnt noch
-    // sonst auffällig.
-    test('die Zeile steht damit in „zu prüfen"', () async {
-      await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
-
-      expect(aufbau.cubit.state.sichtbar.single.zeile, 0);
-      expect(aufbau.cubit.state.zaehler[ImportSicht.zuPruefen], 1);
-    });
-
-    test(
-      'nach der Berichtigung ist der Hinweis weg und die Zeile ergänzt',
-      () async {
-        await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
-        await aufbau.cubit.eintragErsetzen(
-          0,
-          zeile('Schmidt').mandanten.single,
-        );
-
-        expect(
-          aufbau.cubit.state.bericht?.eintraege.single.art,
-          ImportArt.ergaenzt,
-        );
-        expect(aufbau.cubit.state.aehnlicheZu(0), isEmpty);
-        expect(aufbau.cubit.state.sichtbar, isEmpty);
-      },
+    aufbau = mitArt(ImportArt.neu);
+    await aufbau.geoeffnet();
+    expect(
+      aufbau.cubit.state.befund.aehnliche[0]?.single.mandant.nachname,
+      'Schmidt',
     );
 
-    test('ohne Register bleibt es beim Bericht des Dienstes', () async {
-      aufbau = ImportTestaufbau(inhalt: zeile('Schmitt'));
-      aufbau.importieren.berichtFuer = berichtZu;
-
-      await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
-
-      expect(aufbau.cubit.state.aehnliche, isEmpty);
-      expect(aufbau.cubit.state.sichtbar, isEmpty);
-    });
+    await aufbau.close();
+    aufbau = mitArt(ImportArt.ergaenzt);
+    await aufbau.geoeffnet();
+    expect(aufbau.cubit.state.befund.aehnliche, isEmpty);
   });
 }

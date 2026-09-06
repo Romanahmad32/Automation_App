@@ -2,12 +2,12 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_scope.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
-import 'package:automation_app/features/mandanten/presentation/blocs/arbeitspaket_cubit/arbeitspaket_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/views/nicht_zugeordnete_ordner_view.dart';
-import 'package:automation_app/features/mandanten/presentation/widgets/arbeitspaket_button.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_oeffnen_button.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_zustands_bereich.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/paket_holen_button.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/paket_sichere_treffer_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -23,19 +23,10 @@ class NichtZugeordneteOrdnerPage extends StatelessWidget
   @override
   Widget wrappedRoute(BuildContext context) {
     return PageRefreshScope(
-      builder: (context) => MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (context) =>
-                getIt<MandantenOverviewBloc>()
-                  ..add(const LoadMandantenUebersichtEvent()),
-          ),
-          // Die Paket-Buchführung hängt nicht am Aktenbestand: Sie kommt aus
-          // der Datenbank und steht auch dann, wenn der Scan noch läuft.
-          BlocProvider(
-            create: (context) => getIt<ArbeitspaketCubit>()..laden(),
-          ),
-        ],
+      builder: (context) => BlocProvider(
+        create: (context) =>
+            getIt<MandantenOverviewBloc>()
+              ..add(const LoadMandantenUebersichtEvent()),
         child: this,
       ),
     );
@@ -48,9 +39,9 @@ class NichtZugeordneteOrdnerPage extends StatelessWidget
         titel: 'Ordner zuordnen',
         icon: Icons.rule_folder_outlined,
         untertitel: 'Gefundene Akten-Ordner einem Mandanten zuordnen',
-        // Erst holen, dann übernehmen — die Reihenfolge des Vorgangs.
         aktionen: [
-          ArbeitspaketButton(),
+          PaketHolenButton(),
+          PaketSichereTrefferButton(),
           ImportOeffnenButton(),
           PageRefreshButton(),
         ],

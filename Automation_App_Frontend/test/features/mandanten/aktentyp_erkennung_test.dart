@@ -70,19 +70,15 @@ void main() {
       expect(vorschlag.nachname, 'Mustermann');
     });
 
-    // Diese Erwartung war bis zum 05.09.2026 umgekehrt („ein einzelnes Wort
-    // wird zum Vornamen") und wurde auf ausdrücklichen Auftrag gedreht — nicht,
-    // um einen roten Test grün zu bekommen, sondern weil sie den Aktenbestand
-    // falsch beschrieb: `docs/MANDANTEN_IMPORT.md` führt den Mandanten „Mark
-    // Schmidt" mit den Ordnern „VUnfallursache Schmidt" und „Bußgeldsache
-    // Schmidt". Das einzelne Wort hinter dem Präfix ist in dieser Kanzlei der
-    // Nachname. Als Vorname gelesen fand der Vorschlag im Register nie einen
-    // Treffer, weil `MandantErkennung` am Nachnamen wiedererkennt — und genau
-    // darauf baut die Beschriftung der Arbeitspakete (Issue #108).
-    test('ein einzelnes Wort ist der Nachname', () {
-      final vorschlag = nameVorschlagAusOrdner('Strafsache Schmidt');
+    // Die echten Aktenordner der Kanzlei tragen **nur** den Nachnamen
+    // („VUnfallursache Albrecht"), an 61 von 61 Ordnern des eingestellten
+    // Stammordners belegt. Ein einzelnes Wort ist deshalb der Nachname —
+    // andernfalls stünde bei jedem echten Ordner der Nachname im Vornamenfeld,
+    // und „Sichere Treffer übernehmen" fände auf echten Daten nie etwas.
+    test('ein einzelnes Wort wird zum Nachnamen', () {
+      final vorschlag = nameVorschlagAusOrdner('VUnfallursache Albrecht');
       expect(vorschlag.vorname, isEmpty);
-      expect(vorschlag.nachname, 'Schmidt');
+      expect(vorschlag.nachname, 'Albrecht');
     });
 
     test('nur ein Präfix ergibt keinen Vorschlag', () {

@@ -3,21 +3,34 @@ import 'dart:async';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
+import 'package:automation_app/features/mandanten/domain/entities/arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
+import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
+import 'package:automation_app/features/mandanten/domain/services/arbeitspaket_bauen.dart';
+import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
+import 'package:automation_app/features/mandanten/domain/services/mandanten_namensindex.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/notiere_import_paket.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/verknuepfe_ordner_mit_mandant.dart';
+import 'package:automation_app/features/mandanten/presentation/utils/import_anleitung.dart';
+import 'package:automation_app/features/mandanten/domain/services/ordnername_vorschlag.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
+import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 
+part 'mandanten_arbeitspaket_abruf.dart';
+part 'mandanten_arbeitspaket_griff.dart';
 part 'mandanten_overview_event.dart';
 part 'mandanten_overview_state.dart';
 part 'mandanten_stand_abruf.dart';
@@ -38,10 +51,25 @@ part 'mandanten_stand_abruf.dart';
 ///   Klick stehenbleibt.
 ///
 /// Was beim Laden zusammengetragen wird, steht in [MandantenStandAbruf]; was
-/// eine Änderung aus dem Zustand macht, in [MandantenOverviewLoaded] selbst.
+/// eine Änderung aus dem Zustand macht, in [MandantenOverviewLoaded] selbst;
+/// was „Arbeitspaket holen" und „Sichere Treffer übernehmen" (Issue #108)
+/// vom Bloc brauchen, in [ArbeitspaketGriff] — als Mixin, weil diese drei
+/// Methoden anders als die beiden anderen Bausteine direkt `state` lesen.
+///
+/// Nachladen der Historie nach dem Verbuchen läuft dort trotzdem über ein
+/// eigenes Ereignis ([HistorieNeuLadenEvent]) und nicht über einen direkten
+/// `emit`-Aufruf im Mixin — anders als bei `VersandGriff`/`AnredeGriff` im
+/// `EmailEntwurfCubit`. Dort reicht der Umweg über die Klasse, weil `Cubit`s
+/// `emit` (`BlocBase.emit`) sowohl `@protected` als auch `@visibleForTesting`
+/// trägt und der Analyzer beim `@protected`-Treffer gar nicht erst zur
+/// `@visibleForTesting`-Prüfung kommt. `Bloc.emit` überschreibt das und lässt
+/// **nur** `@visibleForTesting` stehen — ausnahmslos, auch aus einem Mixin auf
+/// der eigenen Klasse heraus. Der von `on<...>` gereichte [Emitter] bleibt
+/// deshalb der einzige Weg; [ArbeitspaketGriff] löst das über [Completer].
 @injectable
 class MandantenOverviewBloc
-    extends Bloc<MandantenOverviewEvent, MandantenOverviewState> {
+    extends Bloc<MandantenOverviewEvent, MandantenOverviewState>
+    with ArbeitspaketGriff {
   /// Wie viele Mandanten ein Abruf holt.
   static const int seitenGroesse = 50;
 
@@ -52,6 +80,10 @@ class MandantenOverviewBloc
   static const Duration sucheVerzoegerung = Duration(milliseconds: 250);
 
   final MandantenStandAbruf _abruf;
+
+  /// Erfüllt zugleich den abstrakten Getter aus [ArbeitspaketGriff].
+  @override
+  final MandantenArbeitspaketAbruf _arbeitspaket;
   final UseCase<List<Fall>, GetFaelleParams> _getFaelle;
   final UseCase<List<OrdnerStatus>, SetzeOrdnerStatusParams> _setzeOrdnerStatus;
   final UseCase<void, DeleteMandantParams> _deleteMandant;
@@ -66,11 +98,24 @@ class MandantenOverviewBloc
     this._setzeOrdnerStatus,
     this._deleteMandant,
     this._verknuepfeOrdner,
+    UseCase<List<ImportPaket>, NoParams> getImportPakete,
+    UseCase<List<Mandant>, NoParams> getMandanten,
+    UseCase<KanzleiSettings, NoParams> getKanzleiSettings,
+    UseCase<ImportPaket, NotiereImportPaketParams> notiereImportPaket,
+    UseCase<void, SchreibeArbeitspaketParams> schreibeArbeitspaket,
   ) : _abruf = MandantenStandAbruf(
         getSeite: getMandantenSeite,
         getAktenOrdnernamen: getAktenOrdnernamen,
         getOrdnerStatus: getOrdnerStatus,
         getAkten: getAkten,
+        getImportPakete: getImportPakete,
+      ),
+      _arbeitspaket = MandantenArbeitspaketAbruf(
+        getMandanten: getMandanten,
+        getKanzleiSettings: getKanzleiSettings,
+        getImportPakete: getImportPakete,
+        notiereImportPaket: notiereImportPaket,
+        schreibeArbeitspaket: schreibeArbeitspaket,
       ),
       super(MandantenOverviewLoading()) {
     on<LoadMandantenUebersichtEvent>(_onLoad);
@@ -82,6 +127,7 @@ class MandantenOverviewBloc
     on<FehlerVerwerfenEvent>(_onFehlerVerwerfen);
     on<DeleteMandantEvent>(_onDelete);
     on<VerknuepfeOrdnerEvent>(_onVerknuepfe);
+    on<HistorieNeuLadenEvent>(_onHistorieNeuLaden);
   }
 
   Future<void> _onLoad(
