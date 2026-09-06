@@ -7098,7 +7098,7 @@
                 "type": "null"
               },
               {
-                "description": "Nur f\u00FCr Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGN).",
+                "description": "Nur f\u00FCr Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGn).",
                 "$ref": "#/components/schemas/DamageListingDto"
               }
             ]

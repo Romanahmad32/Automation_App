@@ -71,7 +71,7 @@ void main() {
         inputType: InputType.text,
       ),
     ],
-    wordFilePathOhneAuflistung: 'HGN.docx',
+    wordFilePathOhneAuflistung: 'HGn.docx',
   );
 
   /// Was die Seite beim Verlassen zurückgibt — und ob sie überhaupt schon weg

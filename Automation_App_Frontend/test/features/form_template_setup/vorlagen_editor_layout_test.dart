@@ -201,7 +201,7 @@ void main() {
     final bloc = TemplatePlaceholdersBloc(FesterPlatzhalter())
       ..add(
         const LoadTemplatePlaceholders(
-          'HGN.docx',
+          'HGn.docx',
           TemplateFileSlot.ohneAuflistung,
         ),
       );
@@ -220,8 +220,8 @@ void main() {
               width: VorlagenEditorLayout.linkeSpalteBreite,
               child: TemplateFileSlotCard(
                 slot: TemplateFileSlot.ohneAuflistung,
-                path: r'C:\Vorlagen\Anspruchsschreiben HGN.docx',
-                title: 'Vorlage ohne Auflistung (HGN)',
+                path: r'C:\Vorlagen\Anspruchsschreiben HGn.docx',
+                title: 'Vorlage ohne Auflistung (HGn)',
                 subtitle: 'Standardbrief mit Haftung dem Grunde nach.',
                 onPick: _nichts,
                 onRemove: _nichts,

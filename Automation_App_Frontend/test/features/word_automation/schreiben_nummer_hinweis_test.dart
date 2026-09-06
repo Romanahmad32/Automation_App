@@ -38,10 +38,10 @@ void main() {
       tester,
       bisherigeNummer: 2,
       letzterPfad:
-          r'C:\Arbeit\84-26 C03\Anspruchsschreiben an Allianz 2 HGN.docx',
+          r'C:\Arbeit\84-26 C03\Anspruchsschreiben an Allianz 2 HGn.docx',
     );
     expect(
-      find.text('Zuletzt: Anspruchsschreiben an Allianz 2 HGN.docx'),
+      find.text('Zuletzt: Anspruchsschreiben an Allianz 2 HGn.docx'),
       findsOneWidget,
     );
     expect(find.text('Korrektur von Nr. 2'), findsOneWidget);

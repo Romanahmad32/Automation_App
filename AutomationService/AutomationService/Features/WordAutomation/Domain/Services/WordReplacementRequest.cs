@@ -32,7 +32,7 @@ public sealed record WordReplacementRequest
     /// </summary>
     public string VorgangSchluessel { get; init; } = string.Empty;
 
-    /// <summary>Nur für Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGN).</summary>
+    /// <summary>Nur für Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGn).</summary>
     public DamageListing? DamageListing { get; init; }
 
     /// <summary>

@@ -69,8 +69,8 @@ void main() {
     id: 7,
     templateName: 'Anspruchsschreiben',
     fields: felder,
-    wordFilePathOhneAuflistung: r'C:\Vorlagen\HGN.docx',
-    wordFilePathMitAuflistung: r'C:\Vorlagen\HGN mit Auflistung.docx',
+    wordFilePathOhneAuflistung: r'C:\Vorlagen\HGn.docx',
+    wordFilePathMitAuflistung: r'C:\Vorlagen\HGn mit Auflistung.docx',
   );
 
   test(

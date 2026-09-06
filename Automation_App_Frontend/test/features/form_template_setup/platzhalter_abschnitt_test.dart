@@ -94,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Je Datei eine Liste, mit ihrer eigenen Aufschrift darüber.
-    expect(find.text('Ohne Auflistung (HGN)'), findsOneWidget);
+    expect(find.text('Ohne Auflistung (HGn)'), findsOneWidget);
     expect(find.text('Mit Auflistung'), findsOneWidget);
     // `{{Kennzeichen}}` steht in beiden Dateien — als Chip also zweimal, denn
     // der Chip ist der Weg zu genau diesem Vorkommen.

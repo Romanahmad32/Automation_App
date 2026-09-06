@@ -6,7 +6,7 @@ class TemplateNameCard extends StatelessWidget {
   /// Eine Zeile unter dem Namensfeld — null heißt: keine.
   ///
   /// Gedacht für den Namensvorschlag aus dem Dateinamen („Vorschlag aus
-  /// HGN.docx — bei Bedarf anpassen", #104 Stufe 3c). Der Aufrufer entscheidet,
+  /// HGn.docx — bei Bedarf anpassen", #104 Stufe 3c). Der Aufrufer entscheidet,
   /// wann er steht; die Karte zeigt nur an, was sie bekommt — sonst müsste sie
   /// den Stand des Editors kennen, um eine Textzeile zu setzen.
   final String? hinweis;

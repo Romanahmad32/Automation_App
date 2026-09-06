@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 /// Kennzeichen an einer Feldzeile — **nur noch** die Warnung „in keiner
 /// Datei" (#35 Teil 3, Gestalt aus #104).
 ///
-/// Vorher zeigte es alle vier Fälle: *beide · nur HGN · nur Auflistung · in
+/// Vorher zeigte es alle vier Fälle: *beide · nur HGn · nur Auflistung · in
 /// keiner Datei*. Drei davon waren reine Auskunft und standen an **jeder**
 /// Zeile — achtzehn Kennzeichen, die sagen, dass alles in Ordnung ist,
 /// verstecken das eine, das es nicht ist. Die drei Fälle sind deshalb weg;

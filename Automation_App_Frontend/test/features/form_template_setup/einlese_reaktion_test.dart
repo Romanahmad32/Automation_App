@@ -21,7 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Datei wirklich neu gelesen wurde**: Der Vorschlag ist das Löschen von
 /// Feldern, ein Ladezustand darf ihn nicht auslösen.
 void main() {
-  const pfad = 'C:/Vorlagen/HGN.docx';
+  const pfad = 'C:/Vorlagen/HGn.docx';
 
   const vorlage = FormTemplate(
     id: 3,
@@ -230,7 +230,7 @@ void main() {
       await reagiert.verarbeite(kontext, bearbeitung, geladen(['Kennzeichen']));
 
       // Der Dateiname kommt aus dem Pfad des gerade gelesenen Slots.
-      expect(gefragtNach, 'HGN.docx');
+      expect(gefragtNach, 'HGn.docx');
       expect(gefragteFelder, ['Frist']);
       expect(bearbeitung.feldnamen, ['Kennzeichen']);
       expect(aufbauten, 1);
@@ -350,7 +350,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(fragen, ['HGN.docx']);
+      expect(fragen, ['HGn.docx']);
 
       // Währenddessen wird die zweite Datei getauscht.
       await reagiert.verarbeite(
@@ -363,7 +363,7 @@ void main() {
       );
       await reagiert.verarbeite(kontext, bearbeitung, bNeu);
       expect(fragen, [
-        'HGN.docx',
+        'HGn.docx',
       ], reason: 'über einer offenen Frage geht keine zweite auf');
 
       ersteAntwort.complete(const ['Frist']);
@@ -372,7 +372,7 @@ void main() {
       // Der nächste Zustand holt den übersprungenen Befund nach.
       await reagiert.verarbeite(kontext, bearbeitung, bNeu);
 
-      expect(fragen, ['HGN.docx', 'SA.docx']);
+      expect(fragen, ['HGn.docx', 'SA.docx']);
       expect(gefragt.last, ['Summe']);
       expect(bearbeitung.feldnamen, ['Kennzeichen']);
     });

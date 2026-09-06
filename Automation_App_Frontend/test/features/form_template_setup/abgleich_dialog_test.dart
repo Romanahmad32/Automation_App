@@ -17,7 +17,7 @@ void main() {
   Future<void> zeige(
     WidgetTester tester, {
     required List<String> felder,
-    String dateiname = 'HGN.docx',
+    String dateiname = 'HGn.docx',
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -48,7 +48,7 @@ void main() {
 
     expect(find.text('Datei neu eingelesen'), findsOneWidget);
     expect(
-      find.textContaining('kommen in HGN.docx nicht mehr vor'),
+      find.textContaining('kommen in HGn.docx nicht mehr vor'),
       findsOneWidget,
     );
     expect(find.byType(CheckboxListTile), findsNWidgets(2));
