@@ -36,11 +36,11 @@ class PlatzhalterAbschnitt extends StatelessWidget {
   /// Die Aufschrift über der Chip-Liste einer Datei.
   ///
   /// Kürzer als die Überschrift der Dateikarte („Vorlage ohne Auflistung
-  /// (HGN)"): Dort benennt sie die Datei samt Zweck, hier trennt sie nur zwei
+  /// (HGn)"): Dort benennt sie die Datei samt Zweck, hier trennt sie nur zwei
   /// Chip-Listen voneinander, die ohnehin schon in einem Abschnitt namens
   /// „Platzhalter je Datei" stehen.
   static String slotTitel(TemplateFileSlot slot) => switch (slot) {
-    TemplateFileSlot.ohneAuflistung => 'Ohne Auflistung (HGN)',
+    TemplateFileSlot.ohneAuflistung => 'Ohne Auflistung (HGn)',
     TemplateFileSlot.mitAuflistung => 'Mit Auflistung',
   };
 

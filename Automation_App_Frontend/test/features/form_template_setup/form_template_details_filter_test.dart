@@ -71,7 +71,7 @@ void main() {
         inputType: InputType.text,
       ),
     ],
-    wordFilePathOhneAuflistung: 'HGN.docx',
+    wordFilePathOhneAuflistung: 'HGn.docx',
   );
 
   // Solange die Seite offen ist, steht in `FieldData.label` nur der

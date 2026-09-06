@@ -29,7 +29,7 @@ void main() {
 
   VorlagenEntwurf entwurf({
     String? vorlagenname = 'Anspruchsschreiben',
-    String? pfadOhne = 'HGN.docx',
+    String? pfadOhne = 'HGn.docx',
     String? pfadMit,
     List<FieldData> fields = const [],
     Map<String, String?> namen = const {},

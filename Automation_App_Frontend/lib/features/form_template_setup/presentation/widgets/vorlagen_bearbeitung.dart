@@ -115,7 +115,7 @@ class VorlagenBearbeitung {
   /// ohne ihn neu zu rechnen.
   String? get nameVorschlag => _nameVorschlag;
 
-  /// Der Dateiname, aus dem der Vorschlag stammt (`HGN.docx`) — null, solange
+  /// Der Dateiname, aus dem der Vorschlag stammt (`HGn.docx`) — null, solange
   /// nichts vorgeschlagen wurde.
   String? get nameVorschlagQuelle => _nameVorschlagQuelle;
 

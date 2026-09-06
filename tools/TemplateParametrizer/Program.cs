@@ -55,7 +55,7 @@ Console.WriteLine($"{replacements.Length} Ersetzungen geladen.");
 
 Parametrize(
     Path.Combine(root, "Beispiele", "VORLAGE Vorfahrtverletzung STOP 205_HGn.docx"),
-    Path.Combine(templatesDirectory, "Vorfahrtverletzung_STOP_205_ohne_Auflistung_HGN.docx"),
+    Path.Combine(templatesDirectory, "Vorfahrtverletzung_STOP_205_ohne_Auflistung_HGn.docx"),
     insertDamageListingMarker: false);
 
 Parametrize(

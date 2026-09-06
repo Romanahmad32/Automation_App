@@ -131,7 +131,7 @@ viele Zellen liefern.
   dann in der falschen Zeile.
 - **Nur noch ein Vorkommens-Kennzeichen: „in keiner Datei"** (`FeldVorkommenPille` in `feld_bezeichnung_zelle.dart`,
   ausgelöst über `FeldVorkommenBeobachter`). Vorher zeigte `FeldVorkommenBadge` alle vier Werte aus
-  `FeldVorkommen` — *beide · nur HGN · nur Auflistung · in keiner Datei*. Die ersten drei waren reine Auskunft und
+  `FeldVorkommen` — *beide · nur HGn · nur Auflistung · in keiner Datei*. Die ersten drei waren reine Auskunft und
   standen an **jeder** Zeile, ohne dass der Anwalt je etwas damit tat: Achtzehn Kennzeichen, die sagen, dass
   alles in Ordnung ist, verstecken das eine, das es nicht ist. `FeldVorkommen` selbst bleibt vierwertig
   (`feld_vorkommen_test.dart` prüft weiter alle vier Werte) — nur die Anzeige zeigt jetzt ausschließlich den

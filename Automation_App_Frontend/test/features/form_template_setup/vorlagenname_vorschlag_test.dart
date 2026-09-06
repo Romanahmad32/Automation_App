@@ -11,14 +11,14 @@ void main() {
   group('Dateiname', () {
     test('kommt aus dem Pfad, mit beiden Trennern und mit Endung', () {
       expect(
-        VorlagennameVorschlag.dateiname(r'C:\Vorlagen\HGN.docx'),
-        'HGN.docx',
+        VorlagennameVorschlag.dateiname(r'C:\Vorlagen\HGn.docx'),
+        'HGn.docx',
       );
       expect(
-        VorlagennameVorschlag.dateiname('/home/kanzlei/HGN.docx'),
-        'HGN.docx',
+        VorlagennameVorschlag.dateiname('/home/kanzlei/HGn.docx'),
+        'HGn.docx',
       );
-      expect(VorlagennameVorschlag.dateiname('HGN.docx'), 'HGN.docx');
+      expect(VorlagennameVorschlag.dateiname('HGn.docx'), 'HGn.docx');
     });
   });
 

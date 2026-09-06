@@ -37,7 +37,7 @@ class TemplateFileSlots extends StatelessWidget {
         TemplateFileSlotCard(
           slot: TemplateFileSlot.ohneAuflistung,
           path: bearbeitung.pfadOhneAuflistung,
-          title: 'Vorlage ohne Auflistung (HGN)',
+          title: 'Vorlage ohne Auflistung (HGn)',
           subtitle:
               'Standardbrief mit Haftung dem Grunde nach – ohne '
               'Schadensaufstellung.',

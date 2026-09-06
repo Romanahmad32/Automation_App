@@ -35,8 +35,8 @@ class VorlagennameVorschlag {
     ' sa',
   ];
 
-  /// Der Dateiname mit Endung (`C:\Vorlagen\HGN.docx` → `HGN.docx`) — für den
-  /// Hinweis „aus HGN.docx vorgeschlagen" unter dem Namensfeld. Beide Trenner,
+  /// Der Dateiname mit Endung (`C:\Vorlagen\HGn.docx` → `HGn.docx`) — für den
+  /// Hinweis „aus HGn.docx vorgeschlagen" unter dem Namensfeld. Beide Trenner,
   /// weil der Pfad aus dem Dateidialog kommt und Tests ihn mit `/` schreiben.
   static String dateiname(String pfad) => pfad.split(RegExp(r'[\\/]')).last;
 

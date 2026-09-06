@@ -16,7 +16,7 @@ class FormTemplate extends Equatable {
   /// in [GespeicherterStand].
   final GespeicherterStand? stand;
 
-  /// Pfad der Word-Datei **ohne** Auflistung (HGN-Sektion). Null, wenn für die
+  /// Pfad der Word-Datei **ohne** Auflistung (HGn-Sektion). Null, wenn für die
   /// Vorlage keine Version ohne Auflistung hinterlegt ist.
   final String? wordFilePathOhneAuflistung;
 
@@ -34,7 +34,7 @@ class FormTemplate extends Equatable {
     this.stand,
   });
 
-  /// True, wenn eine Version ohne Auflistung (HGN) verknüpft ist.
+  /// True, wenn eine Version ohne Auflistung (HGn) verknüpft ist.
   bool get hasOhneAuflistung => wordFilePathOhneAuflistung != null;
 
   /// True, wenn eine Version mit Auflistung (Schadensaufstellung) verknüpft ist.

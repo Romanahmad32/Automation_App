@@ -29,7 +29,7 @@ void main() {
         inputType: InputType.date,
       ),
     ],
-    wordFilePathOhneAuflistung: 'HGN.docx',
+    wordFilePathOhneAuflistung: 'HGn.docx',
   );
 
   TemplatePlaceholdersState zustandMit({
@@ -61,7 +61,7 @@ void main() {
       expect(bearbeitung.fields.map((f) => f.label), ['field_0', 'field_1']);
       expect(bearbeitung.feldnamen, ['Kennzeichen', 'Unfalldatum']);
       expect(bearbeitung.nextFieldIndex, 2);
-      expect(bearbeitung.pfadOhneAuflistung, 'HGN.docx');
+      expect(bearbeitung.pfadOhneAuflistung, 'HGn.docx');
       expect(bearbeitung.pfadMitAuflistung, isNull);
     });
 
@@ -176,7 +176,7 @@ void main() {
       final bearbeitung = VorlagenBearbeitung.fuer(vorlage);
 
       bearbeitung.setzePfad(TemplateFileSlot.mitAuflistung, 'Auflistung.docx');
-      expect(bearbeitung.pfadOhneAuflistung, 'HGN.docx');
+      expect(bearbeitung.pfadOhneAuflistung, 'HGn.docx');
       expect(
         bearbeitung.pfad(TemplateFileSlot.mitAuflistung),
         'Auflistung.docx',
@@ -214,7 +214,7 @@ void main() {
       final bearbeitung = VorlagenBearbeitung.fuer(null);
       bearbeitung.formGroup.control('templateName').updateValue('Mein Name');
 
-      final gesetzt = bearbeitung.nameVorschlagen(r'C:\V\HGN.docx');
+      final gesetzt = bearbeitung.nameVorschlagen(r'C:\V\HGn.docx');
 
       expect(gesetzt, isFalse);
       expect(bearbeitung.formGroup.control('templateName').value, 'Mein Name');
@@ -331,7 +331,7 @@ void main() {
       // Ein zweiter Anlauf auf derselben Datei brächte nur zurück, was der
       // Anwalt inzwischen gelöscht hat.
       final bearbeitung = VorlagenBearbeitung.fuer(null)
-        ..setzePfad(TemplateFileSlot.ohneAuflistung, 'C:/Vorlagen/HGN.docx');
+        ..setzePfad(TemplateFileSlot.ohneAuflistung, 'C:/Vorlagen/HGn.docx');
       bearbeitung.automatischUebernehmen(TemplateFileSlot.ohneAuflistung, [
         'Kennzeichen',
       ]);
@@ -340,7 +340,7 @@ void main() {
       // Derselbe Pfad noch einmal gesetzt — das ist kein Wechsel.
       bearbeitung.setzePfad(
         TemplateFileSlot.ohneAuflistung,
-        'C:/Vorlagen/HGN.docx',
+        'C:/Vorlagen/HGn.docx',
       );
 
       expect(

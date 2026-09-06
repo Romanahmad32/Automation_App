@@ -26,7 +26,7 @@ public class WordReplacementDto
     [MinLength(1, ErrorMessage = Validierungstexte.MindestensEinEintrag)]
     public Dictionary<string, string> ReplacePatterns { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Nur für Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGN).</summary>
+    /// <summary>Nur für Vorlagen mit Auflistung; null bei Vorlagen ohne Auflistung (HGn).</summary>
     public DamageListingDto? DamageListing { get; set; }
 
     /// <summary>

@@ -21,7 +21,7 @@ class FestePlatzhalter
 /// zur Reparatur (#36) — ein Feld, dessen Wert beim Erzeugen verworfen wird,
 /// soll sich an Ort und Stelle zuordnen lassen.
 ///
-/// Die drei anderen Fälle (*beide · nur HGN · nur Auflistung*) zeigt es seit
+/// Die drei anderen Fälle (*beide · nur HGn · nur Auflistung*) zeigt es seit
 /// #104 **nicht** mehr, und dieser Test hält das fest. Sie waren reine
 /// Auskunft und standen an jeder Zeile: achtzehn Kennzeichen, die sagen, dass
 /// alles in Ordnung ist, verstecken das eine, das es nicht ist. Der frühere
@@ -30,7 +30,7 @@ class FestePlatzhalter
 /// nicht mehr erscheinen. Der Befund selbst und sein Klickweg sind
 /// unverändert geprüft.
 void main() {
-  /// Zwei Felder an einer Vorlage, deren HGN-Datei nur `{{Kennzeichen}}`
+  /// Zwei Felder an einer Vorlage, deren HGn-Datei nur `{{Kennzeichen}}`
   /// kennt: „Kennzeichen" kommt dort an, „Zeichen" nirgends.
   Future<void> zeigeBadges(
     WidgetTester tester, {
@@ -92,10 +92,10 @@ void main() {
   ) async {
     await zeigeBadges(tester, onZuordnen: (_) {});
 
-    // „Kennzeichen" steht in der HGN-Datei — daran gibt es nichts zu ordnen
+    // „Kennzeichen" steht in der HGn-Datei — daran gibt es nichts zu ordnen
     // und nichts zu melden. Genau ein Kennzeichen bleibt übrig, das der
     // Warnung.
-    expect(find.text('nur HGN'), findsNothing);
+    expect(find.text('nur HGn'), findsNothing);
     expect(find.text('beide'), findsNothing);
     expect(find.text('nur Auflistung'), findsNothing);
     expect(find.byType(FeldVorkommenPille), findsOne);

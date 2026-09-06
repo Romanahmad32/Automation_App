@@ -8,8 +8,8 @@ void main() {
   group('Pfadbestandteile', () {
     test('dateibasisname liefert den Namen ohne Ordner und Endung', () {
       expect(
-        dateibasisname(r'C:\App\Generated\Arbeit\84-26 C03\VORLAGE HGN.docx'),
-        'VORLAGE HGN',
+        dateibasisname(r'C:\App\Generated\Arbeit\84-26 C03\VORLAGE HGn.docx'),
+        'VORLAGE HGn',
       );
       // Ein Punkt im Ordnernamen ist keine Endung, ein fehlender Punkt auch
       // nicht — beides kommt aus echten Kanzleiordnern.

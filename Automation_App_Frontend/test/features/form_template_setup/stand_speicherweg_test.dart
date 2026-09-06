@@ -77,7 +77,7 @@ void main() {
       ),
     ],
     nextFieldIndex: 1,
-    pfadOhneAuflistung: 'HGN.docx',
+    pfadOhneAuflistung: 'HGn.docx',
     pfadMitAuflistung: null,
   );
 
