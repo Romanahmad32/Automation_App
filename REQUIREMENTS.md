@@ -258,9 +258,11 @@ Gemeinsam:
   Nachfrage. Ist das Fenster zu schmal für eine zweite Spalte, bleibt die Vorschau auf Knopfdruck
   erreichbar. Das ist die Entsprechung zur Sichtprüfung des Dokuments (siehe 4.5): Der Versand ist
   der eine unumkehrbare Schritt des Ablaufs. *Ergänzt am 27.08.2026.*
-- **[M] Alles oder nichts:** Fehlt ein Anhang, ist er gesperrt oder ist eine Adresse unbrauchbar,
-  geht **nichts** hinaus, und der Grund steht im Klartext vor dem Anwalt. Eine Mail, der
-  ausgerechnet das Anspruchsschreiben fehlt, wäre schlimmer als eine, die gar nicht erst hinausging.
+- **[M] Alles oder nichts:** Fehlt ein Anhang, ist er gesperrt, ist eine Adresse unbrauchbar oder
+  bleibt ein Platzhalter aus Mandanten-, Vorgangs- oder Versichererdaten offen (siehe unten „Ein
+  offener Platzhalter sperrt den Versand"), geht **nichts** hinaus, und der Grund steht im Klartext
+  vor dem Anwalt. Eine Mail, der ausgerechnet das Anspruchsschreiben fehlt, wäre schlimmer als
+  eine, die gar nicht erst hinausging.
 - **[M] Betreff und Mailtext aus Vorlage:** Betreff und Anschreiben stammen aus einer vom Anwalt
   pflegbaren Textvorlage mit Platzhaltern (z. B. Zeichen, Mandantenname, Schadennummer).
   Ausgangsbestand ist die in der Kanzlei bereits verwendete Mailvorlage — sie wird einmalig
@@ -276,9 +278,11 @@ Gemeinsam:
   der Anwalt. *Ergänzt am 01.09.2026.*
 - **[M] Anrede und Gruß stehen in der Vorlage:** Auch die Anrede ist ein Platzhalter im
   Vorlagentext. So bestimmt jede Vorlage selbst, ob und wie angeredet wird — die eine an
-  zwei Empfänger, die andere persönlich an den Mandanten. Ein Platzhalter, für den es nichts
-  einzusetzen gibt, lässt seine Zeile **ganz** entfallen, statt eine leere zurückzulassen; eine
-  Vorlage darf also Zeilen enthalten, die nur manchmal erscheinen. *Ergänzt am 01.09.2026.*
+  zwei Empfänger, die andere persönlich an den Mandanten. Was ein Platzhalter ergibt, für den es
+  nichts einzusetzen gibt, regelt „Ein offener Platzhalter sperrt den Versand" weiter unten —
+  einheitlich für alle Platzhalter der Vorlage, nicht nur für Anrede und Gruß. *Ergänzt am
+  01.09.2026; die bisherige Sonderregel für leere Zeilen an dieser Stelle wurde am 06.09.2026 durch
+  die einheitliche Regel unten ersetzt.*
 - **[M] Alle Platzhalter eines Vorgangs sind beim Schreiben einer Vorlage wählbar:** Der Anwalt
   bekommt sie nach Gruppen geordnet (beim Verfassen gewählt, Mandant, Versicherung, Vorgang) mit
   Klartext dazu, und ein Klick setzt den Namen an der Schreibmarke ein. Der Grund: Der Katalog ist
@@ -331,8 +335,9 @@ Gemeinsam:
   neutrale Form als solche. Nur sie lässt sich noch verbessern — und ob „Mandant(in)" so in der
   Mail stehen soll, wäre sonst erst an einer Mail zu einem Mandanten ohne hinterlegte Anredeart zu
   sehen, also selten und spät. Der ganze Text dreimal gefüllt wäre hier irreführend: Im Editor ist
-  kein Vorgang gewählt, und nach der Regel „Zeile ohne gefüllten Platzhalter entfällt" stünde von
-  der Vorlage kaum etwas da. *Ergänzt am 02.09.2026.*
+  kein Vorgang gewählt, jeder Vorgangsplatzhalter bliebe offen stehen, und die Vorlage verschwände
+  hinter lauter unveränderten `{{...}}`. *Ergänzt am 02.09.2026; Begründung am 06.09.2026 an die
+  neue Regel für offene Platzhalter angepasst.*
 - **[S] Anredeart und „neutral anreden" sind zwei Angaben, nicht eine:** Ob **namentlich** angeredet
   wird, hängt am Empfängerkreis; welche **Form** ein Wort annimmt, am Mandanten. Der Regelfall
   zeigt, warum sie getrennt bleiben: Eine Mail an die gegnerische Versicherung beginnt mit „Sehr
@@ -400,7 +405,9 @@ Gemeinsam:
   wortlos nichts. *Ergänzt am 02.09.2026.*
 - **[S] Persönlicher Zusatzgruß, gewählt je Mail:** Beim Verfassen wählt der Anwalt den
   persönlichen Gruß aus einer Liste — oder keinen. Der Platzhalter `{{Zusatzgruß}}` setzt ihn ein,
-  üblich als eigene Zeile unter der Anrede; ohne Wahl entfällt die Zeile. Vorbelegt ist, was am
+  üblich als eigene Zeile unter der Anrede; „keinen" ist dabei eine **bewusste Wahl**, keine
+  fehlende Angabe, und die Zeile entfällt für diesen Fall weiter sauber — die Sperre für offene
+  Platzhalter weiter oben greift hier nicht. Vorbelegt ist, was am
   Mandanten hinterlegt ist (siehe 5.1): Der Regelfall soll ohne Klick stimmen, die Ausnahme ohne
   Umweg über die Stammdaten möglich sein. Die Liste pflegt der Anwalt selbst — wie viele Grüße es
   gibt, bestimmt er (siehe 7.1). *Geändert am 02.09.2026: Bis dahin kam der Gruß allein aus dem
@@ -438,20 +445,32 @@ Gemeinsam:
   Ohne diese Auskunft ist ein fertig gefüllter Text nicht mehr auf die Vorlage zurückzuführen, aus
   der er stammt, und ein falsch belegter Platzhalter sieht aus wie ein Tippfehler. *Ergänzt am
   02.09.2026.*
-- **[M] Ein übersprungener Platzhalter bleibt auffindbar — und sagt, was fehlt:** Was leer blieb,
-  steht **offen** im Formular, nicht hinter einem Aufklapper: samt **Stelle** (Betreff oder
-  Zeilennummer), Folge (entfällt die Zeile ganz oder verliert sie nur diesen Wert) und vor allem
-  dem **Grund** — „im Mandantenregister nicht erfasst", „am Vorgang nicht erfasst", „wird oben im
-  Dialog gewählt" oder „kein Feld dieses Namens: Schreibweise prüfen". Der letzte Fall ist der
-  wichtigste: Ein Tippfehler im Platzhalternamen war vorher von einer wirklich fehlenden Angabe
-  nicht zu unterscheiden, und die eine Aufgabe ist „berichtigen", die andere „nachpflegen".
-  Der Ton bleibt der der übrigen Hinweise (kein Alarmrot): Ein fehlender Zusatzgruß ist kein
-  Fehler. *Ergänzt am 02.09.2026: Beobachtung aus der Arbeit am Versand.*
+- **[M] Ein offener Platzhalter sperrt den Versand:** Ein Platzhalter aus **Mandanten-, Vorgangs-
+  oder Versichererdaten**, für den es nichts einzusetzen gibt, bleibt **unverändert als `{{...}}`**
+  in Betreff oder Text stehen, statt seine Zeile stillschweigend zu entfernen — ein sichtbares
+  `{{...}}` beim Versicherer oder Gericht wäre schlimmer als eine Mail, die gar nicht erst
+  hinausging. Er steht dabei **offen** im Formular, nicht hinter einem Aufklapper: samt **Stelle**
+  (Betreff oder Zeilennummer) und vor allem dem **Grund** — „im Mandantenregister nicht erfasst",
+  „am Vorgang nicht erfasst" oder „kein Feld dieses Namens: Schreibweise prüfen". Der letzte Fall
+  ist der wichtigste: Ein Tippfehler im Platzhalternamen war vorher von einer wirklich fehlenden
+  Angabe nicht zu unterscheiden, und die eine Aufgabe ist „berichtigen", die andere „nachpflegen".
+  Der Ton bleibt der der übrigen Hinweise (kein Alarmrot): eine offene Angabe ist kein Tippfehler
+  des Anwalts. **Solange mindestens einer offen ist, lässt sich die Mail nicht senden** — „Alles
+  oder nichts" (siehe oben) gilt damit auch für Platzhalter aus Daten. **Ausgenommen sind Anrede
+  und Zusatzgruß**: Sie werden im Versanddialog gewählt, nicht aus Registerdaten übernommen, haben
+  dort eine Vorbelegung bzw. die bewusste Option „keinen Zusatzgruß" — das ist eine getroffene
+  Wahl, keine fehlende Angabe, und entfernt ihre Zeile weiter sauber (siehe 5.3, 7.1). *Ergänzt am
+  02.09.2026: Beobachtung aus der Arbeit am Versand. Geändert am 06.09.2026: Bis dahin entfiel die
+  Zeile eines offenen Platzhalters ganz oder verlor nur den einen Wert, und Senden blieb trotzdem
+  möglich (Hinweis, kein Riegel) — das verbarg eine lückenhafte Angabe unbemerkt im fertigen
+  Anschreiben, statt sie vor dem Versand aufzuhalten.*
 - **[S] Vorlage und Ergebnis nebeneinander:** Auf Wunsch stellt die App den hinterlegten
-  Vorlagentext dem gefüllten Text **zeilenweise gegenüber**, mit „entfällt" samt Namen des
-  Platzhalters an den Zeilen, die verschwunden sind. Den Vorlagentext allein zu zeigen war fast
-  keine Auskunft — der Anwalt hat ihn geschrieben; die Zuordnung Vorlagenzeile ↔ Textzeile ist es.
-  *Ergänzt am 02.09.2026.*
+  Vorlagentext dem gefüllten Text **zeilenweise gegenüber** — mit „entfällt" an den Zeilen, die
+  wegen Anrede oder Zusatzgruß verschwunden sind, und mit dem unveränderten `{{...}}` an den
+  Zeilen, die einen offenen Platzhalter aus Mandanten-, Vorgangs- oder Versichererdaten behalten
+  haben. Den Vorlagentext allein zu zeigen war fast keine Auskunft — der Anwalt hat ihn
+  geschrieben; die Zuordnung Vorlagenzeile ↔ Textzeile ist es. *Ergänzt am 02.09.2026; am
+  06.09.2026 an die neue Regel für offene Platzhalter angepasst.*
 - **[M] Vorlage wieder abwählen:** „Keine Vorlage" steht in der Auswahl gleichberechtigt neben den
   Vorlagen und führt zur Vorbelegung aus den Vorgangsdaten zurück. Eine Wahl, die sich nicht
   zurücknehmen lässt, zwingt zum Schließen und Neuöffnen des Entwurfs. Ist **kein Vorgang**

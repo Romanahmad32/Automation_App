@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
-import 'package:automation_app/core/general_widgets/form/texte_listen_editor.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/anrede_auswahl.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/import_ordner_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/kennzeichen_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -11,7 +11,9 @@ import 'package:reactive_forms/reactive_forms.dart';
 ///
 /// Die Ordnerliste ist der Grund, warum es dieses Formular gibt: eine
 /// maschinell erzeugte Datei verwechselt eher einen Ordner als eine Anschrift,
-/// und die Zuordnung ist das, was der Import wirklich anrichtet.
+/// und die Zuordnung ist das, was der Import wirklich anrichtet. Sie wird
+/// deshalb **ausgewählt statt getippt** ([ImportOrdnerAuswahl]) — frei getippt
+/// entstünde der Fehler hier ein zweites Mal.
 ///
 /// Nicht bearbeitbar sind `quelle` und `sicherheit`. Sie beschreiben den Fund,
 /// nicht den Mandanten — wer sie überschriebe, verlöre die Auskunft darüber,
@@ -24,6 +26,13 @@ class ImportEintragFormular extends StatelessWidget {
   final Anrede initialAnrede;
   final List<String> initialOrdnernamen;
   final List<String> initialKennzeichen;
+
+  /// Der gescannte Ordnerbestand, aus dem gewählt wird. Er kommt von der
+  /// Importseite herein und wird hier nicht selbst geholt — ein zweiter Scan
+  /// über viertausend Ordner, einmal je geöffnetem Dialog, wäre das Ende der
+  /// Bedienbarkeit.
+  final List<String> vorhandeneOrdner;
+
   final ValueChanged<Anrede> onAnrede;
   final ValueChanged<List<String>> onOrdnernamen;
   final ValueChanged<List<String>> onKennzeichen;
@@ -36,6 +45,7 @@ class ImportEintragFormular extends StatelessWidget {
     required this.onAnrede,
     required this.onOrdnernamen,
     required this.onKennzeichen,
+    this.vorhandeneOrdner = const [],
   });
 
   @override
@@ -113,15 +123,10 @@ class ImportEintragFormular extends StatelessWidget {
           labelText: 'Notiz',
           maxLines: 2,
         ),
-        TexteListenEditor(
-          initialWerte: initialOrdnernamen,
+        ImportOrdnerAuswahl(
+          initialOrdnernamen: initialOrdnernamen,
+          vorhandeneOrdner: vorhandeneOrdner,
           onChanged: onOrdnernamen,
-          labelText: 'Akten-Ordner',
-          helperText: 'Nur der Ordnername unter dem Stammordner, kein Pfad',
-          chipIcon: Icons.folder_outlined,
-          entfernenTooltip: 'Ordner aus dieser Zeile nehmen',
-          hinzufuegenTooltip: 'Ordner hinzufügen',
-          dublettenHinweis: 'Dieser Ordner steht bereits in der Zeile',
         ),
         KennzeichenEditor(
           initialKennzeichen: initialKennzeichen,

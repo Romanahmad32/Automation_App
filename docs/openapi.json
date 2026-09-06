@@ -1583,6 +1583,113 @@
         }
       }
     },
+    "/api/ImportPakete": {
+      "get": {
+        "tags": [
+          "ImportPakete"
+        ],
+        "summary": "Alle Pakete, das j\u00FCngste zuerst.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportPaketDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportPaketDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportPaketDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ImportPakete"
+        ],
+        "summary": "Verbucht ein herausgegebenes Paket und antwortet mit ihm samt der\r\nvergebenen Nummer \u2014 die Oberfl\u00E4che nennt sie dem Anwalt und schreibt\r\nsie in den Dateinamen.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotiereImportPaketDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotiereImportPaketDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/NotiereImportPaketDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPaketDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPaketDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPaketDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Mandanten": {
       "get": {
         "tags": [
@@ -5198,6 +5305,64 @@
         },
         "description": "Ein Mandant in der Importdatei. Alles ist freiwillig au\u00DFer dem Namen: was im\r\nAktenbestand nicht auffindbar war, bleibt leer, statt geraten zu werden."
       },
+      "ImportPaketDto": {
+        "required": [
+          "nummer",
+          "geholtAm",
+          "anzahlOrdner",
+          "erledigt",
+          "eingelesenAm",
+          "zeilen"
+        ],
+        "type": "object",
+        "properties": {
+          "nummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "geholtAm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "anzahlOrdner": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "erledigt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "eingelesenAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "zeilen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Ein herausgegebenes Arbeitspaket, wie es die \u00DCbersicht zeigt.\r\n\r\nDie Ordnernamen selbst fehlen bewusst: Sie sind mit 200 Eintr\u00E4gen je Paket\r\nder weitaus gr\u00F6\u00DFte Teil der Zeile und stehen in keiner Spalte, die der\r\nAnwalt liest. Was er wissen will, ist int ImportPaketDto.Erledigt von\r\nint ImportPaketDto.AnzahlOrdner \u2014 und das ist gerechnet und nicht gespeichert."
+      },
       "JsonElement": {},
       "KanzleiSettingsDto": {
         "required": [
@@ -5694,6 +5859,21 @@
           }
         },
         "description": "Ein Ausschnitt des Registers f\u00FCr die Mandantenliste: die Mandanten dieser\r\nSeite und die beiden Zahlen, die sie einordnen.\r\n\r\n\u0060Gesamt\u0060 ist der ganze Bestand, \u0060Gefiltert\u0060 die Zahl der Treffer\r\nder Suche \u2014 bei leerer Suche sind beide gleich. Aus \u0060Gefiltert\u0060 liest\r\ndie Oberfl\u00E4che, ob es weiterzubl\u00E4ttern gibt; die Zahl der schon geholten\r\nZeilen allein sagt das nicht."
+      },
+      "NotiereImportPaketDto": {
+        "required": [
+          "ordnernamen"
+        ],
+        "type": "object",
+        "properties": {
+          "ordnernamen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Verbucht ein soeben herausgegebenes Arbeitspaket. Nur die Ordnernamen \u2014\r\ndie Nummer vergibt das Backend, denn nur es sieht alle bisherigen Pakete.\r\nEine vom Aufrufer mitgeschickte Nummer w\u00E4re eine Behauptung, die zwei\r\nRechner gleichzeitig aufstellen k\u00F6nnten."
       },
       "OrdnerStatusDto": {
         "required": [
@@ -7528,6 +7708,9 @@
     },
     {
       "name": "PdfConversion"
+    },
+    {
+      "name": "ImportPakete"
     },
     {
       "name": "Mandanten"

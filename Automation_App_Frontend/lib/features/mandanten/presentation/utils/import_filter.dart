@@ -9,6 +9,7 @@ import 'package:equatable/equatable.dart';
 /// wozu ein Mensch etwas zu sagen hat.
 enum ImportSicht {
   zuPruefen('Zu prüfen'),
+  unbekannterOrdner('Ordner unbekannt'),
   neu('Neu'),
   ergaenzt('Ergänzt'),
   unveraendert('Unverändert'),
@@ -29,28 +30,49 @@ class ImportFilter extends Equatable {
   ImportFilter copyWith({String? query, ImportSicht? sicht}) =>
       ImportFilter(query: query ?? this.query, sicht: sicht ?? this.sicht);
 
-  List<ImportEintrag> anwenden(List<ImportEintrag> eintraege) => [
+  /// [unbekannteZeilen] kommt von außen, weil der Bericht des Dienstes davon
+  /// nichts weiß: welche Ordner es im Stammordner wirklich gibt, weiß allein
+  /// das Frontend (`OrdnerPruefung` über den Akten-Scan).
+  List<ImportEintrag> anwenden(
+    List<ImportEintrag> eintraege, {
+    Set<int> unbekannteZeilen = const {},
+  }) => [
     for (final eintrag in eintraege)
-      if (passtZurSicht(eintrag, sicht) && _passtZurSuche(eintrag)) eintrag,
+      if (passtZurSicht(eintrag, sicht, unbekannteZeilen: unbekannteZeilen) &&
+          _passtZurSuche(eintrag))
+        eintrag,
   ];
 
   /// Die Zahlen an den Umschaltern — über allen Zeilen, nicht über den
   /// gefilterten: sonst zeigte jeder Umschalter nur noch sich selbst.
-  Map<ImportSicht, int> zaehlen(List<ImportEintrag> eintraege) => {
+  Map<ImportSicht, int> zaehlen(
+    List<ImportEintrag> eintraege, {
+    Set<int> unbekannteZeilen = const {},
+  }) => {
     for (final sicht in ImportSicht.values)
-      sicht: eintraege.where((e) => passtZurSicht(e, sicht)).length,
+      sicht: eintraege
+          .where(
+            (e) => passtZurSicht(e, sicht, unbekannteZeilen: unbekannteZeilen),
+          )
+          .length,
   };
 
-  static bool passtZurSicht(ImportEintrag eintrag, ImportSicht sicht) =>
-      switch (sicht) {
-        ImportSicht.alle => true,
-        // Abgelehnte Zeilen fallen immer hierher: sie sind der Teil, den der
-        // Import nicht entscheiden konnte.
-        ImportSicht.zuPruefen => eintrag.istAuffaellig,
-        ImportSicht.neu => eintrag.art == ImportArt.neu,
-        ImportSicht.ergaenzt => eintrag.art == ImportArt.ergaenzt,
-        ImportSicht.unveraendert => eintrag.art == ImportArt.unveraendert,
-      };
+  static bool passtZurSicht(
+    ImportEintrag eintrag,
+    ImportSicht sicht, {
+    Set<int> unbekannteZeilen = const {},
+  }) => switch (sicht) {
+    ImportSicht.alle => true,
+    // Abgelehnte Zeilen fallen immer hierher: sie sind der Teil, den der
+    // Import nicht entscheiden konnte.
+    ImportSicht.zuPruefen => eintrag.istAuffaellig,
+    // Die einzige Sicht, die der Bericht nicht selbst hergibt — und die
+    // einzige, die die Übernahme aufhält, solange sie nicht leer ist.
+    ImportSicht.unbekannterOrdner => unbekannteZeilen.contains(eintrag.zeile),
+    ImportSicht.neu => eintrag.art == ImportArt.neu,
+    ImportSicht.ergaenzt => eintrag.art == ImportArt.ergaenzt,
+    ImportSicht.unveraendert => eintrag.art == ImportArt.unveraendert,
+  };
 
   /// Gesucht wird im Namen und in den Ordnernamen — die beiden Angaben, mit
   /// denen der Anwalt eine Zeile wiedererkennt.

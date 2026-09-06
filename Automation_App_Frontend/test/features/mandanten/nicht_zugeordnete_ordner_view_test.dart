@@ -20,6 +20,16 @@ Widget seite(MandantenOverviewBloc bloc) => MaterialApp(
   ),
 );
 
+/// Baut [seite] in einer Fenstergröße, wie sie die Kanzlei-App wirklich hat —
+/// die neue Stand-Karte (Issue #108) braucht mehr Höhe, als das
+/// Standard-Testfenster von `flutter_test` (800×600) hergibt.
+Future<void> pumpSeite(WidgetTester tester, MandantenOverviewBloc bloc) async {
+  tester.view.physicalSize = const Size(1400, 1000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  await tester.pumpWidget(seite(bloc));
+}
+
 /// Vier Ordner, die die drei Töpfe abdecken: zwei Verkehrsunfall-Kandidaten
 /// (einer davon ohne Präfix) und zwei andere Sachgebiete.
 MandantenTestaufbau vierOrdner() => MandantenTestaufbau(
@@ -44,7 +54,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.laden();
 
-    await tester.pumpWidget(seite(aufbau.bloc));
+    await pumpSeite(tester, aufbau.bloc);
     await tester.pumpAndSettle();
 
     final gebaut = tester
@@ -69,7 +79,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.laden();
 
-    await tester.pumpWidget(seite(aufbau.bloc));
+    await pumpSeite(tester, aufbau.bloc);
     await tester.pumpAndSettle();
 
     // Ohne Präfix bleibt im Stapel: „Max Mustermann" kann eine
@@ -93,7 +103,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.laden();
 
-    await tester.pumpWidget(seite(aufbau.bloc));
+    await pumpSeite(tester, aufbau.bloc);
     await tester.enterText(find.byType(TextField), 'muster');
     await tester.pumpAndSettle();
 
@@ -108,7 +118,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.laden();
 
-    await tester.pumpWidget(seite(aufbau.bloc));
+    await pumpSeite(tester, aufbau.bloc);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Andere Ordner (2)'));
@@ -133,7 +143,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.laden();
 
-    await tester.pumpWidget(seite(aufbau.bloc));
+    await pumpSeite(tester, aufbau.bloc);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Gehört keinem Mandanten').first);

@@ -1,31 +1,17 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
-import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
-import 'package:automation_app/features/mandanten/presentation/views/mandanten_import_view.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_datei_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_kachel.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'import_testaufbau.dart';
-
-Widget seite(MandantenImportCubit cubit) => MaterialApp(
-  home: Scaffold(
-    body: BlocProvider.value(
-      value: cubit,
-      child: BlocBuilder<MandantenImportCubit, MandantenImportState>(
-        builder: (context, state) => MandantenImportView(state: state),
-      ),
-    ),
-  ),
-);
 
 void main() {
   testWidgets('ohne Datei steht die Erklärung und die Auswahl', (tester) async {
     final aufbau = ImportTestaufbau();
     addTearDown(aufbau.close);
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
 
     expect(find.byType(ImportDateiAuswahl), findsOneWidget);
     expect(find.text('JSON-Datei wählen'), findsOneWidget);
@@ -47,7 +33,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
     await tester.pumpAndSettle();
 
     // Voreinstellung „zu prüfen": 4000 unauffällige Zeilen, also keine.
@@ -81,7 +67,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
     await tester.pumpAndSettle();
 
     expect(
@@ -96,7 +82,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(FilledButton, 'Übernehmen'));
@@ -133,7 +119,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
     await tester.pumpAndSettle();
 
     expect(
@@ -157,7 +143,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.edit_outlined).first);
@@ -189,7 +175,7 @@ void main() {
     addTearDown(aufbau.close);
     await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.edit_outlined).first);
@@ -224,7 +210,7 @@ void main() {
     await aufbau.cubit.dateiWaehlen('C:/tmp/import.json');
     await aufbau.cubit.uebernehmen();
 
-    await tester.pumpWidget(seite(aufbau.cubit));
+    await tester.pumpWidget(importSeite(aufbau.cubit));
     await tester.pumpAndSettle();
 
     final knopf = tester.widget<IconButton>(
