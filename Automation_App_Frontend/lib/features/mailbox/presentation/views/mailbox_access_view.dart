@@ -257,14 +257,14 @@ class _MailboxAccessViewState extends State<MailboxAccessView>
               const MailboxFilterSection(),
             ],
             rechts: [
-              MailSignaturSektion(
-                controller: _signatur,
-                vorgemerkt: _signaturAusOutlook,
-              ),
               // Textvorlagen, Anreden und Zusatzgrüße stehen seit dem
               // 06.09.2026 unter gemeinsamen Reitern: Sie sind zusammen der
               // Werkzeugkasten des Versanddialogs, nicht drei Einstellungen.
               const MailBausteineSektion(),
+              MailSignaturSektion(
+                controller: _signatur,
+                vorgemerkt: _signaturAusOutlook,
+              ),
             ],
           ),
         );
