@@ -6,7 +6,6 @@ import 'package:automation_app/features/email_versand/presentation/blocs/email_e
 import 'package:automation_app/features/email_versand/presentation/widgets/email_senden_bestaetigung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_inhalt.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_titel.dart';
-import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
@@ -73,8 +72,10 @@ class EmailVersandDialog extends StatelessWidget {
   /// Der Knopf ist anfassbar, auch wenn die Mail noch nicht vollständig ist:
   /// Ein abgeblendeter Knopf ist eine Behauptung ohne Begründung, und der
   /// frühere Kasten „Zum Senden fehlt noch …" stand dafür dauerhaft über dem
-  /// Formular. Jetzt kommt die Begründung beim Drücken — hier in einem Satz,
-  /// und ausführlich an dem Feld, das sie behebt.
+  /// Formular. Seit dem 06.09.2026 steht der erste offene Punkt schon **vor**
+  /// dem Klick in der Statuszeile über den Knöpfen
+  /// (`VersandBereitschaftZeile`); diese Meldung hier ist die Antwort auf den
+  /// Klick, und ausführlich steht der Mangel an dem Feld, das ihn behebt.
   static bool _bereit(BuildContext context) {
     final cubit = context.read<EmailEntwurfCubit>();
     if (cubit.istVersandbereit()) return true;
@@ -124,20 +125,6 @@ class EmailVersandDialog extends StatelessWidget {
         : 'Erneut in Outlook öffnen';
   }
 
-  /// Die Mail ansehen, ohne sie abzuschicken — der Weg für schmale Fenster.
-  /// Ist Platz für die Seitenspalte, steht die Vorschau ohnehin schon da und
-  /// dieser Knopf entfällt.
-  Future<void> _vorschau(BuildContext context, EmailEntwurfState state) {
-    return EmailVorschauDialog.zeigen(
-      context,
-      entwurf: state.entwurf,
-      absender: state.bereitschaft?.absender ?? '',
-      signatur: state.bereitschaft?.signatur ?? '',
-      signaturHtml: state.bereitschaft?.signaturHtml ?? '',
-      signaturBilder: state.bereitschaft?.signaturBilder ?? const [],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -165,14 +152,10 @@ class EmailVersandDialog extends StatelessWidget {
                     : () => Navigator.pop(context),
                 child: const Text('Abbrechen'),
               ),
-              if (!EmailVersandInhalt.zweispaltig(context))
-                TextButton.icon(
-                  onPressed: state.beschaeftigt
-                      ? null
-                      : () => _vorschau(context, state),
-                  icon: const Icon(Icons.visibility_outlined),
-                  label: const Text('Vorschau'),
-                ),
+              // Kein „Vorschau"-Knopf mehr: Sie steht seit dem 06.09.2026 im
+              // Dialog selbst, über den Umschalter Bearbeiten ↔ Vorschau. Ein
+              // zweites Fenster dafür zu öffnen hiess, das Formular zu
+              // verlassen, um es zu prüfen.
               Tooltip(
                 // Vorher sagen, nicht hinterher: Ohne klassisches Outlook
                 // entsteht hier eine .eml-Datei, und ein Anwalt, der Outlook

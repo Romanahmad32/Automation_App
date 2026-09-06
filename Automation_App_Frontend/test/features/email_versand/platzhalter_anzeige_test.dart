@@ -225,7 +225,9 @@ void main() {
   });
 
   group('die Zeile in der vollständigen Liste', () {
-    testWidgets('ein leerer Befund nennt seine Folge', (tester) async {
+    testWidgets('ein leerer Zusatzgruß nennt die entfallene Zeile', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         rahmen(
           const PlatzhalterZeile(
@@ -233,6 +235,9 @@ void main() {
               name: 'Zusatzgruß',
               zeile: 2,
               zeileEntfaellt: true,
+              // Der Versand beantwortet ihn selbst: Keine Wahl ist eine Wahl,
+              // und seine Zeile entfällt sauber (§4.7).
+              istEigen: true,
             ),
           ),
         ),
@@ -240,6 +245,26 @@ void main() {
 
       expect(find.text('{{Zusatzgruß}}'), findsOneWidget);
       expect(find.text('bleibt leer — Zeile 2 entfällt'), findsOneWidget);
+    });
+
+    testWidgets('ein offener Daten-Platzhalter sagt, dass er stehen bleibt', (
+      tester,
+    ) async {
+      // Ergänzt am 06.09.2026 (§4.7): Die zwei Sorten dürfen in der Übersicht
+      // nicht denselben Satz tragen — die eine Zeile ist weg, die andere trägt
+      // sichtbar ein {{…}}, das den Versand aufhält.
+      await tester.pumpWidget(
+        rahmen(
+          const PlatzhalterZeile(
+            befund: PlatzhalterBefund(name: 'MandantTelefon', zeile: 7),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('bleibt offen — {{MandantTelefon}} steht so in Zeile 7'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('ein gefüllter Befund zeigt Wert und Herkunft', (tester) async {

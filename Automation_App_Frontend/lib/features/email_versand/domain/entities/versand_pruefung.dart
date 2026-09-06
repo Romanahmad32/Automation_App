@@ -8,8 +8,14 @@ import 'package:equatable/equatable.dart';
 /// nichts eingetippt hatte — ein Vorwurf für einen leeren Entwurf, der eben
 /// erst geöffnet wurde.
 ///
-/// Deshalb je Feld: Der Mangel steht **an** dem Feld, das ihn behebt, und erst
-/// nachdem „Senden" einmal gedrückt wurde. Vorher ist er null und kostet nichts.
+/// Deshalb je Feld: Der Mangel steht **an** dem Feld, das ihn behebt — markiert
+/// wird er erst, nachdem „Senden" einmal gedrückt wurde (`markiert` im
+/// Zustand), sonst wäre jedes leere Feld ein Vorwurf an einen eben erst
+/// geöffneten Entwurf.
+///
+/// **Der erste offene Punkt steht trotzdem von Anfang an da** (§4.7, ergänzt am
+/// 06.09.2026): in der Statuszeile über den Knöpfen ([erster]). Was zum Senden
+/// fehlt, nach dem Klick zu erfahren, war die eine Auskunft, die zu spät kam.
 class VersandPruefung extends Equatable {
   /// Mangel an der Zeile „An".
   final String? anFehler;
@@ -19,6 +25,15 @@ class VersandPruefung extends Equatable {
 
   final String? betreffFehler;
 
+  /// Mindestens ein Platzhalter aus Mandanten-, Vorgangs- oder
+  /// Versichererdaten steht noch als `{{...}}` in Betreff oder Text und ginge
+  /// wörtlich so hinaus (§4.7, ergänzt am 06.09.2026).
+  ///
+  /// Er hat **kein eigenes Feld**, an dem er stünde — die offenen Stellen
+  /// zeigt die Platzhalter-Übersicht im Abschnitt „Inhalt". Deshalb steht der
+  /// Satz in der Statuszeile über den Knöpfen, und zwar bevor jemand drückt.
+  final String? platzhalterFehler;
+
   /// Die Nachricht ist schwerer, als das Postfach durchlässt.
   final String? groesseFehler;
 
@@ -26,6 +41,7 @@ class VersandPruefung extends Equatable {
     this.anFehler,
     this.kopieFehler,
     this.betreffFehler,
+    this.platzhalterFehler,
     this.groesseFehler,
   });
 
@@ -37,6 +53,7 @@ class VersandPruefung extends Equatable {
     ?anFehler,
     ?kopieFehler,
     ?betreffFehler,
+    ?platzhalterFehler,
     ?groesseFehler,
   ];
 
@@ -52,6 +69,7 @@ class VersandPruefung extends Equatable {
     anFehler,
     kopieFehler,
     betreffFehler,
+    platzhalterFehler,
     groesseFehler,
   ];
 }

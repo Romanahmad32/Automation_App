@@ -1,6 +1,5 @@
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
-import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/hinzufuegen_button.dart';
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
@@ -9,14 +8,21 @@ import 'package:automation_app/features/settings/presentation/widgets/anredebaus
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Die Verwaltung der Anredeanfänge (§4.7, §7.1) — im Reiter „E-Mail", über den
-/// Zusatzgrüßen, weil die Anrede vor dem Gruß steht.
+/// Die Verwaltung der Anredeanfänge (§4.7, §7.1) — ein Reiter des gemeinsamen
+/// Werkzeugkastens (`MailBausteineSektion`), vor den Zusatzgrüßen, weil die
+/// Anrede vor dem Gruß steht.
 ///
 /// Gepflegt wird nur der **Anfang** in seinen drei Beugungsformen; „Herr"/„Frau"
 /// und den Nachnamen setzt der Versand dazu. Der erste der Liste gilt beim
 /// Verfassen ohne Klick.
 class AnredebausteineSektion extends StatelessWidget {
   const AnredebausteineSektion({super.key});
+
+  /// Was der Reiter beantwortet — steht über der Liste.
+  static const String erklaerung =
+      'Nur der Anfang — „Herr"/„Frau" und den Nachnamen setzt der Versand '
+      'dazu, die Beugung folgt dem Mandanten. Der erste gilt beim Verfassen '
+      'ohne Klick.';
 
   @override
   Widget build(BuildContext context) {
@@ -66,21 +72,11 @@ class AnredebausteineSektionInhalt extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnredebausteineCubit, AnredebausteineState>(
       builder: (context, stand) {
-        return FormSection(
-          icon: Icons.record_voice_over_outlined,
-          title: 'Anreden',
-          subtitle:
-              'Nur der Anfang — „Herr"/„Frau" und den Nachnamen setzt der '
-              'Versand dazu, die Beugung folgt dem Mandanten. Der erste gilt '
-              'beim Verfassen ohne Klick.',
-          trailing: stand.laedt
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : null,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 12,
           children: [
+            if (stand.laedt) const LinearProgressIndicator(minHeight: 2),
             if (stand.fehler != null)
               Text(
                 stand.fehler!,

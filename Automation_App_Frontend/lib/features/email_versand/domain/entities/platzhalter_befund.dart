@@ -8,10 +8,13 @@ import 'package:equatable/equatable.dart';
 /// sieht ein falsch belegter Platzhalter aus wie ein Tippfehler im Text.
 ///
 /// Ein leerer Befund trägt deshalb auch seine **Stelle** in der Vorlage
-/// ([zeile]) und die Folge ([zeileEntfaellt]) bei sich: Der übersprungene
-/// Platzhalter ist im gefüllten Text nicht mehr zu sehen — er hat seine Zeile
-/// mitgenommen —, und ohne den Hinweis, *wo* sie stand, bleibt nur die Suche
-/// im Vorlagentext.
+/// ([zeile]) und die Folge ([zeileEntfaellt]) bei sich: Ein übersprungener
+/// Anrede- oder Gruß-Platzhalter ist im gefüllten Text nicht mehr zu sehen — er
+/// hat seine Zeile mitgenommen —, und ohne den Hinweis, *wo* sie stand, bleibt
+/// nur die Suche im Vorlagentext.
+///
+/// Ein **Daten**-Platzhalter ohne Wert bleibt dagegen als `{{...}}` stehen
+/// ([bleibtOffen]) und hält den Versand auf (§4.7, geändert am 06.09.2026).
 class PlatzhalterBefund extends Equatable {
   /// Der Name, wie er in der Vorlage steht — ohne die geschweiften Klammern.
   final String name;
@@ -40,6 +43,16 @@ class PlatzhalterBefund extends Equatable {
   /// Platzhalter, die beim Verfassen entstehen — ihre Namen sagen es selbst.
   final String bezeichnung;
 
+  /// Ob der Versand ihn **selbst** beantwortet — Anrede und Zusatzgruß
+  /// (`MailPlatzhalter.istEigen`). Sie werden im Dialog gewählt, und keine Wahl
+  /// ist dort eine getroffene Entscheidung: Ihre Zeile entfällt sauber.
+  ///
+  /// Alles andere kommt aus Mandanten-, Vorgangs- oder Versichererdaten. Bleibt
+  /// so einer leer, ist das eine **fehlende Angabe** — er steht unverändert als
+  /// `{{...}}` im Text und hält den Versand auf (§4.7, ergänzt am 06.09.2026).
+  /// Vorgabe ist `false`: Wer einen Befund von Hand baut, meint den Regelfall.
+  final bool istEigen;
+
   /// **Warum** leer geblieben ist, und wo die Angabe gepflegt wird („im
   /// Mandantenregister nicht erfasst"). Die Auskunft, die vorher fehlte: Dass
   /// eine Zeile entfällt, sah der Anwalt; woran es lag, nicht.
@@ -63,11 +76,16 @@ class PlatzhalterBefund extends Equatable {
     this.zeile = 0,
     this.zeileEntfaellt = false,
     this.bezeichnung = '',
+    this.istEigen = false,
     this.fehlstelle = '',
     this.weitereEntfallene = const [],
   });
 
   bool get istLeer => wert.trim().isEmpty;
+
+  /// Ob er **offen** stehen bleibt: ein Daten-Platzhalter ohne Wert. Genau
+  /// diese halten den Versand auf (§4.7) — Anrede und Zusatzgruß nicht.
+  bool get bleibtOffen => istLeer && !istEigen;
 
   bool get imBetreff => zeile == 0;
 
@@ -79,8 +97,13 @@ class PlatzhalterBefund extends Equatable {
 
   /// Was das Leerbleiben für den Text bedeutet — der Satz, der in der
   /// Übersicht anstelle des Werts steht.
+  ///
+  /// Zwei Sätze, weil es zwei Folgen sind (§4.7, ergänzt am 06.09.2026): Ein
+  /// Daten-Platzhalter **bleibt sichtbar stehen** und hält die Mail auf, Anrede
+  /// und Zusatzgruß nehmen ihre Zeile mit.
   String get folge {
     if (!istLeer) return '';
+    if (bleibtOffen) return 'bleibt offen — $geschrieben steht so $stelle';
     final erste = imBetreff
         ? 'fällt aus dem Betreff'
         : zeileEntfaellt
@@ -103,6 +126,7 @@ class PlatzhalterBefund extends Equatable {
     zeile,
     zeileEntfaellt,
     bezeichnung,
+    istEigen,
     fehlstelle,
     weitereEntfallene,
   ];
