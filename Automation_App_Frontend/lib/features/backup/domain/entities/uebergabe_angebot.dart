@@ -26,18 +26,22 @@ class UebergabeAngebot extends Equatable {
     required this.programmfassung,
   });
 
-  factory UebergabeAngebot.fromJson(Map<String, dynamic> json) =>
-      UebergabeAngebot(
-        rechnername: json['rechnername'] as String? ?? '',
-        zuletztGearbeitet:
-            DateTime.tryParse(json['zuletztGearbeitet'] as String? ?? '') ??
-            DateTime.now(),
-        gesichertAm:
-            DateTime.tryParse(json['gesichertAm'] as String? ?? '') ??
-            DateTime.now(),
-        sicherung: json['sicherung'] as String? ?? '',
-        programmfassung: json['programmfassung'] as String? ?? '',
-      );
+  factory UebergabeAngebot.fromJson(
+    Map<String, dynamic> json,
+  ) => UebergabeAngebot(
+    rechnername: json['rechnername'] as String? ?? '',
+    // `toLocal()`: der Dienst sendet mit Zeitzonenversatz, angezeigt wird Ortszeit.
+    zuletztGearbeitet:
+        DateTime.tryParse(
+          json['zuletztGearbeitet'] as String? ?? '',
+        )?.toLocal() ??
+        DateTime.now(),
+    gesichertAm:
+        DateTime.tryParse(json['gesichertAm'] as String? ?? '')?.toLocal() ??
+        DateTime.now(),
+    sicherung: json['sicherung'] as String? ?? '',
+    programmfassung: json['programmfassung'] as String? ?? '',
+  );
 
   @override
   List<Object?> get props => [
