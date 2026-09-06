@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/gespeicherter_stand.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +23,14 @@ class FormTemplateActionButtons extends StatelessWidget {
   /// bleibt, sonst gäbe es keinen Weg zurück.
   final bool nurAbbrechen;
 
+  /// Der Stand, der mitgespeichert wird (#104 Stufe 4) — als **Rückruf**, weil
+  /// er im Augenblick des Klicks zu rechnen ist: Er hängt an den gelesenen
+  /// Platzhaltern **und** an den Feldnamen, und die stehen bis zuletzt nur in
+  /// den Controls der `FormGroup` (siehe FEATURE.md). Ein beim Aufbau
+  /// übergebener Wert wäre schon veraltet, sobald jemand ein Feld umbenennt.
+  /// Null lässt die `fields`-Spalte in ihrer alten Form.
+  final GespeicherterStand Function()? standErmitteln;
+
   const FormTemplateActionButtons({
     super.key,
     required this.onCancel,
@@ -30,6 +39,7 @@ class FormTemplateActionButtons extends StatelessWidget {
     this.wordFilePathOhneAuflistung,
     this.wordFilePathMitAuflistung,
     this.nurAbbrechen = false,
+    this.standErmitteln,
   });
 
   @override
@@ -115,6 +125,9 @@ class FormTemplateActionButtons extends StatelessWidget {
                                 wordFilePathOhneAuflistung,
                             wordFilePathMitAuflistung:
                                 wordFilePathMitAuflistung,
+                            // Erst hier gerechnet, nicht beim Aufbau: siehe
+                            // [standErmitteln].
+                            stand: standErmitteln?.call(),
                           ),
                         );
                       }

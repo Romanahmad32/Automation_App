@@ -6,16 +6,16 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
 **Einstieg:** `presentation/pages/form_template_details_page.dart` — Ablauf **Datei zuerst**, leer via `VorlagenLeerzustand`.
 **Zustand:** `presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart`,
 `presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart`,
-`presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`
+`presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart`,
+`presentation/blocs/vorlagen_kopie_cubit/vorlagen_kopie_cubit.dart` (Duplizieren, #104)
 **Domain:** `FormTemplate`, `FieldData`, `DatumsVorbelegung`, `InputType`, `FeldDatenquelle` (+ `platzhalter`, `gruppe`,
 `frueher`), `PlatzhalterGruppe`, `PlatzhalterEintrag`, `CreateFormTemplateRequest`; Dienste `FeldDatenquelleErkennung`
 (+ `DatenquelleVorschlag`), `PlatzhalterKatalog`, `AppEigenePlatzhalter`, `PlatzhalterUebernahme`, `FeldVorkommen`,
 `PlatzhalterZuordnung`, `VerwendeteFelder` (welche Felder die aktive Word-Datei einsetzt, #82), `VorlagenStand`,
-`FelderFilter`, `VorlagennameVorschlag`, `FeldAbgleich`, `VorlagenEntwurf`; `GetFormTemplates`, `CreateFormTemplate`,
-`UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
-**Backend:** `Features/FormTemplates/` · `GET /api/FormTemplates`, `POST /api/FormTemplates`,
-`PUT /api/FormTemplates/{id}`, `DELETE /api/FormTemplates/{id}`; Platzhalter-Erkennung aus
-`Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
+`FelderFilter`, `VorlagennameVorschlag`, `FeldAbgleich`, `VorlagenEntwurf`, `GespeicherterStand`, `KopieName`;
+`GetFormTemplates`, `CreateFormTemplate`, `UpdateFormTemplate`, `DeleteFormTemplate`, `GetTemplatePlaceholders`
+**Backend:** `Features/FormTemplates/` · `GET`/`POST /api/FormTemplates`, `PUT`/`DELETE /api/FormTemplates/{id}`;
+Platzhalter-Erkennung aus `Features/WordAutomation/` · `POST /api/WordAutomation/template-placeholders`
 **Tests:** `test/features/form_template_setup/` — `feld_vorkommen_badge_test.dart`, `datums_vorbelegung_speicherweg_test.dart`,
 `feld_datenquelle_erkennung_test.dart`, `feld_vorkommen_test.dart`, `verwendete_felder_test.dart`, `datums_vorbelegung_test.dart`
 
@@ -37,4 +37,4 @@ Schadensaufstellung) und beschreibt deren Eingabefelder; daraus baut „Word Aut
   änderbar, nie stillschweigend gesetzt (§1.3); dieselbe Erkennung greift zur Laufzeit an Feldern ohne Quelle.
 - Der lange Rest steht in `FALLSTRICKE.md` daneben: Erkennungsregeln, mehrdeutige Namen, erlaubte Zeichen im Platzhalter, Slot
   „mit Auflistung“, Word-Pfad, `FormTemplateOverviewBloc`, Vorbelegung, Verlassen-Wache, Spaltenbeschreibung, Aufklapper,
-  `VorlagenBearbeitung`, Layout, Datei zuerst, Abgleich.
+  `VorlagenBearbeitung`, Layout, Datei zuerst, Abgleich, Übersicht und Duplizieren.

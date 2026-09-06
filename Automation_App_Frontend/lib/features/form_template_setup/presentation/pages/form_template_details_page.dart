@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/gespeicherter_stand.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_data_bloc/form_template_data_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/app_eigene_platzhalter_liste.dart';
@@ -101,6 +102,14 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
       FeldAenderungen(bearbeitung: _bearbeitung, onGeaendert: _neuAufbauen);
 
   void _neuAufbauen() => setState(() {});
+
+  /// Der Stand **in diesem Augenblick** — der Wert, der beim Speichern
+  /// mitgeht (#104 Stufe 4). Er wird beim Klick gerechnet und nicht beim
+  /// Aufbau: Beide Eingaben ändern sich bis zuletzt, die gelesenen Platzhalter
+  /// über den Bloc und die Feldnamen allein über die `FormGroup`.
+  GespeicherterStand _standJetzt() => GespeicherterStand.aus(
+    _bearbeitung.stand(context.read<TemplatePlaceholdersBloc>().state),
+  );
 
   void _feldHinzufuegen({String? name, bool pflicht = false}) => setState(
     () => _bearbeitung.feldHinzufuegen(name: name, pflicht: pflicht),
@@ -210,6 +219,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
                           _bearbeitung.pfadOhneAuflistung,
                       wordFilePathMitAuflistung: _bearbeitung.pfadMitAuflistung,
                       nurAbbrechen: _bearbeitung.zeigtLeerzustand,
+                      standErmitteln: _standJetzt,
                     ),
                     // Solange der Name noch der Vorschlag aus dem Dateinamen
                     // ist, sagt die Karte das darunter. Der

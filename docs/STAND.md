@@ -152,8 +152,15 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   gleichwertig) statt mit leerem Namensfeld — Ablauf **Datei zuerst**: `VorlagennameVorschlag` schlägt den
   Namen aus dem Dateinamen vor, `EinleseReaktion` übernimmt gelesene Platzhalter beim Anlegen automatisch
   zu Feldern (je Slot einmal) und fragt über `FeldAbgleich`/`AbgleichDialog` gesammelt nach, wenn ein
-  Dateiwechsel Felder ins Leere laufen liess. **Noch offen (§5.3), nur noch Stufe 4:** das Kennzeichen
-  „unvollständig" in der Vorlagenübersicht und das Duplizieren einer Vorlage.
+  Dateiwechsel Felder ins Leere laufen liess.
+- **Vorlageneditor, Stufe 4 „Übersicht und Duplizieren" (Issue #104, 06.09.2026)** — die Vorlagenübersicht
+  zeigt eine Spalte „Stand" (`VorlagenStandKennzeichen`): „Unvollständig · N offen", „Vollständig" oder
+  „Noch nicht geprüft". Geschrieben wird der Stand beim Speichern im Editor und im opaken `fields`-JSON
+  mitgeführt (`GespeicherterStand`, kein neues Feld im HTTP-Vertrag) — die Übersicht rechnet ihn **nie**
+  nach. Bestandsvorlagen von vor Stufe 4 zeigen deshalb „Noch nicht geprüft", bis sie einmal im Editor
+  gespeichert werden. Duplizieren (`VorlagenKopieCubit`, über den vorhandenen Anlege-Weg) legt eine Kopie
+  mit Namen „… (Kopie)" (`KopieName`, zählt bei Dopplung hoch) und denselben Feldern an, aber **ohne**
+  Word-Dateien — wer dupliziert, will die Feldarbeit wiederverwenden, nicht die Datei doppelt verknüpfen.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
