@@ -210,6 +210,9 @@ class EmailEntwurfState extends Equatable {
     offenKopie: offenKopie,
     gesamtBytes: gesamtBytes,
     maxBytes: bereitschaft?.maxBytes,
+    // Nur für die Begründung an einem offen gebliebenen Platzhalter: Ohne den
+    // Vorgang lautete sie „kein Vorgang gewählt", auch wenn einer gewählt ist.
+    vorgang: vorgang,
   );
 
   /// Was das Formular anzeigen darf: nichts, bis der erste Versuch gelaufen

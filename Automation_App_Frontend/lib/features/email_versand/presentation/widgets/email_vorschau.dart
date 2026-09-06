@@ -38,6 +38,15 @@ class EmailVorschau extends StatefulWidget {
   /// hinterlegte bleibt ungenutzt.
   final bool ohneSignatur;
 
+  /// Überschreibt die Fußzeile unter der Signatur; null lässt die Vorschau
+  /// selbst erklären, was mit ihr geschieht.
+  ///
+  /// Gebraucht vom **Vorlageneditor** (§4.7, ergänzt am 06.09.2026): Dort läuft
+  /// dieselbe Vorschau über Beispieldaten, und „Es ist keine Signatur
+  /// hinterlegt" wäre dort eine Auskunft über die falsche Sache. Ein zweites
+  /// Vorschau-Widget daneben zu bauen wäre der teurere Weg zu demselben Satz.
+  final String? signaturHinweis;
+
   const EmailVorschau({
     super.key,
     required this.entwurf,
@@ -46,6 +55,7 @@ class EmailVorschau extends StatefulWidget {
     this.signaturHtml = '',
     this.signaturBilder = const [],
     this.ohneSignatur = false,
+    this.signaturHinweis,
   });
 
   @override
@@ -148,6 +158,7 @@ class _EmailVorschauState extends State<EmailVorschau> {
   /// fehlt sie in der Vorschau, ohne dass etwas darauf hinweist — und der
   /// Anwalt merkt es erst an der versendeten Mail.
   String _signaturHinweis(bool ohneHinterlegte) {
+    if (widget.signaturHinweis case final eigener?) return eigener;
     if (widget.ohneSignatur) {
       return 'Die Signatur setzt Outlook selbst ein; sie steht deshalb nicht '
           'in dieser Vorschau.';

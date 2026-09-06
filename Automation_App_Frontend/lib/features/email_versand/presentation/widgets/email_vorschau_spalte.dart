@@ -45,10 +45,15 @@ class EmailVorschauSpalte extends StatelessWidget {
               color: theme.colorScheme.outline,
             ),
             const SizedBox(width: 6),
-            Text(
-              'Vorschau — so geht die Mail hinaus',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.outline,
+            // Umbrechbar statt fest: Die Spalte ist auf einem 1366er Schirm
+            // rund 450 px breit, und bei angehobenem Schriftgrad (§7.1) lief
+            // die Zeile sonst rechts über den Rand hinaus.
+            Expanded(
+              child: Text(
+                'Vorschau — so geht die Mail hinaus',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
               ),
             ),
           ],
