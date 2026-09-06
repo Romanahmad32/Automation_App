@@ -21,6 +21,14 @@ class MandantenImportState extends Equatable {
   final String? fehler;
   final ImportFilter filter;
 
+  /// Der gescannte Ordnerbestand und das Register — das, woran die Datei
+  /// gemessen wird. Überlebt „Andere Datei": der Scan gehört zur Maschine,
+  /// nicht zur Datei.
+  final ImportUmfeld umfeld;
+
+  /// Was die Oberfläche aus [umfeld] und dem Bericht abgeleitet hat.
+  final ImportBefund befund;
+
   const MandantenImportState({
     this.dateiPfad,
     this.datei,
@@ -28,16 +36,20 @@ class MandantenImportState extends Equatable {
     this.laufend = false,
     this.fehler,
     this.filter = const ImportFilter(),
+    this.umfeld = const ImportUmfeld(),
+    this.befund = const ImportBefund(),
   });
 
   bool get uebernommen => bericht?.angewendet ?? false;
 
   /// Übernehmen ist erst möglich, wenn eine Vorschau vorliegt, sie etwas
-  /// bewirkt und sie noch nicht geschrieben wurde.
+  /// bewirkt, sie noch nicht geschrieben wurde — und keine Ordnerangabe darin
+  /// ins Leere zeigt (siehe [ImportBefund.sperrtUebernahme]).
   bool get kannUebernehmen =>
       !laufend &&
       !uebernommen &&
       datei != null &&
+      !befund.sperrtUebernahme &&
       (bericht?.bewirktEtwas ?? false);
 
   /// Wie viele Zeilen der Anwalt von Hand berichtigt hat.
@@ -56,11 +68,28 @@ class MandantenImportState extends Equatable {
     return mandanten[zeile];
   }
 
-  List<ImportEintrag> get sichtbar =>
-      filter.anwenden(bericht?.eintraege ?? const []);
+  List<ImportEintrag> get sichtbar => filter.anwenden(
+    bericht?.eintraege ?? const [],
+    unbekannteZeilen: befund.unbekannteZeilen,
+  );
 
-  Map<ImportSicht, int> get zaehler =>
-      filter.zaehlen(bericht?.eintraege ?? const []);
+  Map<ImportSicht, int> get zaehler => filter.zaehlen(
+    bericht?.eintraege ?? const [],
+    unbekannteZeilen: befund.unbekannteZeilen,
+  );
+
+  /// Der Ausgangszustand für die nächste Datei — [umfeld] bleibt stehen.
+  ///
+  /// „Andere Datei" wirft die Datei weg, nicht den Akten-Scan über viertausend
+  /// Ordner: der beschreibt die Maschine und ändert sich davon nicht.
+  MandantenImportState zurueckgesetzt({
+    String? dateiPfad,
+    bool laufend = false,
+  }) => MandantenImportState(
+    dateiPfad: dateiPfad,
+    laufend: laufend,
+    umfeld: umfeld,
+  );
 
   /// Nicht übergebene Felder bleiben stehen. [fehler] und [bericht] müssen sich
   /// auch wieder leeren lassen — dafür die beiden Schalter, weil `null` hier
@@ -72,6 +101,8 @@ class MandantenImportState extends Equatable {
     bool? laufend,
     String? fehler,
     ImportFilter? filter,
+    ImportUmfeld? umfeld,
+    ImportBefund? befund,
     bool fehlerLoeschen = false,
     bool berichtLoeschen = false,
   }) => MandantenImportState(
@@ -81,6 +112,8 @@ class MandantenImportState extends Equatable {
     laufend: laufend ?? this.laufend,
     fehler: fehlerLoeschen ? null : fehler ?? this.fehler,
     filter: filter ?? this.filter,
+    umfeld: umfeld ?? this.umfeld,
+    befund: befund ?? this.befund,
   );
 
   @override
@@ -91,5 +124,7 @@ class MandantenImportState extends Equatable {
     laufend,
     fehler,
     filter,
+    umfeld,
+    befund,
   ];
 }

@@ -143,8 +143,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Hochzählen der laufenden Auftragsnummer in **einer** Transaktion, idempotent (§4.8, §7.1).
   `RegisterSpiegelService` schreibt danach das Register als Word- und PDF-Datei in einen Ordner aus
   den Einstellungen (§6.2, `…/register/export|stand`); die Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
-- **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
-  doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier.
+- **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei doppeltem Namen).
+  Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier. Dazu das Paketbuch des Imports (`ImportPakete`, #108).
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST api/Settings/auftragsnummer/erhoehe`
   und die Standardpositionen der Schadensaufstellung (§4.4, `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle =
   Vorgabe, leeres Speichern setzt zurück). Dazu die fünf Ordnerpfade (#103): `AppDatenOrdner` trägt Vorlagen, Register und

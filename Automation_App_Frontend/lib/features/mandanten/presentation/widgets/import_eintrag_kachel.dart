@@ -22,11 +22,22 @@ class ImportEintragKachel extends StatelessWidget {
   /// Änderung träfe sonst einen Bericht, der gerade neu entsteht.
   final bool bearbeitbar;
 
+  /// Diese Zeile nennt einen Ordner, den es im Stammordner nicht gibt — der
+  /// Grund, warum die Übernahme gesperrt ist.
+  final bool ordnerUnbekannt;
+
+  /// Zu dieser Zeile steht ein ähnlicher Name im Register. Der Hinweis steht
+  /// schon hier und nicht erst im Dialog, damit der Anwalt die Zeilen findet,
+  /// ohne jede einzelne zu öffnen.
+  final bool aehnlicherName;
+
   const ImportEintragKachel({
     super.key,
     required this.befund,
     required this.datensatz,
     this.bearbeitbar = false,
+    this.ordnerUnbekannt = false,
+    this.aehnlicherName = false,
   });
 
   bool get _aenderbar => bearbeitbar && datensatz != null;
@@ -60,6 +71,21 @@ class ImportEintragKachel extends StatelessWidget {
               hinweis,
               style: theme.textTheme.bodySmall?.copyWith(color: farben.error),
             ),
+          // Beides steht in der Unterzeile und nicht als Chip rechts: dort
+          // stehen schon bis zu drei, und die Kachel bricht bei größerer
+          // Schrift ohnehin knapp.
+          if (ordnerUnbekannt)
+            Text(
+              'Nennt einen Ordner, den es im Stammordner nicht gibt.',
+              style: theme.textTheme.bodySmall?.copyWith(color: farben.error),
+            ),
+          if (aehnlicherName)
+            Text(
+              'Ähnlicher Name im Register — beim Bearbeiten prüfen.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: farben.tertiary,
+              ),
+            ),
         ],
       ),
       trailing: Row(
@@ -92,12 +118,19 @@ class ImportEintragKachel extends StatelessWidget {
   Future<void> _bearbeiten(BuildContext context) async {
     // Der Dialog liegt auf einer eigenen Route und sieht den BlocProvider der
     // Seite nicht — deshalb wird der Cubit vorher gefasst und das Ergebnis
-    // hier angewendet, statt im Dialog danach zu suchen.
+    // hier angewendet, statt im Dialog danach zu suchen. Aus demselben Grund
+    // kommen Vorschläge und Ordnerbestand von hier: der Dialog holt sich
+    // nichts selbst.
     final cubit = context.read<MandantenImportCubit>();
+    final stand = cubit.state;
     final entscheidung = await showDialog<ImportEintragEntscheidung>(
       context: context,
-      builder: (_) =>
-          ImportEintragDialog(befund: befund, datensatz: datensatz!),
+      builder: (_) => ImportEintragDialog(
+        befund: befund,
+        datensatz: datensatz!,
+        vorschlaege: stand.befund.aehnliche[befund.zeile] ?? const [],
+        vorhandeneOrdner: stand.umfeld.ordnernamen,
+      ),
     );
     if (entscheidung == null) return;
 

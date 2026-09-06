@@ -1,6 +1,6 @@
 import 'package:automation_app/features/mandanten/domain/entities/aktentyp.dart';
 import 'package:automation_app/features/mandanten/domain/services/aktentyp_erkennung.dart';
-import 'package:automation_app/features/mandanten/presentation/utils/ordnername_vorschlag.dart';
+import 'package:automation_app/features/mandanten/domain/services/ordnername_vorschlag.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -70,10 +70,15 @@ void main() {
       expect(vorschlag.nachname, 'Mustermann');
     });
 
-    test('ein einzelnes Wort wird zum Vornamen', () {
-      final vorschlag = nameVorschlagAusOrdner('Strafsache Mark');
-      expect(vorschlag.vorname, 'Mark');
-      expect(vorschlag.nachname, isEmpty);
+    // Die echten Aktenordner der Kanzlei tragen **nur** den Nachnamen
+    // („VUnfallursache Albrecht"), an 61 von 61 Ordnern des eingestellten
+    // Stammordners belegt. Ein einzelnes Wort ist deshalb der Nachname —
+    // andernfalls stünde bei jedem echten Ordner der Nachname im Vornamenfeld,
+    // und „Sichere Treffer übernehmen" fände auf echten Daten nie etwas.
+    test('ein einzelnes Wort wird zum Nachnamen', () {
+      final vorschlag = nameVorschlagAusOrdner('VUnfallursache Albrecht');
+      expect(vorschlag.vorname, isEmpty);
+      expect(vorschlag.nachname, 'Albrecht');
     });
 
     test('nur ein Präfix ergibt keinen Vorschlag', () {

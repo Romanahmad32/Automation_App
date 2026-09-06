@@ -2,15 +2,19 @@ import 'package:automation_app/core/general_classes/failures/als_either.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/arbeitspaket_datei_datasource.dart';
 import 'package:automation_app/features/mandanten/data/datasources/import_datei_datasource.dart';
+import 'package:automation_app/features/mandanten/data/datasources/import_paket_datasource.dart';
 import 'package:automation_app/features/mandanten/data/datasources/mandanten_import_datasource.dart';
 import 'package:automation_app/features/mandanten/data/datasources/mandant_datasource.dart';
 import 'package:automation_app/features/mandanten/data/datasources/ordner_status_datasource.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ablage_ergebnis.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
+import 'package:automation_app/features/mandanten/domain/entities/arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
+import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
@@ -27,6 +31,8 @@ class MandantenRepositoryImpl implements MandantenRepository {
   final OrdnerStatusDatasource _ordnerStatusDatasource;
   final ImportDateiDatasource _importDateiDatasource;
   final MandantenImportDatasource _importDatasource;
+  final ImportPaketDatasource _importPaketDatasource;
+  final ArbeitspaketDateiDatasource _arbeitspaketDateiDatasource;
   final KanzleiSettingsRepository _settingsRepository;
 
   MandantenRepositoryImpl(
@@ -35,7 +41,32 @@ class MandantenRepositoryImpl implements MandantenRepository {
     this._ordnerStatusDatasource,
     this._importDateiDatasource,
     this._importDatasource,
+    this._importPaketDatasource,
+    this._arbeitspaketDateiDatasource,
     this._settingsRepository,
+  );
+
+  @override
+  Future<Either<Failure, List<ImportPaket>>> getImportPakete() => alsEither(
+    () => _importPaketDatasource.ladeImportPakete(),
+    uebersetzen: _localFailure,
+  );
+
+  @override
+  Future<Either<Failure, ImportPaket>> notiereImportPaket(
+    List<String> ordnernamen,
+  ) => alsEither(
+    () => _importPaketDatasource.notiereImportPaket(ordnernamen),
+    uebersetzen: _localFailure,
+  );
+
+  @override
+  Future<Either<Failure, void>> schreibeArbeitspaket({
+    required Arbeitspaket paket,
+    required String pfad,
+  }) => alsEither(
+    () => _arbeitspaketDateiDatasource.schreibe(paket: paket, pfad: pfad),
+    uebersetzen: _localFailure,
   );
 
   @override

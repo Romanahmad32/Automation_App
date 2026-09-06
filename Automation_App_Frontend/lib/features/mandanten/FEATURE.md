@@ -9,16 +9,15 @@ Dateisystem zu ihm gehören. Grundlage für Wiederverwendung der Daten, Aktenabl
 `presentation/blocs/ablage_cubit/ablage_cubit.dart`,
 `presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart`,
 `presentation/blocs/mandanten_suche_cubit/mandanten_suche_cubit.dart` (Zuordnen-Dialog)
-**Domain:** `Mandant`, `MandantenSeite`, `Akte`, `Fall`, `Aktentyp`, `OrdnerStatus`,
-`OrdnernamenMenge`, `Anrede`, `CreateMandantRequest`, `MandantenImportDatei`, `ImportBericht`,
-`MandantErkennung`, `AktentypErkennung`, `AblageErgebnis`, `AblageStrategie`; `GetMandanten`,
-`GetMandantenSeite`, `GetAktenOrdnernamen`, `CreateMandant`, `UpdateMandant`, `DeleteMandant`,
-`GetAkten`, `GetFaelle`, `GetOrdnerStatus`, `SetzeOrdnerStatus`, `LiesImportDatei`,
-`ImportiereMandanten`, `VerknuepfeOrdnerMitMandant`, `LegeDokumentAb`
-**Backend:** `Features/Mandanten/` · `GET/POST /api/Mandanten`, `GET /api/Mandanten/seite`,
-`GET /api/Mandanten/aktenordner`, `PUT/DELETE /api/Mandanten/{id}`, `GET/PUT /api/OrdnerStatus`,
-`POST /api/MandantenImport` (Format: `docs/MANDANTEN_IMPORT.md`) — Akten und Fälle laufen über
-keinen Endpunkt, sie kommen direkt aus dem Dateisystem.
+**Domain:** `Mandant`, `MandantenSeite`, `Akte`, `Fall`, `Aktentyp`, `OrdnerStatus`, `OrdnernamenMenge`, `Anrede`,
+`CreateMandantRequest`, `MandantenImportDatei`, `ImportBericht`, `MandantErkennung`, `AktentypErkennung`, `AblageErgebnis`,
+`AblageStrategie`, `Arbeitspaket`, `ImportPaket`, `ArbeitspaketBauen`, `OrdnerPruefung`, `SichereTreffer`; `GetMandanten`,
+`GetMandantenSeite`, `GetAktenOrdnernamen`, `CreateMandant`, `UpdateMandant`, `DeleteMandant`, `GetAkten`, `GetFaelle`,
+`GetOrdnerStatus`, `SetzeOrdnerStatus`, `LiesImportDatei`, `ImportiereMandanten`, `VerknuepfeOrdnerMitMandant`,
+`LegeDokumentAb`, `GetImportPakete`, `NotiereImportPaket`, `SchreibeArbeitspaket`
+**Backend:** `Features/Mandanten/` · `GET/POST /api/Mandanten`, `GET /api/Mandanten/seite`, `GET /api/Mandanten/aktenordner`,
+`PUT/DELETE /api/Mandanten/{id}`, `GET/PUT /api/OrdnerStatus`, `POST /api/MandantenImport` (Format: `docs/MANDANTEN_IMPORT.md`),
+`GET`/`POST /api/ImportPakete` — Akten und Fälle laufen über keinen Endpunkt, sie kommen direkt aus dem Dateisystem.
 **Tests:** `test/features/mandanten/`, Einstieg `test/features/mandanten/mandanten_overview_bloc_test.dart`,
 `test/features/mandanten/mandanten_import_cubit_test.dart`
 

@@ -150,6 +150,9 @@ void main() {
       'ImportBerichtDto',
       'ImportEintragDto',
     ],
+    'lib/features/mandanten/domain/entities/import_paket.dart': [
+      'ImportPaketDto',
+    ],
     'lib/features/mandanten/domain/entities/mandant.dart': [
       'MandantDto',
       'CreateMandantDto',

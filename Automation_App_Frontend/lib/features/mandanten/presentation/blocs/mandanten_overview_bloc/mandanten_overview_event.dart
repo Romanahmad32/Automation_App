@@ -102,3 +102,15 @@ final class VerknuepfeOrdnerEvent extends MandantenOverviewEvent {
   @override
   List<Object> get props => [mandantId, ordnername];
 }
+
+/// Lädt die Paket-Historie neu, nachdem
+/// [ArbeitspaketGriff.schreibeUndVerbucheArbeitspaket] verbucht hat. Eigenes
+/// Ereignis statt eines direkten `emit` im Mixin — siehe die Erklärung am
+/// Kopf von `mandanten_overview_bloc.dart`. [abgeschlossen] lässt den
+/// Aufrufer warten, bis die Historie im Zustand steht, statt fire-and-forget
+/// zu bleiben.
+final class HistorieNeuLadenEvent extends MandantenOverviewEvent {
+  final Completer<void> abgeschlossen;
+
+  const HistorieNeuLadenEvent(this.abgeschlossen);
+}

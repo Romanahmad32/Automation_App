@@ -99,9 +99,11 @@ eine dazu: Wert in `OrdnerStatusArten` **und** in `OrdnerStatusArt` (Dart) ergä
 Frontend unbekannter Status fällt sonst auf `ohneMandantenbezug` zurück, damit eine ältere
 Oberfläche den Vermerk nicht verliert und der Ordner still in den Stapel zurückfällt.
 
-Offen bleibt aus Paket 3 von Issue #19: Namensvorschlag je Zeile statt Dialog und Mehrfachauswahl.
-`nameVorschlagAusOrdner` und `MandantErkennung` liegen dafür bereit und sind auf dieser Seite nur
-noch nicht zusammengeschaltet.
+Der Punkt „Namensvorschlag je Zeile statt Dialog und Mehrfachauswahl" aus Paket 3 von Issue #19 ist
+mit #108 erledigt: `nameVorschlagAusOrdner` und `MandantErkennung` sind zusammengeschaltet — im
+Arbeitspaket trägt jede Zeile ihren Namensvorschlag und den `MandantErkennung`-Treffer
+(`bekannterMandant`/`begruendung`), und `SichereTreffer.finde` nutzt dieselbe Kombination, um
+eindeutige Fälle ganz ohne Agenten zu erledigen.
 
 ## Import: die Zuordnung kommt von außen
 
@@ -152,6 +154,43 @@ wo die Akten liegen, und kommt als Datei herein. **Das Format steht in
 - Der Auftrag für den Erzeuger der Datei liegt als Text in `presentation/utils/import_anleitung.dart`
   und ist in der App kopierbar. Er beschreibt dasselbe Format wie die Doku — ändert sich das Format,
   ändern sich **beide**.
+
+## Arbeitspakete und sichere Treffer (#108)
+
+Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die Fallen aus dem Bau.
+
+- **`Clipboard.setData` hängt im Widget-Test.** Im `flutter_tester` gibt es keinen
+  Zwischenablage-Eigentümer; der Aufruf auf `SystemChannels.platform` wird auf manchen Läufen nie
+  beantwortet, und `pumpAndSettle()` läuft dann in seinen eigenen Zehn-Minuten-Zeitrahmen. Jede
+  Testdatei, die den Paket-Speicherweg widget-testet, braucht deshalb eine
+  Mock-Method-Call-Handler-Attrappe für `SystemChannels.platform` — das hat in diesem Bau eine
+  Stunde gekostet.
+- **Die Reihenfolge beim Paket-Holen ist Absicht:** bauen → Speichern-Dialog → schreiben → **erst
+  dann** verbuchen (`POST /api/ImportPakete`). Bricht der Anwalt den Speichern-Dialog ab, darf kein
+  Paket in der Historie stehen — sonst wäre eine Nummer vergeben für ein Paket, das niemand hat.
+- **`SichereTreffer.finde` bekommt `nameVorschlagAusOrdner` von außen gereicht**, weil die Funktion
+  in `presentation/utils/` liegt und `domain` nicht auf `presentation` zeigen darf — dieselbe
+  Schnittregel, der auch `ArbeitspaketBauen` folgt. Nicht in die Domain kopieren: Es gibt genau eine
+  Präfixtabelle, und eine zweite Auslegung liefe beim nächsten Sonderfall auseinander.
+- **Ein einzelnes Wort ist der Nachname, nicht der Vorname.** Die echten Aktenordner der Kanzlei
+  heißen `VUnfallursache <Nachname>` — nur der Nachname, kein Vorname, kein Komma; im eingestellten
+  Stammordner an 61 von 61 Ordnern belegt. `nameVorschlagAusOrdner` teilt am ersten Leerzeichen und
+  legt ein einzelnes Wort deshalb in den **Nachnamen**. Wer das umdreht, dreht drei Dinge auf einmal
+  ab: `SichereTreffer` bricht bei leerem Nachnamen ab und findet auf echten Daten ausnahmslos
+  nichts, `MandantenNamensindex.kandidaten` sucht mit leerer Zeichenkette und lässt
+  `ArbeitspaketOrdner.bekannterMandant` immer leer, und das Anlegen aus der Kachel belegt das
+  Vornamenfeld mit dem Nachnamen vor.
+- **Nachgebessert wird trotzdem nicht.** Keine Komma-Heuristik für „Nachname, Vorname" — der Anwalt
+  bestätigte: es gibt sie nicht. Sie wäre zudem eine zweite Auslegung derselben Präfixtabelle. Was
+  der Vorschlag nicht auflöst, entscheidet der Agent: Das Arbeitspaket liefert ihm den rohen
+  Ordnernamen (`ArbeitspaketOrdner.ordnername`) daneben.
+- **`SichereTreffer` verlangt ohne Vornamen einen im Register eindeutigen Nachnamen.** Der Nachname
+  bleibt Pflicht; ein fehlender Vorname ist zulässig, und der Vergleich prüft ihn nur, wenn der
+  Ordner einen liefert. „Beide exakt" wäre bei Ordnern ohne Vornamen prinzipiell unerfüllbar
+  gewesen — eine Regel, die nie zuschlägt, ist nicht streng, sondern wirkungslos. Die
+  Schadensrichtung (lieber übersehen als falsch zuordnen) trägt dann allein
+  `vorschlaege.length != 1`: zwei „Albrecht" im Register sind zwei Vorschläge, und weil
+  `MandantErkennung` auch Tippfehler-Nachbarn mitzählt, ist das eng genug.
 
 ## Ablage
 
