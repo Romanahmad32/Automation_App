@@ -19,7 +19,7 @@ void main() {
   group('Arbeitspaket.toJson', () {
     test('traegt genau die Felder des Dateiformats', () {
       final paket = bauePaket(
-        [paketOrdner('VUnfallursache Meier, Anna')],
+        [paketOrdner('VUnfallursache Albrecht')],
         nummer: 3,
         bekannteMandanten: [
           BekannterMandant.aus(
@@ -60,10 +60,10 @@ void main() {
     test('ein Ordner mit Mandantenvorschlag traegt beide Zusatzfelder', () {
       final paket = bauePaket([
         paketOrdner(
-          'VUnfallursache Meier, Anna',
-          vorname: 'Meier,',
-          nachname: 'Anna',
-          bekannterMandant: 'Anna Meier',
+          'VUnfallursache Albrecht',
+          vorname: '',
+          nachname: 'Albrecht',
+          bekannterMandant: 'Anna Albrecht',
           begruendung: 'Nachname gleich',
         ),
       ]);
@@ -78,18 +78,37 @@ void main() {
         'bekannterMandant',
         'begruendung',
       ]);
-      expect(ordner['ordnername'], 'VUnfallursache Meier, Anna');
+      expect(ordner['ordnername'], 'VUnfallursache Albrecht');
       expect(ordner['aktentyp'], 'verkehrsunfall');
-      expect(ordner['nameVorschlagVorname'], 'Meier,');
-      expect(ordner['nameVorschlagNachname'], 'Anna');
-      expect(ordner['bekannterMandant'], 'Anna Meier');
+      expect(ordner['nameVorschlagVorname'], '');
+      expect(ordner['nameVorschlagNachname'], 'Albrecht');
+      expect(ordner['bekannterMandant'], 'Anna Albrecht');
       expect(ordner['begruendung'], 'Nachname gleich');
+    });
+
+    // Der Regelfall traegt keinen Vornamen, weil die echten Ordner keinen
+    // haben — dass ein vorhandener trotzdem durch `toJson()` reist, prueft
+    // sonst seit dem Umstellen der Beispieldaten nichts mehr.
+    test('ein Ordner mit zwei Namensteilen traegt beide', () {
+      final paket = bauePaket([
+        paketOrdner(
+          'VUnfallursache Mark Weber',
+          vorname: 'Mark',
+          nachname: 'Weber',
+        ),
+      ]);
+
+      final ordner = (paket.toJson()['ordner'] as List).single as Map;
+
+      expect(ordner['ordnername'], 'VUnfallursache Mark Weber');
+      expect(ordner['nameVorschlagVorname'], 'Mark');
+      expect(ordner['nameVorschlagNachname'], 'Weber');
     });
 
     // Ein leeres Feld liest sich wie eine Aussage („kein Mandant"), und das
     // waere eine, die niemand geprueft hat.
     test('ohne Fund fehlen bekannterMandant und begruendung', () {
-      final paket = bauePaket([paketOrdner('VUnfallursache Meier, Anna')]);
+      final paket = bauePaket([paketOrdner('VUnfallursache Albrecht')]);
 
       final ordner = (paket.toJson()['ordner'] as List).single as Map;
 

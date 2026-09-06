@@ -180,9 +180,9 @@ Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die Fallen 
   nichts, `MandantenNamensindex.kandidaten` sucht mit leerer Zeichenkette und lässt
   `ArbeitspaketOrdner.bekannterMandant` immer leer, und das Anlegen aus der Kachel belegt das
   Vornamenfeld mit dem Nachnamen vor.
-- **Nachgebessert wird trotzdem nicht.** Keine Komma-Heuristik für „Nachname, Vorname" — die Ordner
-  geben das nicht her, und sie wäre eine zweite Auslegung derselben Präfixtabelle. Was der
-  Vorschlag nicht auflöst, entscheidet der Agent: Das Arbeitspaket liefert ihm den rohen
+- **Nachgebessert wird trotzdem nicht.** Keine Komma-Heuristik für „Nachname, Vorname" — der Anwalt
+  bestätigte: es gibt sie nicht. Sie wäre zudem eine zweite Auslegung derselben Präfixtabelle. Was
+  der Vorschlag nicht auflöst, entscheidet der Agent: Das Arbeitspaket liefert ihm den rohen
   Ordnernamen (`ArbeitspaketOrdner.ordnername`) daneben.
 - **`SichereTreffer` verlangt ohne Vornamen einen im Register eindeutigen Nachnamen.** Der Nachname
   bleibt Pflicht; ein fehlender Vorname ist zulässig, und der Vergleich prüft ihn nur, wenn der

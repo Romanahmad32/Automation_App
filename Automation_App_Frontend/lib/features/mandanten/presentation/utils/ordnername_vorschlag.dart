@@ -21,8 +21,8 @@ import 'package:automation_app/features/mandanten/domain/services/aktentyp_erken
 /// Dublettenhinweis im Arbeitspaket bliebe bei jedem echten Ordner leer.
 ///
 /// Eine Komma-Heuristik für „Nachname, Vorname" steht **bewusst nicht**
-/// daneben: Die Ordner geben das nicht her, und sie wäre eine zweite Auslegung
-/// derselben Präfixtabelle.
+/// daneben: Der Anwalt bestätigte, dass es sie nicht gibt — auch eine zweite
+/// Auslegung derselben Präfixtabelle.
 ({String vorname, String nachname}) nameVorschlagAusOrdner(String ordnername) {
   final praefix = AktentypErkennung.erkenne(ordnername).praefix;
   final rest = ordnername.trim().substring(praefix.length).trim();
