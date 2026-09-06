@@ -109,7 +109,7 @@ void main() {
                 // Bestandsvorlage: genau der Fall aus #105 — öffnen, etwas
                 // ändern, speichern.
                 existingItemId: 7,
-                wordFilePathOhneAuflistung: 'HGN.docx',
+                wordFilePathOhneAuflistung: 'HGn.docx',
               ),
             ),
           ),

@@ -144,10 +144,10 @@ void main() {
   });
 
   /// #35 Teil 2: Die Pflicht gilt je gewählter Word-Datei. Das Feld
-  /// „Schadenshöhe" steht nur in der Auflistungs-Datei — beim HGN-Schreiben
+  /// „Schadenshöhe" steht nur in der Auflistungs-Datei — beim HGn-Schreiben
   /// (dessen Platzhalter es nicht enthalten) darf es den Knopf nicht sperren.
   testWidgets('ein Feld nur aus der Auflistungs-Datei blockiert das '
-      'HGN-Schreiben nicht', (tester) async {
+      'HGn-Schreiben nicht', (tester) async {
     await zeige(
       tester,
       vorlage([feld('Kennzeichen'), feld('Schadenshöhe')]),

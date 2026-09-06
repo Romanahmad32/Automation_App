@@ -41,10 +41,11 @@ class FeldNameHinweis extends StatelessWidget {
           control.value ?? '',
         ).hinweis;
         if (hinweis == null) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(46, 0, 8, 8),
-          child: FehlerHinweis(nachricht: hinweis),
-        );
+        // Ohne eigene Einrückung: Der Hinweis steht jetzt im Aufklapper der
+        // Feldzeile (`FeldAufklappInhalt`), und der rückt seinen ganzen Inhalt
+        // gemeinsam unter die Bezeichnungsspalte ein. Die früheren 46 px hier
+        // kämen zu dessen 48 dazu und schöben ihn aus der Spalte.
+        return FehlerHinweis(nachricht: hinweis);
       },
     );
   }

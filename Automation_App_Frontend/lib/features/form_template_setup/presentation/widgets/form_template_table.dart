@@ -44,6 +44,8 @@ class _FormTemplateTableState extends State<FormTemplateTable> {
           );
         case colFiles:
           return fileCount(a).compareTo(fileCount(b));
+        case colStand:
+          return standRang(a).compareTo(standRang(b));
         case colFields:
           return a.fields.length.compareTo(b.fields.length);
         default:
@@ -87,6 +89,7 @@ class _FormTemplateTableState extends State<FormTemplateTable> {
       children: [
         _headerCell('Vorlage', colName, style, flex: flexName),
         _headerCell('Dateien', colFiles, style, flex: flexFiles),
+        _headerCell('Stand', colStand, style, flex: flexStand),
         _headerCell('Felder', colFields, style, flex: flexFields),
         // Aktionen ist nicht sortierbar.
         SizedBox(

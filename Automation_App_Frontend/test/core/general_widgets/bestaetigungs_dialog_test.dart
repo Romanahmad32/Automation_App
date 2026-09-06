@@ -49,4 +49,40 @@ void main() {
 
     expect(ergebnis, isFalse);
   });
+
+  testWidgets('der ablehnende Knopf lässt sich benennen', (tester) async {
+    // „Abbrechen" passt nur, solange die Rückfrage vor einer Handlung steht.
+    // Beim Verlassen einer Seite mit ungespeicherten Änderungen ist die
+    // Ablehnung selbst eine Handlung (#104) — und „Abbrechen" liesse offen,
+    // was abgebrochen wird.
+    bool? ergebnis;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () async {
+              ergebnis = await bestaetigen(
+                context,
+                titel: 'Änderungen verwerfen?',
+                text: 'Beim Verlassen gehen sie verloren.',
+                bestaetigung: 'Verwerfen',
+                abbruch: 'Weiter bearbeiten',
+                destruktiv: true,
+              );
+            },
+            child: const Text('öffnen'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('öffnen'));
+    await tester.pumpAndSettle();
+    expect(find.text('Abbrechen'), findsNothing);
+
+    await tester.tap(find.text('Weiter bearbeiten'));
+    await tester.pumpAndSettle();
+
+    expect(ergebnis, isFalse);
+  });
 }

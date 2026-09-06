@@ -11,12 +11,19 @@ final class SubmitFormTemplateDataEvent extends FormTemplateDataEvent {
   final String? wordFilePathOhneAuflistung;
   final String? wordFilePathMitAuflistung;
 
+  /// Der Stand, den der Editor beim Drücken des Knopfs gerechnet hat (#104
+  /// Stufe 4) — er reist in der opaken `fields`-Spalte mit, damit die
+  /// Übersicht ihn zeigen kann, ohne die Word-Dateien zu lesen. Null lässt die
+  /// Spalte in ihrer alten Form (siehe `GespeicherterStand`).
+  final GespeicherterStand? stand;
+
   const SubmitFormTemplateDataEvent({
     this.templateName,
     this.existingItemId,
     required this.formData,
     this.wordFilePathOhneAuflistung,
     this.wordFilePathMitAuflistung,
+    this.stand,
   });
 
   @override
@@ -26,5 +33,6 @@ final class SubmitFormTemplateDataEvent extends FormTemplateDataEvent {
     formData,
     wordFilePathOhneAuflistung,
     wordFilePathMitAuflistung,
+    stand,
   ];
 }

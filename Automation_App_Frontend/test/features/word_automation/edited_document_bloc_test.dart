@@ -33,8 +33,8 @@ void main() {
       bloc.add(
         const EditDocumentEvent(
           data: {'Name': 'Mustermann'},
-          path: r'C:\Vorlagen\VORLAGE HGN.docx',
-          outputFileName: 'VORLAGE HGN 12.06.2026',
+          path: r'C:\Vorlagen\VORLAGE HGn.docx',
+          outputFileName: 'VORLAGE HGn 12.06.2026',
           vorgangSchluessel: '84/26 C03_GG-XY 123',
         ),
       );
@@ -52,7 +52,7 @@ void main() {
     bloc.add(
       const EditDocumentEvent(
         data: {'Name': 'Mustermann'},
-        path: r'C:\Vorlagen\VORLAGE HGN.docx',
+        path: r'C:\Vorlagen\VORLAGE HGn.docx',
       ),
     );
     await bloc.stream.firstWhere((state) => state is EditedDocumentLoaded);
@@ -83,7 +83,7 @@ void main() {
     bloc.add(
       const EditDocumentEvent(
         data: {'Name': 'Mustermann'},
-        path: r'C:\Vorlagen\VORLAGE HGN.docx',
+        path: r'C:\Vorlagen\VORLAGE HGn.docx',
       ),
     );
     final erzeugt =

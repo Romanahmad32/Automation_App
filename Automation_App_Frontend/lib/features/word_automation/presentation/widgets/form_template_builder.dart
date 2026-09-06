@@ -57,7 +57,7 @@ class FormTemplateBuilder extends StatelessWidget {
   /// Die {{Platzhalter}} der gerade gewählten Word-Datei. Pflicht ist ein Feld
   /// nur, wenn sein Name hier vorkommt — je Variante abgeleitet statt global
   /// gespeichert (#35 Teil 2): Ein Feld, das nur in der Auflistungs-Datei
-  /// steht, blockiert so nie das HGN-Schreiben.
+  /// steht, blockiert so nie das HGn-Schreiben.
   ///
   /// Null heißt: keine Ableitung — jede markierte Pflicht gilt (der Weg der
   /// freien Erfassung ohne bekannte Datei). Die leere Menge heißt dagegen:

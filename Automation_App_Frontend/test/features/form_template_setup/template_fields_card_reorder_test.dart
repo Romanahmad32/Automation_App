@@ -2,6 +2,7 @@ import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_stand.dart';
 import 'package:automation_app/features/form_template_setup/domain/usecases/get_template_placeholders.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_fields_card.dart';
@@ -12,8 +13,8 @@ import 'package:reactive_forms/reactive_forms.dart';
 
 /// Beim Ziehen hebt die ReorderableListView die Zeile in ein Overlay
 /// **außerhalb** von ReactiveForm und Bloc-Providern der Seite. Der
-/// proxyDecorator muss beides neu umschließen — ohne den Bloc warf das
-/// FeldVorkommenBadge in der gezogenen Zeile eine ProviderNotFoundException.
+/// proxyDecorator muss beides neu umschließen — ohne den Bloc warf die
+/// FeldVorkommenPille in der gezogenen Zeile eine ProviderNotFoundException.
 class FestePlatzhalter
     implements UseCase<List<String>, GetTemplatePlaceholdersParams> {
   @override
@@ -56,6 +57,15 @@ void main() {
       ),
     ];
     final umsortiert = <(int, int)>[];
+    // Vollständig und ohne offene Einträge, damit der Filter auf „Alle" bleibt
+    // und das Umsortieren frei ist.
+    const stand = VorlagenStand(
+      platzhalterOhneFeld: [],
+      felderOhneVorkommen: [],
+      hatDateiOhne: true,
+      hatDateiMit: false,
+      platzhalterUnbekannt: false,
+    );
 
     await tester.pumpWidget(
       MaterialApp(
@@ -74,6 +84,8 @@ void main() {
                   onDatenquelleChanged: (_, _) {},
                   onRequiredChanged: (_, _) {},
                   onDelete: (_) {},
+                  stand: stand,
+                  feldname: (key) => formGroup.control(key).value as String?,
                 ),
               ),
             ),

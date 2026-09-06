@@ -5,6 +5,7 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/create_form_template_request.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
+import 'package:automation_app/features/form_template_setup/domain/services/gespeicherter_stand.dart';
 import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -39,6 +40,7 @@ class FormTemplateDataBloc
           fields: event.formData,
           wordFilePathOhneAuflistung: event.wordFilePathOhneAuflistung,
           wordFilePathMitAuflistung: event.wordFilePathMitAuflistung,
+          stand: event.stand,
         ),
       );
     } else {
@@ -50,6 +52,7 @@ class FormTemplateDataBloc
             fields: event.formData,
             wordFilePathOhneAuflistung: event.wordFilePathOhneAuflistung,
             wordFilePathMitAuflistung: event.wordFilePathMitAuflistung,
+            stand: event.stand,
           ),
         ),
       );

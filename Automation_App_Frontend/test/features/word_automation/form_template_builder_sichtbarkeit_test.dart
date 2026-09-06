@@ -58,7 +58,7 @@ void main() {
       find.widgetWithText(TextField, label).evaluate().isNotEmpty;
 
   testWidgets('ein Feld nur aus der Auflistungs-Datei liegt beim '
-      'HGN-Schreiben im eingeklappten Teil', (tester) async {
+      'HGn-Schreiben im eingeklappten Teil', (tester) async {
     await zeige(tester, aktivePlatzhalter: {'Gegnerkennzeichen'});
 
     expect(stehtOben('Gegnerkennzeichen'), isTrue);
@@ -115,7 +115,7 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     expect(gemeldet?['Vorname'], 'Nikolaus');
 
-    // Umschalten auf HGN: „Vorname" klappt ein, der Wert kommt über
+    // Umschalten auf HGn: „Vorname" klappt ein, der Wert kommt über
     // `erfassteWerte` zurück in die neu gebaute Gruppe.
     await zeige(
       tester,
@@ -159,7 +159,7 @@ void main() {
                   inputType: InputType.date,
                 ),
               ]),
-              // In der Auflistungs-Fassung angefangen zu tippen, dann auf HGN
+              // In der Auflistungs-Fassung angefangen zu tippen, dann auf HGn
               // umgeschaltet: Das halbe Datum kommt hier wieder herein.
               erfassteWerte: const {'Unfalldatum': '1.1.'},
               aktivePlatzhalter: const {'Gegnerkennzeichen'},
