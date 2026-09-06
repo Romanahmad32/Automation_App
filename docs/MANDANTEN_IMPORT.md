@@ -102,11 +102,11 @@ Eigene Fassung, unabhängig von der Importdatei — beide zählen ihre Fassungsn
   ],
   "ordner": [
     {
-      "ordnername": "VUnfallursache Meier, Anna",
+      "ordnername": "VUnfallursache Albrecht",
       "aktentyp": "verkehrsunfall",
-      "nameVorschlagVorname": "Meier,",
-      "nameVorschlagNachname": "Anna",
-      "bekannterMandant": "Anna Meier",
+      "nameVorschlagVorname": "",
+      "nameVorschlagNachname": "Albrecht",
+      "bekannterMandant": "Anna Albrecht",
       "begruendung": "Nachname gleich"
     }
   ]

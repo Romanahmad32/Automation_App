@@ -99,10 +99,10 @@ class Arbeitspaket extends Equatable {
 /// Ein offener Akten-Ordner, wie ihn der Agent vorgelegt bekommt.
 ///
 /// [nameVorschlagVorname] und [nameVorschlagNachname] kommen unverändert aus
-/// `nameVorschlagAusOrdner` und werden **nicht** nachgebessert, auch wenn der
-/// Vorschlag bei „Nachname, Vorname"-Ordnern schief aussieht: der Agent
-/// bekommt den rohen [ordnername] daneben und entscheidet selbst. Eine zweite
-/// Heuristik hier hieße zwei Auslegungen derselben Präfixtabelle.
+/// `nameVorschlagAusOrdner` und werden **nicht** nachgebessert: Der Vorschlag
+/// ist eine Heuristik über eine Präfixtabelle und löst nicht jeden
+/// Ordnernamen auf. Was er nicht auflöst, entscheidet der Agent am rohen
+/// [ordnername], der ihm daneben mitgegeben wird.
 class ArbeitspaketOrdner extends Equatable {
   final String ordnername;
 
