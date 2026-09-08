@@ -202,7 +202,8 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   gibt die nächsten N offenen **Mandanten** samt aller ihrer Ordner als JSON-Datei heraus
   (`ArbeitspaketBauen`, `POST /api/ImportPakete`), führt darüber Buch und rechnet den Fortschritt
   selbst aus den gespeicherten Ordnernamen aus — der Anwalt wird nie gefragt, zu welchem Paket eine
-  Importdatei gehört. Ein Ordnername, den der Stammordner nicht kennt, sperrt die Übernahme der
+  Importdatei gehört. Ein versehentlich geholtes Paket lässt sich zurücknehmen, solange es offen ist
+  (`DELETE /api/ImportPakete/{nummer}`); es sperrt keinen Ordner, also bleibt nichts zurückzusetzen. Ein Ordnername, den der Stammordner nicht kennt, sperrt die Übernahme der
   betroffenen Zeile (Ausnahme: kein Scan verfügbar). **Sichere Treffer übernehmen** schlägt zusätzlich
   Ordner vor, deren Namensvorschlag exakt und eindeutig auf einen erfassten Mandanten passt, und
   schickt sie ohne neuen Weg durch denselben Import (`SichereTreffer`,
