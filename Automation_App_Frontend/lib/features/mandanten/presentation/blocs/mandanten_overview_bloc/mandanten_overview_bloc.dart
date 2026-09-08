@@ -16,6 +16,7 @@ import 'package:automation_app/features/mandanten/domain/services/mandanten_name
 import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/loesche_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/notiere_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
@@ -103,6 +104,7 @@ class MandantenOverviewBloc
     UseCase<KanzleiSettings, NoParams> getKanzleiSettings,
     UseCase<ImportPaket, NotiereImportPaketParams> notiereImportPaket,
     UseCase<void, SchreibeArbeitspaketParams> schreibeArbeitspaket,
+    UseCase<void, LoescheImportPaketParams> loescheImportPaket,
   ) : _abruf = MandantenStandAbruf(
         getSeite: getMandantenSeite,
         getAktenOrdnernamen: getAktenOrdnernamen,
@@ -116,6 +118,7 @@ class MandantenOverviewBloc
         getImportPakete: getImportPakete,
         notiereImportPaket: notiereImportPaket,
         schreibeArbeitspaket: schreibeArbeitspaket,
+        loescheImportPaket: loescheImportPaket,
       ),
       super(MandantenOverviewLoading()) {
     on<LoadMandantenUebersichtEvent>(_onLoad);

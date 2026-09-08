@@ -55,6 +55,19 @@ mixin ArbeitspaketGriff
     return ergebnis;
   }
 
+  /// Nimmt ein versehentlich herausgegebenes, noch offenes Paket zurück und
+  /// lädt danach die Historie neu — dieselbe Reihenfolge wie bei
+  /// [schreibeUndVerbucheArbeitspaket].
+  Future<Either<Failure, void>> loescheImportPaket(int nummer) async {
+    final ergebnis = await _arbeitspaket.loesche(nummer);
+    if (ergebnis case Right()) {
+      final abgeschlossen = Completer<void>();
+      add(HistorieNeuLadenEvent(abgeschlossen));
+      await abgeschlossen.future;
+    }
+    return ergebnis;
+  }
+
   /// Lädt die Paket-Historie neu und schreibt sie in den Zustand — als
   /// Ereignisbehandlung, weil `Bloc.emit` (anders als `Cubit`s `emit`) nur
   /// `@visibleForTesting` trägt und sich deshalb aus keinem Mixin heraus

@@ -13,6 +13,7 @@ class MandantenArbeitspaketAbruf {
   final UseCase<List<ImportPaket>, NoParams> getImportPakete;
   final UseCase<ImportPaket, NotiereImportPaketParams> notiereImportPaket;
   final UseCase<void, SchreibeArbeitspaketParams> schreibeArbeitspaket;
+  final UseCase<void, LoescheImportPaketParams> loescheImportPaket;
 
   const MandantenArbeitspaketAbruf({
     required this.getMandanten,
@@ -20,6 +21,7 @@ class MandantenArbeitspaketAbruf {
     required this.getImportPakete,
     required this.notiereImportPaket,
     required this.schreibeArbeitspaket,
+    required this.loescheImportPaket,
   });
 
   /// Das komplette Register — für den Namensvorschlag im Paket und für
@@ -90,6 +92,10 @@ class MandantenArbeitspaketAbruf {
       NotiereImportPaketParams(ordnernamen: paket.ordnernamen),
     );
   }
+
+  /// Nimmt ein versehentlich herausgegebenes, noch offenes Paket zurück.
+  Future<Either<Failure, void>> loesche(int nummer) =>
+      loescheImportPaket(LoescheImportPaketParams(nummer: nummer));
 
   /// Die Paket-Historie frisch geholt — nach dem Verbuchen wird sie neu
   /// gelesen statt die Paketnummer lokal nachzukorrigieren.

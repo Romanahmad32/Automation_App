@@ -39,8 +39,12 @@ class NichtZugeordneteOrdnerPage extends StatelessWidget
         titel: 'Ordner zuordnen',
         icon: Icons.rule_folder_outlined,
         untertitel: 'Gefundene Akten-Ordner einem Mandanten zuordnen',
+        // Trennstrich zwischen „geht raus" (Arbeitspaket holen) und „kommt
+        // rein" (Sichere Treffer, Aus Datei übernehmen) — sonst sehen alle
+        // drei wie gleichartige Import-Knöpfe aus.
         aktionen: [
           PaketHolenButton(),
+          VerticalDivider(width: 1, indent: 18, endIndent: 18),
           PaketSichereTrefferButton(),
           ImportOeffnenButton(),
           PageRefreshButton(),

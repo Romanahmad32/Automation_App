@@ -191,6 +191,19 @@ Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die Fallen 
   Schadensrichtung (lieber übersehen als falsch zuordnen) trägt dann allein
   `vorschlaege.length != 1`: zwei „Albrecht" im Register sind zwei Vorschläge, und weil
   `MandantErkennung` auch Tippfehler-Nachbarn mitzählt, ist das eng genug.
+- **Ein Paket ist eine Buchführungszeile, keine Reservierung.** Es sperrt keinen Ordner; „erledigt"
+  rechnet `ImportPaketBuch` bei jedem Lesen neu aus Zuordnungen und Vermerken. Deshalb darf ein
+  versehentlich geholtes Paket einfach verschwinden (`DELETE /api/ImportPakete/{nummer}`,
+  Zurücknehmen-Knopf in der Paket-Historie) — es bleibt nichts zurückzusetzen. **Nur solange es
+  offen ist:** Ein eingelesenes Paket zu löschen sähe nach einem Rückgängig der daraus entstandenen
+  Mandanten aus und macht keinen davon rückgängig; das Backend antwortet darauf mit 409, und der
+  Knopf steht an einer eingelesenen Zeile gar nicht erst.
+- **Testbestand:** `scripts/testdaten-kanzleiordner.ps1` legt einen realistisch unordentlichen
+  Stammordner an — alle Präfix-Schreibweisen, rund ein Drittel ohne Präfix, Umlaute, Komma-Formen,
+  Eheleute, Aktenzeichen, Ordner ohne Mandantenbezug und einige Mandanten mit zwei Ordnern. Es fasst
+  vorhandene Ordner nie an und nimmt mit `-Aufraeumen` genau seine eigenen wieder zurück
+  (Merkliste `.testdaten-manifest.txt` im Stammordner — eine *Datei*, der Akten-Scan liest nur
+  Ordner). Mit einer Handvoll gleichförmiger Ordner sieht jede Zuordnungsheuristik gut aus.
 
 ## Ablage
 

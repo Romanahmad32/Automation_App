@@ -1,3 +1,4 @@
+import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/views/nicht_zugeordnete_ordner_view.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/nicht_zugeordneter_ordner_kachel.dart';
@@ -161,4 +162,106 @@ void main() {
     expect(find.text('Verkehrsunfall (2)'), findsOneWidget);
     expect(find.text('Ohne Mandantenbezug (0)'), findsOneWidget);
   });
+
+  // „Aus Versehen das falsche Paket geholt" ist der Grund, warum es den
+  // Zurücknehmen-Knopf gibt: Er entfernt die Buchführungszeile und rührt
+  // keinen Ordner an. Bestätigt wird im Dialog — ein Klick daneben soll sich
+  // nicht sofort auswirken.
+  testWidgets('nimmt ein offenes Paket nach Bestätigung zurück', (
+    tester,
+  ) async {
+    final aufbau = MandantenTestaufbau(
+      akten: [akte('VUnfallursache Mark')],
+      importPakete: [
+        ImportPaket(nummer: 1, geholtAm: angelegt, anzahlOrdner: 2),
+      ],
+    );
+    addTearDown(aufbau.close);
+    await aufbau.laden();
+
+    await pumpSeite(tester, aufbau.bloc);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Pakete (1)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Paket zurücknehmen'));
+    await tester.pumpAndSettle();
+
+    // Abbrechen lässt das Paket stehen.
+    await tester.tap(find.text('Abbrechen'));
+    await tester.pumpAndSettle();
+    expect(aufbau.paketeSpeicher.loeschAufrufe, 0);
+
+    await tester.tap(find.byTooltip('Paket zurücknehmen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Zurücknehmen'));
+    await tester.pumpAndSettle();
+
+    expect(aufbau.paketeSpeicher.loeschAufrufe, 1);
+    expect(aufbau.paketeSpeicher.pakete, isEmpty);
+    // Der Ordner bleibt im Stapel — das Paket war nur eine Buchführungszeile.
+    expect(find.text('VUnfallursache Mark'), findsOneWidget);
+  });
+
+  testWidgets('ein eingelesenes Paket trägt keinen Zurücknehmen-Knopf', (
+    tester,
+  ) async {
+    final aufbau = MandantenTestaufbau(
+      akten: [akte('VUnfallursache Mark')],
+      importPakete: [
+        ImportPaket(
+          nummer: 1,
+          geholtAm: angelegt,
+          anzahlOrdner: 2,
+          erledigt: 2,
+          eingelesenAm: angelegt,
+          zeilen: 2,
+        ),
+      ],
+    );
+    addTearDown(aufbau.close);
+    await aufbau.laden();
+
+    await pumpSeite(tester, aufbau.bloc);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pakete (1)'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Paket zurücknehmen'), findsNothing);
+  });
+
+  // Ein `Column` mit `Expanded`-Liste lief über, sobald Kopf (Ablauf-Hinweis
+  // aufgeklappt) und Liste zusammen nicht mehr in ein kleines Fenster passten
+  // — der `CustomScrollView` teilt sich stattdessen eine Scrollleiste.
+  testWidgets(
+    'kein Overflow auf kleinem Fenster mit aufgeklapptem Ablauf-Hinweis',
+    (tester) async {
+      tester.view.physicalSize = const Size(900, 500);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final aufbau = vierOrdner();
+      addTearDown(aufbau.close);
+      await aufbau.laden();
+
+      FlutterErrorDetails? erfasst;
+      final vorherige = FlutterError.onError;
+      FlutterError.onError = (details) => erfasst ??= details;
+      addTearDown(() => FlutterError.onError = vorherige);
+
+      await tester.pumpWidget(seite(aufbau.bloc));
+      await tester.pumpAndSettle();
+
+      final titel = find.text('So werden viele Ordner auf einmal zugeordnet');
+      expect(titel, findsOneWidget);
+      await tester.tap(titel);
+      await tester.pumpAndSettle();
+
+      expect(
+        erfasst,
+        isNull,
+        reason: 'RenderFlex-Overflow beim Aufklappen: $erfasst',
+      );
+    },
+  );
 }
