@@ -63,16 +63,21 @@ class _PaketHolenButtonState extends State<PaketHolenButton> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        FilledButton.icon(
-          onPressed: aktiv ? () => _holen(context) : null,
-          icon: _laeuft
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.move_to_inbox_outlined, size: 18),
-          label: const Text('Arbeitspaket holen'),
+        Tooltip(
+          message:
+              'Gibt eine Portion offener Ordner zur Bearbeitung außerhalb '
+              'dieser App heraus und kopiert die Anleitung dafür.',
+          child: FilledButton.icon(
+            onPressed: aktiv ? () => _holen(context) : null,
+            icon: _laeuft
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.move_to_inbox_outlined, size: 18),
+            label: const Text('Arbeitspaket holen'),
+          ),
         ),
         MenuAnchor(
           menuChildren: [

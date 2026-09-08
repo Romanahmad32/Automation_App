@@ -53,4 +53,17 @@ public interface IImportPaketBuch
     /// Ordnernamen.
     /// </summary>
     Task SchreibeFortschrittAsync(int zeilen, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Nimmt ein versehentlich herausgegebenes Paket zurück. Setzt an den
+    /// Ordnern nichts zurück — das Paket war ohnehin nur eine Buchführungszeile,
+    /// keine Reservierung —, sondern löscht ausschließlich diese Zeile.
+    /// </summary>
+    /// <returns><c>false</c>, wenn keine Paketnummer <paramref name="nummer"/> existiert.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Das Paket ist bereits eingelesen — das Löschen einer abgeschlossenen
+    /// Zeile sähe nach einem Rückgängig der eingelesenen Mandanten aus, macht
+    /// aber keinen davon rückgängig.
+    /// </exception>
+    Task<bool> LoescheAsync(int nummer, CancellationToken cancellationToken = default);
 }

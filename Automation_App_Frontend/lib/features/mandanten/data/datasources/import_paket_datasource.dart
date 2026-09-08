@@ -1,3 +1,4 @@
+import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
@@ -16,6 +17,10 @@ abstract class ImportPaketDatasource {
   /// Verbucht ein herausgegebenes Paket. Die Nummer vergibt der Dienst — sie
   /// steht erst in der Antwort.
   Future<ImportPaket> notiereImportPaket(List<String> ordnernamen);
+
+  /// Nimmt ein versehentlich herausgegebenes, noch offenes Paket zurück.
+  /// Rührt keinen Ordner an — das Paket war nur eine Buchführungszeile.
+  Future<void> loescheImportPaket(int nummer);
 }
 
 @Injectable(as: ImportPaketDatasource)
@@ -41,5 +46,24 @@ class ApiImportPaketDatasource implements ImportPaketDatasource {
       options: Options(contentType: Headers.jsonContentType),
     );
     return ImportPaket.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> loescheImportPaket(int nummer) async {
+    try {
+      await _dio.delete('/api/ImportPakete/$nummer');
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 404 || status == 409) {
+        throw Exception(
+          backendFehlertext(e) ??
+              dienstOhneAntwort(
+                e,
+                'Das Arbeitspaket konnte nicht gelöscht werden',
+              ),
+        );
+      }
+      rethrow;
+    }
   }
 }

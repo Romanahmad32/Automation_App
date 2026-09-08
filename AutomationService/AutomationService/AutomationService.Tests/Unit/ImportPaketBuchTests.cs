@@ -110,5 +110,49 @@ public sealed class ImportPaketBuchTests : IDisposable
             "der Zähler wird gerechnet und nicht gespeichert — er kann nicht veralten");
     }
 
+    [Fact]
+    public async Task LoescheAsync_NimmtEinOffenesPaketZurueck()
+    {
+        await _aufbau.PaketBuch.NotiereAsync(["Akte Meier"]);
+
+        var geloescht = await _aufbau.PaketBuch.LoescheAsync(1);
+
+        geloescht.Should().BeTrue();
+        (await _aufbau.PaketBuch.GetAllAsync()).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task LoescheAsync_UnbekanntePaketnummerLiefertFalse()
+    {
+        var geloescht = await _aufbau.PaketBuch.LoescheAsync(1);
+
+        geloescht.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task LoescheAsync_RuehrtKeinenOrdnerAn()
+    {
+        _aufbau.Vorhanden("Anna", "Meier", ["Akte Meier"]);
+        await _aufbau.PaketBuch.NotiereAsync(["Akte Meier"]);
+
+        await _aufbau.PaketBuch.LoescheAsync(1);
+
+        (await _aufbau.Register.GetAllAsync()).Should().ContainSingle(
+            "das Paket war nur eine Buchführungszeile, keine Reservierung");
+    }
+
+    [Fact]
+    public async Task LoescheAsync_LehntEinBereitsEingelesenesPaketAb()
+    {
+        await _aufbau.PaketBuch.NotiereAsync(["Akte Meier"]);
+        await _aufbau.Uebernimm([MandantenImportAufbau.Zeile("Anna", "Meier", ["Akte Meier"])]);
+
+        var versuch = () => _aufbau.PaketBuch.LoescheAsync(1);
+
+        await versuch.Should().ThrowAsync<InvalidOperationException>(
+            "sonst sähe es nach einem Rückgängig der eingelesenen Mandanten aus, ohne einen zurückzunehmen");
+        (await _aufbau.PaketBuch.GetAllAsync()).Should().ContainSingle();
+    }
+
     public void Dispose() => _aufbau.Dispose();
 }
