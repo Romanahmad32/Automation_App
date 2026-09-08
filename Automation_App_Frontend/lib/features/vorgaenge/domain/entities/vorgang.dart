@@ -43,7 +43,8 @@ class Vorgang extends Equatable {
   /// Mandanten.
   final String? mandantName;
 
-  /// Gegner/gegnerische Versicherung (für „Name ./. Gegner" im Register).
+  /// Gegner/gegnerische Versicherung (die Gegenseite in der Registerspalte
+  /// „Sache").
   final String? gegner;
   final String? unfallDatum;
 
@@ -202,25 +203,18 @@ class Vorgang extends Equatable {
     return '$links ./. $rechts'.trim();
   }
 
-  /// Der Sachbestand-Teil der Registerspalte 3 („Sachverhalt v. 20.06.2026").
-  /// Getrennt von [parteienBezeichnung] abrufbar, damit die Registertabelle
-  /// beide Teile auf breiten Fenstern nebeneinander setzen kann. Null, solange
-  /// kein Unfalldatum erfasst ist.
+  /// Der Sachbestand-Teil der Registerspalte „Sache"
+  /// („Sachverhalt v. 20.06.2026"). Getrennt von [parteienBezeichnung]
+  /// abrufbar, damit die Registertabelle beide Teile auf breiten Fenstern
+  /// nebeneinander setzen kann. Null, solange kein Unfalldatum erfasst ist.
+  ///
+  /// Das Zusammensetzen beider Teile steht **nicht** mehr hier: Die
+  /// Registeransicht bekommt ihre Zellen seit #109 fertig aus dem Backend
+  /// (`RegisterZeile.sacheUndSachbestand`). Übrig bleiben die zwei Teile für
+  /// die Startseiten-Karte, die ihre Zeilen aus dem geladenen Bestand baut.
   String? get registerSachbestand {
     final datum = (unfallDatum ?? '').trim();
     return datum.isEmpty ? null : 'Sachverhalt v. $datum';
-  }
-
-  /// Vollständiger Inhalt der Registerspalte 3: „Mandant ./. Gegner" mit dem
-  /// Sachverhaltsdatum in der zweiten Zeile. Genutzt vom Sachgebiete-Register
-  /// und vom Registerausschnitt der Startseite, damit beide Ansichten dieselbe
-  /// Zeile zeigen.
-  String get registerSachverhalt {
-    final sachbestand = registerSachbestand;
-    if (sachbestand == null) return parteienBezeichnung;
-    return parteienBezeichnung.isEmpty
-        ? sachbestand
-        : '$parteienBezeichnung\n$sachbestand';
   }
 
   /// Ändert einzelne Felder. Alle Parameter außer [entwurf] sind nach dem

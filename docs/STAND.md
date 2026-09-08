@@ -15,8 +15,10 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   `Vorgaenge`): verbindet Mandant ↔ Referenz ↔ Antwort ↔ Dokument und trägt den Lebenszyklus
   Angefragt → Beantwortet → Erstellt → Abgelegt → Versendet. „Vorgang abschließen" setzt den
   Status auf *Versendet* und zählt die laufende Auftragsnummer hoch — beides im Backend
-  (`VorgangAbschlussService`), in einer Transaktion und idempotent. Eine Registertabelle gibt es
-  **nicht**: die Registeransicht ist aus den abgeschlossenen Vorgängen abgeleitet.
+  (`VorgangAbschlussService`), in einer Transaktion und idempotent. Eine eigene Vorgangs-Tabelle
+  für das Register gibt es **nicht**: Die Registeransicht baut `RegisterZeilenBau` aus den
+  abgeschlossenen Vorgängen **und** der importierten Registerhistorie (§6.2, Issue #109) zu einer
+  gemeinsamen Zeilenliste zusammen.
 - **Persistenz vollständig im Backend** — eingebettetes SQLite (`AutomationDbContext`,
   `%APPDATA%\AutomationService\automation.db`). Die früheren JSON-Ablagen je Feature sind weg,
   das Frontend erreicht alles über HTTP.
@@ -121,6 +123,23 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Einstellungen — eigens gewählt oder aus dem App-Daten-Ordner abgeleitet (`RegisterSpiegelService`,
   `RegisterAblageVorgabe`, #103, `POST api/Vorgaenge/register/export`, `GET …/register/stand`);
   die Kette steht in `docs/DATENFLUESSE.md`.
+- **Registerhistorie aus dem Word-Register (§6.2, Issue #109)** — der Altbestand wird
+  jahrgangsweise übernommen, ab dem ersten Jahrgang des Word-Registers (derzeit 2018 — kein
+  festes Startjahr in der App): eine eigene Tabelle `RegisterHistorie`, wiedererkannt über Jahr,
+  laufende Nummer **und** Nummernzusatz, **nicht** mit einem Vorgang verbunden.
+  `POST /api/RegisterImport` prüft, `POST /api/RegisterImport?uebernehmen=true` schreibt —
+  Vorschau und Übernahme sind derselbe Aufruf, je Jahrgang einzeln oder für alle Jahrgänge zusammen;
+  ein zweiter Lauf desselben Jahrgangs ändert nichts. Je Jahrgang wird geprüft: Lücken in der
+  laufenden Nummer, Spalte 1 gegen die Nummer im Aktenzeichen, Abteilung gegen Rechtsgebiet über
+  den Sachgebietskatalog (§7.1, Haupt- und Nebensachgebiet zählen gleichermaßen). Ein inhaltlicher
+  Befund lehnt nie eine Zeile ab — er wird übernommen, wie sie vorliegt, und markiert; abgelehnt
+  wird ausschließlich eine echte Doppelnummer (gleiches Jahr, gleiche laufende Nummer, gleicher
+  Zusatz). Ein Stand an einer Stelle zeigt, welche Jahrgänge übernommen sind und welche zwischen
+  dem kleinsten und dem größten übernommenen fehlen. Historische Zeilen tragen in der
+  Registeransicht immer den Status „Historie", sind mit Bestätigung bearbeitbar, und
+  `RegisterZeilenBau` mischt Historie und laufende Vorgänge zu einer Quelle für Bildschirm und
+  Word/PDF-Spiegel — beide mit einer fett gesetzten Jahreszeile beim Jahrgangswechsel, wie im
+  bisherigen Word-Register. Format in [`docs/REGISTER_IMPORT.md`](REGISTER_IMPORT.md).
 - **Einheitliche Rückmeldungen (Issue #56, 04.09.2026)** — Baustein `Rueckmeldung` zeigt Erfolgs-,
   Hinweis- und Fehlermeldungen oben rechts als Stapel über der Dialogbarriere (Erfolg 3 s, Hinweis
   5 s, Fehler bis zum Schließen). Alle 52 Snackbar-Stellen umgestellt, ein Architekturtest wacht.

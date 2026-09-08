@@ -89,7 +89,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 | § | Thema |
 |---|---|
 | 6.1 | Aktenablage im Dateisystem: Akte je Mandant, Namensmuster der Unterordner, Stammordner |
-| 6.2 | Sachgebiete-/Auftragsregister: die App führt es, automatische Aufnahme, Spaltenschema, Ansicht und Export |
+| 6.2 | Sachgebiete-/Auftragsregister: die App führt es, automatische Aufnahme, Spaltenschema, Ansicht und Export, Übernahme der Historie des Word-Registers |
 
 ### 7 Betrieb
 
@@ -134,5 +134,5 @@ nicht versionierten Volltext steht, hält niemanden auf.
 ### 9 Offene Punkte
 
 Bewusst noch nicht entschieden — u. a. eine offizielle Zentralruf-Schnittstelle als Alternative zur
-Browser-Automatisierung, die Übernahme des Registeraltbestands, die Bezugsquelle für Updates und
-der Weg des Website-Kanals. Wer auf eine dieser Fragen stößt, entscheidet sie nicht selbst.
+Browser-Automatisierung, die Bezugsquelle für Updates und der Weg des Website-Kanals. Wer auf eine
+dieser Fragen stößt, entscheidet sie nicht selbst.

@@ -1,28 +1,31 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
+import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_cubit.dart';
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_katalog_stand.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/register_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/register_state.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:automation_app/features/vorgaenge/presentation/widgets/register_filter_leiste.dart';
-import 'package:automation_app/features/vorgaenge/presentation/widgets/register_leer_hinweis.dart';
-import 'package:automation_app/features/vorgaenge/presentation/widgets/register_spiegel_leiste.dart';
-import 'package:automation_app/features/vorgaenge/presentation/widgets/register_tabelle.dart';
+import 'package:automation_app/features/vorgaenge/presentation/views/register_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Das Sachgebiete-Register (§6.2) im verbindlichen Spaltenschema —
-/// laufende Nr. | Zeichen | Name ./. Gegner + Sachbestand | Rechtsgebiet.
+/// Lfd. Nr. | Zeichen | Sache · Sachbestand | Rechtsgebiet | Status.
 ///
-/// Die Seite zeigt **alle** Vorgänge, nicht nur die abgeschlossenen; gefiltert
-/// wird über die Leiste darüber. Der Knopf schreibt den Spiegel — die Word- und
-/// PDF-Fassung im eingestellten Ablageordner. Liegt der im synchronisierten
-/// Bereich, ist das Register damit unterwegs lesbar, ohne dass die App etwas
-/// von der Cloud wissen muss.
+/// Die Zeilen kommen seit Issue #109 **fertig gebaut aus dem Backend** und
+/// führen laufende Vorgänge und die übernommene Registerhistorie der Kanzlei in
+/// einer Folge. Vorher leitete diese Seite ihre Zellen selbst aus den
+/// Vorgängen ab, während die Word-/PDF-Datei dieselbe Rechnung im Dienst noch
+/// einmal machte — zwei Quellen, deren Auseinanderlaufen niemandem auffiel.
+///
+/// Der Knopf oben schreibt den Spiegel — die Word- und PDF-Fassung im
+/// eingestellten Ablageordner. Liegt der im synchronisierten Bereich, ist das
+/// Register damit unterwegs lesbar, ohne dass die App etwas von der Cloud
+/// wissen muss.
 ///
 /// Wichtig für das Verständnis der Seite: Der Filter hier wirkt **nur auf den
 /// Bildschirm**. Was in die Datei kommt, steht in den Einstellungen — sonst
@@ -37,40 +40,38 @@ class RegisterPage extends StatefulWidget {
 }
 
 class RegisterPageState extends State<RegisterPage> {
-  RegisterFilter _filter = RegisterFilter.alle;
-
   /// Ob gerade geschrieben wird. Bewusst hier und nicht im Cubit: Dessen
   /// Zustand ist das Ergebnis, und ein Cubit verwirft ein `emit` mit gleichem
   /// Wert — der Knopf bliebe also während des Laufs bedienbar, obwohl die
   /// PDF-Erzeugung Sekunden braucht.
   bool _schreibtGerade = false;
 
-  /// Der [RegisterSpiegelCubit] ist als `factory` registriert — jeder Aufruf
-  /// von `getIt` liefert eine **neue** Instanz, und niemand schließt sie.
-  /// Deshalb hängt er am [BlocProvider] und nicht an einem Feld dieser Klasse:
-  /// Der Provider schließt ihn beim Verlassen der Seite mit. Vorher blieb bei
-  /// jedem Öffnen des Registers ein Cubit samt Stream offen zurück.
+  /// Beide Cubits sind als `factory` registriert — jeder Aufruf von `getIt`
+  /// liefert eine **neue** Instanz, und niemand schließt sie. Deshalb hängen
+  /// sie am [BlocProvider] und nicht an Feldern dieser Klasse: Der Provider
+  /// schließt sie beim Verlassen der Seite mit.
   ///
   /// Der [VorgangCubit] weiter unten hängt dagegen zu Recht direkt an `getIt` —
   /// er ist ein `lazySingleton` und gehört der App, nicht dieser Seite.
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<RegisterSpiegelCubit>()..ladeStand(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => getIt<RegisterCubit>()..lade()),
+        BlocProvider(create: (_) => getIt<RegisterSpiegelCubit>()..ladeStand()),
+      ],
       child: Builder(builder: _geruest),
     );
   }
 
-  /// Eigener Baumschritt unter dem Provider: Der [BuildContext] aus [build]
-  /// steht noch darüber und fände den Cubit nicht.
+  /// Eigener Baumschritt unter den Providern: Der [BuildContext] aus [build]
+  /// steht noch darüber und fände die Cubits nicht.
   Widget _geruest(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: SeitenAppBar(
         titel: 'Sachgebiete-Register',
         icon: Icons.table_chart_outlined,
-        untertitel: 'Alle Vorgänge im Registerschema der Kanzlei',
+        untertitel: 'Alle Vorgänge und die übernommene Historie',
         aktionen: [
           Tooltip(
             message:
@@ -91,13 +92,41 @@ class RegisterPageState extends State<RegisterPage> {
           ),
         ],
       ),
-      body: BlocBuilder<VorgangCubit, List<Vorgang>>(
-        bloc: getIt<VorgangCubit>(),
-        builder: (context, vorgaenge) {
-          if (vorgaenge.isEmpty) return const RegisterLeerHinweis();
-          return _inhalt(theme, vorgaenge);
-        },
+      body: BlocBuilder<RegisterCubit, RegisterState>(
+        builder: (context, state) => _mitUmfeld(context, state),
       ),
+    );
+  }
+
+  /// Was die Ansicht außer ihrem eigenen Zustand noch braucht: den
+  /// Sachgebietskatalog (§7.1) für die Rechtsgebiets-Auswahl und den
+  /// Vorgangsbestand für die Statusspalte. Beides kommt aus `getIt` und bleibt
+  /// deshalb hier, damit [RegisterView] ohne DI prüfbar ist.
+  Widget _mitUmfeld(BuildContext context, RegisterState state) {
+    return BlocBuilder<SachgebietCubit, SachgebietKatalogStand>(
+      bloc: getIt<SachgebietCubit>(),
+      builder: (context, katalogStand) =>
+          BlocBuilder<VorgangCubit, List<Vorgang>>(
+            bloc: getIt<VorgangCubit>(),
+            builder: (context, vorgaenge) => RegisterView(
+              state: state,
+              katalog: switch (katalogStand) {
+                SachgebietKatalogGeladen(:final auswahl) => [
+                  for (final sachgebiet in auswahl)
+                    sachgebiet.rechtsgebietVorschlag,
+                ],
+                _ => const [],
+              },
+              katalogFehlt: katalogStand is SachgebietKatalogFehler,
+              onKatalogErneut: getIt<SachgebietCubit>().ladeErneut,
+              statusJeReferenz: {
+                for (final vorgang in vorgaenge)
+                  vorgang.referenz: vorgang.status,
+              },
+              onDateiEinlesen: () => _importOeffnen(context, state),
+              onAnleitung: () => _importOeffnen(context, state),
+            ),
+          ),
     );
   }
 
@@ -111,68 +140,18 @@ class RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  Widget _inhalt(ThemeData theme, List<Vorgang> vorgaenge) {
-    final zeilen = _filter.anwenden(vorgaenge);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          // Der Katalog (§7.1) speist die Rechtsgebiets-Auswahl; scheitert
-          // sein Laden, filtert die Leiste sichtbar nur über den Bestand.
-          child: BlocBuilder<SachgebietCubit, SachgebietKatalogStand>(
-            bloc: getIt<SachgebietCubit>(),
-            builder: (context, stand) => RegisterFilterLeiste(
-              filter: _filter,
-              alle: vorgaenge,
-              onGeaendert: (filter) => setState(() => _filter = filter),
-              katalog: switch (stand) {
-                SachgebietKatalogGeladen(:final auswahl) => [
-                  for (final sachgebiet in auswahl)
-                    sachgebiet.rechtsgebietVorschlag,
-                ],
-                _ => const [],
-              },
-              katalogFehlt: stand is SachgebietKatalogFehler,
-              onKatalogErneut: getIt<SachgebietCubit>().ladeErneut,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-          child: Text(
-            _umfang(zeilen.length, vorgaenge.length),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline,
-            ),
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-            child: zeilen.isEmpty
-                ? Text(
-                    'Kein Vorgang passt zu dieser Auswahl.',
-                    style: theme.textTheme.bodyMedium,
-                  )
-                : RegisterTabelle(zeilen: zeilen, mitStatus: true),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          child: BlocBuilder<RegisterSpiegelCubit, RegisterSpiegelErgebnis>(
-            builder: (context, stand) => RegisterSpiegelLeiste(stand: stand),
-          ),
-        ),
-      ],
+  /// „Datei einlesen…" und „Anleitung" führen auf dieselbe Seite: Die Anleitung
+  /// für den Erzeuger der Datei steht dort neben dem Einlesen, und ein eigener
+  /// Dialog hier wäre eine zweite Stelle, an der sie veraltet.
+  ///
+  /// Der Vorschlag ist der kleinste fehlende Jahrgang, sonst das Vorjahr — die
+  /// Import-Seite trägt ihn in die Anleitung ein.
+  Future<void> _importOeffnen(BuildContext context, RegisterState state) async {
+    final cubit = context.read<RegisterCubit>();
+    await context.router.push(
+      RegisterImportRoute(vorgeschlagenerJahrgang: state.stand.vorschlag()),
     );
+    // Nach der Rückkehr steht der Bestand anders da, wenn übernommen wurde.
+    await cubit.lade();
   }
-
-  String _umfang(int gezeigt, int gesamt) => gezeigt == gesamt
-      ? '$gesamt Vorgänge. Neue Zeilen entstehen automatisch, sobald ein '
-            'Vorgang abgeschlossen wird.'
-      : '$gezeigt von $gesamt Vorgängen. Der Filter wirkt nur auf diese '
-            'Ansicht — was in die Register-Datei kommt, steht in den '
-            'Einstellungen.';
 }

@@ -1,8 +1,11 @@
 using AutomationService.Core.Ablage;
 using AutomationService.Core.Persistence;
+using AutomationService.Features.RegisterHistorie.Domain.Persistence;
+using AutomationService.Features.Sachgebiete.Domain.Services;
 using AutomationService.Features.Settings.Domain.Services;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Services;
+using RegisterHistorieDienst = AutomationService.Features.RegisterHistorie.Domain.Services.RegisterHistorie;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -91,6 +94,7 @@ public sealed class RegisterSpiegelUmgebung : IDisposable
         return new RegisterSpiegelService(
             context,
             Pdf,
+            new RegisterHistorieDienst(context, new SachgebietKatalog(context)),
             new RegisterSpiegelStand(StandDatei),
             new RegisterSpiegelBauordner(Bau),
             Schleuse,
@@ -119,6 +123,30 @@ public sealed class RegisterSpiegelUmgebung : IDisposable
             MandantName = "Mustermann",
             Gegner = "HUK",
             AngefragtAm = new DateTime(2026, 1, 5),
+        });
+        await Db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Eine übernommene Zeile des gewachsenen Kanzleiregisters — die zweite
+    /// Quelle des Spiegels (§6.2). Sie zählt immer mit: Eine historische Zeile
+    /// ist per Herkunft abgeschlossen und fällt unter keinen Dateifilter.
+    /// </summary>
+    public async Task HistorieAnlegen(int jahr, int nummer)
+    {
+        Db.RegisterHistorie.Add(new RegisterHistorieEntity
+        {
+            Kennung = Guid.NewGuid().ToString(),
+            Jahr = jahr,
+            LaufendeNummer = nummer,
+            Aktenzeichen = $"{nummer:00}/{jahr % 100:00}",
+            Abteilung = "C03",
+            AbteilungRoh = "C03",
+            Mandant = "Mustermann",
+            Gegner = "HUK",
+            Rechtsgebiet = "Verkehrsrecht",
+            Sicherheit = "hoch",
+            ImportiertAm = new DateTime(2026, 1, 5),
         });
         await Db.SaveChangesAsync();
     }

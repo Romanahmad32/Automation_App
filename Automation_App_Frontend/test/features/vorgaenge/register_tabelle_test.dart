@@ -1,27 +1,37 @@
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/register_befund_chip.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_tabelle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'register_testaufbau.dart';
 
 /// Die Registertabelle soll den verfügbaren Platz ausnutzen statt links in
 /// einer schmalen Spalte zu kleben — auf der Registerseite wie in der
 /// Startseiten-Karte. Ist das Fenster zu schmal für den Inhalt, wächst sie
 /// über den Rand hinaus (und wird scrollbar), statt die Spalten zu quetschen.
+///
+/// Seit Issue #109 zeigt sie außerdem beide Quellen in einer Folge: laufende
+/// Vorgänge und die übernommene Historie, getrennt von Jahresüberschriften.
 void main() {
-  Vorgang zeile(int nummer) => Vorgang(
+  RegisterZeile zeile(int nummer) => vorgangsZeile(
+    nummer: nummer,
+    zeichen: '$nummer/26 C03',
+    parteien: 'Mustermann, Max ./. HUK-COBURG',
+    sachbestand: 'Sachverhalt v. 20.06.2026',
     referenz: '$nummer/26 C03_HG-E 1427',
-    angefragtAm: DateTime(2026, 6, 20),
-    laufendeNummer: nummer,
-    jahr: '26',
-    abteilung: 'C03',
-    mandantName: 'Mustermann, Max',
-    gegner: 'HUK-COBURG',
-    unfallDatum: '20.06.2026',
   );
 
   /// Baut die Tabelle in einem [breite] Pixel breiten Bereich auf und liefert
   /// die tatsächlich gerenderte Tabellenbreite.
-  Future<double> tabellenBreite(WidgetTester tester, double breite) async {
+  Future<double> tabellenBreite(
+    WidgetTester tester,
+    double breite, {
+    List<RegisterZeile>? zeilen,
+    bool mitJahreszeilen = false,
+    bool mitStatus = false,
+    ValueChanged<RegisterZeile>? onHistorieZeile,
+  }) async {
     // Reichlich Platz, damit [breite] nie vom Fenster beschnitten wird.
     tester.view.physicalSize = const Size(4000, 800);
     tester.view.devicePixelRatio = 1;
@@ -31,7 +41,12 @@ void main() {
         home: Scaffold(
           body: SizedBox(
             width: breite,
-            child: RegisterTabelle(zeilen: [zeile(215), zeile(216)]),
+            child: RegisterTabelle(
+              zeilen: zeilen ?? [zeile(215), zeile(216)],
+              mitJahreszeilen: mitJahreszeilen,
+              mitStatus: mitStatus,
+              onHistorieZeile: onHistorieZeile,
+            ),
           ),
         ),
       ),
@@ -71,7 +86,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  group('Parteien und Sachbestand', () {
+  group('Sache und Sachbestand', () {
     final parteien = find.text('Mustermann, Max ./. HUK-COBURG');
     final sachbestand = find.text('Sachverhalt v. 20.06.2026');
 
@@ -98,15 +113,20 @@ void main() {
       expect(breit, greaterThan(schmal));
     });
 
+    /// „Sache" und nicht „Name ./. Gegner": Der Bestand kennt zwei Formen, und
+    /// für „Bußgeldsache Erika Musterfrau" gibt es keine Gegenseite. Dieselbe
+    /// Überschrift steht in der Word-/PDF-Fassung (`RegisterLayout`).
     testWidgets('werden von der Überschrift einzeln beschriftet', (
       tester,
     ) async {
       await tabellenBreite(tester, RegisterTabelle.nebeneinanderAb + 1000);
 
-      // „Sachverhalt" steht bündig über dem Sachbestand, nicht über den
-      // Parteien — DataTable setzt Überschriften sonst starr nach links.
+      expect(find.text('Sache'), findsOneWidget);
+      expect(find.text('Name ./. Gegner'), findsNothing);
+      // „Sachbestand" steht bündig darüber, nicht über der Sache — DataTable
+      // setzt Überschriften sonst starr nach links.
       expect(
-        tester.getRect(find.text('Sachverhalt')).right,
+        tester.getRect(find.text('Sachbestand')).right,
         closeTo(tester.getRect(sachbestand.first).right, 2),
       );
     });
@@ -119,6 +139,95 @@ void main() {
         find.text('Mustermann, Max ./. HUK-COBURG\nSachverhalt v. 20.06.2026'),
         findsWidgets,
       );
+    });
+  });
+
+  group('Historie und Vorgänge in einer Folge', () {
+    /// Wie im Registerbuch: Vor jedem Jahrgang steht seine Jahreszahl — auch
+    /// vor dem ersten, genau wie `RegisterDokument` sie in die Datei setzt.
+    testWidgets('setzt bei jedem Jahrgangswechsel eine Jahreszeile', (
+      tester,
+    ) async {
+      await tabellenBreite(
+        tester,
+        1600,
+        mitJahreszeilen: true,
+        zeilen: [
+          historieZeile(jahr: '2019', zeichen: '10/19 C02'),
+          historieZeile(jahr: '2019', zeichen: '11/19 C02', historieId: 8),
+          vorgangsZeile(jahr: '2026'),
+        ],
+      );
+
+      expect(find.text('2019'), findsOneWidget);
+      expect(find.text('2026'), findsOneWidget);
+    });
+
+    testWidgets('ohne Jahreszeilen bleibt der Ausschnitt eine Liste', (
+      tester,
+    ) async {
+      await tabellenBreite(tester, 1600, zeilen: [historieZeile(jahr: '2019')]);
+
+      expect(find.text('2019'), findsNothing);
+    });
+
+    testWidgets('jede historische Zeile trägt den Chip „Historie"', (
+      tester,
+    ) async {
+      await tabellenBreite(
+        tester,
+        1600,
+        mitStatus: true,
+        zeilen: [
+          historieZeile(zeichen: '10/19 C02'),
+          historieZeile(zeichen: '11/19 C02', historieId: 8),
+          vorgangsZeile(),
+        ],
+      );
+
+      expect(find.text('Historie'), findsNWidgets(2));
+    });
+
+    /// Sonst stünde an jeder der tausenden Zeilen ein Hinweis, und
+    /// „auffällig" hieße nichts mehr.
+    testWidgets('der Befund-Chip steht nur an auffälligen Zeilen', (
+      tester,
+    ) async {
+      await tabellenBreite(
+        tester,
+        1600,
+        mitStatus: true,
+        zeilen: [
+          historieZeile(zeichen: '10/19 C02'),
+          historieZeile(
+            zeichen: '11/19 C02',
+            historieId: 8,
+            befunde: const ['Ohne Abteilung.'],
+          ),
+        ],
+      );
+
+      expect(find.byType(RegisterBefundChip), findsOneWidget);
+      expect(find.text('1 Befund'), findsOneWidget);
+    });
+
+    testWidgets('nur historische Zeilen lassen sich anklicken', (tester) async {
+      final angeklickt = <String>[];
+      await tabellenBreite(
+        tester,
+        1600,
+        zeilen: [
+          historieZeile(zeichen: '10/19 C02'),
+          vorgangsZeile(),
+        ],
+        onHistorieZeile: (zeile) => angeklickt.add(zeile.zeichen),
+      );
+
+      await tester.tap(find.text('10/19 C02'));
+      await tester.tap(find.text('01/26 C03'));
+      await tester.pump();
+
+      expect(angeklickt, ['10/19 C02']);
     });
   });
 }

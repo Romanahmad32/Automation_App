@@ -46,8 +46,14 @@ public static class RegisterLayout
         "Kursiv gesetzte Zeilen sind noch nicht abgeschlossen; ihre laufende Nummer "
         + "wird erst beim Abschluss vergeben.";
 
+    /// <summary>
+    /// „Sache" und nicht „Name ./. Gegner": Der Bestand kennt zwei Formen, und
+    /// nur eine davon hat eine Gegenseite (Form B, „Bußgeldsache Mustermann",
+    /// hat keine). Ein Spaltenkopf, der die Gegenseite verspricht, steht über
+    /// Hunderten von Zeilen, die keine haben.
+    /// </summary>
     public static readonly string[] Spaltenkoepfe =
-        ["Lfd. Nr.", "Zeichen", "Name ./. Gegner · Sachbestand", "Rechtsgebiet"];
+        ["Lfd. Nr.", "Zeichen", "Sache · Sachbestand", "Rechtsgebiet"];
 
     /// <summary>
     /// Spaltenbreiten in Twips. Zusammen 9000 und damit innerhalb des

@@ -24,6 +24,11 @@ public static class VorgaengeInjection
         services.AddSingleton<RegisterSpiegelSchleuse>();
         services.AddScoped<IRegisterSpiegelService, RegisterSpiegelService>();
 
+        // Die Zeilen der Ansicht: dieselbe Fachlogik wie der Spiegel, aber ohne
+        // Word, PDF und Ablageordner — der Bildschirm soll nichts davon
+        // aufwecken.
+        services.AddScoped<IRegisterZeilenDienst, RegisterZeilenDienst>();
+
         return services;
     }
 }
