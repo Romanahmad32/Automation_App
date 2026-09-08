@@ -1,6 +1,7 @@
 using AutomationService.Core.Ablage;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.PdfConversion.Domain.Services;
+using AutomationService.Features.RegisterHistorie.Domain.Services;
 using AutomationService.Features.Settings.Domain.Persistence;
 using AutomationService.Features.Settings.Domain.Services;
 using AutomationService.Features.WordAutomation.Domain.Exceptions;
@@ -20,6 +21,11 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 /// </summary>
 /// <param name="db">Vorgänge und Einstellungen.</param>
 /// <param name="pdf">Wandelt die fertige .docx; fehlt Word, bleibt es bei der .docx.</param>
+/// <param name="historie">
+/// Die übernommenen Zeilen des gewachsenen Kanzleiregisters ab 2018 — die
+/// zweite Quelle der Datei (§6.2). Ohne sie zeigte der Spiegel nur die Jahre
+/// seit der Umstellung, und der Anwalt hätte weiter zwei Register.
+/// </param>
 /// <param name="stand">Der Fingerabdruck des zuletzt geschriebenen Bestands.</param>
 /// <param name="bauordner">Wo die Dateien entstehen, bevor sie umziehen.</param>
 /// <param name="schleuse">Lässt immer nur einen Schreiblauf durch.</param>
@@ -27,6 +33,7 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 public sealed class RegisterSpiegelService(
     AutomationDbContext db,
     IPdfConversionService pdf,
+    IRegisterHistorie historie,
     RegisterSpiegelStand stand,
     RegisterSpiegelBauordner bauordner,
     RegisterSpiegelSchleuse schleuse,
@@ -289,8 +296,10 @@ public sealed class RegisterSpiegelService(
         var einstellungen = await EinstellungenAsync(cancellationToken);
 
         var vorgaenge = await db.Vorgaenge.AsNoTracking().ToListAsync(cancellationToken);
+        var historischeZeilen = await historie.GetAllAsync(null, cancellationToken);
         var zeilen = RegisterZeilenBau.Aus(
             vorgaenge,
+            historischeZeilen,
             RegisterSpiegelVorgabe.NurAbgeschlossene(einstellungen.RegisterExportFilter));
 
         return (einstellungen, zeilen);
@@ -318,6 +327,12 @@ public sealed class RegisterSpiegelService(
                 RegisterZeilenBau.Dateifilter(
                     RegisterSpiegelVorgabe.NurAbgeschlossene(einstellungen.RegisterExportFilter)),
                 cancellationToken);
+
+        // Die Historie kommt ungefiltert dazu: Jede übernommene Zeile steht in
+        // der Datei, ganz gleich, wie der Dateifilter steht. Gezählt und nicht
+        // geladen — aus demselben Grund wie oben, und die zweite Quelle darf
+        // die Zahl nicht wieder teuer machen.
+        zeilen += await db.RegisterHistorie.AsNoTracking().CountAsync(cancellationToken);
 
         return (einstellungen, zeilen);
     }

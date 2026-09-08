@@ -1,103 +1,68 @@
-import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Prüft die Ansicht des Registers (§6.2). Seit es **alle** Vorgänge führt und
-/// nicht mehr nur die abgeschlossenen, trägt der Filter die Bedienbarkeit der
-/// Seite — und die Jahrgangsregel muss dieselbe Antwort geben wie
-/// `RegisterZeilenBau.Jahrgang` im Backend, sonst zeigt die App einen anderen
-/// Jahrgang an, als in der Register-Datei steht.
+import 'register_testaufbau.dart';
+
+/// Prüft die Ansicht des Registers (§6.2). Seit die Zeilen aus dem Backend
+/// kommen und auch die übernommene Historie enthalten, trägt der Filter die
+/// Bedienbarkeit der Seite — bei tausenden Zeilen ist „alles zeigen" keine
+/// Ansicht mehr.
+///
+/// **Sortiert wird hier nicht mehr.** Die Reihenfolge stellt
+/// `RegisterZeilenBau.Aus` im Backend her, zusammen mit den Zeilen; sie ein
+/// zweites Mal zu formulieren, hieße sie zweimal pflegen zu müssen.
 void main() {
-  Vorgang vorgang({
-    String referenz = '01/26 C03_HG-E 1427',
-    int? nummer = 1,
-    String? jahr = '26',
-    VorgangStatus status = VorgangStatus.versendet,
-    String rechtsgebiet = RechtsgebietWert.verkehrsrecht,
-    DateTime? angefragtAm,
-    DateTime? abgeschlossenAm,
-  }) => Vorgang(
-    referenz: referenz,
-    angefragtAm: angefragtAm ?? DateTime(2026, 1, 5),
-    status: status,
-    rechtsgebiet: rechtsgebiet,
-    laufendeNummer: nummer,
-    jahr: jahr,
-    abteilung: 'C03',
-    abgeschlossenAm: abgeschlossenAm,
-  );
-
-  group('Jahrgang', () {
-    test('macht aus dem zweistelligen Jahr die vierstellige Überschrift', () {
-      expect(RegisterFilter.jahrgang(vorgang(jahr: '26')), '2026');
-    });
-
-    test('nimmt ein bereits vierstelliges Jahr unverändert', () {
-      expect(RegisterFilter.jahrgang(vorgang(jahr: '2024')), '2024');
-    });
-
-    test('fällt ohne Jahresfeld auf das Abschlussdatum zurück', () {
-      final ohneJahr = vorgang(
-        jahr: null,
-        nummer: null,
-        angefragtAm: DateTime(2025, 12, 30),
-        abgeschlossenAm: DateTime(2026, 1, 8),
-      );
-
-      expect(RegisterFilter.jahrgang(ohneJahr), '2026');
-    });
-
-    test('nimmt ohne Abschluss das Anfragedatum', () {
-      final offen = vorgang(
-        jahr: null,
-        nummer: null,
-        status: VorgangStatus.angefragt,
-        angefragtAm: DateTime(2024, 3, 7),
-      );
-
-      expect(RegisterFilter.jahrgang(offen), '2024');
-    });
-
-    test('listet die vorkommenden Jahrgänge, neueste zuerst', () {
-      final jahre = RegisterFilter.jahrgaenge([
-        vorgang(jahr: '25'),
-        vorgang(jahr: '26'),
-        vorgang(jahr: '25'),
-      ]);
-
-      expect(jahre, ['2026', '2025']);
-    });
-  });
-
   group('anwenden', () {
-    test('lässt ohne Auswahl alle Vorgänge stehen', () {
-      final alle = [
-        vorgang(referenz: 'a', status: VorgangStatus.angefragt),
-        vorgang(referenz: 'b'),
-      ];
+    test('lässt ohne Auswahl alle Zeilen stehen', () {
+      final alle = [vorgangsZeile(), historieZeile()];
 
       expect(RegisterFilter.alle.anwenden(alle), hasLength(2));
     });
 
-    test('filtert nach Status', () {
-      final gefiltert = const RegisterFilter(status: VorgangStatus.versendet)
-          .anwenden([
-            vorgang(referenz: 'a', status: VorgangStatus.angefragt),
-            vorgang(referenz: 'b'),
-          ]);
+    test('behält die Reihenfolge des Backends', () {
+      final alle = [
+        historieZeile(zeichen: 'a'),
+        vorgangsZeile(zeichen: 'b'),
+        historieZeile(zeichen: 'c'),
+      ];
 
-      expect(gefiltert.single.referenz, 'b');
+      expect(RegisterFilter.alle.anwenden(alle).map((z) => z.zeichen), [
+        'a',
+        'b',
+        'c',
+      ]);
     });
 
     test('filtert nach Jahrgang', () {
-      final gefiltert = const RegisterFilter(jahr: '2025').anwenden([
-        vorgang(referenz: 'a', jahr: '25'),
-        vorgang(referenz: 'b', jahr: '26'),
+      final gefiltert = const RegisterFilter(jahr: '2019').anwenden([
+        vorgangsZeile(jahr: '2026', zeichen: 'neu'),
+        historieZeile(jahr: '2019', zeichen: 'alt'),
       ]);
 
-      expect(gefiltert.single.referenz, 'a');
+      expect(gefiltert.single.zeichen, 'alt');
+    });
+
+    /// Historie ist per Definition abgeschlossen — sie darf unter „laufend"
+    /// nicht auftauchen und unter „abgeschlossen" nicht fehlen.
+    test('zählt Historie zu den abgeschlossenen Zeilen', () {
+      final alle = [
+        vorgangsZeile(zeichen: 'laufend', abgeschlossen: false),
+        vorgangsZeile(zeichen: 'fertig'),
+        historieZeile(zeichen: 'alt'),
+      ];
+
+      expect(
+        const RegisterFilter(
+          abgeschlossen: true,
+        ).anwenden(alle).map((z) => z.zeichen),
+        ['fertig', 'alt'],
+      );
+      expect(
+        const RegisterFilter(
+          abgeschlossen: false,
+        ).anwenden(alle).map((z) => z.zeichen),
+        ['laufend'],
+      );
     });
 
     // Der Filter trägt den Katalognamen, der Altbestand ist kleingeschrieben
@@ -106,30 +71,27 @@ void main() {
         'Altbestand', () {
       final gefiltert = const RegisterFilter(rechtsgebiet: 'Verkehrsstrafrecht')
           .anwenden([
-            vorgang(referenz: 'a'),
-            vorgang(referenz: 'b', rechtsgebiet: 'verkehrsstrafrecht'),
+            vorgangsZeile(zeichen: 'a'),
+            vorgangsZeile(zeichen: 'b', rechtsgebiet: 'verkehrsstrafrecht'),
           ]);
 
-      expect(gefiltert.single.referenz, 'b');
+      expect(gefiltert.single.zeichen, 'b');
     });
+  });
 
-    test('sortiert nach Jahrgang und laufender Nummer', () {
-      final sortiert = RegisterFilter.alle.anwenden([
-        vorgang(referenz: 'c', nummer: 2, jahr: '26'),
-        vorgang(referenz: 'a', nummer: 7, jahr: '25'),
-        vorgang(referenz: 'b', nummer: 1, jahr: '26'),
+  group('jahrgaenge', () {
+    test('listet die vorkommenden Jahrgänge, neueste zuerst', () {
+      final jahre = RegisterFilter.jahrgaenge([
+        vorgangsZeile(jahr: '2025'),
+        vorgangsZeile(jahr: '2026'),
+        historieZeile(jahr: '2025'),
       ]);
 
-      expect(sortiert.map((v) => v.referenz), ['a', 'b', 'c']);
+      expect(jahre, ['2026', '2025']);
     });
 
-    test('hängt Vorgänge ohne laufende Nummer hinten an ihren Jahrgang', () {
-      final sortiert = RegisterFilter.alle.anwenden([
-        vorgang(referenz: 'offen', nummer: null, jahr: '26'),
-        vorgang(referenz: 'neun', nummer: 9, jahr: '26'),
-      ]);
-
-      expect(sortiert.map((v) => v.referenz), ['neun', 'offen']);
+    test('ein leeres Jahr taucht nicht als Chip auf', () {
+      expect(RegisterFilter.jahrgaenge([vorgangsZeile(jahr: '')]), isEmpty);
     });
   });
 
@@ -141,9 +103,9 @@ void main() {
     test('vereint Katalog und Bestand, ohne zu doppeln', () {
       final werte = RegisterFilter.rechtsgebiete(
         [
-          vorgang(referenz: 'a', rechtsgebiet: 'verkehrsrecht'),
-          vorgang(referenz: 'b', rechtsgebiet: 'vertragsrecht'),
-          vorgang(referenz: 'c', rechtsgebiet: ''),
+          vorgangsZeile(rechtsgebiet: 'verkehrsrecht'),
+          historieZeile(rechtsgebiet: 'vertragsrecht'),
+          vorgangsZeile(rechtsgebiet: ''),
         ],
         katalog: const ['Verkehrsrecht', 'Strafrecht'],
       );
@@ -153,7 +115,7 @@ void main() {
 
     test('ohne Katalog bleiben die Bestandswerte filterbar', () {
       final werte = RegisterFilter.rechtsgebiete([
-        vorgang(referenz: 'a', rechtsgebiet: 'verkehrsrecht'),
+        vorgangsZeile(rechtsgebiet: 'verkehrsrecht'),
       ]);
 
       expect(werte, ['Verkehrsrecht']);
@@ -162,21 +124,27 @@ void main() {
 
   group('mit', () {
     test('setzt ein Feld zurück statt es beizubehalten', () {
-      const filter = RegisterFilter(status: VorgangStatus.versendet);
+      const filter = RegisterFilter(abgeschlossen: true);
 
-      expect(filter.mit(statusLoeschen: true).status, isNull);
+      expect(filter.mit(abgeschlossenLoeschen: true).abgeschlossen, isNull);
     });
 
     test('lässt die übrigen Felder stehen', () {
-      const filter = RegisterFilter(
-        status: VorgangStatus.versendet,
-        jahr: '2026',
-      );
+      const filter = RegisterFilter(abgeschlossen: true, jahr: '2026');
 
       final geaendert = filter.mit(jahrLoeschen: true);
 
-      expect(geaendert.status, VorgangStatus.versendet);
+      expect(geaendert.abgeschlossen, isTrue);
       expect(geaendert.jahr, isNull);
+      expect(geaendert.istLeer, isFalse);
+    });
+
+    /// `false` ist ein echter Wert und darf nicht wie „nicht angegeben"
+    /// wirken — sonst liesse sich „nur laufende Zeilen" nicht einstellen.
+    test('nimmt „laufend" als Auswahl an, nicht als fehlende Angabe', () {
+      final geaendert = RegisterFilter.alle.mit(abgeschlossen: false);
+
+      expect(geaendert.abgeschlossen, isFalse);
       expect(geaendert.istLeer, isFalse);
     });
   });

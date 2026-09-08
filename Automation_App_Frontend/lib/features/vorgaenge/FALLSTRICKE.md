@@ -20,10 +20,18 @@ Ungleichheit — sonst stünde dieselbe Zeichenkette zweimal untereinander. Dies
 `RegisterZeilenBau.Zeichen` im Backend geben, sonst zeigt der Bildschirm ein anderes Zeichen als
 die Register-Datei.
 
-## Das Register führt alle Vorgänge — die Datei nicht unbedingt
+## Das Register führt alle Zeilen — die Datei nicht unbedingt
 
-Bis #40 zeigte `RegisterPage` nur `status == versendet`. Jetzt steht dort **jeder** Vorgang, und
-gefiltert wird über `RegisterFilter` (Status, Jahrgang, Rechtsgebiet).
+Bis #40 zeigte `RegisterPage` nur `status == versendet`. Jetzt steht dort **jede** Zeile: jeder
+Vorgang der App und, seit #109, die übernommene Registerhistorie der Kanzlei. Gefiltert wird über
+`RegisterFilter` (Stand, Jahrgang, Rechtsgebiet).
+
+Der Filter kennt **keinen `VorgangStatus` mehr**, sondern nur „abgeschlossen / laufend". Eine
+Registerzeile trägt keinen Lebenszyklus: Die Historie hat nie einen gehabt, und vom Vorgang liefert
+der Zeilen-Endpunkt nur `abgeschlossen`. Ein Dropdown mit „Angefragt … Versendet" über einer Liste,
+die zum größten Teil aus Historie besteht, verspräche eine Auswahl, die es nicht gibt. Der
+fünfstufige Chip in der Statusspalte bleibt trotzdem: Er kommt aus dem `VorgangCubit`, den die Seite
+ohnehin hält (`RegisterView.statusJeReferenz`).
 
 **Der Filter wirkt nur auf den Bildschirm.** Was in die Word-/PDF-Datei kommt, entscheidet die
 Einstellung `KanzleiSettings.registerExportFilter`. Das ist Absicht und keine Nachlässigkeit:
@@ -31,11 +39,33 @@ Die Datei liegt in aller Regel in einem synchronisierten Ordner und wird von and
 hinge ihr Inhalt am Bildschirmfilter, ergäben zwei Schreibvorgänge zwei verschiedene Register
 unter demselben Namen, je nachdem, was zuletzt eingestellt war.
 
-Wer die Sortierung ändert, ändert sie **zweimal**: `RegisterFilter.anwenden` (Ansicht) und
-`RegisterZeilenBau.Aus` (Datei) müssen dieselbe Reihenfolge liefern. Dasselbe gilt für
-`RegisterFilter.jahrgang` und `RegisterZeilenBau.Jahrgang` — sie leiten den vierstelligen Jahrgang
-aus demselben zweistelligen `Vorgang.jahr` ab, und ein Auseinanderlaufen fällt niemandem auf, weil
-beide Seiten für sich plausibel aussehen.
+## Reihenfolge und Zellen: eine Quelle, und die liegt im Backend
+
+Bis #109 leitete die Ansicht ihre Zellen aus `Vorgang` ab (`parteienBezeichnung`,
+`registerSachbestand`, `RegisterFilter.jahrgang`) und die Datei dieselben aus `RegisterZeilenBau` im
+Dienst. Zwei Rechnungen für dasselbe Ergebnis, deren Auseinanderlaufen niemandem auffiel, weil jede
+Seite für sich plausibel aussah — dagegen stand ein eigener Paritätstest im Testordner.
+
+Er ist **weg, weil die zweite Quelle weg ist**: `GET /api/Vorgaenge/register/zeilen` liefert
+die fertigen Zeilen samt Sortierung (Jahrgang aufsteigend, darin laufende Nummer, Zeilen ohne Nummer
+hinten am Jahrgang). `RegisterFilter.anwenden` **filtert nur** und rührt die Reihenfolge nicht an.
+Wer an der Sortierung etwas ändert, ändert `RegisterZeilenBau.Aus` — einmal.
+
+Eine Stelle rechnet weiter selbst: die **Startseiten-Karte**. Sie hat den Vorgangsbestand ohnehin im
+Speicher und baut daraus `RegisterZeile.ausVorgang` (samt `VorgangJahrgang.fuer`), statt beim Öffnen
+der Startseite einen zweiten Abruf zu machen. Sie zeigt nur die letzten fünf Vorgänge der App und
+keine Historie; ihre Abbildung hängt an `register_zeile_test.dart`.
+
+## Eine historische Zeile wird zum Bearbeiten roh geladen, nicht zurückgerechnet
+
+Der Zeilen-Endpunkt liefert die **Anzeigeform** — `RegisterHistorieAnzeige` im Backend setzt
+Zeichen, „Sache" und „Sachbestand" aus den Einzelfeldern zusammen. `PUT /api/RegisterHistorie/{id}`
+erwartet aber die Einzelfelder (Abteilung, Sachart, Mandant, Gegner, Sachbestand, Unfalldatum,
+Rechtsgebiet). Deshalb holt der Dialog vor dem Öffnen `GET /api/RegisterHistorie/{id}`
+(`RegisterHistorieZeile`) und belegt die Felder daraus vor — nie aus der Anzeigezeile. Eine
+Rückrechnung aus „Bußgeldsache Erika Musterfrau" wäre nur an der Endung *-sache* vom bloßen Namen
+zu unterscheiden gewesen; aus „Max Mustermann" wäre die Sachart „Max" geworden. Der Herkunftskasten
+zeigt den `freitext` der Originalzeile als Beleg, dazu Befunde und Hinweise.
 
 ## Die laufende Nummer steht nicht im Zähler
 

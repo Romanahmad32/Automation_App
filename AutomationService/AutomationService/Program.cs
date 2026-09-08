@@ -9,6 +9,7 @@ using AutomationService.Features.MailboxMonitor.Presentation.DependencyInjection
 using AutomationService.Features.MailboxMonitor.Presentation.Hubs;
 using AutomationService.Features.Mandanten.Presentation.DependencyInjection;
 using AutomationService.Features.PdfConversion.Presentation.DependencyInjection;
+using AutomationService.Features.RegisterHistorie.Presentation.DependencyInjection;
 using AutomationService.Features.Sachgebiete.Presentation.DependencyInjection;
 using AutomationService.Features.Settings.Presentation.DependencyInjection;
 using AutomationService.Features.Versicherer.Presentation.DependencyInjection;
@@ -69,6 +70,7 @@ builder.Services.AddSettingsServices();
 builder.Services.AddMandantenServices();
 builder.Services.AddVersichererServices();
 builder.Services.AddSachgebieteServices();
+builder.Services.AddRegisterHistorieServices();
 builder.Services.AddVorgaengeServices();
 builder.Services.AddFormTemplatesServices();
 builder.Services.AddBackupServices(builder.Configuration);

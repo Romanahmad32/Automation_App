@@ -1,0 +1,536 @@
+{
+  "version": 1,
+  "jahrgaenge": [
+    {
+      "jahrgang": 2018,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/18",
+          "abteilung": "",
+          "abteilungRoh": "",
+          "sachart": "",
+          "mandant": "Max Mustermann",
+          "gegner": "Direct Line",
+          "sachbestand": "Schaden",
+          "unfalldatum": "28.12.17",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/18 Max Mustermann ./. Direct Line  Schaden v. 28.12.17",
+          "sicherheit": "mittel",
+          "hinweise": ["In der Freitextzelle steht kein Abteilungskürzel"]
+        },
+        {
+          "laufendeNummer": 6,
+          "nummerZusatz": "",
+          "spalte1": "06",
+          "aktenzeichen": "06/18",
+          "abteilung": "C03o",
+          "abteilungRoh": "C 03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Erika Musterfrau",
+          "gegner": "",
+          "sachbestand": "",
+          "unfalldatum": "",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "06/18 C 03o Bußgeldsache Erika Musterfrau",
+          "sicherheit": "mittel",
+          "hinweise": [
+            "Form B: Sachart vor dem Namen, keine Gegenseite",
+            "Ohne Sachbestand und ohne Datum"
+          ]
+        },
+        {
+          "laufendeNummer": 9,
+          "nummerZusatz": "",
+          "spalte1": "09",
+          "aktenzeichen": "09/18",
+          "abteilung": "C01a",
+          "abteilungRoh": "C01a",
+          "sachart": "",
+          "mandant": "Peter Mustermann",
+          "gegner": "Muster & Partner",
+          "sachbestand": "",
+          "unfalldatum": "",
+          "rechtsgebiet": "Arbeitsrecht",
+          "freitext": "09/18 C01a Peter Mustermann ./. Muster & Partner",
+          "sicherheit": "mittel",
+          "hinweise": ["Ohne Sachbestand und ohne Datum"]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2019,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/19",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Anna Musterfrau",
+          "gegner": "S Direkt",
+          "sachbestand": "Schaden",
+          "unfalldatum": "28.12.18",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/19 C03 Anna Musterfrau ./. S Direkt  Schaden v. 28.12.18",
+          "sicherheit": "hoch",
+          "hinweise": []
+        },
+        {
+          "laufendeNummer": 10,
+          "nummerZusatz": "-I",
+          "spalte1": "10",
+          "aktenzeichen": "10/19-I",
+          "abteilung": "C02",
+          "abteilungRoh": "C 02",
+          "sachart": "",
+          "mandant": "Bernd Mustermann",
+          "gegner": "Beate Mustermann",
+          "sachbestand": "Ehescheidung",
+          "unfalldatum": "",
+          "rechtsgebiet": "Familienrecht",
+          "freitext": "10/19-I C 02 Bernd Mustermann ./. Beate Mustermann  Ehescheidung",
+          "sicherheit": "niedrig",
+          "hinweise": ["Nummer trägt den Zusatz -I", "Sachbestand ohne Datum"]
+        },
+        {
+          "laufendeNummer": 13,
+          "nummerZusatz": "",
+          "spalte1": "13",
+          "aktenzeichen": "13/19",
+          "abteilung": "C03o",
+          "abteilungRoh": "C 03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Klaus Mustermann",
+          "gegner": "",
+          "sachbestand": "OWi",
+          "unfalldatum": "15.10.18",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "13/19 C 03o Bußgeldsache Klaus Mustermann  OWi v. 15.10.18",
+          "sicherheit": "mittel",
+          "hinweise": ["Form B: Sachart vor dem Namen, keine Gegenseite"]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2020,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/20",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Sabine Musterfrau",
+          "gegner": "Allianz",
+          "sachbestand": "Unfall",
+          "unfalldatum": "01.01.20",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/20 C03 Sabine Musterfrau ./. Allianz  Unfall v. 01.01.20",
+          "sicherheit": "hoch",
+          "hinweise": []
+        },
+        {
+          "laufendeNummer": 16,
+          "nummerZusatz": "",
+          "spalte1": "16",
+          "aktenzeichen": "16/20",
+          "abteilung": "C01",
+          "abteilungRoh": "C01",
+          "sachart": "",
+          "mandant": "Nina + Tim Mustermann",
+          "gegner": "Musterbank",
+          "sachbestand": "",
+          "unfalldatum": "",
+          "rechtsgebiet": "Vertragsrecht",
+          "freitext": "16/20 C01 Nina + Tim Mustermann ./. Musterbank",
+          "sicherheit": "niedrig",
+          "hinweise": [
+            "Zwei Mandanten in einer Zelle",
+            "Ohne Sachbestand und ohne Datum"
+          ]
+        },
+        {
+          "laufendeNummer": 18,
+          "nummerZusatz": "",
+          "spalte1": "18",
+          "aktenzeichen": "18/20",
+          "abteilung": "C03o",
+          "abteilungRoh": "C03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Jörg Mustermann",
+          "gegner": "",
+          "sachbestand": "Unfall",
+          "unfalldatum": "12.01.2020",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "18/20 C03o Bußgeldsache Jörg Mustermann  Unfall v. 12.01.2020",
+          "sicherheit": "mittel",
+          "hinweise": ["Form B: Sachart vor dem Namen, keine Gegenseite"]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2021,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/21",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Laura Musterfrau",
+          "gegner": "S Direkt",
+          "sachbestand": "Unfall",
+          "unfalldatum": "31.12.20",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/21 C03 Laura Musterfrau ./. S Direkt  Unfall v. 31.12.20",
+          "sicherheit": "hoch",
+          "hinweise": []
+        },
+        {
+          "laufendeNummer": 4,
+          "nummerZusatz": "",
+          "spalte1": "04",
+          "aktenzeichen": "04/21",
+          "abteilung": "C02",
+          "abteilungRoh": "C02",
+          "sachart": "Familiensache",
+          "mandant": "Katrin Musterfrau",
+          "gegner": "",
+          "sachbestand": "Scheidung",
+          "unfalldatum": "",
+          "rechtsgebiet": "Familienrecht",
+          "freitext": "04/21 C02 Familiensache Katrin Musterfrau  Scheidung",
+          "sicherheit": "mittel",
+          "hinweise": [
+            "Form B: Sachart vor dem Namen, keine Gegenseite",
+            "Sachbestand ohne Datum"
+          ]
+        },
+        {
+          "laufendeNummer": 14,
+          "nummerZusatz": "",
+          "spalte1": "14",
+          "aktenzeichen": "14/21",
+          "abteilung": "C03o",
+          "abteilungRoh": "C03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Dirk Mustermann",
+          "gegner": "",
+          "sachbestand": "OWi.",
+          "unfalldatum": "17.11.20",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "14/21 C03o Bußgeldsache Dirk Mustermann   OWi. v. 17.11.20",
+          "sicherheit": "mittel",
+          "hinweise": ["Form B: Sachart vor dem Namen, keine Gegenseite"]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2022,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/22",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Petra Musterfrau",
+          "gegner": "Allianz",
+          "sachbestand": "Unfall",
+          "unfalldatum": "29.12.21",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/22 C03 Petra Musterfrau ./. Allianz  Unfall v. 29.12.21",
+          "sicherheit": "hoch",
+          "hinweise": []
+        },
+        {
+          "laufendeNummer": 6,
+          "nummerZusatz": "",
+          "spalte1": "06",
+          "aktenzeichen": "06/22",
+          "abteilung": "C05/3",
+          "abteilungRoh": "C05/3",
+          "sachart": "Strafsache",
+          "mandant": "Stefan Mustermann",
+          "gegner": "",
+          "sachbestand": "Unfallflucht",
+          "unfalldatum": "",
+          "rechtsgebiet": "Verkehrsstrafrecht",
+          "freitext": "06/22 C05/3 Strafsache Stefan Mustermann  Unfallflucht",
+          "sicherheit": "niedrig",
+          "hinweise": [
+            "Abteilung mit Schrägstrich: Hauptsachgebiet C05, Nebenbezug 3",
+            "Form B: Sachart vor dem Namen, keine Gegenseite",
+            "Sachbestand ohne Datum",
+            "Spalte 3 nennt Verkehrsstrafrecht (C04), die Abteilung C05/3 Strafrecht mit Verkehrsbezug"
+          ]
+        },
+        {
+          "laufendeNummer": 16,
+          "nummerZusatz": "",
+          "spalte1": "16",
+          "aktenzeichen": "16/22",
+          "abteilung": "C01",
+          "abteilungRoh": "C01",
+          "sachart": "",
+          "mandant": "Muster Hotels GmbH",
+          "gegner": "Musterbach",
+          "sachbestand": "Sachbeschädigung",
+          "unfalldatum": "29.11.2021",
+          "rechtsgebiet": "Zivilrecht",
+          "freitext": "16/22 C01 Muster Hotels GmbH ./. Musterbach  Sachbeschädigung vom 29.11.2021",
+          "sicherheit": "hoch",
+          "hinweise": ["Datum mit „vom“ statt „v.“ eingeleitet"]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2023,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/23",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Markus Mustermann",
+          "gegner": "HUK",
+          "sachbestand": "Unfall",
+          "unfalldatum": "21.10.22",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/23 C03 Markus Mustermann ./. HUK  Unfall v. 21.10.22",
+          "sicherheit": "hoch",
+          "hinweise": []
+        },
+        {
+          "laufendeNummer": 13,
+          "nummerZusatz": "",
+          "spalte1": "13",
+          "aktenzeichen": "13/23",
+          "abteilung": "C03o",
+          "abteilungRoh": "C03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Thomas Mustermann",
+          "gegner": "",
+          "sachbestand": "OWi.",
+          "unfalldatum": "15.12.22",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "13/23 C03o Bußgeldsache Thomas Mustermann  OWi. v. 15.12.22",
+          "sicherheit": "mittel",
+          "hinweise": ["Form B: Sachart vor dem Namen, keine Gegenseite"]
+        },
+        {
+          "laufendeNummer": 16,
+          "nummerZusatz": "",
+          "spalte1": "16",
+          "aktenzeichen": "16/23",
+          "abteilung": "C01a",
+          "abteilungRoh": "C01a",
+          "sachart": "",
+          "mandant": "Robert Mustermann",
+          "gegner": "Muster Personal",
+          "sachbestand": "KSch-Klage",
+          "unfalldatum": "",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "16/23 C01a Robert Mustermann ./. Muster Personal  KSch-Klage",
+          "sicherheit": "mittel",
+          "hinweise": [
+            "Sachbestand ohne Datum",
+            "Spalte 3 nennt Verkehrsrecht, die Abteilung C01a Arbeitsrecht"
+          ]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2024,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/24",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Andreas Mustermann",
+          "gegner": "HUK",
+          "sachbestand": "Unfall",
+          "unfalldatum": "22.10.22",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/24 C03 Andreas Mustermann ./. HUK  Unfall v. 22.10.22",
+          "sicherheit": "hoch",
+          "hinweise": []
+        },
+        {
+          "laufendeNummer": 34,
+          "nummerZusatz": "",
+          "spalte1": "34",
+          "aktenzeichen": "34/24",
+          "abteilung": "C03o",
+          "abteilungRoh": "C03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Christian Mustermann",
+          "gegner": "",
+          "sachbestand": "OWi",
+          "unfalldatum": "18.01.24",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "34/24 C03o Bußgeldsache Christian Mustermann   OWi v. 18.01.24",
+          "sicherheit": "mittel",
+          "hinweise": ["Form B: Sachart vor dem Namen, keine Gegenseite"]
+        },
+        {
+          "laufendeNummer": 39,
+          "nummerZusatz": "",
+          "spalte1": "39",
+          "aktenzeichen": "39/24",
+          "abteilung": "C01a",
+          "abteilungRoh": "C01a",
+          "sachart": "",
+          "mandant": "Marco Mustermann",
+          "gegner": "Muster Financial",
+          "sachbestand": "",
+          "unfalldatum": "",
+          "rechtsgebiet": "Arbeitsrecht",
+          "freitext": "39/24 C01a Marco Mustermann ./. Muster Financial",
+          "sicherheit": "mittel",
+          "hinweise": ["Ohne Sachbestand und ohne Datum"]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2025,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/25",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Daniel Mustermann",
+          "gegner": "HUK",
+          "sachbestand": "VUnfall",
+          "unfalldatum": "19.11.2024",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/25 C03 Daniel Mustermann ./. HUK  VUnfall v. 19.11.2024",
+          "sicherheit": "hoch",
+          "hinweise": ["Jahreszeile fehlt ab 2025; der Jahrgang steht im Aktenzeichen"]
+        },
+        {
+          "laufendeNummer": 7,
+          "nummerZusatz": "",
+          "spalte1": "07",
+          "aktenzeichen": "07/25",
+          "abteilung": "C03o",
+          "abteilungRoh": "C03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Frank Mustermann",
+          "gegner": "",
+          "sachbestand": "OWi",
+          "unfalldatum": "30.11.2024",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "07/25 C03o Bußgeldsache Frank Mustermann  OWi v. v. 30.11.2024",
+          "sicherheit": "niedrig",
+          "hinweise": [
+            "Freitext enthält „v. v.“ — Tippfehler im Bestand, nicht berichtigt",
+            "Form B: Sachart vor dem Namen, keine Gegenseite"
+          ]
+        },
+        {
+          "laufendeNummer": 10,
+          "nummerZusatz": "",
+          "spalte1": "10",
+          "aktenzeichen": "10/25",
+          "abteilung": "C05/3",
+          "abteilungRoh": "C05/3",
+          "sachart": "Strafsache",
+          "mandant": "Julia Musterfrau",
+          "gegner": "",
+          "sachbestand": "VUnfall",
+          "unfalldatum": "08.01.2025",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "10/25 C05/3 Strafsache Julia Musterfrau  VUnfall v. 08.01.2025",
+          "sicherheit": "niedrig",
+          "hinweise": [
+            "Abteilung mit Schrägstrich: Hauptsachgebiet C05, Nebenbezug 3",
+            "Form B: Sachart vor dem Namen, keine Gegenseite"
+          ]
+        }
+      ]
+    },
+    {
+      "jahrgang": 2026,
+      "zeilen": [
+        {
+          "laufendeNummer": 1,
+          "nummerZusatz": "",
+          "spalte1": "01",
+          "aktenzeichen": "01/26",
+          "abteilung": "C03",
+          "abteilungRoh": "C03",
+          "sachart": "",
+          "mandant": "Sonja Musterfrau",
+          "gegner": "HUK24",
+          "sachbestand": "VUnfall",
+          "unfalldatum": "28.12.25",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "01/26 C03 Sonja Musterfrau ./. HUK24  VUnfall v. 28.12.25",
+          "sicherheit": "hoch",
+          "hinweise": []
+        },
+        {
+          "laufendeNummer": 5,
+          "nummerZusatz": "",
+          "spalte1": "05",
+          "aktenzeichen": "05/26",
+          "abteilung": "C03o",
+          "abteilungRoh": "C03o",
+          "sachart": "Bußgeldsache",
+          "mandant": "Michael Mustermann",
+          "gegner": "",
+          "sachbestand": "OWi",
+          "unfalldatum": "09.12.25",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "05/26 C03o Bußgeldsache Michael Mustermann   OWi v. 09.12.25",
+          "sicherheit": "mittel",
+          "hinweise": ["Form B: Sachart vor dem Namen, keine Gegenseite"]
+        },
+        {
+          "laufendeNummer": 18,
+          "nummerZusatz": "",
+          "spalte1": "18",
+          "aktenzeichen": "18/26",
+          "abteilung": "C05",
+          "abteilungRoh": "C05",
+          "sachart": "Strafsache",
+          "mandant": "Oliver Mustermann",
+          "gegner": "",
+          "sachbestand": "",
+          "unfalldatum": "",
+          "rechtsgebiet": "Verkehrsrecht",
+          "freitext": "18/26 C05 Strafsache Oliver Mustermann",
+          "sicherheit": "mittel",
+          "hinweise": [
+            "Form B: Sachart vor dem Namen, keine Gegenseite",
+            "Ohne Sachbestand und ohne Datum",
+            "Spalte 3 nennt Verkehrsrecht, die Abteilung C05 Strafrecht"
+          ]
+        }
+      ]
+    }
+  ]
+}

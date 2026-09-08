@@ -1,6 +1,6 @@
 # Datenflüsse — was durch mehrere Features läuft
 
-Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Fünf Ketten laufen
+Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Sechs Ketten laufen
 quer durch den Baum, und in keiner steht an der Nahtstelle, dass es eine gibt. Wer eine davon
 ändert, ohne sie zu kennen, ändert sie an einer Stelle und lässt die anderen stehen.
 
@@ -105,6 +105,11 @@ Was in die Datei kommt, entscheidet die Einstellung `registerExportFilter` — *
 auf der Registerseite. Der wirkt nur auf den Bildschirm; sonst hinge der Inhalt einer Datei, die
 andere lesen, davon ab, was zuletzt jemand eingestellt hatte.
 
+**Seit #109 eine zweite Quelle:** Was der Spiegel schreibt und die Registeransicht zeigt, baut
+`RegisterZeilenBau` aus **zwei** Quellen zusammen — den abgeschlossenen Vorgängen aus dieser Kette
+und der importierten `RegisterHistorie` (Kette 6). Beide laufen in derselben Funktion zusammen,
+damit Bildschirm und Spiegel weiterhin per Konstruktion dasselbe zeigen, nicht nur zufällig.
+
 ## 4. Kanzleidaten
 
 ```
@@ -181,11 +186,46 @@ Und die Rückmeldung: Beim Beenden sieht niemand mehr zu, deshalb merkt sich jed
 lokal (`letzte-sicherung.json`, neben der Datenbank statt darin — ein Import ersetzt die Datenbank).
 Der nächste Start zeigt einen Fehlschlag, der Reiter „Datensicherung" die Zeile „zuletzt gesichert".
 
+## 6. Registerhistorie einlesen
+
+```
+Datei ──▶ POST /api/RegisterImport (Vorschau/Übernahme) ──▶ Tabelle RegisterHistorie
+                                                                    └──▶ RegisterZeilenBau
+                                                                           ├──▶ GET .../zeilen
+                                                                           └──▶ Register-Spiegel (Kette 3)
+```
+
+Ein Programm auf dem Kanzleirechner (oder ein Agent) liest den Altbestand aus dem bisherigen
+Word-Dokument der Kanzlei jahrgangsweise aus und schickt ihn als Datei an
+`POST /api/RegisterImport` — ohne `uebernehmen` nur eine Prüfung, mit `uebernehmen=true` derselbe
+Code, der schreibt (§6.2, Format in `docs/REGISTER_IMPORT.md`), wahlweise je Jahrgang einzeln
+oder für alle Jahrgänge einer Datei zusammen. Übernommene Zeilen landen in der eigenen Tabelle
+`RegisterHistorie`, wiedererkannt über Jahr, laufende Nummer **und** Nummernzusatz — **nicht** in
+der Vorgangs-Tabelle, sonst stünden Tausende Zeilen ohne zugehörigen Vorgang in der Vorgangsliste.
+
+`RegisterZeilenBau` (Backend-Slice `Vorgaenge`) liest beide Tabellen und baut daraus **eine**
+Zeilenliste, sortiert nach Jahrgang und laufender Nummer: `GET api/Vorgaenge/register/zeilen`
+liefert sie an die Registeransicht (Frontend `vorgaenge`), derselbe Bau speist den
+Register-Spiegel aus Kette 3.
+
+**Die Naht:** `RegisterZeilenBau` ist die einzige Stelle, die beide Quellen kennt. Ein neues Feld
+an einer Quelle (Vorgang oder Historie), das in der Zeile erscheinen soll, muss dort eingetragen
+werden — sonst zeigen Bildschirm und Spiegel die eine Quelle vollständig und die andere nur
+teilweise, ohne dass ein Test das bemerkt.
+
 ## Wo eine Kette anfängt zu lügen
 
-Alle fünf haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
+Alle sechs haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
 das von allein — die Architektur-Tests prüfen Schichten und Verträge, nicht Fachwege. Was hilft,
 ist die Naht mitzulesen, bevor man eine Seite anfasst.
+
+**Zwei Quellen, eine Zählung (Kette 3/6):** Seit die Registeransicht Vorgänge und Historie aus
+`RegisterZeilenBau` mischt, zählt „wie viele Zeilen zeigt das Register" nicht mehr aus einer
+Tabelle. Wer nur eine Quelle ändert — ein neues Feld am Vorgang, einen neuen Filter auf
+`RegisterHistorie` — und die andere vergisst, bekommt eine Zahl, die auf dem Bildschirm und im
+Spiegel gleich falsch ist, weil beide aus derselben unvollständigen Funktion lesen. Kein Test
+sieht das: Er prüft, dass Bildschirm und Spiegel übereinstimmen, nicht, dass beide vollständig
+sind.
 
 Kommt eine Kette hinzu oder fällt eine weg, gehört sie hier hinein — sonst steht in dieser Datei
 bald dasselbe wie in einem Steckbrief, der auf Tests zeigt, die es nicht mehr gibt.

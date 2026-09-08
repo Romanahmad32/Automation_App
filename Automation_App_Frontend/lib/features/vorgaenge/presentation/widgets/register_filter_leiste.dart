@@ -1,14 +1,13 @@
 import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
 import 'package:flutter/material.dart';
 
-/// Die Filterleiste über dem Register (§6.2): Jahrgang, Status, Rechtsgebiet.
+/// Die Filterleiste über dem Register (§6.2): Jahrgang, Stand, Rechtsgebiet.
 ///
-/// Nötig, seit das Register **alle** Vorgänge führt und nicht mehr nur die
-/// abgeschlossenen — bei ein paar hundert Zeilen ist „alles zeigen" ohne
-/// Einschränkung keine Ansicht mehr.
+/// Nötig, seit das Register **alle** Zeilen führt — laufende Vorgänge,
+/// abgeschlossene und die übernommene Historie der Kanzlei. Bei tausenden
+/// Zeilen ist „alles zeigen" ohne Einschränkung keine Ansicht mehr.
 ///
 /// Die Rechtsgebiets-Auswahl kommt aus dem Sachgebietskatalog (§7.1) plus dem,
 /// was nur im Bestand vorkommt ([RegisterFilter.rechtsgebiete]) — der Bestand
@@ -21,7 +20,7 @@ import 'package:flutter/material.dart';
 /// schließt.
 class RegisterFilterLeiste extends StatelessWidget {
   final RegisterFilter filter;
-  final List<Vorgang> alle;
+  final List<RegisterZeile> alle;
   final ValueChanged<RegisterFilter> onGeaendert;
 
   /// Die Rechtsgebiete des Katalogs in Katalogreihenfolge; leer, solange der
@@ -62,14 +61,21 @@ class RegisterFilterLeiste extends StatelessWidget {
             ),
           ),
         if (jahre.isNotEmpty) const SizedBox(width: 8),
-        _auswahl<VorgangStatus>(
+        // Zwei Werte statt der fünf Vorgangsstatus: Eine Registerzeile trägt
+        // keinen Lebenszyklus — die Historie hat nie einen gehabt, und vom
+        // Vorgang liefert der Endpunkt nur, ob er abgeschlossen ist.
+        _auswahl<bool>(
           context,
-          hinweis: 'Status',
-          wert: filter.status,
-          werte: VorgangStatus.values,
-          beschriftung: (status) => status.displayName,
-          onGewaehlt: (status) => onGeaendert(
-            filter.mit(status: status, statusLoeschen: status == null),
+          hinweis: 'Stand',
+          alleText: 'Alle Zeilen',
+          wert: filter.abgeschlossen,
+          werte: const [true, false],
+          beschriftung: (fertig) => fertig ? 'Abgeschlossen' : 'Laufend',
+          onGewaehlt: (fertig) => onGeaendert(
+            filter.mit(
+              abgeschlossen: fertig,
+              abgeschlossenLoeschen: fertig == null,
+            ),
           ),
         ),
         _auswahl<String>(
@@ -116,8 +122,11 @@ class RegisterFilterLeiste extends StatelessWidget {
   }
 
   /// Ein Auswahlfeld, dessen erster Eintrag „alle" ist. Bewusst kein Chip je
-  /// Wert: Status und Rechtsgebiet haben zusammen über zwanzig Ausprägungen,
+  /// Wert: Stand und Rechtsgebiet haben zusammen über zwanzig Ausprägungen,
   /// und so viele Chips wären die Leiste selbst, nicht mehr ihr Inhalt.
+  ///
+  /// [alleText] überschreibt die Beschriftung dieses ersten Eintrags, wo die
+  /// Ableitung aus [hinweis] kein Deutsch ergibt („Alle stand").
   Widget _auswahl<T>(
     BuildContext context, {
     required String hinweis,
@@ -125,8 +134,9 @@ class RegisterFilterLeiste extends StatelessWidget {
     required List<T> werte,
     required String Function(T) beschriftung,
     required ValueChanged<T?> onGewaehlt,
+    String? alleText,
   }) {
-    final allesText = 'Alle ${hinweis.toLowerCase()}';
+    final allesText = alleText ?? 'Alle ${hinweis.toLowerCase()}';
     return SizedBox(
       width: _dropdownBreite(context, [allesText, ...werte.map(beschriftung)]),
       child: DropdownButtonFormField<T?>(

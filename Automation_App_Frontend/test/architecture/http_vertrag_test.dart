@@ -167,6 +167,17 @@ void main() {
     'lib/features/mandanten/domain/entities/ordner_status.dart': [
       'OrdnerStatusDto',
     ],
+    'lib/features/register_import/domain/entities/register_import_bericht.dart':
+        ['RegisterImportBerichtDto', 'JahrgangBefundDto'],
+    'lib/features/register_import/domain/entities/register_import_datei.dart': [
+      'RegisterImportDto',
+      'ImportJahrgangDto',
+    ],
+    'lib/features/register_import/domain/entities/register_import_zeile.dart': [
+      'ImportRegisterZeileDto',
+    ],
+    'lib/features/register_import/domain/entities/register_zeilen_befund.dart':
+        ['RegisterZeilenBefundDto'],
     'lib/features/sachgebiete/domain/entities/sachgebiet.dart': [
       'SachgebietDto',
     ],
@@ -179,8 +190,19 @@ void main() {
     'lib/features/versicherer/domain/entities/versicherer.dart': [
       'VersichererDto',
     ],
+    'lib/features/vorgaenge/domain/entities/register_historie_stand.dart': [
+      'RegisterHistorieStandDto',
+      'JahrgangStandDto',
+    ],
+    'lib/features/vorgaenge/domain/entities/register_historie_zeile.dart': [
+      'RegisterHistorieZeileDto',
+    ],
     'lib/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart': [
       'RegisterSpiegelDto',
+    ],
+    'lib/features/vorgaenge/domain/entities/register_zeile.dart': [
+      'RegisterZeilenDto',
+      'RegisterZeileDto',
     ],
     'lib/features/vorgaenge/domain/entities/vorgang_json.dart': ['VorgangDto'],
     'lib/features/word_automation/domain/entities/standard_schadenspositionen.dart':

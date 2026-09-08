@@ -187,6 +187,22 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_o
     as _i975;
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_suche_cubit/mandanten_suche_cubit.dart'
     as _i410;
+import 'package:automation_app/features/register_import/data/datasources/register_import_datasource.dart'
+    as _i686;
+import 'package:automation_app/features/register_import/data/repositories/register_import_repository_impl.dart'
+    as _i911;
+import 'package:automation_app/features/register_import/domain/entities/register_import_bericht.dart'
+    as _i206;
+import 'package:automation_app/features/register_import/domain/entities/register_import_datei.dart'
+    as _i236;
+import 'package:automation_app/features/register_import/domain/repositories/register_import_repository.dart'
+    as _i223;
+import 'package:automation_app/features/register_import/domain/usecases/importiere_register.dart'
+    as _i1058;
+import 'package:automation_app/features/register_import/domain/usecases/lies_register_import_datei.dart'
+    as _i205;
+import 'package:automation_app/features/register_import/presentation/blocs/register_import_cubit/register_import_cubit.dart'
+    as _i482;
 import 'package:automation_app/features/sachgebiete/data/datasources/sachgebiet_datasource.dart'
     as _i460;
 import 'package:automation_app/features/sachgebiete/domain/repositories/sachgebiet_repository.dart'
@@ -219,14 +235,24 @@ import 'package:automation_app/features/versicherer/domain/repositories/versiche
     as _i9;
 import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart'
     as _i782;
+import 'package:automation_app/features/vorgaenge/data/datasources/register_historie_datasource.dart'
+    as _i668;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_spiegel_datasource.dart'
     as _i412;
+import 'package:automation_app/features/vorgaenge/data/datasources/register_zeilen_datasource.dart'
+    as _i274;
 import 'package:automation_app/features/vorgaenge/data/datasources/vorgaenge_datasource.dart'
     as _i933;
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_historie_repository.dart'
+    as _i69;
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart'
     as _i738;
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_zeilen_repository.dart'
+    as _i270;
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart'
     as _i487;
+import 'package:automation_app/features/vorgaenge/presentation/blocs/register_cubit.dart'
+    as _i757;
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart'
     as _i242;
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart'
@@ -366,6 +392,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i668.MandantenImportDatasource>(
       () => _i668.ApiMandantenImportDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i69.RegisterHistorieRepository>(
+      () => _i668.ApiRegisterHistorieDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i56.ZentralrufReplyDatasource>(
       () => _i56.ApiZentralrufReplyDatasource(gh<_i361.Dio>()),
     );
@@ -390,6 +419,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i310.SachgebietCubit>(
       () => _i310.SachgebietCubit(gh<_i1069.SachgebietRepository>()),
     );
+    gh.factory<_i686.RegisterImportDatasource>(
+      () => _i686.ApiRegisterImportDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i388.GrussformelnRepository>(
       () => _i328.ApiGrussformelnDatasource(gh<_i361.Dio>()),
     );
@@ -408,6 +440,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i182.BackupDatasource>(
       () => _i182.ApiBackupDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i270.RegisterZeilenRepository>(
+      () => _i274.ApiRegisterZeilenDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i651.WordTemplateDatasource>(
       () => _i651.ApiWordTemplateDatasource(gh<_i361.Dio>()),
     );
@@ -420,6 +455,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i579.MailboxPushNotifier>(
       () => _i1015.MailboxHub(),
       dispose: (i) => i.dispose(),
+    );
+    gh.factory<_i223.RegisterImportRepository>(
+      () => _i911.RegisterImportRepositoryImpl(
+        gh<_i552.ImportDateiDatasource>(),
+        gh<_i686.RegisterImportDatasource>(),
+      ),
     );
     gh.lazySingleton<_i782.VersichererCubit>(
       () => _i782.VersichererCubit(gh<_i9.VersichererRepository>()),
@@ -448,6 +489,18 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i56.ZentralrufReplyDatasource>(),
       ),
     );
+    gh.factory<_i757.RegisterCubit>(
+      () => _i757.RegisterCubit(
+        gh<_i270.RegisterZeilenRepository>(),
+        gh<_i69.RegisterHistorieRepository>(),
+      ),
+    );
+    gh.factory<
+      _i223.UseCase<
+        _i206.RegisterImportBericht,
+        _i1058.ImportiereRegisterParams
+      >
+    >(() => _i1058.ImportiereRegister(gh<_i223.RegisterImportRepository>()));
     gh.singleton<_i1049.ThemeBloc>(
       () => _i1049.ThemeBloc(gh<_i1039.ThemePreferencesDatasource>()),
     );
@@ -455,6 +508,14 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i123.StandardpositionenCubit(
         gh<_i262.StandardSchadenspositionenRepository>(),
       ),
+    );
+    gh.factory<
+      _i223.UseCase<
+        _i236.RegisterImportDatei,
+        _i205.LiesRegisterImportDateiParams
+      >
+    >(
+      () => _i205.LiesRegisterImportDatei(gh<_i223.RegisterImportRepository>()),
     );
     gh.factory<_i777.ZentralrufRepository>(
       () => _i248.ZentralrufRepositoryImpl(gh<_i615.ZentralrufDatasource>()),
@@ -574,6 +635,22 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i195.KanzleiSettingsBloc(
         gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
         gh<_i223.UseCase<_i609.KanzleiSettings, _i609.KanzleiSettings>>(),
+      ),
+    );
+    gh.factory<_i482.RegisterImportCubit>(
+      () => _i482.RegisterImportCubit(
+        gh<
+          _i223.UseCase<
+            _i236.RegisterImportDatei,
+            _i205.LiesRegisterImportDateiParams
+          >
+        >(),
+        gh<
+          _i223.UseCase<
+            _i206.RegisterImportBericht,
+            _i1058.ImportiereRegisterParams
+          >
+        >(),
       ),
     );
     gh.factory<_i223.UseCase<void, _i22.CreateFormTemplateRequest>>(

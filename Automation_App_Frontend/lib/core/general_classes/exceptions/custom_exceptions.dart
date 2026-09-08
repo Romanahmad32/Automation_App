@@ -24,3 +24,14 @@ class MandantException implements Exception {
   @override
   String toString() => 'MandantException: $message';
 }
+
+/// Fachliche Auskunft aus dem Registerimport (§6.2) — eine Datei, die sich
+/// nicht lesen lässt, oder eine Fassung, die der Dienst nicht kennt.
+class RegisterException implements Exception {
+  final String message;
+
+  const RegisterException(this.message);
+
+  @override
+  String toString() => 'RegisterException: $message';
+}

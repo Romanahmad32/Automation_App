@@ -101,6 +101,30 @@ public sealed class RegisterDokumentTests : IDisposable
     }
 
     /// <summary>
+    /// Die Jahrestrennzeile steht fett und über die volle Breite — wie im
+    /// gewachsenen Word-Register der Kanzlei. Sie ist keine Datenzeile: Die
+    /// Zahl im Kopf und die Zählung des Spiegels (<c>RegisterSpiegelService</c>)
+    /// zählen weiterhin nur die Zeilen mit Inhalt.
+    /// </summary>
+    [Fact]
+    public void Schreibe_SetztDieJahrestrennzeileFettUndZaehltSieNichtAlsDatenzeile()
+    {
+        var xml = Xml(Schreibe(ZweiJahrgaenge));
+
+        var trennzeilen = Regex.Matches(xml, @"<w:tr[ >].*?</w:tr>", RegexOptions.Singleline)
+            .Select(treffer => treffer.Value)
+            .Where(zeile => zeile.Contains(@"<w:gridSpan w:val=""4""", StringComparison.Ordinal))
+            .ToList();
+
+        trennzeilen.Should().HaveCount(2, "je Jahrgangswechsel eine Zeile");
+        trennzeilen.Should().OnlyContain(zeile => zeile.Contains("<w:b", StringComparison.Ordinal));
+
+        // Kopfzeile + zwei Jahrestrennzeilen + drei Datenzeilen.
+        Regex.Matches(xml, @"<w:tr[ >]").Should().HaveCount(1 + 2 + ZweiJahrgaenge.Length);
+        xml.Should().Contain($"{ZweiJahrgaenge.Length} Vorgänge", "gezählt werden nur die Datenzeilen");
+    }
+
+    /// <summary>
     /// Die Jahreszeilen tragen eine Überschriften-Formatvorlage. Daraus baut
     /// Word beim PDF-Export die Sprungmarken — auf dem Handy der Unterschied
     /// zwischen „zum Jahrgang springen" und „durch 90 Seiten wischen".

@@ -27,7 +27,10 @@ public sealed class RegisterSpiegelZeilenzahlTests : IDisposable
 
     /// <summary>
     /// Ein Bestand, in dem der Filter etwas zu tun hat: drei abgeschlossene
-    /// Vorgänge, zwei laufende.
+    /// Vorgänge, zwei laufende — und dazu zwei übernommene Zeilen der
+    /// Registerhistorie, die zweite Quelle der Datei (§6.2). Sie zählen unter
+    /// jedem Filter mit; wären sie nur in einem der beiden Wege gezählt, träte
+    /// genau die Lücke auf, die dieser Test verhindern soll.
     /// </summary>
     async Task BestandAnlegen()
     {
@@ -36,11 +39,13 @@ public sealed class RegisterSpiegelZeilenzahlTests : IDisposable
         await _umgebung.VorgangAnlegen("03/26 C03", 3);
         await _umgebung.VorgangAnlegen("04/26 C03", 4, status: "angefragt");
         await _umgebung.VorgangAnlegen("05/26 C03", 5, status: "beantwortet");
+        await _umgebung.HistorieAnlegen(2019, 1);
+        await _umgebung.HistorieAnlegen(2019, 2);
     }
 
     [Theory]
-    [InlineData("alle", 5)]
-    [InlineData(RegisterSpiegelVorgabe.FilterAbgeschlossen, 3)]
+    [InlineData("alle", 7)]
+    [InlineData(RegisterSpiegelVorgabe.FilterAbgeschlossen, 5)]
     public async Task BeideWegeZaehlenDieselbenZeilen(string filter, int erwartet)
     {
         await _umgebung.EinstellungenAnlegen(filter: filter);
@@ -67,7 +72,7 @@ public sealed class RegisterSpiegelZeilenzahlTests : IDisposable
         var stand = await _umgebung.Dienst().StandAsync();
 
         stand.Geschrieben.Should().BeFalse();
-        stand.Zeilen.Should().Be(5);
+        stand.Zeilen.Should().Be(7);
     }
 
     public void Dispose() => _umgebung.Dispose();

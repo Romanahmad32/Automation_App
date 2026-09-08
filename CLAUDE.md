@@ -84,7 +84,7 @@ Ein Fachthema, zwei Orte — die Zuordnung Feature ↔ Slice:
 | 3 Word Automation | `word_automation`, `email_versand` | `WordAutomation`, `PdfConversion`, `EmailVersand` |
 | 4 Vorlagen Verwalten | `form_template_setup` | `FormTemplates` |
 | 5 Mandanten | `mandanten` | `Mandanten` |
-| 6 Register | `vorgaenge` (Registeransicht) | `Vorgaenge` |
+| 6 Register | `vorgaenge` (Registeransicht), `register_import` | `Vorgaenge`, `RegisterHistorie` |
 | 7 Vorgänge | `vorgaenge` | `Vorgaenge` |
 | 8 Einstellungen | `settings`, `backup` | `Settings`, `Backup` |
 | — (nur Debug) | `dev_simulation` | `DevSimulation` |

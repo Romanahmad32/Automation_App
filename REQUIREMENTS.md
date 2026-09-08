@@ -689,16 +689,55 @@ Die Kanzlei führt ein fortlaufendes Register über alle bearbeiteten Aufträge.
 Register ohne manuelles Nachtragen aktuell zu halten.
 
 - **[M] Die App führt das Register.** Sie ist die führende Quelle; das bisherige Word-Dokument der
-  Kanzlei wird abgelöst, nicht fortgeschrieben.
+  Kanzlei wird abgelöst — fortgeschrieben wird es nicht mehr, sein Altbestand wird aber übernommen
+  (siehe unten „Übernahme der Historie").
 - **[M] Automatische Aufnahme:** Ein abgeschlossener Vorgang (siehe 4.8) erscheint als neue Zeile.
 - **[M] Spaltenschema je Zeile:**
   - laufende Nummer
   - Zeichen (laufende Nr./Jahr samt Abteilung)
-  - „Name ./. Gegner" samt Sachbestand/Datum
+  - Sache (Rubrum — z. B. „Name ./. Gegner" bei Zivilsachen, „Bußgeldsache Name" u. ä. sonst)
+    samt Sachbestand/Datum
   - Rechtsgebiet
-- **[M] In-App-Ansicht:** Die Registerdaten sind in der App im exakten Spaltenschema einsehbar.
+- **[M] In-App-Ansicht:** Die Registerdaten sind in der App im exakten Spaltenschema einsehbar,
+  mit einer fett gesetzten Jahreszeile beim Wechsel des Jahrgangs — wie im bisherigen
+  Word-Register.
 - **[S] Export auf Knopfdruck:** Das Register lässt sich als Word- oder PDF-Tabelle im selben
-  Spaltenschema ausgeben — für Ausdruck, Weitergabe oder Archivierung.
+  Spaltenschema ausgeben, mit derselben Jahrestrennzeile — für Ausdruck, Weitergabe oder
+  Archivierung.
+- **[M] Übernahme der Historie:** Der Altbestand aus der Zeit vor der App wird nicht neu erfasst,
+  sondern jahrgangsweise übernommen, ab dem ersten Jahrgang des Word-Registers (derzeit 2018) —
+  das Startjahr ist keine Vorgabe der App, sondern ergibt sich aus dem Bestand.
+  - **[M] Eigenständig:** Die übernommene Historie ist durchsuchbar und filterbar, aber **nicht**
+    mit einem Vorgang verbunden — für eine historische Zeile gibt es keinen Vorgang zum Öffnen.
+  - **[S] Mandantenzuordnung folgt später:** Eine historische Zeile lässt sich später einem
+    Mandanten zuordnen; das ist keine Voraussetzung für die Übernahme.
+  - **[M] Bearbeitbar mit Bestätigung:** Eine historische Zeile ist mit ausdrücklicher Bestätigung
+    berichtigbar und trägt in der Ansicht immer den Status „Historie" — auch nach der
+    Berichtigung, und auch dann, wenn sie zu keinem Befund mehr Anlass gibt.
+  - **[M] Zwei Betriebsarten:** Der Import kennt eine Vorschau, die nichts schreibt, und die
+    Übernahme, die schreibt — derselbe Ablauf, nur die Übernahme verändert den Bestand. Übernommen
+    wird je Jahrgang einzeln oder in einem Zug für alle Jahrgänge der Datei.
+  - **[M] Prüfungen je Jahrgang:** Lücken in der laufenden Nummer, doppelt vergebene Nummern,
+    Spalte 1 gegen die Nummer im Aktenzeichen, und Abteilung gegen Rechtsgebiet über den
+    Sachgebietskatalog (siehe 7.1) — Haupt- **und** Nebensachgebiet zählen dabei gleichermaßen.
+  - **[M] Sicherheit je Zeile:** Jede eingelesene Zeile trägt eine Einstufung des Erzeugers
+    (`hoch`, `mittel`, `niedrig`; fehlt sie, gilt „ohne Angabe" wie `niedrig`). Die Vorschau zeigt
+    mit Vorgabe nur, was zu prüfen ist: Zeilen unterhalb `hoch` und Zeilen mit Befund. Der Anwalt
+    prüft so je Jahrgang eine überschaubare Menge statt des ganzen Bestands.
+  - **[M] Inhaltliche Befunde lehnen nie ab:** Ein Widerspruch im Altbestand (z. B. wenn Abteilung
+    und Sachbestandstext unterschiedliche Rechtsgebiete nennen) wird übernommen, wie er vorliegt,
+    und als Befund markiert — nie still berichtigt. Die Bereinigung bleibt Sache des Anwalts, in
+    der App. Abgelehnt wird ausschließlich eine echte Doppelnummer: gleiches Jahr, gleiche
+    laufende Nummer und gleicher Nummernzusatz. Der Schlüssel einer Zeile ist deshalb die
+    Kombination aus Jahr, laufender Nummer **und** Nummernzusatz — `10/19` und `10/19-I` bestehen
+    nebeneinander.
+  - **[M] Zweiter Lauf ist harmlos:** Ein zweiter Lauf desselben Jahrgangs ändert am Bestand
+    nichts.
+  - **[M] Stand je Jahrgang:** An einer Stelle ist erkennbar, welche Jahrgänge übernommen sind.
+    Fehlend sind die Jahrgänge zwischen dem kleinsten und dem größten übernommenen, die dort nicht
+    auftauchen; dazu zeigt der Stand offen gebliebene Lücken in der laufenden Nummer je Jahrgang.
+  - **[M] Eine Quelle für Ansicht und Spiegel:** Die In-App-Ansicht und der Word/PDF-Spiegel (siehe
+    oben) zeigen Historie und Vorgänge gemeinsam, aus derselben Quelle.
 
 ## 7. Betrieb
 
@@ -823,7 +862,6 @@ Konfigurierbar sein müssen mindestens:
 | Thema | Stand |
 |---|---|
 | Offizielle Zentralruf-API für Anwälte als Alternative zur Browser-Automatisierung | Zu prüfen |
-| Übernahme der bisherigen Registereinträge aus dem alten Word-Dokument der Kanzlei | Offen — zu klären, ob Altbestand migriert oder das Register ab jetzt neu geführt wird (siehe 6.2) |
 | Bezugsquelle und Weg für Programm-Updates | Offen — Voraussetzung für die Aktualisierung aus der App heraus (siehe 7.3) |
 | Ob und wie weitere Anhänge aus der Akte vorausgewählt werden (z. B. immer alle Fotos) | Offen (siehe 4.7) |
 | Weg des Website-Kanals: strukturierte E-Mail an die Kanzlei (nutzt die vorhandene Postfach-Überwachung) oder Abholung von einem Formular-Dienst | Offen (siehe 4.10) |
