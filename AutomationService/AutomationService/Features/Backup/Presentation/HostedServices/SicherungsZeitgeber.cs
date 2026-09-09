@@ -1,4 +1,4 @@
-﻿using AutomationService.Features.Backup.Domain.Services;
+using AutomationService.Features.Backup.Domain.Services;
 
 namespace AutomationService.Features.Backup.Presentation.HostedServices;
 

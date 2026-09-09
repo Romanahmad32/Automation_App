@@ -3,6 +3,7 @@ using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Domain.Services;
 using AutomationService.Features.Backup.Presentation.HostedServices;
 using AutomationService.Features.Settings.Domain.Services;
+using AutomationService.Tests.Support;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ namespace AutomationService.Tests.Unit;
 /// eine echte Datenbank und echte Archive — eine Sicherung, die entsteht, aber
 /// nicht lesbar ist, fällt sonst erst auf, wenn jemand sie braucht.
 /// </summary>
+[Collection(SicherungsSchleuseSammlung.Name)]
 public sealed class SicherungsZeitgeberTests : IDisposable
 {
     readonly string _dir;
