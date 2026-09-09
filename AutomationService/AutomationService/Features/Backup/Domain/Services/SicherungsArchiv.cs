@@ -53,12 +53,17 @@ public static class SicherungsArchiv
         try
         {
             await SqliteSicherung.VacuumIntoAsync(datenbankPfad, temporaereKopie, cancellationToken);
+            await AktenPfadSicherung.PasseAnAsync(temporaereKopie, export: true, cancellationToken);
 
-            using var archiv = ZipFile.Open(zielPfad, ZipArchiveMode.Create);
-            archiv.CreateEntryFromFile(temporaereKopie, DatenbankEintrag, CompressionLevel.Optimal);
+            using var zip = ZipFile.Open(zielPfad, ZipArchiveMode.Create);
+            var archiv = new ArchivSchreiber(zip);
+            AnhangSicherung.Packe(temporaereKopie,
+                Path.Combine(Path.GetDirectoryName(datenbankPfad)!, AnhangSicherung.Ordner), archiv);
+            archiv.Datei(temporaereKopie, DatenbankEintrag);
 
             if (!Directory.Exists(vorlagenVerzeichnis))
             {
+                archiv.Abschliessen();
                 return;
             }
 
@@ -72,11 +77,9 @@ public static class SicherungsArchiv
 
                 var relativ = Path.GetRelativePath(vorlagenVerzeichnis, vorlage)
                     .Replace(Path.DirectorySeparatorChar, '/');
-                archiv.CreateEntryFromFile(
-                    vorlage,
-                    $"{VorlagenOrdner}/{relativ}",
-                    CompressionLevel.Optimal);
+                archiv.Datei(vorlage, $"{VorlagenOrdner}/{relativ}");
             }
+            archiv.Abschliessen();
         }
         finally
         {
@@ -91,7 +94,7 @@ public static class SicherungsArchiv
     public static void Entpacke(string archivPfad, string zielVerzeichnis)
     {
         Directory.CreateDirectory(zielVerzeichnis);
-        ZipFile.ExtractToDirectory(archivPfad, zielVerzeichnis, overwriteFiles: true);
+        ArchivPruefung.EntpackeGeprueft(archivPfad, zielVerzeichnis);
     }
 
     private static void TryDelete(string pfad)

@@ -128,58 +128,44 @@ entfernt — der Rückfall selbst bleibt.
 
 ## 5. Der Stand wechselt den Arbeitsplatz
 
-```
-Beenden / Vorgangsabschluss / Zeitgeber ──▶ Sicherung im synchronisierten Ordner ──▶ App am zweiten Rechner starten
-                        (automation-<Rechner>-<yyyyMMdd-HHmmss>.zip + arbeitsplatz-<Rechner>.json)   └──▶ Rückfrage
-```
+Bereitstellen-Knopf / Beenden / Vorgangsabschluss / Zeitgeber → fertiges Archiv im gemeinsamen
+Ordner → OneDrive-Übertragung → Prüfung und bestätigte Übernahme → Ansichten neu laden.
 
-Der Anwalt arbeitet im Büro und zu Hause; die Datenbank selbst darf dabei **nicht** in den
-Sync-Ordner (WAL-Modus: drei Dateien, die ein Synchronisierer einzeln und zu verschiedenen Zeiten
-kopiert). Übergeben wird deshalb eine Datei (§7.2).
+Die Datenbank bleibt lokal (§7.2). `AutomatischeSicherung` stellt Datenbank, Vorlagen und erfasste
+Mailanhänge als geprüftes ZIP bereit; der andere Rechner wird über seine Arbeitsplatz-Datei
+informiert. `ArbeitsplatzUebergabeGate` fragt beim Start, `SynchronisationsLeiste` prüft im Betrieb
+alle 15 Sekunden und bei Wiederaufnahme. Ein später eintreffender Download bleibt damit sichtbar.
 
-Beim Beenden schreibt `ArbeitsplatzDienst.StopAsync` über `AutomatischeSicherung` ein Archiv in den
-eingestellten Ordner und daneben die eigene `arbeitsplatz-<Rechner>.json`. Beim Start liest
-`ArbeitsplatzUebergabe` alle *fremden* Akten; ist eine davon neuer, fragt die App **vor** der
-Oberfläche nach (`ArbeitsplatzUebergabeGate` → `GET api/Backup/uebergabe`), und erst auf Klick
-spielt sie ein — über denselben Import wie eine Sicherung von Hand.
+**Die Naht — Herkunft und Inhalt:** `SynchronisationsVerlauf` merkt die lokale Ausgangsbasis.
+`BestandsFingerabdruck` unterscheidet echte Änderungen von WAL-/Checkpoint-Aktivität; unveränderte
+Inhalte erhalten kein neues Archiv und keine neue Revision. Vorgängerkennungen erkennen
+Nachfolger unabhängig von der Rechneruhr. Getrennte Zweige werden als Konflikt gemeldet.
 
-Seit #112 kommt ein dritter Auslöser dazu: `SicherungsZeitgeber` prüft alle 30 Minuten einen
-Fingerabdruck über `automation.db`/`-wal`/`-shm` (`AenderungsMerkmal`) und schreibt nur, wenn sich
-seit der letzten Sicherung etwas geändert hat — ein Absturz kostet damit höchstens diesen Abstand,
-nicht den ganzen Arbeitstag. Aufgeräumt wird seither nach Alter statt nach Anzahl
-(`Aufbewahrungsregel`, ausgeführt von `SicherungsAufraeumung`): Der Zeitpunkt kommt aus dem
-Dateinamen (`SicherungsDateiname`), nicht aus dem Änderungsdatum der Datei — ein Synchronisierer
-setzt das beim Herunterladen neu —, betroffen sind nur die eigenen Archive (fremde Rechner bleiben
-unberührt), und das jeweils neueste Archiv wird nie gelöscht. `SicherungsBestand` liefert Anzahl und
-ältesten Zeitpunkt der eigenen Archive für die Auskunft im Reiter „Datensicherung".
+**Die zweite Naht — Übernehmen ersetzt:** Die Zustimmung trägt eine `pruefkennung`, die an den
+angezeigten fremden und lokalen Stand gebunden ist. Ein Konflikt braucht eine ausdrückliche
+Auswahl. Import validiert und migriert eine isolierte Kopie, legt eine Vor-Import-Sicherung an
+und tauscht dann die Datenbank über SQLite Online Backup. `ImportDateien` nimmt vorbereitete
+Dateiänderungen bei abgefangenen Fehlern zurück. Ein harter Absturz über mehrere Dateien bleibt
+über die Vor-Import-Sicherung wiederherstellbar.
 
-**Die Naht — zwei Zeitpunkte, nicht einer:** Die Akte trennt `zuletztGearbeitet` von `gesichertAm`.
-Das Angebot entscheidet sich am zweiten, der Satz auf dem Bildschirm nennt den ersten. Wer beide
-zusammenlegt, macht aus einem Rechner, der heute nur kurz auf war, den „neueren" Stand — obwohl sein
-Archiv von vorgestern ist. Nach einer Übernahme trägt die eigene Akte deshalb *jetzt* als
-Arbeitszeitpunkt und den *übernommenen* als Stand; sonst böte entweder jeder Start dasselbe Archiv
-erneut an oder der andere Rechner böte den Stand postwendend zurück.
+**Die dritte Naht — alte Ansichten:** `DatenstandSignal` baut nach Import Router und Formulare neu.
+`DatenbankWechsel` verhindert spätere Saves alter EF-Kontexte; `DatenstandMiddleware` und
+`DatenstandInterceptor` verhindern Schreibaufträge mit einer veralteten Datenstand-Kennung.
+Ungespeicherte Eingaben müssen vor einer Übernahme gespeichert werden.
 
-**Die zweite Naht — Übergabe ist keine Verschmelzung.** Wer übernimmt, ersetzt seinen Bestand. Was
-davor schützt: die Frage selbst (sie nennt Rechner, Zeitpunkt und den eigenen Stand daneben), die
-Vor-Import-Sicherung des Backends — und dass die Frage kommt, bevor irgendeine Ansicht Daten
-geladen hat.
+**Die vierte Naht — Pfade:** Relative OneDrive-Einstellungspfade bleiben portabel, absolute
+Einstellungspfade behalten den lokalen Wert. Erfasste Anhänge reisen mit relativen Archivpfaden;
+Akten-/Dokumentverweise unter dem Aktenstamm werden am Ziel angepasst. Die Akten selbst liegen in
+der separat synchronisierten Aktenablage. Postfach-Zugänge und Tokens bleiben rechnerlokal.
 
-**Die dritte Naht — maschinenabhängige Pfade.** Fünf Ordnerfelder (App-Daten-, Akten-, Vorlagen-,
-Register- und Sicherungsordner) überleben den Import seit #103 **je nach Speicherform**, nicht
-mehr alle gleich (`DatabaseBackupService.SchuetzeMaschinenPfadeAsync`, `AppOrdnerPfad`): Ein
-**relativ mit Anker** gespeicherter Pfad (`%OneDriveCommercial%\Kanzlei App Daten`) kommt mit — er
-trägt keinen Benutzernamen und kein Laufwerk, sondern den Namen der Variable, die der
-OneDrive-Client auf jedem Rechner selbst setzt. Ein **absoluter** Pfad bleibt beim Wert *dieses*
-Rechners: Der fremde Sicherungsordner wäre der schlimmste, weil beide Rechner zwar denselben
-synchronisierten Ordner meinen, aber unter verschiedenen Pfaden — der Rechner legte danach seine
-Sicherungen woanders ab, als er sein Angebot liest. Fehlt der Anker eines übernommenen relativen
-Pfads auf diesem Rechner, wird trotzdem übernommen statt verworfen: Er wird richtig, sobald das
-Konto eingerichtet ist, und bis dahin sagt `GET api/Settings/ordner`, was fehlt.
+**Die Rückmeldung:** „Bereitgestellt“ bestätigt die lokale Ablage und keinen Cloud-Upload.
+Dateigröße und Prüfsumme werden beim Übernehmen geprüft; ein Platzhalter allein ist kein Beweis
+für einen vollständigen Download. Eine Übernahme wird im gemeinsamen Ordner quittiert. Die
+letzte automatische Sicherung bleibt lokal vermerkt und Fehler werden sichtbar. Der Zeitgeber
+arbeitet weiter alle 30 Minuten, die Aufbewahrung staffelt eigene Archive nach Tag/Woche/Monat.
 
-Und die Rückmeldung: Beim Beenden sieht niemand mehr zu, deshalb merkt sich jeder Lauf sein Ergebnis
-lokal (`letzte-sicherung.json`, neben der Datenbank statt darin — ein Import ersetzt die Datenbank).
-Der nächste Start zeigt einen Fehlschlag, der Reiter „Datensicherung" die Zeile „zuletzt gesichert".
+Einrichtung und Alltag stehen in [Arbeitsplatzwechsel](ONEDRIVE_ARBEITSPLATZWECHSEL.md), technische
+Details im [Backup-Steckbrief](../Automation_App_Frontend/lib/features/backup/FEATURE.md).
 
 ## Wo eine Kette anfängt zu lügen
 

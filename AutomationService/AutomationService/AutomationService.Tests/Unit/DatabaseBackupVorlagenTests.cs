@@ -127,7 +127,7 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
     /// Der Schnitt ist eng: Datenbank plus Vorlagen, sonst nichts.
     /// </summary>
     [Fact]
-    public async Task Im_Archiv_liegen_nur_die_Datenbank_und_die_Vorlagen()
+    public async Task Im_Archiv_liegen_Daten_Vorlagen_und_Pruefsummen_aber_keine_Zugangsdaten()
     {
         await LegeDatenbankAn();
         await File.WriteAllTextAsync(Path.Combine(_dir, "mailbox_config.json"), "Zugang");
@@ -139,7 +139,7 @@ public sealed class DatabaseBackupVorlagenTests : IDisposable
         using (var archiv = ZipFile.OpenRead(sicherung))
         {
             archiv.Entries.Select(e => e.FullName).Should().BeEquivalentTo(
-                [SicherungsArchiv.DatenbankEintrag, $"{SicherungsArchiv.VorlagenOrdner}/Anspruch.docx"]);
+                [SicherungsArchiv.DatenbankEintrag, $"{SicherungsArchiv.VorlagenOrdner}/Anspruch.docx", ArchivPruefung.Manifest]);
         }
 
         File.Delete(sicherung);

@@ -21,9 +21,44 @@ namespace AutomationService.Core.Persistence;
 /// Context). Das Schema-Mapping liegt aber je beim Feature
 /// (IEntityTypeConfiguration) und wird hier nur eingesammelt.
 /// </summary>
-public class AutomationDbContext(DbContextOptions<AutomationDbContext> options)
-    : DbContext(options)
+public class AutomationDbContext : DbContext
 {
+    public bool IsolierteSicherung { get; init; }
+
+    readonly string _datenbank;
+    readonly long _generation;
+
+    public AutomationDbContext(DbContextOptions<AutomationDbContext> options) : base(options)
+    {
+        _datenbank = Database.GetDbConnection().DataSource;
+        _generation = DatenbankWechsel.KontextGeneration(_datenbank);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        if (IsolierteSicherung) return base.SaveChanges(acceptAllChangesOnSuccess);
+        DatenbankWechsel.Schleuse.Wait();
+        try
+        {
+            DatenbankWechsel.Pruefe(_datenbank, _generation);
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+        finally { DatenbankWechsel.Schleuse.Release(); }
+    }
+
+    public override async Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        if (IsolierteSicherung) return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        await DatenbankWechsel.Schleuse.WaitAsync(cancellationToken);
+        try
+        {
+            DatenbankWechsel.Pruefe(_datenbank, _generation);
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        finally { DatenbankWechsel.Schleuse.Release(); }
+    }
+
     public DbSet<VorgangEntity> Vorgaenge => Set<VorgangEntity>();
     public DbSet<MandantEntity> Mandanten => Set<MandantEntity>();
     public DbSet<OrdnerStatusEntity> OrdnerStatus => Set<OrdnerStatusEntity>();

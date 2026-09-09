@@ -31,5 +31,8 @@ public interface IArbeitsplatzUebergabe
     /// Haelt fest, dass der Anwalt die Meldung ueber eine misslungene Sicherung
     /// gesehen hat. Ohne das staende sie bei jedem Start wieder da.
     /// </summary>
+    Task<UebernahmeErgebnis> UebernehmenGeprueftAsync(
+        string? pruefkennung, bool konfliktBestaetigt, CancellationToken cancellationToken = default);
+
     void QuittiereFehler();
 }
