@@ -75,6 +75,12 @@ die App danach per IMAP in „Gesendet" nach, außer der Anbieter tut es selbst 
 
 ## Fallstricke
 
+- **Alle Nachrichten lesen.** Unter *Postfach → Posteingang* erscheinen alle Nachrichten des
+  eingerichteten Ordners, unabhängig vom Betreff. Die App lädt 50 Einträge pro Seite; mit
+  „Ältere“/„Neuere“ wird geblättert. Den Text lädt sie erst beim Öffnen, Anhänge nicht mit der Liste.
+  Sehr große Textteile und Anhänge bleiben im Webmailer erreichbar. Der gesonderte Bereich
+  *Zentralruf-Antworten* behält die automatische Auswertung mit Betreff-Filter.
+
 - **POP3 statt IMAP.** Holt Outlook die Mails per POP3 mit „Kopie vom Server löschen", sind sie
   weg, bevor die Überwachung sie sieht — die Zentralruf-Antwort käme nie an. Outlook auf IMAP
   umstellen.
