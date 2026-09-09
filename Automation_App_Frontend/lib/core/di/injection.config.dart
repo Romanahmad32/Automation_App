@@ -237,14 +237,20 @@ import 'package:automation_app/features/versicherer/presentation/blocs/versicher
     as _i782;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_historie_datasource.dart'
     as _i668;
+import 'package:automation_app/features/vorgaenge/data/datasources/register_nummern_datasource.dart'
+    as _i979;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_spiegel_datasource.dart'
     as _i412;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_zeilen_datasource.dart'
     as _i274;
 import 'package:automation_app/features/vorgaenge/data/datasources/vorgaenge_datasource.dart'
     as _i933;
+import 'package:automation_app/features/vorgaenge/data/repositories/register_nummern_repository_impl.dart'
+    as _i728;
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_historie_repository.dart'
     as _i69;
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_nummern_repository.dart'
+    as _i117;
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart'
     as _i738;
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_zeilen_repository.dart'
@@ -379,6 +385,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i738.RegisterSpiegelRepository>(
       () => _i412.ApiRegisterSpiegelDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i979.RegisterNummernDatasource>(
+      () => _i979.ApiRegisterNummernDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i67.EmailVersandRepository>(
       () => _i715.ApiEmailVersandDatasource(gh<_i361.Dio>()),
     );
@@ -460,6 +469,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i579.MailboxPushNotifier>(
       () => _i1015.MailboxHub(),
       dispose: (i) => i.dispose(),
+    );
+    gh.factory<_i117.RegisterNummernRepository>(
+      () => _i728.RegisterNummernRepositoryImpl(
+        gh<_i979.RegisterNummernDatasource>(),
+      ),
     );
     gh.factory<_i223.RegisterImportRepository>(
       () => _i911.RegisterImportRepositoryImpl(
@@ -752,17 +766,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i223.UseCase<void, _i60.DeleteFormTemplateParams>>(
       () => _i60.DeleteFormTemplate(gh<_i211.FormTemplateRepository>()),
     );
-    gh.factory<_i851.VorgangStartenBloc>(
-      () => _i851.VorgangStartenBloc(
-        gh<
-          _i223.UseCase<_i146.ZentralrufPrefillResult, _i208.ZentralrufRequest>
-        >(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
-        gh<_i847.VorgangCubit>(),
-      ),
-    );
     gh.factory<
       _i223.UseCase<_i578.MandantenImportDatei, _i675.LiesImportDateiParams>
     >(() => _i675.LiesImportDatei(gh<_i763.MandantenRepository>()));
@@ -811,6 +814,18 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i993.MandantEditCubit(
         gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
         gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
+      ),
+    );
+    gh.factory<_i851.VorgangStartenBloc>(
+      () => _i851.VorgangStartenBloc(
+        gh<
+          _i223.UseCase<_i146.ZentralrufPrefillResult, _i208.ZentralrufRequest>
+        >(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
+        gh<_i117.RegisterNummernRepository>(),
+        gh<_i847.VorgangCubit>(),
       ),
     );
     gh.factory<_i347.FormTemplateDataBloc>(
