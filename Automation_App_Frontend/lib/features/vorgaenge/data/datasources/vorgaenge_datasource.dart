@@ -38,11 +38,17 @@ class ApiVorgaengeDatasource implements VorgangRepository {
   }
 
   @override
-  Future<void> deleteVorgang(String referenz) async {
+  Future<void> deleteVorgang(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) async {
     try {
       await _dio.delete(
         '/api/Vorgaenge',
-        queryParameters: {'referenz': referenz},
+        queryParameters: {
+          'referenz': referenz,
+          'registerzeileBehalten': registerzeileBehalten,
+        },
       );
     } on DioException catch (e) {
       // Kein Treffer im Backend erfüllt den No-op-Vertrag (z. B. beim

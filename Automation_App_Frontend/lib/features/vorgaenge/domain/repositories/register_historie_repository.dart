@@ -23,4 +23,8 @@ abstract class RegisterHistorieRepository {
   /// Oberfläche ein — was hier ankommt, ist bereits die Entscheidung des
   /// Anwalts.
   Future<void> aendere(int id, RegisterHistorieAenderung aenderung);
+
+  /// Löscht eine historische Zeile für sich (§6.3) — nur für Zeilen ohne
+  /// Vorgang gedacht. Die Rückfrage davor holt die Oberfläche ein.
+  Future<void> loesche(int id);
 }
