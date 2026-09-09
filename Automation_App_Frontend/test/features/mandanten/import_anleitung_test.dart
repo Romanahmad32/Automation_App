@@ -7,8 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Wortlaut, sondern dass die vier Aussagen darin stehen, ohne die ein
 /// Arbeitspaket schadet statt nützt.
 void main() {
-  test('beide Aufträge beschreiben denselben Dateiaufbau', () {
-    expect(ImportAnleitung.text, contains(ImportAnleitung.dateiaufbau));
+  test('der Auftrag beschreibt den Dateiaufbau, den die Seite zeigt', () {
     expect(ImportAnleitung.paketText, contains(ImportAnleitung.dateiaufbau));
     expect(
       ImportAnleitung.dateiaufbau,
@@ -40,10 +39,13 @@ void main() {
     expect(ImportAnleitung.paketText, contains('Lies nur DORT in die '));
   });
 
-  // Der Auftrag ohne Paket bleibt, wie er war — auf einem Rechner ohne
-  // Arbeitspaket ist er weiterhin der ganze Weg.
-  test('der Auftrag ohne Paket nennt den Stammordner', () {
-    expect(ImportAnleitung.text, contains('Stammordner: <Pfad zum'));
-    expect(ImportAnleitung.text, isNot(contains('arbeitspaket-')));
+  // Es gab einmal einen zweiten Auftrag für den Lauf über den ganzen
+  // Stammordner, ohne Paket. Zwei Aufträge nebeneinander ließen offen, welcher
+  // gilt; der schwächere ist gegangen. Was ihn ausmachte — ein von Hand zu
+  // füllender Stammordner-Platzhalter statt der Ordner aus dem Paket —, darf
+  // im verbliebenen nicht wieder auftauchen.
+  test('der Auftrag kennt nur den Weg über ein Arbeitspaket', () {
+    expect(ImportAnleitung.paketText, contains('arbeitspaket-<nr>.json'));
+    expect(ImportAnleitung.paketText, isNot(contains('hier eintragen')));
   });
 }

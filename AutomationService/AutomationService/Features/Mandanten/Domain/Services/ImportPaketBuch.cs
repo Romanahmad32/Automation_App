@@ -92,6 +92,22 @@ public sealed class ImportPaketBuch(
         if (geschlossen) await db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<bool> LoescheAsync(int nummer, CancellationToken cancellationToken = default)
+    {
+        var paket = await db.ImportPakete.SingleOrDefaultAsync(p => p.Nummer == nummer, cancellationToken);
+        if (paket is null) return false;
+
+        if (paket.EingelesenAm is not null)
+        {
+            throw new InvalidOperationException(
+                $"Paket {nummer} ist bereits eingelesen und lässt sich nicht mehr löschen.");
+        }
+
+        db.ImportPakete.Remove(paket);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     /// <summary>
     /// Die Namen aller Ordner, die nicht mehr im Zuordnungsstapel liegen:
     /// zugeordnet oder vermerkt. Beide Mengen werden zusammen in ein

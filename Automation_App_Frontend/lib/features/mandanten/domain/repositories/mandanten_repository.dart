@@ -84,6 +84,13 @@ abstract class MandantenRepository {
     List<String> ordnernamen,
   );
 
+  /// Nimmt ein versehentlich herausgegebenes, noch offenes Arbeitspaket
+  /// zurück. Rührt keinen Ordner an — das Paket war nur eine
+  /// Buchführungszeile, keine Reservierung. Ein bereits eingelesenes Paket
+  /// lässt sich nicht mehr löschen (das Backend antwortet dann mit einer
+  /// erklärenden Meldung).
+  Future<Either<Failure, void>> loescheImportPaket(int nummer);
+
   /// Schreibt das Arbeitspaket als JSON-Datei nach [pfad] — die Eingabe für den
   /// Agenten, der die Importdatei erzeugt. Den Pfad hat der Anwalt im
   /// Speichern-Dialog bestimmt.

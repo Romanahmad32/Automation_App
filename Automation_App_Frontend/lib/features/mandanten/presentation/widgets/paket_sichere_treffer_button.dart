@@ -39,16 +39,21 @@ class _PaketSichereTrefferButtonState extends State<PaketSichereTrefferButton> {
         context.watch<MandantenOverviewBloc>().state
             is MandantenOverviewLoaded &&
         !_laeuft;
-    return FilledButton.tonalIcon(
-      onPressed: aktiv ? () => _uebernehmen(context) : null,
-      icon: _laeuft
-          ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.auto_awesome_outlined, size: 18),
-      label: const Text('Sichere Treffer übernehmen'),
+    return Tooltip(
+      message:
+          'Ordnet automatisch, was sich ohne Nachlesen sicher zuordnen '
+          'lässt — ganz ohne Datei von außerhalb.',
+      child: FilledButton.tonalIcon(
+        onPressed: aktiv ? () => _uebernehmen(context) : null,
+        icon: _laeuft
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.auto_awesome_outlined, size: 18),
+        label: const Text('Sichere Treffer übernehmen'),
+      ),
     );
   }
 

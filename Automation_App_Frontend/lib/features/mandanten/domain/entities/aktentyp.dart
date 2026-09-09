@@ -21,7 +21,7 @@ enum Aktentyp {
   final String bezeichnung;
 
   /// Kommt der Ordner als Verkehrsunfallsache in Frage? Nur diese stehen
-  /// standardmäßig im Zuordnungsstapel, der Rest unter „Andere Ordner".
+  /// standardmäßig im Zuordnungsstapel, der Rest unter „Andere Sachgebiete".
   bool get istUnfallkandidat =>
       this == Aktentyp.verkehrsunfall || this == Aktentyp.ohnePraefix;
 }

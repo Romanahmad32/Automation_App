@@ -16,6 +16,7 @@ import 'package:automation_app/features/mandanten/domain/services/mandanten_name
 import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/loesche_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/notiere_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
@@ -33,6 +34,7 @@ part 'mandanten_arbeitspaket_abruf.dart';
 part 'mandanten_arbeitspaket_griff.dart';
 part 'mandanten_overview_event.dart';
 part 'mandanten_overview_state.dart';
+part 'mandanten_zuordnungsstapel_griff.dart';
 part 'mandanten_stand_abruf.dart';
 
 /// Lädt das Mandantenregister und den Akten-Scan und führt beides zusammen:
@@ -69,9 +71,15 @@ part 'mandanten_stand_abruf.dart';
 @injectable
 class MandantenOverviewBloc
     extends Bloc<MandantenOverviewEvent, MandantenOverviewState>
-    with ArbeitspaketGriff {
+    with ArbeitspaketGriff, ZuordnungsstapelGriff {
   /// Wie viele Mandanten ein Abruf holt.
   static const int seitenGroesse = 50;
+
+  /// Wie viele Ordner des Zuordnungsstapels auf einmal angezeigt werden und um
+  /// wie viele es beim Scrollen ans Ende weitergeht. Nicht dasselbe wie
+  /// [seitenGroesse]: dort geht es um einen Abruf beim Dienst, hier nur darum,
+  /// wie viel von einem bereits vorliegenden Bestand gezeigt wird.
+  static const int ordnerPortion = 50;
 
   /// Wie lange das Suchfeld wartet, bevor es den Bloc fragt. Die Wartezeit
   /// sitzt im `EntitySearchBar` und nicht als Bloc-Transformer hier: ein
@@ -85,6 +93,9 @@ class MandantenOverviewBloc
   @override
   final MandantenArbeitspaketAbruf _arbeitspaket;
   final UseCase<List<Fall>, GetFaelleParams> _getFaelle;
+
+  /// Erfüllt zugleich den abstrakten Getter aus [ZuordnungsstapelGriff].
+  @override
   final UseCase<List<OrdnerStatus>, SetzeOrdnerStatusParams> _setzeOrdnerStatus;
   final UseCase<void, DeleteMandantParams> _deleteMandant;
   final UseCase<Mandant, VerknuepfeOrdnerParams> _verknuepfeOrdner;
@@ -103,6 +114,7 @@ class MandantenOverviewBloc
     UseCase<KanzleiSettings, NoParams> getKanzleiSettings,
     UseCase<ImportPaket, NotiereImportPaketParams> notiereImportPaket,
     UseCase<void, SchreibeArbeitspaketParams> schreibeArbeitspaket,
+    UseCase<void, LoescheImportPaketParams> loescheImportPaket,
   ) : _abruf = MandantenStandAbruf(
         getSeite: getMandantenSeite,
         getAktenOrdnernamen: getAktenOrdnernamen,
@@ -116,12 +128,14 @@ class MandantenOverviewBloc
         getImportPakete: getImportPakete,
         notiereImportPaket: notiereImportPaket,
         schreibeArbeitspaket: schreibeArbeitspaket,
+        loescheImportPaket: loescheImportPaket,
       ),
       super(MandantenOverviewLoading()) {
     on<LoadMandantenUebersichtEvent>(_onLoad);
     on<SearchMandantenEvent>(_onSearch);
     on<LadeWeitereMandantenEvent>(_onLadeWeitere);
     on<SetzeZuordnungFilterEvent>(_onSetzeFilter);
+    on<ZeigeWeitereOrdnerEvent>(_onZeigeWeitereOrdner);
     on<LadeFaelleEvent>(_onLadeFaelle);
     on<SetzeOrdnerStatusEvent>(_onSetzeOrdnerStatus);
     on<FehlerVerwerfenEvent>(_onFehlerVerwerfen);
@@ -218,27 +232,6 @@ class MandantenOverviewBloc
   /// Setzt oder nimmt den Vermerk zurück. Der Dienst antwortet mit dem
   /// vollständigen Stand danach — auch eine Massenaktion über hunderte Ordner
   /// bleibt damit ein Aufruf und ein Zustandswechsel, ohne Rescan.
-  Future<void> _onSetzeOrdnerStatus(
-    SetzeOrdnerStatusEvent event,
-    Emitter<MandantenOverviewState> emit,
-  ) async {
-    if (event.ordnernamen.isEmpty) return;
-    final result = await _setzeOrdnerStatus(
-      SetzeOrdnerStatusParams(ordnernamen: event.ordnernamen, art: event.art),
-    );
-    final aktuell = state;
-    if (aktuell is! MandantenOverviewLoaded) return;
-    switch (result) {
-      case Left(value: final failure):
-        // Nur eine Meldung, nicht die Seite: den Scan über tausende Ordner,
-        // Filter und Scrollstand für eine gescheiterte Aktion wegzuwerfen wäre
-        // teurer als die Aktion selbst.
-        emit(aktuell.copyWith(fehler: failure.message));
-      case Right(value: final stand):
-        emit(aktuell.copyWith(ordnerStatus: stand, fehlerVerwerfen: true));
-    }
-  }
-
   void _onFehlerVerwerfen(
     FehlerVerwerfenEvent event,
     Emitter<MandantenOverviewState> emit,
@@ -246,16 +239,6 @@ class MandantenOverviewBloc
     final aktuell = state;
     if (aktuell is MandantenOverviewLoaded) {
       emit(aktuell.copyWith(fehlerVerwerfen: true));
-    }
-  }
-
-  void _onSetzeFilter(
-    SetzeZuordnungFilterEvent event,
-    Emitter<MandantenOverviewState> emit,
-  ) {
-    final current = state;
-    if (current is MandantenOverviewLoaded) {
-      emit(current.copyWith(zuordnungFilter: event.filter));
     }
   }
 

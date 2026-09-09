@@ -167,6 +167,8 @@ import 'package:automation_app/features/mandanten/domain/usecases/lege_dokument_
     as _i698;
 import 'package:automation_app/features/mandanten/domain/usecases/lies_import_datei.dart'
     as _i675;
+import 'package:automation_app/features/mandanten/domain/usecases/loesche_import_paket.dart'
+    as _i1071;
 import 'package:automation_app/features/mandanten/domain/usecases/notiere_import_paket.dart'
     as _i253;
 import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket.dart'
@@ -651,6 +653,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<
       _i223.UseCase<_i659.ImportBericht, _i486.ImportiereMandantenParams>
     >(() => _i486.ImportiereMandanten(gh<_i763.MandantenRepository>()));
+    gh.factory<_i223.UseCase<void, _i1071.LoescheImportPaketParams>>(
+      () => _i1071.LoescheImportPaket(gh<_i763.MandantenRepository>()),
+    );
     gh.factory<_i223.UseCase<_i38.ImportPaket, _i253.NotiereImportPaketParams>>(
       () => _i253.NotiereImportPaket(gh<_i763.MandantenRepository>()),
     );
@@ -679,6 +684,26 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i223.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(),
         gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
         gh<_i847.VorgangCubit>(),
+      ),
+    );
+    gh.factory<_i975.MandantenOverviewBloc>(
+      () => _i975.MandantenOverviewBloc(
+        gh<_i223.UseCase<_i171.MandantenSeite, _i733.MandantenSeiteParams>>(),
+        gh<_i223.UseCase<List<String>, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i332.Fall>, _i684.GetFaelleParams>>(),
+        gh<_i223.UseCase<List<_i736.OrdnerStatus>, _i223.NoParams>>(),
+        gh<
+          _i223.UseCase<List<_i736.OrdnerStatus>, _i86.SetzeOrdnerStatusParams>
+        >(),
+        gh<_i223.UseCase<void, _i63.DeleteMandantParams>>(),
+        gh<_i223.UseCase<_i258.Mandant, _i443.VerknuepfeOrdnerParams>>(),
+        gh<_i223.UseCase<List<_i38.ImportPaket>, _i223.NoParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
+        gh<_i223.UseCase<_i38.ImportPaket, _i253.NotiereImportPaketParams>>(),
+        gh<_i223.UseCase<void, _i507.SchreibeArbeitspaketParams>>(),
+        gh<_i223.UseCase<void, _i1071.LoescheImportPaketParams>>(),
       ),
     );
     gh.factory<
@@ -764,25 +789,6 @@ extension GetItInjectableX on _i174.GetIt {
         >(),
         gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
         gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-      ),
-    );
-    gh.factory<_i975.MandantenOverviewBloc>(
-      () => _i975.MandantenOverviewBloc(
-        gh<_i223.UseCase<_i171.MandantenSeite, _i733.MandantenSeiteParams>>(),
-        gh<_i223.UseCase<List<String>, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i119.Akte>, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i332.Fall>, _i684.GetFaelleParams>>(),
-        gh<_i223.UseCase<List<_i736.OrdnerStatus>, _i223.NoParams>>(),
-        gh<
-          _i223.UseCase<List<_i736.OrdnerStatus>, _i86.SetzeOrdnerStatusParams>
-        >(),
-        gh<_i223.UseCase<void, _i63.DeleteMandantParams>>(),
-        gh<_i223.UseCase<_i258.Mandant, _i443.VerknuepfeOrdnerParams>>(),
-        gh<_i223.UseCase<List<_i38.ImportPaket>, _i223.NoParams>>(),
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(),
-        gh<_i223.UseCase<_i38.ImportPaket, _i253.NotiereImportPaketParams>>(),
-        gh<_i223.UseCase<void, _i507.SchreibeArbeitspaketParams>>(),
       ),
     );
     return this;

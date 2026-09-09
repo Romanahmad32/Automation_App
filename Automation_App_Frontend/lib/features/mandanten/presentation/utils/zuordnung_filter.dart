@@ -1,4 +1,5 @@
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
+import 'package:automation_app/features/mandanten/domain/entities/aktentyp.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
 import 'package:equatable/equatable.dart';
 
@@ -23,20 +24,44 @@ enum GeaendertSeit {
 /// In welchen der drei Töpfe ein noch nicht zugeordneter Ordner fällt. Jeder
 /// Ordner liegt in genau einem — die Ansicht ist damit eine echte Aufteilung
 /// des Arbeitsvorrats und kein Ausblenden.
+/// Die Namen sagen, **was zu tun ist**, und nicht, was erkannt wurde. Der
+/// Unterschied ist in der Kanzlei aufgefallen: „Verkehrsunfall (265)" las sich
+/// als Erkennungsquote, obwohl 152 dieser 265 Ordner überhaupt kein Präfix
+/// tragen und nur deshalb dort liegen, weil ihr Name nichts verrät. Und
+/// „Ohne Mandantenbezug (0)" stand als dritte Quote neben zwei automatisch
+/// gefüllten Töpfen, obwohl diesen Topf allein der Anwalt füllt — 0 ist dort
+/// der richtige Anfangswert und kein Fehlschlag.
 enum OrdnerAnsicht {
-  /// Kommt als Verkehrsunfallsache in Frage: zuzuordnen. Der Arbeitsvorrat.
-  stapel('Verkehrsunfall'),
+  /// Kommt als Verkehrsunfallsache in Frage: zuzuordnen. Der Arbeitsvorrat —
+  /// Ordner mit Verkehrsunfall-Präfix **und** solche ganz ohne Präfix.
+  stapel(
+    'Zuzuordnen',
+    'Verkehrsunfallsachen und Ordner, deren Name keinen '
+        'Aktentyp nennt — hier liegt die Arbeit.',
+  ),
 
   /// Nach dem Aktentyp-Präfix eine Bußgeld-, Straf- oder Familiensache — muss
   /// gar nicht zugeordnet werden, ist aber noch nicht entschieden.
-  andere('Andere Ordner'),
+  andere(
+    'Andere Sachgebiete',
+    'Bußgeld-, Straf- und Familiensachen laut '
+        'Präfix im Ordnernamen — diese App ordnet sie nicht zu.',
+  ),
 
   /// Entschieden: gehört keinem Mandanten. Jederzeit zurücknehmbar.
-  ohneBezug('Ohne Mandantenbezug');
+  ohneBezug(
+    'Beiseitegelegt',
+    'Von Hand als „ohne Mandantenbezug" vermerkt. '
+        'Nichts wird hier automatisch einsortiert; jederzeit zurückzunehmen.',
+  );
 
-  const OrdnerAnsicht(this.bezeichnung);
+  const OrdnerAnsicht(this.bezeichnung, this.erklaerung);
 
   final String bezeichnung;
+
+  /// Was in diesem Topf liegt und wie es dorthin kommt — als Tooltip am
+  /// Umschalter.
+  final String erklaerung;
 }
 
 /// Was vom Zuordnungsstapel gerade zu sehen ist. Drei unabhängige Achsen:
@@ -121,6 +146,33 @@ class ZuordnungFilter extends Equatable {
       zaehler[topf] = zaehler[topf]! + 1;
     }
     return zaehler;
+  }
+
+  /// Woher die Ordner im Topf [OrdnerAnsicht.stapel] stammen: aus dem
+  /// erkannten Verkehrsunfall-Präfix oder daraus, dass der Name **keinen**
+  /// Aktentyp nennt. Beides landet im selben Topf (`istUnfallkandidat`), und
+  /// solange die Oberfläche das nicht auseinanderhält, liest sich die Zahl als
+  /// Erkennungsquote — im Bestand der Kanzlei hat die knappe Mehrheit gar kein
+  /// Präfix.
+  ({int mitPraefix, int ohnePraefix}) herkunftImStapel(
+    List<Akte> akten, {
+    OrdnernamenMenge? ohneMandantenbezug,
+    DateTime? jetzt,
+  }) {
+    final vermerkt = ohneMandantenbezug ?? OrdnernamenMenge(const []);
+    final stichtag = _stichtag(jetzt ?? DateTime.now());
+    var mitPraefix = 0;
+    var ohnePraefix = 0;
+    for (final akte in akten) {
+      if (!_passtBasis(akte, stichtag)) continue;
+      if (ansichtVon(akte, vermerkt) != OrdnerAnsicht.stapel) continue;
+      if (akte.aktentyp == Aktentyp.ohnePraefix) {
+        ohnePraefix++;
+      } else {
+        mitPraefix++;
+      }
+    }
+    return (mitPraefix: mitPraefix, ohnePraefix: ohnePraefix);
   }
 
   DateTime? _stichtag(DateTime jetzt) {

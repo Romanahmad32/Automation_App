@@ -59,9 +59,18 @@ Alle übrigen Felder dürfen leer bleiben oder fehlen. Unbekannte Felder werden 
 Erzeuger ist ein Programm, kein Formular, und eine Datei mit 4000 brauchbaren und einer krummen
 Zeile darf nicht als Ganzes scheitern.
 
-Den fertigen Arbeitsauftrag für den Erzeuger hält die App zum Kopieren bereit
-(*Aus Datei übernehmen* → **Auftrag für den Erzeuger kopieren**); der Wortlaut liegt in
-`Automation_App_Frontend/lib/features/mandanten/presentation/utils/import_anleitung.dart`.
+Den fertigen Auftrag für den Erzeuger gibt die App mit dem Arbeitspaket heraus (siehe unten): Er
+steht als Feld `anleitung` in der Paketdatei und liegt nach dem Speichern zugleich in der
+Zwischenablage. Der Wortlaut liegt in
+`Automation_App_Frontend/lib/features/mandanten/presentation/utils/import_anleitung.dart`; die
+Import-Seite zeigt daraus nur noch den **Dateiaufbau** zum Nachschlagen.
+
+Bis dahin stand daneben ein zweiter Auftrag für den Lauf über den ganzen Stammordner, ohne Paket,
+auf der Import-Seite zum Kopieren. Er ist entfallen: Zwei Aufträge nebeneinander ließen offen,
+welcher gilt, und der paketlose war strikt schwächer — Stammordner als Platzhalter zum
+Selbsteintragen, keine bekannten Mandanten, keine Namensvorschläge, keine geschlossene Liste, keine
+Buchführung. Er beschrieb genau den Lauf über alle 4040 Ordner auf einmal, den der nächste
+Abschnitt verwirft.
 
 ## Arbeitspakete: die Zuordnung entsteht portionsweise
 
@@ -148,6 +157,20 @@ abgearbeitetes Paket bleibt offen, und der Anwalt sieht am Zähler `erledigt`, w
 berechnet, ohne den Anwalt zu fragen, welche Datei zu welchem Paket gehört — und ein Ordner, der
 später wieder frei wird, senkt die Zahl von selbst. Es gibt keinen gespeicherten Stand, der
 veralten kann.
+
+### Ein versehentlich geholtes Paket zurücknehmen
+
+Weil ein Paket **eine Buchführungszeile und keine Reservierung** ist — es sperrt keinen Ordner, und
+`erledigt` wird bei jedem Lesen neu gerechnet —, bleibt beim Löschen nichts zurückzusetzen. Wer
+danebengegriffen hat (falsche Paketgröße, Paket zweimal geholt), nimmt die Zeile über den
+Zurücknehmen-Knopf in der Paket-Historie wieder heraus (`DELETE /api/ImportPakete/{nummer}`); die
+Ordner bleiben unberührt im Zuordnungsstapel, und das nächste Paket bekommt die Nummer wieder
+(`max + 1` rechnet den Bestand jedes Mal frisch aus).
+
+**Nur solange das Paket offen ist.** Ein eingelesenes Paket zu löschen sähe nach einem Rückgängig
+der daraus entstandenen Mandanten aus und macht keinen einzigen davon rückgängig — der Dienst
+antwortet darauf mit 409, und in der Historie steht der Knopf an einer eingelesenen Zeile gar nicht
+erst. Wer einen übernommenen Import zurückdrehen will, arbeitet am Register, nicht am Paketbuch.
 
 ## Was die App damit macht
 

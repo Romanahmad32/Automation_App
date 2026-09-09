@@ -13,6 +13,7 @@ class MandantenArbeitspaketAbruf {
   final UseCase<List<ImportPaket>, NoParams> getImportPakete;
   final UseCase<ImportPaket, NotiereImportPaketParams> notiereImportPaket;
   final UseCase<void, SchreibeArbeitspaketParams> schreibeArbeitspaket;
+  final UseCase<void, LoescheImportPaketParams> loescheImportPaket;
 
   const MandantenArbeitspaketAbruf({
     required this.getMandanten,
@@ -20,6 +21,7 @@ class MandantenArbeitspaketAbruf {
     required this.getImportPakete,
     required this.notiereImportPaket,
     required this.schreibeArbeitspaket,
+    required this.loescheImportPaket,
   });
 
   /// Das komplette Register — für den Namensvorschlag im Paket und für
@@ -70,7 +72,7 @@ class MandantenArbeitspaketAbruf {
     );
   }
 
-  /// Schreibt [paket] nach [pfad], legt die Anleitung in die Zwischenablage
+  /// Schreibt [paket] nach [pfad], legt den Auftrag in die Zwischenablage
   /// und verbucht das Paket erst danach.
   Future<Either<Failure, ImportPaket>> schreibeUndVerbuche({
     required Arbeitspaket paket,
@@ -81,8 +83,8 @@ class MandantenArbeitspaketAbruf {
     );
     if (geschrieben case Left(value: final failure)) return Left(failure);
 
-    // Die Anleitung landet erst nach erfolgreichem Schreiben in der
-    // Zwischenablage — sonst läge dort eine Anleitung zu einer Datei, die es
+    // Der Auftrag landet erst nach erfolgreichem Schreiben in der
+    // Zwischenablage — sonst läge dort ein Auftrag zu einer Datei, die es
     // gar nicht gibt.
     await Clipboard.setData(ClipboardData(text: ImportAnleitung.paketText));
 
@@ -90,6 +92,10 @@ class MandantenArbeitspaketAbruf {
       NotiereImportPaketParams(ordnernamen: paket.ordnernamen),
     );
   }
+
+  /// Nimmt ein versehentlich herausgegebenes, noch offenes Paket zurück.
+  Future<Either<Failure, void>> loesche(int nummer) =>
+      loescheImportPaket(LoescheImportPaketParams(nummer: nummer));
 
   /// Die Paket-Historie frisch geholt — nach dem Verbuchen wird sie neu
   /// gelesen statt die Paketnummer lokal nachzukorrigieren.
