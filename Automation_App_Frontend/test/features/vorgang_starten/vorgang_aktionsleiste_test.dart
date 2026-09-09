@@ -34,6 +34,7 @@ void main() {
       OhneKanzleiEinstellungen(),
       MandantAnlegenDouble(MandantenRegisterDouble()),
       MandantAktualisierenDouble(MandantenRegisterDouble()),
+      OhneRegisterNummern(),
       VorgangCubit(VorgangAblageDouble(), VorgangPersistenzFehlerCubit()),
     );
     addTearDown(bloc.close);

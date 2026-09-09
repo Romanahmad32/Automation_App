@@ -87,6 +87,7 @@ void main() {
       OhneKanzleiEinstellungen(),
       MandantAnlegenDouble(register),
       MandantAktualisierenDouble(register),
+      OhneRegisterNummern(),
       vorgaenge,
     );
     getIt.registerSingleton<UseCase<List<Mandant>, NoParams>>(

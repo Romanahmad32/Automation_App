@@ -19,6 +19,12 @@ class VorgangStartenSektionen extends StatelessWidget {
   final String rechtsgebiet;
   final bool istVerkehrsunfall;
   final ValueChanged<String> onRechtsgebietChanged;
+
+  /// Bestand für die Belegt-Warnung am Auftragsnummer-Feld (§6.3) — leer
+  /// bzw. `null`, solange der Nummernstand nicht geladen ist.
+  final List<int> belegteNummern;
+  final String? nummernJahr;
+
   final bool referenzManuallyEdited;
   final VoidCallback onReferenzReset;
   final List<Mandant> mandanten;
@@ -36,6 +42,8 @@ class VorgangStartenSektionen extends StatelessWidget {
     required this.rechtsgebiet,
     required this.istVerkehrsunfall,
     required this.onRechtsgebietChanged,
+    required this.belegteNummern,
+    required this.nummernJahr,
     required this.referenzManuallyEdited,
     required this.onReferenzReset,
     required this.mandanten,
@@ -62,6 +70,8 @@ class VorgangStartenSektionen extends StatelessWidget {
               AuftragSection(
                 rechtsgebiet: rechtsgebiet,
                 onRechtsgebietChanged: onRechtsgebietChanged,
+                belegteNummern: belegteNummern,
+                nummernJahr: nummernJahr,
               ),
               if (istVerkehrsunfall) const UnfallSection(),
               ReferenzSection(

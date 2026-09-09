@@ -2,6 +2,8 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/register_nummern_stand.dart';
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_nummern_repository.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
@@ -24,6 +26,7 @@ class VorgangStartenBloc
   final UseCase<KanzleiSettings, NoParams> _getKanzleiSettings;
   final UseCase<Mandant, CreateMandantRequest> _createMandant;
   final UseCase<Mandant, Mandant> _updateMandant;
+  final RegisterNummernRepository _registerNummern;
   final VorgangCubit _vorgaenge;
 
   VorgangStartenBloc(
@@ -31,6 +34,7 @@ class VorgangStartenBloc
     this._getKanzleiSettings,
     this._createMandant,
     this._updateMandant,
+    this._registerNummern,
     this._vorgaenge,
   ) : super(VorgangStartenInitial()) {
     on<LadeDefaultsEvent>(_onLadeDefaults);
@@ -68,16 +72,33 @@ class VorgangStartenBloc
     Emitter<VorgangStartenState> emit,
   ) async {
     final settings = await _ladeEinstellungen();
+    // §6.3: Vorgeschlagen wird die nächste freie Nummer des Jahrgangs aus dem
+    // Bestand (Vorgänge der App und übernommene Historie), nicht mehr der
+    // Zähler aus den Einstellungen — der bleibt nur die Korrektur von Hand
+    // (§7.1). Schlägt der Abruf fehl, bleibt es beim Zähler als Rückfall: ein
+    // nicht erreichbarer Endpunkt darf das Anlegen eines Vorgangs nicht
+    // aufhalten.
+    final nummernstand = await _ladeNummernstand();
     if (settings != null) {
       emit(
         VorgangStartenDefaultsLoaded(
-          auftragsnummer: settings.laufendeAuftragsnummer,
+          auftragsnummer:
+              nummernstand?.naechsteNummer ?? settings.laufendeAuftragsnummer,
           abteilung: settings.abteilung,
+          belegteNummern: nummernstand?.belegte ?? const [],
+          nummernJahr: nummernstand?.jahr,
         ),
       );
     }
-    // Bei Fehler bleibt es bei den Formular-Standardwerten. Hochgezählt wird die
-    // Auftragsnummer erst beim Abschluss des Vorgangs (§4.8).
+    // Bei Fehler bleibt es bei den Formular-Standardwerten.
+  }
+
+  Future<RegisterNummernStand?> _ladeNummernstand() async {
+    final result = await _registerNummern.ladeNummernstand();
+    return switch (result) {
+      Right(value: final stand) => stand,
+      Left() => null,
+    };
   }
 
   Future<void> _onSpeichereVorgang(
