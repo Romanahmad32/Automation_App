@@ -5,6 +5,7 @@ using AutomationService.Features.Sachgebiete.Domain.Services;
 using AutomationService.Features.Settings.Domain.Services;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Services;
+using AutomationService.Features.Vorgaenge.Presentation.HostedServices;
 using RegisterHistorieDienst = AutomationService.Features.RegisterHistorie.Domain.Services.RegisterHistorie;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,14 @@ namespace AutomationService.Tests.Support;
 /// Herausgelöst, als die PDF-Fälle eine eigene Testklasse bekamen: Zwei
 /// Fassungen desselben Aufbaus hätten sich beim ersten Nachbessern
 /// auseinanderentwickelt.
+///
+/// Seit §6.2 („Word sofort, PDF nachgezogen") sind es <b>zwei</b> Schritte:
+/// <c>Dienst().SchreibeAsync()</c> schreibt die .docx und reiht die Wandlung
+/// ein, <see cref="PdfNachziehenAsync"/> arbeitet sie ab. Der
+/// Hintergrunddienst wird hier absichtlich nicht gestartet — nur so lässt sich
+/// der Zwischenzustand prüfen, und nur so wartet kein Test auf einen Planer.
+/// Wer die Ausgangslage „vollständiger Spiegel" braucht, nimmt
+/// <see cref="VollstaendigSchreibenAsync"/>.
 /// </summary>
 public sealed class RegisterSpiegelUmgebung : IDisposable
 {
@@ -48,6 +57,20 @@ public sealed class RegisterSpiegelUmgebung : IDisposable
         Db = NeuerContext();
         Db.Database.EnsureCreated();
         StandDatei = Path.Combine(Bau, "stand.json");
+
+        // Stand und Bauordner sind im Betrieb Singletons und werden hier
+        // genauso gehalten: Der Stand trägt ein Schloss, das nur schützt, wenn
+        // sich alle Läufe dasselbe Exemplar teilen.
+        Stand = new RegisterSpiegelStand(StandDatei);
+        Bauordner = new RegisterSpiegelBauordner(Bau);
+        Bremse = new WarteschlangeMitBremse(Warteschlange);
+        Nachzug = new RegisterPdfNachzug(
+            Warteschlange,
+            Pdf,
+            Stand,
+            Bauordner,
+            Hub,
+            NullLogger<RegisterPdfNachzug>.Instance);
     }
 
     /// <summary>Zum Einrichten der Ausgangslage — nicht der Context der Dienste.</summary>
@@ -77,6 +100,55 @@ public sealed class RegisterSpiegelUmgebung : IDisposable
     public RegisterSpiegelSchleuse Schleuse { get; } = new();
 
     /// <summary>
+    /// Die echte Warteschlange. Ein Singleton wie im Betrieb: Ein zweites
+    /// Exemplar hiesse, in den einen Kanal einzureihen und aus dem anderen
+    /// abzuarbeiten.
+    /// </summary>
+    public RegisterPdfWarteschlange Warteschlange { get; } = new();
+
+    /// <summary>
+    /// Der Weg, den die Dienste nehmen — die echte Warteschlange hinter einer
+    /// Bremse, die im Regelfall nichts bremst (siehe
+    /// <see cref="WarteschlangeMitBremse"/>).
+    /// </summary>
+    public WarteschlangeMitBremse Bremse { get; }
+
+    public RegisterHubAttrappe Hub { get; } = new();
+
+    public RegisterSpiegelStand Stand { get; }
+
+    public RegisterSpiegelBauordner Bauordner { get; }
+
+    /// <summary>
+    /// Der Nachzug, der die eingereihten PDF-Aufträge abarbeitet — hier
+    /// <b>nicht</b> als Hintergrunddienst gestartet, sondern von Hand
+    /// ausgelöst (<see cref="PdfNachziehenAsync"/>). Nur so lässt sich der
+    /// Zwischenzustand prüfen, um den es in §6.2 geht: die .docx liegt, das PDF
+    /// noch nicht.
+    /// </summary>
+    public RegisterPdfNachzug Nachzug { get; }
+
+    /// <summary>
+    /// Arbeitet ab, was gerade eingereiht ist — der Ersatz für das Warten auf
+    /// einen Hintergrunddienst.
+    /// </summary>
+    /// <returns>Wie viele PDF-Aufträge abgearbeitet wurden.</returns>
+    public Task<int> PdfNachziehenAsync() => Nachzug.AlleAbarbeitenAsync();
+
+    /// <summary>
+    /// Schreiben <em>und</em> die PDF-Fassung nachziehen — der Zustand, den ein
+    /// Test als Ausgangslage meint, wenn er „es liegt ein vollständiger
+    /// Spiegel" braucht. Seit §6.2 sind das zwei Schritte, und wer nur den
+    /// ersten macht, richtet eine Ausgangslage ohne PDF ein.
+    /// </summary>
+    public async Task<RegisterSpiegelErgebnis> VollstaendigSchreibenAsync(bool erzwingen = false)
+    {
+        var ergebnis = await Dienst().SchreibeAsync(erzwingen);
+        await PdfNachziehenAsync();
+        return ergebnis;
+    }
+
+    /// <summary>
     /// Ein frischer Dienst je Aufruf, mit einem <b>eigenen</b> DbContext — wie
     /// im Betrieb, wo er je Anfrage neu gebaut wird und der Context am
     /// Anfrage-Scope hängt.
@@ -93,10 +165,10 @@ public sealed class RegisterSpiegelUmgebung : IDisposable
         _contexts.Add(context);
         return new RegisterSpiegelService(
             context,
-            Pdf,
+            Bremse,
             new RegisterHistorieDienst(context, new SachgebietKatalog(context)),
-            new RegisterSpiegelStand(StandDatei),
-            new RegisterSpiegelBauordner(Bau),
+            Stand,
+            Bauordner,
             Schleuse,
             NullLogger<RegisterSpiegelService>.Instance);
     }

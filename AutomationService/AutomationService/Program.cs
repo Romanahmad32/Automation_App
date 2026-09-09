@@ -13,7 +13,10 @@ using AutomationService.Features.RegisterHistorie.Presentation.DependencyInjecti
 using AutomationService.Features.Sachgebiete.Presentation.DependencyInjection;
 using AutomationService.Features.Settings.Presentation.DependencyInjection;
 using AutomationService.Features.Versicherer.Presentation.DependencyInjection;
+using AutomationService.Features.Vorgaenge.Domain.Services;
 using AutomationService.Features.Vorgaenge.Presentation.DependencyInjection;
+using AutomationService.Features.Vorgaenge.Presentation.HostedServices;
+using AutomationService.Features.Vorgaenge.Presentation.Hubs;
 using AutomationService.Features.WordAutomation.Presentation.DependencyInjection;
 using AutomationService.Features.ZentralrufAutomation.Presentation.DependencyInjection;
 using Scalar.AspNetCore;
@@ -76,6 +79,21 @@ builder.Services.AddFormTemplatesServices();
 builder.Services.AddBackupServices(builder.Configuration);
 builder.Services.AddDevSimulationServices(builder.Configuration);
 
+// Die PDF-Fassung des Register-Spiegels entsteht nachgelagert (§6.2 „Word
+// sofort, PDF nachgezogen"). Die Warteschlange ist ein Singleton — zwei
+// Exemplare hiessen: einreihen in den einen Kanal, abarbeiten aus dem anderen.
+// Der Nachzug ist ein Hintergrunddienst und kein abgesetzter Task, weil der
+// Scoped-DbContext des Aufrufs nach der Antwort tot ist; im Auftrag stehen
+// deshalb nur Pfade.
+//
+// Steht hier und nicht in AddVorgaengeServices, weil beide Zeilen aus einer
+// Aenderung stammen, die parallel zu einer anderen an dieser Datei entstand.
+// Der Platz in der Erweiterungsmethode des Slices bleibt der richtige.
+builder.Services.AddSingleton<RegisterPdfWarteschlange>();
+builder.Services.AddSingleton<IRegisterPdfWarteschlange>(sp =>
+    sp.GetRequiredService<RegisterPdfWarteschlange>());
+builder.Services.AddHostedService<RegisterPdfNachzug>();
+
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
@@ -93,6 +111,9 @@ app.UseCors(CorsPolicyName);
 app.MapHealthEndpoint();
 app.MapControllers();
 app.MapHub<MailboxHub>("/hubs/mailbox");
+// Eigener Hub je Slice: Der MailboxHub gehoert der Postfachueberwachung, und
+// ihn mitzubenutzen band das Register an deren Vertrag (SliceIsolationTests).
+app.MapHub<RegisterHub>("/hubs/register");
 
 app.Run();
 
