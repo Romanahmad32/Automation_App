@@ -37,7 +37,12 @@ class Arbeitspaket extends Equatable {
 
   /// Der Auftragstext für den Agenten (`ImportAnleitung.paketText`). Er reist
   /// in der Datei mit, damit das Paket auch dann noch verständlich ist, wenn
-  /// es Tage später bearbeitet wird.
+  /// es Tage später bearbeitet wird — und damit der Auftrag nicht allein an
+  /// der Zwischenablage hängt, die ein einziges Kopieren unterwegs leert.
+  ///
+  /// **Das Feld heißt weiter `anleitung`**, obwohl die Oberfläche überall
+  /// „Auftrag" sagt: Der Name steht im Format der Fassung 1, und ihn
+  /// umzubenennen wäre ein Formatwechsel für einen Wortlaut.
   final String anleitung;
 
   /// Der bereits erfasste Mandantenbestand — der Agent soll vorhandene

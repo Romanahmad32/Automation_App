@@ -59,9 +59,18 @@ Alle übrigen Felder dürfen leer bleiben oder fehlen. Unbekannte Felder werden 
 Erzeuger ist ein Programm, kein Formular, und eine Datei mit 4000 brauchbaren und einer krummen
 Zeile darf nicht als Ganzes scheitern.
 
-Den fertigen Arbeitsauftrag für den Erzeuger hält die App zum Kopieren bereit
-(*Aus Datei übernehmen* → **Auftrag für den Erzeuger kopieren**); der Wortlaut liegt in
-`Automation_App_Frontend/lib/features/mandanten/presentation/utils/import_anleitung.dart`.
+Den fertigen Auftrag für den Erzeuger gibt die App mit dem Arbeitspaket heraus (siehe unten): Er
+steht als Feld `anleitung` in der Paketdatei und liegt nach dem Speichern zugleich in der
+Zwischenablage. Der Wortlaut liegt in
+`Automation_App_Frontend/lib/features/mandanten/presentation/utils/import_anleitung.dart`; die
+Import-Seite zeigt daraus nur noch den **Dateiaufbau** zum Nachschlagen.
+
+Bis dahin stand daneben ein zweiter Auftrag für den Lauf über den ganzen Stammordner, ohne Paket,
+auf der Import-Seite zum Kopieren. Er ist entfallen: Zwei Aufträge nebeneinander ließen offen,
+welcher gilt, und der paketlose war strikt schwächer — Stammordner als Platzhalter zum
+Selbsteintragen, keine bekannten Mandanten, keine Namensvorschläge, keine geschlossene Liste, keine
+Buchführung. Er beschrieb genau den Lauf über alle 4040 Ordner auf einmal, den der nächste
+Abschnitt verwirft.
 
 ## Arbeitspakete: die Zuordnung entsteht portionsweise
 
