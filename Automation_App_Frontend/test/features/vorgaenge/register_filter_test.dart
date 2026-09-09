@@ -1,3 +1,4 @@
+import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -33,13 +34,58 @@ void main() {
       ]);
     });
 
-    test('filtert nach Jahrgang', () {
-      final gefiltert = const RegisterFilter(jahr: '2019').anwenden([
+    test('filtert auf einen einzelnen Jahrgang', () {
+      final gefiltert = const RegisterFilter.imJahr(2019).anwenden([
         vorgangsZeile(jahr: '2026', zeichen: 'neu'),
         historieZeile(jahr: '2019', zeichen: 'alt'),
       ]);
 
       expect(gefiltert.single.zeichen, 'alt');
+    });
+
+    /// Die häufigste Frage am Register ist „die letzten Jahre" und nicht
+    /// „genau 2021" — die Spanne schließt beide Grenzen ein.
+    test('filtert auf eine Jahrgangsspanne, Grenzen eingeschlossen', () {
+      final alle = [
+        historieZeile(jahr: '2019', zeichen: 'a'),
+        historieZeile(jahr: '2020', zeichen: 'b'),
+        historieZeile(jahr: '2021', zeichen: 'c'),
+        vorgangsZeile(jahr: '2026', zeichen: 'd'),
+      ];
+
+      expect(
+        const RegisterFilter(
+          vonJahr: 2020,
+          bisJahr: 2021,
+        ).anwenden(alle).map((z) => z.zeichen),
+        ['b', 'c'],
+      );
+    });
+
+    test('eine offene Grenze lässt die Spanne nach dieser Seite offen', () {
+      final alle = [
+        historieZeile(jahr: '2019', zeichen: 'a'),
+        vorgangsZeile(jahr: '2026', zeichen: 'd'),
+      ];
+
+      expect(
+        const RegisterFilter(vonJahr: 2020).anwenden(alle).single.zeichen,
+        'd',
+      );
+      expect(
+        const RegisterFilter(bisJahr: 2020).anwenden(alle).single.zeichen,
+        'a',
+      );
+    });
+
+    /// Eine Zeile ohne lesbare Jahreszahl lässt sich nicht einordnen. Sie
+    /// stillschweigend durchzulassen hieße, eine Auswahl zu zeigen, die nicht
+    /// gilt — ohne Spanne bleibt sie sichtbar.
+    test('eine Zeile ohne Jahreszahl fällt aus der Spanne heraus', () {
+      final ohneJahr = [vorgangsZeile(jahr: '', zeichen: 'x')];
+
+      expect(const RegisterFilter(vonJahr: 2020).anwenden(ohneJahr), isEmpty);
+      expect(RegisterFilter.alle.anwenden(ohneJahr), hasLength(1));
     });
 
     /// Historie ist per Definition abgeschlossen — sie darf unter „laufend"
@@ -65,6 +111,30 @@ void main() {
       );
     });
 
+    /// Nach der Übernahme besteht das Register zum größten Teil aus Historie.
+    /// Wer die laufende Arbeit sehen will, sucht sie sonst zwischen tausenden
+    /// Altzeilen.
+    test('filtert nach Herkunft — in beide Richtungen', () {
+      final alle = [
+        vorgangsZeile(zeichen: 'app'),
+        historieZeile(zeichen: 'alt'),
+      ];
+
+      expect(
+        const RegisterFilter(
+          quelle: RegisterQuellen.vorgang,
+        ).anwenden(alle).single.zeichen,
+        'app',
+      );
+      expect(
+        const RegisterFilter(
+          quelle: RegisterQuellen.historie,
+        ).anwenden(alle).single.zeichen,
+        'alt',
+      );
+      expect(RegisterFilter.alle.anwenden(alle), hasLength(2));
+    });
+
     // Der Filter trägt den Katalognamen, der Altbestand ist kleingeschrieben
     // gespeichert — beide müssen sich treffen (RechtsgebietWert.gleich).
     test('filtert nach Rechtsgebiet — auch über den kleingeschriebenen '
@@ -79,19 +149,19 @@ void main() {
     });
   });
 
-  group('jahrgaenge', () {
-    test('listet die vorkommenden Jahrgänge, neueste zuerst', () {
-      final jahre = RegisterFilter.jahrgaenge([
+  group('jahre', () {
+    test('listet die vorkommenden Jahrgänge als Zahl, neueste zuerst', () {
+      final jahre = RegisterFilter.jahre([
         vorgangsZeile(jahr: '2025'),
         vorgangsZeile(jahr: '2026'),
         historieZeile(jahr: '2025'),
       ]);
 
-      expect(jahre, ['2026', '2025']);
+      expect(jahre, [2026, 2025]);
     });
 
-    test('ein leeres Jahr taucht nicht als Chip auf', () {
-      expect(RegisterFilter.jahrgaenge([vorgangsZeile(jahr: '')]), isEmpty);
+    test('ein leeres Jahr taucht in der Auswahl nicht auf', () {
+      expect(RegisterFilter.jahre([vorgangsZeile(jahr: '')]), isEmpty);
     });
   });
 
@@ -130,13 +200,30 @@ void main() {
     });
 
     test('lässt die übrigen Felder stehen', () {
-      const filter = RegisterFilter(abgeschlossen: true, jahr: '2026');
+      const filter = RegisterFilter(
+        abgeschlossen: true,
+        vonJahr: 2026,
+        bisJahr: 2026,
+      );
 
       final geaendert = filter.mit(jahrLoeschen: true);
 
       expect(geaendert.abgeschlossen, isTrue);
-      expect(geaendert.jahr, isNull);
+      expect(geaendert.vonJahr, isNull);
+      expect(geaendert.bisJahr, isNull);
       expect(geaendert.istLeer, isFalse);
+    });
+
+    /// Sonst bekäme der Anwalt eine leere Tabelle und müsste selbst darauf
+    /// kommen, dass er das zweite Feld auch noch anfassen muss.
+    test('„von" über „bis" zieht die andere Grenze mit', () {
+      const spanne = RegisterFilter(vonJahr: 2019, bisJahr: 2021);
+
+      final nachOben = spanne.mit(vonJahr: 2024);
+      expect((nachOben.vonJahr, nachOben.bisJahr), (2024, 2024));
+
+      final nachUnten = spanne.mit(bisJahr: 2018);
+      expect((nachUnten.vonJahr, nachUnten.bisJahr), (2018, 2018));
     });
 
     /// `false` ist ein echter Wert und darf nicht wie „nicht angegeben"

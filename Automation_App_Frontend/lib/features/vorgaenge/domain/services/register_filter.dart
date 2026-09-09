@@ -7,7 +7,7 @@ import 'package:equatable/equatable.dart';
 /// Das Register führt **alle** Zeilen — laufende Vorgänge, abgeschlossene und
 /// die übernommene Historie der Kanzlei. Bei tausenden Zeilen ist „alles
 /// zeigen" ohne Einschränkung keine Ansicht mehr; deshalb filtert man hier nach
-/// Stand, Jahrgang und Rechtsgebiet.
+/// Stand, Jahrgangsspanne und Rechtsgebiet.
 ///
 /// Dieser Filter wirkt **nur auf die Ansicht**. Was in die Spiegeldatei kommt,
 /// entscheidet die Einstellung `registerExportFilter` — sonst hinge der Inhalt
@@ -16,7 +16,8 @@ import 'package:equatable/equatable.dart';
 ///
 /// **Er sortiert nicht.** Die Reihenfolge kommt seit Issue #109 aus dem
 /// Backend (`RegisterZeilenBau.Aus`), zusammen mit den Zeilen selbst — vorher
-/// war sie zweimal formuliert und konnte auseinanderlaufen.
+/// war sie zweimal formuliert und konnte auseinanderlaufen. Ob sie vorwärts
+/// oder rückwärts gelesen wird, entscheidet `RegisterReihenfolge`.
 class RegisterFilter extends Equatable {
   /// Null heißt: alle. `true` zeigt nur abgeschlossene Zeilen — die Historie
   /// zählt dazu, sie ist per Definition abgeschlossen. `false` zeigt nur, was
@@ -29,46 +30,113 @@ class RegisterFilter extends Equatable {
   /// eine Auswahl, die es nicht gibt.
   final bool? abgeschlossen;
 
-  /// Vierstelliger Jahrgang; null heißt: alle Jahrgänge.
-  final String? jahr;
+  /// Die Jahrgangsspanne, beide Grenzen einschließlich; null heißt „offen".
+  ///
+  /// Eine Spanne statt eines einzelnen Jahrgangs, weil die Frage am Register
+  /// fast nie „genau 2021" lautet, sondern „die letzten Jahre" — und weil ein
+  /// Chip je Jahrgang bei einem Registerbuch ab 2018 eine Leiste ergibt, die
+  /// breiter ist als die Tabelle darunter. Ein einzelner Jahrgang ist der
+  /// Sonderfall `von == bis` ([imJahr]).
+  final int? vonJahr;
+  final int? bisJahr;
 
   /// Rechtsgebiet in Anzeigeform („Verkehrsrecht"); null heißt: alle.
   /// Verglichen wird über [RechtsgebietWert.gleich], damit der
   /// kleingeschriebene Altbestand dieselben Treffer liefert.
   final String? rechtsgebiet;
 
-  const RegisterFilter({this.abgeschlossen, this.jahr, this.rechtsgebiet});
+  /// Woher die Zeile stammt ([RegisterQuellen.vorgang] oder
+  /// [RegisterQuellen.historie]); null heißt: beides.
+  ///
+  /// Der praktische Fall ist das Ausblenden: Nach der Übernahme besteht das
+  /// Register zum größten Teil aus Historie, und wer die laufende Arbeit der
+  /// Kanzlei sehen will, sucht sie zwischen tausenden Altzeilen. Die
+  /// Gegenrichtung — nur Historie — ist der Blick beim Nacharbeiten des
+  /// Imports.
+  final String? quelle;
+
+  const RegisterFilter({
+    this.abgeschlossen,
+    this.vonJahr,
+    this.bisJahr,
+    this.rechtsgebiet,
+    this.quelle,
+  });
 
   static const RegisterFilter alle = RegisterFilter();
 
+  /// Genau ein Jahrgang — was ein Klick auf einen Jahrgangs-Chip meint.
+  const RegisterFilter.imJahr(int jahrgang)
+    : abgeschlossen = null,
+      vonJahr = jahrgang,
+      bisJahr = jahrgang,
+      rechtsgebiet = null,
+      quelle = null;
+
   bool get istLeer =>
-      abgeschlossen == null && jahr == null && rechtsgebiet == null;
+      abgeschlossen == null &&
+      vonJahr == null &&
+      bisJahr == null &&
+      rechtsgebiet == null &&
+      quelle == null;
 
   /// Kopie mit geänderten Feldern. Anders als sonst im Projekt setzt `null`
   /// hier **zurück** — „alle Zeilen" ist der Normalfall und muss mit einem
   /// Klick erreichbar sein.
+  ///
+  /// Die Spanne bleibt dabei gültig: Wer „von" über „bis" schiebt, zieht die
+  /// andere Grenze mit, statt eine leere Tabelle zu bekommen und selbst darauf
+  /// zu kommen, dass er zwei Felder anfassen muss.
   RegisterFilter mit({
     bool? abgeschlossen,
-    String? jahr,
+    int? vonJahr,
+    int? bisJahr,
     String? rechtsgebiet,
+    String? quelle,
     bool abgeschlossenLoeschen = false,
     bool jahrLoeschen = false,
     bool rechtsgebietLoeschen = false,
-  }) => RegisterFilter(
-    abgeschlossen: abgeschlossenLoeschen
-        ? null
-        : abgeschlossen ?? this.abgeschlossen,
-    jahr: jahrLoeschen ? null : jahr ?? this.jahr,
-    rechtsgebiet: rechtsgebietLoeschen
-        ? null
-        : rechtsgebiet ?? this.rechtsgebiet,
-  );
+    bool quelleLoeschen = false,
+  }) {
+    var neuVon = jahrLoeschen ? null : vonJahr ?? this.vonJahr;
+    var neuBis = jahrLoeschen ? null : bisJahr ?? this.bisJahr;
+    if (neuVon != null && neuBis != null && neuVon > neuBis) {
+      if (vonJahr != null) {
+        neuBis = neuVon;
+      } else {
+        neuVon = neuBis;
+      }
+    }
+    return RegisterFilter(
+      abgeschlossen: abgeschlossenLoeschen
+          ? null
+          : abgeschlossen ?? this.abgeschlossen,
+      vonJahr: neuVon,
+      bisJahr: neuBis,
+      rechtsgebiet: rechtsgebietLoeschen
+          ? null
+          : rechtsgebiet ?? this.rechtsgebiet,
+      quelle: quelleLoeschen ? null : quelle ?? this.quelle,
+    );
+  }
 
   bool passt(RegisterZeile zeile) =>
       (abgeschlossen == null || zeile.abgeschlossen == abgeschlossen) &&
-      (jahr == null || zeile.jahr == jahr) &&
+      _jahrPasst(zeile.jahr) &&
+      (quelle == null || zeile.quelle == quelle) &&
       (rechtsgebiet == null ||
           RechtsgebietWert.gleich(zeile.rechtsgebiet, rechtsgebiet));
+
+  /// Eine Zeile ohne lesbare Jahreszahl fällt aus jeder Spanne heraus — sie
+  /// lässt sich nicht einordnen, und sie stillschweigend durchzulassen hieße,
+  /// eine Auswahl zu zeigen, die nicht gilt. Ohne Spanne bleibt sie sichtbar.
+  bool _jahrPasst(String jahr) {
+    if (vonJahr == null && bisJahr == null) return true;
+    final wert = int.tryParse(jahr);
+    if (wert == null) return false;
+    return (vonJahr == null || wert >= vonJahr!) &&
+        (bisJahr == null || wert <= bisJahr!);
+  }
 
   /// Wendet den Filter an und lässt die Reihenfolge, wie sie kam: Jahrgang
   /// aufsteigend, darin nach laufender Nummer, Zeilen ohne Nummer hinten am
@@ -77,13 +145,12 @@ class RegisterFilter extends Equatable {
   List<RegisterZeile> anwenden(List<RegisterZeile> zeilen) =>
       zeilen.where(passt).toList();
 
-  /// Die vorkommenden Jahrgänge, neueste zuerst — die Chips der Filterleiste.
-  static List<String> jahrgaenge(List<RegisterZeile> zeilen) {
-    final jahre = zeilen
-        .map((zeile) => zeile.jahr)
-        .where((jahr) => jahr.isNotEmpty)
-        .toSet()
-        .toList();
+  /// Die vorkommenden Jahrgänge als Zahl, neueste zuerst — die Auswahl der
+  /// beiden Felder „Von" und „Bis".
+  static List<int> jahre(List<RegisterZeile> zeilen) {
+    final jahre = <int>{
+      for (final zeile in zeilen) ?int.tryParse(zeile.jahr),
+    }.toList();
     jahre.sort((a, b) => b.compareTo(a));
     return jahre;
   }
@@ -116,5 +183,11 @@ class RegisterFilter extends Equatable {
   }
 
   @override
-  List<Object?> get props => [abgeschlossen, jahr, rechtsgebiet];
+  List<Object?> get props => [
+    abgeschlossen,
+    vonJahr,
+    bisJahr,
+    rechtsgebiet,
+    quelle,
+  ];
 }

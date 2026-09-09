@@ -155,8 +155,10 @@ Lücken in der laufenden Nummer haben.
 
 Eine historische Zeile lässt sich in der Registeransicht berichtigen, nur nach ausdrücklicher
 Bestätigung. In der Spalte „Status" trägt sie dabei immer den Status **„Historie"** — auch nach
-der Berichtigung —, denn sie ist und bleibt kein Vorgang; ein zusätzlicher Befund-Chip erscheint
-nur, wenn die Zeile einen Befund oder eine Sicherheit unter `hoch` hat.
+der Berichtigung —, denn sie ist und bleibt kein Vorgang. Und **nur** ihn: Was an der Zeile auffiel
+(Befunde, eine Sicherheit unter `hoch`), steht im Herkunftskasten des Bearbeiten-Dialogs, den ein
+Klick auf die Zeile öffnet — dort, wo der Anwalt es braucht, um es zu berichtigen. Ein zweiter Chip
+in der Statusspalte machte aus einer Spalte mit einer Aussage eine mit zweien.
 
 Die Registeransicht und der Word/PDF-Spiegel des Registers zeigen Historie und laufende Vorgänge
 gemeinsam, aus derselben Quelle: Was auf dem Bildschirm steht, steht auch im Spiegel. Wechselt der

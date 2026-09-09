@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -71,6 +72,15 @@ class RegisterSpiegelCubit extends Cubit<RegisterSpiegelErgebnis> {
 
   /// Der Dienst antwortet auf beide Wege mit 200 und einem Stand; hier landet
   /// nur, was gar nicht erst ankam — Dienst nicht erreichbar, Zeitüberschreitung.
-  String _satz(Exception fehler) =>
-      'Der Register-Export ist nicht erreichbar: $fehler';
+  ///
+  /// Die Datenquelle hat daraus bereits einen deutschen Satz gemacht
+  /// ([RegisterException]). Der Rückfall ist der Fall, den es nicht geben
+  /// sollte: eine Ausnahme, die niemand übersetzt hat — dann lieber ein Satz
+  /// ohne Einzelheit als ein Ausnahmetext im Gesicht des Anwalts.
+  String _satz(Exception fehler) => switch (fehler) {
+    RegisterException(:final message) => message,
+    _ =>
+      'Das Register konnte nicht geschrieben werden. '
+          'Bitte starten Sie die Anwendung neu.',
+  };
 }

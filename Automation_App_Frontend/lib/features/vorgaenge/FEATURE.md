@@ -6,15 +6,14 @@ verwalten" (Pflege, Tab 7) und das Sachgebiete-Register (Tab 6) aus Vorgängen *
 Registerhistorie, das zusätzlich als Word- und PDF-Datei in einen Ordner geht (§6.2).
 **Anforderung:** `REQUIREMENTS.md` §3, §4.8, §6.2
 **Einstieg:** `presentation/blocs/vorgang_cubit.dart`
-**Zustand:** `VorgangCubit` (`presentation/blocs/vorgang_cubit.dart`, `@lazySingleton` — der
-app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und dashboard lesen) ·
-`RegisterCubit` (Tab 6: Zeilen, Stand der Historie, Filter) · `RegisterSpiegelCubit` ·
-`VorgangPersistenzFehlerCubit` · `VorgangNavigationSignal` · `LetzteVersaendeCubit` (email_versand)
+**Zustand:** `VorgangCubit` (`@lazySingleton` — der app-weite Bestand, den auch word_automation, mailbox, zentralruf_reply und
+dashboard lesen) · `RegisterCubit` (Tab 6: Zeilen, Historienstand, Filter, Reihenfolge) · `RegisterSpiegelCubit` ·
+`VorgangPersistenzFehlerCubit` · `VorgangNavigationSignal` · `VorgangHervorhebungSignal` · `LetzteVersaendeCubit` (email_versand)
 **Domain:** Entities `Vorgang`, `VorgangEntwurf`, `VorgangStatus`, `ReferenzTeile`, `RechtsgebietWert`,
 `RegisterZeile`, `RegisterHistorieStand`, `RegisterHistorieAenderung`, `RegisterSpiegelErgebnis`; Ports
 `VorgangRepository`, `RegisterZeilenRepository`, `RegisterHistorieRepository`, `RegisterSpiegelRepository`;
 Dienste `AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`, `VorgangVollstaendigkeit`,
-`VorgangWartezeit`, `RegisterFilter`, `VorgangJahrgang`, `MandantAnschrift`.
+`VorgangWartezeit`, `RegisterFilter`, `RegisterReihenfolge`, `VorgangJahrgang`, `MandantAnschrift`.
 **Backend:** `Features/Vorgaenge/` + `Features/RegisterHistorie/` · `GET|PUT /api/Vorgaenge`,
 `PUT|DELETE /api/Vorgaenge/entwurf`, `DELETE /api/Vorgaenge?referenz=`, `POST …/abschliessen|referenz`,
 `POST …/register/export`, `GET …/register/stand|zeilen`, `GET /api/RegisterHistorie/stand`, `GET|PUT /api/RegisterHistorie/{id}`

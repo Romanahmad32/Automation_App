@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart';
@@ -72,16 +73,40 @@ void main() {
     expect(cubit.state.geschrieben, isTrue);
   });
 
-  test('ein nicht erreichbarer Dienst wird zu einem lesbaren Satz', () async {
+  /// Die Datenquelle hat den Fehlschlag der Leitung schon in einen deutschen
+  /// Satz übersetzt — der geht unverändert an den Anwalt.
+  test('der Satz der Datenquelle kommt unverändert durch', () async {
     final cubit = RegisterSpiegelCubit(
-      RegisterSpiegelAttrappe(wirft: Exception('Verbindung abgelehnt')),
+      RegisterSpiegelAttrappe(
+        wirft: const RegisterException(
+          'Der Dienst der Anwendung antwortet nicht. '
+          'Bitte starten Sie die Anwendung neu.',
+        ),
+      ),
     );
 
     await cubit.exportiere();
 
-    expect(cubit.state.fehler, contains('nicht erreichbar'));
+    expect(cubit.state.fehler, startsWith('Der Dienst der Anwendung'));
     expect(cubit.state.geschrieben, isFalse);
   });
+
+  /// Der Fall, den es nicht geben sollte: eine Ausnahme, die niemand übersetzt
+  /// hat. Ihr Text stand vorher wortwörtlich in der Meldung („DioException
+  /// [connection error] …") — und der sagt dem Anwalt nichts.
+  test(
+    'eine unübersetzte Ausnahme landet nicht im Wortlaut am Bildschirm',
+    () async {
+      final cubit = RegisterSpiegelCubit(
+        RegisterSpiegelAttrappe(wirft: Exception('DioException [unknown]')),
+      );
+
+      await cubit.exportiere();
+
+      expect(cubit.state.fehler, isNot(contains('DioException')));
+      expect(cubit.state.fehler, contains('nicht geschrieben werden'));
+    },
+  );
 
   /// Der Knopf gilt auch dann, wenn die Seite gerade erst aufgeht.
   ///

@@ -257,6 +257,8 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/register_sp
     as _i242;
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart'
     as _i847;
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_hervorhebung_signal.dart'
+    as _i663;
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart'
     as _i416;
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler_cubit.dart'
@@ -355,6 +357,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i842.AppRouter>(() => _i842.AppRouter());
     gh.lazySingleton<_i277.MailboxAuswahlSignal>(
       () => _i277.MailboxAuswahlSignal(),
+    );
+    gh.lazySingleton<_i663.VorgangHervorhebungSignal>(
+      () => _i663.VorgangHervorhebungSignal(),
     );
     gh.lazySingleton<_i416.VorgangNavigationSignal>(
       () => _i416.VorgangNavigationSignal(),

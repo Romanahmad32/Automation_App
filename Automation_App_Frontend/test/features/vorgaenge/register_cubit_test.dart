@@ -1,6 +1,7 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_aenderung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_stand.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/register_reihenfolge.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,7 +17,8 @@ void main() {
   RegisterCubit cubit() => RegisterCubit(zeilenPort, historiePort);
 
   setUp(() {
-    zeilenPort = FakeRegisterZeilen(zeilen: [vorgangsZeile(), historieZeile()]);
+    // In der Reihenfolge, in der das Backend liefert: Jahrgang aufsteigend.
+    zeilenPort = FakeRegisterZeilen(zeilen: [historieZeile(), vorgangsZeile()]);
     historiePort = FakeRegisterHistorie(
       stand: const RegisterHistorieStand(
         jahrgaenge: [JahrgangStand(jahrgang: 2019, zeilen: 3)],
@@ -51,11 +53,23 @@ void main() {
     final register = cubit();
     await register.lade();
 
-    register.filtern(const RegisterFilter(jahr: '2019'));
+    register.filtern(const RegisterFilter.imJahr(2019));
     await register.lade();
 
-    expect(register.state.filter.jahr, '2019');
+    expect(register.state.filter.vonJahr, 2019);
     expect(register.state.sichtbar.single.jahr, '2019');
+  });
+
+  /// Angesehen werden fast immer die jüngsten Zeilen — nach tausenden
+  /// übernommenen stünden sie sonst ganz unten.
+  test('zeigt die neuesten Zeilen zuerst und lässt sich umdrehen', () async {
+    final register = cubit();
+
+    await register.lade();
+    expect(register.state.sichtbar.map((z) => z.jahr), ['2026', '2019']);
+
+    register.sortieren(RegisterReihenfolge.aeltesteZuerst);
+    expect(register.state.sichtbar.map((z) => z.jahr), ['2019', '2026']);
   });
 
   group('aendereHistorie', () {
