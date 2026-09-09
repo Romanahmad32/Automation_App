@@ -10,6 +10,12 @@ public static class VorgaengeInjection
         services.AddScoped<IVorgangRepository, VorgangRepository>();
         services.AddScoped<IVorgangAbschlussService, VorgangAbschlussService>();
 
+        // Kein eigenes Interface: Die Löschung hat eine einzige Umsetzung und
+        // wird nur vom Controller aufgerufen, anders als die Repositories und
+        // Dienste darüber, die auch aus anderen Slices heraus ausgetauscht
+        // werden könnten.
+        services.AddScoped<VorgangLoeschung>();
+
         // Bauordner und Stand haengen an festen Pfaden und halten keinen
         // Zustand je Anfrage — Singleton. Beide liegen neben der Datenbank und
         // nicht im Ablageordner: Was dort landet, synchronisiert mit und waere
