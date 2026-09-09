@@ -16,7 +16,8 @@ Dienste `AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`, `Vorga
 `VorgangWartezeit`, `RegisterFilter`, `RegisterReihenfolge`, `VorgangJahrgang`, `MandantAnschrift`.
 **Backend:** `Features/Vorgaenge/` + `Features/RegisterHistorie/` · `GET|PUT /api/Vorgaenge`,
 `PUT|DELETE /api/Vorgaenge/entwurf`, `DELETE /api/Vorgaenge?referenz=`, `POST …/abschliessen|referenz`,
-`POST …/register/export`, `GET …/register/stand|zeilen`, `GET /api/RegisterHistorie/stand`, `GET|PUT /api/RegisterHistorie/{id}`
+`POST …/register/export`, `GET …/register/stand|zeilen`, `GET /api/RegisterHistorie/stand`, `GET|PUT /api/RegisterHistorie/{id}`,
+`GET …/register/nummern` (§6.3) → `RegisterNummernRepository`/`RegisterNummernStand`, auch von `vorgang_starten` gelesen
 **Tests:** `test/features/vorgaenge/` — u. a. `vorgang_cubit_test.dart`, `register_cubit_test.dart`,
 `register_zeile_test.dart`, `register_tabelle_test.dart`, `register_view_bearbeiten_test.dart`
 

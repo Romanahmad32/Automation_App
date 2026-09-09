@@ -60,6 +60,7 @@ void main() {
       OhneKanzleiEinstellungen(),
       MandantAnlegenDouble(register),
       MandantAktualisierenDouble(register),
+      OhneRegisterNummern(),
       VorgangCubit(VorgangAblageDouble(), VorgangPersistenzFehlerCubit()),
     );
     formular = createVorgangForm();

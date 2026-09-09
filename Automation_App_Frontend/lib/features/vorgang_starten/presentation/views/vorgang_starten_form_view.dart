@@ -38,6 +38,11 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
 
   bool _referenzManuallyEdited = false;
 
+  /// Der Bestand für die Warnung am Auftragsnummer-Feld (§6.3) — leer, solange
+  /// der Nummernstand nicht geladen ist oder der Abruf scheiterte.
+  List<int> _belegteNummern = const [];
+  String? _nummernJahr;
+
   static const _referenzQuellfelder = [
     'auftragsnummer',
     'auftragsjahr',
@@ -78,7 +83,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
       if (!mounted) return;
       final state = context.read<VorgangStartenBloc>().state;
       if (state is VorgangStartenDefaultsLoaded) {
-        _patchDefaults(state.auftragsnummer, state.abteilung);
+        _patchDefaults(state);
       }
     });
   }
@@ -92,14 +97,23 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     super.dispose();
   }
 
-  void _patchDefaults(int auftragsnummer, String abteilung) {
-    _form.control('auftragsnummer').updateValue(auftragsnummer.toString());
+  void _patchDefaults(VorgangStartenDefaultsLoaded state) {
+    _form
+        .control('auftragsnummer')
+        .updateValue(state.auftragsnummer.toString());
     // Kürzel ohne Leerzeichen (§7.1) — ein gespeicherter Altwert wie 'C 03'
     // wird beim Einlesen normalisiert, bevor er in die Referenz wandert.
-    final bereinigt = AbteilungKuerzel.normalisiere(abteilung);
+    final bereinigt = AbteilungKuerzel.normalisiere(state.abteilung);
     if (bereinigt.isNotEmpty) {
       _form.control('abteilung').updateValue(bereinigt);
     }
+    // Für die Belegt-Warnung am Feld (§6.3) — bewusst lokaler State statt
+    // erneutem Bloc-Zugriff aus `AuftragSection`: Die Sektionen sind reine
+    // `StatelessWidget`s, die ihre Werte von der View bekommen.
+    setState(() {
+      _belegteNummern = state.belegteNummern;
+      _nummernJahr = state.nummernJahr;
+    });
   }
 
   /// Setzt die Pflicht der Unfall-Felder je nach Rechtsgebiet: Kennzeichen des
@@ -257,7 +271,7 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     return BlocListener<VorgangStartenBloc, VorgangStartenState>(
       listener: (context, state) {
         if (state is VorgangStartenDefaultsLoaded) {
-          _patchDefaults(state.auftragsnummer, state.abteilung);
+          _patchDefaults(state);
         }
         // Jeder Weg, auf dem ein Mandant entstanden sein kann, mündet hier —
         // der Karten-Knopf, das Speichern des Vorgangs und der Fehlerpfad
@@ -282,6 +296,8 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
                 rechtsgebiet: _rechtsgebiet,
                 istVerkehrsunfall: _istVerkehrsunfall,
                 onRechtsgebietChanged: _onRechtsgebietChanged,
+                belegteNummern: _belegteNummern,
+                nummernJahr: _nummernJahr,
                 referenzManuallyEdited: _referenzManuallyEdited,
                 onReferenzReset: _resetReferenz,
                 mandanten: _mandanten,

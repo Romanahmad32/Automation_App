@@ -1,7 +1,10 @@
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
+import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/register_nummern_stand.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_nummern_repository.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler_cubit.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
@@ -20,6 +23,8 @@ VorgangStartenBloc _baue(
   VorgangCubit vorgaenge,
   MandantAnlegenDouble anlegen, {
   UseCase<ZentralrufPrefillResult, ZentralrufRequest>? vorbefuellung,
+  UseCase<KanzleiSettings, NoParams>? kanzleiEinstellungen,
+  RegisterNummernRepository? registerNummern,
 }) {
   return VorgangStartenBloc(
     vorbefuellung ??
@@ -30,9 +35,10 @@ VorgangStartenBloc _baue(
             skippedFields: [],
           ),
         ),
-    OhneKanzleiEinstellungen(),
+    kanzleiEinstellungen ?? OhneKanzleiEinstellungen(),
     anlegen,
     MandantAktualisierenDouble(anlegen.register),
+    registerNummern ?? OhneRegisterNummern(),
     vorgaenge,
   );
 }
@@ -290,4 +296,77 @@ void main() {
       await vorgaenge.close();
     },
   );
+
+  group('LadeDefaultsEvent (§6.3)', () {
+    test(
+      'vorgeschlagen wird die nächste Nummer des Bestands, nicht der Zähler',
+      () async {
+        final vorgaenge = VorgangCubit(
+          VorgangAblageDouble(),
+          VorgangPersistenzFehlerCubit(),
+        );
+        final bloc = _baue(
+          vorgaenge,
+          MandantAnlegenDouble(MandantenRegisterDouble()),
+          kanzleiEinstellungen: FesteKanzleiEinstellungen(
+            KanzleiSettings.empty.copyWith(laufendeAuftragsnummer: 1),
+          ),
+          registerNummern: FesterRegisterNummernStand(
+            const RegisterNummernStand(
+              jahr: '2026',
+              hoechsteNummer: 6,
+              naechsteNummer: 7,
+              belegte: [1, 4, 5, 6],
+            ),
+          ),
+        );
+
+        bloc.add(const LadeDefaultsEvent());
+        final zustand =
+            await bloc.stream.firstWhere(
+                  (s) => s is VorgangStartenDefaultsLoaded,
+                )
+                as VorgangStartenDefaultsLoaded;
+
+        expect(zustand.auftragsnummer, 7);
+        expect(zustand.belegteNummern, [1, 4, 5, 6]);
+        expect(zustand.nummernJahr, '2026');
+
+        await bloc.close();
+        await vorgaenge.close();
+      },
+    );
+
+    test(
+      'scheitert der Abruf, bleibt es beim Zähler der Einstellungen und ohne Warnung',
+      () async {
+        final vorgaenge = VorgangCubit(
+          VorgangAblageDouble(),
+          VorgangPersistenzFehlerCubit(),
+        );
+        final bloc = _baue(
+          vorgaenge,
+          MandantAnlegenDouble(MandantenRegisterDouble()),
+          kanzleiEinstellungen: FesteKanzleiEinstellungen(
+            KanzleiSettings.empty.copyWith(laufendeAuftragsnummer: 42),
+          ),
+          // Kein registerNummern angegeben → OhneRegisterNummern (Fehlschlag).
+        );
+
+        bloc.add(const LadeDefaultsEvent());
+        final zustand =
+            await bloc.stream.firstWhere(
+                  (s) => s is VorgangStartenDefaultsLoaded,
+                )
+                as VorgangStartenDefaultsLoaded;
+
+        expect(zustand.auftragsnummer, 42);
+        expect(zustand.belegteNummern, isEmpty);
+        expect(zustand.nummernJahr, isNull);
+
+        await bloc.close();
+        await vorgaenge.close();
+      },
+    );
+  });
 }
