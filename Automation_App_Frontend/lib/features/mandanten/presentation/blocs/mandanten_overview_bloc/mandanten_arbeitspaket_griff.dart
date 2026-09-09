@@ -35,7 +35,7 @@ mixin ArbeitspaketGriff
     return _arbeitspaket.baue(aktuell, anzahl);
   }
 
-  /// Schreibt [paket] nach [pfad], legt die Anleitung in die Zwischenablage
+  /// Schreibt [paket] nach [pfad], legt den Auftrag in die Zwischenablage
   /// und verbucht das Paket erst danach — und aktualisiert die Paket-Historie
   /// im Zustand. **Nur aufrufen, nachdem der Speichern-Dialog erfolgreich
   /// war**: bricht der Anwalt ihn ab, darf nichts verbucht werden.

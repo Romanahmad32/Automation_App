@@ -51,7 +51,7 @@ class ZuordnungAblaufHinweis extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 '1. Arbeitspaket holen gibt eine Portion offener Ordner '
-                'heraus — die Anleitung dafür liegt danach in der '
+                'heraus — der Auftrag dazu liegt danach in der '
                 'Zwischenablage.\n'
                 '2. Außerhalb dieser App wird darin je Ordner der Mandant '
                 'eingetragen.\n'

@@ -72,7 +72,7 @@ class MandantenArbeitspaketAbruf {
     );
   }
 
-  /// Schreibt [paket] nach [pfad], legt die Anleitung in die Zwischenablage
+  /// Schreibt [paket] nach [pfad], legt den Auftrag in die Zwischenablage
   /// und verbucht das Paket erst danach.
   Future<Either<Failure, ImportPaket>> schreibeUndVerbuche({
     required Arbeitspaket paket,
@@ -83,8 +83,8 @@ class MandantenArbeitspaketAbruf {
     );
     if (geschrieben case Left(value: final failure)) return Left(failure);
 
-    // Die Anleitung landet erst nach erfolgreichem Schreiben in der
-    // Zwischenablage — sonst läge dort eine Anleitung zu einer Datei, die es
+    // Der Auftrag landet erst nach erfolgreichem Schreiben in der
+    // Zwischenablage — sonst läge dort ein Auftrag zu einer Datei, die es
     // gar nicht gibt.
     await Clipboard.setData(ClipboardData(text: ImportAnleitung.paketText));
 

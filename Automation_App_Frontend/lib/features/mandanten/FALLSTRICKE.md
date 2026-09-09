@@ -173,9 +173,22 @@ wo die Akten liegen, und kommt als Datei herein. **Das Format steht in
   Zeilen verschieben sich, sobald eine weggelassen wird. Das Feld geht bewusst nicht über die
   Leitung (`toJson` kennt es nicht) — es gilt dem laufenden Vorgang, nicht dem Bestand, und stünde
   sonst im Vertrag, ohne dass das Backend etwas damit anfinge.
-- Der Auftrag für den Erzeuger der Datei liegt als Text in `presentation/utils/import_anleitung.dart`
-  und ist in der App kopierbar. Er beschreibt dasselbe Format wie die Doku — ändert sich das Format,
-  ändern sich **beide**.
+- **Es gibt genau einen Auftrag für den Erzeuger der Datei**, und er hängt am Arbeitspaket:
+  `ImportAnleitung.paketText` (in `presentation/utils/import_anleitung.dart`). Er reist als Feld
+  `anleitung` in der Paketdatei mit und liegt nach dem Speichern zugleich in der Zwischenablage.
+  Daneben stand einmal eine zweite Fassung für den Lauf über den ganzen Stammordner, mit eigenem
+  Knopf auf der Import-Seite. Sie war strikt schwächer — Stammordner als Platzhalter zum
+  Selbsteintragen, keine bekannten Mandanten (Dubletten), keine Namensvorschläge (ein Blick in
+  jeden Ordner), keine geschlossene Liste (Doppelarbeit) — und beschrieb genau den Lauf über alle
+  4040 Ordner auf einmal, den die Arbeitspakete abgeschafft haben. Vor allem aber ließen zwei
+  Aufträge nebeneinander offen, welcher gilt: genau die Frage, die in der Kanzlei aufkam. Geblieben
+  ist auf der Import-Seite `ImportAnleitung.dateiaufbau` zum **Nachschlagen** des Formats — eine
+  Frage an das Format, keine zweite Auftragsvergabe. Der Auftrag beschreibt dasselbe Format wie die
+  Doku: ändert es sich, ändern sich **beide**.
+- **Das JSON-Feld heißt `anleitung`, die Oberfläche sagt „Auftrag".** Kein Versehen: Der Feldname
+  steht im Format der Fassung 1, ihn umzubenennen wäre ein Formatwechsel für einen Wortlaut. Im
+  sichtbaren Text ist „Auftrag" dagegen durchgezogen — vorher standen „Anleitung", „Auftrag" und
+  „Arbeitsauftrag" für dieselbe Sache nebeneinander.
 
 ## Arbeitspakete und sichere Treffer (#108)
 
