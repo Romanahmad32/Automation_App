@@ -168,10 +168,12 @@ selbst ist `FehlerHinweis` (`core/general_widgets/`) — dieselbe Fehlerfarbe wi
 aber ohne ihre Wirkung; das Muster stammt von `FeldNameHinweis` in `form_template_setup`.
 
 Der Bestand (`belegteNummern`, `nummernJahr`) liegt als lokaler State in
-`_VorgangStartenFormViewState`, gesetzt in `_patchDefaults` — nicht als erneuter Bloc-Zugriff aus
-`AuftragSection`: Die Sektionen-Widgets sind reine `StatelessWidget`s, die ihre Werte von der View
-bekommen, wie auch `referenzManuallyEdited` und die Mandantenliste. Ändert der Anwalt den Jahrgang
-im Feld `auftragsjahr`, wird der Bestand **nicht** neu geladen — er gilt für den beim Öffnen der
-Seite aktuellen Jahrgang. Das deckt den Normalfall (ein neuer Vorgang trägt praktisch immer das
-laufende Jahr); ein Nachladen je Tastenanschlag im Jahr-Feld war für diesen Zuschnitt bewusst
-nicht Teil der Aufgabe.
+`_VorgangStartenFormViewState`, gesetzt über `onNummernstandGeladen` — den Rückkanal von
+`VorgangDefaultsBeobachter` (`presentation/widgets/`, seit #109-D1 die eigenständige Auslagerung von
+`_patchDefaults` und dem Öffnen-schon-geladen-Check aus der View, wegen des 250-Zeilen-Budgets). Es
+ist kein erneuter Bloc-Zugriff aus `AuftragSection` nötig: Die Sektionen-Widgets sind reine
+`StatelessWidget`s, die ihre Werte von der View bekommen, wie auch `referenzManuallyEdited` und die
+Mandantenliste. Ändert der Anwalt den Jahrgang im Feld `auftragsjahr`, wird der Bestand **nicht** neu
+geladen — er gilt für den beim Öffnen der Seite aktuellen Jahrgang. Das deckt den Normalfall (ein
+neuer Vorgang trägt praktisch immer das laufende Jahr); ein Nachladen je Tastenanschlag im Jahr-Feld
+war für diesen Zuschnitt bewusst nicht Teil der Aufgabe.
