@@ -25,12 +25,12 @@ class RegisterAblageFelder extends StatelessWidget {
     children: [
       OrdnerAuswahlFeld(
         formControlName: 'registerAblageOrdner',
-        beschriftung: 'Register-Ablage',
+        beschriftung: 'Abweichende Register-Ablage (optional)',
         dialogTitel: 'Ordner für das Register wählen',
         icon: Icons.cloud_outlined,
         hinweisOhneOrdner:
-            'Ohne eigene Wahl entsteht das Register unter dem Ordner für die '
-            'App-Daten. Fehlt auch der, wird keine Register-Datei geschrieben.',
+            'Standard: Unterordner „Register“ im gemeinsamen OneDrive-Ordner. '
+            'Ohne gemeinsame oder eigene Ablage wird keine Register-Datei geschrieben.',
       ),
       SizedBox(height: 8),
       SynchronisierterOrdnerVorschlag(

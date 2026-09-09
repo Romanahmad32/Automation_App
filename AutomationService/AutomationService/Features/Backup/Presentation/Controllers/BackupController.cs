@@ -21,7 +21,8 @@ namespace AutomationService.Features.Backup.Presentation.Controllers;
 [Route("api/[controller]")]
 public class BackupController(
     IDatabaseBackupService backupService,
-    IArbeitsplatzUebergabe uebergabe) : ControllerBase
+    IArbeitsplatzUebergabe uebergabe,
+    IAutomatischeSicherung automatischeSicherung) : ControllerBase
 {
     [HttpGet("export")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -53,8 +54,7 @@ public class BackupController(
 
         await using var stream = datei.OpenReadStream();
         var ergebnis = await backupService.ImportBackupAsync(stream, cancellationToken);
-        var message = "Sicherung eingespielt. Bitte die App neu starten, damit alle "
-            + "Ansichten die wiederhergestellten Daten laden."
+        var message = "Sicherung eingespielt. Die Ansichten werden neu geladen."
             + Vorlagenhinweis(ergebnis.UebersprungeneVorlagen);
         return Ok(new { message });
     }
@@ -78,9 +78,11 @@ public class BackupController(
     [ProducesResponseType(typeof(UebernahmeErgebnisDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<UebernahmeErgebnisDto>> Uebernehmen(
+        [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)] UebernahmeAuftragDto? auftrag,
         CancellationToken cancellationToken)
     {
-        var ergebnis = await uebergabe.UebernehmenAsync(cancellationToken);
+        var ergebnis = await uebergabe.UebernehmenGeprueftAsync(
+            auftrag?.Pruefkennung, auftrag?.KonfliktBestaetigt ?? false, cancellationToken);
         if (ergebnis.Rechnername is null)
         {
             return Ok(new UebernahmeErgebnisDto(
@@ -92,6 +94,21 @@ public class BackupController(
             ergebnis.Rechnername,
             $"Stand von {ergebnis.Rechnername} übernommen."
             + Vorlagenhinweis(ergebnis.UebersprungeneVorlagen)));
+    }
+
+    [HttpPost("bereitstellen")]
+    [ProducesResponseType(typeof(LetzteSicherungDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<LetzteSicherungDto>> Bereitstellen(CancellationToken cancellationToken)
+    {
+        var ergebnis = await automatischeSicherung.SchreibeAsync(cancellationToken);
+        if (ergebnis is null || !ergebnis.Gelungen)
+        {
+            return Problem(detail: ergebnis?.Meldung ?? "Bitte zuerst den gemeinsamen App-Datenordner einstellen.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        return Ok(LetzteSicherungDto.From(ergebnis));
     }
 
     /// <summary>

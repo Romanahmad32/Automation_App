@@ -34,11 +34,13 @@ namespace AutomationService.Features.Backup.Presentation.HostedServices;
 /// </param>
 /// <param name="logger">Hält Fehlschläge im Protokoll fest.</param>
 /// <param name="intervall">Nur für Tests; ab Werk <see cref="Intervall"/>.</param>
+/// <param name="standLesen">Inhaltlicher Fingerabdruck einschließlich Vorlagen und Anhängen.</param>
 public sealed class SicherungsZeitgeber(
     IAutomatischeSicherung sicherung,
     Func<string> datenbankPfad,
     ILogger<SicherungsZeitgeber> logger,
-    TimeSpan? intervall = null) : BackgroundService
+    TimeSpan? intervall = null,
+    Func<string>? standLesen = null) : BackgroundService
 {
     /// <summary>
     /// Der Takt. Eine halbe Stunde ist der Ausgleich zwischen „höchstens eine
@@ -140,7 +142,7 @@ public sealed class SicherungsZeitgeber(
     {
         try
         {
-            return AenderungsMerkmal.Fingerabdruck(datenbankPfad());
+            return standLesen?.Invoke() ?? AenderungsMerkmal.Fingerabdruck(datenbankPfad());
         }
         catch (Exception ex)
         {

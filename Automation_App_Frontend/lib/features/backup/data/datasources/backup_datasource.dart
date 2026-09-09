@@ -13,7 +13,12 @@ abstract class BackupDatasource {
 
   Future<UebergabeStand> uebergabeStand();
 
-  Future<String> uebernehmeStand();
+  Future<String> uebernehmeStand({
+    String? pruefkennung,
+    bool konfliktBestaetigt = false,
+  });
+
+  Future<void> jetztBereitstellen();
 
   Future<void> quittiereSicherungsfehler();
 }
@@ -65,15 +70,33 @@ class ApiBackupDatasource implements BackupDatasource {
   }
 
   @override
-  Future<String> uebernehmeStand() async {
+  Future<String> uebernehmeStand({
+    String? pruefkennung,
+    bool konfliktBestaetigt = false,
+  }) async {
     final response = await _dio.post(
       '/api/Backup/uebergabe/uebernehmen',
+      data: {
+        'pruefkennung': pruefkennung,
+        'konfliktBestaetigt': konfliktBestaetigt,
+      },
       // Einspielen heißt Datenbank tauschen und migrieren — dieselbe
       // Größenordnung wie ein Import von Hand, nicht die 3-Sekunden-Vorgabe.
       options: Options(sendTimeout: _timeout, receiveTimeout: _timeout),
     );
+    if (response.data is Map && response.data['uebernommen'] == false) {
+      throw StateError(
+        'Das Angebot ist nicht mehr verfügbar. Bitte erneut prüfen.',
+      );
+    }
     return _meldung(response.data, 'Stand übernommen.');
   }
+
+  @override
+  Future<void> jetztBereitstellen() => _dio.post<void>(
+    '/api/Backup/bereitstellen',
+    options: Options(sendTimeout: _timeout, receiveTimeout: _timeout),
+  );
 
   @override
   Future<void> quittiereSicherungsfehler() =>

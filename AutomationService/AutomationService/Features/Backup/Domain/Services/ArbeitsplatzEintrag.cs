@@ -35,4 +35,34 @@ public sealed record ArbeitsplatzEintrag(
     DateTime ZuletztGearbeitet,
     DateTime? GesichertAm,
     string? Sicherung,
-    string Programmfassung);
+    string Programmfassung)
+{
+    public string? Revision { get; init; }
+    public string[] Vorfahren { get; init; } = [];
+    public string? Sha256 { get; init; }
+    public long? Bytes { get; init; }
+
+    // Die Herkunftskette ist ein Wert: Nach JSON-Rundreise ist das Array neu,
+    // der Arbeitsplatz-Eintrag aber weiterhin derselbe.
+    public bool Equals(ArbeitsplatzEintrag? other) => other is not null
+        && Rechnername == other.Rechnername && ZuletztGearbeitet == other.ZuletztGearbeitet
+        && GesichertAm == other.GesichertAm && Sicherung == other.Sicherung
+        && Programmfassung == other.Programmfassung && Revision == other.Revision
+        && Sha256 == other.Sha256 && Bytes == other.Bytes
+        && Vorfahren.SequenceEqual(other.Vorfahren, StringComparer.Ordinal);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Rechnername);
+        hash.Add(ZuletztGearbeitet);
+        hash.Add(GesichertAm);
+        hash.Add(Sicherung);
+        hash.Add(Programmfassung);
+        hash.Add(Revision);
+        hash.Add(Sha256);
+        hash.Add(Bytes);
+        foreach (var vorfahr in Vorfahren) hash.Add(vorfahr);
+        return hash.ToHashCode();
+    }
+}

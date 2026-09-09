@@ -9,12 +9,11 @@ namespace AutomationService.Features.Backup.Domain.Services;
 
 /// <summary>
 /// Sicherung/Wiederherstellung des gesamten Anwenderbestands: Datenbank <em>und</em>
-/// Word-Vorlagen, als ein ZIP (Aufbau siehe <see cref="SicherungsArchiv"/>).
+/// Word-Vorlagen und Mailanhänge, als ein ZIP (Aufbau siehe <see cref="SicherungsArchiv"/>).
 ///
-/// Import sichert den aktuellen Stand vorher vollstaendig daneben, ersetzt
-/// Datenbank und Vorlagen und hebt das Schema per EF-Core-Migrationen auf den
-/// aktuellen Stand — so laesst sich auch eine aeltere Sicherung gefahrlos
-/// einspielen. Blanke .db-Sicherungen aus der Zeit vor dem Vorlagenordner
+/// Import sichert den aktuellen Stand vorher vollständig daneben. Prüfung und
+/// Migration erfolgen an einer Kopie vor dem Datenbanktausch; abweichende lokale
+/// Vorlagen bleiben erhalten. Blanke .db-Sicherungen aus der Zeit vor dem Vorlagenordner
 /// funktionieren weiter; dann bleiben die Vorlagen unberuehrt.
 ///
 /// Bewusst ohne DI-Kontext (nur Pfade + Logger), damit der Dienst die Dateien
@@ -31,6 +30,8 @@ public sealed class DatabaseBackupService(
     // Export und Import serialisieren: die Dateien werden nie gleichzeitig getauscht.
     static readonly SemaphoreSlim Gate = new(1, 1);
 
+    public SynchronisationsVerlauf Verlauf { get; } = new(databaseFilePath, vorlagenVerzeichnis);
+
     public async Task<string> CreateBackupFileAsync(CancellationToken cancellationToken = default)
     {
         var zielPfad = Path.Combine(Path.GetTempPath(), $"automation-backup-{Guid.NewGuid():N}.zip");
@@ -42,6 +43,11 @@ public sealed class DatabaseBackupService(
             await SicherungsArchiv.ErstelleAsync(
                 databaseFilePath, vorlagenOrdner, zielPfad, cancellationToken);
         }
+        catch
+        {
+            TryDelete(zielPfad);
+            throw;
+        }
         finally
         {
             Gate.Release();
@@ -51,8 +57,13 @@ public sealed class DatabaseBackupService(
         return zielPfad;
     }
 
-    public async Task<SicherungsImportErgebnis> ImportBackupAsync(
-        Stream sicherung, CancellationToken cancellationToken = default)
+    public Task<SicherungsImportErgebnis> ImportBackupAsync(
+        Stream sicherung, CancellationToken cancellationToken = default) =>
+        ImportGeprueftAsync(sicherung, null, null, cancellationToken);
+
+    public async Task<SicherungsImportErgebnis> ImportGeprueftAsync(
+        Stream sicherung, string? erwarteterInhalt, ArbeitsplatzEintrag? uebernahme,
+        CancellationToken cancellationToken = default)
     {
         var arbeitsordner = Path.Combine(
             Path.GetTempPath(), $"automation-import-{Guid.NewGuid():N}");
@@ -64,8 +75,13 @@ public sealed class DatabaseBackupService(
         var vorlagenOrdner = vorlagenVerzeichnis();
 
         await Gate.WaitAsync(cancellationToken);
+        var schreibschutz = false;
         try
         {
+            await DatenbankWechsel.Schleuse.WaitAsync(cancellationToken);
+            schreibschutz = true;
+            if (erwarteterInhalt is not null && Verlauf.Fingerabdruck() != erwarteterInhalt)
+                throw new InvalidBackupException("Der lokale Stand hat sich geändert. Bitte die Übernahme erneut prüfen.");
             await using (var datei = File.Create(hochgeladen))
             {
                 await sicherung.CopyToAsync(datei, cancellationToken);
@@ -80,25 +96,53 @@ public sealed class DatabaseBackupService(
             // dieses Rechners sollen den Import ueberleben.
             var lokaleEinstellungen = await LeseLokaleEinstellungenAsync(cancellationToken);
 
-            ErsetzeDatenbankdatei(datenbankQuelle);
-            IReadOnlyList<string> uebersprungen = vorlagenQuelle is null
-                ? []
-                : VorlagenWiederherstellung.StelleWiederHer(vorlagenQuelle, vorlagenOrdner);
-            if (uebersprungen.Count > 0)
+            // Migration und alle Prüfungen erfolgen an der entpackten Kopie.
+            await MigriereAufAktuellesSchemaAsync(datenbankQuelle, cancellationToken);
+            await SchuetzeMaschinenPfadeAsync(lokaleEinstellungen, datenbankQuelle, cancellationToken);
+            await AktenPfadSicherung.PasseAnAsync(datenbankQuelle, export: false, cancellationToken);
+            var zielVorlagen = vorlagenOrdner;
+            await using (var vorbereitet = OeffneKontext(datenbankQuelle))
             {
-                logger.LogInformation(
-                    "{Anzahl} Vorlage(n) nicht ersetzt (lokal abweichender Inhalt): {Namen}",
-                    uebersprungen.Count, string.Join(", ", uebersprungen));
+                var settings = await vorbereitet.KanzleiSettings.FirstOrDefaultAsync(cancellationToken);
+                if (settings is not null && (AppOrdnerPfad.IstRelativ(settings.VorlagenOrdner)
+                    || AppOrdnerPfad.IstRelativ(settings.AppDatenOrdner)))
+                {
+                    zielVorlagen = VorlagenOrdnerVorgabe.Ermittle(vorbereitet);
+                }
             }
+            var anhangQuelle = Path.Combine(arbeitsordner, "entpackt", AnhangSicherung.Ordner);
+            var anhangZiel = Path.Combine(Path.GetDirectoryName(databaseFilePath)!, AnhangSicherung.Ordner);
+            AnhangSicherung.PassePfadeAn(datenbankQuelle, anhangZiel,
+                Directory.Exists(anhangQuelle) ? anhangQuelle : null);
+            await ValidiereSicherungAsync(datenbankQuelle, cancellationToken);
 
-            await MigriereAufAktuellesSchemaAsync(cancellationToken);
-            await SchuetzeMaschinenPfadeAsync(lokaleEinstellungen, cancellationToken);
+            using var dateien = new ImportDateien(arbeitsordner);
+            IReadOnlyList<string> uebersprungen = vorlagenQuelle is null
+                ? [] : dateien.Vorlagen(vorlagenQuelle, zielVorlagen);
+            if (Directory.Exists(anhangQuelle)) dateien.Anhaenge(anhangQuelle, anhangZiel);
+            cancellationToken.ThrowIfCancellationRequested();
+            // SQLite Online Backup ersetzt innerhalb einer DB-Transaktion. Keine WAL-Datei löschen.
+            var rueckweg = Path.Combine(arbeitsordner, "vorher.db");
+            await SqliteSicherung.VacuumIntoAsync(databaseFilePath, rueckweg, cancellationToken);
+            ImportDatenbank.Ersetze(datenbankQuelle, databaseFilePath);
+            try
+            {
+                if (uebernahme is not null) Verlauf.Merke(uebernahme, Verlauf.Fingerabdruck());
+            }
+            catch
+            {
+                ImportDatenbank.Ersetze(rueckweg, databaseFilePath);
+                throw;
+            }
+            dateien.Bestaetige();
+            DatenbankWechsel.Vollzogen(databaseFilePath);
 
             logger.LogInformation("Sicherung eingespielt und migriert.");
             return new SicherungsImportErgebnis(uebersprungen);
         }
         finally
         {
+            if (schreibschutz) DatenbankWechsel.Schleuse.Release();
             Gate.Release();
             TryDeleteDirectory(arbeitsordner);
         }
@@ -144,6 +188,10 @@ public sealed class DatabaseBackupService(
         {
             await using var connection = new SqliteConnection($"Data Source={pfad};Mode=ReadOnly");
             await connection.OpenAsync(ct);
+            await using var pruefung = connection.CreateCommand();
+            pruefung.CommandText = "PRAGMA integrity_check;";
+            if (!string.Equals(Convert.ToString(await pruefung.ExecuteScalarAsync(ct), CultureInfo.InvariantCulture), "ok", StringComparison.Ordinal))
+                throw new InvalidBackupException("Die Datenbank in der Sicherung ist beschädigt.");
             await using var command = connection.CreateCommand();
             command.CommandText =
                 "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory';";
@@ -177,26 +225,20 @@ public sealed class DatabaseBackupService(
 
         var bakPfad = Path.Combine(
             Path.GetDirectoryName(databaseFilePath)!,
-            $"automation-vor-import-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
+            $"automation-vor-import-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.zip");
         await SicherungsArchiv.ErstelleAsync(databaseFilePath, vorlagenOrdner, bakPfad, ct);
         logger.LogInformation("Vor-Import-Sicherung abgelegt: {Pfad}", bakPfad);
     }
 
-    /// <summary>Tauscht die Datenbankdatei aus, nachdem alle Verbindungen gelöst sind.</summary>
-    void ErsetzeDatenbankdatei(string quelle)
-    {
-        // Gepoolte Verbindungen halten sonst ein Handle auf die Zieldatei und
-        // verhindern das Überschreiben; veraltete WAL-/SHM-Seitendateien entfernen.
-        SqliteConnection.ClearAllPools();
-        TryDelete(databaseFilePath + "-wal");
-        TryDelete(databaseFilePath + "-shm");
-        File.Copy(quelle, databaseFilePath, overwrite: true);
-    }
-
     /// <summary>Hebt die (ggf. ältere) eingespielte DB auf den aktuellen Schemastand.</summary>
-    async Task MigriereAufAktuellesSchemaAsync(CancellationToken ct)
+    async Task MigriereAufAktuellesSchemaAsync(string pfad, CancellationToken ct)
     {
-        await using var context = OeffneKontext();
+        await using var context = OeffneKontext(pfad);
+        var angewendet = await context.Database.GetAppliedMigrationsAsync(ct);
+        if (angewendet.Except(context.Database.GetMigrations(), StringComparer.Ordinal).Any())
+        {
+            throw new InvalidBackupException("Die Sicherung stammt aus einer neueren App-Version. Bitte diese App zuerst aktualisieren.");
+        }
         await context.Database.MigrateAsync(ct);
         await context.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", ct);
     }
@@ -243,9 +285,9 @@ public sealed class DatabaseBackupService(
     /// dahin sagt <c>GET api/Settings/ordner</c>, was fehlt. Ihn zu verwerfen
     /// wäre stiller Datenverlust an einer behebbaren Lage.
     /// </summary>
-    async Task SchuetzeMaschinenPfadeAsync(KanzleiSettingsEntity? lokal, CancellationToken ct)
+    async Task SchuetzeMaschinenPfadeAsync(KanzleiSettingsEntity? lokal, string pfad, CancellationToken ct)
     {
-        await using var context = OeffneKontext();
+        await using var context = OeffneKontext(pfad);
         var eingespielt = await context.KanzleiSettings
             .FirstOrDefaultAsync(s => s.Id == KanzleiSettingsEntity.SingletonId, ct);
         if (eingespielt is null)
@@ -267,12 +309,12 @@ public sealed class DatabaseBackupService(
     static string Uebernommen(string eingespielt, string? lokal) =>
         AppOrdnerPfad.IstRelativ(eingespielt) ? eingespielt.Trim() : lokal ?? string.Empty;
 
-    AutomationDbContext OeffneKontext()
+    AutomationDbContext OeffneKontext(string? pfad = null)
     {
         var options = new DbContextOptionsBuilder<AutomationDbContext>()
-            .UseSqlite($"Data Source={databaseFilePath}")
+            .UseSqlite($"Data Source={pfad ?? databaseFilePath}")
             .Options;
-        return new AutomationDbContext(options);
+        return new AutomationDbContext(options) { IsolierteSicherung = pfad is not null };
     }
 
     static void TryDelete(string pfad)

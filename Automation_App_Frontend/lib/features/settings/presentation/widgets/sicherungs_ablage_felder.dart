@@ -18,12 +18,12 @@ class SicherungsAblageFelder extends StatelessWidget {
     children: [
       OrdnerAuswahlFeld(
         formControlName: 'sicherungsAblageOrdner',
-        beschriftung: 'Sicherungsablage',
+        beschriftung: 'Abweichende Sicherungsablage (optional)',
         dialogTitel: 'Ordner für die automatischen Sicherungen wählen',
         icon: Icons.backup_outlined,
         hinweisOhneOrdner:
-            'Ohne eigene Wahl sichert die App unter den Ordner für die '
-            'App-Daten. Fehlt auch der, sichert sie nur auf Knopfdruck.',
+            'Standard: Unterordner „Sicherungen“ im gemeinsamen OneDrive-Ordner. '
+            'Dies ist zugleich die Ablage für den Arbeitsplatzwechsel.',
       ),
       SizedBox(height: 8),
       SynchronisierterOrdnerVorschlag(

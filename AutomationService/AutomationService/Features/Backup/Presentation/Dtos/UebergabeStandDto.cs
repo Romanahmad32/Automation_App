@@ -22,13 +22,23 @@ namespace AutomationService.Features.Backup.Presentation.Dtos;
 /// <param name="AeltestesArchiv">
 /// Wie weit die eigene Historie zurückreicht; <c>null</c>, wenn nichts liegt.
 /// </param>
+/// <param name="Zustand">Status des Arbeitsplatzwechsels.</param>
+/// <param name="Hinweis">Verständliche Erläuterung und nächster Schritt.</param>
+/// <param name="Konflikt">Unterschiedliche Änderungen brauchen eine ausdrückliche Auswahl.</param>
+/// <param name="LokaleAenderungen">Der lokale Inhalt weicht von der letzten Bereitstellung ab.</param>
+/// <param name="Pruefkennung">Bindet die Bestätigung an die angezeigten Datenstände.</param>
 public sealed record UebergabeStandDto(
     UebergabeAngebotDto? Angebot,
     DateTime? EigenerStandGesichertAm,
     LetzteSicherungDto? LetzteSicherung,
     string AblageOrdner,
     int EigeneArchive,
-    DateTime? AeltestesArchiv)
+    DateTime? AeltestesArchiv,
+    string Zustand,
+    string Hinweis,
+    bool Konflikt,
+    bool LokaleAenderungen,
+    string? Pruefkennung)
 {
     public static UebergabeStandDto From(UebergabeStand stand) => new(
         UebergabeAngebotDto.From(stand.Angebot),
@@ -36,7 +46,8 @@ public sealed record UebergabeStandDto(
         LetzteSicherungDto.From(stand.LetzterLauf),
         stand.AblageOrdner,
         stand.Bestand.Anzahl,
-        stand.Bestand.Aeltestes);
+        stand.Bestand.Aeltestes,
+        stand.Zustand, stand.Hinweis, stand.Konflikt, stand.LokaleAenderungen, stand.Pruefkennung);
 }
 
 /// <summary>Der Arbeitsplatz, dessen Stand zur Übernahme bereitliegt.</summary>

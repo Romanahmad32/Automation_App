@@ -27,12 +27,18 @@ class BackupDouble implements BackupRepository {
   }
 
   @override
-  Future<String> uebernehmeStand() async {
+  Future<String> uebernehmeStand({
+    String? pruefkennung,
+    bool konfliktBestaetigt = false,
+  }) async {
     uebernahmen++;
     final fehler = uebernahmeWirft;
     if (fehler != null) throw fehler;
     return 'Stand von BUERO-PC übernommen.';
   }
+
+  @override
+  Future<void> jetztBereitstellen() async {}
 
   @override
   Future<void> quittiereSicherungsfehler() async => quittungen++;
