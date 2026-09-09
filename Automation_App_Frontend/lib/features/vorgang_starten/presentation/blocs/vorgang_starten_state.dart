@@ -11,19 +11,34 @@ final class VorgangStartenInitial extends VorgangStartenState {}
 
 final class VorgangStartenLoading extends VorgangStartenState {}
 
-/// Vorbelegung des Formulars aus den Einstellungen (laufende Auftragsnummer und
-/// Abteilung). Wird beim Öffnen der Seite emittiert.
+/// Vorbelegung des Formulars beim Öffnen der Seite: die vorgeschlagene
+/// Auftragsnummer (§6.3, Rückfall auf `settings.laufendeAuftragsnummer`) und
+/// die Abteilung aus den Einstellungen.
+///
+/// [belegteNummern] und [nummernJahr] tragen den Bestand mit, gegen den das
+/// Formular die Warnung bei einer doppelt vergebenen Nummer zeigt — leer bzw.
+/// `null`, wenn der Abruf des Nummernstands scheiterte (dann bleibt es beim
+/// bloßen Vorschlag aus den Einstellungen, ohne Warnung).
 final class VorgangStartenDefaultsLoaded extends VorgangStartenState {
   final int auftragsnummer;
   final String abteilung;
+  final List<int> belegteNummern;
+  final String? nummernJahr;
 
   const VorgangStartenDefaultsLoaded({
     required this.auftragsnummer,
     required this.abteilung,
+    this.belegteNummern = const [],
+    this.nummernJahr,
   });
 
   @override
-  List<Object?> get props => [auftragsnummer, abteilung];
+  List<Object?> get props => [
+    auftragsnummer,
+    abteilung,
+    belegteNummern,
+    nummernJahr,
+  ];
 }
 
 /// Der Vorgang wurde gespeichert. [zentralrufAusgefuellt] zeigt an, ob zusätzlich

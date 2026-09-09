@@ -90,13 +90,14 @@ Kapitel 4–7.
 | § | Thema |
 |---|---|
 | 6.1 | Aktenablage im Dateisystem: Akte je Mandant, Namensmuster der Unterordner, Stammordner |
-| 6.2 | Sachgebiete-/Auftragsregister: die App führt es, automatische Aufnahme, Spaltenschema, Ansicht und Export |
+| 6.2 | Sachgebiete-/Auftragsregister: die App führt es, automatische Aufnahme, Spaltenschema, Ansicht und Export (Word sofort, PDF nachgezogen), Übernahme der Historie des Word-Registers |
+| 6.3 | Laufende Nummer und Kopplung von Register und Vorgang: Vorschlag aus dem Bestand (höchste + 1), belegt ab dem Anlegen, frei beim Löschen, Doublette warnt statt zu sperren, beide Löschrichtungen fragen nach der Gegenseite |
 
 ### 7 Betrieb
 
 | § | Thema |
 |---|---|
-| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Rechtsgebiet folgt der Abteilung, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand samt Mail-Textvorlagen, Anreden und Zusatzgrüßen, Postfach-Zugang, Darstellung, Sicherung |
+| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen — als Korrektur von Hand, Vorschlag kommt aus 6.3), Sachgebietskatalog (Kürzel, Rechtsgebiet folgt der Abteilung, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand samt Mail-Textvorlagen, Anreden und Zusatzgrüßen, Postfach-Zugang, Darstellung, Sicherung |
 | 7.2 | Datensicherung und Datenintegrität: Schutz vor Datenverlust, Sichern/Wiederherstellen, robuste Wiederherstellung, Sicherung während der Arbeit, Aufbewahrung nach Alter, dauerhafte Kennungen, Änderungsstand |
 | 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[K]**, siehe 8) |
 
@@ -135,5 +136,5 @@ nicht versionierten Volltext steht, hält niemanden auf.
 ### 9 Offene Punkte
 
 Bewusst noch nicht entschieden — u. a. eine offizielle Zentralruf-Schnittstelle als Alternative zur
-Browser-Automatisierung, die Übernahme des Registeraltbestands, die Bezugsquelle für Updates und
-der Weg des Website-Kanals. Wer auf eine dieser Fragen stößt, entscheidet sie nicht selbst.
+Browser-Automatisierung, die Bezugsquelle für Updates und der Weg des Website-Kanals. Wer auf eine
+dieser Fragen stößt, entscheidet sie nicht selbst.

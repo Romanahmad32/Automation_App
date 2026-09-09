@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Text.Json;
+using AutomationService.Features.RegisterHistorie.Domain.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Persistence;
 
 namespace AutomationService.Features.Vorgaenge.Domain.Services;
@@ -24,34 +25,63 @@ public static class RegisterZeilenBau
     public static IReadOnlyList<RegisterZeile> Aus(
         IEnumerable<VorgangEntity> vorgaenge,
         bool nurAbgeschlossene)
+        => Aus(vorgaenge, [], nurAbgeschlossene);
+
+    /// <summary>
+    /// Dieselben Zeilen aus <b>beiden</b> Quellen: den Vorgängen der App und
+    /// der übernommenen Registerhistorie ab 2018 (§6.2).
+    ///
+    /// Eine Quelle für Bildschirm und Spiegeldatei — deshalb baut das Backend
+    /// die Zeilen und das Frontend zeigt sie nur. Solange beide Seiten dieselbe
+    /// Liste mischen, können sie nicht auseinanderlaufen; die Paritätstests, die
+    /// das früher zusammenhielten, werden damit überflüssig.
+    ///
+    /// <paramref name="nurAbgeschlossene"/> wirkt nur auf die Vorgänge: Eine
+    /// historische Zeile ist per Herkunft abgeschlossen und fällt unter keinen
+    /// Filter.
+    /// </summary>
+    public static IReadOnlyList<RegisterZeile> Aus(
+        IEnumerable<VorgangEntity> vorgaenge,
+        IEnumerable<RegisterHistorieEntity> historie,
+        bool nurAbgeschlossene)
     {
         ArgumentNullException.ThrowIfNull(vorgaenge);
+        ArgumentNullException.ThrowIfNull(historie);
 
         var zeilen = vorgaenge
             .Where(v => !nurAbgeschlossene || IstAbgeschlossen(v))
             .Select(Zeile)
+            .Concat(historie.Select(RegisterHistorieZeilen.Zeile))
             .ToList();
 
-        // Chronologisch wie die gewachsene Datei: Jahrgang aufsteigend, darin
-        // nach laufender Nummer. Zeilen ohne Nummer (noch nicht abgeschlossen)
-        // hängen hinten am Jahrgang, weil ihre Nummer erst beim Abschluss
-        // vergeben wird und sie sonst jedes Mal die Reihenfolge umwürfen.
-        zeilen.Sort((a, b) =>
-        {
-            var jahr = string.CompareOrdinal(a.Jahr, b.Jahr);
-            if (jahr != 0) return jahr;
-            if (a.LaufendeNummer is null && b.LaufendeNummer is null)
-                return string.CompareOrdinal(a.Zeichen, b.Zeichen);
-            if (a.LaufendeNummer is null) return 1;
-            if (b.LaufendeNummer is null) return -1;
-            return a.LaufendeNummer.Value.CompareTo(b.LaufendeNummer.Value);
-        });
-
+        zeilen.Sort(Reihenfolge);
         return zeilen;
     }
 
     /// <summary>
-    /// Derselbe Filter wie in <see cref="Aus"/>, aber als Ausdruck — damit die
+    /// Chronologisch wie die gewachsene Datei: Jahrgang aufsteigend, darin nach
+    /// laufender Nummer — quellenübergreifend, damit eine historische Zeile
+    /// zwischen den Vorgängen desselben Jahrgangs an ihrer Nummer steht und
+    /// nicht als zweiter Block dahinter.
+    ///
+    /// Zeilen ohne Nummer (noch nicht abgeschlossen) hängen hinten am Jahrgang,
+    /// weil ihre Nummer erst beim Abschluss vergeben wird und sie sonst jedes
+    /// Mal die Reihenfolge umwürfen.
+    /// </summary>
+    static int Reihenfolge(RegisterZeile a, RegisterZeile b)
+    {
+        var jahr = string.CompareOrdinal(a.Jahr, b.Jahr);
+        if (jahr != 0) return jahr;
+        if (a.LaufendeNummer is null && b.LaufendeNummer is null)
+            return string.CompareOrdinal(a.Zeichen, b.Zeichen);
+        if (a.LaufendeNummer is null) return 1;
+        if (b.LaufendeNummer is null) return -1;
+        var nummer = a.LaufendeNummer.Value.CompareTo(b.LaufendeNummer.Value);
+        return nummer != 0 ? nummer : string.CompareOrdinal(a.Zeichen, b.Zeichen);
+    }
+
+    /// <summary>
+    /// Derselbe Filter wie in <c>Aus</c>, aber als Ausdruck — damit die
     /// Datenbank die Zeilen <em>zählen</em> kann, statt sie erst alle zu laden
     /// und bauen zu lassen. Genutzt von <c>StandAsync</c>, das beim Öffnen der
     /// Registerseite nur die Anzahl braucht.
@@ -69,14 +99,24 @@ public static class RegisterZeilenBau
     static bool IstAbgeschlossen(VorgangEntity v) =>
         string.Equals(v.Status, VorgangAbschlussService.StatusVersendet, StringComparison.Ordinal);
 
-    static RegisterZeile Zeile(VorgangEntity v) => new(
+    /// <summary>
+    /// Baut die Zeile zu genau einem Vorgang — dieselbe Ableitung, die auch
+    /// die Registeransicht und der Word/PDF-Spiegel benutzen. Öffentlich, damit
+    /// <c>VorgangLoeschung</c> (§6.3) beim Löschen dieselbe Zeile bekommt, die
+    /// auch im Register stünde, statt Jahrgang, Zeichen und Parteien ein
+    /// zweites Mal herzuleiten.
+    /// </summary>
+    public static RegisterZeile Zeile(VorgangEntity v) => new(
         Jahr: Jahrgang(v),
         LaufendeNummer: v.LaufendeNummer,
         Zeichen: Zeichen(v),
         Parteien: Parteien(v),
         Sachbestand: Sachbestand(v),
         Rechtsgebiet: RechtsgebietAnzeige.Fuer(v.Rechtsgebiet),
-        Abgeschlossen: IstAbgeschlossen(v));
+        Abgeschlossen: IstAbgeschlossen(v),
+        // Die Referenz statt der Id: Sie ist der Schlüssel, mit dem die Ansicht
+        // den Vorgang öffnet, und sie steht ohnehin schon in der Zeile.
+        VorgangReferenz: v.Referenz);
 
     /// <summary>
     /// Vierstelliger Jahrgang. <c>Jahr</c> steht am Vorgang zweistellig ("26"),
@@ -88,7 +128,7 @@ public static class RegisterZeilenBau
     /// <c>IsAsciiDigit</c> und nicht <c>IsDigit</c>: Letzteres nimmt auch
     /// Ziffern anderer Schriften an (etwa ٢٦), aus denen dann ein Jahrgang
     /// „20٢٦" entstünde, den das Frontend nie erzeugt. Die Zusage lautet,
-    /// dieselbe Antwort zu geben wie <c>RegisterFilter.jahrgang</c> — und Darts
+    /// dieselbe Antwort zu geben wie <c>VorgangJahrgang.fuer</c> — und Darts
     /// <c>\d</c> kennt nur 0–9.
     /// </summary>
     public static string Jahrgang(VorgangEntity v)

@@ -67,6 +67,9 @@ void main() {
     // Abruf zu liefern. Als `…Datasource` benannt wuerde sie das Gegenteil
     // ihrer Arbeitsweise behaupten.
     'lib/features/mailbox/data/datasources/mailbox_hub.dart',
+    // Derselbe Fall fuer das Register (§6.2/§6.3): Push-Verbindung zum Hub
+    // `/hubs/register`, kein Abruf auf Anfrage.
+    'lib/features/vorgaenge/data/datasources/register_hub.dart',
   };
 
   final klassenkopf = RegExp(r'^(abstract\s+)?class\s+(\w+)', multiLine: true);

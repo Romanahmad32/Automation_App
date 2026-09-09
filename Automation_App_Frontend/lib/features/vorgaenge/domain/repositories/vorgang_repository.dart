@@ -16,7 +16,15 @@ abstract class VorgangRepository {
   Future<Vorgang> upsertVorgang(Vorgang vorgang);
 
   /// Löscht den Vorgang zur Referenz (No-op, wenn keiner passt).
-  Future<void> deleteVorgang(String referenz);
+  ///
+  /// [registerzeileBehalten] entscheidet über die gespiegelte Registerzeile
+  /// (§6.3): Bei `true` (Vorbelegung — die Antwort, die nichts zusätzlich
+  /// löscht) wird sie vorher zu einer eigenständigen Zeile der übernommenen
+  /// Historie; bei `false` verschwindet sie mit dem Vorgang.
+  Future<void> deleteVorgang(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  });
 
   /// Hinterlegt den angefangenen Ausfüllstand am Vorgang — [entwurf] `null`
   /// verwirft ihn. Eigener Weg statt [upsertVorgang]: Der Entwurf wird beim

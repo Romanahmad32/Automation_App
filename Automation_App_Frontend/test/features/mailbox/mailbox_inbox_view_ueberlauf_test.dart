@@ -98,7 +98,10 @@ class _LeereVorgangAblage implements VorgangRepository {
   @override
   Future<Vorgang> upsertVorgang(Vorgang vorgang) => throw UnimplementedError();
   @override
-  Future<void> deleteVorgang(String referenz) => throw UnimplementedError();
+  Future<void> deleteVorgang(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) => throw UnimplementedError();
   @override
   Future<Vorgang?> abschliessenVorgang(String referenz) async => null;
   @override

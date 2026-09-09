@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_push_notifier.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -10,16 +12,25 @@ import 'package:injectable/injectable.dart';
 /// Bewusst schmal: Der Spiegel wird ohnehin nach jedem Vorgangsabschluss im
 /// Backend geschrieben. Diese Klasse trägt nur den Knopf „Jetzt neu schreiben"
 /// und die Anzeige darunter — und `laeuft`, damit man nicht zweimal drückt,
-/// während Word noch wandelt.
+/// während Word noch wandelt. Dazu hört sie auf den Hub `/hubs/register`
+/// ([RegisterPushNotifier]): Läuft eine PDF-Umwandlung nach, trägt sie das
+/// Fertigwerden nach, ohne dass jemand im Takt nachfragen müsste.
 @injectable
 class RegisterSpiegelCubit extends Cubit<RegisterSpiegelErgebnis> {
   final RegisterSpiegelRepository _repository;
+  final RegisterPushNotifier _hub;
 
   /// Der Lauf, der gerade unterwegs ist — oder null.
   Future<void>? _laufend;
 
-  RegisterSpiegelCubit(this._repository)
-    : super(RegisterSpiegelErgebnis.unbekannt);
+  StreamSubscription<({bool fertig, String? pdfPfad, String? fehler})>?
+  _pdfFertigSub;
+
+  RegisterSpiegelCubit(this._repository, this._hub)
+    : super(RegisterSpiegelErgebnis.unbekannt) {
+    _pdfFertigSub = _hub.onPdfFertig.listen(_pdfNachgezogen);
+    _hub.ensureConnected();
+  }
 
   /// Schützt vor einem zweiten Lauf, solange einer offen ist. Bewusst **kein**
   /// Anzeigezustand: Ein Cubit verwirft ein `emit` mit gleichem Wert, ein Knopf
@@ -71,6 +82,36 @@ class RegisterSpiegelCubit extends Cubit<RegisterSpiegelErgebnis> {
 
   /// Der Dienst antwortet auf beide Wege mit 200 und einem Stand; hier landet
   /// nur, was gar nicht erst ankam — Dienst nicht erreichbar, Zeitüberschreitung.
-  String _satz(Exception fehler) =>
-      'Der Register-Export ist nicht erreichbar: $fehler';
+  ///
+  /// Die Datenquelle hat daraus bereits einen deutschen Satz gemacht
+  /// ([RegisterException]). Der Rückfall ist der Fall, den es nicht geben
+  /// sollte: eine Ausnahme, die niemand übersetzt hat — dann lieber ein Satz
+  /// ohne Einzelheit als ein Ausnahmetext im Gesicht des Anwalts.
+  String _satz(Exception fehler) => switch (fehler) {
+    RegisterException(:final message) => message,
+    _ =>
+      'Das Register konnte nicht geschrieben werden. '
+          'Bitte starten Sie die Anwendung neu.',
+  };
+
+  /// Trägt die Hub-Meldung nach (§6.2 „Dass ein PDF gerade entsteht, ist an
+  /// der Oberfläche ablesbar"): Der Lauf ist vorbei, `pdfLaeuft` wird falsch,
+  /// und je nach [meldung.fertig] steht der Pfad oder der Klartext aus
+  /// [meldung.fehler] daneben — nie beides zugleich, wie schon
+  /// `RegisterSpiegelDto` es meldet.
+  void _pdfNachgezogen(
+    ({bool fertig, String? pdfPfad, String? fehler}) meldung,
+  ) => emit(
+    state.copyWith(
+      pdfLaeuft: false,
+      pdfPfad: meldung.fertig ? meldung.pdfPfad : null,
+      pdfFehler: meldung.fertig ? null : meldung.fehler,
+    ),
+  );
+
+  @override
+  Future<void> close() {
+    _pdfFertigSub?.cancel();
+    return super.close();
+  }
 }

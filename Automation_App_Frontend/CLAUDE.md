@@ -66,10 +66,10 @@ dieselben Feldnamen, `grep -h "Backend:" lib/features/*/FEATURE.md` beantwortet 
 featureübergreifende Fragen in einem Zugriff.
 
 **Was über den Feature-Rand hinausgeht, steht in [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md)**:
-fünf Ketten laufen quer durch mehrere Features (Vorbelegung, Antwortübernahme, Abschluss,
-Kanzleidaten, Arbeitsplatzwechsel), und der Steckbrief eines Features sagt nicht, dass es Teil
-einer ist. Wer
-eine Kette an einer Stelle ändert und die andere stehen lässt, bricht sie — kein Test fängt das.
+sechs Ketten laufen quer durch mehrere Features (Vorbelegung, Antwortübernahme, Abschluss,
+Kanzleidaten, Arbeitsplatzwechsel, Registerhistorie), und der Steckbrief eines Features sagt
+nicht, dass es Teil einer ist. Wer eine Kette an einer Stelle ändert und die andere stehen
+lässt, bricht sie — kein Test fängt das.
 
 Der Steckbrief hat ein Budget (40 Zeilen, keine über 130 Zeichen) — es hält ihn zum Einstieg
 tauglich. Wo mehr zu erklären ist, liegt daneben eine **`FALLSTRICKE.md` ohne Budget** (welche
@@ -91,7 +91,8 @@ zusammenzuziehen, um unter das Budget zu kommen, hat schon einmal lesbare Doku u
 | `mandanten` | Mandantenregister (Datenbank) + Akten/Fälle (Dateisystem) |
 | `sachgebiete` | Sachgebietskatalog (§7.1) als Quelle der Rechtsgebiets- und Abteilungs-Auswahl; kein eigener Tab |
 | `versicherer` | lesender Zugriff auf die Versicherer-Wissensbasis; benutzt aus `zentralruf_reply` |
-| `vorgaenge` | Lebenszyklus der Vorgänge + Sachgebiete-/Auftragsregister |
+| `vorgaenge` | Lebenszyklus der Vorgänge + Sachgebiete-/Auftragsregister mit Historie (§6.2) |
+| `register_import` | Registerhistorie jahrgangsweise einlesen: Vorschau je Jahrgang, Befunde, Übernahme (§6.2) |
 | `settings` | Kanzleidaten, Aktenstammordner, Auftragsnummer/Abteilung, Mail-Signatur, Erscheinungsbild; hängt die Reiter aus `mailbox`, `backup` und `word_automation` (Standardpositionen) ein |
 | `backup` | Sicherung und Wiederherstellung; aufgerufen aus den Einstellungen |
 | `dev_simulation` | Demo-Vorgang + Simulationsmenü, nur in `kDebugMode` sichtbar |

@@ -1,12 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/dev_simulation/presentation/widgets/demo_vorgang_button.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgaenge_liste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_bearbeiten_dialog.dart';
-import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_verwaltung_tile.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_loeschen_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -38,18 +38,15 @@ class VorgaengeVerwaltenPage extends StatelessWidget {
 
   Future<void> _loeschen(BuildContext context, Vorgang vorgang) async {
     final cubit = getIt<VorgangCubit>();
-    final bestaetigt = await bestaetigen(
-      context,
-      titel: 'Vorgang löschen?',
-      text:
-          'Der Vorgang „${vorgang.zeichen}" wird endgültig gelöscht. '
-          'Dies kann nicht rückgängig gemacht werden.',
-      bestaetigung: 'Löschen',
-      destruktiv: true,
+    final registerzeileBehalten = await showDialog<bool>(
+      context: context,
+      builder: (_) => VorgangLoeschenDialog(vorgang: vorgang),
     );
-    if (bestaetigt) {
-      await cubit.loesche(vorgang.referenz);
-    }
+    if (registerzeileBehalten == null) return;
+    await cubit.loesche(
+      vorgang.referenz,
+      registerzeileBehalten: registerzeileBehalten,
+    );
   }
 
   @override
@@ -85,17 +82,10 @@ class VorgaengeVerwaltenPage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  itemCount: liste.length,
-                  itemBuilder: (context, index) {
-                    final vorgang = liste[index];
-                    return VorgangVerwaltungTile(
-                      vorgang: vorgang,
-                      onEdit: () => _bearbeiten(context, vorgang),
-                      onDelete: () => _loeschen(context, vorgang),
-                    );
-                  },
+                child: VorgaengeListe(
+                  vorgaenge: liste,
+                  onEdit: (vorgang) => _bearbeiten(context, vorgang),
+                  onDelete: (vorgang) => _loeschen(context, vorgang),
                 ),
               ),
             ],

@@ -228,7 +228,14 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
 
   /// Löscht den Vorgang mit der angegebenen Referenz endgültig (z. B.
   /// Fehlerfassung oder Test-Vorgang). No-op, wenn keiner passt.
-  Future<void> loesche(String referenz) async {
+  ///
+  /// [registerzeileBehalten] steuert die gespiegelte Registerzeile (§6.3):
+  /// bei `true` (Vorbelegung) wird sie eigenständige Zeile der übernommenen
+  /// Historie, bei `false` verschwindet sie mit dem Vorgang.
+  Future<void> loesche(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) async {
     final neu = state
         .where(
           (vorhanden) => !Vorgang.gleicheReferenz(vorhanden.referenz, referenz),
@@ -236,7 +243,10 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
         .toList();
     if (neu.length == state.length) return;
     emit(neu);
-    await _loescheImBackend(referenz);
+    await _loescheImBackend(
+      referenz,
+      registerzeileBehalten: registerzeileBehalten,
+    );
   }
 
   /// Schließt den Vorgang ab (Versand erledigt). Statuswechsel auf „versendet"
@@ -264,7 +274,10 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
       switch (fehler.aktion) {
         VorgangPersistenzAktion.laden => ladeErneut(),
         VorgangPersistenzAktion.speichern => _upsert(fehler.vorgang!),
-        VorgangPersistenzAktion.loeschen => _loescheImBackend(fehler.referenz!),
+        VorgangPersistenzAktion.loeschen => _loescheImBackend(
+          fehler.referenz!,
+          registerzeileBehalten: fehler.registerzeileBehalten,
+        ),
       };
 
   /// Liefert den Vorgang zur Referenz, falls vorhanden (tolerant gegenüber
@@ -289,11 +302,22 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     }
   }
 
-  Future<void> _loescheImBackend(String referenz) async {
+  Future<void> _loescheImBackend(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) async {
     try {
-      await _datasource.deleteVorgang(referenz);
+      await _datasource.deleteVorgang(
+        referenz,
+        registerzeileBehalten: registerzeileBehalten,
+      );
     } catch (_) {
-      _fehler.melde(VorgangPersistenzMeldung.loeschen(referenz));
+      _fehler.melde(
+        VorgangPersistenzMeldung.loeschen(
+          referenz,
+          registerzeileBehalten: registerzeileBehalten,
+        ),
+      );
     }
   }
 
