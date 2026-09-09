@@ -93,18 +93,24 @@ import 'package:automation_app/features/mailbox/data/datasources/mailbox_datasou
     as _i829;
 import 'package:automation_app/features/mailbox/data/datasources/mailbox_hub.dart'
     as _i1015;
+import 'package:automation_app/features/mailbox/data/datasources/posteingang_datasource.dart'
+    as _i405;
 import 'package:automation_app/features/mailbox/data/repositories/mailbox_repository_impl.dart'
     as _i943;
 import 'package:automation_app/features/mailbox/domain/repositories/mailbox_push_notifier.dart'
     as _i579;
 import 'package:automation_app/features/mailbox/domain/repositories/mailbox_repository.dart'
     as _i469;
+import 'package:automation_app/features/mailbox/domain/repositories/posteingang_repository.dart'
+    as _i204;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_auswahl_signal.dart'
     as _i277;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart'
     as _i865;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart'
     as _i431;
+import 'package:automation_app/features/mailbox/presentation/blocs/posteingang_cubit.dart'
+    as _i367;
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart'
     as _i431;
 import 'package:automation_app/features/mandanten/data/datasources/arbeitspaket_datei_datasource.dart'
@@ -386,6 +392,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i435.MailVorlagenRepository>(
       () => _i229.ApiMailVorlagenDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i204.PosteingangRepository>(
+      () => _i405.ApiPosteingangDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i501.KanzleiSettingsDatasource>(
       () => _i501.ApiKanzleiSettingsDatasource(gh<_i361.Dio>()),
     );
@@ -422,6 +431,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i579.MailboxPushNotifier>(
       () => _i1015.MailboxHub(),
       dispose: (i) => i.dispose(),
+    );
+    gh.factory<_i367.PosteingangCubit>(
+      () => _i367.PosteingangCubit(
+        gh<_i204.PosteingangRepository>(),
+        gh<_i579.MailboxPushNotifier>(),
+      ),
     );
     gh.lazySingleton<_i782.VersichererCubit>(
       () => _i782.VersichererCubit(gh<_i9.VersichererRepository>()),

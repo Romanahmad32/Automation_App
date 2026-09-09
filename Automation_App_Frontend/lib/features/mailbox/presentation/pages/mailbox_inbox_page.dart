@@ -2,8 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
-import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
-import 'package:automation_app/features/mailbox/presentation/views/mailbox_inbox_view.dart';
+import 'package:automation_app/features/mailbox/presentation/views/mailbox_bereiche.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,10 +17,7 @@ class MailboxInboxPage extends StatelessWidget implements AutoRouteWrapper {
   @override
   Widget wrappedRoute(BuildContext context) {
     return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => getIt<MailboxInboxCubit>()..refresh()),
-        BlocProvider(create: (_) => getIt<ZentralrufReplyBloc>()),
-      ],
+      providers: [BlocProvider(create: (_) => getIt<ZentralrufReplyBloc>())],
       child: this,
     );
   }
@@ -38,16 +34,9 @@ class MailboxInboxPage extends StatelessWidget implements AutoRouteWrapper {
         appBar: SeitenAppBar(
           titel: 'Postfach',
           icon: Icons.mark_email_read_outlined,
-          untertitel: 'Eingegangene Zentralruf-Antworten übernehmen',
-          aktionen: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Aktualisieren',
-              onPressed: () => context.read<MailboxInboxCubit>().refresh(),
-            ),
-          ],
+          untertitel: 'Nachrichten lesen und Zentralruf-Antworten übernehmen',
         ),
-        body: const MailboxInboxView(),
+        body: const MailboxBereiche(),
       ),
     );
   }

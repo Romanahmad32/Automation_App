@@ -14,8 +14,8 @@ class MailboxFilterSection extends StatelessWidget {
       icon: Icons.filter_alt,
       title: 'Überwachung',
       subtitle:
-          'Standard: Posteingang, erkannt werden Mails mit „Zentralruf“ im '
-          'Betreff.',
+          'Im Posteingang erscheinen alle Nachrichten des Ordners. Der '
+          'Betreff-Filter gilt nur für die automatische Zentralruf-Auswertung.',
       children: [
         GeneralTextField<String>(
           formControlName: 'folder',
