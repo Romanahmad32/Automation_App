@@ -34,9 +34,11 @@ class MailboxInboxCubit extends Cubit<MailboxInboxState> {
     emit(state.copyWith(loading: true, clearError: true));
 
     final statusResult = await _repository.getStatus();
+    if (isClosed) return;
     final repliesResult = await _repository.getReplies(
       includeAcknowledged: false,
     );
+    if (isClosed) return;
 
     final status = switch (statusResult) {
       Right(value: final value) => value,
@@ -60,6 +62,7 @@ class MailboxInboxCubit extends Cubit<MailboxInboxState> {
   /// Markiert einen Treffer als erledigt und blendet ihn aus der offenen Liste aus.
   Future<void> acknowledge(String id) async {
     final result = await _repository.acknowledge(id);
+    if (isClosed) return;
     switch (result) {
       case Right():
         emit(

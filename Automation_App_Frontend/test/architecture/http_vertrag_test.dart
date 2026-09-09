@@ -85,6 +85,11 @@ void main() {
   // zu fuellen repariert den Bestand; sie vollstaendig zu halten repariert
   // ihn dauerhaft.
   const gespiegelteDtos = <String, List<String>>{
+    'lib/features/mailbox/domain/entities/posteingang.dart': [
+      'PosteingangEintragDto',
+      'PosteingangSeiteDto',
+      'PosteingangInhaltDto',
+    ],
     'lib/features/backup/domain/entities/letzte_sicherung.dart': [
       'LetzteSicherungDto',
     ],
