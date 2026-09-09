@@ -102,7 +102,11 @@ class RegisterHistorieZeile extends Equatable {
       befunde: (json['befunde'] as List?)?.cast<String>() ?? const [],
       hinweise: (json['hinweise'] as List?)?.cast<String>() ?? const [],
       mandantId: (json['mandantId'] as num?)?.toInt(),
-      geaendertAm: geaendert == null ? null : DateTime.tryParse(geaendert),
+      // `toLocal()` wie überall an der Grenze zum Dienst: er sendet mit
+      // Zeitzonenversatz, angezeigt wird Ortszeit.
+      geaendertAm: geaendert == null
+          ? null
+          : DateTime.tryParse(geaendert)?.toLocal(),
     );
   }
 

@@ -47,9 +47,11 @@ class JahrgangStand extends Equatable {
           (nummer as num).toInt(),
       ],
       mitBefund: (json['mitBefund'] as num?)?.toInt() ?? 0,
+      // `toLocal()` wie überall an der Grenze zum Dienst: er sendet mit
+      // Zeitzonenversatz, angezeigt wird Ortszeit.
       zuletztImportiertAm: zeitpunkt == null
           ? null
-          : DateTime.tryParse(zeitpunkt),
+          : DateTime.tryParse(zeitpunkt)?.toLocal(),
     );
   }
 
