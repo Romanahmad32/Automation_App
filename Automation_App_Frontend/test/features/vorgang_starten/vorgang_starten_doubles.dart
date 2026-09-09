@@ -274,7 +274,10 @@ class VorgangAblageDouble implements VorgangRepository {
   }
 
   @override
-  Future<void> deleteVorgang(String referenz) async {
+  Future<void> deleteVorgang(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) async {
     vorgaenge = vorgaenge
         .where((v) => !Vorgang.gleicheReferenz(v.referenz, referenz))
         .toList();
