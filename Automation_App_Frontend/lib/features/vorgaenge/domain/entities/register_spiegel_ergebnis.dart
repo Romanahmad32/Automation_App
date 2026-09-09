@@ -66,7 +66,13 @@ class RegisterSpiegelErgebnis extends Equatable {
       pdfPfad: json['pdfPfad'] as String?,
       pdfFehler: json['pdfFehler'] as String?,
       zeilen: (json['zeilen'] as num?)?.toInt() ?? 0,
-      geschriebenAm: zeitpunkt == null ? null : DateTime.tryParse(zeitpunkt),
+      // `toLocal()`: der Dienst sendet mit Zeitzonenversatz, angezeigt wird
+      // Ortszeit. Ohne das nennt die Fußleiste zwei Stunden früher als das
+      // geschriebene Dokument selbst — und lässt den Schreibvorgang wie
+      // ausgefallen aussehen.
+      geschriebenAm: zeitpunkt == null
+          ? null
+          : DateTime.tryParse(zeitpunkt)?.toLocal(),
       konfliktkopien:
           (json['konfliktkopien'] as List?)?.cast<String>() ?? const [],
     );

@@ -167,6 +167,24 @@ void main() {
     expect(stand.konfliktkopien, ['Register-LAPTOP.docx']);
   });
 
+  test('fromJson rechnet den Versatz des Dienstes in Ortszeit um', () {
+    // Der Dienst sendet `DateTime.Now`, also mit Zeitzonenversatz. `DateTime`
+    // parst das zu einem UTC-Wert; ohne `toLocal()` nennt die Fußleiste zwei
+    // Stunden früher als die Uhrzeit, die im geschriebenen Dokument selbst
+    // steht („Stand 09.09.2026 13:34" gegen „· 11:34"). Genau daran ist der
+    // Verdacht entstanden, die App habe gar nicht geschrieben.
+    final stand = RegisterSpiegelErgebnis.fromJson(const {
+      'geschrieben': true,
+      'geschriebenAm': '2026-09-09T13:34:10.3894212+02:00',
+    });
+
+    expect(stand.geschriebenAm!.isUtc, isFalse);
+    expect(
+      stand.geschriebenAm,
+      DateTime.parse('2026-09-09T13:34:10.3894212+02:00').toLocal(),
+    );
+  });
+
   test('fromJson kommt mit einer knappen Antwort aus', () {
     final stand = RegisterSpiegelErgebnis.fromJson(const {
       'geschrieben': false,
