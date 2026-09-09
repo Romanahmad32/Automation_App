@@ -1,0 +1,180 @@
+# AGENTS.md
+
+Wegweiser für Codex (Codex.ai/code). **Diese Datei wird bei jeder Sitzung vollständig
+geladen und bleibt deshalb kurz** — sie sagt, was das Projekt ist, wo etwas liegt und was
+unverhandelbar gilt. Alles Weitere wird bei Bedarf nachgeladen:
+
+- `Automation_App_Frontend/AGENTS.md` und `AutomationService/AGENTS.md` ziehen sich selbst,
+  sobald im jeweiligen Teilbaum gearbeitet wird.
+- Die Tabelle unter „Bevor du anfängst" sagt, welches Dokument welche Aufgabe abdeckt.
+
+Wer hier etwas ergänzt, prüft zuerst, ob es nicht in eine dieser Dateien gehört.
+
+## Was das ist
+
+Windows-Desktop-App für einen deutschen Einzelanwalt. Sie automatisiert den Ablauf bei
+Verkehrsunfall-Mandaten: Anfrage beim Zentralruf der Autoversicherer nach dem gegnerischen
+Versicherer, Füllen der Word-Anspruchsschreiben (inkl. RVG-Gebühren), dann Prüfen, Ablegen,
+Versenden. Oberfläche, erzeugte Dokumente, Fachbegriffe und viele Kommentare sind deutsch —
+diese Konvention beibehalten.
+
+**[`REQUIREMENTS.md`](REQUIREMENTS.md) im Wurzelverzeichnis ist das bindende
+Anforderungsdokument** — vor jeder Änderung am fachlichen Ablauf lesen. Sie ist versioniert und
+liegt damit in jedem Clone, jedem Worktree und jeder Cloud-Sitzung vor. AGENTS.md beschreibt,
+wie gebaut wird, nicht was fachlich gefordert ist: Was hier fehlt, steht dort — und wird
+nicht geraten.
+
+Bewusste Haltepunkte für den Menschen (nicht wegautomatisieren): Captcha im Zentralruf-Formular,
+Sichtprüfung des Dokuments, Freigabe des Versands.
+
+Auslieferungsziel — ein Klick aufs App-Symbol startet Frontend und Backend zusammen als eine
+gewöhnliche Windows-Anwendung, kein separater Serverstart, kein Terminal. **Das ist erreicht:**
+`AppBootstrap` (`lib/core/backend/`) startet den Dienst als Kindprozess, `ParentProcessWatchdog`
+beendet ihn wieder.
+
+Fachliche Konvention: Kfz-Kennzeichen mit Bindestrich, z. B. `HG-E 1427`
+(Unterscheidungszeichen-Erkennungsbuchstaben Nummer) — in Hinweisen, Prüfungen und erzeugten Dokumenten.
+
+## Bevor du anfängst — was lesen?
+
+| Du willst … | Lies zuerst |
+|---|---|
+| einen Endpunkt hinzufügen oder ändern | Skill `neuer-endpunkt` — lädt sich selbst; sonst `.Codex/skills/neuer-endpunkt/SKILL.md` |
+| wissen, welche Felder ein Endpunkt hat | [`docs/openapi.json`](docs/openapi.json) — nicht die Controller greppen |
+| an einem Feature arbeiten | `Automation_App_Frontend/lib/features/<feature>/FEATURE.md` — reicht die Änderung über das Feature hinaus, zuerst [`docs/DATENFLUESSE.md`](docs/DATENFLUESSE.md) |
+| am Flutter-Frontend arbeiten | `Automation_App_Frontend/AGENTS.md` |
+| am Backend arbeiten | `AutomationService/AGENTS.md` |
+| an Prozessstart, Pfaden, Vorlagen, Sicherung, Versionierung, CI, Installer arbeiten | [`docs/RELEASE.md`](docs/RELEASE.md) |
+| fachliches Verhalten ändern | [`REQUIREMENTS.md`](REQUIREMENTS.md) — den Wortlaut; [`docs/ANFORDERUNGEN_INDEX.md`](docs/ANFORDERUNGEN_INDEX.md) ist nur der Themenindex dazu |
+| wissen, was gebaut ist und was fehlt | [`docs/STAND.md`](docs/STAND.md) |
+| wissen, welche Rechte, Hooks, Befehle und Skills gelten | [`.Codex/README.md`](.Codex/README.md) |
+| das Postfach anbinden (welcher Weg? 1&1/IONOS, Gmail) | [`docs/POSTFACH_SETUP.md`](docs/POSTFACH_SETUP.md) |
+| das Postfach an Outlook/M365 anbinden (Azure-Einrichtung) | [`docs/OUTLOOK_SETUP.md`](docs/OUTLOOK_SETUP.md) |
+| ein GitHub-Issue lösen, oder einen Subagenten beauftragen | Skill `issue-loesen` bzw. `subagent-auftrag` |
+
+## Landkarte
+
+```
+Automation_App/                  ← dieser Ordner IST das Git-Repo (Romanahmad32/Automation_App,
+├── AutomationService/             öffentlich, Standardzweig master). Frontend und Backend sind
+│   └── AutomationService/         Unterordner, damit eine Vertragsänderung über beide Seiten
+├── Automation_App_Frontend/       ein Commit und ein Diff ist.
+├── Beispiele/                   echte Beispieldaten (`VORLAGE *.docx`, Zentralruf-Antwortmail),
+│                                  nicht versioniert — im frischen Clone nicht vorhanden
+├── docs/                        Verträge, Anleitungen, Stand
+├── installer/                   Inno-Setup-Skript
+├── scripts/                     check.ps1 und Releasehelfer
+├── tools/                       TemplateParametrizer, ZentralrufDomDump (eigenständige .NET-Konsolen)
+└── .Codex/                     geteiltes Agent-Setup: Rechte, Hooks, Slash-Befehle
+```
+
+Das Backend lauscht auf `http://localhost:5143` (net10.0, SignalR für die Postfach-Meldungen).
+CI: `.github/workflows/ci.yml`; Auslieferung läuft über Git-Tags
+(`git tag v1.2.0 && git push origin v1.2.0`, Einzelheiten in [`docs/RELEASE.md`](docs/RELEASE.md)).
+Die Toolchain ist festgenagelt (`global.json`, `FLUTTER_VERSION`, `.fvmrc`); ein Versionssprung
+gehört in einen eigenen Commit.
+
+Ein Fachthema, zwei Orte — die Zuordnung Feature ↔ Slice:
+
+| Tab | Frontend `lib/features/` | Backend `Features/` |
+|---|---|---|
+| 0 Übersicht | `dashboard` (nur lesend, springt in den zuständigen Tab) | — |
+| 1 Vorgang starten | `vorgang_starten`, `zentralruf_request` | `Vorgaenge`, `ZentralrufAutomation` |
+| 2 Postfach | `mailbox`, `zentralruf_reply`, `versicherer` | `MailboxMonitor`, `ZentralrufAutomation`, `Versicherer` |
+| 3 Word Automation | `word_automation`, `email_versand` | `WordAutomation`, `PdfConversion`, `EmailVersand` |
+| 4 Vorlagen Verwalten | `form_template_setup` | `FormTemplates` |
+| 5 Mandanten | `mandanten` | `Mandanten` |
+| 6 Register | `vorgaenge` (Registeransicht) | `Vorgaenge` |
+| 7 Vorgänge | `vorgaenge` | `Vorgaenge` |
+| 8 Einstellungen | `settings`, `backup` | `Settings`, `Backup` |
+| — (nur Debug) | `dev_simulation` | `DevSimulation` |
+
+Die Tab-Indizes liegen zentral in `lib/core/router/app_tab_index.dart` (`AppTabIndex`); beim
+Umsortieren dort **und in dieser Tabelle** mitpflegen. **Index 0 ist der Start-Tab** — was dort
+steht, sieht der Anwalt direkt nach dem Öffnen.
+
+## Architektur in Kürze
+
+Das Frontend spricht über HTTP mit dem Backend (Dio; Host und Port kommen aus `BackendEndpoint`
+in `lib/core/backend/backend_endpoint.dart` — die einzige Quelle für beides, nie wieder fest
+eintragen). Das Backend erledigt, was Flutter nicht kann: Word-Dokumente und Browsersteuerung.
+
+**Der vollständige HTTP-Vertrag steht in [`docs/openapi.json`](docs/openapi.json)** — Pfade,
+DTOs, Feldnamen. Die Datei wird nicht von Hand gepflegt: `OpenApiVertragTests` holt sie aus dem
+laufenden Dienst und schlägt an, wenn der Bestand abweicht. Beide Seiten sind nur über
+Zeichenketten verbunden (Pfade, camelCase-Feldnamen), deshalb prüft
+`test/architecture/http_vertrag_test.dart` die Dart-Seite gegen dieselbe Datei.
+
+Backend: senkrechte Schnitte je Feature. Frontend: Clean Architecture je Feature. Das Frontend
+hat **keine** eigene Persistenz — alles liegt in der SQLite-Datenbank des Backends. Einzelheiten
+stehen in den beiden Teilbaum-Dateien.
+
+## Prüfkette
+
+```powershell
+./scripts/check.ps1                       # alles (~2:30) — das Tor vor dem PR
+./scripts/check.ps1 -Regeln -NurFrontend  # die Dart-Regeln (~60 s) — die Arbeitsschleife
+./scripts/check.ps1 -Regeln               # Regeln beider Seiten (~105 s)
+./scripts/check.ps1 -Beheben              # Formatierer vorher schreibend laufen lassen
+```
+
+Fährt genau die Schritte aus `.github/workflows/ci.yml`, bricht nicht beim ersten Fehler ab und
+fasst am Ende zusammen — mit der Dauer je Schritt, damit sichtbar bleibt, wo die Zeit hingeht.
+**Vor dem Abschließen einer Änderung laufen lassen** — die Einzelbefehle für die Arbeit dazwischen
+stehen in den Teilbaum-Dateien. Wer die Kette schneller machen will, liest zuerst den Kopf von
+`check.ps1`: was schon gemessen und verworfen wurde, steht dort.
+
+Die Schalter spannen **zwei Achsen** auf, die sich kombinieren lassen: `-NurFrontend`/`-NurBackend`
+sagen *welcher Teilbaum*, `-Regeln` sagt *wie tief*. `-NurFrontend` ist ausdrücklich **nicht** die
+schnelle Stufe — er fährt Codegenerierung und die volle Testsuite. `-Regeln` fährt genau die
+Tabelle „Diese Regeln sind ausführbar" (unten) plus `analyze` und lässt weg, was *Verhalten* prüft:
+Codegenerierung und Fachtests. Was dort grün ist, kann in den Fachtests noch fallen — als Tor vor
+dem PR bleibt die volle Kette.
+
+## Regeln, die nicht verhandelbar sind
+
+Für jeden Menschen **und jeden AI-Agent**, der hier Code ändert:
+
+- **Dateien kurz halten.** Nicht generierte Code-Dateien max. **250 Anweisungszeilen** (Kommentare
+  und Leerzeilen zählen **nicht** mit) und **450 Zeilen insgesamt**. Wird eine Datei länger, in
+  mehrere Klassen/Widgets aufteilen — nie das Erklären kürzen, um unter die Grenze zu kommen.
+- **Keine privaten Typen oder Top-Level-Funktionen** im Frontend (kein `_`-Präfix bei Klassen,
+  keine privaten `_WidgetXyz`) — stattdessen eigenständige, öffentliche, wiederverwendbare
+  Bausteine in eigenen Dateien. (State-Klassen von `StatefulWidget` sind die übliche Ausnahme.)
+- **Vorhandenes bevorzugen.** Vor jedem neuen Baustein prüfen, ob es schon einen passenden gibt,
+  und diesen verwenden oder erweitern statt zu verdoppeln.
+- **Ein roter Test wird grün, indem der Code repariert wird.** Eine Testerwartung ändert man nur
+  auf ausdrücklichen Auftrag und begründet es im Commit — sonst ist „Test angepasst" die
+  Abkürzung, die den Fehler mitsamt seinem Wächter beseitigt.
+- Benennung von Datasources und Repositories: siehe `Automation_App_Frontend/AGENTS.md`.
+
+Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Test statt eines übersehenen Hinweises:
+
+| Regel | Erzwungen von |
+|---|---|
+| Dateilänge ≤ 250 Anweisungszeilen, ≤ 450 gesamt | `test/architecture/file_length_test.dart`, `Architecture/DateilaengeTests.cs` |
+| Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
+| Benennung von Datasources/Repositories | `test/architecture/benennung_test.dart` |
+| Flüchtige Meldungen nur über `Rueckmeldung`, kein direkter `ScaffoldMessenger` | `test/architecture/rueckmeldung_test.dart` |
+| Schichten (Clean Architecture / senkrechte Schnitte) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
+| Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
+| HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs`, `test/architecture/http_vertrag_test.dart` |
+| Doku: Steckbrief je Feature, Zeilenbudgets, lebende Verweise | `test/architecture/dokumentation_test.dart`, `Architecture/DokumentationTests.cs` |
+| Anforderungsverweise (`§4.8`) gegen `docs/ANFORDERUNGEN_INDEX.md`, und dessen Gliederung gegen `REQUIREMENTS.md` | `test/architecture/anforderungen_test.dart`, `Architecture/DokumentationTests.cs` |
+| Formatierung | `dart format --set-exit-if-changed`, `dotnet format --verify-no-changes` (CI) |
+| Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
+| `pubspec.lock` passt zur gepinnten Flutter-Fassung | `pub get` + `git diff --exit-code` (CI, `check.ps1`) |
+| Zweigname beginnt mit `feature/` oder `bugfix/` ([`docs/RELEASE.md`](docs/RELEASE.md)) | `.Codex/hooks/zweigname.ps1`, CI-Schritt „Zweigname"; der Hook selbst durch `zweigname_hook_test.dart` |
+
+Schlägt eine davon fehl, ist die Antwort **nie**, die Regel zu lockern oder das Limit
+hochzusetzen. Begründete Ausnahmen gehören namentlich in den jeweiligen Test.
+
+## Agent-Setup (`.Codex/`)
+
+Versioniert, damit jeder Agent dieselbe Umgebung vorfindet — hier, im Worktree, in der Cloud:
+Rechte und Hooks (`settings.json`), die Hooks selbst (`hooks/`), Slash-Befehle (`commands/`),
+Skills (`skills/`). **Was davon welche Regel durchsetzt und warum, steht in
+[`.Codex/README.md`](.Codex/README.md)** — dort auch, warum der Geheimnis-Wächter bewusst ein
+Git-Hook ist und keiner von diesen, und was ein Hook kostet, der vor *jedem* Werkzeugaufruf läuft.
+
+Maschinenlokales gehört in `.Codex/settings.local.json` — die bleibt ignoriert.

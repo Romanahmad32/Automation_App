@@ -151,9 +151,9 @@ wo die Akten liegen, und kommt als Datei herein. **Das Format steht in
   Zeilen verschieben sich, sobald eine weggelassen wird. Das Feld geht bewusst nicht über die
   Leitung (`toJson` kennt es nicht) — es gilt dem laufenden Vorgang, nicht dem Bestand, und stünde
   sonst im Vertrag, ohne dass das Backend etwas damit anfinge.
-- Der Auftrag für den Erzeuger der Datei liegt als Text in `presentation/utils/import_anleitung.dart`
-  und ist in der App kopierbar. Er beschreibt dasselbe Format wie die Doku — ändert sich das Format,
-  ändern sich **beide**.
+- Die Anleitung für den Erzeuger der Datei liegt als Text in `presentation/utils/import_anleitung.dart`
+  und ist in der App kopierbar (Button „Anleitung für den Erzeuger kopieren"). Sie beschreibt dasselbe
+  Format wie die Doku — ändert sich das Format, ändern sich **beide**.
 
 ## Arbeitspakete und sichere Treffer (#108)
 

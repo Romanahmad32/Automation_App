@@ -24,12 +24,37 @@ public sealed class MandantenImport(
         MandantenImportAuftrag auftrag,
         CancellationToken cancellationToken = default)
     {
+        if (auftrag.NurPruefen)
+        {
+            var pruefLauf = await BaueLaufAsync(auftrag, tracking: false, cancellationToken);
+            return pruefLauf.Ergebnis(angewendet: false);
+        }
+
+        // Registerstand und Schreiben liegen in derselben Transaktion: Läge das
+        // Lesen davor, könnte zwischen Prüfung und Schreiben ein anderer
+        // Schreibzugriff (z. B. ein von Hand angelegter Mandant) dazwischenkommen,
+        // den der Import nicht mehr sähe — er legte dann eine Dublette an, die
+        // das Register selbst mit 409 abgelehnt hätte.
+        await using var transaktion = await db.Database.BeginTransactionAsync(cancellationToken);
+
+        var lauf = await BaueLaufAsync(auftrag, tracking: true, cancellationToken);
+        await SchreibeAsync(lauf, cancellationToken);
+
+        await transaktion.CommitAsync(cancellationToken);
+
+        await VerbucheFortschrittAsync(auftrag.Mandanten.Count, cancellationToken);
+        return lauf.Ergebnis(angewendet: true);
+    }
+
+    async Task<MandantenImportLauf> BaueLaufAsync(
+        MandantenImportAuftrag auftrag, bool tracking, CancellationToken cancellationToken)
+    {
         // Im Prüflauf werden dieselben Entitäten verändert wie beim Schreiben.
         // Ungetrackt geladen kann daraus auch dann nichts in die Datenbank
         // gelangen, wenn später jemand ein SaveChanges danebenstellt.
-        var register = auftrag.NurPruefen
-            ? await db.Mandanten.AsNoTracking().ToListAsync(cancellationToken)
-            : await db.Mandanten.ToListAsync(cancellationToken);
+        var register = tracking
+            ? await db.Mandanten.ToListAsync(cancellationToken)
+            : await db.Mandanten.AsNoTracking().ToListAsync(cancellationToken);
 
         // Die schon gesetzten Vermerke gehören zum Ausgangsstand: ohne sie
         // zählte ein zweiter Lauf derselben Datei dieselben Ordner erneut als
@@ -42,12 +67,7 @@ public sealed class MandantenImport(
         }
 
         lauf.MarkiereOhneBezug(auftrag.OhneMandantenbezug);
-
-        if (auftrag.NurPruefen) return lauf.Ergebnis(angewendet: false);
-
-        await SchreibeAsync(lauf, cancellationToken);
-        await VerbucheFortschrittAsync(auftrag.Mandanten.Count, cancellationToken);
-        return lauf.Ergebnis(angewendet: true);
+        return lauf;
     }
 
     /// <summary>
@@ -80,8 +100,6 @@ public sealed class MandantenImport(
 
     async Task SchreibeAsync(MandantenImportLauf lauf, CancellationToken cancellationToken)
     {
-        await using var transaktion = await db.Database.BeginTransactionAsync(cancellationToken);
-
         db.Mandanten.AddRange(lauf.NeueMandanten);
         await db.SaveChangesAsync(cancellationToken);
 
@@ -97,7 +115,5 @@ public sealed class MandantenImport(
                 OrdnerStatusArten.OhneMandantenbezug,
                 cancellationToken);
         }
-
-        await transaktion.CommitAsync(cancellationToken);
     }
 }
