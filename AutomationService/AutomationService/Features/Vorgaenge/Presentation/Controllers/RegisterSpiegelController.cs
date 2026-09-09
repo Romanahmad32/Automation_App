@@ -16,6 +16,13 @@ namespace AutomationService.Features.Vorgaenge.Presentation.Controllers;
 /// Beide Wege antworten immer mit 200 und einem Ergebnis. Ein gesperrtes Ziel
 /// ist kein Serverfehler, sondern eine Lage, die die Oberfläche in einem Satz
 /// erklären und der Anwender sofort beheben kann.
+///
+/// <b>Die Antwort kommt vor dem PDF</b> (§6.2 „Word sofort, PDF nachgezogen").
+/// Wer sie erhält, weiß, dass die .docx liegt — die PDF-Fassung entsteht
+/// danach, und dass sie unterwegs ist, steht in
+/// <see cref="RegisterSpiegelDto.PdfLaeuft"/>. Fertig meldet der Hub
+/// <c>/hubs/register</c> mit <c>registerPdfFertig</c>; nachgefragt wird nicht
+/// im Takt.
 /// </summary>
 [ApiController]
 [Route("api/Vorgaenge/register")]

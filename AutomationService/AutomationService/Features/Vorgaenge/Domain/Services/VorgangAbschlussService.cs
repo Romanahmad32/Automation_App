@@ -24,14 +24,25 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 /// synchronisierten Ordner schreiben). Der Anwalt würde das als zähen
 /// „Abschließen"-Knopf erleben, und der Abschluss steht zu diesem Zeitpunkt
 /// ohnehin fest. Der Fehlschlag wird gemerkt und beim nächsten Start gezeigt.
+///
+/// Seit dem 09.09.2026 gilt dasselbe für den Spiegel (§4.8: „Er wartet nicht
+/// mehr darauf, dass die Register-Dateien geschrieben sind"). Er ist die
+/// dritte Nebensache an derselben Stelle, und aus demselben Grund abgesetzt:
+/// Die Datenbank ist das Register, die Dateien sind die Kopie. Die Wandlung
+/// nach PDF hat der Spiegel selbst schon abgesetzt (§6.2 „Word sofort, PDF
+/// nachgezogen") — nur schreibt er die .docx davor noch synchron, und auch die
+/// muss der Abschluss nicht abwarten, um festzustehen.
 /// </summary>
 /// <param name="db">Vorgänge und Einstellungen in einer Transaktion.</param>
-/// <param name="spiegel">Schreibt die Word-/PDF-Fassung; wirft nicht.</param>
+/// <param name="scopes">
+/// Liefert dem abgesetzten Spiegel-Lauf seinen eigenen Scope — warum er einen
+/// braucht, steht an <see cref="StosseSpiegelAn"/>.
+/// </param>
 /// <param name="sicherung">Legt den Stand im synchronisierten Ordner ab; wirft nicht.</param>
 /// <param name="logger">Hält fest, wenn der Spiegel nicht geschrieben werden konnte.</param>
 public sealed class VorgangAbschlussService(
     AutomationDbContext db,
-    IRegisterSpiegelService spiegel,
+    IServiceScopeFactory scopes,
     IAutomatischeSicherung sicherung,
     ILogger<VorgangAbschlussService> logger) : IVorgangAbschlussService
 {
@@ -64,7 +75,7 @@ public sealed class VorgangAbschlussService(
 
         if (settings.RegisterNachAbschlussSchreiben)
         {
-            await SpiegelNachziehenAsync(cancellationToken);
+            StosseSpiegelAn();
         }
 
         StosseSicherungAn();
@@ -93,16 +104,35 @@ public sealed class VorgangAbschlussService(
     });
 
     /// <summary>
-    /// Zieht den Register-Spiegel nach. Der Aufruf ist doppelt abgesichert: Der
-    /// Dienst meldet erwartbare Fehlschläge als Ergebnis statt als Ausnahme,
-    /// und was trotzdem herauskommt, wird hier geschluckt. Der Abschluss ist
-    /// zu diesem Zeitpunkt festgeschrieben und darf nicht mehr wackeln.
+    /// Stößt den Register-Spiegel an und lässt ihn laufen (§4.8: der Abschluss
+    /// wartet nicht mehr darauf, dass die Register-Dateien geschrieben sind).
+    ///
+    /// Bewusst ohne <c>await</c> und bewusst ohne den Abbruch-Token des
+    /// Requests — aus demselben Grund wie bei
+    /// <see cref="StosseSicherungAn"/>: Die Antwort geht sofort hinaus, und
+    /// mit ihr wäre der Token abgebrochen; der Spiegel stürbe genau in dem
+    /// Moment, für den er da ist.
+    ///
+    /// Ein Unterschied zur Sicherung bleibt, und er ist der Grund für den
+    /// eigenen Scope: Der Spiegel ist <em>kein</em> Singleton. Er liest die
+    /// Vorgänge über einen <c>DbContext</c>, der am Scope dieses Requests
+    /// hängt, und den räumt der Container mit der Antwort ab. Ohne eigenen
+    /// Scope fände der abgesetzte Lauf statt der Zeilen ein „Cannot access a
+    /// disposed context instance" — und weil der Spiegel Fehlschläge als
+    /// Ergebnis meldet statt zu werfen, bliebe der Ablageordner still leer.
+    ///
+    /// Doppelt abgesichert wie vorher: Der Dienst meldet erwartbare
+    /// Fehlschläge als Ergebnis, und was trotzdem herauskommt, wird hier
+    /// geschluckt. Der Abschluss ist zu diesem Zeitpunkt festgeschrieben und
+    /// darf nicht mehr wackeln.
     /// </summary>
-    async Task SpiegelNachziehenAsync(CancellationToken cancellationToken)
+    void StosseSpiegelAn() => _ = Task.Run(async () =>
     {
         try
         {
-            var ergebnis = await spiegel.SchreibeAsync(cancellationToken: cancellationToken);
+            using var scope = scopes.CreateScope();
+            var spiegel = scope.ServiceProvider.GetRequiredService<IRegisterSpiegelService>();
+            var ergebnis = await spiegel.SchreibeAsync();
             if (ergebnis.Fehler is not null)
             {
                 logger.LogWarning(
@@ -113,5 +143,5 @@ public sealed class VorgangAbschlussService(
         {
             logger.LogError(ex, "Register-Spiegel nach Abschluss unerwartet fehlgeschlagen.");
         }
-    }
+    });
 }
