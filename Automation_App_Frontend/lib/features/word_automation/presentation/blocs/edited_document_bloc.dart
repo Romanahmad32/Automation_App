@@ -22,6 +22,40 @@ class EditedDocumentBloc
   EditedDocumentBloc(this.fillOutTemplate) : super(EditedDocumentInitial()) {
     on<EditDocumentEvent>(_onEditDocumentEvent);
     on<DokumentAbgelegtEvent>(_onDokumentAbgelegtEvent);
+    on<DokumentAusVorgangEvent>(_onDokumentAusVorgangEvent);
+  }
+
+  /// Holt das am Vorgang vermerkte Schreiben zurück in den Wizard (§3), damit
+  /// Begutachten, Ablegen, Versand und Abschluss auch nach einem Neustart
+  /// erreichbar sind, ohne es neu zu erzeugen.
+  ///
+  /// **Was in dieser Sitzung erzeugt wurde, hat Vorrang.** Sonst nähme ein
+  /// Vorgangswechsel dem Anwalt das Dokument weg, das er gerade vor sich hat —
+  /// und genau das ist ein gebauter Weg: Ein ohne Vorgang erzeugtes Schreiben
+  /// wird im Speicherschritt nachträglich einem Vorgang zugeordnet (§4.6).
+  /// Abgeräumt wird deshalb nur ein zuvor wiederhergestellter Stand.
+  void _onDokumentAusVorgangEvent(
+    DokumentAusVorgangEvent event,
+    Emitter<EditedDocumentState> emit,
+  ) {
+    final aktuell = state;
+    if (aktuell is EditedDocumentLoaded && !aktuell.wiederhergestellt) return;
+
+    final pfad = event.pfad?.trim() ?? '';
+    // Ein Pfad, hinter dem nichts liegt (Datei verschoben, Arbeitsordner nach
+    // dem Abschluss geräumt), ist so gut wie keiner — dann bleibt der Schritt
+    // gesperrt, statt ins Leere zu führen.
+    if (pfad.isEmpty || !File(pfad).existsSync()) {
+      if (aktuell is EditedDocumentLoaded) emit(EditedDocumentInitial());
+      return;
+    }
+    emit(
+      EditedDocumentLoaded(
+        pfad,
+        erzeugtAm: _aenderungszeit(pfad),
+        wiederhergestellt: true,
+      ),
+    );
   }
 
   /// Übernimmt den Ablageort in der Akte als neuen Arbeitspfad. Die Warnungen

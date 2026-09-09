@@ -10,9 +10,8 @@ legt es in der Mandantenakte ab und schließt den Vorgang ab. Größtes Feature 
 Fremd eingebunden: `AblageCubit` (mandanten), `KanzleiSettingsBloc`, `FormTemplateOverviewBloc`, `VorgangCubit`.
 **Domain:** Entities `DamageListing`, `GeneratedDocument`, `RvgCalculation`, `VorlagenUebersicht`,
 `ArbeitsordnerAufraeumung`, `AblageFormat`, `StandardSchadenspositionen`; Dienst `DatenquelleVorschlaege`
-(bekannte Werte je Datenquelle zur Auswahl am Feld, #17 — gezeigt von `AusfuellFeld`); UseCases
-`FillOutTemplate`, `ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateRvgFees`, `GetVorlagenUebersicht`,
-`ArbeitsordnerAufraeumen`.
+(bekannte Werte je Datenquelle zur Auswahl am Feld, #17 — gezeigt von `AusfuellFeld`); UseCases `FillOutTemplate`,
+`ConvertDocxToPdf`, `ErzeugePdfFassung`, `CalculateRvgFees`, `GetVorlagenUebersicht`, `ArbeitsordnerAufraeumen`.
 **Backend:** `Features/WordAutomation/`, `Features/PdfConversion/` ·
 `GET /api/WordAutomation/vorlagen`, `POST /api/WordAutomation/replaced-document`,
 `POST /api/WordAutomation/rvg-calculation`, `POST /api/WordAutomation/arbeitsordner/aufraeumen`,
@@ -23,7 +22,8 @@ und `POST /api/Vorgaenge/abschliessen`; Standardpositionen über `GET`/`PUT /api
 **Fallstricke**
 
 - Der lange Rest steht in `FALLSTRICKE.md` daneben: Ablageformat, Vorgangsstatus, Vorsteuer,
-  Vorlagenverknüpfung, Auswahlhilfe und die Platzhalter, die die App selbst füllt (RVG, `{{Gesamtforderung}}`).
+  Wiederaufnahme eines Vorgangs, Vorlagenverknüpfung, Auswahlhilfe und die Platzhalter, die die App
+  selbst füllt (RVG, `{{Gesamtforderung}}`).
 - Der `IndexedStack` der Page hält alle vier Views auf den festen `WizardStep`-Enum-Indizes;
   sichtbar sind nur die aus `WizardState.steps`. Einen Schritt einfügen: Enum, `steps` und
   `children` gemeinsam ändern.
