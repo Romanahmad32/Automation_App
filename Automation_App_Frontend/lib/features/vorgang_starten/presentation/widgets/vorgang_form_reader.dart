@@ -1,6 +1,10 @@
+import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
+import 'package:automation_app/features/sachgebiete/domain/services/rechtsgebiet_ableitung.dart';
+import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_cubit.dart';
+import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_katalog_stand.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -18,6 +22,22 @@ String baueReferenz(FormGroup form, String rechtsgebiet) {
   if (!RechtsgebietWert.istVerkehrsrecht(rechtsgebiet)) return basis;
   final kennzeichen = kennzeichenAusFormular(valueOf('kennzeichenGegner'));
   return kennzeichen.isEmpty ? basis : '${basis}_$kennzeichen';
+}
+
+/// Das Rechtsgebiet, das aus der eingetragenen Abteilung folgt (§7.1) — oder
+/// `null`, solange der Katalog nicht geladen ist oder die Abteilung keinen
+/// Eintrag hat. `null` heisst „nichts vorzuschlagen", nie „Verkehrsrecht".
+///
+/// Greift auf den app-weiten `SachgebietCubit` zu, wie es die Auswahllisten
+/// über `SachgebietKatalogBuilder` auch tun; die Ableitungsregel selbst steht
+/// prüfbar in [RechtsgebietAbleitung].
+String? rechtsgebietZurAbteilung(FormGroup form) {
+  final stand = getIt<SachgebietCubit>().state;
+  if (stand is! SachgebietKatalogGeladen) return null;
+  return RechtsgebietAbleitung.zuAbteilung(
+    stand.auswahl,
+    form.control('abteilung').value as String?,
+  );
 }
 
 /// Liest die typisierten Eingaben aus der FormGroup (entkoppelt die View von den

@@ -58,8 +58,9 @@ Ohne Unterabschnitte — bei Fragen zu Betriebsform oder Datenhaltung hierher.
 ### 3 Der Vorgang als zentrale Klammer
 
 Der Vorgang bündelt Mandant, Referenz, Antwort, Dokumente, Ablageort und Versand; Zuordnung über
-die Referenz, ablesbarer Lebenszyklus, mehrere Schreiben je Vorgang, Rechtsgebiet, Übersicht als
-Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
+die Referenz, ablesbarer Lebenszyklus, Wiederaufnahme über Sitzungen hinweg, mehrere Schreiben je
+Vorgang, Rechtsgebiet, Übersicht als Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die
+Kapitel 4–7.
 
 ### 4 Kernworkflow: Anspruchsschreiben Verkehrsunfall
 
@@ -95,7 +96,7 @@ Startpunkt, Wiederauffindbarkeit. Bezugsgröße für die Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand samt Mail-Textvorlagen, Anreden und Zusatzgrüßen, Postfach-Zugang, Darstellung, Sicherung |
+| 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen), Sachgebietskatalog (Kürzel, Rechtsgebiet folgt der Abteilung, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand samt Mail-Textvorlagen, Anreden und Zusatzgrüßen, Postfach-Zugang, Darstellung, Sicherung |
 | 7.2 | Datensicherung und Datenintegrität: Schutz vor Datenverlust, Sichern/Wiederherstellen, robuste Wiederherstellung, Sicherung während der Arbeit, Aufbewahrung nach Alter, dauerhafte Kennungen, Änderungsstand |
 | 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[K]**, siehe 8) |
 

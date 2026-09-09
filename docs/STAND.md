@@ -169,6 +169,21 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
   Grunde nach).
 
+- **Das Rechtsgebiet folgt der Abteilung (§7.1, 09.09.2026)** — „Vorgang starten" fragte dasselbe
+  zweimal: Abteilung und Rechtsgebiet standen als zwei gleichrangige Auswahllisten aus demselben
+  Katalog untereinander, ohne Verbindung. Wer die Abteilung auf `C05` stellte, behielt
+  „Verkehrsrecht" — mit falscher Registerzeile (§6.2), Pflicht-Unfallfeldern und einem Kennzeichen
+  in der Referenz. Jetzt leitet `RechtsgebietAbleitung` es aus dem Hauptsachgebiet ab (`C05/3` →
+  Strafrecht); `RechtsgebietAuswahl` zeigt es an und öffnet die volle Katalogauswahl erst auf
+  „Abweichend wählen" — dann friert die Wahl ein, bis sie zurückgenommen wird (wie die Referenz).
+- **Ein Schreiben überlebt den Neustart (§3, 09.09.2026)** — der Word-Assistent kannte nur, was er
+  selbst erzeugt hatte: Nach einem Neustart waren „Begutachten" und „Speichern & weiter" gesperrt,
+  und der Absprung „Versenden & abschließen" endete in „Es wurde noch kein Dokument erstellt" —
+  Versand (§4.7) und Abschluss (§4.8) waren nur über ein neu erzeugtes Schreiben erreichbar.
+  `DokumentAusVorgangEvent` holt `Vorgang.dokumentPfad` zurück, `wiederaufnahmeSchritt` springt in
+  den Schritt, den der Absprung verspricht. Ein in der Sitzung erzeugtes Dokument wird dabei nie
+  verdrängt.
+
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
 - Assistenten-Eingaben und Schadensaufstellung bleiben am Vorgang (`feldWerte`,

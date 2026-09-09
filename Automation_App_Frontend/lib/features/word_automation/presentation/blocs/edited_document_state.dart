@@ -27,15 +27,32 @@ final class EditedDocumentLoaded extends EditedDocumentState {
   /// springen (§4.6).
   final bool inAkteAbgelegt;
 
+  /// True, wenn dieser Zustand aus dem **Vorgang** stammt statt aus einem Lauf
+  /// dieser Sitzung (§3: Wiederaufnahme). Der Unterschied trägt: Ein erzeugtes
+  /// Dokument schaltet den Vorgang weiter, zählt die Schreiben-Nummer (§4.9)
+  /// und springt ins Begutachten — ein wiederhergestelltes tut nichts davon,
+  /// es macht nur die Schritte wieder erreichbar, die es schon gab.
+  ///
+  /// Die Warnungen der Erzeugung fehlen ihm: Sie stehen am Dokument, nicht am
+  /// Vorgang. Was beim Erzeugen offenblieb, sieht man in der PDF-Vorschau.
+  final bool wiederhergestellt;
+
   const EditedDocumentLoaded(
     this.path, {
     this.warnings = const [],
     this.erzeugtAm,
     this.inAkteAbgelegt = false,
+    this.wiederhergestellt = false,
   });
 
   @override
-  List<Object?> get props => [path, warnings, erzeugtAm, inAkteAbgelegt];
+  List<Object?> get props => [
+    path,
+    warnings,
+    erzeugtAm,
+    inAkteAbgelegt,
+    wiederhergestellt,
+  ];
 }
 
 final class EditedDocumentError extends EditedDocumentState {
