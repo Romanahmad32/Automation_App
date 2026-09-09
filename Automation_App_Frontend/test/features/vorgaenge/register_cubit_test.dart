@@ -109,4 +109,34 @@ void main() {
       expect(zeilenPort.abrufe, vorher);
     });
   });
+
+  group('loescheHistorie', () {
+    /// §6.3: Eine historische Zeile geht für sich — sie hat keinen Vorgang,
+    /// der mitginge.
+    test('löscht und lädt danach neu', () async {
+      final register = cubit();
+      await register.lade();
+      final vorher = zeilenPort.abrufe;
+
+      final erfolg = await register.loescheHistorie(7);
+
+      expect(erfolg, isTrue);
+      expect(historiePort.geloescht, [7]);
+      // Eine Löschung verschiebt die Zahlen im Stand ihres Jahrgangs — auch
+      // hier wird deshalb alles neu geholt.
+      expect(zeilenPort.abrufe, vorher + 1);
+    });
+
+    test('meldet einen Fehlschlag und lädt dann nicht neu', () async {
+      historiePort.fehler = Exception('404');
+      final register = cubit();
+      await register.lade();
+      final vorher = zeilenPort.abrufe;
+
+      final erfolg = await register.loescheHistorie(7);
+
+      expect(erfolg, isFalse);
+      expect(zeilenPort.abrufe, vorher);
+    });
+  });
 }

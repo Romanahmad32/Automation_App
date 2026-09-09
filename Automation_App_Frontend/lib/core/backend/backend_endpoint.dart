@@ -13,6 +13,7 @@ abstract final class BackendEndpoint {
   static const String basisUrl = 'http://$host:$port';
   static const String healthUrl = '$basisUrl/health';
   static const String mailboxHubUrl = '$basisUrl/hubs/mailbox';
+  static const String registerHubUrl = '$basisUrl/hubs/register';
 
   /// Kurzform für Meldungen an den Anwender.
   static const String adresse = '$host:$port';

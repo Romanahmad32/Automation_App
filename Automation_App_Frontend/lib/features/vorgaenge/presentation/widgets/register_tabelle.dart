@@ -55,6 +55,18 @@ class RegisterTabelle extends StatelessWidget {
   /// einer Vorgangszeile steht ein Mandat, das man weiterbearbeitet.
   final ValueChanged<RegisterZeile>? onVorgangZeile;
 
+  /// Löschen einer Zeile (§6.3) — blendet bei Angabe eine eigene Spalte mit
+  /// einem Papierkorb-Symbol ein. Was das Löschen je Herkunft bedeutet,
+  /// entscheidet der Aufrufer (`RegisterView._zeileLoeschen`); die Tabelle
+  /// meldet nur den Klick.
+  ///
+  /// Eigene Spalte statt eines dritten Rückrufs auf die Zeile selbst: Das
+  /// Symbol sitzt in einer eigenen `DataCell` mit eigenem `onTap` — der
+  /// überschreibt für genau diese Zelle das `onSelectChanged` der Zeile
+  /// (`DataCell.onTap` gilt nur für die Zelle, in der es steht), der Klick
+  /// auf den Rest der Zeile bleibt [onHistorieZeile]/[onVorgangZeile].
+  final ValueChanged<RegisterZeile>? onLoeschen;
+
   /// Ab dieser verfügbaren Breite (logische Pixel, nicht Bildschirmpunkte)
   /// stehen Sache und Sachbestand in einer Zeile nebeneinander statt
   /// untereinander.
@@ -69,6 +81,7 @@ class RegisterTabelle extends StatelessWidget {
     this.statusJeReferenz = const {},
     this.onHistorieZeile,
     this.onVorgangZeile,
+    this.onLoeschen,
   });
 
   @override
@@ -168,7 +181,19 @@ class RegisterTabelle extends StatelessWidget {
         label: Text('Status'),
         columnWidth: IntrinsicColumnWidth(),
       ),
+    // Ohne Überschrift: Ein Papierkorb-Symbol erklärt sich selbst, „Löschen"
+    // über einer einzelnen schmalen Spalte wäre nur Ballast.
+    if (onLoeschen != null)
+      const DataColumn(
+        label: SizedBox.shrink(),
+        columnWidth: IntrinsicColumnWidth(),
+      ),
   ];
+
+  /// Wie viele Spalten die Tabelle gerade trägt — die Jahreszeile braucht das,
+  /// um genau so viele leere Zellen daneben zu setzen.
+  int get _spaltenAnzahl =>
+      4 + (mitStatus ? 1 : 0) + (onLoeschen != null ? 1 : 0);
 
   /// Die Datenzeilen, bei jedem Jahrgangswechsel von einer Jahresüberschrift
   /// unterbrochen — dieselbe Regel wie `RegisterDokument` im Backend
@@ -193,7 +218,7 @@ class RegisterTabelle extends StatelessWidget {
     color: WidgetStatePropertyAll(theme.colorScheme.surfaceContainerHigh),
     cells: [
       DataCell(RegisterJahresZeile(jahr: jahr)),
-      for (var spalte = 1; spalte < (mitStatus ? 5 : 4); spalte++)
+      for (var spalte = 1; spalte < _spaltenAnzahl; spalte++)
         const DataCell(SizedBox.shrink()),
     ],
   );
@@ -229,6 +254,21 @@ class RegisterTabelle extends StatelessWidget {
               zeile: zeile,
               status: statusJeReferenz[zeile.vorgangReferenz ?? ''],
             ),
+          ),
+        if (onLoeschen != null)
+          DataCell(
+            Tooltip(
+              message: 'Löschen',
+              child: Icon(
+                Icons.delete_outline,
+                size: 20,
+                color: theme.colorScheme.error,
+              ),
+            ),
+            // Eigenes `onTap` statt eines `IconButton`: Es überschreibt für
+            // diese eine Zelle das `onSelectChanged` der Zeile, ohne dass ein
+            // zweiter Gestendetektor mit dem der Zeile um den Klick konkurriert.
+            onTap: () => onLoeschen!(zeile),
           ),
       ],
     );

@@ -6,6 +6,8 @@ import 'package:automation_app/features/vorgaenge/domain/repositories/register_s
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'register_testaufbau.dart';
+
 /// Antwortet mit einem festen Stand und merkt sich, wie gefragt wurde.
 class RegisterSpiegelAttrappe implements RegisterSpiegelRepository {
   final RegisterSpiegelErgebnis antwort;
@@ -50,7 +52,7 @@ void main() {
         docxPfad: 'C:/OneDrive/R.docx',
       ),
     );
-    final cubit = RegisterSpiegelCubit(attrappe);
+    final cubit = RegisterSpiegelCubit(attrappe, FakeRegisterPushNotifier());
 
     await cubit.ladeStand();
 
@@ -65,7 +67,7 @@ void main() {
     final attrappe = RegisterSpiegelAttrappe(
       antwort: const RegisterSpiegelErgebnis(geschrieben: true),
     );
-    final cubit = RegisterSpiegelCubit(attrappe);
+    final cubit = RegisterSpiegelCubit(attrappe, FakeRegisterPushNotifier());
 
     await cubit.exportiere();
 
@@ -83,6 +85,7 @@ void main() {
           'Bitte starten Sie die Anwendung neu.',
         ),
       ),
+      FakeRegisterPushNotifier(),
     );
 
     await cubit.exportiere();
@@ -99,6 +102,7 @@ void main() {
     () async {
       final cubit = RegisterSpiegelCubit(
         RegisterSpiegelAttrappe(wirft: Exception('DioException [unknown]')),
+        FakeRegisterPushNotifier(),
       );
 
       await cubit.exportiere();
@@ -122,7 +126,7 @@ void main() {
         antwort: const RegisterSpiegelErgebnis(geschrieben: true),
         standHaengt: tor,
       );
-      final cubit = RegisterSpiegelCubit(attrappe);
+      final cubit = RegisterSpiegelCubit(attrappe, FakeRegisterPushNotifier());
 
       final laden = cubit.ladeStand();
       final druck = cubit.exportiere();
@@ -140,6 +144,7 @@ void main() {
     () async {
       final cubit = RegisterSpiegelCubit(
         RegisterSpiegelAttrappe(wirft: Exception('Zeitüberschreitung')),
+        FakeRegisterPushNotifier(),
       );
 
       await cubit.exportiere();
@@ -156,6 +161,7 @@ void main() {
       'docxPfad': r'C:\OneDrive\Register.docx',
       'pdfPfad': r'C:\OneDrive\Register.pdf',
       'pdfFehler': null,
+      'pdfLaeuft': false,
       'zeilen': 3,
       'geschriebenAm': '2026-08-30T12:00:00',
       'konfliktkopien': ['Register-LAPTOP.docx'],
@@ -165,6 +171,30 @@ void main() {
     expect(stand.zeilen, 3);
     expect(stand.geschriebenAm, DateTime(2026, 8, 30, 12));
     expect(stand.konfliktkopien, ['Register-LAPTOP.docx']);
+  });
+
+  /// §6.2 „Word sofort, PDF nachgezogen": Direkt nach dem Export gilt
+  /// regelmäßig `pdfPfad: null`, `pdfFehler: null`, `pdfLaeuft: true`.
+  test('fromJson liest pdfLaeuft', () {
+    final stand = RegisterSpiegelErgebnis.fromJson(const {
+      'geschrieben': true,
+      'docxPfad': r'C:\OneDrive\Register.docx',
+      'pdfPfad': null,
+      'pdfFehler': null,
+      'pdfLaeuft': true,
+    });
+
+    expect(stand.pdfLaeuft, isTrue);
+    expect(stand.pdfPfad, isNull);
+    expect(stand.pdfFehler, isNull);
+  });
+
+  test('fromJson nimmt an, dass keine PDF-Umwandlung läuft', () {
+    final stand = RegisterSpiegelErgebnis.fromJson(const {
+      'geschrieben': false,
+    });
+
+    expect(stand.pdfLaeuft, isFalse);
   });
 
   test('fromJson rechnet den Versatz des Dienstes in Ortszeit um', () {
@@ -193,5 +223,66 @@ void main() {
     expect(stand.zeilen, 0);
     expect(stand.geschriebenAm, isNull);
     expect(stand.konfliktkopien, isEmpty);
+  });
+
+  group('Hub-Meldung registerPdfFertig', () {
+    // §6.2: „Dass ein PDF gerade entsteht, ist an der Oberfläche ablesbar" —
+    // der Cubit trägt die Meldung nach, statt dass die Seite im Takt fragt.
+    test('fertig: true trägt Pfad nach und beendet pdfLaeuft', () async {
+      final hub = FakeRegisterPushNotifier();
+      final cubit = RegisterSpiegelCubit(
+        RegisterSpiegelAttrappe(
+          antwort: const RegisterSpiegelErgebnis(
+            geschrieben: true,
+            docxPfad: r'C:\OneDrive\Register.docx',
+            pdfLaeuft: true,
+          ),
+        ),
+        hub,
+      );
+      await cubit.exportiere();
+      expect(cubit.state.pdfLaeuft, isTrue);
+
+      hub.sendePdfFertig(fertig: true, pdfPfad: r'C:\OneDrive\Register.pdf');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.pdfLaeuft, isFalse);
+      expect(cubit.state.pdfPfad, r'C:\OneDrive\Register.pdf');
+      expect(cubit.state.pdfFehler, isNull);
+      // Der Rest des Stands bleibt unberührt.
+      expect(cubit.state.docxPfad, r'C:\OneDrive\Register.docx');
+    });
+
+    test(
+      'fertig: false trägt den Klartext aus fehler nach — kein Fehlschlag',
+      () async {
+        final hub = FakeRegisterPushNotifier();
+        final cubit = RegisterSpiegelCubit(
+          RegisterSpiegelAttrappe(
+            antwort: const RegisterSpiegelErgebnis(
+              geschrieben: true,
+              pdfLaeuft: true,
+            ),
+          ),
+          hub,
+        );
+        await cubit.exportiere();
+
+        hub.sendePdfFertig(
+          fertig: false,
+          fehler: 'Word ist auf diesem Rechner nicht installiert.',
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(cubit.state.pdfLaeuft, isFalse);
+        expect(
+          cubit.state.pdfFehler,
+          'Word ist auf diesem Rechner nicht installiert.',
+        );
+        expect(cubit.state.pdfPfad, isNull);
+        // Kein Fehlschlag des Spiegels — nur des PDFs daneben.
+        expect(cubit.state.fehler, isNull);
+      },
+    );
   });
 }
