@@ -1,4 +1,4 @@
-using AutomationService.Features.Backup.Domain.Services;
+﻿using AutomationService.Features.Backup.Domain.Services;
 
 namespace AutomationService.Features.Backup.Presentation.HostedServices;
 
@@ -100,10 +100,12 @@ public sealed class SicherungsZeitgeber(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Startwert vor dem ersten Takt — und nicht erst beim ersten Takt: Was
-        // zwischen Start und erster halber Stunde geschrieben wurde, soll die
-        // erste Sicherung mitnehmen.
-        _stand = Stand();
+        // Kein Startwert: Wäre der aktuelle Bestand der Vergleichswert, gälte
+        // nach einem Absturz oder einem abgebrochenen Lauf ausgerechnet das als
+        // gesichert, was noch nirgends liegt — es bliebe bis zur nächsten Eingabe
+        // liegen. Der erste Takt fragt deshalb immer nach; ob daraus ein Archiv
+        // wird, entscheidet die AutomatischeSicherung am SynchronisationsVerlauf,
+        // also am zuletzt tatsächlich abgelegten Stand.
 
         using var takt = new PeriodicTimer(intervall ?? Intervall);
         while (!stoppingToken.IsCancellationRequested)
