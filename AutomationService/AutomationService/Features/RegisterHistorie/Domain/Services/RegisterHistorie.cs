@@ -1,3 +1,4 @@
+using System.Globalization;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.RegisterHistorie.Domain.Persistence;
 using AutomationService.Features.Sachgebiete.Domain.Services;
@@ -123,6 +124,98 @@ public sealed class RegisterHistorie(AutomationDbContext db, ISachgebietKatalog 
 
         await db.SaveChangesAsync(cancellationToken);
         return zeile;
+    }
+
+    public async Task<bool> LoescheAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var zeile = await db.RegisterHistorie
+            .FirstOrDefaultAsync(eintrag => eintrag.Id == id, cancellationToken);
+        if (zeile is null) return false;
+
+        db.RegisterHistorie.Remove(zeile);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<RegisterHistorieEntity?> UebernehmeAsync(
+        RegisterHistorieUebernahme uebernahme,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(uebernahme);
+
+        var nummerZusatz = uebernahme.NummerZusatz.Trim();
+
+        // Erst prüfen, dann schreiben: Ein DbUpdateException mitten im Löschen
+        // des Vorgangs wäre der schlechteste Ausgang. Derselbe natürliche
+        // Schlüssel wie am Unique-Index (RegisterHistorieEntityConfiguration) —
+        // hier wird die Kollision vor dem Schreiben erkannt statt danach
+        // aufgefangen.
+        var schonBelegt = await db.RegisterHistorie
+            .AsNoTracking()
+            .AnyAsync(
+                zeile => zeile.Jahr == uebernahme.Jahr
+                    && zeile.LaufendeNummer == uebernahme.LaufendeNummer
+                    && zeile.NummerZusatz == nummerZusatz,
+                cancellationToken);
+        if (schonBelegt) return null;
+
+        var abteilung = AbteilungKuerzel.Normalisiere(uebernahme.Abteilung);
+        var zeileNeu = new RegisterHistorieEntity
+        {
+            Kennung = Guid.NewGuid().ToString(),
+            Jahr = uebernahme.Jahr,
+            LaufendeNummer = uebernahme.LaufendeNummer,
+            NummerZusatz = nummerZusatz,
+            Spalte1 = uebernahme.Spalte1.Trim(),
+            Aktenzeichen = Aktenzeichen(uebernahme.Jahr, uebernahme.LaufendeNummer, nummerZusatz),
+            Abteilung = abteilung,
+            // Kein Rohwert, weil niemand ihn getippt hat — der Vorgang führte
+            // die Abteilung von Anfang an normalisiert.
+            AbteilungRoh = abteilung,
+            Sachart = string.Empty,
+            // Die fertige Parteienspalte landet unverändert in Mandant; Gegner
+            // bleibt leer. RegisterHistorieAnzeige.Parteien gibt dann genau
+            // diesen Text zurück (Gegenseite und Sachart sind leer) — dieselbe
+            // Anzeige wie am Vorgang, ohne die Zerlegung ein zweites Mal
+            // nachzubauen.
+            Mandant = uebernahme.Parteien.Trim(),
+            Gegner = string.Empty,
+            // Ebenso beim Sachbestand: die fertige, schon mit dem Datum
+            // zusammengesetzte Spalte, Unfalldatum bleibt leer.
+            Sachbestand = uebernahme.Sachbestand.Trim(),
+            Unfalldatum = string.Empty,
+            Rechtsgebiet = uebernahme.Rechtsgebiet.Trim(),
+            Freitext = string.Empty,
+            // Kein Erzeuger hat hier etwas geschätzt — die Felder kamen aus
+            // eigenen Spalten des Vorgangs, nie aus einer Freitextzelle.
+            Sicherheit = RegisterSicherheiten.Hoch,
+            HinweiseJson = "[]",
+            MandantId = null,
+            Quelle = RegisterHistorieEntity.QuelleVorgang,
+            ImportiertAm = DateTime.UtcNow,
+        };
+
+        // Dieselbe Prüfung wie beim Import und wie in AendereAsync: Die Zeile
+        // soll sich verhalten wie eine berichtigte, nicht wie eine unbesehen
+        // eingefügte.
+        var nachschlag = new SachgebietNachschlag(await katalog.GetAllAsync(cancellationToken));
+        var pruefung = RegisterZeilenPruefung.Pruefe(AlsImportZeile(zeileNeu), nachschlag);
+        zeileNeu.BefundeJson = RegisterHistorieListen.Schreib(pruefung.Befunde);
+
+        db.RegisterHistorie.Add(zeileNeu);
+        await db.SaveChangesAsync(cancellationToken);
+        return zeileNeu;
+    }
+
+    /// <summary>
+    /// Das Aktenzeichen im Format der gewachsenen Datei ("10/19-I"), aus den
+    /// Bestandteilen des natürlichen Schlüssels — ein Vorgang der App führt
+    /// kein eigenes Aktenzeichen in diesem Schema.
+    /// </summary>
+    static string Aktenzeichen(int jahr, int laufendeNummer, string nummerZusatz)
+    {
+        var zweistelligesJahr = (((jahr % 100) + 100) % 100).ToString("00", CultureInfo.InvariantCulture);
+        return $"{laufendeNummer}/{zweistelligesJahr}{nummerZusatz}";
     }
 
     /// <summary>

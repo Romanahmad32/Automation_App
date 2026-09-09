@@ -99,7 +99,14 @@ public static class RegisterZeilenBau
     static bool IstAbgeschlossen(VorgangEntity v) =>
         string.Equals(v.Status, VorgangAbschlussService.StatusVersendet, StringComparison.Ordinal);
 
-    static RegisterZeile Zeile(VorgangEntity v) => new(
+    /// <summary>
+    /// Baut die Zeile zu genau einem Vorgang — dieselbe Ableitung, die auch
+    /// die Registeransicht und der Word/PDF-Spiegel benutzen. Öffentlich, damit
+    /// <c>VorgangLoeschung</c> (§6.3) beim Löschen dieselbe Zeile bekommt, die
+    /// auch im Register stünde, statt Jahrgang, Zeichen und Parteien ein
+    /// zweites Mal herzuleiten.
+    /// </summary>
+    public static RegisterZeile Zeile(VorgangEntity v) => new(
         Jahr: Jahrgang(v),
         LaufendeNummer: v.LaufendeNummer,
         Zeichen: Zeichen(v),

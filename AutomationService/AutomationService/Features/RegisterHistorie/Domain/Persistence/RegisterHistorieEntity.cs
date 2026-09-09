@@ -26,6 +26,15 @@ public class RegisterHistorieEntity
     /// <summary>Die Zeile stammt aus einer eingelesenen Registerdatei.</summary>
     public const string QuelleImport = "import";
 
+    /// <summary>
+    /// Die Zeile stammt aus einem gelöschten Vorgang der App (§6.3): Beim
+    /// Löschen entschied der Anwalt, die gespiegelte Registerzeile zu
+    /// behalten, und aus dem Spiegel wurde eine eigenständige Zeile. Anders als
+    /// <see cref="QuelleImport"/> war hier nichts aus einer Freitextzelle zu
+    /// zerlegen — die Felder standen von Anfang an einzeln am Vorgang.
+    /// </summary>
+    public const string QuelleVorgang = "vorgang";
+
     public int Id { get; set; }
 
     /// <summary>Stabile Referenz (GUID als Zeichenkette), einmal vergeben und nie geändert.</summary>
@@ -102,7 +111,10 @@ public class RegisterHistorieEntity
     /// </summary>
     public int? MandantId { get; set; }
 
-    /// <summary>Woher die Zeile stammt — derzeit nur <see cref="QuelleImport"/>.</summary>
+    /// <summary>
+    /// Woher die Zeile stammt: <see cref="QuelleImport"/> oder
+    /// <see cref="QuelleVorgang"/>.
+    /// </summary>
     public string Quelle { get; set; } = QuelleImport;
 
     public DateTime ImportiertAm { get; set; }
