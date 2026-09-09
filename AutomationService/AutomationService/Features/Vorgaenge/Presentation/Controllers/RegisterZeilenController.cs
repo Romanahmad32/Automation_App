@@ -1,3 +1,4 @@
+using System.Globalization;
 using AutomationService.Features.Vorgaenge.Domain.Services;
 using AutomationService.Features.Vorgaenge.Presentation.Dtos;
 using Microsoft.AspNetCore.Mvc;
@@ -28,4 +29,22 @@ public class RegisterZeilenController(IRegisterZeilenDienst zeilen) : Controller
         [FromQuery] int? jahrgang,
         CancellationToken cancellationToken)
         => Ok(RegisterZeilenDto.From(await zeilen.LadeAsync(jahrgang, cancellationToken)));
+
+    /// <summary>
+    /// Der Nummernstand eines Jahrgangs (§6.3): der Vorschlag für die nächste
+    /// laufende Nummer und die im Jahrgang schon belegten. Ohne
+    /// <paramref name="jahrgang"/> gilt das laufende Kalenderjahr — der
+    /// Jahrgang, in dem ein neuer Vorgang heute landet.
+    /// </summary>
+    [HttpGet("nummern")]
+    [ProducesResponseType(typeof(RegisterNummernDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<RegisterNummernDto>> Nummern(
+        [FromQuery] int? jahrgang,
+        CancellationToken cancellationToken)
+    {
+        var jahr = jahrgang ?? DateTime.Now.Year;
+        var alleZeilen = await zeilen.LadeAsync(jahr, cancellationToken);
+        var stand = RegisterNummern.Stand(alleZeilen, jahr.ToString(CultureInfo.InvariantCulture));
+        return Ok(RegisterNummernDto.From(stand));
+    }
 }
