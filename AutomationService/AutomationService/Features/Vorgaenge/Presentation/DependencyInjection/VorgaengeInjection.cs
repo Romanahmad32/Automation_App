@@ -1,5 +1,6 @@
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Vorgaenge.Domain.Services;
+using AutomationService.Features.Vorgaenge.Presentation.HostedServices;
 
 namespace AutomationService.Features.Vorgaenge.Presentation.DependencyInjection;
 
@@ -34,6 +35,17 @@ public static class VorgaengeInjection
         // Word, PDF und Ablageordner — der Bildschirm soll nichts davon
         // aufwecken.
         services.AddScoped<IRegisterZeilenDienst, RegisterZeilenDienst>();
+
+        // Der Nachzug der PDF-Fassung (§6.2 „Word sofort, PDF nachgezogen") ist
+        // ein Hintergrunddienst und kein abgesetzter Task: Der Scoped-DbContext
+        // des Aufrufs ist nach der Antwort tot, im Auftrag stehen deshalb nur
+        // Pfade. Die Warteschlange muss Singleton sein — je Anfrage eine eigene
+        // wäre keine Warteschlange —, und der Hintergrunddienst muss dieselbe
+        // Instanz sehen wie der Schreiblauf, der einreiht.
+        services.AddSingleton<RegisterPdfWarteschlange>();
+        services.AddSingleton<IRegisterPdfWarteschlange>(sp =>
+            sp.GetRequiredService<RegisterPdfWarteschlange>());
+        services.AddHostedService<RegisterPdfNachzug>();
 
         return services;
     }

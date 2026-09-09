@@ -26,6 +26,19 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
     private readonly AutomatischeSicherungAttrappe _sicherung = new();
 
     /// <summary>
+    /// Die Grenze, bis zu der auf einen <em>abgesetzten</em> Anstoß gewartet
+    /// wird. Großzügig, und das ist der Punkt: Gemessen wird hier nicht, wie
+    /// schnell der Planer die Aufgabe legt, sondern <em>dass</em> sie gelegt
+    /// wird. Mit fünf Sekunden fiel dieser Test in der vollen Suite gelegentlich
+    /// um (09.09.2026) — nicht, weil der Anstoß fehlte, sondern weil der
+    /// Threadpool unter parallel laufenden Testklassen ausgelastet war und die
+    /// abgesetzte Aufgabe entsprechend später dran kam. Ein Test, der bei Last
+    /// zufällig rot wird, kostet mehr, als eine kurze Grenze einbringt: Fehlt
+    /// der Anstoß wirklich, schlägt er auch hier fehl, nur später.
+    /// </summary>
+    static readonly TimeSpan AnstossGrenze = TimeSpan.FromSeconds(30);
+
+    /// <summary>
     /// Ein winziger Container, nur damit es eine <c>IServiceScopeFactory</c>
     /// gibt. Der Abschluss holt den Spiegel seit §4.8 aus einem eigenen Scope:
     /// Er stösst ihn abgesetzt an, und der DbContext des Requests ist zu diesem
@@ -152,7 +165,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
 
         await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
 
-        await _spiegel.Angestossen.WaitAsync(TimeSpan.FromSeconds(5));
+        await _spiegel.Angestossen.WaitAsync(AnstossGrenze);
         _spiegel.Aufrufe.Should().Be(1);
     }
 
@@ -177,7 +190,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
         ergebnis.Should().NotBeNull();
         ergebnis!.Status.Should().Be(VorgangAbschlussService.StatusVersendet);
         // Angestossen wird er trotzdem — nur eben danach.
-        await _spiegel.Angestossen.WaitAsync(TimeSpan.FromSeconds(5));
+        await _spiegel.Angestossen.WaitAsync(AnstossGrenze);
         _spiegel.Freigeben();
     }
 
@@ -194,7 +207,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
 
         await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
 
-        await _sicherung.Angestossen.WaitAsync(TimeSpan.FromSeconds(5));
+        await _sicherung.Angestossen.WaitAsync(AnstossGrenze);
         _sicherung.Aufrufe.Should().Be(1);
     }
 
@@ -228,7 +241,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
         // Gewartet wird auf den Wartepunkt, damit die Ausnahme wirklich
         // gefallen ist, bevor der Test nachsieht — sie fällt seit §4.8 in einer
         // abgesetzten Aufgabe.
-        await _spiegel.Angestossen.WaitAsync(TimeSpan.FromSeconds(5));
+        await _spiegel.Angestossen.WaitAsync(AnstossGrenze);
         ergebnis.Should().NotBeNull();
         ergebnis!.Status.Should().Be(VorgangAbschlussService.StatusVersendet);
         (await _db.KanzleiSettings.SingleAsync()).LaufendeAuftragsnummer.Should().Be(85);

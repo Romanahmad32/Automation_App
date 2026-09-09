@@ -122,7 +122,21 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   und schreibt ihren Stand als frische Word- **und** PDF-Tabelle in einen Ordner aus den
   Einstellungen — eigens gewählt oder aus dem App-Daten-Ordner abgeleitet (`RegisterSpiegelService`,
   `RegisterAblageVorgabe`, #103, `POST api/Vorgaenge/register/export`, `GET …/register/stand`);
-  die Kette steht in `docs/DATENFLUESSE.md`.
+  die Kette steht in `docs/DATENFLUESSE.md`. **Word sofort, PDF nachgezogen (09.09.2026):** Beim
+  Bestand der Kanzlei (93 Seiten, ~2.000 Zeilen) kostet die `.docx` 0,8 s und die PDF-Umwandlung
+  durch Word 20,2 s — letztere läuft deshalb über eine Warteschlange im Hintergrund
+  (`RegisterPdfNachzug`, Fertigmeldung über `RegisterHub` auf `/hubs/register`), und der
+  Auftragsabschluss wartet auf keines von beidem. Solange kein neues PDF liegt, liegt auch kein
+  altes.
+- **Laufende Nummer aus dem Bestand (§6.3, 09.09.2026)** — vorgeschlagen wird die höchste im
+  Jahrgang belegte Nummer + 1, quellenübergreifend über Vorgänge und übernommene Historie
+  (`RegisterNummern`, `GET api/Vorgaenge/register/nummern`); belegt ist sie ab dem Anlegen und
+  wieder frei, sobald der Vorgang gelöscht wird — sie hängt am Vorgang, nicht an einem Zähler. Der
+  Zähler in den Einstellungen bleibt als Korrektur von Hand (§7.1). Eine doppelte Nummer warnt und
+  sperrt nicht: Das gewachsene Register enthält echte Doubletten (`1/26` und `5/26` je zweimal),
+  und was im Bestand steht, muss eintragbar bleiben. Beim Löschen fragt die App in beide
+  Richtungen (`VorgangLoeschung`, `?registerzeileBehalten=`, `DELETE api/RegisterHistorie/{id}`);
+  eine Spiegelzeile kann ihren Vorgang nicht überleben, dort lautet die Frage „Vorgang mit?".
 - **Registerhistorie aus dem Word-Register (§6.2, Issue #109)** — der Altbestand wird
   jahrgangsweise übernommen, ab dem ersten Jahrgang des Word-Registers (derzeit 2018 — kein
   festes Startjahr in der App): eine eigene Tabelle `RegisterHistorie`, wiedererkannt über Jahr,

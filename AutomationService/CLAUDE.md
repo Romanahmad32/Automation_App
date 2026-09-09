@@ -132,16 +132,17 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
 - **RegisterHistorie** — das gewachsene Kanzleiregister, jahrgangsweise übernommen (§6.2): `POST api/RegisterImport` prüft
   (Lücken, Doppelte, Spalte 1, Abteilung↔Rechtsgebiet) und schreibt erst mit `?uebernehmen=true`; Widersprüche werden benannt, nie
   berichtigt, abgelehnt nur Dubletten. Schlüssel (Jahr, Nummer, Zusatz): `10/19-I` ist eine eigene Akte. `api/RegisterHistorie`
-  gibt Stand und berichtigt (`AddRegisterHistorieServices`). Kante nur Vorgaenge → RegisterHistorie → Sachgebiete, nie zurück.
+  gibt Stand, berichtigt, löscht (`DELETE {id}`) und nimmt auf (`UebernehmeAsync`: Zeile eines gelöschten Vorgangs wird
+  eigenständig, §6.3; `AddRegisterHistorieServices`). Kante nur Vorgaenge → RegisterHistorie → Sachgebiete, nie zurück.
 - **PdfConversion** — docx→PDF für die Vorschau in der App. Standard-Engine ist Word-COM per Late Binding
   (`WordInteropPdfConversionService`, eigener STA-Thread + Warmup), FreeSpire.Doc ist der Rückfall über eine
   Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter `Generated/PdfCache` (`PdfPreviewCache`).
 - **Vorgaenge** — Lebenszyklus des Vorgangs/Auftrags (Liste, Einzelabruf, Upsert, Löschen,
   Referenzänderung, angefangener Ausfüllstand über `PUT|DELETE api/Vorgaenge/entwurf`).
-  `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und das
-  Hochzählen der laufenden Auftragsnummer in **einer** Transaktion, idempotent (§4.8, §7.1).
-  `RegisterSpiegelService` schreibt danach das Register als Word- und PDF-Datei in einen Ordner aus
-  den Einstellungen (§6.2, `…/register/export|stand`); die Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
+  `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und Auftragsnummer in **einer** Transaktion,
+  idempotent (§4.8, §7.1); auf den Spiegel wartet er **nicht**. `RegisterSpiegelService` schreibt ihn in einen Ordner
+  aus den Einstellungen (§6.2, `…/register/export|stand`): `.docx` sofort, PDF über `RegisterPdfNachzug`, gemeldet über
+  `RegisterHub`; dazu §6.3 (`RegisterNummern`, `VorgangLoeschung`). Ketten: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei doppeltem Namen).
   Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier. Dazu das Paketbuch des Imports (`ImportPakete`, #108).
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST api/Settings/auftragsnummer/erhoehe`

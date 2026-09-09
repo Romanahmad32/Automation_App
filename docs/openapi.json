@@ -724,6 +724,50 @@
         }
       }
     },
+    "/api/Vorgaenge/register/nummern": {
+      "get": {
+        "tags": [
+          "RegisterZeilen"
+        ],
+        "summary": "Der Nummernstand eines Jahrgangs (\u00A76.3): der Vorschlag f\u00FCr die n\u00E4chste\r\nlaufende Nummer und die im Jahrgang schon belegten. Ohne\r\njahrgang gilt das laufende Kalenderjahr \u2014 der\r\nJahrgang, in dem ein neuer Vorgang heute landet.",
+        "parameters": [
+          {
+            "name": "jahrgang",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterNummernDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterNummernDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterNummernDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Vorgaenge": {
       "get": {
         "tags": [
@@ -828,12 +872,21 @@
         "tags": [
           "Vorgaenge"
         ],
+        "summary": "L\u00F6scht den Vorgang zur Referenz (\u00A76.3). registerzeileBehalten\r\nentscheidet \u00FCber seine gespiegelte Registerzeile: vorbelegt mit\r\n\u0060true\u0060, weil das die Antwort ist, die nichts zus\u00E4tzlich l\u00F6scht \u2014\r\ndie Zeile wird dabei zu einer eigenst\u00E4ndigen der \u00FCbernommenen Historie,\r\n\u003Cb\u003Ebevor\u003C/b\u003E der Vorgang verschwindet. Mit \u0060false\u0060 verschwindet sie\r\nmit ihm, wie bisher.",
         "parameters": [
           {
             "name": "referenz",
             "in": "query",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "registerzeileBehalten",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
             }
           }
         ],
@@ -1715,6 +1768,49 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "RegisterHistorie"
+        ],
+        "summary": "L\u00F6scht eine historische Zeile f\u00FCr sich (\u00A76.3). Nur f\u00FCr Zeilen ohne\r\nVorgang gedacht \u2014 eine Spiegelzeile eines Vorgangs l\u00E4sst sich nur\r\nzusammen mit ihm l\u00F6schen (\u0060DELETE api/Vorgaenge\u0060 mit\r\n\u0060registerzeileBehalten=false\u0060); daf\u00FCr braucht es hier keinen\r\neigenen Weg, weil die Zeile sonst beim n\u00E4chsten Schreiben wiederk\u00E4me.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           },
           "404": {
             "description": "Not Found",
@@ -6975,6 +7071,48 @@
         },
         "description": "Eine Registerimportdatei. Der Rumpf der Anfrage ist Zeichen f\u00FCr Zeichen die\r\nDatei, die au\u00DFerhalb der App entsteht \u2014 kein Umschlag, keine zus\u00E4tzlichen\r\nFelder. Nur deshalb kann derselbe Inhalt gepr\u00FCft, \u00FCbernommen und aufgehoben\r\nwerden, ohne dass jemand ihn dazwischen umformt.\r\n\r\n\u0060Version\u0060 ist die Format-Fassung, derzeit 1; fehlt sie, wird 1\r\nangenommen, eine andere wird abgelehnt statt halb gelesen.\r\n\r\nZwei Schreibweisen, damit die Jahrgangs-Anleitung an den Erzeuger kurz\r\nbleibt: die Langform mit \u0060jahrgaenge\u0060 und die Kurzform mit\r\n\u0060jahrgang\u0060 und \u0060zeilen\u0060 auf oberster Ebene f\u00FCr die \u00FCbliche Datei\r\nmit genau einem Jahrgang. Stehen beide darin, gilt die Langform \u2014 sie ist\r\ndie vollst\u00E4ndigere Aussage."
       },
+      "RegisterNummernDto": {
+        "required": [
+          "jahr",
+          "hoechsteNummer",
+          "naechsteNummer",
+          "belegte"
+        ],
+        "type": "object",
+        "properties": {
+          "jahr": {
+            "type": "string"
+          },
+          "hoechsteNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "naechsteNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "belegte": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        },
+        "description": "Der Nummernstand eines Jahrgangs (\u00A76.3) f\u00FCr den Vertrag: der Vorschlag f\u00FCr\r\ndie n\u00E4chste laufende Nummer und die im Jahrgang schon belegten."
+      },
       "RegisterSpiegelDto": {
         "required": [
           "geschrieben",
@@ -6983,6 +7121,7 @@
           "docxPfad",
           "pdfPfad",
           "pdfFehler",
+          "pdfLaeuft",
           "zeilen",
           "geschriebenAm",
           "konfliktkopien"
@@ -7022,6 +7161,9 @@
               "string"
             ]
           },
+          "pdfLaeuft": {
+            "type": "boolean"
+          },
           "zeilen": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -7044,7 +7186,7 @@
             }
           }
         },
-        "description": "\u00DCbertragungsformat f\u00FCr den Zustand des Register-Spiegels (\u00A76.2).\r\n\r\nDie Oberfl\u00E4che zeigt daraus einen einzigen Satz an: geschrieben, \u00FCbersprungen\r\noder gescheitert \u2014 und im letzten Fall den Klartext, der sagt, was zu tun\r\nist. IReadOnlyList\u0026lt;string\u0026gt; RegisterSpiegelDto.Konfliktkopien ist der Sonderfall, der eine eigene\r\nWarnung verdient: Er hei\u00DFt, dass jemand den Spiegel unterwegs bearbeitet hat\r\nund es ab jetzt zwei Register g\u00E4be."
+        "description": "\u00DCbertragungsformat f\u00FCr den Zustand des Register-Spiegels (\u00A76.2).\r\n\r\nDie Oberfl\u00E4che zeigt daraus einen einzigen Satz an: geschrieben, \u00FCbersprungen\r\noder gescheitert \u2014 und im letzten Fall den Klartext, der sagt, was zu tun\r\nist. IReadOnlyList\u0026lt;string\u0026gt; RegisterSpiegelDto.Konfliktkopien ist der Sonderfall, der eine eigene\r\nWarnung verdient: Er hei\u00DFt, dass jemand den Spiegel unterwegs bearbeitet hat\r\nund es ab jetzt zwei Register g\u00E4be.\r\n\r\n\u0060PdfLaeuft\u0060 sagt, dass gerade eine PDF-Fassung entsteht (\u00A76.2 \u201EDass ein\r\nPDF gerade entsteht, ist an der Oberfl\u00E4che ablesbar\u0022). Es steht in beiden\r\nAntworten: in der auf \u0060export\u0060 \u2014 direkt danach ist \u0060pdfPfad\u0060\r\ndeshalb regelm\u00E4\u00DFig leer, \u003Cem\u003Eohne\u003C/em\u003E dass ein \u0060pdfFehler\u0060 daneben\r\nsteht \u2014 und in der auf \u0060stand\u0060, damit die Registerseite den laufenden\r\nLauf nach einem Fensterwechsel noch erkennt. Fertig meldet der Hub\r\n\u0060/hubs/register\u0060 mit \u0060registerPdfFertig\u0060."
       },
       "RegisterZeileDto": {
         "required": [
