@@ -18,7 +18,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class VorgangStartenSektionen extends StatelessWidget {
   final String rechtsgebiet;
   final bool istVerkehrsunfall;
+
+  /// Ob das Rechtsgebiet von Hand gesetzt wurde — sonst folgt es der
+  /// Abteilung (§7.1).
+  final bool rechtsgebietManuell;
   final ValueChanged<String> onRechtsgebietChanged;
+  final VoidCallback onRechtsgebietAbweichend;
+  final VoidCallback onRechtsgebietFolgtWieder;
 
   /// Bestand für die Belegt-Warnung am Auftragsnummer-Feld (§6.3) — leer
   /// bzw. `null`, solange der Nummernstand nicht geladen ist.
@@ -41,7 +47,10 @@ class VorgangStartenSektionen extends StatelessWidget {
     super.key,
     required this.rechtsgebiet,
     required this.istVerkehrsunfall,
+    required this.rechtsgebietManuell,
     required this.onRechtsgebietChanged,
+    required this.onRechtsgebietAbweichend,
+    required this.onRechtsgebietFolgtWieder,
     required this.belegteNummern,
     required this.nummernJahr,
     required this.referenzManuallyEdited,
@@ -69,7 +78,10 @@ class VorgangStartenSektionen extends StatelessWidget {
             children: [
               AuftragSection(
                 rechtsgebiet: rechtsgebiet,
+                rechtsgebietManuell: rechtsgebietManuell,
                 onRechtsgebietChanged: onRechtsgebietChanged,
+                onRechtsgebietAbweichend: onRechtsgebietAbweichend,
+                onRechtsgebietFolgtWieder: onRechtsgebietFolgtWieder,
                 belegteNummern: belegteNummern,
                 nummernJahr: nummernJahr,
               ),

@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Domain.Services;
+using AutomationService.Tests.Support;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ namespace AutomationService.Tests.Unit;
 /// Sicherung, die entsteht, aber nicht lesbar ist, wäre die schlechteste aller
 /// Antworten — sie fällt erst auf, wenn jemand sie braucht.
 /// </summary>
+[Collection(SicherungsSchleuseSammlung.Name)]
 public sealed class AutomatischeSicherungTests : IDisposable
 {
     readonly string _dir;

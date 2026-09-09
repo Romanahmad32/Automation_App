@@ -1,4 +1,5 @@
-/// Der Arbeitsauftrag für den Erzeuger der Importdatei — zum Kopieren gedacht.
+/// Der Auftrag für den Erzeuger der Importdatei: was mit einem Arbeitspaket zu
+/// tun ist und wie die Antwort auszusehen hat.
 ///
 /// Der Erzeuger sitzt nicht in dieser App: die Datei entsteht auf dem
 /// Kanzleirechner, wo der Aktenbestand liegt, durch ein Programm, das Ordner
@@ -6,25 +7,31 @@
 /// Schnittstelle — und er gehört neben das Format, das er beschreibt, nicht in
 /// eine Anleitung, die man erst suchen muss.
 ///
-/// Es gibt ihn in **zwei Fassungen**, weil es zwei Betriebsarten gibt:
+/// Er begegnet dem Anwalt an **einer** Stelle: „Arbeitspaket holen" schreibt
+/// ihn als Feld `anleitung` in die Paketdatei und legt ihn zugleich in die
+/// Zwischenablage. Die Datei ist die Arbeit, der Text wird ihr vorangestellt.
 ///
-/// * [text] für den Lauf über den ganzen Stammordner — der Erzeuger sucht sich
-///   seine Ordner selbst.
-/// * [paketText] für den Lauf mit einem Arbeitspaket — die App gibt die Ordner
-///   vor, und die Liste ist geschlossen.
-///
-/// Der Aufbau der Antwortdatei ([dateiaufbau]) ist in beiden Fällen derselbe
-/// und steht deshalb genau einmal da: zweimal beschrieben liefen die Fassungen
-/// beim ersten Formatwechsel auseinander, und die zweite fiele erst auf, wenn
-/// eine Datei nicht mehr eingelesen werden kann.
+/// **Eine Fassung, nicht zwei.** Daneben stand einmal ein zweiter Auftrag für
+/// den Lauf über den ganzen Stammordner, ohne Arbeitspaket, auf der
+/// Import-Seite zum Kopieren. Er war strikt schwächer — der Stammordner ein
+/// von Hand zu füllender Platzhalter, keine bekannten Mandanten (also
+/// Dubletten), keine Namensvorschläge (also ein Blick in jeden Ordner auf
+/// einem Netzlaufwerk), keine geschlossene Liste (also Doppelarbeit), keine
+/// Buchführung — und er beschrieb genau den Lauf über alle 4040 Ordner auf
+/// einmal, den die Arbeitspakete abgeschafft haben. Nebeneinander ließen die
+/// beiden vor allem die Frage offen, welcher denn nun gilt. Wer ihn
+/// wiederbelebt, holt diese Frage zurück.
 ///
 /// Dieselbe Beschreibung ausführlicher: `docs/MANDANTEN_IMPORT.md`. Ändert sich
 /// das Format, ändern sich beide.
 class ImportAnleitung {
   const ImportAnleitung._();
 
-  /// Der Aufbau der Antwortdatei (Fassung 1) samt Feldregeln — der Teil, den
-  /// beide Aufträge wortgleich brauchen.
+  /// Der Aufbau der Antwortdatei (Fassung 1) samt Feldregeln.
+  ///
+  /// Eigene Konstante und nicht bloß ein Absatz in [paketText], weil die
+  /// Import-Seite ihn zum **Nachschlagen** zeigt: Wer eine fertige Datei prüft,
+  /// will das Format sehen und nicht den Auftrag noch einmal erteilt bekommen.
   static const dateiaufbau = r'''
 Antwort: eine JSON-Datei in diesem Aufbau (Fassung 1)
 {
@@ -58,36 +65,10 @@ Regeln
 - Die Datei darf mehrfach eingelesen werden; ein zweiter Lauf ändert nichts.
 ''';
 
-  /// Der Auftrag ohne Arbeitspaket: der Erzeuger liest den Stammordner selbst.
-  static const text =
-      r'''
-Aufgabe: Erzeuge aus dem Aktenbestand der Kanzlei eine Importdatei für die
-Kanzlei-App (mandanten-import.json, Aufbau unten).
-
-Stammordner: <Pfad zum Akten-Stammordner hier eintragen>
-
-Vorgehen
-1. Lies die Ordnernamen der ersten Ebene unter dem Stammordner.
-2. Ermittle je Ordner den Mandanten — aus dem Ordnernamen und, wo das nicht
-   reicht, aus den Schreiben im Ordner (Anschrift, Kennzeichen, Telefon,
-   E-Mail).
-3. Trage nur ein, was du wirklich gefunden hast. Rate nichts: ein leeres Feld
-   ist besser als ein falsches, die App ergänzt Leerstellen später von selbst.
-   Sie überschreibt aber niemals einen vorhandenen Wert.
-4. Gehören mehrere Ordner demselben Mandanten, ergibt das EINEN Eintrag mit
-   mehreren Namen in "aktenOrdnernamen".
-5. Ordner ohne Mandantenbezug (Buchhaltung, Vorlagen, Muster, Ablage) kommen
-   nach "ohneMandantenbezug" statt in "mandanten".
-6. Setze "sicherheit" ehrlich: "hoch" nur, wenn Name und Zuordnung belegt sind.
-   "quelle" nennt die Datei oder den Ordner, aus dem die Angaben stammen.
-
-''' +
-      dateiaufbau;
-
   /// Der Auftrag zu einem Arbeitspaket (`arbeitspaket-<nr>.json`).
   ///
-  /// Er sagt vier Dinge, die der Auftrag ohne Paket nicht sagen kann und die
-  /// jeweils einen bestimmten Schaden verhindern:
+  /// Er sagt vier Dinge, die erst das Paket möglich macht und die jeweils
+  /// einen bestimmten Schaden verhindern:
   ///
   /// * **Die Liste ist geschlossen.** Wer daneben greift, bearbeitet Ordner
   ///   doppelt — einmal hier und einmal im nächsten Paket — und erzeugt genau

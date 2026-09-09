@@ -25,6 +25,21 @@ unbedienbar:
 - **Nur `ListView.builder`.** Weder der Stapel noch die Mandantenliste noch die Liste im
   `ZuordnenDialog` darf über eine `Column` oder ein `ListView(children: [...])` laufen — die bauen
   alle Kinder auf einmal.
+- **Abgeleitete Werte rechnet der Zustand einmal, nicht bei jedem Zugriff.**
+  `nichtZugeordneteAkten`, `sichtbareNichtZugeordnete`, `angezeigteNichtZugeordnete`,
+  beide Zähler-Abbildungen und `offeneOrdnerFuerPaket` sind `late final` **Felder** und keine
+  Getter. Als Getter rechnete jeder Zugriff neu, und eine einzige `build`-Runde fragt sieben davon
+  ab — jeder mit einem vollen Durchlauf über alle Ordner, mehrere davon zusätzlich mit `anwenden`
+  bzw. `zaehlen`. Gemessen an 4000 Ordnern: **31 ms je Rebuild gegen 0,001 ms**; bei 16 ms je Bild
+  hieß das ein verworfenes Bild pro Tastendruck in der Ordnersuche. Der Zustand ist unveränderlich,
+  das Merken also gefahrlos — ein neuer Filter ist ein neuer Zustand und rechnet neu. Wer eines
+  dieser Felder in einen Getter zurückverwandelt, holt das Ruckeln zurück.
+- **Der Stapel wird portionsweise gezeigt** — `MandantenOverviewBloc.ordnerPortion` (50), weiter
+  beim Scrollen ans Ende (`ZeigeWeitereOrdnerEvent`). Das ist **kein** Nachladen: die Ordner liegen
+  seit dem Scan alle vor, es wächst nur `sichtbareOrdnerGrenze`. Ein Filterwechsel setzt sie zurück,
+  sonst zeigte der nächste Topf ohne Zutun so viele Zeilen, wie im vorigen erscrollt wurden. Was den
+  **ganzen** gefilterten Topf braucht, nimmt weiter `sichtbareNichtZugeordnete` — die Massenaktion
+  etwa arbeitet auf allen passenden Ordnern und nicht auf den gerade gezeigten.
 - **Die Mandantenliste kommt seitenweise** — `GET /api/Mandanten/seite`, 50 je Abruf, nachgeladen
   beim Weiterscrollen. `MandantenOverviewLoaded.mandanten` ist damit **ein Ausschnitt** und nicht
   mehr der Bestand. Daran hängen zwei Dinge, die man leicht übersieht:
@@ -73,9 +88,9 @@ Zustände, und `ZuordnungFilter.ansichtVon` teilt genau danach in die drei Ansic
 | Zustand | woran er hängt | Ansicht |
 |---|---|---|
 | zugeordnet | `Mandant.aktenOrdnernamen` | gar nicht im Stapel |
-| offen, Verkehrsunfall-Kandidat | Aktentyp-Präfix (Heuristik) | „Verkehrsunfall" — der Arbeitsvorrat |
-| offen, anderes Sachgebiet | Aktentyp-Präfix (Heuristik) | „Andere Ordner" |
-| ohne Mandantenbezug | `OrdnerStatus` in der Datenbank | „Ohne Mandantenbezug" |
+| offen, Verkehrsunfall-Kandidat | Aktentyp-Präfix **oder gar kein Präfix** | „Zuzuordnen" — der Arbeitsvorrat |
+| offen, anderes Sachgebiet | Aktentyp-Präfix (Heuristik) | „Andere Sachgebiete" |
+| ohne Mandantenbezug | `OrdnerStatus` in der Datenbank | „Beiseitegelegt" |
 
 Drei Dinge daran sind Absicht und keine Feinheit:
 
@@ -83,6 +98,13 @@ Drei Dinge daran sind Absicht und keine Feinheit:
   mehr — die ausdrückliche Entscheidung des Anwalts geht vor der Namensraterei.
 - **Ein Ordner ohne erkanntes Präfix bleibt im Arbeitsvorrat.** „Max Mustermann" kann sehr wohl eine
   Verkehrsunfallsache sein. Die Heuristik darf Arbeit ersparen, aber nichts verschlucken.
+- **Die Töpfe heißen nach der Aufgabe, nicht nach einer Erkennung** — und die Filterleiste sagt
+  unter „Zuzuordnen", woraus die Zahl besteht. Im Bestand der Kanzlei (394 offene Ordner) trugen
+  **113** ein Verkehrsunfall-Präfix und **152** gar keines: Beschriftet als „Verkehrsunfall (265)"
+  las sich der Topf als Erkennungsquote und die Erkennung als kläglich, obwohl sie genau das tat,
+  was der Punkt darüber verlangt. Dasselbe umgekehrt bei „Ohne Mandantenbezug (0)": ein Topf, den
+  allein der Anwalt füllt, stand als dritte Quote neben zwei automatisch gefüllten — 0 ist dort der
+  richtige Anfangswert. Wer die Namen zurückdreht, holt beide Fehllesungen zurück.
 - **Vermerken ist kein Löschen.** Es wird nichts entfernt und kein Ordner angefasst; jeder Vermerk
   ist einzeln oder als Massenaktion zurücknehmbar. Nur deshalb darf der Stapel überhaupt
   standardmäßig etwas ausblenden — und nur deshalb kann er auf null gehen
@@ -151,9 +173,22 @@ wo die Akten liegen, und kommt als Datei herein. **Das Format steht in
   Zeilen verschieben sich, sobald eine weggelassen wird. Das Feld geht bewusst nicht über die
   Leitung (`toJson` kennt es nicht) — es gilt dem laufenden Vorgang, nicht dem Bestand, und stünde
   sonst im Vertrag, ohne dass das Backend etwas damit anfinge.
-- Der Auftrag für den Erzeuger der Datei liegt als Text in `presentation/utils/import_anleitung.dart`
-  und ist in der App kopierbar. Er beschreibt dasselbe Format wie die Doku — ändert sich das Format,
-  ändern sich **beide**.
+- **Es gibt genau einen Auftrag für den Erzeuger der Datei**, und er hängt am Arbeitspaket:
+  `ImportAnleitung.paketText` (in `presentation/utils/import_anleitung.dart`). Er reist als Feld
+  `anleitung` in der Paketdatei mit und liegt nach dem Speichern zugleich in der Zwischenablage.
+  Daneben stand einmal eine zweite Fassung für den Lauf über den ganzen Stammordner, mit eigenem
+  Knopf auf der Import-Seite. Sie war strikt schwächer — Stammordner als Platzhalter zum
+  Selbsteintragen, keine bekannten Mandanten (Dubletten), keine Namensvorschläge (ein Blick in
+  jeden Ordner), keine geschlossene Liste (Doppelarbeit) — und beschrieb genau den Lauf über alle
+  4040 Ordner auf einmal, den die Arbeitspakete abgeschafft haben. Vor allem aber ließen zwei
+  Aufträge nebeneinander offen, welcher gilt: genau die Frage, die in der Kanzlei aufkam. Geblieben
+  ist auf der Import-Seite `ImportAnleitung.dateiaufbau` zum **Nachschlagen** des Formats — eine
+  Frage an das Format, keine zweite Auftragsvergabe. Der Auftrag beschreibt dasselbe Format wie die
+  Doku: ändert es sich, ändern sich **beide**.
+- **Das JSON-Feld heißt `anleitung`, die Oberfläche sagt „Auftrag".** Kein Versehen: Der Feldname
+  steht im Format der Fassung 1, ihn umzubenennen wäre ein Formatwechsel für einen Wortlaut. Im
+  sichtbaren Text ist „Auftrag" dagegen durchgezogen — vorher standen „Anleitung", „Auftrag" und
+  „Arbeitsauftrag" für dieselbe Sache nebeneinander.
 
 ## Arbeitspakete und sichere Treffer (#108)
 
@@ -191,6 +226,19 @@ Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die Fallen 
   Schadensrichtung (lieber übersehen als falsch zuordnen) trägt dann allein
   `vorschlaege.length != 1`: zwei „Albrecht" im Register sind zwei Vorschläge, und weil
   `MandantErkennung` auch Tippfehler-Nachbarn mitzählt, ist das eng genug.
+- **Ein Paket ist eine Buchführungszeile, keine Reservierung.** Es sperrt keinen Ordner; „erledigt"
+  rechnet `ImportPaketBuch` bei jedem Lesen neu aus Zuordnungen und Vermerken. Deshalb darf ein
+  versehentlich geholtes Paket einfach verschwinden (`DELETE /api/ImportPakete/{nummer}`,
+  Zurücknehmen-Knopf in der Paket-Historie) — es bleibt nichts zurückzusetzen. **Nur solange es
+  offen ist:** Ein eingelesenes Paket zu löschen sähe nach einem Rückgängig der daraus entstandenen
+  Mandanten aus und macht keinen davon rückgängig; das Backend antwortet darauf mit 409, und der
+  Knopf steht an einer eingelesenen Zeile gar nicht erst.
+- **Testbestand:** `scripts/testdaten-kanzleiordner.ps1` legt einen realistisch unordentlichen
+  Stammordner an — alle Präfix-Schreibweisen, rund ein Drittel ohne Präfix, Umlaute, Komma-Formen,
+  Eheleute, Aktenzeichen, Ordner ohne Mandantenbezug und einige Mandanten mit zwei Ordnern. Es fasst
+  vorhandene Ordner nie an und nimmt mit `-Aufraeumen` genau seine eigenen wieder zurück
+  (Merkliste `.testdaten-manifest.txt` im Stammordner — eine *Datei*, der Akten-Scan liest nur
+  Ordner). Mit einer Handvoll gleichförmiger Ordner sieht jede Zuordnungsheuristik gut aus.
 
 ## Ablage
 

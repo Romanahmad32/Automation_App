@@ -7,12 +7,11 @@ namespace AutomationService.Features.Mandanten.Presentation.Controllers;
 /// <summary>
 /// Die Buchführung über die Arbeitspakete des Mandanten-Imports (§5.1, §6.1).
 ///
-/// Zwei Routen genügen, und beide sind bewusst schmal: Zusammengesetzt wird
-/// ein Paket im Frontend — nur dort ist der Ordnerbestand im Dateisystem
-/// bekannt —, hier wird es nur verbucht und wieder ausgelesen. Es gibt keine
-/// Route, die ein Paket als eingelesen meldet: Das rechnet der Import selbst
-/// aus den Ordnernamen aus, damit der Anwalt beim Import nichts auszuwählen
-/// hat.
+/// Zusammengesetzt wird ein Paket im Frontend — nur dort ist der Ordnerbestand
+/// im Dateisystem bekannt —, hier wird es nur verbucht, wieder ausgelesen und
+/// — solange es offen ist — zurückgenommen. Es gibt keine Route, die ein
+/// Paket als eingelesen meldet: Das rechnet der Import selbst aus den
+/// Ordnernamen aus, damit der Anwalt beim Import nichts auszuwählen hat.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -48,6 +47,29 @@ public class ImportPaketeController(IImportPaketBuch buch) : ControllerBase
         catch (ArgumentException exception)
         {
             return Problem(detail: exception.Message, statusCode: StatusCodes.Status400BadRequest);
+        }
+    }
+
+    /// <summary>
+    /// Nimmt ein versehentlich herausgegebenes, noch offenes Paket zurück.
+    /// Rührt keinen Ordner an — das Paket war nur eine Buchführungszeile.
+    /// </summary>
+    [HttpDelete("{nummer:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Loesche(int nummer, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var geloescht = await buch.LoescheAsync(nummer, cancellationToken);
+            return geloescht
+                ? NoContent()
+                : Problem(detail: $"Paket {nummer} nicht gefunden", statusCode: StatusCodes.Status404NotFound);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Problem(detail: exception.Message, statusCode: StatusCodes.Status409Conflict);
         }
     }
 }

@@ -6,6 +6,9 @@
 /// Stand anschließend per Repository nach. Die konkrete SignalR-Implementierung
 /// liegt in der data-Schicht; die Präsentationsschicht kennt nur diesen Port.
 abstract class MailboxPushNotifier {
+  /// Der Server meldet Änderungen im gesamten Posteingang, unabhängig vom Betreff.
+  Stream<void> get onPosteingangChanged;
+
   /// Feuert, sobald das Backend eine neu erfasste Antwort meldet.
   Stream<void> get onReplyReceived;
 

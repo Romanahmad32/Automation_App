@@ -2079,6 +2079,71 @@
         }
       }
     },
+    "/api/ImportPakete/{nummer}": {
+      "delete": {
+        "tags": [
+          "ImportPakete"
+        ],
+        "summary": "Nimmt ein versehentlich herausgegebenes, noch offenes Paket zur\u00FCck.\r\nR\u00FChrt keinen Ordner an \u2014 das Paket war nur eine Buchf\u00FChrungszeile.",
+        "parameters": [
+          {
+            "name": "nummer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Mandanten": {
       "get": {
         "tags": [
@@ -2880,6 +2945,223 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mailbox/nachrichten": {
+      "get": {
+        "tags": [
+          "Posteingang"
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangSeiteDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangSeiteDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangSeiteDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mailbox/nachrichten/{id}": {
+      "get": {
+        "tags": [
+          "Posteingang"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangInhaltDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangInhaltDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangInhaltDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4894,6 +5176,46 @@
           "Backup"
         ],
         "summary": "\u00DCbernimmt den angebotenen Stand. Ersetzt den bisherigen Bestand \u2014 deshalb\r\nausschlie\u00DFlich auf Klick und nie von selbst. Der bisherige Stand wird vom\r\nImport vorher vollst\u00E4ndig daneben gelegt.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UebernahmeAuftragDto"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UebernahmeAuftragDto"
+                  }
+                ]
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UebernahmeAuftragDto"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -4911,6 +5233,55 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UebernahmeErgebnisDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Backup/bereitstellen": {
+      "post": {
+        "tags": [
+          "Backup"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetzteSicherungDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetzteSicherungDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetzteSicherungDto"
                 }
               }
             }
@@ -6703,6 +7074,98 @@
         },
         "description": "Welches Outlook auf diesem Rechner steht (\u00A74.7). Die Oberfl\u00E4che fragt es,\r\nbevor sie Kn\u00F6pfe anbietet, die es brauchen \u2014 und schreibt hin, warum sie\r\nnichts liefern, statt es geschehen zu lassen."
       },
+      "PosteingangEintragDto": {
+        "required": [
+          "id",
+          "betreff",
+          "absender",
+          "datum",
+          "gelesen",
+          "groesse"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "betreff": {
+            "type": "string"
+          },
+          "absender": {
+            "type": "string"
+          },
+          "datum": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "gelesen": {
+            "type": "boolean"
+          },
+          "groesse": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "uint32"
+          }
+        }
+      },
+      "PosteingangInhaltDto": {
+        "required": [
+          "text",
+          "gekuerzt",
+          "anhaenge"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "gekuerzt": {
+            "type": "boolean"
+          },
+          "anhaenge": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PosteingangSeiteDto": {
+        "required": [
+          "nachrichten",
+          "naechsteSeite",
+          "gesamt"
+        ],
+        "type": "object",
+        "properties": {
+          "nachrichten": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosteingangEintragDto"
+            }
+          },
+          "naechsteSeite": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gesamt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -7909,7 +8372,12 @@
           "letzteSicherung",
           "ablageOrdner",
           "eigeneArchive",
-          "aeltestesArchiv"
+          "aeltestesArchiv",
+          "zustand",
+          "hinweis",
+          "konflikt",
+          "lokaleAenderungen",
+          "pruefkennung"
         ],
         "type": "object",
         "properties": {
@@ -7963,9 +8431,51 @@
             ],
             "description": "Wie weit die eigene Historie zur\u00FCckreicht; \u0060null\u0060, wenn nichts liegt.",
             "format": "date-time"
+          },
+          "zustand": {
+            "type": "string",
+            "description": "Status des Arbeitsplatzwechsels."
+          },
+          "hinweis": {
+            "type": "string",
+            "description": "Verst\u00E4ndliche Erl\u00E4uterung und n\u00E4chster Schritt."
+          },
+          "konflikt": {
+            "type": "boolean",
+            "description": "Unterschiedliche \u00C4nderungen brauchen eine ausdr\u00FCckliche Auswahl."
+          },
+          "lokaleAenderungen": {
+            "type": "boolean",
+            "description": "Der lokale Inhalt weicht von der letzten Bereitstellung ab."
+          },
+          "pruefkennung": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Bindet die Best\u00E4tigung an die angezeigten Datenst\u00E4nde."
           }
         },
         "description": "Auskunft f\u00FCr den Start der App (\u00A77.2, #39): Gibt es einen neueren Stand am\r\nanderen Arbeitsplatz, und wie ist die letzte automatische Sicherung\r\nausgegangen? Beides in einer Abfrage, weil beides an derselben Stelle\r\ngezeigt wird \u2014 bevor die Oberfl\u00E4che aufgeht."
+      },
+      "UebernahmeAuftragDto": {
+        "required": [
+          "pruefkennung"
+        ],
+        "type": "object",
+        "properties": {
+          "pruefkennung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "konfliktBestaetigt": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "Bindet die Best\u00E4tigung an genau den angezeigten fremden und lokalen Stand."
       },
       "UebernahmeErgebnisDto": {
         "required": [
@@ -8905,6 +9415,9 @@
     },
     {
       "name": "Mailbox"
+    },
+    {
+      "name": "Posteingang"
     },
     {
       "name": "FormTemplates"

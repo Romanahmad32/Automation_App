@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Der Abschluss der Mandantenliste: entweder „es kommt noch etwas" oder
-/// „das war alles".
+/// Der Abschluss einer langen Liste: entweder „es kommt noch etwas" oder
+/// „das war alles". Benutzt von der Mandantenliste und vom Zuordnungsstapel —
+/// die beiden sagen mit [meldung] verschiedene Dinge, weil bei der einen ein
+/// Abruf nachlädt und die andere nur mehr von einem vorliegenden Bestand
+/// zeigt.
 ///
 /// Er steht als letzte Zeile in der Liste selbst und nicht darunter, damit er
 /// mitscrollt — und er ist der Grund, warum der Anwalt nach 50 Zeilen nicht
@@ -16,11 +19,16 @@ class MandantenListenFuss extends StatelessWidget {
   /// Ob gerade nachgeladen wird.
   final bool laedt;
 
+  /// Der Satz über den Zahlen. Ohne Angabe der Wortlaut der Mandantenliste,
+  /// die tatsächlich beim Dienst nachlädt.
+  final String? meldung;
+
   const MandantenListenFuss({
     super.key,
     required this.geladen,
     required this.gesamt,
     required this.laedt,
+    this.meldung,
   });
 
   @override
@@ -34,7 +42,8 @@ class MandantenListenFuss extends StatelessWidget {
         children: [
           if (laedt) const LinearProgressIndicator(minHeight: 2),
           Text(
-            '$geladen von $gesamt geladen — weiterscrollen lädt nach.',
+            meldung ??
+                '$geladen von $gesamt geladen — weiterscrollen lädt nach.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.outline,
             ),

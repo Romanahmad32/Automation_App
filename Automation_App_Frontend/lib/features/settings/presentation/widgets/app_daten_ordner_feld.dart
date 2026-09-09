@@ -23,13 +23,12 @@ class AppDatenOrdnerFeld extends StatelessWidget {
     children: [
       OrdnerAuswahlFeld(
         formControlName: 'appDatenOrdner',
-        beschriftung: 'Ordner für die App-Daten',
-        dialogTitel: 'Ordner für die App-Daten wählen',
+        beschriftung: 'Gemeinsamer OneDrive-Ordner',
+        dialogTitel: 'Gemeinsamer OneDrive-Ordner wählen',
         icon: Icons.folder_copy_outlined,
         hinweisOhneOrdner:
-            'Ohne diesen Ordner gilt allein, was unten unter „Abweichende '
-            'Ordner festlegen" steht: Die Vorlagen verwaltet dann die App '
-            'selbst, Register und Sicherung bleiben aus.',
+            'Für den Arbeitsplatzwechsel auf beiden Rechnern denselben '
+            'OneDrive-Ordner wählen. Die App legt ihre Unterordner selbst an.',
       ),
       SizedBox(height: 8),
       SynchronisierterOrdnerVorschlag(

@@ -91,6 +91,7 @@ if (app.Environment.IsDevelopment())
 // "Failed to determine the https port for redirect".
 app.UseExceptionHandler();
 app.UseCors(CorsPolicyName);
+app.UseMiddleware<DatenstandMiddleware>();
 app.MapHealthEndpoint();
 app.MapControllers();
 app.MapHub<MailboxHub>("/hubs/mailbox");

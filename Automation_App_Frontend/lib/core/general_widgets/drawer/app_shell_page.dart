@@ -1,3 +1,4 @@
+import 'package:automation_app/features/backup/presentation/widgets/synchronisations_leiste.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/general_widgets/drawer/app_side_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
@@ -55,7 +56,11 @@ class _AppShellPageState extends State<AppShellPage> {
                 onDestinationSelected: tabsRouter.setActiveIndex,
                 onToggle: () => setState(() => _isExtended = !_isExtended),
               ),
-              Expanded(child: VorgangPersistenzFehlerListener(child: child)),
+              Expanded(
+                child: SynchronisationsLeiste(
+                  child: VorgangPersistenzFehlerListener(child: child),
+                ),
+              ),
             ],
           ),
         );

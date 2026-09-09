@@ -122,9 +122,10 @@ void main() {
     expect(backup.uebernahmen, 1);
     expect(find.text('Die Anwendung'), findsNothing);
     expect(
-      find.textContaining('hat sich nichts geändert'),
+      find.textContaining('Bitte den Datenstand erneut prüfen'),
       findsOneWidget,
-      reason: 'der eigene Stand ist unberuehrt — das muss dastehen',
+      reason:
+          'eine verlorene Antwort darf keine unveränderten Daten versprechen',
     );
   });
 

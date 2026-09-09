@@ -202,6 +202,21 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
   Grunde nach).
 
+- **Das Rechtsgebiet folgt der Abteilung (§7.1, 09.09.2026)** — „Vorgang starten" fragte dasselbe
+  zweimal: Abteilung und Rechtsgebiet standen als zwei gleichrangige Auswahllisten aus demselben
+  Katalog untereinander, ohne Verbindung. Wer die Abteilung auf `C05` stellte, behielt
+  „Verkehrsrecht" — mit falscher Registerzeile (§6.2), Pflicht-Unfallfeldern und einem Kennzeichen
+  in der Referenz. Jetzt leitet `RechtsgebietAbleitung` es aus dem Hauptsachgebiet ab (`C05/3` →
+  Strafrecht); `RechtsgebietAuswahl` zeigt es an und öffnet die volle Katalogauswahl erst auf
+  „Abweichend wählen" — dann friert die Wahl ein, bis sie zurückgenommen wird (wie die Referenz).
+- **Ein Schreiben überlebt den Neustart (§3, 09.09.2026)** — der Word-Assistent kannte nur, was er
+  selbst erzeugt hatte: Nach einem Neustart waren „Begutachten" und „Speichern & weiter" gesperrt,
+  und der Absprung „Versenden & abschließen" endete in „Es wurde noch kein Dokument erstellt" —
+  Versand (§4.7) und Abschluss (§4.8) waren nur über ein neu erzeugtes Schreiben erreichbar.
+  `DokumentAusVorgangEvent` holt `Vorgang.dokumentPfad` zurück, `wiederaufnahmeSchritt` springt in
+  den Schritt, den der Absprung verspricht. Ein in der Sitzung erzeugtes Dokument wird dabei nie
+  verdrängt.
+
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
 - Assistenten-Eingaben und Schadensaufstellung bleiben am Vorgang (`feldWerte`,
@@ -229,13 +244,16 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Zeilen lassen sich in der Vorschau berichtigen oder weglassen
   (`POST /api/MandantenImport`, Format in [`docs/MANDANTEN_IMPORT.md`](MANDANTEN_IMPORT.md)).
   Vorschau und Übernahme sind derselbe Aufruf; ergänzt wird nur, überschrieben nie, und ein zweiter
-  Lauf derselben Datei ändert nichts. Der Auftrag für den Erzeuger der Datei ist in der App
-  kopierbar.
+  Lauf derselben Datei ändert nichts. Den Auftrag für den Erzeuger der Datei gibt die App mit dem
+  Arbeitspaket heraus — in der Paketdatei und in der Zwischenablage; einen zweiten, paketlosen
+  Auftrag gibt es bewusst nicht mehr.
 - Bei diesem Umfang lässt sich die Zuordnung zusätzlich in **Arbeitspakete** zerlegen (#108): Die App
   gibt die nächsten N offenen **Mandanten** samt aller ihrer Ordner als JSON-Datei heraus
   (`ArbeitspaketBauen`, `POST /api/ImportPakete`), führt darüber Buch und rechnet den Fortschritt
   selbst aus den gespeicherten Ordnernamen aus — der Anwalt wird nie gefragt, zu welchem Paket eine
-  Importdatei gehört. Ein Ordnername, den der Stammordner nicht kennt, sperrt die Übernahme der
+  Importdatei gehört. Ein versehentlich geholtes Paket lässt sich zurücknehmen, solange es offen ist
+  (`DELETE /api/ImportPakete/{nummer}`); es sperrt keinen Ordner, also bleibt nichts zurückzusetzen.
+  Ein Ordnername, den der Stammordner nicht kennt, sperrt die Übernahme der
   betroffenen Zeile (Ausnahme: kein Scan verfügbar). **Sichere Treffer übernehmen** schlägt zusätzlich
   Ordner vor, deren Namensvorschlag exakt und eindeutig auf einen erfassten Mandanten passt, und
   schickt sie ohne neuen Weg durch denselben Import (`SichereTreffer`,

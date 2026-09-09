@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:automation_app/core/general_classes/datenstand_signal.dart';
 import 'package:automation_app/core/backend/app_bootstrap.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/router/app_router.dart';
@@ -18,14 +20,49 @@ void main() {
   runApp(AppBootstrap(anwendungBauen: MyApp.new));
 }
 
-class MyApp extends StatelessWidget {
-  final _router = getIt<AppRouter>();
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
 
-  MyApp({super.key});
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  AppRouter _router = AppRouter();
+  late final StreamSubscription<String> _wechsel;
+  late final StreamSubscription<bool> _arbeit;
+  bool _importAktiv = false;
+  int _generation = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _arbeit = DatenstandSignal.arbeit.listen((wert) {
+      if (mounted) setState(() => _importAktiv = wert);
+    });
+    _wechsel = DatenstandSignal.aenderungen.listen((_) {
+      if (!mounted) return;
+      final vorher = _router;
+      setState(() {
+        _router = AppRouter();
+        _generation++;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => vorher.dispose());
+    });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_wechsel.cancel());
+    unawaited(_arbeit.cancel());
+    _router.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
+      key: ValueKey(_generation),
       providers: [
         BlocProvider(
           create: (context) => getIt<ThemeBloc>()..add(LoadThemeEvent()),
@@ -52,6 +89,36 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             debugShowCheckedModeBanner: false,
             routerConfig: _router.config(),
+            builder: (context, child) => Stack(
+              children: [
+                child!,
+                if (_importAktiv) ...[
+                  const Positioned.fill(
+                    child: ModalBarrier(
+                      dismissible: false,
+                      color: Colors.black38,
+                    ),
+                  ),
+                  const Center(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text(
+                              'Sicherung wird geladen und geprüft. Bitte warten …',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
             themeMode: state.mode,
             darkTheme: theme.dark(),
             theme: theme.light(),

@@ -13,6 +13,8 @@ namespace AutomationService.Features.MailboxMonitor.Presentation.Hubs;
 /// </summary>
 public sealed class MailboxHub : Hub
 {
+    public const string MessagesChangedEvent = "messagesChanged";
+
     /// <summary>Neue Zentralruf-Antwort erfasst — der Client lädt die Treffer per REST nach.</summary>
     public const string ReplyReceivedEvent = "replyReceived";
 

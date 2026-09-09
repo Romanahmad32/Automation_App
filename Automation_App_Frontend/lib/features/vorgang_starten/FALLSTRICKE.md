@@ -177,3 +177,22 @@ Mandantenliste. Ändert der Anwalt den Jahrgang im Feld `auftragsjahr`, wird der
 geladen — er gilt für den beim Öffnen der Seite aktuellen Jahrgang. Das deckt den Normalfall (ein
 neuer Vorgang trägt praktisch immer das laufende Jahr); ein Nachladen je Tastenanschlag im Jahr-Feld
 war für diesen Zuschnitt bewusst nicht Teil der Aufgabe.
+
+## Die Referenz-Vorschau friert ein, sobald jemand sie anfasst
+
+Die Referenz baut sich aus Auftragsnummer, Jahr, Abteilung und dem Kennzeichen des Gegners und
+wird bei jeder Änderung dieser vier Felder neu gesetzt (`_syncReferenzVorschau`). Ändert der Anwalt
+sie einmal von Hand, ist Schluss damit: `_referenzManuallyEdited` friert die Automatik ein, bis
+„zurücksetzen" gedrückt wird. Erkannt wird die Handänderung über einen **Wertvergleich** im
+Listener, nicht über ein Unterdrücken der Ereignisse — das eigene `updateValue` löst denselben
+Strom aus wie eine Tastatureingabe, und wer stattdessen ein Flag um den Schreibvorgang legt,
+verpasst jede Änderung, die währenddessen eintrifft. Dasselbe Muster trägt das Rechtsgebiet
+(`_rechtsgebietManuell`, §7.1): vorschlagen statt entscheiden, mit sichtbarem Weg zurück.
+
+## `registriereAnfrage` ist ein Upsert über die Referenz
+
+Dieselbe Referenz ein zweites Mal zu speichern legt keinen zweiten Vorgang an, sondern
+aktualisiert **nur die hier erfassten Felder** des vorhandenen. Antwort- und Dokumentdaten, die
+später aus Postfach (§4.4) und Word-Automation (§4.6) dazugekommen sind, bleiben stehen. Das ist
+der Grund, warum der Anwalt einen Vorgang gefahrlos noch einmal über dieses Formular schicken darf
+— etwa wenn der Zentralruf-Prefill beim ersten Versuch am Captcha gescheitert ist.

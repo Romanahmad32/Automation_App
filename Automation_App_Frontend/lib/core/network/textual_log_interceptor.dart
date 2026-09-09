@@ -22,7 +22,9 @@ class TextualLogInterceptor extends Interceptor {
     debugPrint('uri: ${response.requestOptions.uri}');
     debugPrint('statusCode: ${response.statusCode}');
     response.headers.forEach((k, v) => debugPrint('$k: ${v.join(', ')}'));
-    if (_isTextual(response.headers)) {
+    if (response.requestOptions.extra['keinAntwortProtokoll'] == true) {
+      debugPrint('body: <Postfachinhalt, nicht protokolliert>');
+    } else if (_isTextual(response.headers)) {
       debugPrint('body: ${response.data}');
     } else {
       final type =
