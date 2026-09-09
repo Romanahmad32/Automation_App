@@ -115,6 +115,12 @@ Das ist alles. `.github/workflows/release.yml` läuft rund zehn Minuten und hän
 `Automation_App_Setup_1.0.0.exe` (~85 MB) an ein GitHub-Release, mit dem Text aus
 `installer/RELEASE_NOTES.md` (`{VERSION}` wird ersetzt).
 
+**Vor dem Tag: den Abschnitt „Neu in {VERSION}" in `installer/RELEASE_NOTES.md`
+neu schreiben.** Er ist das Einzige an einem Release, das von Hand entsteht —
+alles andere zieht die CI aus dem Tag. Nichts erzwingt ihn, und genau deshalb
+steht er hier: Bleibt er stehen, wirbt die neue Version mit dem Inhalt der
+alten. Der Rest der Datei gilt versionsunabhängig und bleibt, wie er ist.
+
 Der Weg dorthin: Backend-Tests → Frontend-Tests → `scripts/build-package.ps1` →
 `scripts/smoke-test.ps1` → Inno Setup → Artefakt → Release.
 
