@@ -243,7 +243,11 @@ class RegisterView extends StatelessWidget {
   ) async {
     final id = zeile.historieId;
     if (id == null) return;
+    // Beides **vor** der Rückfrage geholt: Danach ist der `BuildContext` durch
+    // einen `await` hindurchgereicht, und ob das Widget dann noch steht, weiß
+    // hier niemand (`use_build_context_synchronously`).
     final rueckmeldung = Rueckmeldung.von(context);
+    final cubit = context.read<RegisterCubit>();
 
     final zugestimmt = await bestaetigen(
       context,
@@ -257,7 +261,6 @@ class RegisterView extends StatelessWidget {
     );
     if (!zugestimmt) return;
 
-    final cubit = context.read<RegisterCubit>();
     final erfolg = await cubit.loescheHistorie(id);
     if (erfolg) {
       rueckmeldung.erfolg('Registereintrag ${zeile.zeichen} gelöscht.');

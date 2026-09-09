@@ -188,8 +188,9 @@ Richtungen sitzen bewusst an verschiedenen Stellen der Oberfläche:
   Tabelle bekommt eine zusätzliche Spalte mit einem Papierkorb-Symbol (`RegisterTabelle.onLoeschen`),
   sichtbar nur, wenn ein Rückruf gesetzt ist — genau wie schon bei `onHistorieZeile`/`onVorgangZeile`.
   Das Symbol sitzt in einer eigenen `DataCell` mit eigenem `onTap`, das für **diese eine Zelle** das
-  `onSelectChanged` der Zeile überschreibt (Flutter-Verhalten von `DataCell.onTap`, siehe
-  `data_table.dart` der SDK: eine Zelle mit eigenem `onTap` ruft nie den Zeilen-Rückruf) — ein Klick
+  `onSelectChanged` der Zeile überschreibt (Verhalten von `DataCell.onTap` in der Quelle von
+  Flutters `DataTable`, gepinnte Fassung 3.41.2: eine Zelle mit eigenem `onTap` ruft nie den
+  Zeilen-Rückruf) — ein Klick
   auf den Papierkorb öffnet also nicht zusätzlich den Bearbeiten-Dialog oder springt in die
   Vorgangsverwaltung.
 

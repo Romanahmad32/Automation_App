@@ -237,6 +237,8 @@ import 'package:automation_app/features/versicherer/presentation/blocs/versicher
     as _i782;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_historie_datasource.dart'
     as _i668;
+import 'package:automation_app/features/vorgaenge/data/datasources/register_hub.dart'
+    as _i434;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_nummern_datasource.dart'
     as _i979;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_spiegel_datasource.dart'
@@ -251,6 +253,8 @@ import 'package:automation_app/features/vorgaenge/domain/repositories/register_h
     as _i69;
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_nummern_repository.dart'
     as _i117;
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_push_notifier.dart'
+    as _i818;
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart'
     as _i738;
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_zeilen_repository.dart'
@@ -448,9 +452,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i287.WordAutomationDatasource>(
       () => _i287.ApiWordAutomationDatasource(gh<_i361.Dio>()),
     );
-    gh.factory<_i242.RegisterSpiegelCubit>(
-      () => _i242.RegisterSpiegelCubit(gh<_i738.RegisterSpiegelRepository>()),
-    );
     gh.factory<_i182.BackupDatasource>(
       () => _i182.ApiBackupDatasource(gh<_i361.Dio>()),
     );
@@ -480,6 +481,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i552.ImportDateiDatasource>(),
         gh<_i686.RegisterImportDatasource>(),
       ),
+    );
+    gh.lazySingleton<_i818.RegisterPushNotifier>(
+      () => _i434.RegisterHub(),
+      dispose: (i) => i.dispose(),
     );
     gh.lazySingleton<_i782.VersichererCubit>(
       () => _i782.VersichererCubit(gh<_i9.VersichererRepository>()),
@@ -547,6 +552,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i865.MailboxConfigBloc>(
       () => _i865.MailboxConfigBloc(gh<_i469.MailboxRepository>()),
+    );
+    gh.factory<_i242.RegisterSpiegelCubit>(
+      () => _i242.RegisterSpiegelCubit(
+        gh<_i738.RegisterSpiegelRepository>(),
+        gh<_i818.RegisterPushNotifier>(),
+      ),
     );
     gh.factory<_i223.UseCase<_i609.KanzleiSettings, _i223.NoParams>>(
       () => _i706.GetKanzleiSettings(gh<_i849.KanzleiSettingsRepository>()),
