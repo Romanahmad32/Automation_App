@@ -16,6 +16,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/pdf_p
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/wiederaufnahme.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_fill_out.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_review.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_save.dart';
@@ -73,6 +74,21 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
+        // Das Schreiben gehört zum Vorgang, nicht zur Sitzung (§3): Beim
+        // Wechsel des Vorgangs kommt das an ihm vermerkte Dokument in den
+        // Wizard — sonst blieben „Begutachten" und „Speichern & weiter" nach
+        // einem Neustart gesperrt, und die Absprünge dorthin liefen ins Leere.
+        //
+        // Nur beim Wechsel des Vorgangs selbst, nicht bei jeder Aktualisierung
+        // seines Stands: Sonst überschriebe der Rückfluss nach dem Erzeugen
+        // (`uebernehmeVorgangsStand`) das frische Dokument samt Warnungen.
+        BlocListener<WizardCubit, WizardState>(
+          listenWhen: (previous, current) =>
+              andererVorgang(previous.selectedVorgang, current.selectedVorgang),
+          listener: (context, state) => context.read<EditedDocumentBloc>().add(
+            DokumentAusVorgangEvent(state.selectedVorgang?.dokumentPfad),
+          ),
+        ),
         // Sobald eine Vorlage gewählt ist, ihre PDF-Vorschau laden.
         BlocListener<DocumentBloc, DocumentState>(
           listenWhen: (previous, current) =>
@@ -105,6 +121,16 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
               // bleibt im Speicherschritt, wo er gerade abgelegt hat (§4.6).
               case EditedDocumentLoaded(inAkteAbgelegt: true):
                 break;
+              // Wiederhergestellt aus dem Vorgang: nur die Vorschau nachziehen.
+              // Kein Sprung ins Begutachten — der Anwalt hat vielleicht nur den
+              // Vorgang gewechselt —, und vor allem kein Rückfluss: Es ist
+              // nichts entstanden, und `naechsteSchreibenNummer` zählte sonst
+              // bei jedem Einstieg eine Nummer weiter (§4.9). Wohin gesprungen
+              // wird, entscheidet der Absprung selbst (`VorgangSelector`).
+              case EditedDocumentLoaded(wiederhergestellt: true, :final path):
+                context.read<ResultPdfPreviewBloc>().add(
+                  LoadPdfPreviewEvent(path),
+                );
               case EditedDocumentLoaded():
                 context.read<WizardCubit>().goToStep(WizardStep.review);
                 context.read<ResultPdfPreviewBloc>().add(

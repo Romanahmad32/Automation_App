@@ -18,7 +18,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class VorgangStartenSektionen extends StatelessWidget {
   final String rechtsgebiet;
   final bool istVerkehrsunfall;
+
+  /// Ob das Rechtsgebiet von Hand gesetzt wurde — sonst folgt es der
+  /// Abteilung (§7.1).
+  final bool rechtsgebietManuell;
   final ValueChanged<String> onRechtsgebietChanged;
+  final VoidCallback onRechtsgebietAbweichend;
+  final VoidCallback onRechtsgebietFolgtWieder;
   final bool referenzManuallyEdited;
   final VoidCallback onReferenzReset;
   final List<Mandant> mandanten;
@@ -35,7 +41,10 @@ class VorgangStartenSektionen extends StatelessWidget {
     super.key,
     required this.rechtsgebiet,
     required this.istVerkehrsunfall,
+    required this.rechtsgebietManuell,
     required this.onRechtsgebietChanged,
+    required this.onRechtsgebietAbweichend,
+    required this.onRechtsgebietFolgtWieder,
     required this.referenzManuallyEdited,
     required this.onReferenzReset,
     required this.mandanten,
@@ -61,7 +70,10 @@ class VorgangStartenSektionen extends StatelessWidget {
             children: [
               AuftragSection(
                 rechtsgebiet: rechtsgebiet,
+                rechtsgebietManuell: rechtsgebietManuell,
                 onRechtsgebietChanged: onRechtsgebietChanged,
+                onRechtsgebietAbweichend: onRechtsgebietAbweichend,
+                onRechtsgebietFolgtWieder: onRechtsgebietFolgtWieder,
               ),
               if (istVerkehrsunfall) const UnfallSection(),
               ReferenzSection(

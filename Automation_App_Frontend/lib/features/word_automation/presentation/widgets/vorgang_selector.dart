@@ -4,6 +4,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/wiederaufnahme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -48,7 +49,14 @@ class _VorgangSelectorState extends State<VorgangSelector> {
       if (Vorgang.gleicheReferenz(vorgang.referenz, referenz)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          context.read<WizardCubit>().selectVorgang(vorgang);
+          final cubit = context.read<WizardCubit>()..selectVorgang(vorgang);
+          // Der Absprung nennt seinen Schritt („Prüfen & ablegen",
+          // „Versenden & abschließen") — dann soll er auch dort landen und
+          // nicht auf Schritt 1 (§3). Die Auswahl oben holt das Dokument des
+          // Vorgangs zurück; ohne benutzbares Dokument gibt
+          // `wiederaufnahmeSchritt` null zurück und es bleibt beim Ausfüllen.
+          final schritt = wiederaufnahmeSchritt(vorgang);
+          if (schritt != null) cubit.goToStep(schritt);
         });
         break;
       }
