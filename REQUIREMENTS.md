@@ -559,6 +559,9 @@ Gemeinsam:
   - gilt der Vorgang als erledigt,
   - wird die laufende Auftragsnummer weitergezählt (siehe 7.1),
   - und der Vorgang wird ins Sachgebiete-/Auftragsregister aufgenommen (siehe 6.2).
+  *Geändert am 09.09.2026: Seine Nummer trägt der Vorgang schon seit dem Anlegen (siehe 6.3) — der
+  Abschluss schreibt sie nur fest. Und er wartet nicht mehr darauf, dass die Register-Dateien
+  geschrieben sind (siehe 6.2 „Word sofort, PDF nachgezogen").*
 - **[M]** Ein abgeschlossener Vorgang bleibt einsehbar und auffindbar.
 
 ### 4.9 Folgekorrespondenz
@@ -704,6 +707,17 @@ Register ohne manuelles Nachtragen aktuell zu halten.
 - **[S] Export auf Knopfdruck:** Das Register lässt sich als Word- oder PDF-Tabelle im selben
   Spaltenschema ausgeben, mit derselben Jahrestrennzeile — für Ausdruck, Weitergabe oder
   Archivierung.
+  - **[M] Word sofort, PDF nachgezogen:** Das Word-Dokument entsteht sofort; die PDF-Fassung wird
+    danach erzeugt, ohne dass jemand darauf wartet. Kein Arbeitsschritt des Anwalts — und
+    insbesondere nicht der Auftragsabschluss (siehe 4.8) — hängt am Entstehen der Dateien.
+    *Ergänzt am 09.09.2026, nachdem der Weg vermessen wurde: Beim Bestand der Kanzlei (93 Seiten,
+    rund 2.000 Zeilen) braucht das Word-Dokument 0,8 s und die PDF-Umwandlung durch Word 20 s;
+    das Verhältnis bleibt bei größerem Bestand gleich (~0,23 s je Seite). Ein Abschluss, der 20 s
+    hängt, ist kein Abschluss, den man drückt.*
+  - **[M] Solange kein neues PDF liegt, liegt auch kein altes:** Ein PDF, das eine andere Fassung
+    zeigt als das Word-Dokument daneben, sieht vollständig aus und ist es nicht — es wird
+    weggeräumt, bis die neue Fassung fertig ist. Dass ein PDF gerade entsteht, ist an der
+    Oberfläche ablesbar.
 - **[M] Übernahme der Historie:** Der Altbestand aus der Zeit vor der App wird nicht neu erfasst,
   sondern jahrgangsweise übernommen, ab dem ersten Jahrgang des Word-Registers (derzeit 2018) —
   das Startjahr ist keine Vorgabe der App, sondern ergibt sich aus dem Bestand.
@@ -739,6 +753,42 @@ Register ohne manuelles Nachtragen aktuell zu halten.
   - **[M] Eine Quelle für Ansicht und Spiegel:** Die In-App-Ansicht und der Word/PDF-Spiegel (siehe
     oben) zeigen Historie und Vorgänge gemeinsam, aus derselben Quelle.
 
+### 6.3 Laufende Nummer und Kopplung von Register und Vorgang
+
+Das Register ist kein Abzug der App, sondern ihr Gegenstück: Wer eine Nummer vergibt, vergibt sie
+im Register, und wer eine Zeile löscht, löscht sie dort, wo der Vorgang steht. Diese Anforderung
+regelt beides. *Neu am 09.09.2026, veranlasst durch den Bestand: `1/26 C03` und `5/26 C03` sind
+im Register jeder zweimal vergeben — die Nummer kam aus einem Zähler, der erst beim Abschluss
+weiterlief, und zwei gleichzeitig offene Vorgänge bekamen deshalb dieselbe.*
+
+- **[M] Die Nummer kommt aus dem Bestand, nicht aus einem Zähler.** Vorgeschlagen wird die höchste
+  im Jahrgang belegte laufende Nummer **+ 1** — quellenübergreifend über die Vorgänge der App
+  **und** die übernommene Historie (siehe 6.2). Wer im Jahrgang 2026 den nächsten Auftrag anlegt,
+  bekommt die nächste Nummer dieses Jahrgangs, gleich aus welcher Quelle die bisher höchste stammt.
+- **[M] Belegt ab dem Anlegen.** Die vorgeschlagene Nummer wird mit dem Vorgang gespeichert und
+  gilt ab dann als belegt. Zwei gleichzeitig offene Vorgänge tragen deshalb nie dieselbe Nummer.
+  Sie bleibt für den einzelnen Vorgang überschreibbar (siehe 7.1).
+- **[M] Frei beim Löschen.** Wird ein Vorgang gelöscht, ist seine Nummer wieder frei. Das ist keine
+  eigene Rückrechnung, sondern die Folge daraus, dass die Nummer am Vorgang hängt und nicht an
+  einem Zähler: Sie erscheint danach als Lücke im Jahrgang (siehe 6.2 „Stand je Jahrgang") und wird
+  wieder vorgeschlagen, sobald sie die höchste freie ist.
+- **[M] Eine doppelte Nummer warnt, sperrt nicht.** Ist die Nummer im Jahrgang schon belegt, sagt
+  die App es deutlich und lässt sich übergehen. Eine Sperre wäre hier falsch: Das gewachsene
+  Register der Kanzlei enthält echte Doubletten, und was im Bestand steht, muss eintragbar bleiben
+  (siehe 6.2 „Inhaltliche Befunde lehnen nie ab"). Abgelehnt wird weiterhin nur die echte
+  Doppelnummer beim Import desselben Jahrgangs.
+- **[M] Vorgang löschen fragt nach der Registerzeile.** Beim Löschen eines Vorgangs entscheidet der
+  Anwalt, ob die Registerzeile mitgeht oder bleibt. Bleibt sie, wird aus der gespiegelten Zeile
+  eine eigenständige Registerzeile (siehe 6.2 „Eigenständig") — ohne diesen Schritt verschwände sie
+  beim nächsten Schreiben von selbst, weil sie nur ein Spiegel des Vorgangs war.
+- **[M] Registerzeile löschen fragt nach dem Vorgang.** Bei einer Zeile, die einen Vorgang
+  spiegelt, ist der Vorgang der eigentliche Gegenstand: Die Zeile lässt sich nur zusammen mit ihm
+  löschen. Die App sagt das und lässt den Anwalt ausdrücklich bestätigen, dass der Vorgang mitgeht
+  — statt eine Zeile zu entfernen, die beim nächsten Schreiben wiederkäme. Eine übernommene
+  historische Zeile hat keinen Vorgang (siehe 6.2); sie wird für sich gelöscht.
+- **[M] Beide Fragen sind Haltepunkte, nicht Vorbelegungen.** Vorbelegt ist jeweils die Antwort,
+  die nichts zusätzlich löscht; wer beides löschen will, sagt es ausdrücklich.
+
 ## 7. Betrieb
 
 ### 7.1 Einstellungen
@@ -748,10 +798,16 @@ Konfigurierbar sein müssen mindestens:
 - **[M] Kanzlei-/Anfragerdaten** für die Zentralruf-Anfrage (Name, Anschrift, Kontaktdaten).
 - **[M] Abteilungskürzel und laufende Auftragsnummer** für das Referenzformat (siehe 4.2):
   - **Hinterlegen:** Die aktuelle Nummer ist hier jederzeit einsehbar und korrigierbar.
-  - **Vorbefüllen:** Jedes „Auftragsnummer"-Feld in der App wird automatisch mit ihr vorbelegt und
-    kann für den einzelnen Vorgang überschrieben werden.
+  - **Vorbefüllen:** Jedes „Auftragsnummer"-Feld in der App wird automatisch vorbelegt und kann für
+    den einzelnen Vorgang überschrieben werden. *Geändert am 09.09.2026: Vorbelegt wird mit der
+    nächsten freien Nummer des Jahrgangs aus dem Bestand (siehe 6.3), nicht mehr mit dem Zähler
+    hier. Der Zähler ist damit die Korrektur von Hand für den Einzelfall und nicht mehr die
+    Quelle des Vorschlags — als Quelle hat er zwei doppelte Nummern erzeugt.*
   - **Hochzählen:** Nach dem Auftragsabschluss (siehe 4.8) wird sie um eins erhöht — automatisch
-    oder erst nach Bestätigung; welche Variante gilt, ist hier einstellbar.
+    oder erst nach Bestätigung; welche Variante gilt, ist hier einstellbar. *Geändert am
+    09.09.2026: Für die Nummer des nächsten Vorgangs ist dieses Hochzählen ohne Bedeutung, weil
+    der Vorschlag aus dem Bestand kommt (siehe 6.3). Der Wert bleibt als hinterlegte Nummer der
+    Kanzlei erhalten.*
 - **[M] Sachgebietskatalog:** Die Abteilungskürzel der Kanzlei mit ihrem Sachgebiet liegen als
   Stammdaten in der App vor. Sie speisen die Auswahl der Abteilung (siehe 4.2) und des
   Rechtsgebiets (siehe 6.2) — beide Auswahlen bieten den vollen Katalog an, nicht nur die im
