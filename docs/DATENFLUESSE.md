@@ -1,6 +1,6 @@
 # Datenflüsse — was durch mehrere Features läuft
 
-Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Fünf Ketten laufen
+Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Sechs Ketten laufen
 quer durch den Baum, und in keiner steht an der Nahtstelle, dass es eine gibt. Wer eine davon
 ändert, ohne sie zu kennen, ändert sie an einer Stelle und lässt die anderen stehen.
 
@@ -73,7 +73,25 @@ word_automation ──▶ vorgaenge ──▶ settings
 `wizard_step_save.dart` schließt den Vorgang ab; im Backend erledigt `VorgangAbschlussService`
 Status, Abschlusszeitpunkt und das Hochzählen der laufenden Auftragsnummer in **einer**
 Transaktion, idempotent (§4.8, §7.1). Danach — und ausdrücklich erst danach — schreibt
-`RegisterSpiegelService` das Sachgebiete-Register als Word- und PDF-Datei neu (§6.2).
+`RegisterSpiegelService` das Sachgebiete-Register neu (§6.2).
+
+**Der Abschluss wartet dabei auf nichts** (§4.8, seit 09.09.2026). Vermessen am Bestand der
+Kanzlei: 93 Seiten, rund 2.000 Zeilen, 0,8 s für die `.docx` und 20,2 s für die PDF-Umwandlung
+durch Word (linear, ~0,23 s je Seite). Der Anstoß ist deshalb abgesetzt — und zwar **mit eigenem
+Scope** (`IServiceScopeFactory`), nicht als blanker Fire-and-Forget: Der Spiegel liest über den
+`DbContext` der Anfrage, und der ist nach der Antwort abgeräumt. Ein abgesetzter Lauf auf dem
+alten Scope hätte still ein „Cannot access a disposed context instance" gefangen und wortlos
+keine Datei geschrieben — die schlimmste Sorte Fehlschlag, weil die Oberfläche Erfolg meldet.
+
+**Innerhalb des Spiegels dann noch einmal geteilt:** Die `.docx` entsteht und zieht sofort in den
+Ablageordner, das PDF danach über eine Warteschlange (`RegisterPdfWarteschlange`,
+`RegisterPdfNachzug` als Hintergrunddienst) — im Auftrag stehen nur Pfade, aus demselben Grund wie
+oben. Bis das neue PDF liegt, liegt **kein** PDF: Ein PDF von gestern neben einer `.docx` von heute
+sieht vollständig aus und ist es nicht, und unterwegs liest man das PDF. Fertig oder gescheitert
+meldet der Nachzug über `RegisterHub` (`/hubs/register`, `registerPdfFertig`); solange er läuft,
+sagt `pdfLaeuft` im Stand, dass die Fassung entsteht — das ist ausdrücklich kein Fehler und wird
+in der Oberfläche auch nicht als solcher gezeigt. Überholte Aufträge (fünf Abschlüsse am
+Feierabend) überspringt der Nachzug anhand des Fingerabdrucks, vor **und** nach der Wandlung.
 
 **Die Naht:** Die Auftragsnummer gehört fachlich zu `settings`, wird aber hier weitergezählt. Sie
 von außen zu setzen (`POST api/Settings/auftragsnummer/erhoehe`) und den Abschluss zu trennen,
@@ -104,6 +122,11 @@ Drei Eigenheiten hängen daran, alle drei an der Cloud und keine davon in der Cl
 Was in die Datei kommt, entscheidet die Einstellung `registerExportFilter` — **nicht** der Filter
 auf der Registerseite. Der wirkt nur auf den Bildschirm; sonst hinge der Inhalt einer Datei, die
 andere lesen, davon ab, was zuletzt jemand eingestellt hatte.
+
+**Seit #109 eine zweite Quelle:** Was der Spiegel schreibt und die Registeransicht zeigt, baut
+`RegisterZeilenBau` aus **zwei** Quellen zusammen — den abgeschlossenen Vorgängen aus dieser Kette
+und der importierten `RegisterHistorie` (Kette 6). Beide laufen in derselben Funktion zusammen,
+damit Bildschirm und Spiegel weiterhin per Konstruktion dasselbe zeigen, nicht nur zufällig.
 
 ## 4. Kanzleidaten
 
@@ -167,11 +190,67 @@ arbeitet weiter alle 30 Minuten, die Aufbewahrung staffelt eigene Archive nach T
 Einrichtung und Alltag stehen in [Arbeitsplatzwechsel](ONEDRIVE_ARBEITSPLATZWECHSEL.md), technische
 Details im [Backup-Steckbrief](../Automation_App_Frontend/lib/features/backup/FEATURE.md).
 
+## 6. Registerhistorie einlesen
+
+```
+Datei ──▶ POST /api/RegisterImport (Vorschau/Übernahme) ──▶ Tabelle RegisterHistorie
+                                                                    └──▶ RegisterZeilenBau
+                                                                           ├──▶ GET .../zeilen
+                                                                           └──▶ Register-Spiegel (Kette 3)
+```
+
+Ein Programm auf dem Kanzleirechner (oder ein Agent) liest den Altbestand aus dem bisherigen
+Word-Dokument der Kanzlei jahrgangsweise aus und schickt ihn als Datei an
+`POST /api/RegisterImport` — ohne `uebernehmen` nur eine Prüfung, mit `uebernehmen=true` derselbe
+Code, der schreibt (§6.2, Format in `docs/REGISTER_IMPORT.md`), wahlweise je Jahrgang einzeln
+oder für alle Jahrgänge einer Datei zusammen. Übernommene Zeilen landen in der eigenen Tabelle
+`RegisterHistorie`, wiedererkannt über Jahr, laufende Nummer **und** Nummernzusatz — **nicht** in
+der Vorgangs-Tabelle, sonst stünden Tausende Zeilen ohne zugehörigen Vorgang in der Vorgangsliste.
+
+`RegisterZeilenBau` (Backend-Slice `Vorgaenge`) liest beide Tabellen und baut daraus **eine**
+Zeilenliste, sortiert nach Jahrgang und laufender Nummer: `GET api/Vorgaenge/register/zeilen`
+liefert sie an die Registeransicht (Frontend `vorgaenge`), derselbe Bau speist den
+Register-Spiegel aus Kette 3.
+
+**Die Naht:** `RegisterZeilenBau` ist die einzige Stelle, die beide Quellen kennt. Ein neues Feld
+an einer Quelle (Vorgang oder Historie), das in der Zeile erscheinen soll, muss dort eingetragen
+werden — sonst zeigen Bildschirm und Spiegel die eine Quelle vollständig und die andere nur
+teilweise, ohne dass ein Test das bemerkt.
+
+**Seit §6.3 läuft die Kante auch in die andere Richtung** (09.09.2026): Nicht nur speist die
+Historie die Registerzeilen, sie **nimmt** auch eine auf. Wird ein Vorgang gelöscht und soll seine
+Registerzeile bleiben (`DELETE api/Vorgaenge?…&registerzeileBehalten=true`), macht
+`VorgangLoeschung` aus der gespiegelten Zeile eine eigenständige Zeile der Historie — mit
+`Quelle = "vorgang"` statt `"import"`, damit ablesbar bleibt, woher sie kam. Zwei Dinge hängen
+daran:
+
+- **Gebaut wird über `RegisterZeilenBau.Zeile`**, dieselbe Ableitung wie für Ansicht und Spiegel.
+  Eine zweite Herleitung von Jahrgang, Zeichen und Rubrum wäre genau die Verdopplung, die diese
+  Klasse verhindern soll.
+- **Der natürliche Schlüssel ist eindeutig** (`Jahr`, `LaufendeNummer`, `NummerZusatz`, Unique-Index
+  mit Filter `LaufendeNummer > 0`). Die Übernahme fragt **vorher**, ob er belegt ist, und lässt es
+  dann bleiben — steht die Zeile schon im Register, gibt es nichts zu bewahren. Eine
+  `DbUpdateException` mitten in einem Löschvorgang wäre der schlechteste Ausgang, und der Vorgang
+  soll trotzdem verschwinden.
+
+Die Gegenrichtung braucht keinen eigenen Weg: Eine Spiegelzeile kann ihren Vorgang nicht
+überleben — sie käme beim nächsten Schreiben wieder —, deshalb löscht die Registeransicht sie über
+denselben Aufruf mit `registerzeileBehalten=false`. Nur eine echte historische Zeile hat einen
+eigenen Weg (`DELETE api/RegisterHistorie/{id}`).
+
 ## Wo eine Kette anfängt zu lügen
 
-Alle fünf haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
+Alle sechs haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
 das von allein — die Architektur-Tests prüfen Schichten und Verträge, nicht Fachwege. Was hilft,
 ist die Naht mitzulesen, bevor man eine Seite anfasst.
+
+**Zwei Quellen, eine Zählung (Kette 3/6):** Seit die Registeransicht Vorgänge und Historie aus
+`RegisterZeilenBau` mischt, zählt „wie viele Zeilen zeigt das Register" nicht mehr aus einer
+Tabelle. Wer nur eine Quelle ändert — ein neues Feld am Vorgang, einen neuen Filter auf
+`RegisterHistorie` — und die andere vergisst, bekommt eine Zahl, die auf dem Bildschirm und im
+Spiegel gleich falsch ist, weil beide aus derselben unvollständigen Funktion lesen. Kein Test
+sieht das: Er prüft, dass Bildschirm und Spiegel übereinstimmen, nicht, dass beide vollständig
+sind.
 
 Kommt eine Kette hinzu oder fällt eine weg, gehört sie hier hinein — sonst steht in dieser Datei
 bald dasselbe wie in einem Steckbrief, der auf Tests zeigt, die es nicht mehr gibt.

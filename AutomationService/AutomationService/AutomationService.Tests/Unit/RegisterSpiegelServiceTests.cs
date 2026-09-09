@@ -33,13 +33,21 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
 
     string Pdf => _umgebung.PdfPfad;
 
+    /// <summary>
+    /// Am Ende liegen beide Dateien im Ablageordner. Seit §6.2 („Word sofort,
+    /// PDF nachgezogen") sind das <b>zwei</b> Schritte, und der Test macht
+    /// beide: Vorher behauptete er, das PDF liege direkt nach
+    /// <c>SchreibeAsync</c> — das ist ab jetzt der falsche Zeitpunkt. Dass es
+    /// dazwischen wirklich noch fehlt, prüft
+    /// <see cref="RegisterSpiegelPdfTests"/>.
+    /// </summary>
     [Fact]
     public async Task Schreibe_LegtWordUndPdfImAblageordnerAn()
     {
         await EinstellungenAnlegen();
         await VorgangAnlegen("01/26 C03", 1);
 
-        var ergebnis = await Dienst().SchreibeAsync();
+        var ergebnis = await _umgebung.VollstaendigSchreibenAsync();
 
         ergebnis.Geschrieben.Should().BeTrue();
         ergebnis.Zeilen.Should().Be(1);
@@ -70,10 +78,13 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
     {
         await EinstellungenAnlegen();
         await VorgangAnlegen("01/26 C03", 1);
-        await Dienst().SchreibeAsync();
+        // Vollständig, damit die Ausgangslage ein Ordner mit .docx *und* PDF
+        // ist — genau das prüft der Vergleich mit dem Stand.
+        await _umgebung.VollstaendigSchreibenAsync();
         var ersterStand = File.GetLastWriteTimeUtc(Docx);
 
         var zweiter = await Dienst().SchreibeAsync();
+        await _umgebung.PdfNachziehenAsync();
 
         zweiter.Geschrieben.Should().BeFalse();
         zweiter.Grund.Should().Contain("nicht geändert");
@@ -168,10 +179,13 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
         await VorgangAnlegen("01/26 C03", 1);
 
         var ergebnis = await Dienst().SchreibeAsync();
+        await _umgebung.PdfNachziehenAsync();
 
         ergebnis.Geschrieben.Should().BeFalse();
         ergebnis.Fehler.Should().Contain("nicht von der App");
         (await File.ReadAllTextAsync(Docx)).Should().Be("die Handarbeit von sieben Jahren");
+        // Nachgezogen wird nichts, weil nichts eingereiht wurde — der Lauf
+        // bricht ab, bevor der Ablageordner angefasst wird.
         File.Exists(Pdf).Should().BeFalse("auch das PDF darf dann nicht entstehen");
     }
 
@@ -193,13 +207,20 @@ public sealed class RegisterSpiegelServiceTests : IDisposable
         zweiter.Fehler.Should().BeNull();
     }
 
+    /// <summary>
+    /// Im Ablageordner liegen genau die zwei Dateien und kein Zwischenstand —
+    /// weder eine halbfertige .docx noch das <c>~…tmp</c> eines
+    /// Laufwerkswechsels. Geprüft nach dem vollständigen Lauf: Der PDF-Teil
+    /// entsteht seit §6.2 später, und der Ordner soll auch dann aufgeräumt
+    /// sein.
+    /// </summary>
     [Fact]
     public async Task Schreibe_LaesstKeineZwischenstaendeImAblageordner()
     {
         await EinstellungenAnlegen();
         await VorgangAnlegen("01/26 C03", 1);
 
-        await Dienst().SchreibeAsync();
+        await _umgebung.VollstaendigSchreibenAsync();
 
         Directory.EnumerateFiles(_umgebung.Ablage).Select(Path.GetFileName)
             .Should().BeEquivalentTo([$"{RegisterSpiegelVorgabe.Dateiname}.docx",

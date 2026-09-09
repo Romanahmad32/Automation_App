@@ -16,7 +16,8 @@ namespace AutomationService.Features.Vorgaenge.Presentation.Controllers;
 [Route("api/[controller]")]
 public class VorgaengeController(
     IVorgangRepository repository,
-    IVorgangAbschlussService abschlussService) : ControllerBase
+    IVorgangAbschlussService abschlussService,
+    VorgangLoeschung loeschung) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<VorgangDto>), StatusCodes.Status200OK)]
@@ -137,14 +138,23 @@ public class VorgaengeController(
         };
     }
 
+    /// <summary>
+    /// Löscht den Vorgang zur Referenz (§6.3). <paramref name="registerzeileBehalten"/>
+    /// entscheidet über seine gespiegelte Registerzeile: vorbelegt mit
+    /// <c>true</c>, weil das die Antwort ist, die nichts zusätzlich löscht —
+    /// die Zeile wird dabei zu einer eigenständigen der übernommenen Historie,
+    /// <b>bevor</b> der Vorgang verschwindet. Mit <c>false</c> verschwindet sie
+    /// mit ihm, wie bisher.
+    /// </summary>
     [HttpDelete]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         [FromQuery] string referenz,
-        CancellationToken cancellationToken)
+        [FromQuery] bool registerzeileBehalten = true,
+        CancellationToken cancellationToken = default)
     {
-        var removed = await repository.DeleteAsync(referenz, cancellationToken);
+        var removed = await loeschung.LoescheAsync(referenz, registerzeileBehalten, cancellationToken);
         return removed ? NoContent() : NotFound();
     }
 }

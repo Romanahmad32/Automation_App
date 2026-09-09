@@ -196,7 +196,10 @@ class StummeVorgangsablage implements VorgangRepository {
   Future<Vorgang> upsertVorgang(Vorgang vorgang) async => vorgang;
 
   @override
-  Future<void> deleteVorgang(String referenz) async {}
+  Future<void> deleteVorgang(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) async {}
 
   @override
   Future<Vorgang?> setzeEntwurf(

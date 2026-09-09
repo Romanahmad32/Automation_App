@@ -46,5 +46,10 @@ class AppRouter extends RootStackRouter {
         AutoRoute(path: 'einstellungen', page: SettingsRoute.page),
       ],
     ),
+    // Nicht unter der Shell: Das Register (Tab 6) ist kein Stapel, und eine
+    // zehnte Kindroute waere ein Reiter mehr, den niemand sehen soll. Die
+    // Übernahme der Registerhistorie liegt deshalb als eigene Route über den
+    // Reitern und wird von Tab 6 aus geöffnet (`context.router.push`).
+    AutoRoute(path: '/register-import', page: RegisterImportRoute.page),
   ];
 }

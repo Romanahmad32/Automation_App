@@ -21,6 +21,11 @@ class _FakeVorgaengeDatasource implements VorgangRepository {
   bool upsertSchlaegtFehl = false;
   bool abschliessenSchlaegtFehl = false;
   bool aendereReferenzSchlaegtFehl = false;
+  bool deleteSchlaegtFehl = false;
+
+  /// Mit welchem [registerzeileBehalten] zuletzt gelöscht wurde (§6.3) — null,
+  /// solange noch nicht gelöscht wurde.
+  bool? letztesRegisterzeileBehalten;
 
   @override
   Future<List<Vorgang>> loadVorgaenge() async => vorgaenge;
@@ -38,7 +43,12 @@ class _FakeVorgaengeDatasource implements VorgangRepository {
   }
 
   @override
-  Future<void> deleteVorgang(String referenz) async {
+  Future<void> deleteVorgang(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) async {
+    letztesRegisterzeileBehalten = registerzeileBehalten;
+    if (deleteSchlaegtFehl) throw Exception('Backend nicht erreichbar');
     vorgaenge = vorgaenge
         .where((v) => !Vorgang.gleicheReferenz(v.referenz, referenz))
         .toList();
@@ -512,5 +522,65 @@ void main() {
 
     expect(datasource.vorgaenge, hasLength(1));
     expect(datasource.vorgaenge.single.referenz, '84/26 C03_GG-XY 123');
+  });
+
+  group('loesche', () {
+    // §6.3: Vorbelegt ist „behalten" — die Antwort, die nichts zusätzlich
+    // löscht.
+    test('behält die Registerzeile, wenn nicht anders verlangt', () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+
+      await cubit.loesche('84/26 C03_GG-XY 123');
+
+      expect(cubit.state, isEmpty);
+      expect(datasource.letztesRegisterzeileBehalten, isTrue);
+    });
+
+    test('reicht registerzeileBehalten: false an das Backend durch', () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+
+      await cubit.loesche('84/26 C03_GG-XY 123', registerzeileBehalten: false);
+
+      expect(datasource.letztesRegisterzeileBehalten, isFalse);
+    });
+
+    test(
+      'fehlgeschlagenes Löschen wird gemeldet statt still geschluckt',
+      () async {
+        await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+        datasource.deleteSchlaegtFehl = true;
+
+        await cubit.loesche(
+          '84/26 C03_GG-XY 123',
+          registerzeileBehalten: false,
+        );
+
+        // In-Memory bleibt gelöscht (optimistisch), der Fehler ist gemeldet.
+        expect(cubit.state, isEmpty);
+        expect(fehler.state, isNotNull);
+        expect(fehler.state!.aktion, VorgangPersistenzAktion.loeschen);
+        expect(fehler.state!.referenz, '84/26 C03_GG-XY 123');
+        expect(fehler.state!.registerzeileBehalten, isFalse);
+      },
+    );
+
+    test(
+      'wiederhole löscht mit derselben Entscheidung zur Registerzeile',
+      () async {
+        await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+        datasource.deleteSchlaegtFehl = true;
+        await cubit.loesche(
+          '84/26 C03_GG-XY 123',
+          registerzeileBehalten: false,
+        );
+        final gemeldet = fehler.state!;
+
+        datasource.deleteSchlaegtFehl = false;
+        datasource.letztesRegisterzeileBehalten = null;
+        await cubit.wiederhole(gemeldet);
+
+        expect(datasource.letztesRegisterzeileBehalten, isFalse);
+      },
+    );
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Hinweis auf der Registerseite, solange überhaupt kein Vorgang erfasst ist.
+/// Hinweis auf der Registerseite, solange sie überhaupt keine Zeile hat —
+/// weder einen Vorgang der App noch eine übernommene Zeile aus dem
+/// Registerbuch.
 ///
 /// Seit das Register alle Vorgänge führt (§6.2) heißt „leer" wörtlich leer —
 /// vorher stand hier auch dann etwas, wenn Vorgänge liefen, aber noch keiner
@@ -24,9 +26,10 @@ class RegisterLeerHinweis extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Noch keine Vorgänge erfasst. Sobald ein Vorgang angelegt wird, '
-              'erscheint er hier als Registerzeile — die laufende Nummer '
-              'bekommt er beim Abschluss.',
+              'Noch keine Registerzeile. Sobald ein Vorgang angelegt wird, '
+              'erscheint er hier — die laufende Nummer bekommt er beim '
+              'Abschluss. Ältere Jahrgänge kommen über „Datei einlesen…" '
+              'oben dazu.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),

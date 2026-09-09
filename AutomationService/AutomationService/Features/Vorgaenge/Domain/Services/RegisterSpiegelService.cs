@@ -1,6 +1,6 @@
 using AutomationService.Core.Ablage;
 using AutomationService.Core.Persistence;
-using AutomationService.Features.PdfConversion.Domain.Services;
+using AutomationService.Features.RegisterHistorie.Domain.Services;
 using AutomationService.Features.Settings.Domain.Persistence;
 using AutomationService.Features.Settings.Domain.Services;
 using AutomationService.Features.WordAutomation.Domain.Exceptions;
@@ -10,45 +10,57 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 
 /// <summary>
 /// Schreibt den Register-Spiegel (§6.2, #40): Zeilen aus der Datenbank, .docx
-/// über <see cref="RegisterDokument"/>, PDF über den PdfConversion-Slice, und
-/// beides atomar in den eingestellten Ablageordner.
+/// über <see cref="RegisterDokument"/> atomar in den eingestellten
+/// Ablageordner — und die PDF-Fassung in die Warteschlange.
 ///
 /// Der Ablauf ist so gebaut, dass im Ablageordner nur zwei Dinge geschehen
 /// können: nichts, oder eine vollständige neue Fassung. Gebaut wird im
 /// Arbeitsverzeichnis; erst der letzte Schritt fasst das Ziel an (siehe
 /// <see cref="AtomareAblage"/>).
+///
+/// <b>Auf das PDF wird nicht gewartet</b> (§6.2 „Word sofort, PDF
+/// nachgezogen"): Die .docx kostet 0,8 s, die Wandlung durch Word 20 s. Wer
+/// hier wartete, machte aus jedem Vorgangsabschluss einen Knopf, der zwanzig
+/// Sekunden hängt. Der Lauf gibt deshalb zurück, sobald die .docx liegt, und
+/// meldet über <see cref="RegisterSpiegelErgebnis.PdfLaeuft"/>, dass die
+/// Fassung unterwegs ist.
+///
+/// Was er dabei <em>nicht</em> aufschiebt: das Wegräumen des veralteten PDF.
+/// Das geschieht sofort, denn genau dazwischen liegt der Zustand, den §6.2
+/// verbietet — ein PDF von gestern neben einer .docx von heute.
 /// </summary>
 /// <param name="db">Vorgänge und Einstellungen.</param>
-/// <param name="pdf">Wandelt die fertige .docx; fehlt Word, bleibt es bei der .docx.</param>
+/// <param name="warteschlange">
+/// Nimmt die PDF-Wandlung ab. Die Naht ist der Grund, warum der Abschluss
+/// wieder schnell ist; wer sie umgeht, holt die zwanzig Sekunden zurück.
+/// </param>
+/// <param name="historie">
+/// Die übernommenen Zeilen des gewachsenen Kanzleiregisters ab 2018 — die
+/// zweite Quelle der Datei (§6.2). Ohne sie zeigte der Spiegel nur die Jahre
+/// seit der Umstellung, und der Anwalt hätte weiter zwei Register.
+/// </param>
 /// <param name="stand">Der Fingerabdruck des zuletzt geschriebenen Bestands.</param>
 /// <param name="bauordner">Wo die Dateien entstehen, bevor sie umziehen.</param>
 /// <param name="schleuse">Lässt immer nur einen Schreiblauf durch.</param>
 /// <param name="logger">Protokolliert Lauf und Fehlschlag.</param>
 public sealed class RegisterSpiegelService(
     AutomationDbContext db,
-    IPdfConversionService pdf,
+    IRegisterPdfWarteschlange warteschlange,
+    IRegisterHistorie historie,
     RegisterSpiegelStand stand,
     RegisterSpiegelBauordner bauordner,
     RegisterSpiegelSchleuse schleuse,
     ILogger<RegisterSpiegelService> logger) : IRegisterSpiegelService
 {
-    /// <summary>
-    /// Alles rund um die PDF-Fassung — erzeugen, ablegen, die veraltete
-    /// wegräumen. Steht in einer eigenen Klasse, weil daran eine eigene
-    /// Zusicherung hängt: .docx und .pdf im Ablageordner dürfen nie
-    /// Verschiedenes sagen.
-    /// </summary>
-    readonly RegisterSpiegelPdfAblage pdfAblage = new(pdf, logger);
-
     public async Task<RegisterSpiegelErgebnis> StandAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            return await StandInternAsync(cancellationToken);
+            return MitPdfStand(await StandInternAsync(cancellationToken));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            return Unerwartet(ex);
+            return MitPdfStand(Unerwartet(ex));
         }
     }
 
@@ -60,14 +72,29 @@ public sealed class RegisterSpiegelService(
         {
             // Nur einer schreibt. Warum das kein Sonderfall ist, steht an
             // RegisterSpiegelSchleuse.
-            return await schleuse.NacheinanderAsync(
-                () => SchreibeInternAsync(erzwingen, cancellationToken), cancellationToken);
+            return MitPdfStand(await schleuse.NacheinanderAsync(
+                () => SchreibeInternAsync(erzwingen, cancellationToken), cancellationToken));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            return Unerwartet(ex);
+            return MitPdfStand(Unerwartet(ex));
         }
     }
+
+    /// <summary>
+    /// Setzt <see cref="RegisterSpiegelErgebnis.PdfLaeuft"/> — für beide Wege
+    /// und jeden Ausgang an genau einer Stelle.
+    ///
+    /// Nicht an den einzelnen Rückgaben, obwohl das naheliegender wäre: Die
+    /// Auskunft „es entsteht gerade ein PDF" gilt für den Prozess und nicht
+    /// für diesen Aufruf. Ein übersprungener Lauf, ein gesperrtes Ziel, ein
+    /// unerwarteter Fehlschlag — in allen drei Fällen kann von einem früheren
+    /// Lauf noch eine Wandlung unterwegs sein, und die Oberfläche soll das
+    /// sehen. Fünf Ausgänge, die es je selbst setzen, wären fünf Stellen, an
+    /// denen es einmal vergessen wird.
+    /// </summary>
+    RegisterSpiegelErgebnis MitPdfStand(RegisterSpiegelErgebnis ergebnis) =>
+        ergebnis with { PdfLaeuft = warteschlange.Laeuft };
 
     /// <summary>
     /// Das Netz unter beiden Wegen. Der Controller sichert zu, dass er immer
@@ -125,6 +152,8 @@ public sealed class RegisterSpiegelService(
             DocxPfad: File.Exists(ablage.Docx) ? ablage.Docx : null,
             PdfPfad: File.Exists(ablage.Pdf) ? ablage.Pdf : null,
             PdfFehler: null,
+            // Setzt MitPdfStand; hier stünde sonst dieselbe Auskunft zweimal.
+            PdfLaeuft: false,
             Zeilen: zeilen,
             GeschriebenAm: letzter?.GeschriebenAm,
             Konfliktkopien: ablage.Konfliktkopien());
@@ -161,7 +190,7 @@ public sealed class RegisterSpiegelService(
 
         try
         {
-            return await SchreibeDateienAsync(
+            return SchreibeDateien(
                 ablage, zeilen, nurAbgeschlossene, abdruck, letzter, cancellationToken);
         }
         catch (ZieldateiGesperrtException ex)
@@ -232,7 +261,27 @@ public sealed class RegisterSpiegelService(
         && File.Exists(ablage.Docx)
         && letzter.PdfGeschrieben == File.Exists(ablage.Pdf);
 
-    async Task<RegisterSpiegelErgebnis> SchreibeDateienAsync(
+    /// <summary>
+    /// Der Schreiblauf selbst — bis zur fertigen .docx, nicht weiter.
+    ///
+    /// Die Reihenfolge trägt drei Zusicherungen, und jede hängt an ihrem Platz:
+    ///
+    /// <list type="number">
+    /// <item>Die .docx entsteht im Bauordner und zieht in einem unteilbaren
+    /// Schritt um — im Ablageordner liegt nie ein Zwischenstand.</item>
+    /// <item>Das veraltete PDF verschwindet <em>nach</em> dem Umzug. Vorher
+    /// weggeräumt, hätte ein gesperrtes Ziel eine vollständige alte Fassung um
+    /// ihr PDF gebracht, ohne dass etwas Neues an dessen Stelle trat.</item>
+    /// <item>Die neue Fassung wird eingereiht und nicht abgewartet. Erst danach
+    /// kehrt der Lauf zurück — der Anwalt wartet auf 0,8 s und nicht auf
+    /// 20 s (§6.2).</item>
+    /// </list>
+    ///
+    /// Ohne <c>async</c>, und das ist die sichtbarste Folge der Umstellung:
+    /// Hier wird nichts mehr abgewartet. Der einzige Schritt, der es früher
+    /// nötig machte, war die Wandlung.
+    /// </summary>
+    RegisterSpiegelErgebnis SchreibeDateien(
         RegisterSpiegelAblage ablage,
         IReadOnlyList<RegisterZeile> zeilen,
         bool nurAbgeschlossene,
@@ -240,43 +289,71 @@ public sealed class RegisterSpiegelService(
         RegisterSpiegelStand.Eintrag? letzter,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var jetzt = DateTime.Now;
         var bauDocx = bauordner.NeueDatei(".docx");
+        var pdfQuelle = bauordner.NeueDatei(".docx");
         var bauPdf = bauordner.NeueDatei(".pdf");
+        var eingereiht = false;
 
         try
         {
             RegisterDokument.Schreibe(bauDocx, zeilen, jetzt, nurAbgeschlossene);
 
-            // Erst wandeln, dann umziehen: Was scheitert, scheitert damit,
-            // bevor der Ablageordner angefasst wird.
-            var pdfFehler = await pdfAblage.ErzeugeAsync(bauDocx, bauPdf, cancellationToken);
+            // Die Wandlung braucht die .docx noch, wenn sie längst umgezogen
+            // ist — Ersetze verschiebt sie, und der Ablageordner wird
+            // grundsätzlich nicht gelesen (er kann auf „Dateien bei Bedarf"
+            // stehen, und dann löste jeder Lesezugriff einen Download aus).
+            // Deshalb eine eigene Kopie, die dem Auftrag gehört.
+            File.Copy(bauDocx, pdfQuelle);
 
             AtomareAblage.Ersetze(bauDocx, ablage.Docx);
             AtomareAblage.SchreibschutzSetzen(ablage.Docx);
 
-            pdfFehler = pdfAblage.Ablegen(ablage, bauPdf, pdfFehler, letzter);
-            var pdfPfad = pdfFehler is null ? ablage.Pdf : null;
+            // Ab hier liegt eine neue .docx und kein PDF: „Solange kein neues
+            // PDF liegt, liegt auch kein altes" (§6.2).
+            RegisterSpiegelPdfAblage.VeraltetesWegraeumen(ablage, letzter);
 
-            stand.Schreiben(new RegisterSpiegelStand.Eintrag(
-                abdruck, ablage.Docx, jetzt, PdfGeschrieben: pdfFehler is null));
+            // PdfGeschrieben zunächst false, und das ist keine Lüge, sondern
+            // der Zustand auf der Platte. Der Nachzug führt den Eintrag nach,
+            // sobald das PDF liegt — und bis dahin gilt derselbe Bestand als
+            // „ohne PDF geschrieben", weshalb ein zweiter Lauf mittendrin
+            // nichts neu schreibt.
+            var eintrag = new RegisterSpiegelStand.Eintrag(
+                abdruck, ablage.Docx, jetzt, PdfGeschrieben: false);
+            stand.Schreiben(eintrag);
+
+            warteschlange.Einreihen(new RegisterPdfAuftrag(pdfQuelle, bauPdf, ablage, eintrag));
+            eingereiht = true;
+
             logger.LogInformation(
-                "Register-Spiegel geschrieben: {Zeilen} Zeilen nach {Ziel}.", zeilen.Count, ablage.Docx);
+                "Register-Spiegel geschrieben: {Zeilen} Zeilen nach {Ziel}; PDF-Fassung eingereiht.",
+                zeilen.Count,
+                ablage.Docx);
 
             return new RegisterSpiegelErgebnis(
                 Geschrieben: true,
                 Grund: null,
                 Fehler: null,
                 DocxPfad: ablage.Docx,
-                PdfPfad: pdfPfad,
-                PdfFehler: pdfFehler,
+                // Beides null: Das PDF entsteht erst. „Noch nicht da" ist kein
+                // Fehler und darf nicht als einer erscheinen — es steht in
+                // PdfLaeuft.
+                PdfPfad: null,
+                PdfFehler: null,
+                PdfLaeuft: false,
                 Zeilen: zeilen.Count,
                 GeschriebenAm: jetzt,
                 Konfliktkopien: ablage.Konfliktkopien());
         }
         finally
         {
-            bauordner.Aufraeumen(bauDocx, bauPdf);
+            // Was eingereiht ist, gehört dem Auftrag — er räumt seine beiden
+            // Dateien selbst weg. Wurde nichts eingereiht, liegen sie noch
+            // hier.
+            if (eingereiht) bauordner.Aufraeumen(bauDocx);
+            else bauordner.Aufraeumen(bauDocx, pdfQuelle, bauPdf);
         }
     }
 
@@ -289,8 +366,10 @@ public sealed class RegisterSpiegelService(
         var einstellungen = await EinstellungenAsync(cancellationToken);
 
         var vorgaenge = await db.Vorgaenge.AsNoTracking().ToListAsync(cancellationToken);
+        var historischeZeilen = await historie.GetAllAsync(null, cancellationToken);
         var zeilen = RegisterZeilenBau.Aus(
             vorgaenge,
+            historischeZeilen,
             RegisterSpiegelVorgabe.NurAbgeschlossene(einstellungen.RegisterExportFilter));
 
         return (einstellungen, zeilen);
@@ -318,6 +397,12 @@ public sealed class RegisterSpiegelService(
                 RegisterZeilenBau.Dateifilter(
                     RegisterSpiegelVorgabe.NurAbgeschlossene(einstellungen.RegisterExportFilter)),
                 cancellationToken);
+
+        // Die Historie kommt ungefiltert dazu: Jede übernommene Zeile steht in
+        // der Datei, ganz gleich, wie der Dateifilter steht. Gezählt und nicht
+        // geladen — aus demselben Grund wie oben, und die zweite Quelle darf
+        // die Zahl nicht wieder teuer machen.
+        zeilen += await db.RegisterHistorie.AsNoTracking().CountAsync(cancellationToken);
 
         return (einstellungen, zeilen);
     }

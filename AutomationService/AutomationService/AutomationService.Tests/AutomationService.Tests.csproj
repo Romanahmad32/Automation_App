@@ -23,4 +23,16 @@
     <ProjectReference Include="..\AutomationService.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      Testdaten, die die Tests zur Laufzeit lesen (die anonymisierte Kurzfassung
+      des Kanzleiregisters). Ohne diesen Eintrag liegen sie nur im Projektordner
+      und nicht neben der Test-Assembly, und der Testlauf faende sie nicht.
+
+      Hier gehoeren ausschliesslich erfundene Namen hin: Das Repository ist
+      oeffentlich.
+    -->
+    <Content Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

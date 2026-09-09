@@ -17,11 +17,18 @@ class VorgangVerwaltungTile extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  /// Ob diese Kachel gerade angesprungen wurde — aus dem Register heraus
+  /// (`VorgangHervorhebungSignal`). Dann trägt sie für ein paar Sekunden einen
+  /// farbigen Rand: Nach einem Tabwechsel steht der Blick sonst vor einer
+  /// Liste, die überall gleich aussieht.
+  final bool hervorgehoben;
+
   const VorgangVerwaltungTile({
     super.key,
     required this.vorgang,
     required this.onEdit,
     required this.onDelete,
+    this.hervorgehoben = false,
   });
 
   String _untertitel() {
@@ -42,6 +49,12 @@ class VorgangVerwaltungTile extends StatelessWidget {
     final parteien = vorgang.parteienBezeichnung;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+      shape: hervorgehoben
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: theme.colorScheme.primary, width: 2),
+            )
+          : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(

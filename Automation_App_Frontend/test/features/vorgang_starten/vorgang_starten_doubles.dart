@@ -5,8 +5,10 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/register_nummern_stand.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_nummern_repository.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_request.dart';
@@ -203,6 +205,40 @@ class OhneKanzleiEinstellungen implements UseCase<KanzleiSettings, NoParams> {
       Left(LocalFailure(message: 'keine Einstellungen'));
 }
 
+/// Liefert feste Kanzleidaten — für den Rückfall auf
+/// `laufendeAuftragsnummer`, wenn der Nummernstand (§6.3) nicht zu holen ist.
+class FesteKanzleiEinstellungen implements UseCase<KanzleiSettings, NoParams> {
+  final KanzleiSettings settings;
+
+  FesteKanzleiEinstellungen(this.settings);
+
+  @override
+  Future<Either<Failure, KanzleiSettings>> call(NoParams params) async =>
+      Right(settings);
+}
+
+/// Der Nummernstand-Abruf (§6.3) scheitert — der Bloc muss auf den Zähler der
+/// Einstellungen zurückfallen, ohne das Laden der Defaults zu blockieren.
+class OhneRegisterNummern implements RegisterNummernRepository {
+  @override
+  Future<Either<Failure, RegisterNummernStand>> ladeNummernstand({
+    int? jahrgang,
+  }) async => Left(LocalFailure(message: 'kein Nummernstand'));
+}
+
+/// Liefert einen festen Nummernstand — für Tests des Vorschlags
+/// (`naechsteNummer`) und der Belegt-Warnung.
+class FesterRegisterNummernStand implements RegisterNummernRepository {
+  final RegisterNummernStand stand;
+
+  FesterRegisterNummernStand(this.stand);
+
+  @override
+  Future<Either<Failure, RegisterNummernStand>> ladeNummernstand({
+    int? jahrgang,
+  }) async => Right(stand);
+}
+
 /// Vorgangsablage im Speicher: hält den Upsert über die Referenz nach, damit
 /// sichtbar bleibt, ob ein Vorgang entstanden ist. [entwuerfe] zählt mit, was
 /// als angefangener Ausfüllstand abgelegt (bzw. mit `null` verworfen) wurde.
@@ -238,7 +274,10 @@ class VorgangAblageDouble implements VorgangRepository {
   }
 
   @override
-  Future<void> deleteVorgang(String referenz) async {
+  Future<void> deleteVorgang(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) async {
     vorgaenge = vorgaenge
         .where((v) => !Vorgang.gleicheReferenz(v.referenz, referenz))
         .toList();

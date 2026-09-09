@@ -139,3 +139,60 @@ Mitgezählt wird über einen `BlocListener` im Widgetbaum. Ein von Hand geöffne
 `bloc.stream.listen(…)` überlebt den Testkörper und blockiert das Aufräumen; dasselbe gilt für
 `await bloc.close()` im Test. Der Bloc wird hier bewusst nicht geschlossen — mit dem Testprozess ist
 er ohnehin weg.
+
+## Auftragsnummer-Vorschlag und Belegt-Warnung (§6.3)
+
+`_onLadeDefaults` lädt seit §6.3 zusätzlich den Nummernstand des laufenden Jahrgangs über
+`RegisterNummernRepository` (Feature `vorgaenge`, wie hier schon die Einstellungen eines anderen
+Features gelesen werden). Vorgeschlagen wird `naechsteNummer` — die höchste im Jahrgang belegte
+Nummer + 1, quellenübergreifend über Vorgänge der App und übernommene Historie (§6.2) —, nicht mehr
+`settings.laufendeAuftragsnummer`. Der Zähler bleibt trotzdem bestehen: Er ist weiterhin die
+Korrektur von Hand (§7.1) und wird unverändert erst beim Abschluss des Vorgangs erhöht (`POST
+/api/Vorgaenge/abschliessen`, atomar im Backend, §4.8) — mit dem Vorschlag des nächsten Vorgangs hat
+das seit §6.3 nichts mehr zu tun.
+
+**Scheitert der Abruf, bleibt es beim Zähler.** `_ladeNummernstand()` fängt den Fehler ab und gibt
+`null` zurück; `_onLadeDefaults` fällt dann auf `settings.laufendeAuftragsnummer` zurück und lässt
+`belegteNummern`/`nummernJahr` leer bzw. `null`. Ein nicht erreichbarer Endpunkt darf das Anlegen
+eines Vorgangs nicht aufhalten — deshalb hier **kein** Fehlerdialog und keine `Rueckmeldung`.
+
+**Die Belegt-Warnung sitzt bewusst nicht am `FormControl`.** `AuftragsnummerBelegtHinweis`
+(`presentation/widgets/`) hört über `ReactiveValueListenableBuilder` live auf das Feld
+`auftragsnummer` und vergleicht gegen `belegteNummern` — sie setzt **keinen** Validator. Ein
+Validator würde `formGroup.valid` mitbestimmen und über `VorgangAktionsleiste` den
+„Speichern"-Knopf sperren, so wie es die RVG-Wert-Prüfung in `word_automation` mit absichtlich
+unlesbaren Werten tut. §6.3 verlangt das Gegenteil: „Eine doppelte Nummer warnt, sperrt nicht" — das
+gewachsene Register der Kanzlei enthält echte Doubletten (`1/26 C03` und `5/26 C03` doppelt, siehe
+Begründung der Anforderung), und was im Bestand steht, muss eintragbar bleiben. Der Hinweistext
+selbst ist `FehlerHinweis` (`core/general_widgets/`) — dieselbe Fehlerfarbe wie eine Validierung,
+aber ohne ihre Wirkung; das Muster stammt von `FeldNameHinweis` in `form_template_setup`.
+
+Der Bestand (`belegteNummern`, `nummernJahr`) liegt als lokaler State in
+`_VorgangStartenFormViewState`, gesetzt über `onNummernstandGeladen` — den Rückkanal von
+`VorgangDefaultsBeobachter` (`presentation/widgets/`, seit #109-D1 die eigenständige Auslagerung von
+`_patchDefaults` und dem Öffnen-schon-geladen-Check aus der View, wegen des 250-Zeilen-Budgets). Es
+ist kein erneuter Bloc-Zugriff aus `AuftragSection` nötig: Die Sektionen-Widgets sind reine
+`StatelessWidget`s, die ihre Werte von der View bekommen, wie auch `referenzManuallyEdited` und die
+Mandantenliste. Ändert der Anwalt den Jahrgang im Feld `auftragsjahr`, wird der Bestand **nicht** neu
+geladen — er gilt für den beim Öffnen der Seite aktuellen Jahrgang. Das deckt den Normalfall (ein
+neuer Vorgang trägt praktisch immer das laufende Jahr); ein Nachladen je Tastenanschlag im Jahr-Feld
+war für diesen Zuschnitt bewusst nicht Teil der Aufgabe.
+
+## Die Referenz-Vorschau friert ein, sobald jemand sie anfasst
+
+Die Referenz baut sich aus Auftragsnummer, Jahr, Abteilung und dem Kennzeichen des Gegners und
+wird bei jeder Änderung dieser vier Felder neu gesetzt (`_syncReferenzVorschau`). Ändert der Anwalt
+sie einmal von Hand, ist Schluss damit: `_referenzManuallyEdited` friert die Automatik ein, bis
+„zurücksetzen" gedrückt wird. Erkannt wird die Handänderung über einen **Wertvergleich** im
+Listener, nicht über ein Unterdrücken der Ereignisse — das eigene `updateValue` löst denselben
+Strom aus wie eine Tastatureingabe, und wer stattdessen ein Flag um den Schreibvorgang legt,
+verpasst jede Änderung, die währenddessen eintrifft. Dasselbe Muster trägt das Rechtsgebiet
+(`_rechtsgebietManuell`, §7.1): vorschlagen statt entscheiden, mit sichtbarem Weg zurück.
+
+## `registriereAnfrage` ist ein Upsert über die Referenz
+
+Dieselbe Referenz ein zweites Mal zu speichern legt keinen zweiten Vorgang an, sondern
+aktualisiert **nur die hier erfassten Felder** des vorhandenen. Antwort- und Dokumentdaten, die
+später aus Postfach (§4.4) und Word-Automation (§4.6) dazugekommen sind, bleiben stehen. Das ist
+der Grund, warum der Anwalt einen Vorgang gefahrlos noch einmal über dieses Formular schicken darf
+— etwa wenn der Zentralruf-Prefill beim ersten Versuch am Captcha gescheitert ist.

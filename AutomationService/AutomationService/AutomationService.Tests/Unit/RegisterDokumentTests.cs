@@ -101,6 +101,30 @@ public sealed class RegisterDokumentTests : IDisposable
     }
 
     /// <summary>
+    /// Die Jahrestrennzeile steht fett und über die volle Breite — wie im
+    /// gewachsenen Word-Register der Kanzlei. Sie ist keine Datenzeile: Die
+    /// Zahl im Kopf und die Zählung des Spiegels (<c>RegisterSpiegelService</c>)
+    /// zählen weiterhin nur die Zeilen mit Inhalt.
+    /// </summary>
+    [Fact]
+    public void Schreibe_SetztDieJahrestrennzeileFettUndZaehltSieNichtAlsDatenzeile()
+    {
+        var xml = Xml(Schreibe(ZweiJahrgaenge));
+
+        var trennzeilen = Regex.Matches(xml, @"<w:tr[ >].*?</w:tr>", RegexOptions.Singleline)
+            .Select(treffer => treffer.Value)
+            .Where(zeile => zeile.Contains(@"<w:gridSpan w:val=""4""", StringComparison.Ordinal))
+            .ToList();
+
+        trennzeilen.Should().HaveCount(2, "je Jahrgangswechsel eine Zeile");
+        trennzeilen.Should().OnlyContain(zeile => zeile.Contains("<w:b", StringComparison.Ordinal));
+
+        // Kopfzeile + zwei Jahrestrennzeilen + drei Datenzeilen.
+        Regex.Matches(xml, @"<w:tr[ >]").Should().HaveCount(1 + 2 + ZweiJahrgaenge.Length);
+        xml.Should().Contain($"{ZweiJahrgaenge.Length} Vorgänge", "gezählt werden nur die Datenzeilen");
+    }
+
+    /// <summary>
     /// Die Jahreszeilen tragen eine Überschriften-Formatvorlage. Daraus baut
     /// Word beim PDF-Export die Sprungmarken — auf dem Handy der Unterschied
     /// zwischen „zum Jahrgang springen" und „durch 90 Seiten wischen".
@@ -137,6 +161,31 @@ public sealed class RegisterDokumentTests : IDisposable
     public void Schreibe_WeistDieDateiAlsSpiegelAus()
     {
         Xml(Schreibe(ZweiJahrgaenge)).Should().Contain(RegisterLayout.Spiegelhinweis);
+    }
+
+    /// <summary>
+    /// Die Reihenfolge im <c>w:tbl</c> ist im OOXML-Schema festgelegt:
+    /// <c>tblPr</c>, dann <c>tblGrid</c>, dann die Zeilen. Word ist darin
+    /// unnachgiebig — steht das Raster hinter den Zeilen, öffnet es die Datei
+    /// gar nicht erst („Fehler beim Öffnen der Datei in Word", COM 0x800A1401)
+    /// und die PDF-Wandlung fällt auf den langsamen Ersatzweg zurück, bis der
+    /// Aufruf am Bildschirm in die Zeitüberschreitung läuft.
+    ///
+    /// Am Augenschein ist das nicht zu sehen: Die .docx liegt da, hat die
+    /// richtige Größe und lässt sich von anderen Lesern öffnen.
+    /// </summary>
+    [Fact]
+    public void Schreibe_SetztDasSpaltenrasterVorDieZeilen()
+    {
+        var xml = Xml(Schreibe(ZweiJahrgaenge));
+
+        var raster = xml.IndexOf("<w:tblGrid", StringComparison.Ordinal);
+        var ersteZeile = xml.IndexOf("<w:tr", StringComparison.Ordinal);
+
+        raster.Should().BeGreaterThan(-1);
+        raster.Should().BeLessThan(
+            ersteZeile,
+            "das OOXML-Schema verlangt tblPr, tblGrid, dann die Zeilen — sonst öffnet Word die Datei nicht");
     }
 
     [Fact]

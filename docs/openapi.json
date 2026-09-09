@@ -680,6 +680,94 @@
         }
       }
     },
+    "/api/Vorgaenge/register/zeilen": {
+      "get": {
+        "tags": [
+          "RegisterZeilen"
+        ],
+        "summary": "Alle Registerzeilen; mit jahrgang nur die eines\r\nJahres. Laufende Vorg\u00E4nge sind eingeschlossen \u2014 der Filter \u201Enur\r\nabgeschlossene\u0022 gilt f\u00FCr die Spiegeldatei, nicht f\u00FCr den Bildschirm.",
+        "parameters": [
+          {
+            "name": "jahrgang",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterZeilenDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterZeilenDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterZeilenDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vorgaenge/register/nummern": {
+      "get": {
+        "tags": [
+          "RegisterZeilen"
+        ],
+        "summary": "Der Nummernstand eines Jahrgangs (\u00A76.3): der Vorschlag f\u00FCr die n\u00E4chste\r\nlaufende Nummer und die im Jahrgang schon belegten. Ohne\r\njahrgang gilt das laufende Kalenderjahr \u2014 der\r\nJahrgang, in dem ein neuer Vorgang heute landet.",
+        "parameters": [
+          {
+            "name": "jahrgang",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterNummernDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterNummernDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterNummernDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Vorgaenge": {
       "get": {
         "tags": [
@@ -784,12 +872,21 @@
         "tags": [
           "Vorgaenge"
         ],
+        "summary": "L\u00F6scht den Vorgang zur Referenz (\u00A76.3). registerzeileBehalten\r\nentscheidet \u00FCber seine gespiegelte Registerzeile: vorbelegt mit\r\n\u0060true\u0060, weil das die Antwort ist, die nichts zus\u00E4tzlich l\u00F6scht \u2014\r\ndie Zeile wird dabei zu einer eigenst\u00E4ndigen der \u00FCbernommenen Historie,\r\n\u003Cb\u003Ebevor\u003C/b\u003E der Vorgang verschwindet. Mit \u0060false\u0060 verschwindet sie\r\nmit ihm, wie bisher.",
         "parameters": [
           {
             "name": "referenz",
             "in": "query",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "registerzeileBehalten",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
             }
           }
         ],
@@ -1517,6 +1614,298 @@
                   "items": {
                     "$ref": "#/components/schemas/SachgebietDto"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RegisterHistorie/stand": {
+      "get": {
+        "tags": [
+          "RegisterHistorie"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RegisterHistorie/{id}": {
+      "get": {
+        "tags": [
+          "RegisterHistorie"
+        ],
+        "summary": "Eine einzelne Zeile \u2014 was der Bearbeiten-Dialog beim \u00D6ffnen holt. Er\r\nbraucht mehr als die Registeransicht zeigt: den Freitext als Beleg, die\r\nBefunde und die Hinweise des Erzeugers.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieZeileDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieZeileDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieZeileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "RegisterHistorie"
+        ],
+        "summary": "Berichtigt eine historische Zeile. Die Best\u00E4tigung davor holt die\r\nOberfl\u00E4che ein: Was hier ankommt, ist bereits die Entscheidung des\r\nAnwalts, und der Dienst f\u00FChrt sie aus, statt sie ein zweites Mal zu\r\nhinterfragen.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterHistorieAenderungDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterHistorieAenderungDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterHistorieAenderungDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieZeileDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieZeileDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHistorieZeileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "RegisterHistorie"
+        ],
+        "summary": "L\u00F6scht eine historische Zeile f\u00FCr sich (\u00A76.3). Nur f\u00FCr Zeilen ohne\r\nVorgang gedacht \u2014 eine Spiegelzeile eines Vorgangs l\u00E4sst sich nur\r\nzusammen mit ihm l\u00F6schen (\u0060DELETE api/Vorgaenge\u0060 mit\r\n\u0060registerzeileBehalten=false\u0060); daf\u00FCr braucht es hier keinen\r\neigenen Weg, weil die Zeile sonst beim n\u00E4chsten Schreiben wiederk\u00E4me.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RegisterImport": {
+      "post": {
+        "tags": [
+          "RegisterImport"
+        ],
+        "parameters": [
+          {
+            "name": "uebernehmen",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterImportDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterImportDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterImportBerichtDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterImportBerichtDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterImportBerichtDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5571,6 +5960,34 @@
         },
         "description": "Das Ergebnis einer einzelnen Zeile der Importdatei. \u0060Art\u0060 ist\r\n\u0060neu\u0060, \u0060ergaenzt\u0060, \u0060unveraendert\u0060 oder \u0060abgelehnt\u0060 \u2014 als\r\nZeichenkette, weil eine Zahl die Dart-Seite an die Deklarationsreihenfolge\r\neines C#-Enums koppeln w\u00FCrde.\r\n\r\n\u0060MandantId\u0060 ist nur bei \u0060angewendet\u0060 belegt \u2014 in der Vorschau\r\ngibt es den Mandanten noch nicht, und eine vorweggenommene Nummer w\u00E4re eine\r\nZusage, die der Bericht nicht halten kann."
       },
+      "ImportJahrgangDto": {
+        "required": [
+          "jahrgang",
+          "zeilen"
+        ],
+        "type": "object",
+        "properties": {
+          "jahrgang": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "zeilen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ImportRegisterZeileDto"
+            }
+          }
+        },
+        "description": "Ein Jahrgang in der Langform der Datei."
+      },
       "ImportMandantDto": {
         "required": [
           "anrede",
@@ -5733,6 +6150,288 @@
           }
         },
         "description": "Ein herausgegebenes Arbeitspaket, wie es die \u00DCbersicht zeigt.\r\n\r\nDie Ordnernamen selbst fehlen bewusst: Sie sind mit 200 Eintr\u00E4gen je Paket\r\nder weitaus gr\u00F6\u00DFte Teil der Zeile und stehen in keiner Spalte, die der\r\nAnwalt liest. Was er wissen will, ist int ImportPaketDto.Erledigt von\r\nint ImportPaketDto.AnzahlOrdner \u2014 und das ist gerechnet und nicht gespeichert."
+      },
+      "ImportRegisterZeileDto": {
+        "required": [
+          "laufendeNummer",
+          "nummerZusatz",
+          "spalte1",
+          "aktenzeichen",
+          "abteilung",
+          "abteilungRoh",
+          "sachart",
+          "mandant",
+          "gegner",
+          "sachbestand",
+          "unfalldatum",
+          "rechtsgebiet",
+          "freitext",
+          "sicherheit",
+          "hinweise"
+        ],
+        "type": "object",
+        "properties": {
+          "laufendeNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nummerZusatz": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "spalte1": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "aktenzeichen": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "abteilung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "abteilungRoh": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sachart": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mandant": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gegner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sachbestand": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unfalldatum": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rechtsgebiet": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "freitext": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sicherheit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hinweise": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Eine Zeile in der Importdatei. Alles ist freiwillig: Was in der\r\nFreitextzelle nicht auffindbar war, bleibt leer, statt geraten zu werden \u2014\r\nein Erzeuger, der eine L\u00FCcke f\u00FCllt, um das Feld zu belegen, ist genau das,\r\nwovor die Sicherheitsstufen sch\u00FCtzen sollen."
+      },
+      "JahrgangBefundDto": {
+        "required": [
+          "jahrgang",
+          "zeilen",
+          "luecken",
+          "doppelte",
+          "neu",
+          "unveraendert",
+          "abgelehnt",
+          "zuPruefen",
+          "abweichungen",
+          "eintraege"
+        ],
+        "type": "object",
+        "properties": {
+          "jahrgang": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "zeilen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "luecken": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "doppelte": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "neu": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unveraendert": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "abgelehnt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "zuPruefen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "abweichungen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "eintraege": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegisterZeilenBefundDto"
+            }
+          }
+        },
+        "description": "Der Befund \u00FCber einen Jahrgang \u2014 die Karte, die der Anwalt vor der Freigabe\r\nliest. \u0060Luecken\u0060 und \u0060Doppelte\u0060 stehen vorn, weil sie \u00FCber die\r\nVollst\u00E4ndigkeit entscheiden; \u0060ZuPruefen\u0060 ist die Zahl, nach der die\r\nZeilenliste vorgefiltert wird."
+      },
+      "JahrgangStandDto": {
+        "required": [
+          "jahrgang",
+          "zeilen",
+          "hoechsteNummer",
+          "luecken",
+          "mitBefund",
+          "zuletztImportiertAm"
+        ],
+        "type": "object",
+        "properties": {
+          "jahrgang": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "zeilen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hoechsteNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "luecken": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "mitBefund": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "zuletztImportiertAm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Ein \u00FCbernommener Jahrgang mit seinen offenen Punkten."
       },
       "JsonElement": {},
       "KanzleiSettingsDto": {
@@ -6569,6 +7268,314 @@
         },
         "description": "Ein vom Monitor erfasster Antwort-Treffer, wie ihn die Oberfl\u00E4che abruft."
       },
+      "RegisterHistorieAenderungDto": {
+        "required": [
+          "abteilung",
+          "sachart",
+          "mandant",
+          "gegner",
+          "sachbestand",
+          "unfalldatum",
+          "rechtsgebiet"
+        ],
+        "type": "object",
+        "properties": {
+          "abteilung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sachart": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mandant": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gegner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sachbestand": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unfalldatum": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rechtsgebiet": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Die Berichtigung einer historischen Zeile. Alles nullable und leer als\r\ng\u00FCltiger Wert: Ein Feld zu \u003Cem\u003Eleeren\u003C/em\u003E ist eine gewollte \u00C4nderung \u2014 im\r\nBestand steht manches, was gar nicht in die Spalte geh\u00F6rt.\r\n\r\nJahr und laufende Nummer stehen bewusst nicht darin (siehe\r\nRegisterHistorieAenderung)."
+      },
+      "RegisterHistorieStandDto": {
+        "required": [
+          "jahrgaenge",
+          "fehlendeJahrgaenge"
+        ],
+        "type": "object",
+        "properties": {
+          "jahrgaenge": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JahrgangStandDto"
+            }
+          },
+          "fehlendeJahrgaenge": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        },
+        "description": "Der Stand der \u00DCbernahme, wie ihn die Registeransicht als Chip-Zeile zeigt\r\n(\u00A76.2): je Jahrgang ein H\u00E4kchen, ein \u201Efehlt\u0022 oder die Zahl der offenen\r\nL\u00FCcken."
+      },
+      "RegisterHistorieZeileDto": {
+        "required": [
+          "id",
+          "kennung",
+          "jahr",
+          "laufendeNummer",
+          "nummerZusatz",
+          "aktenzeichen",
+          "abteilung",
+          "sachart",
+          "mandant",
+          "gegner",
+          "sachbestand",
+          "unfalldatum",
+          "rechtsgebiet",
+          "freitext",
+          "sicherheit",
+          "befunde",
+          "hinweise",
+          "mandantId",
+          "geaendertAm"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "kennung": {
+            "type": "string"
+          },
+          "jahr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "laufendeNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nummerZusatz": {
+            "type": "string"
+          },
+          "aktenzeichen": {
+            "type": "string"
+          },
+          "abteilung": {
+            "type": "string"
+          },
+          "sachart": {
+            "type": "string"
+          },
+          "mandant": {
+            "type": "string"
+          },
+          "gegner": {
+            "type": "string"
+          },
+          "sachbestand": {
+            "type": "string"
+          },
+          "unfalldatum": {
+            "type": "string"
+          },
+          "rechtsgebiet": {
+            "type": "string"
+          },
+          "freitext": {
+            "type": "string"
+          },
+          "sicherheit": {
+            "type": "string"
+          },
+          "befunde": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hinweise": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mandantId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "geaendertAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Eine gespeicherte Zeile der Registerhistorie, wie der Bearbeiten-Dialog sie\r\nzur\u00FCckbekommt.\r\n\r\n\u0060Freitext\u0060 geht mit hinaus: Er ist der Beleg, gegen den der Anwalt eine\r\nBerichtigung liest. \u0060Kennung\u0060 ebenso \u2014 sie ist die stabile Referenz\r\n(\u00A77.2), w\u00E4hrend \u0060Id\u0060 eine Z\u00E4hlnummer der Datenbank bleibt."
+      },
+      "RegisterImportBerichtDto": {
+        "required": [
+          "jahrgaenge",
+          "angewendet"
+        ],
+        "type": "object",
+        "properties": {
+          "jahrgaenge": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JahrgangBefundDto"
+            }
+          },
+          "angewendet": {
+            "type": "boolean"
+          }
+        },
+        "description": "Was ein Registerimport bewirkt hat oder bewirken w\u00FCrde. Vorschau und\r\n\u00DCbernahme liefern denselben Bericht; nur bool RegisterImportBerichtDto.Angewendet\r\nunterscheidet sie."
+      },
+      "RegisterImportDto": {
+        "required": [
+          "version",
+          "jahrgang",
+          "zeilen",
+          "jahrgaenge"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "jahrgang": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "zeilen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ImportRegisterZeileDto"
+            }
+          },
+          "jahrgaenge": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ImportJahrgangDto"
+            }
+          }
+        },
+        "description": "Eine Registerimportdatei. Der Rumpf der Anfrage ist Zeichen f\u00FCr Zeichen die\r\nDatei, die au\u00DFerhalb der App entsteht \u2014 kein Umschlag, keine zus\u00E4tzlichen\r\nFelder. Nur deshalb kann derselbe Inhalt gepr\u00FCft, \u00FCbernommen und aufgehoben\r\nwerden, ohne dass jemand ihn dazwischen umformt.\r\n\r\n\u0060Version\u0060 ist die Format-Fassung, derzeit 1; fehlt sie, wird 1\r\nangenommen, eine andere wird abgelehnt statt halb gelesen.\r\n\r\nZwei Schreibweisen, damit die Jahrgangs-Anleitung an den Erzeuger kurz\r\nbleibt: die Langform mit \u0060jahrgaenge\u0060 und die Kurzform mit\r\n\u0060jahrgang\u0060 und \u0060zeilen\u0060 auf oberster Ebene f\u00FCr die \u00FCbliche Datei\r\nmit genau einem Jahrgang. Stehen beide darin, gilt die Langform \u2014 sie ist\r\ndie vollst\u00E4ndigere Aussage."
+      },
+      "RegisterNummernDto": {
+        "required": [
+          "jahr",
+          "hoechsteNummer",
+          "naechsteNummer",
+          "belegte"
+        ],
+        "type": "object",
+        "properties": {
+          "jahr": {
+            "type": "string"
+          },
+          "hoechsteNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "naechsteNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "belegte": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        },
+        "description": "Der Nummernstand eines Jahrgangs (\u00A76.3) f\u00FCr den Vertrag: der Vorschlag f\u00FCr\r\ndie n\u00E4chste laufende Nummer und die im Jahrgang schon belegten."
+      },
       "RegisterSpiegelDto": {
         "required": [
           "geschrieben",
@@ -6577,6 +7584,7 @@
           "docxPfad",
           "pdfPfad",
           "pdfFehler",
+          "pdfLaeuft",
           "zeilen",
           "geschriebenAm",
           "konfliktkopien"
@@ -6616,6 +7624,9 @@
               "string"
             ]
           },
+          "pdfLaeuft": {
+            "type": "boolean"
+          },
           "zeilen": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -6638,7 +7649,169 @@
             }
           }
         },
-        "description": "\u00DCbertragungsformat f\u00FCr den Zustand des Register-Spiegels (\u00A76.2).\r\n\r\nDie Oberfl\u00E4che zeigt daraus einen einzigen Satz an: geschrieben, \u00FCbersprungen\r\noder gescheitert \u2014 und im letzten Fall den Klartext, der sagt, was zu tun\r\nist. IReadOnlyList\u0026lt;string\u0026gt; RegisterSpiegelDto.Konfliktkopien ist der Sonderfall, der eine eigene\r\nWarnung verdient: Er hei\u00DFt, dass jemand den Spiegel unterwegs bearbeitet hat\r\nund es ab jetzt zwei Register g\u00E4be."
+        "description": "\u00DCbertragungsformat f\u00FCr den Zustand des Register-Spiegels (\u00A76.2).\r\n\r\nDie Oberfl\u00E4che zeigt daraus einen einzigen Satz an: geschrieben, \u00FCbersprungen\r\noder gescheitert \u2014 und im letzten Fall den Klartext, der sagt, was zu tun\r\nist. IReadOnlyList\u0026lt;string\u0026gt; RegisterSpiegelDto.Konfliktkopien ist der Sonderfall, der eine eigene\r\nWarnung verdient: Er hei\u00DFt, dass jemand den Spiegel unterwegs bearbeitet hat\r\nund es ab jetzt zwei Register g\u00E4be.\r\n\r\n\u0060PdfLaeuft\u0060 sagt, dass gerade eine PDF-Fassung entsteht (\u00A76.2 \u201EDass ein\r\nPDF gerade entsteht, ist an der Oberfl\u00E4che ablesbar\u0022). Es steht in beiden\r\nAntworten: in der auf \u0060export\u0060 \u2014 direkt danach ist \u0060pdfPfad\u0060\r\ndeshalb regelm\u00E4\u00DFig leer, \u003Cem\u003Eohne\u003C/em\u003E dass ein \u0060pdfFehler\u0060 daneben\r\nsteht \u2014 und in der auf \u0060stand\u0060, damit die Registerseite den laufenden\r\nLauf nach einem Fensterwechsel noch erkennt. Fertig meldet der Hub\r\n\u0060/hubs/register\u0060 mit \u0060registerPdfFertig\u0060."
+      },
+      "RegisterZeileDto": {
+        "required": [
+          "jahr",
+          "laufendeNummer",
+          "zeichen",
+          "parteien",
+          "sachbestand",
+          "rechtsgebiet",
+          "abgeschlossen",
+          "quelle",
+          "historieId",
+          "vorgangReferenz",
+          "sicherheit",
+          "befunde"
+        ],
+        "type": "object",
+        "properties": {
+          "jahr": {
+            "type": "string"
+          },
+          "laufendeNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "zeichen": {
+            "type": "string"
+          },
+          "parteien": {
+            "type": "string"
+          },
+          "sachbestand": {
+            "type": "string"
+          },
+          "rechtsgebiet": {
+            "type": "string"
+          },
+          "abgeschlossen": {
+            "type": "boolean"
+          },
+          "quelle": {
+            "type": "string"
+          },
+          "historieId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "vorgangReferenz": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sicherheit": {
+            "type": "string"
+          },
+          "befunde": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Eine Zeile im verbindlichen Spaltenschema, gleich welcher Herkunft.\r\n\u0060Quelle\u0060 sagt, welcher: Eine historische Zeile l\u00E4sst sich nicht \u00F6ffnen,\r\nsondern nur berichtigen, und tr\u00E4gt daf\u00FCr \u0060HistorieId\u0060 statt\r\n\u0060VorgangReferenz\u0060."
+      },
+      "RegisterZeilenBefundDto": {
+        "required": [
+          "zeile",
+          "jahrgang",
+          "laufendeNummer",
+          "aktenzeichen",
+          "anzeigetext",
+          "rechtsgebiet",
+          "sicherheit",
+          "art",
+          "befunde",
+          "hinweise",
+          "zuPruefen"
+        ],
+        "type": "object",
+        "properties": {
+          "zeile": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "jahrgang": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "laufendeNummer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "aktenzeichen": {
+            "type": "string"
+          },
+          "anzeigetext": {
+            "type": "string"
+          },
+          "rechtsgebiet": {
+            "type": "string"
+          },
+          "sicherheit": {
+            "type": "string"
+          },
+          "art": {
+            "type": "string"
+          },
+          "befunde": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hinweise": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "zuPruefen": {
+            "type": "boolean"
+          }
+        },
+        "description": "Das Ergebnis einer einzelnen Zeile. \u0060Art\u0060 ist \u0060neu\u0060,\r\n\u0060unveraendert\u0060 oder \u0060abgelehnt\u0060 \u2014 als Zeichenkette, weil eine Zahl\r\ndie Dart-Seite an die Deklarationsreihenfolge eines C#-Enums koppeln w\u00FCrde.\r\n\r\n\u0060ZuPruefen\u0060 wird mitgeschickt und nicht im Frontend nachgerechnet: Die\r\nRegel (\u201Enicht hoch, oder es liegt ein Befund vor\u0022) geh\u00F6rt zur Fachlogik, und\r\nzwei Fassungen davon versteckten am Bildschirm eine Zeile, die der Bericht\r\nz\u00E4hlt."
+      },
+      "RegisterZeilenDto": {
+        "required": [
+          "zeilen"
+        ],
+        "type": "object",
+        "properties": {
+          "zeilen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegisterZeileDto"
+            }
+          }
+        },
+        "description": "Die Zeilen der Registeransicht (\u00A76.2). Ein Umschlag statt einer blanken\r\nListe, damit sp\u00E4ter eine Gesamtzahl oder ein Stand danebentreten kann, ohne\r\ndass der Vertrag seine Form \u00E4ndert."
       },
       "ReplacedDocumentResponseDto": {
         "required": [
@@ -8205,6 +9378,9 @@
       "name": "RegisterSpiegel"
     },
     {
+      "name": "RegisterZeilen"
+    },
+    {
       "name": "Vorgaenge"
     },
     {
@@ -8215,6 +9391,12 @@
     },
     {
       "name": "Sachgebiete"
+    },
+    {
+      "name": "RegisterHistorie"
+    },
+    {
+      "name": "RegisterImport"
     },
     {
       "name": "PdfConversion"

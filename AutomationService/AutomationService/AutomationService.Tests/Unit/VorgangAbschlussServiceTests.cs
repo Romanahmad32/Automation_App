@@ -6,6 +6,7 @@ using AutomationService.Tests.Support;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -24,6 +25,28 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
     private readonly RegisterSpiegelAttrappe _spiegel = new();
     private readonly AutomatischeSicherungAttrappe _sicherung = new();
 
+    /// <summary>
+    /// Die Grenze, bis zu der auf einen <em>abgesetzten</em> Anstoß gewartet
+    /// wird. Großzügig, und das ist der Punkt: Gemessen wird hier nicht, wie
+    /// schnell der Planer die Aufgabe legt, sondern <em>dass</em> sie gelegt
+    /// wird. Mit fünf Sekunden fiel dieser Test in der vollen Suite gelegentlich
+    /// um (09.09.2026) — nicht, weil der Anstoß fehlte, sondern weil der
+    /// Threadpool unter parallel laufenden Testklassen ausgelastet war und die
+    /// abgesetzte Aufgabe entsprechend später dran kam. Ein Test, der bei Last
+    /// zufällig rot wird, kostet mehr, als eine kurze Grenze einbringt: Fehlt
+    /// der Anstoß wirklich, schlägt er auch hier fehl, nur später.
+    /// </summary>
+    static readonly TimeSpan AnstossGrenze = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Ein winziger Container, nur damit es eine <c>IServiceScopeFactory</c>
+    /// gibt. Der Abschluss holt den Spiegel seit §4.8 aus einem eigenen Scope:
+    /// Er stösst ihn abgesetzt an, und der DbContext des Requests ist zu diesem
+    /// Zeitpunkt schon abgeräumt. Die Attrappe liegt als Singleton darin, damit
+    /// der Test hinterher dieselbe befragen kann, die der Dienst aufgerufen hat.
+    /// </summary>
+    private readonly ServiceProvider _dienste;
+
     public VorgangAbschlussServiceTests()
     {
         _connection = new SqliteConnection("DataSource=:memory:");
@@ -33,9 +56,12 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
             .Options;
         _db = new AutomationDbContext(options);
         _db.Database.EnsureCreated();
+        _dienste = new ServiceCollection()
+            .AddSingleton<IRegisterSpiegelService>(_spiegel)
+            .BuildServiceProvider();
         _service = new VorgangAbschlussService(
             _db,
-            _spiegel,
+            _dienste.GetRequiredService<IServiceScopeFactory>(),
             _sicherung,
             NullLogger<VorgangAbschlussService>.Instance);
     }
@@ -125,6 +151,12 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
         ergebnis!.Status.Should().Be(VorgangAbschlussService.StatusVersendet);
     }
 
+    /// <summary>
+    /// Der Spiegel wird nachgezogen (§6.2, #40) — aber abgesetzt (§4.8).
+    /// Deshalb wird auf den Wartepunkt der Attrappe gewartet und nicht bloss
+    /// ihr Zähler gelesen; sonst hinge der Test daran, wie der Planer die
+    /// Aufgabe gelegt hat.
+    /// </summary>
     [Fact]
     public async Task Abschliessen_ZiehtDenRegisterSpiegelNach()
     {
@@ -133,7 +165,33 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
 
         await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
 
+        await _spiegel.Angestossen.WaitAsync(AnstossGrenze);
         _spiegel.Aufrufe.Should().Be(1);
+    }
+
+    /// <summary>
+    /// Die Zusicherung aus §4.8: Der Abschluss wartet nicht darauf, dass die
+    /// Register-Dateien geschrieben sind. Beim Bestand der Kanzlei kostete das
+    /// Warten 20 Sekunden — ein Abschluss, der 20 Sekunden hängt, ist kein
+    /// Abschluss, den man drückt.
+    ///
+    /// Gezeigt an einem Spiegel, der nicht durchkommt: Wartete der Abschluss,
+    /// käme er selbst nicht zurück und der Test liefe in seine Zeitgrenze.
+    /// </summary>
+    [Fact]
+    public async Task Abschliessen_WartetNichtAufDenRegisterSpiegel()
+    {
+        await LegeSettingsAn(84, spiegelSchreiben: true);
+        await LegeVorgangAn("84/26 C03_GG-XY 123");
+        _spiegel.Anhalten();
+
+        var ergebnis = await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
+
+        ergebnis.Should().NotBeNull();
+        ergebnis!.Status.Should().Be(VorgangAbschlussService.StatusVersendet);
+        // Angestossen wird er trotzdem — nur eben danach.
+        await _spiegel.Angestossen.WaitAsync(AnstossGrenze);
+        _spiegel.Freigeben();
     }
 
     /// <summary>
@@ -149,7 +207,7 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
 
         await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
 
-        await _sicherung.Angestossen.WaitAsync(TimeSpan.FromSeconds(5));
+        await _sicherung.Angestossen.WaitAsync(AnstossGrenze);
         _sicherung.Aufrufe.Should().Be(1);
     }
 
@@ -180,6 +238,10 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
 
         var ergebnis = await _service.AbschliessenAsync("84/26 C03_GG-XY 123");
 
+        // Gewartet wird auf den Wartepunkt, damit die Ausnahme wirklich
+        // gefallen ist, bevor der Test nachsieht — sie fällt seit §4.8 in einer
+        // abgesetzten Aufgabe.
+        await _spiegel.Angestossen.WaitAsync(AnstossGrenze);
         ergebnis.Should().NotBeNull();
         ergebnis!.Status.Should().Be(VorgangAbschlussService.StatusVersendet);
         (await _db.KanzleiSettings.SingleAsync()).LaufendeAuftragsnummer.Should().Be(85);
@@ -187,6 +249,8 @@ public sealed class VorgangAbschlussServiceTests : IDisposable
 
     public void Dispose()
     {
+        _spiegel.Dispose();
+        _dienste.Dispose();
         _db.Dispose();
         _connection.Dispose();
     }

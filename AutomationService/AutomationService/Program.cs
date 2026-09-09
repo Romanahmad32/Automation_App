@@ -9,10 +9,12 @@ using AutomationService.Features.MailboxMonitor.Presentation.DependencyInjection
 using AutomationService.Features.MailboxMonitor.Presentation.Hubs;
 using AutomationService.Features.Mandanten.Presentation.DependencyInjection;
 using AutomationService.Features.PdfConversion.Presentation.DependencyInjection;
+using AutomationService.Features.RegisterHistorie.Presentation.DependencyInjection;
 using AutomationService.Features.Sachgebiete.Presentation.DependencyInjection;
 using AutomationService.Features.Settings.Presentation.DependencyInjection;
 using AutomationService.Features.Versicherer.Presentation.DependencyInjection;
 using AutomationService.Features.Vorgaenge.Presentation.DependencyInjection;
+using AutomationService.Features.Vorgaenge.Presentation.Hubs;
 using AutomationService.Features.WordAutomation.Presentation.DependencyInjection;
 using AutomationService.Features.ZentralrufAutomation.Presentation.DependencyInjection;
 using Scalar.AspNetCore;
@@ -69,6 +71,7 @@ builder.Services.AddSettingsServices();
 builder.Services.AddMandantenServices();
 builder.Services.AddVersichererServices();
 builder.Services.AddSachgebieteServices();
+builder.Services.AddRegisterHistorieServices();
 builder.Services.AddVorgaengeServices();
 builder.Services.AddFormTemplatesServices();
 builder.Services.AddBackupServices(builder.Configuration);
@@ -92,6 +95,9 @@ app.UseMiddleware<DatenstandMiddleware>();
 app.MapHealthEndpoint();
 app.MapControllers();
 app.MapHub<MailboxHub>("/hubs/mailbox");
+// Eigener Hub je Slice: Der MailboxHub gehoert der Postfachueberwachung, und
+// ihn mitzubenutzen band das Register an deren Vertrag (SliceIsolationTests).
+app.MapHub<RegisterHub>("/hubs/register");
 
 app.Run();
 

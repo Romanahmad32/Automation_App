@@ -407,6 +407,127 @@ namespace AutomationService.Core.Persistence.Migrations
                     b.ToTable("OrdnerStatus");
                 });
 
+            modelBuilder.Entity("AutomationService.Features.RegisterHistorie.Domain.Persistence.RegisterHistorieEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Abteilung")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AbteilungRoh")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Aktenzeichen")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BefundeJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("[]");
+
+                    b.Property<string>("Freitext")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("GeaendertAm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Gegner")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("HinweiseJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("[]");
+
+                    b.Property<DateTime>("ImportiertAm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Jahr")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Kennung")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LaufendeNummer")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Mandant")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("MandantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("NummerZusatz")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Quelle")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Rechtsgebiet")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sachart")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sachbestand")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sicherheit")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Spalte1")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Unfalldatum")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Jahr");
+
+                    b.HasIndex("Kennung")
+                        .IsUnique();
+
+                    b.HasIndex("Jahr", "LaufendeNummer", "NummerZusatz")
+                        .IsUnique()
+                        .HasFilter("LaufendeNummer > 0");
+
+                    b.ToTable("RegisterHistorie", (string)null);
+                });
+
             modelBuilder.Entity("AutomationService.Features.Sachgebiete.Domain.Persistence.SachgebietEntity", b =>
                 {
                     b.Property<int>("Id")

@@ -58,6 +58,9 @@ void main() {
       OhneKanzleiEinstellungen(),
       MandantAnlegenDouble(register),
       MandantAktualisierenDouble(register),
+      // Ohne Nummernstand: Der Test prüft die Ableitung des Rechtsgebiets,
+      // der Vorschlag fällt dabei auf den Zähler der Einstellungen zurück.
+      OhneRegisterNummern(),
       vorgaenge,
     );
     getIt.registerSingleton<UseCase<List<Mandant>, NoParams>>(
