@@ -1,4 +1,6 @@
 using AutomationService.Core.Ablage;
+using AutomationService.Core.Lifetime;
+using System.Security.Cryptography;
 
 namespace AutomationService.Features.Backup.Domain.Services;
 
@@ -57,7 +59,9 @@ public sealed class AutomatischeSicherung(
     /// und nicht die Instanz: Der Ablageordner ist derselbe, gleich welcher
     /// Aufrufer gerade sichert.
     /// </summary>
-    static readonly SemaphoreSlim Schleuse = new(1, 1);
+    SynchronisationsVerlauf? Verlauf => (sicherung as DatabaseBackupService)?.Verlauf;
+
+    static SemaphoreSlim Schleuse => SynchronisationsVerlauf.Schleuse;
 
     /// <summary>Namensmuster der Archive: <c>automation-&lt;Rechner&gt;-&lt;Zeitstempel&gt;.zip</c>.</summary>
     public static string SuchmusterFuer(string rechnername) =>
@@ -80,14 +84,43 @@ public sealed class AutomatischeSicherung(
             // des Zeitgebers. Ein Abbruch beim Warten faellt in denselben catch.
             await Schleuse.WaitAsync(cancellationToken);
             eingetreten = true;
+            if (Verlauf is { } aktiv) aktiv.Aktivitaet = "bereitstellen";
 
+            var verlauf = (sicherung as DatabaseBackupService)?.Verlauf;
+            var basis = verlauf?.Lies();
+            var fingerabdruck = verlauf?.Fingerabdruck();
+            if (basis is not null && basis.Fingerabdruck == fingerabdruck
+                && basis.Eintrag.Sicherung is { } vorhanden && ArchivIstUnveraendert(Path.Combine(ordner, vorhanden), basis.Eintrag))
+            {
+                ArbeitsplatzAkte.Schreibe(ordner, basis.Eintrag with { Rechnername = ArbeitsplatzAkte.DieserRechner });
+                merker.MerkeErfolg(basis.Eintrag.GesichertAm!.Value, vorhanden);
+                return merker.Lies();
+            }
             gebaut = await sicherung.CreateBackupFileAsync(cancellationToken);
+            if (verlauf is not null && fingerabdruck != verlauf.Fingerabdruck())
+                throw new InvalidBackupException("Während der Sicherung wurden Daten geändert. Bitte erneut bereitstellen.");
             var zeitpunkt = DateTime.Now;
             var dateiname = SicherungsDateiname.Baue(ArbeitsplatzAkte.DieserRechner, zeitpunkt);
+            // Auch zwei Änderungen in derselben Sekunde dürfen kein veröffentlichtes Archiv ersetzen.
+            while (File.Exists(Path.Combine(ordner, dateiname)))
+            {
+                zeitpunkt = zeitpunkt.AddSeconds(1);
+                dateiname = SicherungsDateiname.Baue(ArbeitsplatzAkte.DieserRechner, zeitpunkt);
+            }
+            var eintrag = new ArbeitsplatzEintrag(ArbeitsplatzAkte.DieserRechner, zeitpunkt, zeitpunkt,
+                dateiname, Programmfassung.Aktuell)
+            {
+                Revision = basis is not null && basis.Fingerabdruck == fingerabdruck ? basis.Eintrag.Revision : Guid.NewGuid().ToString("N"),
+                Vorfahren = basis is null ? [] : basis.Fingerabdruck == fingerabdruck ? basis.Eintrag.Vorfahren : basis.Eintrag.Vorfahren
+                    .Concat(basis.Eintrag.Revision is { } revision ? [revision] : Array.Empty<string>()).Distinct().ToArray(),
+                Sha256 = DateiHash(gebaut),
+                Bytes = new FileInfo(gebaut).Length,
+            };
             AtomareAblage.Ersetze(gebaut, Path.Combine(ordner, dateiname));
             gebaut = null;
 
-            ArbeitsplatzAkte.MerkeSicherung(ordner, zeitpunkt, dateiname);
+            if (verlauf is not null) verlauf.Merke(eintrag, fingerabdruck!);
+            ArbeitsplatzAkte.Schreibe(ordner, eintrag);
             SicherungsAufraeumung.RaeumeAuf(ordner, ArbeitsplatzAkte.DieserRechner, zeitpunkt);
 
             merker.MerkeErfolg(zeitpunkt, dateiname);
@@ -113,6 +146,7 @@ public sealed class AutomatischeSicherung(
         {
             if (eingetreten)
             {
+                if (Verlauf is { } aktiv) aktiv.Aktivitaet = null;
                 Schleuse.Release();
             }
 
@@ -172,6 +206,16 @@ public sealed class AutomatischeSicherung(
         var zeitpunkt = DateTime.Now;
         merker.MerkeFehler(zeitpunkt, meldung);
         return new LetzteSicherung(zeitpunkt, false, null, meldung, FehlerQuittiert: false);
+    }
+
+    static bool ArchivIstUnveraendert(string pfad, ArbeitsplatzEintrag eintrag) =>
+        File.Exists(pfad) && (eintrag.Bytes is null || new FileInfo(pfad).Length == eintrag.Bytes)
+        && (eintrag.Sha256 is null || DateiHash(pfad) == eintrag.Sha256);
+
+    static string DateiHash(string pfad)
+    {
+        using var strom = File.OpenRead(pfad);
+        return Convert.ToHexString(SHA256.HashData(strom));
     }
 
     static void TryDelete(string pfad)

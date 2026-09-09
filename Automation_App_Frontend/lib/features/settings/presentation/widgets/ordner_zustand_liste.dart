@@ -12,7 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// tatsächlich nutzt (`GET /api/Settings/ordner`).
 ///
 /// **Gesammelt am Fuß und nicht unter jedem Feld** — drei der fünf Felder
-/// stecken im zugeklappten Aufklapper „Abweichende Ordner festlegen". Ihre
+/// stecken im zugeklappten Aufklapper „Erweiterte Einstellungen". Ihre
 /// Zeile stünde dort in aller Regel ungelesen, ausgerechnet die zum
 /// fehlenden Anker. Zusammen gelesen beantworten die fünf Zeilen außerdem die
 /// Frage, um die es hier geht: *Wo landet das alles?*
@@ -77,7 +77,10 @@ class OrdnerZustandListeState extends State<OrdnerZustandListe> {
       spacing: 4,
       children: [
         const Divider(height: 24),
-        Text('Wohin die App ablegt', style: theme.textTheme.titleSmall),
+        Text(
+          'Aktuell verwendete Ablageorte (gespeicherte Einstellungen)',
+          style: theme.textTheme.titleSmall,
+        ),
         for (final zustand in _zustaende) OrdnerZustandZeile(zustand: zustand),
       ],
     );

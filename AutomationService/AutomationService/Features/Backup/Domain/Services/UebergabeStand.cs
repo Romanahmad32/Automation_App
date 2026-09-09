@@ -29,4 +29,11 @@ public sealed record UebergabeStand(
     ArbeitsplatzEintrag? EigenerStand,
     LetzteSicherung? LetzterLauf,
     string AblageOrdner,
-    SicherungsBestand Bestand);
+    SicherungsBestand Bestand)
+{
+    public string Zustand { get; init; } = "bereit";
+    public string Hinweis { get; init; } = string.Empty;
+    public bool Konflikt { get; init; }
+    public bool LokaleAenderungen { get; init; }
+    public string? Pruefkennung { get; init; }
+}

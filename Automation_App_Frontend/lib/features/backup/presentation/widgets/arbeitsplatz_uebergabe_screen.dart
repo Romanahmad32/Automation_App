@@ -67,6 +67,10 @@ class ArbeitsplatzUebergabeScreen extends StatelessWidget {
           SicherungsFehlerKarte(lauf: lauf),
           const SizedBox(height: 24),
         ],
+        if (stand.konflikt) ...[
+          Text(stand.hinweis, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+        ],
         if (angebot != null) ...[
           UebergabeAngebotKarte(
             angebot: angebot,
@@ -115,7 +119,9 @@ class ArbeitsplatzUebergabeScreen extends StatelessWidget {
       FilledButton.icon(
         onPressed: onUebernehmen,
         icon: const Icon(Icons.cloud_download_outlined),
-        label: const Text('Stand übernehmen'),
+        label: Text(
+          stand.konflikt ? 'Hiesigen Stand ersetzen' : 'Stand übernehmen',
+        ),
       ),
       const SizedBox(height: 12),
       OutlinedButton(

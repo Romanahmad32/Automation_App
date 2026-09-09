@@ -12,11 +12,10 @@ class VorlagenOrdnerFeld extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const OrdnerAuswahlFeld(
     formControlName: 'vorlagenOrdner',
-    beschriftung: 'Vorlagenordner',
+    beschriftung: 'Abweichender Vorlagenordner (optional)',
     dialogTitel: 'Ordner mit den Word-Vorlagen wählen',
     hinweisOhneOrdner:
-        'Ohne eigene Wahl liegen die Vorlagen unter dem Ordner für die '
-        'App-Daten; fehlt auch der, verwaltet die App sie in ihrem eigenen '
-        'Ordner unter AppData.',
+        'Standard: Unterordner „Vorlagen“ im gemeinsamen OneDrive-Ordner. '
+        'Ohne gemeinsamen Ordner verwaltet die App die Vorlagen lokal.',
   );
 }
