@@ -28,8 +28,10 @@ public class PosteingangOrdnerProxy : DispatchProxy
             case "FetchAsync" when args is [IList<UniqueId> uids, IFetchRequest, ..]:
                 IList<IMessageSummary> inhalt = [new MessageSummary(0) { UniqueId = uids[0], Body = InhaltStruktur }];
                 return Task.FromResult(inhalt);
-            case "GetBodyPartAsync" when args is [UniqueId, string part, ..]:
-                if (part != "1")
+            // Die Ueberladung mit BodyPart, nicht die mit dem string-Specifier:
+            // genau die ruft PosteingangText.LadeAsync mit summary.TextBody.
+            case "GetBodyPartAsync" when args is [UniqueId, BodyPart teil, ..]:
+                if (teil.PartSpecifier != "1")
                 {
                     throw new InvalidOperationException("Ein Anhang wurde ungefragt geladen.");
                 }
