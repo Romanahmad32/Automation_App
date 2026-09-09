@@ -68,7 +68,7 @@ Kapitel 4–7.
 |---|---|
 | 4.1 | Mandantendaten erfassen; Stammdaten bekannter Mandanten übernehmen |
 | 4.2 | Zentralruf-Anfrage: Formular vorbefüllen, Captcha bleibt beim Anwalt, Aufbau der Referenz |
-| 4.3 | Zentralruf-Antwort verarbeiten: Auslesen, Zuordnen, manueller Weg und Postfach-Überwachung, bestätigte Übernahme, Negativ-Antwort |
+| 4.3 | Zentralruf-Antwort verarbeiten: Auslesen, Zuordnen, manueller Weg und Postfach-Überwachung, bestätigte Übernahme, Negativ-Antwort; vollständiger, seitenweise geladener Posteingang |
 | 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, Standardpositionen der Schadensaufstellung, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |
 | 4.6 | Ablage in der Akte; Ablageort am Vorgang festhalten |
@@ -111,7 +111,7 @@ Ausschluss auf welches Kapitel drückt: Wer an dem Kapitel arbeitet, liest die Z
 |---|---|
 | Keine vollständige Kanzleisoftware (kein Fristenmanagement, keine Buchhaltung, keine Mandantenkommunikation über den Workflow hinaus) | §3, §5.1, §6 |
 | Keine Fristen- oder Wiedervorlagelogik — die App erinnert nicht aktiv; die Übersicht nach Bearbeitungsstand genügt | §3, §4.9 |
-| **Kein Mailprogramm** — die Workflow-Mails versendet die App **sehr wohl selbst** (§4.7); was fehlt, ist das Postfach: kein Posteingang zum Lesen und Beantworten, keine Ordner, keine Suche | §4.7, §4.9 |
+| **Kein vollständiges Mailprogramm** — lesender Posteingang in begrenzten Seiten (§4.3), Workflow-Versand (§4.7); keine Ordnerverwaltung, Suche oder vollständiger Antwort-Workflow | §4.3, §4.7, §4.9 |
 | Keine Vollautomatisierung ohne Anwalt — Captcha, inhaltliche Freigabe, Übernahme der Antwort und Auftragsabschluss bleiben bestätigte Schritte | §4.2, §4.3, §4.5, §4.8 |
 | Andere Rechtsgebiete nur getragen, nicht ausgebaut — der durchgängige Workflow ist nur für Verkehrsunfall-Mandate ausgearbeitet | §3, §4 |
 | Kein Mehrbenutzer- oder Netzwerkbetrieb — Einzelplatz, ein Nutzer, lokale Daten | §2, §7 |

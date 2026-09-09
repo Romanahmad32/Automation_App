@@ -1,6 +1,5 @@
 using AutomationService.Features.ZentralrufAutomation.Domain.Services;
 using MailKit;
-using MailKit.Search;
 using MimeKit;
 
 namespace AutomationService.Features.MailboxMonitor.Domain.Services;
@@ -30,13 +29,7 @@ public sealed class MailboxNachrichtenScanner(
     {
         ArgumentNullException.ThrowIfNull(folder);
 
-        var all = await folder.SearchAsync(SearchQuery.All, cancellationToken);
-        var recent = all.Count <= options.InitialScanCount
-            ? all
-            : all.Skip(all.Count - options.InitialScanCount).ToList();
-
-        await ProcessUidsAsync(folder, recent, cancellationToken);
-        _highWater = all.Count > 0 ? all[^1] : null;
+        await ScanBereichAsync(folder, Math.Max(0, folder.Count - options.InitialScanCount), cancellationToken);
     }
 
     /// <summary>Sieht alles ab der zuletzt gesehenen UID durch — nach IDLE bzw. je Poll-Takt.</summary>
@@ -50,48 +43,40 @@ public sealed class MailboxNachrichtenScanner(
             return;
         }
 
-        // Bereich ab der zuletzt gesehenen UID (inklusive — die Dublettenprüfung
-        // verwirft die schon erfasste Nachricht).
-        var newUids = await folder.SearchAsync(
-            SearchQuery.Uids(new UniqueIdRange(highWater, UniqueId.MaxValue)),
-            cancellationToken);
-
-        await ProcessUidsAsync(folder, newUids, cancellationToken);
-        if (newUids.Count > 0)
+        var start = await PosteingangLeser.FindeGrenzeAsync(folder.Count, highWater.Id, async index =>
         {
-            _highWater = newUids.Max();
-        }
+            var summaries = await folder.FetchAsync(index, index, MessageSummaryItems.UniqueId, cancellationToken);
+            return summaries.First(item => item.Index == index).UniqueId.Id;
+        });
+        await ScanBereichAsync(folder, start, cancellationToken);
     }
 
-    private async Task ProcessUidsAsync(IMailFolder folder, IList<UniqueId> uids, CancellationToken cancellationToken)
+    private async Task ScanBereichAsync(IMailFolder folder, int start, CancellationToken cancellationToken)
     {
-        foreach (var uid in uids)
+        var ende = folder.Count;
+        for (var index = start; index < ende; index += PosteingangLeser.Seitengroesse)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            MimeMessage message;
-            try
+            var summaries = await folder.FetchAsync(index, Math.Min(ende - 1, index + PosteingangLeser.Seitengroesse - 1),
+                MessageSummaryItems.UniqueId | MessageSummaryItems.Envelope, cancellationToken);
+            foreach (var summary in summaries.OrderBy(item => item.UniqueId.Id))
             {
-                message = await folder.GetMessageAsync(uid, cancellationToken);
+                if (_highWater is { } water && summary.UniqueId.Id <= water.Id)
+                {
+                    continue;
+                }
+                // Erst Kopfzeilen prüfen. Normale Kanzleimails samt Anhängen
+                // werden vom Zentralruf-Monitor überhaupt nicht heruntergeladen.
+                var subject = summary.Envelope?.Subject ?? string.Empty;
+                if (string.IsNullOrEmpty(options.SubjectFilter)
+                    || subject.Contains(options.SubjectFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    using var message = await folder.GetMessageAsync(summary.UniqueId, cancellationToken);
+                    var dedupeKey = !string.IsNullOrEmpty(message.MessageId)
+                        ? message.MessageId : $"{folder.UidValidity}:{summary.UniqueId}";
+                    await ProcessMessageAsync(message, subject, dedupeKey, cancellationToken);
+                }
+                _highWater = summary.UniqueId;
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
-            {
-                logger.LogWarning(exception, "Nachricht {Uid} konnte nicht geladen werden.", uid);
-                continue;
-            }
-
-            var subject = message.Subject ?? string.Empty;
-            if (!string.IsNullOrEmpty(options.SubjectFilter)
-                && !subject.Contains(options.SubjectFilter, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var dedupeKey = !string.IsNullOrEmpty(message.MessageId)
-                ? message.MessageId
-                : $"{folder.UidValidity}:{uid}";
-
-            await ProcessMessageAsync(message, subject, dedupeKey, cancellationToken);
         }
     }
 

@@ -33,6 +33,7 @@ public static class MailboxInjection
         services.AddSingleton<IMailboxConfigSource>(
             sp => sp.GetRequiredService<MailboxConfigStore>());
         services.AddSingleton<MailboxConnectionState>();
+        services.AddSingleton<PosteingangDienst>();
 
         // Microsoft-OAuth für Outlook-Postfächer: Singleton, weil MSAL-App und
         // Token-Cache (Datei) über Monitor und Controller hinweg geteilt werden.

@@ -116,3 +116,17 @@ Textdokument*.txt
 # vollstaendiger Klon des Repos samt Build-Ausgabe. Maschinenlokal und
 # kurzlebig — versioniert waeren sie ein zweites Repo im Repo.
 .claude/worktrees/
+
+# ---------------------------------------------------------------------------
+# Streuabfall der Werkzeuge
+# ---------------------------------------------------------------------------
+# PowerShell legt seinen Modul-Analysecache normalerweise unter
+# %LOCALAPPDATA% ab. Zeigt die Variable beim Aufruf aus dem Projekt heraus
+# nicht dorthin, entsteht der Baum stattdessen im Arbeitsverzeichnis — er lag
+# schon als Automation_App_Frontend/Microsoft/ hier und war einmal versehentlich
+# mitcommittet. Regenerierbar, maschinenlokal, gehoert nicht ins Repo.
+#
+# Mit `**/`, nicht `Microsoft/…`: Ein Muster mit Schraegstrich in der Mitte ist
+# an die Ebene dieser Datei gebunden und traefe nur die Repo-Wurzel — der Baum
+# entstand aber im Unterordner.
+**/Microsoft/Windows/PowerShell/

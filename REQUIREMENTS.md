@@ -164,12 +164,19 @@ Versicherungsschein-/Schadennummer, Kontaktdaten).
   eingehende Zentralruf-Antworten selbsttätig (Erkennung über den Betreff), ereignisbasiert statt in
   starrem Takt. Voraussetzung ist ein einmalig hinterlegter Postfach-Zugang (siehe 7.1); ohne Zugang
   bleibt die Überwachung inaktiv. Beide Wege münden in dieselbe Auswertung.
+- **[M] Vollständiger, effizienter Posteingang:** Alle Nachrichten des eingerichteten
+  Posteingangs sind unabhängig vom Zentralruf-Betreff sichtbar, auch ältere Nachrichten.
+  Die App lädt zunächst nur eine begrenzte Seite mit Absender, Betreff und Datum. Weitere Seiten
+  werden auf Wunsch geladen; der Mailtext erst beim Öffnen, Anhänge nicht mit der Nachrichtenliste.
+  Auch große Postfächer dürfen die Oberfläche nicht blockieren oder einen unbegrenzt wachsenden
+  Speicherbestand erzeugen. Neue Nachrichten werden nachgeladen, die Zentralruf-Auswertung bleibt
+  als eigener Bereich erhalten. *Ergänzt am 09.09.2026 auf ausdrücklichen Nutzerwunsch.*
 - **[S] Anhänge der erfassten Antwort aufheben:** Bringt eine erfasste Antwort Dateien mit, hebt
   die App sie auf und bietet sie beim Versand zum Anhängen an (siehe 4.7). Beobachtet wurde, dass
   der Anwalt genau diese Dateien im Mailprogramm von Hand in die ausgehende Nachricht zieht — ein
   Schritt, den die App ihm abnehmen kann, weil sie die Nachricht ohnehin vollständig abruft.
-  Aufgehoben wird nur, was zu einer erfassten Antwort gehört: Ein Posteingang zum Lesen und
-  Verwalten entsteht dadurch nicht (Abschnitt 8). Aufgehoben heißt **nicht auf Dauer**: Was zwei
+  Aufgehoben wird nur, was zu einer erfassten Antwort gehört; der allgemeine Posteingang lädt
+  seine Nachrichten bei Bedarf vom Server. Aufgehoben heißt **nicht auf Dauer**: Was zwei
   Wochen unberührt liegt, räumt die App wieder weg — die Nachricht liegt ja weiter im Postfach,
   und ein Gutachten mit Lichtbildern soll sich nicht über Jahre in der Anwendung sammeln.
   *Ergänzt am 26.08.2026 nach Beobachtung in der Kanzlei; Aufbewahrungsgrenze am 27.08.2026.*
@@ -493,8 +500,7 @@ Gemeinsam:
   öffnen — mit dem Vorgang der ausgewählten Antwort vorbelegt, sonst als leeres Anschreiben.
   Damit bleibt eine Nachfrage an die Versicherung in der App, ohne den Umweg über den
   Word-Assistenten. *(Grenzt an das Nicht-Ziel „keine Mandantenkommunikation über den
-  beschriebenen Workflow hinaus" in Abschnitt 8: Ein Posteingang zum Lesen und Beantworten
-  entsteht dadurch nicht.)*
+  beschriebenen Workflow hinaus" in Abschnitt 8; der lesende Posteingang steht in Abschnitt 4.3.)*
 - **[S] Entwurf im Mailprogramm als zweiter Weg:** Neben dem Direktversand öffnet die App die
   fertige Nachricht auf Wunsch als **Entwurf in Outlook** — mit Empfängern, Betreff, Text und den
   Anhängen, die sie kennt; gesendet wird dann dort. Gedacht für den Fall, dass noch etwas
@@ -816,9 +822,10 @@ Konfigurierbar sein müssen mindestens:
 - **Keine Fristen- oder Wiedervorlagelogik:** Die App erinnert nicht aktiv an unbeantwortete
   Anfragen oder Schreiben. Die nach Bearbeitungsstand gruppierte Übersicht (siehe 3) genügt, um zu
   sehen, was offen ist.
-- **Kein Mailprogramm:** Die App versendet die Mails des Workflows selbst (siehe 4.7), ersetzt aber
-  kein Postfach: kein Posteingang zum Lesen und Beantworten, keine Ordner, keine Suche. Wer
-  antwortet, tut das im gewohnten Mailprogramm.
+- **Kein vollständiges Mailprogramm:** Die App bietet einen seitenweise geladenen, lesenden
+  Posteingang (siehe 4.3) und versendet die Mails des Workflows selbst (siehe 4.7).
+  Ordnerverwaltung, Suche, Löschen und ein vollständiger Antwort-Workflow bleiben beim gewohnten
+  Mailprogramm. *Abgrenzung am 09.09.2026 um den ausdrücklich gewünschten Posteingang erweitert.*
 - **Keine Vollautomatisierung ohne Anwalt:** Captcha-Lösung, inhaltliche Freigabe, Übernahme der
   Zentralruf-Antwort und Auftragsabschluss bleiben bewusst bestätigte Schritte.
 - **Andere Rechtsgebiete zunächst nur getragen, nicht ausgebaut:** Über die gemeinsame Vorgangs-,

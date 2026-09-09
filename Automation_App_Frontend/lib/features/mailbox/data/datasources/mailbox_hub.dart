@@ -24,6 +24,10 @@ class MailboxHub implements MailboxPushNotifier {
 
   final _replyReceived = StreamController<void>.broadcast();
   final _statusChanged = StreamController<void>.broadcast();
+  final _posteingangChanged = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get onPosteingangChanged => _posteingangChanged.stream;
 
   /// Feuert, sobald das Backend eine neu erfasste Antwort meldet.
   @override
@@ -52,6 +56,13 @@ class MailboxHub implements MailboxPushNotifier {
     });
     connection.on('statusChanged', (_) {
       if (!_statusChanged.isClosed) _statusChanged.add(null);
+      if (!_posteingangChanged.isClosed) _posteingangChanged.add(null);
+    });
+    connection.on('messagesChanged', (_) {
+      if (!_posteingangChanged.isClosed) _posteingangChanged.add(null);
+    });
+    connection.onreconnected(({connectionId}) {
+      if (!_posteingangChanged.isClosed) _posteingangChanged.add(null);
     });
 
     try {
@@ -69,5 +80,6 @@ class MailboxHub implements MailboxPushNotifier {
     await _connection?.stop();
     await _replyReceived.close();
     await _statusChanged.close();
+    await _posteingangChanged.close();
   }
 }
