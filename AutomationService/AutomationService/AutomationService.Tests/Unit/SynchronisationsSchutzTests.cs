@@ -8,6 +8,7 @@ using Xunit;
 
 namespace AutomationService.Tests.Unit;
 
+[Collection(SicherungsSchleuseSammlung.Name)]
 public class SynchronisationsSchutzTests
 {
     [Fact]

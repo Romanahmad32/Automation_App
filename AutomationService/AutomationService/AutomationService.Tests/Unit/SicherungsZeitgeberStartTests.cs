@@ -9,6 +9,7 @@ using Xunit;
 
 namespace AutomationService.Tests.Unit;
 
+[Collection(SicherungsSchleuseSammlung.Name)]
 public sealed class SicherungsZeitgeberStartTests
 {
     [Theory]
@@ -67,7 +68,9 @@ public sealed class SicherungsZeitgeberStartTests
         try
         {
             // Echter Hosted-Service-Start: TickAsync allein umginge die fehlerhafte Initialisierung.
-            return await beobachtet.ErsterLauf.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            // Großzügig: Die Frist begrenzt, dass überhaupt getaktet wird, und sagt
+            // nichts über das Tempo. Der Archivbau hängt an der Maschine.
+            return await beobachtet.ErsterLauf.Task.WaitAsync(TimeSpan.FromSeconds(60));
         }
         finally { await zeitgeber.StopAsync(CancellationToken.None); }
     }

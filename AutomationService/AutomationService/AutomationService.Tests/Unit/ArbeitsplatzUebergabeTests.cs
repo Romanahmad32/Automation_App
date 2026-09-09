@@ -2,6 +2,7 @@ using AutomationService.Core.Persistence;
 using AutomationService.Features.Backup.Domain.Services;
 using AutomationService.Features.Settings.Domain.Persistence;
 using AutomationService.Features.Settings.Domain.Services;
+using AutomationService.Tests.Support;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,7 @@ namespace AutomationService.Tests.Unit;
 /// Wochenende. Geprüft wird deshalb beides — dass ein neuerer fremder Stand
 /// angeboten wird <em>und</em> dass ein älterer es nicht wird.
 /// </summary>
+[Collection(SicherungsSchleuseSammlung.Name)]
 public sealed class ArbeitsplatzUebergabeTests : IDisposable
 {
     const string Fremd = "LAPTOP";
