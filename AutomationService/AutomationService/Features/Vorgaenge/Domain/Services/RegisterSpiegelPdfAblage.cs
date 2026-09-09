@@ -18,6 +18,14 @@ namespace AutomationService.Features.Vorgaenge.Domain.Services;
 /// diesem Zeitpunkt schon richtig; den Lauf als gescheitert zu melden hiesse,
 /// etwas anderes zu sagen, als auf der Platte steht. Gemeldet wird deshalb
 /// genau das, was fehlt — als Satz, nicht als Ausnahme.
+///
+/// Seit §6.2 („Word sofort, PDF nachgezogen") fallen die drei Schritte
+/// zeitlich auseinander: <see cref="VeraltetesWegraeumen"/> läuft noch im
+/// Schreiblauf, sobald die neue .docx liegt; <see cref="ErzeugeAsync"/> und
+/// <see cref="Ablegen"/> laufen danach im
+/// <c>RegisterPdfNachzug</c>. Die Zusicherung wird davon nicht schwächer,
+/// sondern früher eingelöst: Zwischen den beiden Zeitpunkten liegt kein PDF —
+/// und nicht das falsche.
 /// </summary>
 /// <param name="pdf">Wandelt die fertige .docx; fehlt Word, bleibt es bei der .docx.</param>
 /// <param name="logger">Protokolliert, was nicht ging.</param>
@@ -89,9 +97,18 @@ public sealed class RegisterSpiegelPdfAblage(IPdfConversionService pdf, ILogger 
     /// Spiegel selbst dort abgelegt hat — der Stand führt dasselbe Ziel und
     /// weiß, dass damals ein PDF entstand. Alles andere im Ordner geht ihn
     /// nichts an.
+    ///
+    /// Öffentlich, weil der Schreiblauf das inzwischen selbst tut: Er räumt
+    /// weg, sobald die neue .docx liegt, und reiht die Wandlung erst danach
+    /// ein. Wartete er damit auf den Nachzug, stünde das PDF von gestern die
+    /// ganzen zwanzig Sekunden neben der .docx von heute — und der Anwalt läse
+    /// unterwegs genau dann das falsche Register, wenn er gerade eben etwas
+    /// geändert hat.
     /// </summary>
-    static void VeraltetesWegraeumen(RegisterSpiegelAblage ablage, RegisterSpiegelStand.Eintrag? letzter)
+    public static void VeraltetesWegraeumen(RegisterSpiegelAblage ablage, RegisterSpiegelStand.Eintrag? letzter)
     {
+        ArgumentNullException.ThrowIfNull(ablage);
+
         if (letzter is null
             || !letzter.PdfGeschrieben
             || !string.Equals(letzter.Ziel, ablage.Docx, StringComparison.OrdinalIgnoreCase))
