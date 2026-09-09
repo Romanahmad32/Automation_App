@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:automation_app/core/general_classes/datenstand_signal.dart';
+import 'package:automation_app/features/backup/domain/entities/synchronisations_fehler.dart';
+
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/network/backend_fehlertext.dart';
@@ -45,8 +48,11 @@ class BackupRepositoryImpl implements BackupRepository {
 
   @override
   Future<Either<Failure, String>> importiere(String dateipfad) async {
+    DatenstandSignal.beschaeftigt(true);
     try {
-      return Right(await _datasource.importDatenbank(dateipfad));
+      final meldung = await _datasource.importDatenbank(dateipfad);
+      DatenstandSignal.uebernommen(meldung);
+      return Right(meldung);
     } on DioException catch (e) {
       return Left(
         ServerFailure(
@@ -62,6 +68,8 @@ class BackupRepositoryImpl implements BackupRepository {
       return Left(
         LocalFailure(message: 'Import fehlgeschlagen: ${ausnahmeText(e)}'),
       );
+    } finally {
+      DatenstandSignal.beschaeftigt(false);
     }
   }
 
@@ -69,7 +77,38 @@ class BackupRepositoryImpl implements BackupRepository {
   Future<UebergabeStand> uebergabeStand() => _datasource.uebergabeStand();
 
   @override
-  Future<String> uebernehmeStand() => _datasource.uebernehmeStand();
+  Future<String> uebernehmeStand({
+    String? pruefkennung,
+    bool konfliktBestaetigt = false,
+  }) async {
+    DatenstandSignal.beschaeftigt(true);
+    try {
+      final meldung = await _aktion(
+        () => _datasource.uebernehmeStand(
+          pruefkennung: pruefkennung,
+          konfliktBestaetigt: konfliktBestaetigt,
+        ),
+      );
+      DatenstandSignal.uebernommen(meldung);
+      return meldung;
+    } finally {
+      DatenstandSignal.beschaeftigt(false);
+    }
+  }
+
+  @override
+  Future<void> jetztBereitstellen() => _aktion(_datasource.jetztBereitstellen);
+
+  Future<T> _aktion<T>(Future<T> Function() ausfuehren) async {
+    try {
+      return await ausfuehren();
+    } on DioException catch (e) {
+      throw SynchronisationsFehler(
+        backendFehlertext(e) ??
+            'Die App hat keine Bestätigung erhalten. Bitte den Stand erneut prüfen.',
+      );
+    }
+  }
 
   @override
   Future<void> quittiereSicherungsfehler() =>

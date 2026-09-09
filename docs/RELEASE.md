@@ -83,7 +83,10 @@ Seine echten Vorlagen kommen deshalb auf anderem Weg auf den Rechner: einmal in
 
 ### Sicherung
 
-Eine Sicherung ist ein ZIP aus `automation.db` **und** `Vorlagen/*.docx`
+Einrichtung und Bedienung: [OneDrive-Arbeitsplatzwechsel](ONEDRIVE_ARBEITSPLATZWECHSEL.md).
+
+Eine Sicherung ist ein ZIP aus `automation.db`, `Vorlagen/*.docx`, erfassten `Anhaenge/`
+und einem Prüfsummenmanifest
 (`SicherungsArchiv`). Die Vorlagen müssen mit, weil die Datenbank zu jeder
 Formularvorlage einen Pfad auf eine `.docx`-Datei speichert — seit #33
 *relativ zum eingestellten Vorlagenordner* (`VorlagenPfad`), nicht mehr

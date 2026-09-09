@@ -27,13 +27,15 @@ class OrdnerSektion extends StatelessWidget {
     icon: Icons.folder_copy_outlined,
     title: 'Ordner',
     subtitle:
-        'Ein Ordner für alles, was die App selbst ablegt — Vorlagen, '
-        'Register und Sicherungen entstehen darunter beim ersten Schreiben. '
-        'Daneben die Akten der Kanzlei, die dort bleiben, wo sie gewachsen '
-        'sind. Liegt der Ordner in OneDrive, steht auf einem zweiten '
-        'Arbeitsplatz alles von selbst richtig.',
+        'Ein gemeinsamer OneDrive-Ordner genügt für Vorlagen, Register und '
+        'Sicherungen zum Arbeitsplatzwechsel. Die App organisiert die Unterordner. '
+        'Eure bestehende Aktenablage wird separat gewählt.',
     children: [
       AppDatenOrdnerFeld(),
+      Text(
+        'Im gemeinsamen Ordner entstehen automatisch:\n'
+        'Vorlagen · Register · Sicherungen für den Arbeitsplatzwechsel',
+      ),
       StammordnerField(),
       AbweichendeOrdnerAufklapper(),
       OrdnerZustandListe(),

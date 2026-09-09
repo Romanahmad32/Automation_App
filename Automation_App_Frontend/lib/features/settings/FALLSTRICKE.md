@@ -3,6 +3,15 @@
 Was im Steckbrief (`FEATURE.md`) nicht mehr in vierzig Zeilen passt. Hier steht das *Warum*; das
 *Was* steht dort.
 
+## Eine Ordnerwahl im Alltag
+
+„Gemeinsamer OneDrive-Ordner“ ist die zentrale Auswahl. Vorlagen, Register und Sicherungen werden
+als Unterordner organisiert. Der Aktenstamm bleibt separat für die bestehende Kanzleiablage.
+„Erweiterte Einstellungen“ bleibt zunächst geschlossen, auch bei vorhandenen Sonderpfaden.
+Der sichtbare Hinweis nennt jede aktive Abweichung und aktualisiert sich bei spät geladenen Werten.
+Öffnen und Schließen ändern keine Pfade. Die Übersicht der tatsächlichen Ablageorte zeigt den
+zuletzt gespeicherten Stand; sie wird nach dem Speichern neu geladen.
+
 ## Die Ordnerpfade werden relativ abgelegt — und der Anker gehört dazu
 
 Ein Ordner unterhalb von OneDrive wird nicht als `C:\Users\anwalt\OneDrive - Kanzlei\Kanzlei App Daten`
@@ -61,17 +70,11 @@ Die Suche ist asynchron, und das ist keine Vorsicht auf Verdacht: Zeigt die Vari
 OneDrive-Bereich, der getrennt ist oder auf „Dateien bei Bedarf" steht, dauert schon das Nachsehen.
 Im `build` stünde sie bei jedem Tastendruck im Feld daneben.
 
-## Der Aufklapper klappt nur auf, nie zu
+## Spät geladene Ordnerwerte
 
-`AbweichendeOrdnerAufklapper` beginnt zugeklappt, solange alle drei Einzelfelder leer sind, und
-aufgeklappt, sobald eines gefüllt ist. Das Formular wird aber erst gefüllt, **nachdem** das Widget
-zum ersten Mal aufgebaut wurde (`AppSettingsView` patcht, wenn der Bloc geladen hat) — ein einmal im
-`initState` gelesener Stand wäre immer leer und der Aufklapper immer zu. Deshalb hängt er am
-`valueChanges` der `FormGroup` und tauscht über einen `ValueKey` das `ExpansionTile` aus:
-`initiallyExpanded` wird nur beim ersten Aufbau gelesen.
-
-Der Zustand ist absichtlich **einbahnig**. Wer das letzte der drei Felder leert, stünde sonst mitten
-im Arbeiten vor einer Fläche, die sich unter ihm zuklappt.
+`AbweichendeOrdnerAufklapper` hört auf `valueChanges` der `FormGroup`, weil `AppSettingsView`
+die Werte erst nach dem Laden einträgt. Aktualisiert wird nur der sichtbare Hinweis. Das
+`ExpansionTile` behält seinen Zustand; eine Pfadänderung öffnet oder schließt es nicht.
 
 ## Die Mail-Signatur speichert für sich
 

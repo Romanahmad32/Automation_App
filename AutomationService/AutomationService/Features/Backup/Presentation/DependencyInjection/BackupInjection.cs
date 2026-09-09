@@ -85,7 +85,8 @@ public static class BackupInjection
             services.AddHostedService(sp => new SicherungsZeitgeber(
                 sp.GetRequiredService<IAutomatischeSicherung>(),
                 AppDataPaths.DatabaseFilePath,
-                sp.GetRequiredService<ILogger<SicherungsZeitgeber>>()));
+                sp.GetRequiredService<ILogger<SicherungsZeitgeber>>(),
+                standLesen: () => ((DatabaseBackupService)sp.GetRequiredService<IDatabaseBackupService>()).Verlauf.Fingerabdruck()));
         }
 
         return services;

@@ -4505,6 +4505,46 @@
           "Backup"
         ],
         "summary": "\u00DCbernimmt den angebotenen Stand. Ersetzt den bisherigen Bestand \u2014 deshalb\r\nausschlie\u00DFlich auf Klick und nie von selbst. Der bisherige Stand wird vom\r\nImport vorher vollst\u00E4ndig daneben gelegt.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UebernahmeAuftragDto"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UebernahmeAuftragDto"
+                  }
+                ]
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UebernahmeAuftragDto"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -4522,6 +4562,55 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UebernahmeErgebnisDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Backup/bereitstellen": {
+      "post": {
+        "tags": [
+          "Backup"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetzteSicherungDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetzteSicherungDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetzteSicherungDto"
                 }
               }
             }
@@ -6736,7 +6825,12 @@
           "letzteSicherung",
           "ablageOrdner",
           "eigeneArchive",
-          "aeltestesArchiv"
+          "aeltestesArchiv",
+          "zustand",
+          "hinweis",
+          "konflikt",
+          "lokaleAenderungen",
+          "pruefkennung"
         ],
         "type": "object",
         "properties": {
@@ -6790,9 +6884,51 @@
             ],
             "description": "Wie weit die eigene Historie zur\u00FCckreicht; \u0060null\u0060, wenn nichts liegt.",
             "format": "date-time"
+          },
+          "zustand": {
+            "type": "string",
+            "description": "Status des Arbeitsplatzwechsels."
+          },
+          "hinweis": {
+            "type": "string",
+            "description": "Verst\u00E4ndliche Erl\u00E4uterung und n\u00E4chster Schritt."
+          },
+          "konflikt": {
+            "type": "boolean",
+            "description": "Unterschiedliche \u00C4nderungen brauchen eine ausdr\u00FCckliche Auswahl."
+          },
+          "lokaleAenderungen": {
+            "type": "boolean",
+            "description": "Der lokale Inhalt weicht von der letzten Bereitstellung ab."
+          },
+          "pruefkennung": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Bindet die Best\u00E4tigung an die angezeigten Datenst\u00E4nde."
           }
         },
         "description": "Auskunft f\u00FCr den Start der App (\u00A77.2, #39): Gibt es einen neueren Stand am\r\nanderen Arbeitsplatz, und wie ist die letzte automatische Sicherung\r\nausgegangen? Beides in einer Abfrage, weil beides an derselben Stelle\r\ngezeigt wird \u2014 bevor die Oberfl\u00E4che aufgeht."
+      },
+      "UebernahmeAuftragDto": {
+        "required": [
+          "pruefkennung"
+        ],
+        "type": "object",
+        "properties": {
+          "pruefkennung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "konfliktBestaetigt": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "Bindet die Best\u00E4tigung an genau den angezeigten fremden und lokalen Stand."
       },
       "UebernahmeErgebnisDto": {
         "required": [

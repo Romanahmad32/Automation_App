@@ -4,6 +4,7 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.da
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart';
 import 'package:automation_app/features/backup/presentation/cubit/backup_state.dart';
 import 'package:automation_app/features/backup/presentation/widgets/sicherungs_stand_zeile.dart';
+import 'package:automation_app/features/backup/presentation/widgets/synchronisations_bereich.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -65,7 +66,7 @@ class _DataBackupBodyState extends State<DataBackupBody> {
       text:
           'Dabei werden alle aktuellen Daten durch die Sicherung ersetzt. '
           'Der bisherige Stand wird zuvor automatisch als Sicherungskopie '
-          'abgelegt. Nach dem Einspielen die App bitte neu starten.',
+          'abgelegt. Nach dem Einspielen werden die Ansichten neu geladen. Nicht gespeicherte Eingaben werden verworfen.',
       bestaetigung: 'Einspielen',
     );
   }
@@ -87,6 +88,13 @@ class _DataBackupBodyState extends State<DataBackupBody> {
         // übrigen fünf, und die Abstände kommen von dort.
         return EinstellungenReiter(
           links: [
+            const FormSection(
+              icon: Icons.sync,
+              title: 'Arbeitsplatzwechsel & Synchronisierung',
+              subtitle:
+                  'Daten zwischen diesem Rechner und einem anderen Arbeitsplatz über OneDrive austauschen.',
+              children: [SynchronisationsAnsicht()],
+            ),
             FormSection(
               icon: Icons.backup_outlined,
               title: 'Datensicherung',

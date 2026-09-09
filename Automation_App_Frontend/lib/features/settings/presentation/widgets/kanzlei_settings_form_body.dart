@@ -133,7 +133,7 @@ class KanzleiSettingsFormBody extends StatelessWidget {
           title: 'Register-Spiegel',
           subtitle:
               'Das Sachgebiete-Register entsteht zusätzlich als Word- und '
-              'PDF-Datei — unter dem Ordner für die App-Daten, sofern oben '
+              'PDF-Datei — im gemeinsamen OneDrive-Ordner, sofern oben '
               'kein eigener gewählt ist. Liegt er im synchronisierten Bereich, '
               'ist das Register unterwegs lesbar; die App spricht dabei mit '
               'keiner Cloud, sie legt nur eine Datei ab. Gepflegt wird das '
