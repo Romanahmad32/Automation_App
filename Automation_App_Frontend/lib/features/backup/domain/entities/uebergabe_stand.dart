@@ -25,7 +25,18 @@ class UebergabeStand extends Equatable {
   /// Zeitpunkt des ältesten eigenen Archivs; null ohne eigene Archive.
   final DateTime? aeltestesArchiv;
 
+  final String zustand;
+  final String hinweis;
+  final bool konflikt;
+  final bool lokaleAenderungen;
+  final String? pruefkennung;
+
   const UebergabeStand({
+    this.zustand = 'bereit',
+    this.hinweis = '',
+    this.konflikt = false,
+    this.lokaleAenderungen = false,
+    this.pruefkennung,
     this.angebot,
     this.eigenerStandGesichertAm,
     this.letzteSicherung,
@@ -45,6 +56,11 @@ class UebergabeStand extends Equatable {
     final angebot = json['angebot'] as Map<String, dynamic>?;
     final lauf = json['letzteSicherung'] as Map<String, dynamic>?;
     return UebergabeStand(
+      zustand: json['zustand'] as String? ?? 'bereit',
+      hinweis: json['hinweis'] as String? ?? '',
+      konflikt: json['konflikt'] as bool? ?? false,
+      lokaleAenderungen: json['lokaleAenderungen'] as bool? ?? false,
+      pruefkennung: json['pruefkennung'] as String?,
       angebot: angebot == null ? null : UebergabeAngebot.fromJson(angebot),
       // `toLocal()`: der Dienst sendet mit Zeitzonenversatz, angezeigt wird Ortszeit.
       eigenerStandGesichertAm: DateTime.tryParse(
@@ -67,5 +83,10 @@ class UebergabeStand extends Equatable {
     ablageOrdner,
     eigeneArchive,
     aeltestesArchiv,
+    zustand,
+    hinweis,
+    konflikt,
+    lokaleAenderungen,
+    pruefkennung,
   ];
 }

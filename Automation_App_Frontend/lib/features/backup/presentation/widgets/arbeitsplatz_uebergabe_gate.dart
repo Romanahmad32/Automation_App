@@ -74,7 +74,10 @@ class ArbeitsplatzUebergabeGateState extends State<ArbeitsplatzUebergabeGate> {
       _fehler = null;
     });
     try {
-      await _backup.uebernehmeStand();
+      await _backup.uebernehmeStand(
+        pruefkennung: _stand?.pruefkennung,
+        konfliktBestaetigt: _stand?.konflikt ?? false,
+      );
     } catch (fehler) {
       if (!mounted) return;
       setState(() {
@@ -84,7 +87,7 @@ class ArbeitsplatzUebergabeGateState extends State<ArbeitsplatzUebergabeGate> {
         // erneut versuchen oder seinen Stand behalten.
         _fehler =
             'Der Stand konnte nicht übernommen werden: $fehler '
-            'Auf diesem Rechner hat sich nichts geändert.';
+            'Bitte den Datenstand erneut prüfen. Eine fehlende Bestätigung kann auch durch eine unterbrochene Verbindung entstehen.';
       });
       return;
     }

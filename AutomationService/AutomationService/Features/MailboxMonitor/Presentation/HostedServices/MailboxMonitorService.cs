@@ -212,6 +212,7 @@ public sealed class MailboxMonitorService(
                     Volatile.Write(ref _idleDone, null);
                 }
 
+                await NotifyAsync(MailboxHub.MessagesChangedEvent, stoppingToken);
                 await scanner.ScanNewAsync(folder, stoppingToken);
             }
         }
@@ -221,7 +222,7 @@ public sealed class MailboxMonitorService(
         }
     }
 
-    private static async Task PollLoopAsync(
+    private async Task PollLoopAsync(
         ImapClient client,
         IMailFolder folder,
         MailboxNachrichtenScanner scanner,
@@ -231,6 +232,7 @@ public sealed class MailboxMonitorService(
         {
             await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
             await client.NoOpAsync(stoppingToken);
+            await NotifyAsync(MailboxHub.MessagesChangedEvent, stoppingToken);
             await scanner.ScanNewAsync(folder, stoppingToken);
         }
     }

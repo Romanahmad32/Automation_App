@@ -17,6 +17,22 @@ void main() {
     expect(find.text('JSON-Datei wählen'), findsOneWidget);
   });
 
+  // Diese Seite liest ein, sie gibt keine Arbeit heraus. Sie bot den Auftrag
+  // einmal ein zweites Mal an — in einer eigenen Fassung ohne Arbeitspaket —
+  // und ließ damit offen, welcher der beiden gilt. Geblieben ist der Aufbau
+  // der Antwortdatei zum Nachschlagen.
+  testWidgets('bietet keinen zweiten Auftrag an, nur das Format', (
+    tester,
+  ) async {
+    final aufbau = ImportTestaufbau();
+    addTearDown(aufbau.close);
+
+    await tester.pumpWidget(importSeite(aufbau.cubit));
+
+    expect(find.text('Auftrag für den Erzeuger kopieren'), findsNothing);
+    expect(find.text('Aufbau der Antwortdatei ansehen'), findsOneWidget);
+  });
+
   // Dieselbe Größenordnung wie beim Zuordnungsstapel: eine Importdatei über den
   // Produktivbestand hat viertausend Zeilen. Ein Widget-Test kann das Einfrieren
   // nicht messen, wohl aber seine Ursache — dass alle Kacheln gebaut werden.

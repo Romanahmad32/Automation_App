@@ -78,8 +78,8 @@ public static class ArbeitsplatzAkte
             .OfType<ArbeitsplatzEintrag>()
             .Where(eintrag => !string.Equals(
                 eintrag.Rechnername, DieserRechner, StringComparison.OrdinalIgnoreCase))
-            .GroupBy(eintrag => eintrag.Rechnername, StringComparer.OrdinalIgnoreCase)
-            .Select(gruppe => gruppe.MaxBy(eintrag => eintrag.ZuletztGearbeitet)!)
+            .GroupBy(eintrag => $"{eintrag.Rechnername}:{eintrag.Revision}", StringComparer.OrdinalIgnoreCase)
+            .Select(gruppe => gruppe.MaxBy(eintrag => eintrag.GesichertAm)!)
             .ToList();
     }
 
@@ -91,12 +91,9 @@ public static class ArbeitsplatzAkte
     public static void MerkeArbeitsbeginn(string ordner)
     {
         var bisher = LiesEigene(ordner);
-        Schreibe(ordner, new ArbeitsplatzEintrag(
-            DieserRechner,
-            DateTime.Now,
-            bisher?.GesichertAm,
-            bisher?.Sicherung,
-            Programmfassung.Aktuell));
+        Schreibe(ordner, bisher is null
+            ? new ArbeitsplatzEintrag(DieserRechner, DateTime.Now, null, null, Programmfassung.Aktuell)
+            : bisher with { ZuletztGearbeitet = DateTime.Now });
     }
 
     /// <summary>
@@ -136,11 +133,11 @@ public static class ArbeitsplatzAkte
             zwischenstand, Path.Combine(ordner, DateinameFuer(eintrag.Rechnername)));
     }
 
-    static IEnumerable<string> Dateien(string ordner)
+    static string[] Dateien(string ordner)
     {
         try
         {
-            return Directory.EnumerateFiles(ordner, Suchmuster, SearchOption.TopDirectoryOnly);
+            return Directory.EnumerateFiles(ordner, Suchmuster, SearchOption.TopDirectoryOnly).ToArray();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

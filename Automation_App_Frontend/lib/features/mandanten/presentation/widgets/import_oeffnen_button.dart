@@ -14,10 +14,15 @@ class ImportOeffnenButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: TextButton.icon(
-        onPressed: () => _oeffnen(context),
-        icon: const Icon(Icons.file_upload_outlined, size: 18),
-        label: const Text('Aus Datei übernehmen'),
+      child: Tooltip(
+        message:
+            'Liest die Antwort-Datei ein, die außerhalb dieser App erzeugt '
+            'wurde — zur Prüfung vor jeder Übernahme.',
+        child: TextButton.icon(
+          onPressed: () => _oeffnen(context),
+          icon: const Icon(Icons.file_upload_outlined, size: 18),
+          label: const Text('Aus Datei übernehmen'),
+        ),
       ),
     );
   }

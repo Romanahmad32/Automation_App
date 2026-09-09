@@ -6,32 +6,14 @@ import 'package:automation_app/features/settings/presentation/widgets/vorlagen_o
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
-/// Die drei Einzelwahlen, die es vor dem einen Ordner für die App-Daten gab
-/// (#103) — eingeklappt, aber erreichbar.
-///
-/// Wegzunehmen wären sie nicht: Ein Anwalt, dessen Vorlagen seit Jahren auf
-/// einem Netzlaufwerk liegen, darf nicht ausgesperrt werden. Sichtbar sind sie
-/// trotzdem nicht, denn im Regelfall gibt es nichts zu entscheiden — die drei
-/// Ordner entstehen unter dem einen darüber.
-///
-/// Gestaltet wie die anderen aufklappbaren Flächen der App
-/// (`nicht_verwendete_felder.dart`, `MailboxOriginaltextPanel`): eigene Karte,
-/// Kartenform am `ExpansionTile`, kein `leading`-Icon.
-///
-/// **Zugeklappt nur, solange alle drei leer sind.** Wer einen dieser Ordner
-/// gesetzt hat, soll ihn sehen, ohne ihn zu suchen — sonst sieht der Reiter
-/// aus, als gälte allein der Ordner oben, während in Wahrheit ein anderer
-/// gewinnt. Der Zustand ist bewusst **einbahnig**: Einmal aufgeklappt, bleibt
-/// offen. Wer das letzte der drei Felder leert, stünde sonst mitten im
-/// Arbeiten vor einer Fläche, die sich unter ihm zuklappt.
+/// Sonderpfade bleiben eingeklappt. Aktive Abweichungen sind im Titelbereich
+/// sichtbar, auch wenn die Formularwerte erst nachträglich geladen werden.
 class AbweichendeOrdnerAufklapper extends StatefulWidget {
-  /// Die Felder, deren Inhalt darüber entscheidet, ob offen begonnen wird.
-  static const List<String> felder = [
+  static const felder = [
     'vorlagenOrdner',
     'registerAblageOrdner',
     'sicherungsAblageOrdner',
   ];
-
   const AbweichendeOrdnerAufklapper({super.key});
 
   @override
@@ -41,34 +23,35 @@ class AbweichendeOrdnerAufklapper extends StatefulWidget {
 
 class AbweichendeOrdnerAufklapperState
     extends State<AbweichendeOrdnerAufklapper> {
-  /// Dieselbe Rundung wie die Karte, ohne eigene Linie: Das `ExpansionTile`
-  /// zöge im aufgeklappten Zustand sonst seine Vorgabe-Trennlinien quer über
-  /// den Kartenrahmen.
-  static const RoundedRectangleBorder kartenForm = RoundedRectangleBorder(
-    borderRadius: BorderRadius.all(Radius.circular(16)),
-    side: BorderSide.none,
-  );
-
   StreamSubscription<Object?>? _abo;
-  bool _offen = false;
+  String _abweichungen = '';
 
-  /// Die Werte kommen **nach** dem ersten Aufbau: `AppSettingsView` füllt das
-  /// Formular erst, wenn der Bloc geladen hat. Ein einmal im `initState`
-  /// gelesener Stand wäre deshalb immer leer und der Aufklapper immer zu.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final form = ReactiveForm.of(context, listen: false);
     if (form is! FormGroup) return;
-
     _abo?.cancel();
-    // Ohne setState: Das hier läuft vor dem ersten Aufbau dieses Widgets.
-    _offen = _offen || _gefuellt(form);
+    _abweichungen = _namen(form);
     _abo = form.valueChanges.listen((_) {
-      if (_offen || !_gefuellt(form) || !mounted) return;
-      setState(() => _offen = true);
+      if (!mounted) return;
+      setState(() => _abweichungen = _namen(form));
     });
   }
+
+  String _namen(FormGroup form) => AbweichendeOrdnerAufklapper.felder
+      .where(
+        (name) =>
+            ((form.control(name).value as String?) ?? '').trim().isNotEmpty,
+      )
+      .map(
+        (name) => switch (name) {
+          'vorlagenOrdner' => 'Vorlagen',
+          'registerAblageOrdner' => 'Register',
+          _ => 'Sicherungen für den Arbeitsplatzwechsel',
+        },
+      )
+      .join(', ');
 
   @override
   void dispose() {
@@ -76,31 +59,25 @@ class AbweichendeOrdnerAufklapperState
     super.dispose();
   }
 
-  bool _gefuellt(FormGroup form) => AbweichendeOrdnerAufklapper.felder.any(
-    (name) => ((form.control(name).value as String?) ?? '').trim().isNotEmpty,
-  );
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    const form = RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(16)),
+    );
     return Card(
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        // Der Schlüssel ist der ganze Trick: `initiallyExpanded` liest das
-        // `ExpansionTile` nur beim ersten Aufbau. Wechselt der Wert, muss ein
-        // neues her — sonst bliebe die Fläche zu, obwohl ein Ordner darin
-        // steht.
-        key: ValueKey(_offen),
-        initiallyExpanded: _offen,
-        shape: kartenForm,
-        collapsedShape: kartenForm,
-        title: const Text('Abweichende Ordner festlegen'),
+        shape: form,
+        collapsedShape: form,
+        title: const Text('Erweiterte Einstellungen'),
         subtitle: Text(
-          'Nur nötig, wenn Vorlagen, Register oder Sicherungen woanders '
-          'liegen sollen.',
+          _abweichungen.isEmpty
+              ? 'Optional: einzelne Ablageorte abweichend festlegen.'
+              : 'Abweichende Ablage aktiv: $_abweichungen. '
+                    'Hier gelten eigene Pfade statt der automatischen Unterordner.',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: _abweichungen.isEmpty ? null : theme.colorScheme.error,
           ),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -111,11 +88,11 @@ class AbweichendeOrdnerAufklapperState
             spacing: 16,
             children: [
               Text(
-                'Was hier steht, gewinnt gegen den Ordner oben. Leer heißt: '
-                'die App leitet den Ordner von ihm ab.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                'Ein eigener Pfad ersetzt den jeweiligen automatischen Unterordner. '
+                'Leer lassen, um den gemeinsamen OneDrive-Ordner zu verwenden. '
+                'Eine andere Sicherungsablage wird auch für den Arbeitsplatzwechsel verwendet; '
+                'beide Rechner müssen dieselbe Ablage nutzen.',
+                style: theme.textTheme.bodySmall,
               ),
               const VorlagenOrdnerFeld(),
               const RegisterAblageFelder(),

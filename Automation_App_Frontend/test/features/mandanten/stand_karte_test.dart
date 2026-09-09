@@ -11,12 +11,13 @@ void main() {
   testWidgets('zeigt die vier Zähler des Zählerbands', (tester) async {
     await tester.pumpWidget(
       seite(
-        const StandKarte(
+        StandKarte(
           gesamt: 4040,
           zugeordnet: 312,
           ohneBezug: 58,
           offen: 3670,
-          pakete: [],
+          pakete: const [],
+          onPaketLoeschen: (_) {},
         ),
       ),
     );
@@ -49,6 +50,7 @@ void main() {
               anzahlOrdner: 100,
             ),
           ],
+          onPaketLoeschen: (_) {},
         ),
       ),
     );
@@ -88,6 +90,7 @@ void main() {
                 zeilen: 200,
               ),
             ],
+            onPaketLoeschen: (_) {},
           ),
         ),
       );
@@ -109,12 +112,13 @@ void main() {
   ) async {
     await tester.pumpWidget(
       seite(
-        const StandKarte(
+        StandKarte(
           gesamt: 0,
           zugeordnet: 0,
           ohneBezug: 0,
           offen: 0,
-          pakete: [],
+          pakete: const [],
+          onPaketLoeschen: (_) {},
         ),
       ),
     );

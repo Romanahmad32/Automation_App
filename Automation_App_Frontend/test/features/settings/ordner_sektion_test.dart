@@ -16,19 +16,8 @@ import 'package:reactive_forms/reactive_forms.dart';
 
 import 'kanzlei_settings_doubles.dart';
 
-/// Die Ordner-Sektion ist der sichtbare Teil von #103: aus vier Ordnerwahlen
-/// über zwei Spalten wurde **eine** Karte mit einer Wahl obenauf.
-///
-/// Zwei Dinge daran kippen still und sind deshalb hier festgehalten:
-///
-/// 1. Der Aufklapper zeigt die drei Einzelfelder nur, wenn eines gefüllt ist —
-///    und die Werte kommen **nach** dem ersten Aufbau, weil das Formular erst
-///    gefüllt wird, wenn der Bloc geladen hat. Ein Aufklapper, der das
-///    verschläft, verbirgt einen gesetzten Ordner: Der Reiter sähe aus, als
-///    gälte allein der Ordner oben, während in Wahrheit ein anderer gewinnt.
-/// 2. Der Satz zum fehlenden Anker muss die **Variable beim Namen nennen**.
-///    „Lässt sich nicht auflösen" allein sagt dem Anwalt nicht, dass sein
-///    Geschäfts-OneDrive auf diesem Rechner fehlt.
+/// Die vereinfachte Einrichtung zeigt Sonderpfade erst auf Wunsch. Bestehende
+/// und spät geladene Abweichungen müssen dennoch sofort erkennbar bleiben.
 void main() {
   FormGroup formular({String vorlagenOrdner = ''}) => FormGroup({
     'appDatenOrdner': FormControl<String>(),
@@ -70,7 +59,7 @@ void main() {
 
     expect(find.byType(AppDatenOrdnerFeld), findsOneWidget);
     expect(find.byType(StammordnerField), findsOneWidget);
-    expect(find.text('Abweichende Ordner festlegen'), findsOneWidget);
+    expect(find.text('Erweiterte Einstellungen'), findsOneWidget);
 
     expect(
       find.byType(VorlagenOrdnerFeld),
@@ -83,36 +72,50 @@ void main() {
     expect(find.byType(SicherungsAblageFelder), findsNothing);
   });
 
-  testWidgets('steht offen, wenn ein Einzelfeld schon gesetzt ist', (
-    tester,
-  ) async {
-    await zeige(tester, formular(vorlagenOrdner: r'C:\Kanzlei\Vorlagen'));
+  testWidgets(
+    'nennt bestehende Sonderpfade geschlossen und bewahrt sie beim Öffnen',
+    (tester) async {
+      final form = formular(vorlagenOrdner: r'C:\Kanzlei\Vorlagen');
+      await zeige(tester, form);
+      expect(
+        find.textContaining('Abweichende Ablage aktiv: Vorlagen'),
+        findsOneWidget,
+      );
+      expect(find.byType(VorlagenOrdnerFeld), findsNothing);
+      await tester.ensureVisible(find.text('Erweiterte Einstellungen'));
+      await tester.tap(find.text('Erweiterte Einstellungen'));
+      await tester.pumpAndSettle();
+      expect(find.byType(VorlagenOrdnerFeld), findsOneWidget);
+      expect(find.byType(RegisterAblageFelder), findsOneWidget);
+      expect(find.byType(SicherungsAblageFelder), findsOneWidget);
+      expect(form.control('vorlagenOrdner').value, r'C:\Kanzlei\Vorlagen');
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-    expect(find.byType(VorlagenOrdnerFeld), findsOneWidget);
-    expect(find.byType(RegisterAblageFelder), findsOneWidget);
-    expect(find.byType(SicherungsAblageFelder), findsOneWidget);
-  });
-
-  testWidgets('klappt auf, wenn der Wert erst nach dem Aufbau ankommt', (
-    tester,
-  ) async {
-    final form = formular();
-    await zeige(tester, form);
-    expect(find.byType(VorlagenOrdnerFeld), findsNothing);
-
-    // Genau der Weg von AppSettingsView: Das Formular wird gefüllt, sobald der
-    // Bloc geladen hat — also nach dem ersten Aufbau dieses Widgets.
-    form.patchValue({'vorlagenOrdner': r'C:\Kanzlei\Vorlagen'});
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byType(VorlagenOrdnerFeld),
-      findsOneWidget,
-      reason:
-          'Der Aufklapper liest initiallyExpanded nur beim ersten Aufbau. Ohne '
-          'ausgetauschten Schlüssel bleibt ein gesetzter Ordner verborgen.',
-    );
-  });
+  testWidgets(
+    'zeigt spät geladene Abweichungen ohne aufzuklappen und aktualisiert den Hinweis',
+    (tester) async {
+      final form = formular();
+      await zeige(tester, form);
+      form.patchValue({'sicherungsAblageOrdner': r'C:\OneDrive\Sicherung'});
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining(
+          'Abweichende Ablage aktiv: Sicherungen für den Arbeitsplatzwechsel',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(SicherungsAblageFelder), findsNothing);
+      form.patchValue({'sicherungsAblageOrdner': ''});
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Abweichende Ablage aktiv:'), findsNothing);
+      expect(
+        find.text('Optional: einzelne Ablageorte abweichend festlegen.'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('nennt beim fehlenden Anker die OneDrive-Variable', (
     tester,

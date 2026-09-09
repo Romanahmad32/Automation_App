@@ -9,15 +9,21 @@ starten) und für die Abteilung als Haupt-/Nebensachgebiet-Auswahl (Einstellunge
 Zustände `SachgebietKatalogLaedt`/`Geladen`/`Fehler` (`sachgebiet_katalog_stand.dart`)
 **Domain:** `Sachgebiet` (`domain/entities/sachgebiet.dart`, spiegelt `SachgebietDto`) ·
 `AbteilungKuerzel` (`domain/services/abteilung_kuerzel.dart`: Überschneidungen `C05/3`,
-Normalisierung) · Port `SachgebietRepository`
+Normalisierung) · `RechtsgebietAbleitung` (`domain/services/rechtsgebiet_ableitung.dart`:
+Abteilung → Rechtsgebiet) · Port `SachgebietRepository`
 **Backend:** `Features/Sachgebiete/` · `GET /api/Sachgebiete` (der einzige Endpunkt — nur lesend)
-**Tests:** `test/features/sachgebiete/` (DTO-Abbild, Kürzel-Regeln) · aus Sicht des Aufrufers
-`test/features/vorgaenge/register_filter_test.dart` (Katalog ∪ Bestand)
+**Tests:** `test/features/sachgebiete/` (DTO-Abbild, Kürzel-Regeln, Ableitung) · aus Sicht des
+Aufrufers `test/features/vorgaenge/register_filter_test.dart` (Katalog ∪ Bestand) und
+`test/features/vorgang_starten/rechtsgebiet_folgt_abteilung_test.dart` (Ableitung samt Folgen)
 
 **Fallstricke**
 
 - Kein eigener Tab. Benutzt aus `vorgaenge` (Register-Filter, Bearbeiten-Dialog), `vorgang_starten`
   (`auftrag_section.dart`) und `settings` (`kanzlei_settings_form_body.dart`).
+- **Abteilung und Rechtsgebiet sind dieselbe Katalogzeile** (§7.1) — einmal als Kürzel, einmal als
+  Name. Erfasst wird nur die Abteilung; `RechtsgebietAuswahl` zeigt an, was aus ihrem *Haupt*teil
+  folgt (`C05/3` → Strafrecht), und schaltet erst auf „Abweichend wählen" die volle Auswahl frei.
+  Zwei gleichrangige Listen waren es vorher — und sie liefen auseinander, ohne dass etwas rot wurde.
 - Ein Ladefehler wird **nicht** still geschluckt (anders als beim `VersichererCubit`): Die
   Auswahllisten zeigen über `SachgebietKatalogBuilder` einen Hinweis mit „Erneut versuchen" und
   bleiben aus — eine stillschweigend unvollständige Auswahl ist die Fehlerklasse, die der Katalog

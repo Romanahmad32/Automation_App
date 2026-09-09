@@ -76,6 +76,8 @@ class _FesteMailboxAntworten implements MailboxRepository {
 /// Feuert nie — der Hub selbst ist hier nicht Gegenstand des Tests.
 class _StummerPushNotifier implements MailboxPushNotifier {
   @override
+  Stream<void> get onPosteingangChanged => const Stream.empty();
+  @override
   Stream<void> get onReplyReceived => const Stream.empty();
   @override
   Stream<void> get onStatusChanged => const Stream.empty();

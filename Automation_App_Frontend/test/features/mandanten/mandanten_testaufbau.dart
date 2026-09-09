@@ -10,6 +10,7 @@ import 'package:automation_app/features/mandanten/domain/entities/ordner_status.
 import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/loesche_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/notiere_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
@@ -249,7 +250,9 @@ class ImportPaketeSpeicher {
   List<ImportPaket> pakete;
   int leseAufrufe = 0;
   int notiereAufrufe = 0;
+  int loeschAufrufe = 0;
   String? fehlerBeimNotieren;
+  String? fehlerBeimLoeschen;
 
   ImportPaketeSpeicher([List<ImportPaket> anfangsbestand = const []])
     : pakete = [...anfangsbestand];
@@ -292,6 +295,27 @@ class FakeNotiereImportPaket
     );
     speicher.pakete = [neu, ...speicher.pakete];
     return Right(neu);
+  }
+}
+
+/// Nimmt zurück wie der Dienst: entfernt die Zeile, ohne einen Ordner
+/// anzurühren.
+class FakeLoescheImportPaket
+    implements UseCase<void, LoescheImportPaketParams> {
+  final ImportPaketeSpeicher speicher;
+
+  FakeLoescheImportPaket(this.speicher);
+
+  @override
+  Future<Either<Failure, void>> call(LoescheImportPaketParams params) async {
+    speicher.loeschAufrufe++;
+    final fehler = speicher.fehlerBeimLoeschen;
+    if (fehler != null) return Left(LocalFailure(message: fehler));
+    speicher.pakete = [
+      for (final p in speicher.pakete)
+        if (p.nummer != params.nummer) p,
+    ];
+    return Right(null);
   }
 }
 
@@ -378,6 +402,7 @@ class MandantenTestaufbau {
         FesteKanzleiSettings(stammordner),
         FakeNotiereImportPaket(paketeSpeicher),
         FakeSchreibeArbeitspaket(dateiSpeicher),
+        FakeLoescheImportPaket(paketeSpeicher),
       ),
     );
   }

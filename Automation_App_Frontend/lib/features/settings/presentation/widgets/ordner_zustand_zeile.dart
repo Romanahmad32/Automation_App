@@ -21,11 +21,11 @@ class OrdnerZustandZeile extends StatelessWidget {
   /// bleiben stehen, wie sie sind: Ein neuer Ordner im Dienst soll hier
   /// auftauchen und nicht verschwinden.
   static String beschriftung(String feld) => switch (feld) {
-    'appDatenOrdner' => 'Ordner für die App-Daten',
+    'appDatenOrdner' => 'Gemeinsamer OneDrive-Ordner',
     'aktenStammordner' => 'Akten-Stammordner',
     'vorlagenOrdner' => 'Vorlagen',
     'registerAblageOrdner' => 'Register-Ablage',
-    'sicherungsAblageOrdner' => 'Sicherungsablage',
+    'sicherungsAblageOrdner' => 'Sicherungen für den Arbeitsplatzwechsel',
     _ => feld,
   };
 
@@ -39,7 +39,7 @@ class OrdnerZustandZeile extends StatelessWidget {
     OrdnerZustandArten.ordnerFehlt =>
       '${zustand.wirksam} — Ordner wird beim ersten Schreiben angelegt.',
     OrdnerZustandArten.abgeleitet =>
-      '${zustand.wirksam} — abgeleitet aus dem Ordner für die App-Daten.',
+      '${zustand.wirksam} — automatisch im gemeinsamen OneDrive-Ordner.',
     OrdnerZustandArten.standard =>
       '${zustand.wirksam} — die App verwaltet die Vorlagen selbst.',
     OrdnerZustandArten.bereit => zustand.wirksam,

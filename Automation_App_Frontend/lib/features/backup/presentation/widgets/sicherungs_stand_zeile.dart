@@ -23,7 +23,7 @@ class SicherungsStandZeile extends StatefulWidget {
 
   static String satz(UebergabeStand stand) {
     if (stand.ablageOrdner.isEmpty) {
-      return 'Nicht eingerichtet. In den Kanzleidaten unter „Sicherungsablage" '
+      return 'Nicht eingerichtet. In den Kanzleidaten unter „Gemeinsamer OneDrive-Ordner" '
           'einen Ordner wählen — dann sichert die App beim Beenden von selbst '
           'dorthin.';
     }
@@ -115,6 +115,8 @@ class SicherungsStandZeileState extends State<SicherungsStandZeile> {
     final meldung = await UebergabeUebernahmeDialog.frageUndUebernimm(
       context,
       angebot,
+      pruefkennung: _stand?.pruefkennung,
+      konflikt: _stand?.konflikt ?? false,
     );
     if (meldung == null) return;
 

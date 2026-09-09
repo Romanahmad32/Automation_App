@@ -61,6 +61,12 @@ class MandantenRepositoryImpl implements MandantenRepository {
   );
 
   @override
+  Future<Either<Failure, void>> loescheImportPaket(int nummer) => alsEither(
+    () => _importPaketDatasource.loescheImportPaket(nummer),
+    uebersetzen: _localFailure,
+  );
+
+  @override
   Future<Either<Failure, void>> schreibeArbeitspaket({
     required Arbeitspaket paket,
     required String pfad,

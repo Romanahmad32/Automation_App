@@ -50,6 +50,37 @@ denselben Vorlagennamen; unterschieden werden sie allein durch die Nummer.
 
 ## Vorgang und Berechnung
 
+### Das Schreiben gehört zum Vorgang, nicht zur Sitzung (§3)
+
+Der Wizard kannte lange nur, was er selbst gerade erzeugt hatte: `EditedDocumentBloc` hielt den
+Pfad, `WizardStepBar` schaltete „Dokument begutachten" und „Speichern & weiter" allein an
+`EditedDocumentLoaded` frei — und `Vorgang.dokumentPfad` wurde nirgends zurückgelesen.
+
+Nach einem Neustart war der Vorgang damit **eingemauert**: Der Absprung „Versenden & abschließen"
+eines abgelegten Vorgangs landete auf Schritt 1, und Schritt 4 sagte „Es wurde noch kein Dokument
+erstellt". Versand (§4.7) und Abschluss (§4.8) hängen aber genau dort — der einzige Weg dorthin
+wäre gewesen, das Schreiben neu zu erzeugen. Für einen Schritt, der die laufende Auftragsnummer
+hochzählt, ist das kein Umweg, den man gehen will.
+
+`DokumentAusVorgangEvent` holt es zurück. Drei Regeln hängen daran, und alle drei sind Riegel:
+
+- **Wiederhergestellt ist nicht erzeugt.** `EditedDocumentLoaded.wiederhergestellt` trennt beides,
+  und der Listener der Page fasst einen wiederhergestellten Stand nur für die PDF-Vorschau an.
+  Liefe er in den Erzeugungszweig, schaltete jeder Einstieg in einen Vorgang dessen Status weiter
+  und zählte über `naechsteSchreibenNummer` eine Schreiben-Nummer hoch (§4.9) — fürs Hinsehen.
+- **Was in dieser Sitzung erzeugt wurde, hat Vorrang.** Der Bloc verdrängt ein nicht
+  wiederhergestelltes Dokument nicht. Sonst nähme die nachträgliche Zuordnung eines ohne Vorgang
+  erzeugten Schreibens (§4.6, der Weg über den Speicherschritt) dem Anwalt genau das Dokument weg,
+  das er gerade vor sich hat — samt der Warnungen, die nur am Erzeugungslauf hängen.
+- **Nur beim Wechsel des Vorgangs, nicht bei jedem neuen Stand.** Das `listenWhen` der Page
+  vergleicht über `andererVorgang` die Referenz. Ohne das schlüge `uebernehmeVorgangsStand` —
+  der Rückfluss unmittelbar nach dem Erzeugen — sofort zurück und ersetzte das frische Dokument.
+
+Wohin gesprungen wird, entscheidet `wiederaufnahmeSchritt` (`utils/wiederaufnahme.dart`) mit
+derselben Zuordnung, die `VorgangNaechsterSchritt` auf seinen Knopf schreibt. Ohne benutzbare
+Datei springt er nicht: Ein Sprung auf einen gesperrten Schritt ist nur eine andere Sackgasse.
+Das kommt vor — nach dem Abschluss räumt der Dienst den Arbeitsordner, der Pfad am Vorgang bleibt.
+
 - Der Vorgangsstatus wird nur vorwärts geschaltet (`status.index`): „erstellt" im Listener der
   Page, „abgelegt" in `schliesseAblageAb`, „versendet" über `VorgangCubit.abschliessen`. Vorher
   immer `findeZuReferenz`.
