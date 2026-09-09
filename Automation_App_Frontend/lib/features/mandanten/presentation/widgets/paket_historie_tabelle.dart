@@ -12,10 +12,24 @@ import 'package:flutter/material.dart';
 /// Fortschritt im Akzent, der Fortschrittsbalken auf dem tatsächlichen Stand.
 /// Fertige Pakete zeigen denselben Balken voll und grau — gleiche Form,
 /// andere Aussage. „–" ersetzt leere Zellen, solange ein Paket offen ist.
+///
+/// Nur ein **offenes** Paket trägt den Zurücknehmen-Knopf: Ein bereits
+/// eingelesenes zu löschen sähe nach einem Rückgängig der daraus entstandenen
+/// Mandanten aus, macht aber keinen davon rückgängig — das Backend lehnt den
+/// Versuch ohnehin ab (§ [PaketHistorieTabelle.onLoeschen]).
 class PaketHistorieTabelle extends StatelessWidget {
   final List<ImportPaket> pakete;
 
-  const PaketHistorieTabelle({super.key, required this.pakete});
+  /// Nimmt ein offenes Paket zurück (Klick auf den Zurücknehmen-Knopf, nach
+  /// Bestätigung im Dialog). Rührt keinen Ordner an — nur die
+  /// Buchführungszeile verschwindet.
+  final void Function(int nummer) onLoeschen;
+
+  const PaketHistorieTabelle({
+    super.key,
+    required this.pakete,
+    required this.onLoeschen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +67,19 @@ class PaketHistorieTabelle extends StatelessWidget {
                 numeric: true,
                 columnWidth: IntrinsicColumnWidth(),
               ),
+              DataColumn(
+                label: SizedBox.shrink(),
+                columnWidth: IntrinsicColumnWidth(),
+              ),
             ],
-            rows: [for (final paket in pakete) _zeile(theme, paket)],
+            rows: [for (final paket in pakete) _zeile(context, theme, paket)],
           ),
         ),
       ),
     );
   }
 
-  DataRow _zeile(ThemeData theme, ImportPaket paket) {
+  DataRow _zeile(BuildContext context, ThemeData theme, ImportPaket paket) {
     final scheme = theme.colorScheme;
     final offen = paket.offen;
     final ton = offen ? SoftTone.fromAccent(scheme.tertiary, scheme) : null;
@@ -119,7 +137,43 @@ class PaketHistorieTabelle extends StatelessWidget {
           ),
         ),
         DataCell(Text(paket.zeilen == null ? '–' : '${paket.zeilen}')),
+        DataCell(
+          offen
+              ? IconButton(
+                  icon: const Icon(Icons.undo, size: 18),
+                  tooltip: 'Paket zurücknehmen',
+                  onPressed: () => _zuruecknehmen(context, paket),
+                )
+              : const SizedBox.shrink(),
+        ),
       ],
     );
+  }
+
+  /// Fragt nach, bevor die Buchführungszeile verschwindet — ein Doppelklick
+  /// auf den falschen Knopf soll sich nicht sofort auswirken.
+  Future<void> _zuruecknehmen(BuildContext context, ImportPaket paket) async {
+    final bestaetigt = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Paket ${paket.nummer} zurücknehmen?'),
+        content: const Text(
+          'Die Ordner werden nicht angefasst — nur die Buchführungszeile '
+          'verschwindet. Ein neu geholtes Paket bekommt danach wieder '
+          'dieselbe Nummer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Zurücknehmen'),
+          ),
+        ],
+      ),
+    );
+    if (bestaetigt ?? false) onLoeschen(paket.nummer);
   }
 }

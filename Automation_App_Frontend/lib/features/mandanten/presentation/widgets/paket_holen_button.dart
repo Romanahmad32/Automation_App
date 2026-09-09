@@ -2,6 +2,7 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/mandanten/domain/services/arbeitspaket_bauen.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/paket_gespeichert_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -63,16 +64,21 @@ class _PaketHolenButtonState extends State<PaketHolenButton> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        FilledButton.icon(
-          onPressed: aktiv ? () => _holen(context) : null,
-          icon: _laeuft
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.move_to_inbox_outlined, size: 18),
-          label: const Text('Arbeitspaket holen'),
+        Tooltip(
+          message:
+              'Gibt eine Portion offener Ordner zur Bearbeitung außerhalb '
+              'dieser App heraus und kopiert den Auftrag dafür.',
+          child: FilledButton.icon(
+            onPressed: aktiv ? () => _holen(context) : null,
+            icon: _laeuft
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.move_to_inbox_outlined, size: 18),
+            label: const Text('Arbeitspaket holen'),
+          ),
         ),
         MenuAnchor(
           menuChildren: [
@@ -133,11 +139,15 @@ class _PaketHolenButtonState extends State<PaketHolenButton> {
       );
       switch (ergebnis) {
         case Right():
-          final mandanten = ArbeitspaketBauen.mandantenAnzahl(paket.ordner);
-          rueckmeldung.erfolg(
-            'Paket ${paket.paket} mit $mandanten Mandanten und '
-            '${paket.ordner.length} Ordnern gespeichert. Die Anleitung liegt '
-            'in der Zwischenablage.',
+          if (!context.mounted) return;
+          // Ein Dialog und keine Rückmeldung: Hier hält der Anwalt Datei und
+          // Auftrag zum einzigen Mal zugleich in der Hand — die Begründung
+          // steht am Kopf von `PaketGespeichertDialog`.
+          await zeigePaketGespeichert(
+            context,
+            paket: paket,
+            pfad: zielPfad,
+            mandantenAnzahl: ArbeitspaketBauen.mandantenAnzahl(paket.ordner),
           );
         case Left(value: final failure):
           rueckmeldung.fehler(failure.message);

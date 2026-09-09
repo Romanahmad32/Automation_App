@@ -14,10 +14,11 @@ Dateisystem zu ihm gehören. Grundlage für Wiederverwendung der Daten, Aktenabl
 `AblageStrategie`, `Arbeitspaket`, `ImportPaket`, `ArbeitspaketBauen`, `OrdnerPruefung`, `SichereTreffer`; `GetMandanten`,
 `GetMandantenSeite`, `GetAktenOrdnernamen`, `CreateMandant`, `UpdateMandant`, `DeleteMandant`, `GetAkten`, `GetFaelle`,
 `GetOrdnerStatus`, `SetzeOrdnerStatus`, `LiesImportDatei`, `ImportiereMandanten`, `VerknuepfeOrdnerMitMandant`,
-`LegeDokumentAb`, `GetImportPakete`, `NotiereImportPaket`, `SchreibeArbeitspaket`
+`LegeDokumentAb`, `GetImportPakete`, `NotiereImportPaket`, `LoescheImportPaket`, `SchreibeArbeitspaket`
 **Backend:** `Features/Mandanten/` · `GET/POST /api/Mandanten`, `GET /api/Mandanten/seite`, `GET /api/Mandanten/aktenordner`,
 `PUT/DELETE /api/Mandanten/{id}`, `GET/PUT /api/OrdnerStatus`, `POST /api/MandantenImport` (Format: `docs/MANDANTEN_IMPORT.md`),
-`GET`/`POST /api/ImportPakete` — Akten und Fälle laufen über keinen Endpunkt, sie kommen direkt aus dem Dateisystem.
+`GET`/`POST /api/ImportPakete`, `DELETE /api/ImportPakete/{nummer}` (nur offene) — Akten und Fälle laufen über keinen
+Endpunkt, sie kommen direkt aus dem Dateisystem.
 **Tests:** `test/features/mandanten/`, Einstieg `test/features/mandanten/mandanten_overview_bloc_test.dart`,
 `test/features/mandanten/mandanten_import_cubit_test.dart`
 

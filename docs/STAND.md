@@ -196,13 +196,16 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Zeilen lassen sich in der Vorschau berichtigen oder weglassen
   (`POST /api/MandantenImport`, Format in [`docs/MANDANTEN_IMPORT.md`](MANDANTEN_IMPORT.md)).
   Vorschau und Übernahme sind derselbe Aufruf; ergänzt wird nur, überschrieben nie, und ein zweiter
-  Lauf derselben Datei ändert nichts. Der Auftrag für den Erzeuger der Datei ist in der App
-  kopierbar.
+  Lauf derselben Datei ändert nichts. Den Auftrag für den Erzeuger der Datei gibt die App mit dem
+  Arbeitspaket heraus — in der Paketdatei und in der Zwischenablage; einen zweiten, paketlosen
+  Auftrag gibt es bewusst nicht mehr.
 - Bei diesem Umfang lässt sich die Zuordnung zusätzlich in **Arbeitspakete** zerlegen (#108): Die App
   gibt die nächsten N offenen **Mandanten** samt aller ihrer Ordner als JSON-Datei heraus
   (`ArbeitspaketBauen`, `POST /api/ImportPakete`), führt darüber Buch und rechnet den Fortschritt
   selbst aus den gespeicherten Ordnernamen aus — der Anwalt wird nie gefragt, zu welchem Paket eine
-  Importdatei gehört. Ein Ordnername, den der Stammordner nicht kennt, sperrt die Übernahme der
+  Importdatei gehört. Ein versehentlich geholtes Paket lässt sich zurücknehmen, solange es offen ist
+  (`DELETE /api/ImportPakete/{nummer}`); es sperrt keinen Ordner, also bleibt nichts zurückzusetzen.
+  Ein Ordnername, den der Stammordner nicht kennt, sperrt die Übernahme der
   betroffenen Zeile (Ausnahme: kein Scan verfügbar). **Sichere Treffer übernehmen** schlägt zusätzlich
   Ordner vor, deren Namensvorschlag exakt und eindeutig auf einen erfassten Mandanten passt, und
   schickt sie ohne neuen Weg durch denselben Import (`SichereTreffer`,

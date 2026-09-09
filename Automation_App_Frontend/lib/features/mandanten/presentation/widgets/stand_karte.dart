@@ -27,6 +27,9 @@ class StandKarte extends StatefulWidget {
   /// Die Paket-Historie, neueste Nummer zuerst.
   final List<ImportPaket> pakete;
 
+  /// Nimmt ein offenes Paket zurück — durchgereicht an [PaketHistorieTabelle].
+  final void Function(int nummer) onPaketLoeschen;
+
   const StandKarte({
     super.key,
     required this.gesamt,
@@ -34,6 +37,7 @@ class StandKarte extends StatefulWidget {
     required this.ohneBezug,
     required this.offen,
     required this.pakete,
+    required this.onPaketLoeschen,
   });
 
   @override
@@ -130,7 +134,10 @@ class _StandKarteState extends State<StandKarte> {
                   ),
                 )
               else
-                PaketHistorieTabelle(pakete: widget.pakete),
+                PaketHistorieTabelle(
+                  pakete: widget.pakete,
+                  onLoeschen: widget.onPaketLoeschen,
+                ),
             ],
           ),
         ],

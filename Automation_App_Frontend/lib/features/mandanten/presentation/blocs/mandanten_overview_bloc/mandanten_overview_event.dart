@@ -56,6 +56,12 @@ final class SetzeZuordnungFilterEvent extends MandantenOverviewEvent {
   List<Object> get props => [filter];
 }
 
+/// Zeigt die nächste Portion des Zuordnungsstapels. Kein Nachladen — die
+/// Ordner liegen seit dem Scan alle vor, sie werden nur portionsweise gezeigt.
+final class ZeigeWeitereOrdnerEvent extends MandantenOverviewEvent {
+  const ZeigeWeitereOrdnerEvent();
+}
+
 /// Lädt die Fälle einer Akte nach (beim Aufklappen). Ist bereits geladen,
 /// passiert nichts.
 final class LadeFaelleEvent extends MandantenOverviewEvent {

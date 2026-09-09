@@ -45,7 +45,7 @@ void main() {
     expect(zaehler[OrdnerAnsicht.ohneBezug], 0);
   });
 
-  test('„Andere Ordner" zeigt die übrigen Sachgebiete', () {
+  test('„Andere Sachgebiete" zeigt die übrigen Sachgebiete', () {
     const filter = ZuordnungFilter(ansicht: OrdnerAnsicht.andere);
 
     expect(namen(filter.anwenden(bestand, jetzt: jetzt)), [

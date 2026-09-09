@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 /// Die drei Filter über dem Zuordnungsstapel: Ordnername, Topf und
 /// Änderungszeitpunkt. Der Topf-Umschalter nennt jede Zahl, damit der Anwalt
 /// sieht, was gerade nicht vor ihm liegt — beiseitegelegt ist nicht gelöscht.
+///
+/// Jeder Topf trägt seine Erklärung als Tooltip, und „Zuzuordnen" sagt
+/// darunter offen, woraus seine Zahl besteht: Die Töpfe sahen wie drei
+/// Erkennungsquoten aus, obwohl der erste zur Hälfte aus Ordnern besteht,
+/// deren Name gar keinen Aktentyp nennt, und der dritte nur füllt, was der
+/// Anwalt selbst hineinlegt.
 class OrdnerFilterLeiste extends StatelessWidget {
   final ZuordnungFilter filter;
 
@@ -12,12 +18,16 @@ class OrdnerFilterLeiste extends StatelessWidget {
   /// angewandt).
   final Map<OrdnerAnsicht, int> zaehler;
 
+  /// Woraus die Zahl des Topfes „Zuzuordnen" besteht.
+  final ({int mitPraefix, int ohnePraefix}) herkunft;
+
   final ValueChanged<ZuordnungFilter> onChanged;
 
   const OrdnerFilterLeiste({
     super.key,
     required this.filter,
     required this.zaehler,
+    required this.herkunft,
     required this.onChanged,
   });
 
@@ -46,6 +56,7 @@ class OrdnerFilterLeiste extends StatelessWidget {
                   ButtonSegment(
                     value: topf,
                     label: Text('${topf.bezeichnung} (${zaehler[topf] ?? 0})'),
+                    tooltip: topf.erklaerung,
                   ),
               ],
               selected: {filter.ansicht},
@@ -74,7 +85,24 @@ class OrdnerFilterLeiste extends StatelessWidget {
             ),
           ],
         ),
+        if (filter.ansicht == OrdnerAnsicht.stapel) _herkunftszeile(context),
       ],
+    );
+  }
+
+  /// Sagt, wie viel von „Zuzuordnen" tatsächlich erkannt wurde. Ohne diese
+  /// Zeile liest sich die Zahl als Erkennungsquote — und wirkt kläglich,
+  /// obwohl die Heuristik genau das tut, was sie soll: nichts verschlucken.
+  Widget _herkunftszeile(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      'Darin ${herkunft.mitPraefix} mit Verkehrsunfall-Präfix erkannt und '
+      '${herkunft.ohnePraefix}, deren Name keinen Aktentyp nennt — die stehen '
+      'hier, weil sie nicht ausgeschlossen werden konnten, nicht weil sie '
+      'erkannt wurden.',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.outline,
+      ),
     );
   }
 }

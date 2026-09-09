@@ -35,7 +35,7 @@ mixin ArbeitspaketGriff
     return _arbeitspaket.baue(aktuell, anzahl);
   }
 
-  /// Schreibt [paket] nach [pfad], legt die Anleitung in die Zwischenablage
+  /// Schreibt [paket] nach [pfad], legt den Auftrag in die Zwischenablage
   /// und verbucht das Paket erst danach — und aktualisiert die Paket-Historie
   /// im Zustand. **Nur aufrufen, nachdem der Speichern-Dialog erfolgreich
   /// war**: bricht der Anwalt ihn ab, darf nichts verbucht werden.
@@ -47,6 +47,19 @@ mixin ArbeitspaketGriff
       paket: paket,
       pfad: pfad,
     );
+    if (ergebnis case Right()) {
+      final abgeschlossen = Completer<void>();
+      add(HistorieNeuLadenEvent(abgeschlossen));
+      await abgeschlossen.future;
+    }
+    return ergebnis;
+  }
+
+  /// Nimmt ein versehentlich herausgegebenes, noch offenes Paket zurück und
+  /// lädt danach die Historie neu — dieselbe Reihenfolge wie bei
+  /// [schreibeUndVerbucheArbeitspaket].
+  Future<Either<Failure, void>> loescheImportPaket(int nummer) async {
+    final ergebnis = await _arbeitspaket.loesche(nummer);
     if (ergebnis case Right()) {
       final abgeschlossen = Completer<void>();
       add(HistorieNeuLadenEvent(abgeschlossen));
