@@ -43,4 +43,28 @@ public interface IRegisterHistorie
         int id,
         RegisterHistorieAenderung aenderung,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Löscht die Zeile zur Id (§6.3). <c>false</c>, wenn es sie nicht gibt —
+    /// derselbe Wettlauf wie bei <see cref="AendereAsync"/>: Der Anwalt sah die
+    /// Zeile im selben Bestand, den er gerade löscht, ein Fehlschlag hier ist
+    /// kein Programmfehler.
+    /// </summary>
+    Task<bool> LoescheAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Übernimmt die gespiegelte Registerzeile eines gelöschten Vorgangs als
+    /// eigenständige Zeile der Historie (§6.3) — ohne diesen Schritt
+    /// verschwände sie beim nächsten Schreiben, weil sie nur ein Spiegel des
+    /// Vorgangs war. <c>null</c>, wenn der natürliche Schlüssel (Jahr,
+    /// LaufendeNummer, NummerZusatz) schon belegt ist: Dann steht die Zeile
+    /// ohnehin im Register, und es gibt nichts zu bewahren.
+    ///
+    /// Wirft nie wegen dieser Kollision — sie wird vor dem Schreiben erkannt,
+    /// nicht als <c>DbUpdateException</c> danach aufgefangen. Ein Löschvorgang
+    /// darf daran nicht scheitern.
+    /// </summary>
+    Task<RegisterHistorieEntity?> UebernehmeAsync(
+        RegisterHistorieUebernahme uebernahme,
+        CancellationToken cancellationToken = default);
 }

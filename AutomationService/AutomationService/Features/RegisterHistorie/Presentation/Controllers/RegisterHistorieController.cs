@@ -61,4 +61,20 @@ public class RegisterHistorieController(IRegisterHistorie historie) : Controller
         var zeile = await historie.AendereAsync(id, aenderung.ZuDomaene(), cancellationToken);
         return zeile is null ? NotFound() : Ok(RegisterHistorieZeileDto.From(zeile));
     }
+
+    /// <summary>
+    /// Löscht eine historische Zeile für sich (§6.3). Nur für Zeilen ohne
+    /// Vorgang gedacht — eine Spiegelzeile eines Vorgangs lässt sich nur
+    /// zusammen mit ihm löschen (<c>DELETE api/Vorgaenge</c> mit
+    /// <c>registerzeileBehalten=false</c>); dafür braucht es hier keinen
+    /// eigenen Weg, weil die Zeile sonst beim nächsten Schreiben wiederkäme.
+    /// </summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Loesche(int id, CancellationToken cancellationToken)
+    {
+        var geloescht = await historie.LoescheAsync(id, cancellationToken);
+        return geloescht ? NoContent() : NotFound();
+    }
 }
