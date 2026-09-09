@@ -49,6 +49,14 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
   /// Die nächste Seite der Mandantenliste wird geholt.
   final bool mehrLadend;
 
+  /// Wie viele Ordner des Zuordnungsstapels die Liste gerade zeigt. Der Stapel
+  /// wird **nicht** nachgeladen — er liegt nach dem Scan vollständig vor —,
+  /// sondern portionsweise angezeigt: bei rund 4000 Ordnern ist eine Liste,
+  /// die in einem Zug bis ans Ende reicht, weder zu überblicken noch billig
+  /// zu filtern. Jeder Filterwechsel setzt die Grenze zurück, sonst zeigte der
+  /// nächste Topf ohne Zutun hunderte Zeilen.
+  final int sichtbareOrdnerGrenze;
+
   /// Eine einzelne Aktion ist gescheitert. Sie kostet eine Meldung über der
   /// Liste und **nicht** den geladenen Stand: eine fehlgeschlagene Massenaktion
   /// über hunderte Ordner sonst den Scan über tausende Ordner, den Filter und
@@ -82,6 +90,7 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
     this.zuordnungFilter = const ZuordnungFilter(),
     this.neuLadend = false,
     this.mehrLadend = false,
+    this.sichtbareOrdnerGrenze = MandantenOverviewBloc.ordnerPortion,
     this.fehler,
     this.importPakete = const [],
   });
@@ -100,6 +109,7 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
     ZuordnungFilter? zuordnungFilter,
     bool? neuLadend,
     bool? mehrLadend,
+    int? sichtbareOrdnerGrenze,
     String? fehler,
     bool fehlerVerwerfen = false,
     List<ImportPaket>? importPakete,
@@ -116,6 +126,8 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
       zuordnungFilter: zuordnungFilter ?? this.zuordnungFilter,
       neuLadend: neuLadend ?? this.neuLadend,
       mehrLadend: mehrLadend ?? this.mehrLadend,
+      sichtbareOrdnerGrenze:
+          sichtbareOrdnerGrenze ?? this.sichtbareOrdnerGrenze,
       fehler: fehlerVerwerfen ? null : (fehler ?? this.fehler),
       importPakete: importPakete ?? this.importPakete,
     );
@@ -180,25 +192,47 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
 
   /// Im Stammordner gefundene Ordner ohne Mandanten-Zuordnung — inklusive der
   /// als „ohne Mandantenbezug" vermerkten, die dort ihren eigenen Topf haben.
-  List<Akte> get nichtZugeordneteAkten =>
-      akten.where((a) => !_zugeordnet.enthaelt(a.ordnername)).toList();
+  late final List<Akte> nichtZugeordneteAkten = akten
+      .where((a) => !_zugeordnet.enthaelt(a.ordnername))
+      .toList();
 
-  /// Der Arbeitsvorrat, wie ihn [zuordnungFilter] gerade zeigt.
-  List<Akte> get sichtbareNichtZugeordnete => zuordnungFilter.anwenden(
+  /// Der Arbeitsvorrat, wie ihn [zuordnungFilter] gerade zeigt — **alle**
+  /// passenden Ordner, auch die noch nicht angezeigten: das „M" in „N von M".
+  /// Angezeigt wird davon [angezeigteNichtZugeordnete].
+  late final List<Akte> sichtbareNichtZugeordnete = zuordnungFilter.anwenden(
     nichtZugeordneteAkten,
     ohneMandantenbezug: ohneMandantenbezug,
   );
+
+  /// Der tatsächlich gezeigte Ausschnitt — die ersten
+  /// [sichtbareOrdnerGrenze] von [sichtbareNichtZugeordnete].
+  late final List<Akte> angezeigteNichtZugeordnete = sichtbareNichtZugeordnete
+      .take(sichtbareOrdnerGrenze)
+      .toList();
+
+  /// Ob hinter dem gezeigten Ausschnitt noch Ordner liegen.
+  bool get gibtWeitereOrdner =>
+      sichtbareNichtZugeordnete.length > sichtbareOrdnerGrenze;
 
   /// Wie viele Ordner in jedem Topf liegen — mit Suche und Zeitfenster.
-  Map<OrdnerAnsicht, int> get ordnerZaehler => zuordnungFilter.zaehlen(
+  late final Map<OrdnerAnsicht, int> ordnerZaehler = zuordnungFilter.zaehlen(
     nichtZugeordneteAkten,
     ohneMandantenbezug: ohneMandantenbezug,
   );
+
+  /// Woher die Ordner im Topf „Zuzuordnen" stammen — erkanntes Präfix gegen
+  /// „Name nennt keinen Aktentyp". Mit Suche und Zeitfenster, damit die Zahlen
+  /// zum Umschalter darüber passen.
+  late final ({int mitPraefix, int ohnePraefix}) stapelHerkunft =
+      zuordnungFilter.herkunftImStapel(
+        nichtZugeordneteAkten,
+        ohneMandantenbezug: ohneMandantenbezug,
+      );
 
   /// Dieselben Töpfe ohne Suche und Zeitfenster — der Bezugswert für „N von M".
   /// Der Vorgabefilter greift auf keiner der beiden Achsen; welchen Topf er
   /// zeigt, spielt beim Zählen keine Rolle.
-  Map<OrdnerAnsicht, int> get ordnerZaehlerUngefiltert =>
+  late final Map<OrdnerAnsicht, int> ordnerZaehlerUngefiltert =
       const ZuordnungFilter().zaehlen(
         nichtZugeordneteAkten,
         ohneMandantenbezug: ohneMandantenbezug,
@@ -208,12 +242,9 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
   /// Arbeitsvorrat für ein Arbeitspaket (§5.1/§6.1, Issue #108). Unabhängig
   /// vom gerade gewählten Topf: Bußgeld-, Straf- und Familiensachen zählen
   /// mit, ein Arbeitspaket lässt nichts unter den Tisch fallen.
-  List<Akte> get offeneOrdnerFuerPaket {
-    final vermerkt = ohneMandantenbezug;
-    return nichtZugeordneteAkten
-        .where((a) => !vermerkt.enthaelt(a.ordnername))
-        .toList();
-  }
+  late final List<Akte> offeneOrdnerFuerPaket = nichtZugeordneteAkten
+      .where((a) => !ohneMandantenbezug.enthaelt(a.ordnername))
+      .toList();
 
   /// Noch zu entscheidende Ordner: weder zugeordnet noch vermerkt. Das ist die
   /// Zahl, die auf null gehen kann und darum auf der Übersicht steht.
@@ -254,6 +285,7 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
     zuordnungFilter,
     neuLadend,
     mehrLadend,
+    sichtbareOrdnerGrenze,
     fehler,
     importPakete,
   ];
