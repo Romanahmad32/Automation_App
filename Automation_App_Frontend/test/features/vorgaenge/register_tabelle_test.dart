@@ -31,6 +31,7 @@ void main() {
     bool mitStatus = false,
     ValueChanged<RegisterZeile>? onHistorieZeile,
     ValueChanged<RegisterZeile>? onVorgangZeile,
+    ValueChanged<RegisterZeile>? onLoeschen,
   }) async {
     // Reichlich Platz, damit [breite] nie vom Fenster beschnitten wird.
     tester.view.physicalSize = const Size(4000, 800);
@@ -47,6 +48,7 @@ void main() {
               mitStatus: mitStatus,
               onHistorieZeile: onHistorieZeile,
               onVorgangZeile: onVorgangZeile,
+              onLoeschen: onLoeschen,
             ),
           ),
         ),
@@ -287,6 +289,92 @@ void main() {
       await tester.pump();
 
       expect(angeklickt, ['10/19 C02']);
+    });
+  });
+
+  group('Löschen-Spalte (§6.3)', () {
+    testWidgets('ohne onLoeschen erscheint kein Papierkorb', (tester) async {
+      await tabellenBreite(
+        tester,
+        1600,
+        zeilen: [historieZeile(), vorgangsZeile()],
+      );
+
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
+    });
+
+    testWidgets('mit onLoeschen trägt jede Zeile einen Papierkorb', (
+      tester,
+    ) async {
+      await tabellenBreite(
+        tester,
+        1600,
+        zeilen: [historieZeile(), vorgangsZeile()],
+        onLoeschen: (_) {},
+      );
+
+      expect(find.byIcon(Icons.delete_outline), findsNWidgets(2));
+    });
+
+    testWidgets('ein Klick auf den Papierkorb meldet genau diese Zeile', (
+      tester,
+    ) async {
+      final geloescht = <String>[];
+      await tabellenBreite(
+        tester,
+        1600,
+        zeilen: [
+          historieZeile(zeichen: '10/19 C02'),
+          vorgangsZeile(),
+        ],
+        onLoeschen: (zeile) => geloescht.add(zeile.zeichen),
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await tester.pump();
+
+      expect(geloescht, ['10/19 C02']);
+    });
+
+    /// `DataCell.onTap` überschreibt für diese eine Zelle das
+    /// `onSelectChanged` der Zeile — sonst öffnete ein Klick auf den
+    /// Papierkorb zusätzlich den Bearbeiten-Dialog.
+    testWidgets('ein Klick auf den Papierkorb öffnet nicht auch die Zeile', (
+      tester,
+    ) async {
+      final angeklickt = <String>[];
+      final geloescht = <String>[];
+      await tabellenBreite(
+        tester,
+        1600,
+        zeilen: [historieZeile(zeichen: '10/19 C02')],
+        onHistorieZeile: (zeile) => angeklickt.add(zeile.zeichen),
+        onLoeschen: (zeile) => geloescht.add(zeile.zeichen),
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pump();
+
+      expect(geloescht, ['10/19 C02']);
+      expect(angeklickt, isEmpty);
+    });
+
+    testWidgets('kommt mit Jahreszeilen und Statusspalte ohne Fehler aus', (
+      tester,
+    ) async {
+      await tabellenBreite(
+        tester,
+        1600,
+        mitJahreszeilen: true,
+        mitStatus: true,
+        zeilen: [
+          historieZeile(jahr: '2019'),
+          vorgangsZeile(jahr: '2026'),
+        ],
+        onLoeschen: (_) {},
+      );
+
+      expect(tester.takeException(), isNull);
     });
   });
 }

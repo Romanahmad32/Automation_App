@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_aenderung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_stand.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_historie_repository.dart';
+import 'package:automation_app/features/vorgaenge/domain/repositories/register_push_notifier.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_spiegel_repository.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_zeilen_repository.dart';
 
@@ -132,6 +135,9 @@ class FakeRegisterHistorie implements RegisterHistorieRepository {
   /// Was `aendere` bekommen hat, in der Reihenfolge der Aufrufe.
   final List<({int id, RegisterHistorieAenderung aenderung})> geaendert = [];
 
+  /// Die Kennungen, zu denen `loesche` gerufen wurde.
+  final List<int> geloescht = [];
+
   FakeRegisterHistorie({
     this.stand = RegisterHistorieStand.leer,
     this.roh,
@@ -154,6 +160,12 @@ class FakeRegisterHistorie implements RegisterHistorieRepository {
     if (fehler != null) throw fehler!;
     geaendert.add((id: id, aenderung: aenderung));
   }
+
+  @override
+  Future<void> loesche(int id) async {
+    if (fehler != null) throw fehler!;
+    geloescht.add(id);
+  }
 }
 
 /// Tut nichts — die Spiegelleiste am Fuß der Ansicht braucht nur einen Stand,
@@ -166,4 +178,32 @@ class FakeRegisterSpiegel implements RegisterSpiegelRepository {
   @override
   Future<RegisterSpiegelErgebnis> ladeStand() async =>
       RegisterSpiegelErgebnis.unbekannt;
+}
+
+/// Baut keine echte Verbindung auf — der Test löst die Hub-Meldung über
+/// [sendePdfFertig] selbst aus, statt auf ein echtes SignalR zu warten.
+class FakeRegisterPushNotifier implements RegisterPushNotifier {
+  final _controller =
+      StreamController<
+        ({bool fertig, String? pdfPfad, String? fehler})
+      >.broadcast();
+
+  @override
+  Stream<({bool fertig, String? pdfPfad, String? fehler})> get onPdfFertig =>
+      _controller.stream;
+
+  @override
+  Future<void> ensureConnected() async {}
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  /// Simuliert die Hub-Meldung `registerPdfFertig` für den Test.
+  void sendePdfFertig({
+    required bool fertig,
+    String? pdfPfad,
+    String? fehler,
+  }) => _controller.add((fertig: fertig, pdfPfad: pdfPfad, fehler: fehler));
 }

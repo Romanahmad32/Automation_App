@@ -97,4 +97,17 @@ class RegisterCubit extends Cubit<RegisterState> {
     await lade();
     return true;
   }
+
+  /// Löscht eine historische Zeile für sich (§6.3) und lädt danach neu — wie
+  /// bei einer Berichtigung verschiebt das auch die Zahlen im Stand ihres
+  /// Jahrgangs. Liefert `false`, wenn der Dienst es nicht angenommen hat.
+  Future<bool> loescheHistorie(int id) async {
+    try {
+      await _historie.loesche(id);
+    } on Exception {
+      return false;
+    }
+    await lade();
+    return true;
+  }
 }

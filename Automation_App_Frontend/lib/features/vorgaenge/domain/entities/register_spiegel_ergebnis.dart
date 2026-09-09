@@ -33,6 +33,15 @@ class RegisterSpiegelErgebnis extends Equatable {
   /// verbindliche Fassung, das PDF die bequeme.
   final String? pdfFehler;
 
+  /// Ob gerade eine PDF-Fassung entsteht (§6.2 „Word sofort, PDF
+  /// nachgezogen"). Direkt nach dem Export gilt regelmäßig `pdfPfad: null`,
+  /// `pdfFehler: null`, `pdfLaeuft: true` — „noch nicht da" ist ausdrücklich
+  /// **kein** Fehler und darf nicht als solcher gemeldet werden (§6.2
+  /// „Solange kein neues PDF liegt, liegt auch kein altes"). Fertig meldet der
+  /// Hub `/hubs/register` mit `registerPdfFertig`
+  /// ([RegisterPushNotifier.onPdfFertig]); danach steht hier wieder `false`.
+  final bool pdfLaeuft;
+
   final int zeilen;
   final DateTime? geschriebenAm;
 
@@ -48,6 +57,7 @@ class RegisterSpiegelErgebnis extends Equatable {
     this.docxPfad,
     this.pdfPfad,
     this.pdfFehler,
+    this.pdfLaeuft = false,
     this.zeilen = 0,
     this.geschriebenAm,
     this.konfliktkopien = const [],
@@ -65,6 +75,7 @@ class RegisterSpiegelErgebnis extends Equatable {
       docxPfad: json['docxPfad'] as String?,
       pdfPfad: json['pdfPfad'] as String?,
       pdfFehler: json['pdfFehler'] as String?,
+      pdfLaeuft: json['pdfLaeuft'] as bool? ?? false,
       zeilen: (json['zeilen'] as num?)?.toInt() ?? 0,
       // `toLocal()`: der Dienst sendet mit Zeitzonenversatz, angezeigt wird
       // Ortszeit. Ohne das nennt die Fußleiste zwei Stunden früher als das
@@ -78,6 +89,32 @@ class RegisterSpiegelErgebnis extends Equatable {
     );
   }
 
+  /// Für [RegisterSpiegelCubit._pdfNachgezogen]: Trägt die Hub-Meldung nach,
+  /// ohne den Rest des zuletzt geladenen Stands anzurühren.
+  RegisterSpiegelErgebnis copyWith({
+    bool? geschrieben,
+    String? grund,
+    String? fehler,
+    String? docxPfad,
+    String? pdfPfad,
+    String? pdfFehler,
+    bool? pdfLaeuft,
+    int? zeilen,
+    DateTime? geschriebenAm,
+    List<String>? konfliktkopien,
+  }) => RegisterSpiegelErgebnis(
+    geschrieben: geschrieben ?? this.geschrieben,
+    grund: grund ?? this.grund,
+    fehler: fehler ?? this.fehler,
+    docxPfad: docxPfad ?? this.docxPfad,
+    pdfPfad: pdfPfad ?? this.pdfPfad,
+    pdfFehler: pdfFehler ?? this.pdfFehler,
+    pdfLaeuft: pdfLaeuft ?? this.pdfLaeuft,
+    zeilen: zeilen ?? this.zeilen,
+    geschriebenAm: geschriebenAm ?? this.geschriebenAm,
+    konfliktkopien: konfliktkopien ?? this.konfliktkopien,
+  );
+
   @override
   List<Object?> get props => [
     geschrieben,
@@ -86,6 +123,7 @@ class RegisterSpiegelErgebnis extends Equatable {
     docxPfad,
     pdfPfad,
     pdfFehler,
+    pdfLaeuft,
     zeilen,
     geschriebenAm,
     konfliktkopien,
