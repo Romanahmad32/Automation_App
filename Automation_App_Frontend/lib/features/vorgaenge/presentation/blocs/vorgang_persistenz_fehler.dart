@@ -18,6 +18,11 @@ class VorgangPersistenzFehler extends Equatable {
   /// Die nicht gelöschte Referenz (nur bei [VorgangPersistenzAktion.loeschen]).
   final String? referenz;
 
+  /// Ob die Registerzeile beim Löschversuch behalten werden sollte (§6.3,
+  /// nur bei [VorgangPersistenzAktion.loeschen]) — die Wiederholung braucht
+  /// dieselbe Entscheidung, mit der der Anwalt den Löschvorgang bestätigt hat.
+  final bool registerzeileBehalten;
+
   /// Zeitpunkt des Fehlers — unterscheidet zwei gleiche Fehler nacheinander,
   /// damit der Cubit erneut emittiert. `Rueckmeldung` erkennt an Text und Art
   /// dieselbe stehende Meldung wieder und tauscht deren Inhalt (Aktion,
@@ -30,9 +35,17 @@ class VorgangPersistenzFehler extends Equatable {
     required this.meldung,
     this.vorgang,
     this.referenz,
+    this.registerzeileBehalten = true,
     DateTime? zeitpunkt,
   }) : zeitpunkt = zeitpunkt ?? DateTime.now();
 
   @override
-  List<Object?> get props => [aktion, meldung, vorgang, referenz, zeitpunkt];
+  List<Object?> get props => [
+    aktion,
+    meldung,
+    vorgang,
+    referenz,
+    registerzeileBehalten,
+    zeitpunkt,
+  ];
 }

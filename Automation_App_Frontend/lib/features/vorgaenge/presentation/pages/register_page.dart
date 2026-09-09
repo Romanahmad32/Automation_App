@@ -130,6 +130,8 @@ class RegisterPageState extends State<RegisterPage> {
               },
               onDateiEinlesen: () => _importOeffnen(context, state),
               onVorgangOeffnen: (zeile) => _vorgangOeffnen(context, zeile),
+              onVorgangLoeschen: (referenz) =>
+                  _vorgangLoeschen(context, referenz),
             ),
           ),
     );
@@ -157,8 +159,8 @@ class RegisterPageState extends State<RegisterPage> {
   /// Der Sprung vom Register in die Vorgangsverwaltung (Tab 7).
   ///
   /// Das Register ist ein Verzeichnis: Man findet dort eine Sache wieder und
-  /// will dann an sie heran. Gearbeitet wird aber nicht hier — Bearbeiten und
-  /// Löschen liegen in der Verwaltung, und zwei Pflegeorte für denselben
+  /// will dann an sie heran. **Bearbeitet** wird aber nicht hier — dafür
+  /// bleibt es bei der Vorgangsverwaltung, und zwei Pflegeorte für denselben
   /// Vorgang wären einer zu viel. Das Signal sorgt dafür, dass die Liste dort
   /// zur Zeile scrollt und sie hervorhebt, statt den Anwalt unter Hunderten
   /// selbst suchen zu lassen.
@@ -167,6 +169,19 @@ class RegisterPageState extends State<RegisterPage> {
     if (referenz == null) return;
     getIt<VorgangHervorhebungSignal>().setze(referenz);
     AutoTabsRouter.of(context).setActiveIndex(AppTabIndex.vorgaenge);
+  }
+
+  /// Löscht den Vorgang hinter einer Spiegelzeile (§6.3), mit
+  /// `registerzeileBehalten: false` — die Zeile selbst ist hier schon der
+  /// Gegenstand der Bestätigung (`RegisterView._vorgangMitloeschen`), keine
+  /// zusätzliche Auswahl. Fehlschläge meldet der `VorgangCubit` wie jede
+  /// andere Löschung über die app-weite `VorgangPersistenzFehlerCubit`; hier
+  /// wird nur neu geladen, damit die Zeile aus der Tabelle verschwindet.
+  Future<void> _vorgangLoeschen(BuildContext context, String referenz) async {
+    await getIt<VorgangCubit>().loesche(referenz, registerzeileBehalten: false);
+    if (context.mounted) {
+      await context.read<RegisterCubit>().lade();
+    }
   }
 
   /// „Datei einlesen…" führt auf die Import-Seite: Die Anleitung für den

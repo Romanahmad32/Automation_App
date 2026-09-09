@@ -47,7 +47,10 @@ void main() {
             providers: [
               BlocProvider.value(value: register),
               BlocProvider(
-                create: (_) => RegisterSpiegelCubit(FakeRegisterSpiegel()),
+                create: (_) => RegisterSpiegelCubit(
+                  FakeRegisterSpiegel(),
+                  FakeRegisterPushNotifier(),
+                ),
               ),
             ],
             child: BlocBuilder<RegisterCubit, RegisterState>(

@@ -167,3 +167,75 @@ der Dialog bleibt offen und zeigt `KennzeichenField.hinweis` als `errorText` am 
 Ohne das wäre dies der eine Weg, auf dem ein Rohwert in den Bestand käme: Beim Erfassen stellt
 `KennzeichenField` die Konvention selbst her, hier stand das Feld ungeprüft da. An dem Wert hängt
 die Zuordnung einer Zentralruf-Antwort über das Kennzeichen (`gleichesKennzeichen`).
+
+## Löschen: zwei Richtungen, ein Vertrag (§6.3)
+
+Seit §6.3 sind Vorgang und Registerzeile beim Löschen gekoppelt, und zwar in **beide** Richtungen —
+`DELETE api/Vorgaenge?referenz=…&registerzeileBehalten=` löscht den Vorgang und entscheidet über die
+gespiegelte Zeile, `DELETE api/RegisterHistorie/{id}` löscht eine historische Zeile für sich. Beide
+Richtungen sitzen bewusst an verschiedenen Stellen der Oberfläche:
+
+- **Vorgang löschen (Tab 7, `vorgaenge_verwalten_page.dart`)** fragt jetzt zusätzlich, ob die
+  Registerzeile bleibt. Der bisherige `bestaetigen()`-Dialog (`bestaetigungs_dialog.dart`) ist dafür
+  bewusst **nicht** erweitert worden — er ist die reine Ja/Nein-Rückfrage an Dutzenden Stellen der
+  App, und eine dritte Auswahl dort hätte jeden dieser Aufrufe mitverändert. Stattdessen liefert
+  `VorgangLoeschenDialog` (`presentation/widgets/vorgang_loeschen_dialog.dart`) dieselbe Bauart wie
+  `VorgangAbschliessenDialog` aus `word_automation`: `AlertDialog` + `CheckboxListTile` für eine
+  Rückfrage mit genau einer zusätzlichen Entscheidung. Er liefert `bool?` — `null` bei Abbruch,
+  sonst die Entscheidung zur Registerzeile; vorbelegt ist `true` (behalten), die Antwort, die nichts
+  zusätzlich löscht.
+- **Registerzeile löschen (Tab 6, `register_view.dart`/`register_tabelle.dart`)** ist neu: Die
+  Tabelle bekommt eine zusätzliche Spalte mit einem Papierkorb-Symbol (`RegisterTabelle.onLoeschen`),
+  sichtbar nur, wenn ein Rückruf gesetzt ist — genau wie schon bei `onHistorieZeile`/`onVorgangZeile`.
+  Das Symbol sitzt in einer eigenen `DataCell` mit eigenem `onTap`, das für **diese eine Zelle** das
+  `onSelectChanged` der Zeile überschreibt (Flutter-Verhalten von `DataCell.onTap`, siehe
+  `data_table.dart` der SDK: eine Zelle mit eigenem `onTap` ruft nie den Zeilen-Rückruf) — ein Klick
+  auf den Papierkorb öffnet also nicht zusätzlich den Bearbeiten-Dialog oder springt in die
+  Vorgangsverwaltung.
+
+  `RegisterView._zeileLoeschen` entscheidet danach über `RegisterZeile.istHistorie`:
+  - **Historie** geht für sich über `RegisterCubit.loescheHistorie` (neu, spiegelt `aendereHistorie`)
+    → `RegisterHistorieRepository.loesche` → `DELETE api/RegisterHistorie/{id}`, mit gewöhnlicher
+    Rückfrage („Registereintrag löschen?") und Erfolg/Fehlschlag über `Rueckmeldung` — derselbe
+    Wortlaut-Stil wie beim Berichtigen.
+  - **Vorgang** hat **keine** Auswahl „nur die Zeile": Der Dialog („Vorgang mitlöschen?") sagt, dass
+    die Zeile den Vorgang nicht überleben kann, und lässt nur bestätigen, dass beides geht. Bestätigt,
+    ruft er `RegisterView.onVorgangLoeschen` — eine Brücke zur Seite, denn die Ansicht kennt den
+    `VorgangCubit` nicht (der gehört der Seite, wie schon `onVorgangOeffnen`). `RegisterPage`
+    verdrahtet sie auf `VorgangCubit.loesche(referenz, registerzeileBehalten: false)` und lädt danach
+    `RegisterCubit` neu, damit die Zeile aus der Tabelle verschwindet. Fehlschläge meldet der
+    `VorgangCubit` wie jede andere Löschung über die app-weite `VorgangPersistenzFehlerCubit` — hier
+    wird bewusst keine zweite Fehlermeldung gebaut.
+
+`VorgangCubit.loesche`, `VorgangRepository.deleteVorgang` und `ApiVorgaengeDatasource.deleteVorgang`
+tragen jetzt alle `registerzeileBehalten` (Vorbelegung `true`); `VorgangPersistenzFehler` trägt es
+mit, damit „Erneut versuchen" nach einem Fehlschlag dieselbe Entscheidung wiederholt und nicht
+stillschweigend auf „behalten" zurückfällt.
+
+## Der Register-Hub trägt schon die Nutzdaten — anders als der vom Postfach
+
+`RegisterHub` (`data/datasources/register_hub.dart`) ist eine zweite SignalR-Anbindung, gebaut nach
+dem Muster von `MailboxHub` aus `mailbox` — eigener Hub (`/hubs/register`), weil das Register ein
+anderer senkrechter Schnitt ist als das Postfach (dieselbe Begründung steht am Backend-`RegisterHub`).
+Der Unterschied zum Postfach-Hub: `replyReceived`/`statusChanged` dort sind nutzdatenfrei und lösen
+nur ein Nachladen aus (`MailboxInboxCubit.refresh()`); `registerPdfFertig` hier trägt direkt
+`fertig`/`pdfPfad`/`fehler` — dieselben Feldnamen wie `RegisterSpiegelDto`. Ein Nachladen des ganzen
+Zeilenbestands nur für einen Satz in der Spiegelleiste wäre Ballast, den `RegisterSpiegelCubit`
+(`presentation/blocs/register_spiegel_cubit.dart`) sich spart: `_pdfNachgezogen` schreibt die Meldung
+direkt in `RegisterSpiegelErgebnis.copyWith(...)`.
+
+`pdfLaeuft` lebt ausschließlich am `RegisterSpiegelErgebnis`/`RegisterSpiegelDto` — eine `RegisterZeile`
+trägt es nicht, das Feld sagt nichts über eine einzelne Zeile, sondern über den Spiegel als Ganzes.
+
+**„PDF läuft" ist ausdrücklich kein Fehler.** `RegisterSpiegelLeiste` prüft `stand.pdfLaeuft` **vor**
+`stand.pdfFehler` und zeigt bei `pdfLaeuft: true` einen eigenen Satz („… das PDF entsteht noch —
+kommt von selbst nach"), nie den `pdfFehler`-Satz — auch wenn der (vertragswidrig) zufällig gesetzt
+wäre. Der Vertrag garantiert zwar, dass beide sich ausschließen (direkt nach dem Export ist
+`pdfFehler: null`, solange `pdfLaeuft: true` gilt), die Leiste sichert das aber defensiv noch einmal
+ab, statt sich blind auf das Backend zu verlassen (§6.2 „Solange kein neues PDF liegt, liegt auch
+kein altes").
+
+Push ist wie beim Postfach **best-effort**: `RegisterHub.ensureConnected()` schluckt einen
+fehlgeschlagenen Verbindungsaufbau still. Ohne Verbindung bleibt die Leiste beim zuletzt per REST
+geladenen Stand stehen (`RegisterSpiegelCubit.ladeStand()`, aufgerufen beim Öffnen der Seite) — ein
+`pdfLaeuft: true` löst sich dann erst beim nächsten manuellen Laden auf, nicht von selbst.

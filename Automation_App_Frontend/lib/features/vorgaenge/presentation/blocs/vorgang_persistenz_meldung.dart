@@ -27,12 +27,15 @@ abstract final class VorgangPersistenzMeldung {
         vorgang: vorgang,
       );
 
-  static VorgangPersistenzFehler loeschen(String referenz) =>
-      VorgangPersistenzFehler(
-        aktion: VorgangPersistenzAktion.loeschen,
-        meldung:
-            'Der Vorgang „${ReferenzTeile.zeichenAus(referenz)}" konnte nicht '
-            'gelöscht werden und taucht nach einem Neustart wieder auf.',
-        referenz: referenz,
-      );
+  static VorgangPersistenzFehler loeschen(
+    String referenz, {
+    bool registerzeileBehalten = true,
+  }) => VorgangPersistenzFehler(
+    aktion: VorgangPersistenzAktion.loeschen,
+    meldung:
+        'Der Vorgang „${ReferenzTeile.zeichenAus(referenz)}" konnte nicht '
+        'gelöscht werden und taucht nach einem Neustart wieder auf.',
+    referenz: referenz,
+    registerzeileBehalten: registerzeileBehalten,
+  );
 }

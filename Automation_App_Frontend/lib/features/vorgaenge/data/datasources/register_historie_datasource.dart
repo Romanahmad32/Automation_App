@@ -39,4 +39,15 @@ class ApiRegisterHistorieDatasource implements RegisterHistorieRepository {
   Future<void> aendere(int id, RegisterHistorieAenderung aenderung) async {
     await _dio.put('/api/RegisterHistorie/$id', data: aenderung.toJson());
   }
+
+  @override
+  Future<void> loesche(int id) async {
+    try {
+      await _dio.delete('/api/RegisterHistorie/$id');
+    } on DioException catch (e) {
+      // Kein Treffer erfüllt denselben No-op-Vertrag wie beim Vorgang: Ein
+      // wiederholter Löschversuch, der doch schon durchging, ist kein Fehler.
+      if (e.response?.statusCode != 404) rethrow;
+    }
+  }
 }

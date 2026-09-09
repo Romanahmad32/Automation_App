@@ -50,6 +50,12 @@ class RegisterView extends StatelessWidget {
   /// damit die Ansicht ohne den Router der App prüfbar bleibt.
   final ValueChanged<RegisterZeile>? onVorgangOeffnen;
 
+  /// Löscht den Vorgang hinter einer Spiegelzeile (§6.3) — die Brücke zum
+  /// `VorgangCubit`, den diese Ansicht nicht kennt (der gehört der Seite, wie
+  /// [onVorgangOeffnen]). Null lässt Vorgangszeilen ungelöscht; historische
+  /// Zeilen gehen unabhängig davon über den eigenen `RegisterCubit`.
+  final Future<void> Function(String referenz)? onVorgangLoeschen;
+
   const RegisterView({
     super.key,
     required this.state,
@@ -59,6 +65,7 @@ class RegisterView extends StatelessWidget {
     this.statusJeReferenz = const {},
     this.onDateiEinlesen,
     this.onVorgangOeffnen,
+    this.onVorgangLoeschen,
   });
 
   @override
@@ -146,6 +153,7 @@ class RegisterView extends StatelessWidget {
       statusJeReferenz: statusJeReferenz,
       onHistorieZeile: (zeile) => _zeileBearbeiten(context, zeile),
       onVorgangZeile: onVorgangOeffnen,
+      onLoeschen: (zeile) => _zeileLoeschen(context, zeile),
     );
   }
 
@@ -217,5 +225,76 @@ class RegisterView extends StatelessWidget {
         'Der Registereintrag ${zeile.zeichen} konnte nicht geändert werden.',
       );
     }
+  }
+
+  /// Löscht eine Zeile (§6.3) — welche Rückfrage kommt und wohin es geht,
+  /// entscheidet die Herkunft: eine historische Zeile geht für sich, eine
+  /// Vorgangszeile nur zusammen mit ihrem Vorgang.
+  Future<void> _zeileLoeschen(BuildContext context, RegisterZeile zeile) =>
+      zeile.istHistorie
+      ? _historieLoeschen(context, zeile)
+      : _vorgangMitloeschen(context, zeile);
+
+  /// Löscht eine historische Zeile für sich — gewöhnliche Rückfrage, denn
+  /// hinter ihr steht kein Vorgang, der mitginge (§6.2 „Eigenständig").
+  Future<void> _historieLoeschen(
+    BuildContext context,
+    RegisterZeile zeile,
+  ) async {
+    final id = zeile.historieId;
+    if (id == null) return;
+    final rueckmeldung = Rueckmeldung.von(context);
+
+    final zugestimmt = await bestaetigen(
+      context,
+      titel: 'Registereintrag löschen?',
+      text:
+          'Die Zeile ${zeile.zeichen} wird endgültig aus der übernommenen '
+          'Historie gelöscht. Dies kann nicht rückgängig gemacht werden.',
+      bestaetigung: 'Löschen',
+      destruktiv: true,
+      icon: Icons.delete_outline,
+    );
+    if (!zugestimmt) return;
+
+    final cubit = context.read<RegisterCubit>();
+    final erfolg = await cubit.loescheHistorie(id);
+    if (erfolg) {
+      rueckmeldung.erfolg('Registereintrag ${zeile.zeichen} gelöscht.');
+    } else {
+      rueckmeldung.fehler(
+        'Der Registereintrag ${zeile.zeichen} konnte nicht gelöscht werden.',
+      );
+    }
+  }
+
+  /// Eine Zeile, die einen Vorgang spiegelt, kann nicht für sich bestehen
+  /// bleiben (§6.3) — sie käme beim nächsten Schreiben des Registers wieder.
+  /// Der Dialog sagt genau das; bestätigt der Anwalt, geht der Vorgang mit
+  /// ([onVorgangLoeschen], derselbe Aufruf wie in der Vorgangsverwaltung, nur
+  /// mit `registerzeileBehalten: false`). Es gibt bewusst keine Auswahl „nur
+  /// die Zeile" — die gibt es fachlich nicht.
+  Future<void> _vorgangMitloeschen(
+    BuildContext context,
+    RegisterZeile zeile,
+  ) async {
+    final referenz = zeile.vorgangReferenz;
+    if (referenz == null || onVorgangLoeschen == null) return;
+
+    final zugestimmt = await bestaetigen(
+      context,
+      titel: 'Vorgang mitlöschen?',
+      text:
+          'Diese Zeile spiegelt den Vorgang „${zeile.zeichen}" und kann '
+          'nicht für sich bestehen bleiben — ohne ihn käme sie beim '
+          'nächsten Schreiben des Registers wieder. Mit „Vorgang löschen" '
+          'wird der Vorgang endgültig gelöscht.',
+      bestaetigung: 'Vorgang löschen',
+      destruktiv: true,
+      icon: Icons.delete_outline,
+    );
+    if (!zugestimmt) return;
+
+    await onVorgangLoeschen!(referenz);
   }
 }
