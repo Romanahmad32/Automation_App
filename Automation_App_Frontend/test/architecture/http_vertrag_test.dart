@@ -197,6 +197,9 @@ void main() {
     'lib/features/vorgaenge/domain/entities/register_historie_zeile.dart': [
       'RegisterHistorieZeileDto',
     ],
+    'lib/features/vorgaenge/domain/entities/register_nummern_stand.dart': [
+      'RegisterNummernDto',
+    ],
     'lib/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart': [
       'RegisterSpiegelDto',
     ],
