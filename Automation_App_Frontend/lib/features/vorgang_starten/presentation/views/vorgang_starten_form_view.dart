@@ -7,7 +7,6 @@ import 'package:automation_app/core/general_widgets/form/german_date_field.dart'
 import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
-import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
@@ -16,6 +15,7 @@ import 'package:automation_app/features/vorgang_starten/presentation/widgets/man
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_bindung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_entscheidung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_aktionsleiste.dart';
+import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_defaults_beobachter.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_group.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_reader.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_starten_sektionen.dart';
@@ -78,14 +78,6 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     );
     _syncReferenzVorschau();
     unawaited(_ladeMandanten());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final state = context.read<VorgangStartenBloc>().state;
-      if (state is VorgangStartenDefaultsLoaded) {
-        _patchDefaults(state);
-      }
-    });
   }
 
   @override
@@ -95,25 +87,6 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     }
     _form.dispose();
     super.dispose();
-  }
-
-  void _patchDefaults(VorgangStartenDefaultsLoaded state) {
-    _form
-        .control('auftragsnummer')
-        .updateValue(state.auftragsnummer.toString());
-    // Kürzel ohne Leerzeichen (§7.1) — ein gespeicherter Altwert wie 'C 03'
-    // wird beim Einlesen normalisiert, bevor er in die Referenz wandert.
-    final bereinigt = AbteilungKuerzel.normalisiere(state.abteilung);
-    if (bereinigt.isNotEmpty) {
-      _form.control('abteilung').updateValue(bereinigt);
-    }
-    // Für die Belegt-Warnung am Feld (§6.3) — bewusst lokaler State statt
-    // erneutem Bloc-Zugriff aus `AuftragSection`: Die Sektionen sind reine
-    // `StatelessWidget`s, die ihre Werte von der View bekommen.
-    setState(() {
-      _belegteNummern = state.belegteNummern;
-      _nummernJahr = state.nummernJahr;
-    });
   }
 
   /// Setzt die Pflicht der Unfall-Felder je nach Rechtsgebiet: Kennzeichen des
@@ -268,55 +241,60 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<VorgangStartenBloc, VorgangStartenState>(
-      listener: (context, state) {
-        if (state is VorgangStartenDefaultsLoaded) {
-          _patchDefaults(state);
-        }
-        // Jeder Weg, auf dem ein Mandant entstanden sein kann, mündet hier —
-        // der Karten-Knopf, das Speichern des Vorgangs und der Fehlerpfad
-        // dahinter: Scheitert nach der Anlage das Vorbefüllen, ist der Mandant
-        // trotzdem gespeichert und muss verknüpft werden (FALLSTRICKE.md).
-        final gespeicherter = switch (state) {
-          MandantGespeichert(:final mandant) => mandant,
-          VorgangGespeichert(:final gespeicherterMandant) ||
-          VorgangStartenError(
-            :final gespeicherterMandant,
-          ) => gespeicherterMandant,
-          _ => null,
-        };
-        if (gespeicherter != null) _verknuepfeGespeicherten(gespeicherter);
-      },
-      child: ReactiveForm(
-        formGroup: _form,
-        child: Column(
-          children: [
-            Expanded(
-              child: VorgangStartenSektionen(
-                rechtsgebiet: _rechtsgebiet,
-                istVerkehrsunfall: _istVerkehrsunfall,
-                onRechtsgebietChanged: _onRechtsgebietChanged,
-                belegteNummern: _belegteNummern,
-                nummernJahr: _nummernJahr,
-                referenzManuallyEdited: _referenzManuallyEdited,
-                onReferenzReset: _resetReferenz,
-                mandanten: _mandanten,
-                selectedMandantId: _selectedMandantId,
-                onMandantGewaehlt: _uebernehmeMandant,
-                onAuswahlAufheben: () =>
-                    setState(() => _selectedMandantId = null),
-                vorgaengeAmMandanten: _vorgaengeAmMandanten,
-                onMandantBestaetigt: _onMandantBestaetigt,
-                onVorlageAusfuellen: _vorlageAusfuellen,
-                onZumPostfach: _zumPostfach,
+    return VorgangDefaultsBeobachter(
+      form: _form,
+      onNummernstandGeladen: (belegteNummern, nummernJahr) => setState(() {
+        _belegteNummern = belegteNummern;
+        _nummernJahr = nummernJahr;
+      }),
+      child: BlocListener<VorgangStartenBloc, VorgangStartenState>(
+        listener: (context, state) {
+          // Jeder Weg, auf dem ein Mandant entstanden sein kann, mündet hier —
+          // der Karten-Knopf, das Speichern des Vorgangs und der Fehlerpfad
+          // dahinter: Scheitert nach der Anlage das Vorbefüllen, ist der
+          // Mandant trotzdem gespeichert und muss verknüpft werden
+          // (FALLSTRICKE.md).
+          final gespeicherter = switch (state) {
+            MandantGespeichert(:final mandant) => mandant,
+            VorgangGespeichert(:final gespeicherterMandant) ||
+            VorgangStartenError(
+              :final gespeicherterMandant,
+            ) => gespeicherterMandant,
+            _ => null,
+          };
+          if (gespeicherter != null) _verknuepfeGespeicherten(gespeicherter);
+        },
+        child: ReactiveForm(
+          formGroup: _form,
+          child: Column(
+            children: [
+              Expanded(
+                child: VorgangStartenSektionen(
+                  rechtsgebiet: _rechtsgebiet,
+                  istVerkehrsunfall: _istVerkehrsunfall,
+                  onRechtsgebietChanged: _onRechtsgebietChanged,
+                  belegteNummern: _belegteNummern,
+                  nummernJahr: _nummernJahr,
+                  referenzManuallyEdited: _referenzManuallyEdited,
+                  onReferenzReset: _resetReferenz,
+                  mandanten: _mandanten,
+                  selectedMandantId: _selectedMandantId,
+                  onMandantGewaehlt: _uebernehmeMandant,
+                  onAuswahlAufheben: () =>
+                      setState(() => _selectedMandantId = null),
+                  vorgaengeAmMandanten: _vorgaengeAmMandanten,
+                  onMandantBestaetigt: _onMandantBestaetigt,
+                  onVorlageAusfuellen: _vorlageAusfuellen,
+                  onZumPostfach: _zumPostfach,
+                ),
               ),
-            ),
-            VorgangAktionsleiste(
-              zeigeZentralruf: _istVerkehrsunfall,
-              onSpeichern: () => unawaited(_absenden(zentralruf: false)),
-              onZentralruf: () => unawaited(_absenden(zentralruf: true)),
-            ),
-          ],
+              VorgangAktionsleiste(
+                zeigeZentralruf: _istVerkehrsunfall,
+                onSpeichern: () => unawaited(_absenden(zentralruf: false)),
+                onZentralruf: () => unawaited(_absenden(zentralruf: true)),
+              ),
+            ],
+          ),
         ),
       ),
     );
