@@ -4,6 +4,7 @@ import 'package:automation_app/core/general_widgets/form/general_text_field.dart
 import 'package:automation_app/features/sachgebiete/presentation/widgets/abteilung_auswahl.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/sachgebiet_katalog_builder.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
+import 'package:automation_app/features/vorgang_starten/presentation/widgets/auftragsnummer_belegt_hinweis.dart';
 import 'package:flutter/material.dart';
 
 /// Karte „Auftrag" oben im Formular: laufende Auftragsnummer, Jahr, Abteilung
@@ -16,10 +17,17 @@ class AuftragSection extends StatelessWidget {
   final String rechtsgebiet;
   final ValueChanged<String> onRechtsgebietChanged;
 
+  /// Bestand für die Belegt-Warnung am Auftragsnummer-Feld (§6.3) — siehe
+  /// [AuftragsnummerBelegtHinweis].
+  final List<int> belegteNummern;
+  final String? nummernJahr;
+
   const AuftragSection({
     super.key,
     required this.rechtsgebiet,
     required this.onRechtsgebietChanged,
+    required this.belegteNummern,
+    required this.nummernJahr,
   });
 
   @override
@@ -47,6 +55,10 @@ class AuftragSection extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        AuftragsnummerBelegtHinweis(
+          belegteNummern: belegteNummern,
+          jahr: nummernJahr,
         ),
         const AbteilungAuswahl(),
         SachgebietKatalogBuilder(
