@@ -101,15 +101,27 @@ public static class RegisterLayout
     /// Einheit, in der die Vorlagendatei vermessen wurde. Über die
     /// Komfortmethoden von DocX ginge das nur über eine Umrechnung in Punkte
     /// und damit über einen Rundungsfehler je Spalte.
+    ///
+    /// <b>Die Stelle, an der das Raster steht, ist nicht beliebig.</b> Das
+    /// OOXML-Schema schreibt im <c>w:tbl</c> die Folge <c>tblPr</c>,
+    /// <c>tblGrid</c>, Zeilen vor, und Word ist darin unnachgiebig: Hängt das
+    /// Raster hinten an, öffnet Word die Datei gar nicht erst („Fehler beim
+    /// Öffnen der Datei in Word", COM 0x800A1401). Am Augenschein ist das nicht
+    /// zu sehen — die .docx liegt da und andere Leser öffnen sie —, es fiel nur
+    /// als gescheiterte PDF-Wandlung auf. Bewacht von
+    /// <c>Schreibe_SetztDasSpaltenrasterVorDieZeilen</c>.
     /// </summary>
     static void SetzeSpaltenbreiten(Table tabelle)
     {
-        var raster = tabelle.Xml.Element(W + "tblGrid");
-        raster?.Remove();
-        tabelle.Xml.Add(new XElement(
+        tabelle.Xml.Element(W + "tblGrid")?.Remove();
+        var raster = new XElement(
             W + "tblGrid",
             SpaltenbreitenTwips.Select(breite =>
-                new XElement(W + "gridCol", new XAttribute(W + "w", breite)))));
+                new XElement(W + "gridCol", new XAttribute(W + "w", breite))));
+
+        var eigenschaften = tabelle.Xml.Element(W + "tblPr");
+        if (eigenschaften is null) tabelle.Xml.AddFirst(raster);
+        else eigenschaften.AddAfterSelf(raster);
 
         foreach (var zeile in tabelle.Xml.Elements(W + "tr"))
         {

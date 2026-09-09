@@ -47,6 +47,14 @@ class RegisterTabelle extends StatelessWidget {
   /// Null macht die Zeilen unklickbar (Startseiten-Karte).
   final ValueChanged<RegisterZeile>? onHistorieZeile;
 
+  /// Klick auf eine Zeile, hinter der ein **Vorgang der App** steht — der Weg
+  /// in die Vorgangsverwaltung. Null macht diese Zeilen unklickbar.
+  ///
+  /// Getrennt von [onHistorieZeile], weil die beiden Herkünfte an verschiedene
+  /// Orte führen: Eine historische Zeile lässt sich nur berichtigen, hinter
+  /// einer Vorgangszeile steht ein Mandat, das man weiterbearbeitet.
+  final ValueChanged<RegisterZeile>? onVorgangZeile;
+
   /// Ab dieser verfügbaren Breite (logische Pixel, nicht Bildschirmpunkte)
   /// stehen Sache und Sachbestand in einer Zeile nebeneinander statt
   /// untereinander.
@@ -60,6 +68,7 @@ class RegisterTabelle extends StatelessWidget {
     this.mitJahreszeilen = false,
     this.statusJeReferenz = const {},
     this.onHistorieZeile,
+    this.onVorgangZeile,
   });
 
   @override
@@ -79,11 +88,32 @@ class RegisterTabelle extends StatelessWidget {
             constraints: BoxConstraints(minWidth: constraints.maxWidth),
             child: DataTable(
               columnSpacing: 24,
-              headingRowHeight: kompakt ? 40 : 48,
-              dataRowMinHeight: kompakt ? 40 : 48,
-              dataRowMaxHeight: kompakt ? 64 : 72,
+              // Enger als die Vorgabe von `DataTable` (56): Das Register wird
+              // überflogen, nicht gelesen — je mehr Zeilen auf den Schirm
+              // passen, desto weniger muss gescrollt werden. Die Höchsthöhe
+              // bleibt großzügig, damit „Sache" und „Sachbestand" auf schmalen
+              // Fenstern zweizeilig stehen können, ohne beschnitten zu werden.
+              headingRowHeight: kompakt ? 36 : 40,
+              dataRowMinHeight: kompakt ? 32 : 36,
+              dataRowMaxHeight: kompakt ? 52 : 60,
               headingRowColor: WidgetStatePropertyAll(
                 theme.colorScheme.surfaceContainerHighest,
+              ),
+              // Ein Klick auf eine historische Zeile öffnet den
+              // Bearbeiten-Dialog — das ist keine Mehrfachauswahl, und
+              // `DataTable` blendet die Ankreuzspalte sonst allein deshalb ein,
+              // weil `onSelectChanged` gesetzt ist. Ihr „alle auswählen" in der
+              // Kopfzeile rief den Rückruf für **jede** Zeile auf und legte so
+              // einen Dialog über den nächsten.
+              showCheckboxColumn: false,
+              // Eine dünne Linie zwischen den Spalten: Bei fünf Spalten und
+              // langen Rubren war ohne sie nicht zu sehen, wo „Sache" aufhört
+              // und „Rechtsgebiet" anfängt. Dasselbe Gitter zieht das
+              // Registerbuch der Kanzlei.
+              border: TableBorder(
+                verticalInside: BorderSide(
+                  color: theme.colorScheme.outlineVariant,
+                ),
               ),
               columns: _spalten(nebeneinander),
               rows: _zeilen(theme, nebeneinander),
@@ -178,10 +208,10 @@ class RegisterTabelle extends StatelessWidget {
     final stil = zeile.istHistorie
         ? TextStyle(color: theme.colorScheme.onSurfaceVariant)
         : null;
-    final anklickbar = zeile.istHistorie && onHistorieZeile != null;
+    final geklickt = zeile.istHistorie ? onHistorieZeile : onVorgangZeile;
 
     return DataRow(
-      onSelectChanged: anklickbar ? (_) => onHistorieZeile!(zeile) : null,
+      onSelectChanged: geklickt == null ? null : (_) => geklickt(zeile),
       cells: [
         DataCell(Text(zeile.laufendeNummer?.toString() ?? '—', style: stil)),
         DataCell(Text(zeile.zeichen, style: stil)),

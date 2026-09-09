@@ -163,6 +163,31 @@ public sealed class RegisterDokumentTests : IDisposable
         Xml(Schreibe(ZweiJahrgaenge)).Should().Contain(RegisterLayout.Spiegelhinweis);
     }
 
+    /// <summary>
+    /// Die Reihenfolge im <c>w:tbl</c> ist im OOXML-Schema festgelegt:
+    /// <c>tblPr</c>, dann <c>tblGrid</c>, dann die Zeilen. Word ist darin
+    /// unnachgiebig — steht das Raster hinter den Zeilen, öffnet es die Datei
+    /// gar nicht erst („Fehler beim Öffnen der Datei in Word", COM 0x800A1401)
+    /// und die PDF-Wandlung fällt auf den langsamen Ersatzweg zurück, bis der
+    /// Aufruf am Bildschirm in die Zeitüberschreitung läuft.
+    ///
+    /// Am Augenschein ist das nicht zu sehen: Die .docx liegt da, hat die
+    /// richtige Größe und lässt sich von anderen Lesern öffnen.
+    /// </summary>
+    [Fact]
+    public void Schreibe_SetztDasSpaltenrasterVorDieZeilen()
+    {
+        var xml = Xml(Schreibe(ZweiJahrgaenge));
+
+        var raster = xml.IndexOf("<w:tblGrid", StringComparison.Ordinal);
+        var ersteZeile = xml.IndexOf("<w:tr", StringComparison.Ordinal);
+
+        raster.Should().BeGreaterThan(-1);
+        raster.Should().BeLessThan(
+            ersteZeile,
+            "das OOXML-Schema verlangt tblPr, tblGrid, dann die Zeilen — sonst öffnet Word die Datei nicht");
+    }
+
     [Fact]
     public void Schreibe_KommtOhneVorgaengeAus()
     {

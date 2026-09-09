@@ -1,13 +1,21 @@
 import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/register_reihenfolge.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/register_auswahl_feld.dart';
 import 'package:flutter/material.dart';
 
-/// Die Filterleiste über dem Register (§6.2): Jahrgang, Stand, Rechtsgebiet.
+/// Die Filterleiste über dem Register (§6.2): Reihenfolge, Jahrgangsspanne,
+/// Stand, Rechtsgebiet.
 ///
 /// Nötig, seit das Register **alle** Zeilen führt — laufende Vorgänge,
 /// abgeschlossene und die übernommene Historie der Kanzlei. Bei tausenden
 /// Zeilen ist „alles zeigen" ohne Einschränkung keine Ansicht mehr.
+///
+/// Die Jahrgänge stehen als **Spanne** und nicht mehr als Chip je Jahr: Ein
+/// Registerbuch ab 2018 ergab eine Chipreihe, die breiter war als die Tabelle
+/// darunter, und beantwortete die häufigste Frage („die letzten drei Jahre")
+/// gar nicht. Zwei Felder „Von" und „Bis" sagen dasselbe in einer Zeile.
 ///
 /// Die Rechtsgebiets-Auswahl kommt aus dem Sachgebietskatalog (§7.1) plus dem,
 /// was nur im Bestand vorkommt ([RegisterFilter.rechtsgebiete]) — der Bestand
@@ -23,6 +31,12 @@ class RegisterFilterLeiste extends StatelessWidget {
   final List<RegisterZeile> alle;
   final ValueChanged<RegisterFilter> onGeaendert;
 
+  /// Die Leserichtung. Kein Teil des Filters — sie sagt nicht, *welche* Zeilen
+  /// zu sehen sind — steht hier aber daneben, weil sie dieselbe Frage bedient:
+  /// „Zeig mir den Ausschnitt, der mich angeht."
+  final RegisterReihenfolge reihenfolge;
+  final ValueChanged<RegisterReihenfolge> onReihenfolge;
+
   /// Die Rechtsgebiete des Katalogs in Katalogreihenfolge; leer, solange der
   /// Katalog lädt oder nicht erreichbar ist.
   final List<String> katalog;
@@ -37,6 +51,8 @@ class RegisterFilterLeiste extends StatelessWidget {
     required this.filter,
     required this.alle,
     required this.onGeaendert,
+    required this.reihenfolge,
+    required this.onReihenfolge,
     this.katalog = const [],
     this.katalogFehlt = false,
     this.onKatalogErneut,
@@ -44,7 +60,7 @@ class RegisterFilterLeiste extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final jahre = RegisterFilter.jahrgaenge(alle);
+    final jahre = RegisterFilter.jahre(alle);
     final rechtsgebiete = RegisterFilter.rechtsgebiete(alle, katalog: katalog);
 
     return Wrap(
@@ -52,20 +68,19 @@ class RegisterFilterLeiste extends StatelessWidget {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        for (final jahr in jahre)
-          FilterChip(
-            label: Text(jahr),
-            selected: filter.jahr == jahr,
-            onSelected: (gewaehlt) => onGeaendert(
-              filter.mit(jahr: gewaehlt ? jahr : null, jahrLoeschen: !gewaehlt),
-            ),
-          ),
-        if (jahre.isNotEmpty) const SizedBox(width: 8),
+        RegisterAuswahlFeld<RegisterReihenfolge>(
+          hinweis: 'Reihenfolge',
+          wert: reihenfolge,
+          werte: RegisterReihenfolge.values,
+          beschriftung: (richtung) => richtung.bezeichnung,
+          onGewaehlt: (richtung) =>
+              onReihenfolge(richtung ?? RegisterReihenfolge.vorgabe),
+        ),
+        ..._jahresfelder(jahre),
         // Zwei Werte statt der fünf Vorgangsstatus: Eine Registerzeile trägt
         // keinen Lebenszyklus — die Historie hat nie einen gehabt, und vom
         // Vorgang liefert der Endpunkt nur, ob er abgeschlossen ist.
-        _auswahl<bool>(
-          context,
+        RegisterAuswahlFeld<bool>(
           hinweis: 'Stand',
           alleText: 'Alle Zeilen',
           wert: filter.abgeschlossen,
@@ -78,9 +93,24 @@ class RegisterFilterLeiste extends StatelessWidget {
             ),
           ),
         ),
-        _auswahl<String>(
-          context,
+        // Nach der Übernahme besteht das Register zum größten Teil aus
+        // Historie. Wer die laufende Arbeit sehen will, sucht sie sonst
+        // zwischen tausenden Altzeilen.
+        RegisterAuswahlFeld<String>(
+          hinweis: 'Herkunft',
+          alleText: 'Alle Herkünfte',
+          wert: filter.quelle,
+          werte: const [RegisterQuellen.vorgang, RegisterQuellen.historie],
+          beschriftung: (quelle) => quelle == RegisterQuellen.historie
+              ? 'Übernommene Historie'
+              : 'Vorgänge der App',
+          onGewaehlt: (quelle) => onGeaendert(
+            filter.mit(quelle: quelle, quelleLoeschen: quelle == null),
+          ),
+        ),
+        RegisterAuswahlFeld<String>(
           hinweis: 'Rechtsgebiet',
+          alleText: 'Alle Rechtsgebiete',
           wert: filter.rechtsgebiet,
           werte: rechtsgebiete,
           beschriftung: (gebiet) => gebiet,
@@ -91,26 +121,7 @@ class RegisterFilterLeiste extends StatelessWidget {
             ),
           ),
         ),
-        if (katalogFehlt)
-          SizedBox(
-            width: 420,
-            child: Row(
-              children: [
-                const Expanded(
-                  child: FehlerHinweis(
-                    nachricht:
-                        'Sachgebietskatalog nicht geladen — die Auswahl zeigt '
-                        'nur, was im Bestand vorkommt.',
-                  ),
-                ),
-                if (onKatalogErneut != null)
-                  TextButton(
-                    onPressed: onKatalogErneut,
-                    child: const Text('Erneut versuchen'),
-                  ),
-              ],
-            ),
-          ),
+        if (katalogFehlt) _katalogHinweis(),
         if (!filter.istLeer)
           TextButton.icon(
             onPressed: () => onGeaendert(RegisterFilter.alle),
@@ -121,94 +132,49 @@ class RegisterFilterLeiste extends StatelessWidget {
     );
   }
 
-  /// Ein Auswahlfeld, dessen erster Eintrag „alle" ist. Bewusst kein Chip je
-  /// Wert: Stand und Rechtsgebiet haben zusammen über zwanzig Ausprägungen,
-  /// und so viele Chips wären die Leiste selbst, nicht mehr ihr Inhalt.
+  /// „Von" und „Bis" über die Jahrgänge, die es überhaupt gibt.
   ///
-  /// [alleText] überschreibt die Beschriftung dieses ersten Eintrags, wo die
-  /// Ableitung aus [hinweis] kein Deutsch ergibt („Alle stand").
-  Widget _auswahl<T>(
-    BuildContext context, {
-    required String hinweis,
-    required T? wert,
-    required List<T> werte,
-    required String Function(T) beschriftung,
-    required ValueChanged<T?> onGewaehlt,
-    String? alleText,
-  }) {
-    final allesText = alleText ?? 'Alle ${hinweis.toLowerCase()}';
-    return SizedBox(
-      width: _dropdownBreite(context, [allesText, ...werte.map(beschriftung)]),
-      child: DropdownButtonFormField<T?>(
-        initialValue: wert,
-        isDense: true,
-        // Ohne `isExpanded` bekommt der Text hier keine Breitenbegrenzung von
-        // seiner Zeile und lief mit der angehobenen Schrift (Issue #57) unter
-        // den Pfeil hinaus, statt sich einzuordnen — `_dropdownBreite` bemisst
-        // das Feld zwar so, dass der längste Eintrag ohnehin passt, aber erst
-        // `isExpanded` macht das eine Zusicherung statt eines Zufalls.
-        isExpanded: true,
-        decoration: InputDecoration(
-          labelText: hinweis,
-          border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-        ),
-        items: [
-          DropdownMenuItem<T?>(
-            value: null,
-            child: Text(allesText, overflow: TextOverflow.ellipsis),
-          ),
-          for (final eintrag in werte)
-            DropdownMenuItem<T?>(
-              value: eintrag,
-              child: Text(
-                beschriftung(eintrag),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-        ],
-        onChanged: onGewaehlt,
+  /// Ohne gesetzte Grenze zeigen sie die äußeren Jahrgänge des Bestands statt
+  /// „Alle": Die Spanne ist damit immer ablesbar, und der Anwalt sieht auf
+  /// einen Blick, wie weit das Register reicht. Ein einziger Jahrgang braucht
+  /// keine Spanne — dann steht dort nichts.
+  List<Widget> _jahresfelder(List<int> jahre) {
+    if (jahre.length < 2) return const [];
+    return [
+      RegisterAuswahlFeld<int>(
+        hinweis: 'Von',
+        wert: filter.vonJahr ?? jahre.last,
+        werte: jahre,
+        beschriftung: (jahr) => '$jahr',
+        onGewaehlt: (jahr) => onGeaendert(filter.mit(vonJahr: jahr)),
       ),
-    );
+      RegisterAuswahlFeld<int>(
+        hinweis: 'Bis',
+        wert: filter.bisJahr ?? jahre.first,
+        werte: jahre,
+        beschriftung: (jahr) => '$jahr',
+        onGewaehlt: (jahr) => onGeaendert(filter.mit(bisJahr: jahr)),
+      ),
+    ];
   }
 
-  /// Breite, die den längsten Eintrag (samt „Alle …") ohne Kürzung zeigt.
-  /// Eine feste Breite passte nicht mehr zu jeder Schriftgröße und jedem
-  /// Katalog — sie reichte für „Alle rechtsgebiet" bei der angehobenen
-  /// Schrift (Issue #57) nicht mehr, und ein neuer, langer Katalogeintrag
-  /// hätte dieselbe Lücke wieder aufgerissen. Gemessen wird mit
-  /// `titleMedium`, dem Stil, den `DropdownButtonFormField` ohne eigenes
-  /// `style` selbst für seinen Text verwendet (siehe `dropdown.dart`,
-  /// `_textStyle`).
-  double _dropdownBreite(BuildContext context, List<String> texte) {
-    final style = Theme.of(context).textTheme.titleMedium;
-    final painter = TextPainter(
-      textDirection: Directionality.of(context),
-      // Ohne die ambiente Textskala misst das Feld enger, als es zeichnet,
-      // sobald Windows die Schrift vergrößert — der gerenderte Dropdown-Text
-      // nutzt genau diese Skala über `MediaQuery.textScalerOf`.
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    );
-    var textBreite = 0.0;
-    try {
-      for (final text in texte) {
-        painter.text = TextSpan(text: text, style: style);
-        painter.layout();
-        if (painter.width > textBreite) textBreite = painter.width;
-      }
-    } finally {
-      painter.dispose();
-    }
-    // Innenpolster (12+12) + Pfeil samt Abstand + Sicherheitszuschlag —
-    // `isExpanded` würde einen zu knappen Wert notfalls per Ellipsis auffangen,
-    // soll das im Regelfall aber nicht müssen.
-    const chrome = 88.0;
-    const mindestbreite = 160.0;
-    final breite = textBreite + chrome;
-    return breite < mindestbreite ? mindestbreite : breite;
-  }
+  Widget _katalogHinweis() => SizedBox(
+    width: 420,
+    child: Row(
+      children: [
+        const Expanded(
+          child: FehlerHinweis(
+            nachricht:
+                'Sachgebietskatalog nicht geladen — die Auswahl zeigt '
+                'nur, was im Bestand vorkommt.',
+          ),
+        ),
+        if (onKatalogErneut != null)
+          TextButton(
+            onPressed: onKatalogErneut,
+            child: const Text('Erneut versuchen'),
+          ),
+      ],
+    ),
+  );
 }

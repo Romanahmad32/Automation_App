@@ -1,14 +1,19 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
+import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_cubit.dart';
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_katalog_stand.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_meldung.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_state.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_hervorhebung_signal.dart';
 import 'package:automation_app/features/vorgaenge/presentation/views/register_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -124,25 +129,49 @@ class RegisterPageState extends State<RegisterPage> {
                   vorgang.referenz: vorgang.status,
               },
               onDateiEinlesen: () => _importOeffnen(context, state),
-              onAnleitung: () => _importOeffnen(context, state),
+              onVorgangOeffnen: (zeile) => _vorgangOeffnen(context, zeile),
             ),
           ),
     );
   }
 
+  /// Schreibt den Spiegel und sagt danach, was daraus geworden ist — als
+  /// flüchtige Meldung oben rechts, wie überall in der App.
+  ///
+  /// Vorher stand das Ergebnis nur in der Leiste am **Fuß** der Seite: Wer
+  /// oben auf den Knopf gedrückt hatte, blieb ohne Antwort, und ein Fehlschlag
+  /// blieb unter tausenden Zeilen liegen. Der Griff auf [Rueckmeldung] wird vor
+  /// dem `await` gefasst — danach ist der Kontext womöglich fort.
   Future<void> _schreiben(BuildContext context) async {
     final spiegel = context.read<RegisterSpiegelCubit>();
+    final rueckmeldung = Rueckmeldung.von(context);
     setState(() => _schreibtGerade = true);
     try {
       await spiegel.exportiere();
     } finally {
       if (mounted) setState(() => _schreibtGerade = false);
     }
+    RegisterSpiegelMeldung.zu(spiegel.state).zeige(rueckmeldung);
   }
 
-  /// „Datei einlesen…" und „Anleitung" führen auf dieselbe Seite: Die Anleitung
-  /// für den Erzeuger der Datei steht dort neben dem Einlesen, und ein eigener
-  /// Dialog hier wäre eine zweite Stelle, an der sie veraltet.
+  /// Der Sprung vom Register in die Vorgangsverwaltung (Tab 7).
+  ///
+  /// Das Register ist ein Verzeichnis: Man findet dort eine Sache wieder und
+  /// will dann an sie heran. Gearbeitet wird aber nicht hier — Bearbeiten und
+  /// Löschen liegen in der Verwaltung, und zwei Pflegeorte für denselben
+  /// Vorgang wären einer zu viel. Das Signal sorgt dafür, dass die Liste dort
+  /// zur Zeile scrollt und sie hervorhebt, statt den Anwalt unter Hunderten
+  /// selbst suchen zu lassen.
+  void _vorgangOeffnen(BuildContext context, RegisterZeile zeile) {
+    final referenz = zeile.vorgangReferenz;
+    if (referenz == null) return;
+    getIt<VorgangHervorhebungSignal>().setze(referenz);
+    AutoTabsRouter.of(context).setActiveIndex(AppTabIndex.vorgaenge);
+  }
+
+  /// „Datei einlesen…" führt auf die Import-Seite: Die Anleitung für den
+  /// Erzeuger der Datei steht dort neben dem Einlesen, und ein eigener Dialog
+  /// oder ein zweiter Knopf hier wäre eine weitere Stelle, an der sie veraltet.
   ///
   /// Der Vorschlag ist der kleinste fehlende Jahrgang, sonst das Vorjahr — die
   /// Import-Seite trägt ihn in die Anleitung ein.

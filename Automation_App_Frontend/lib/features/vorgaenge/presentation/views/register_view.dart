@@ -4,10 +4,11 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.da
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_state.dart';
-import 'package:automation_app/features/vorgaenge/presentation/widgets/historie_stand_karte.dart';
+import 'package:automation_app/features/vorgaenge/presentation/widgets/historie_stand_leiste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/historie_zeile_dialog.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_filter_leiste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_leer_hinweis.dart';
@@ -18,6 +19,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Inhalt der Registerseite (§6.2): Stand der übernommenen Historie,
 /// Filterleiste, Tabelle, Spiegelleiste.
+///
+/// Die Tabelle bekommt den größten Teil der Seite. Was darüber steht, sagt in
+/// je einer Zeile, woran man ist — der Stand der Historie und die Auswahl —,
+/// und legt sich erst auf Verlangen breiter hin: Geöffnet wird diese Seite, um
+/// im Register zu lesen.
 ///
 /// Eigenes Widget neben `RegisterPage`, damit die Seite nur noch verdrahtet
 /// (Provider, Kopfzeile, Export-Knopf) und dieser Teil ohne `getIt` prüfbar
@@ -35,9 +41,14 @@ class RegisterView extends StatelessWidget {
   /// nicht, sie weiß nur, ob sie abgeschlossen ist.
   final Map<String, VorgangStatus> statusJeReferenz;
 
-  /// Öffnet die Import-Seite; „Anleitung" führt auf dieselbe Seite.
+  /// Öffnet die Import-Seite; die Anleitung für den Erzeuger der Datei steht
+  /// dort gleich daneben.
   final VoidCallback? onDateiEinlesen;
-  final VoidCallback? onAnleitung;
+
+  /// Klick auf eine Zeile, hinter der ein Vorgang der App steht — der Sprung
+  /// in die Vorgangsverwaltung. Als Rückruf und nicht als Route hier drin,
+  /// damit die Ansicht ohne den Router der App prüfbar bleibt.
+  final ValueChanged<RegisterZeile>? onVorgangOeffnen;
 
   const RegisterView({
     super.key,
@@ -47,7 +58,7 @@ class RegisterView extends StatelessWidget {
     this.onKatalogErneut,
     this.statusJeReferenz = const {},
     this.onDateiEinlesen,
-    this.onAnleitung,
+    this.onVorgangOeffnen,
   });
 
   @override
@@ -60,22 +71,23 @@ class RegisterView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          child: HistorieStandKarte(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          child: HistorieStandLeiste(
             stand: state.stand,
             onDateiEinlesen: onDateiEinlesen,
-            onAnleitung: onAnleitung,
-            gewaehlterJahrgang: state.filter.jahr,
+            gewaehlterJahrgang: _einzelnerJahrgang,
             onJahrgang: (jahrgang) =>
-                cubit.filtern(state.filter.mit(jahr: '$jahrgang')),
+                cubit.filtern(RegisterFilter.imJahr(jahrgang)),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
           child: RegisterFilterLeiste(
             filter: state.filter,
             alle: state.zeilen,
             onGeaendert: cubit.filtern,
+            reihenfolge: state.reihenfolge,
+            onReihenfolge: cubit.sortieren,
             katalog: katalog,
             katalogFehlt: katalogFehlt,
             onKatalogErneut: onKatalogErneut,
@@ -133,8 +145,16 @@ class RegisterView extends StatelessWidget {
       mitJahreszeilen: true,
       statusJeReferenz: statusJeReferenz,
       onHistorieZeile: (zeile) => _zeileBearbeiten(context, zeile),
+      onVorgangZeile: onVorgangOeffnen,
     );
   }
+
+  /// Der Jahrgang, auf dem die Spanne steht, wenn sie genau einen umfasst —
+  /// nur dann ist ein Chip in der Historie-Zeile hervorgehoben. Bei „2019 bis
+  /// 2022" gäbe es keinen einen, den man meinen könnte.
+  int? get _einzelnerJahrgang => state.filter.vonJahr == state.filter.bisJahr
+      ? state.filter.vonJahr
+      : null;
 
   String _umfang(int gezeigt, int gesamt) => gezeigt == gesamt
       ? '$gesamt Zeilen. Neue entstehen automatisch, sobald ein Vorgang '

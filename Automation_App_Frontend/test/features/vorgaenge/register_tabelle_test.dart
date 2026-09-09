@@ -1,5 +1,4 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
-import 'package:automation_app/features/vorgaenge/presentation/widgets/register_befund_chip.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_tabelle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +30,7 @@ void main() {
     bool mitJahreszeilen = false,
     bool mitStatus = false,
     ValueChanged<RegisterZeile>? onHistorieZeile,
+    ValueChanged<RegisterZeile>? onVorgangZeile,
   }) async {
     // Reichlich Platz, damit [breite] nie vom Fenster beschnitten wird.
     tester.view.physicalSize = const Size(4000, 800);
@@ -46,6 +46,7 @@ void main() {
               mitJahreszeilen: mitJahreszeilen,
               mitStatus: mitStatus,
               onHistorieZeile: onHistorieZeile,
+              onVorgangZeile: onVorgangZeile,
             ),
           ),
         ),
@@ -188,9 +189,11 @@ void main() {
       expect(find.text('Historie'), findsNWidgets(2));
     });
 
-    /// Sonst stünde an jeder der tausenden Zeilen ein Hinweis, und
-    /// „auffällig" hieße nichts mehr.
-    testWidgets('der Befund-Chip steht nur an auffälligen Zeilen', (
+    /// §6.2: Eine historische Zeile trägt in der Ansicht **immer** den Status
+    /// „Historie" — und nur ihn. Der zweite Chip daneben machte aus einer
+    /// Spalte mit einer Aussage eine mit zweien; was auffiel, steht im
+    /// Herkunftskasten des Bearbeiten-Dialogs.
+    testWidgets('auch eine auffällige Zeile trägt nur „Historie"', (
       tester,
     ) async {
       await tabellenBreite(
@@ -198,17 +201,73 @@ void main() {
         1600,
         mitStatus: true,
         zeilen: [
-          historieZeile(zeichen: '10/19 C02'),
           historieZeile(
             zeichen: '11/19 C02',
             historieId: 8,
             befunde: const ['Ohne Abteilung.'],
+            sicherheit: RegisterSicherheiten.niedrig,
           ),
         ],
       );
 
-      expect(find.byType(RegisterBefundChip), findsOneWidget);
-      expect(find.text('1 Befund'), findsOneWidget);
+      expect(find.text('Historie'), findsOneWidget);
+      expect(find.text('1 Befund'), findsNothing);
+      expect(find.text('sehr unsicher'), findsNothing);
+    });
+
+    /// Ein Klick öffnet den Bearbeiten-Dialog — das ist keine Mehrfachauswahl.
+    /// Das „alle auswählen" in der Kopfzeile rief den Rückruf für **jede**
+    /// Zeile auf und legte so einen Dialog über den nächsten.
+    testWidgets('es gibt keine Ankreuzspalte', (tester) async {
+      var geklickt = 0;
+      await tabellenBreite(
+        tester,
+        1600,
+        zeilen: [
+          historieZeile(),
+          historieZeile(zeichen: 'b', historieId: 8),
+        ],
+        onHistorieZeile: (_) => geklickt++,
+      );
+
+      expect(find.byType(Checkbox), findsNothing);
+      expect(geklickt, 0);
+    });
+
+    /// Ohne sie war bei fünf Spalten und langen Rubren nicht zu sehen, wo
+    /// „Sache" aufhört und „Rechtsgebiet" anfängt.
+    testWidgets('eine dünne Linie trennt die Spalten', (tester) async {
+      await tabellenBreite(tester, 1600, mitStatus: true);
+
+      final tabelle = tester.widget<DataTable>(find.byType(DataTable));
+      expect(tabelle.border?.verticalInside.width, greaterThan(0));
+    });
+
+    /// Das Register ist ein Verzeichnis: Man findet dort eine Sache wieder und
+    /// will dann an sie heran. Historie und Vorgang führen dabei an
+    /// verschiedene Orte — Berichtigung hier, Vorgangsverwaltung dort.
+    testWidgets('jede Herkunft meldet an ihren eigenen Rückruf', (
+      tester,
+    ) async {
+      final historie = <String>[];
+      final vorgaenge = <String>[];
+      await tabellenBreite(
+        tester,
+        1600,
+        zeilen: [
+          historieZeile(zeichen: '10/19 C02'),
+          vorgangsZeile(),
+        ],
+        onHistorieZeile: (zeile) => historie.add(zeile.zeichen),
+        onVorgangZeile: (zeile) => vorgaenge.add(zeile.zeichen),
+      );
+
+      await tester.tap(find.text('10/19 C02'));
+      await tester.tap(find.text('01/26 C03'));
+      await tester.pump();
+
+      expect(historie, ['10/19 C02']);
+      expect(vorgaenge, ['01/26 C03']);
     });
 
     testWidgets('nur historische Zeilen lassen sich anklicken', (tester) async {

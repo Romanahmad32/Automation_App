@@ -24,14 +24,26 @@ die Register-Datei.
 
 Bis #40 zeigte `RegisterPage` nur `status == versendet`. Jetzt steht dort **jede** Zeile: jeder
 Vorgang der App und, seit #109, die übernommene Registerhistorie der Kanzlei. Gefiltert wird über
-`RegisterFilter` (Stand, Jahrgang, Rechtsgebiet).
+`RegisterFilter` (Stand, Jahrgangs**spanne**, Herkunft, Rechtsgebiet).
+
+Die **Herkunft** (`quelle`, gegen `RegisterQuellen`) ist der praktisch wichtigste Filter: Nach der
+Übernahme besteht das Register zum größten Teil aus Historie, und wer die laufende Arbeit der
+Kanzlei sehen will, sucht sie sonst zwischen tausenden Altzeilen.
 
 Der Filter kennt **keinen `VorgangStatus` mehr**, sondern nur „abgeschlossen / laufend". Eine
 Registerzeile trägt keinen Lebenszyklus: Die Historie hat nie einen gehabt, und vom Vorgang liefert
 der Zeilen-Endpunkt nur `abgeschlossen`. Ein Dropdown mit „Angefragt … Versendet" über einer Liste,
 die zum größten Teil aus Historie besteht, verspräche eine Auswahl, die es nicht gibt. Der
-fünfstufige Chip in der Statusspalte bleibt trotzdem: Er kommt aus dem `VorgangCubit`, den die Seite
-ohnehin hält (`RegisterView.statusJeReferenz`).
+fünfstufige Chip in der Statusspalte bleibt trotzdem — aber nur an Zeilen der App: Er kommt aus dem
+`VorgangCubit`, den die Seite ohnehin hält (`RegisterView.statusJeReferenz`). Eine **historische
+Zeile trägt dort nur „Historie"** und sonst nichts (§6.2); was an ihr auffiel, steht im
+Herkunftskasten des Bearbeiten-Dialogs.
+
+Die Jahrgänge stehen als **Spanne** (`vonJahr`/`bisJahr`, beide einschließlich) und nicht mehr als
+Chip je Jahr: Ein Registerbuch ab 2018 ergab eine Chipreihe, die breiter war als die Tabelle
+darunter, und beantwortete die häufigste Frage („die letzten drei Jahre") gar nicht. Ohne gesetzte
+Grenze zeigen die Felder „Von"/„Bis" die äußeren Jahrgänge des Bestands — die Spanne bleibt damit
+ablesbar. Ein Klick auf einen Jahrgangs-Chip in der Historie-Zeile setzt `RegisterFilter.imJahr`.
 
 **Der Filter wirkt nur auf den Bildschirm.** Was in die Word-/PDF-Datei kommt, entscheidet die
 Einstellung `KanzleiSettings.registerExportFilter`. Das ist Absicht und keine Nachlässigkeit:
@@ -51,10 +63,34 @@ die fertigen Zeilen samt Sortierung (Jahrgang aufsteigend, darin laufende Nummer
 hinten am Jahrgang). `RegisterFilter.anwenden` **filtert nur** und rührt die Reihenfolge nicht an.
 Wer an der Sortierung etwas ändert, ändert `RegisterZeilenBau.Aus` — einmal.
 
+Am Bildschirm steht die Folge trotzdem **umgekehrt**: `RegisterReihenfolge.neuesteZuerst` ist die
+Vorgabe der Seite und liest dieselbe Liste rückwärts, weil fast immer die jüngsten Zeilen gesucht
+werden — nach tausenden übernommenen stünden sie sonst ganz unten. Das ist ausdrücklich **keine**
+zweite Sortierregel: `anwenden` ist ein `reversed`, kein `sort`. Ein laufender Vorgang ohne Nummer
+steht im Bestand hinten am Jahrgang und rückt dadurch von selbst nach ganz oben. Die Word-/PDF-Datei
+bleibt chronologisch vorwärts wie das Registerbuch; die Auswahl „Reihenfolge" in der Filterleiste
+stellt am Bildschirm auf dieselbe Richtung zurück.
+
 Eine Stelle rechnet weiter selbst: die **Startseiten-Karte**. Sie hat den Vorgangsbestand ohnehin im
 Speicher und baut daraus `RegisterZeile.ausVorgang` (samt `VorgangJahrgang.fuer`), statt beim Öffnen
 der Startseite einen zweiten Abruf zu machen. Sie zeigt nur die letzten fünf Vorgänge der App und
 keine Historie; ihre Abbildung hängt an `register_zeile_test.dart`.
+
+## Ein Klick im Register führt je Herkunft woanders hin
+
+Die Registertabelle hat zwei Rückrufe, nicht einen: `onHistorieZeile` öffnet den Berichtigen-Dialog,
+`onVorgangZeile` springt über `VorgangHervorhebungSignal` + `AutoTabsRouter` in Tab 7. Das Register
+bleibt damit **Verzeichnis** — gepflegt wird ein Vorgang in der Verwaltung, und zwei Pflegeorte für
+denselben Vorgang wären einer zu viel.
+
+Das Signal ist bewusst **nicht** das `VorgangNavigationSignal`: Das trägt eine Vorauswahl für den
+Word-Assistenten und wird dort verbraucht. Denselben Kanal zu nehmen hieße, dass ein Blick ins
+Register den nächsten Word-Lauf umstellt.
+
+`VorgaengeListe` verarbeitet das Signal und scrollt in **zwei** Schritten — anteilig springen, im
+nächsten Bild mit `ensureVisible` zurechtrücken. Der Grund: `ListView.builder` baut nur, was
+sichtbar ist, eine Zeile weit außerhalb hat gar keinen `BuildContext`, an dem `ensureVisible`
+ansetzen könnte.
 
 ## Eine historische Zeile wird zum Bearbeiten roh geladen, nicht zurückgerechnet
 
@@ -105,6 +141,20 @@ etwas ändert, prüft `Abschliessen_BleibtBestehen_WennDerSpiegelScheitert` im B
 „Register-LAPTOP.docx" aussehen. Taucht eine auf, hat jemand den Spiegel unterwegs bearbeitet —
 ab da gäbe es zwei Register, und genau davor will die Kanzlei weg. Die `RegisterSpiegelLeiste`
 zeigt das deshalb in Fehlerfarbe und nicht als Nebensatz.
+
+Die Leiste zeigt aber **nur, was dauerhaft gilt** — Konfliktkopie, fehlendes PDF, wohin zuletzt
+geschrieben wurde. Der Ausgang eines *Laufs* geht über `RegisterSpiegelMeldung` an `Rueckmeldung`,
+also oben rechts: Wer oben auf „Register jetzt schreiben" drückt, liest keinen roten Satz, der
+unter tausenden Zeilen am Fuß der Seite steht. Und was die Leitung wirft, übersetzt schon
+`ApiRegisterSpiegelDatasource` in einen deutschen Satz (`RegisterException`) — vorher stand der
+Ausnahmetext von Dio im Wortlaut in der Meldung an den Anwalt.
+
+**Der Export braucht seine eigene Uhr.** `network_module.dart` gibt drei Sekunden vor; Schreiben
+heißt aber Word starten (kalt rund anderthalb Sekunden), wandeln und zwei Dateien umziehen. Ohne
+das `receiveTimeout` von zwei Minuten in `ApiRegisterSpiegelDatasource` meldete der Bildschirm eine
+Zeitüberschreitung, während der Dienst in Ruhe zu Ende schrieb — die eine Meldung, die zu einem
+zweiten Druck verleitet, der dieselbe Arbeit noch einmal anstößt. Dieselbe Vorsorge trifft
+`WordAutomationDatasource` (60 s) und `ZentralrufDatasource` (3 min).
 
 ## Der Bearbeiten-Dialog prüft von Hand — er hat kein reactive_forms
 

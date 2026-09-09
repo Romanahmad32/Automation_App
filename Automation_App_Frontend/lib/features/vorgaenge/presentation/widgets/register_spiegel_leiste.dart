@@ -3,13 +3,19 @@ import 'package:automation_app/features/vorgaenge/domain/entities/register_spieg
 import 'package:flutter/material.dart';
 
 /// Der Zustand des Register-Spiegels unter der Tabelle (§6.2): wann zuletzt
-/// geschrieben wurde, wohin, und was schiefging.
+/// geschrieben wurde und wohin.
 ///
-/// Der wichtigste Fall ist die Konfliktkopie. Sie heißt, dass jemand die Datei
-/// unterwegs bearbeitet hat und der Synchronisierungsdienst nicht
+/// Hier steht, was **dauerhaft** gilt — nicht, was gerade schiefging. Ein
+/// fehlgeschlagener Lauf meldet sich als flüchtige Meldung oben rechts
+/// (`RegisterSpiegelMeldung`), wie jeder andere Fehlschlag der App auch: Am Fuß
+/// der Seite, unter tausenden Zeilen, hat ihn niemand gelesen, der eben oben
+/// auf den Knopf gedrückt hat.
+///
+/// Der wichtigste Fall hier ist die Konfliktkopie. Sie heißt, dass jemand die
+/// Datei unterwegs bearbeitet hat und der Synchronisierungsdienst nicht
 /// zusammenführen konnte — ab da gäbe es zwei Register, und das ist genau die
-/// Lage, aus der die Kanzlei heraus will. Deshalb steht sie hier als Warnung
-/// und nicht als Nebensatz.
+/// Lage, aus der die Kanzlei heraus will. Sie ist eine Lage und kein Ereignis,
+/// und steht deshalb hier und nicht in einer Meldung, die vorbeizieht.
 class RegisterSpiegelLeiste extends StatelessWidget {
   final RegisterSpiegelErgebnis stand;
 
@@ -23,8 +29,6 @@ class RegisterSpiegelLeiste extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (stand.fehler != null)
-          _zeile(theme, Icons.error_outline, stand.fehler!, farben.error),
         if (stand.pdfFehler != null)
           _zeile(
             theme,
@@ -42,12 +46,24 @@ class RegisterSpiegelLeiste extends StatelessWidget {
             'Bitte die Kopie ansehen und danach löschen.',
             farben.error,
           ),
-        if (stand.fehler == null) _erfolgszeile(theme, farben),
+        _standzeile(theme, farben),
       ],
     );
   }
 
-  Widget _erfolgszeile(ThemeData theme, ColorScheme farben) {
+  Widget _standzeile(ThemeData theme, ColorScheme farben) {
+    // Nach einem Fehlschlag steht hier nur, dass nichts geschrieben wurde —
+    // warum, sagt die Meldung oben rechts. Ein Pfad aus dem letzten
+    // erfolgreichen Lauf stünde hier sonst wie ein frisches Ergebnis.
+    if (stand.fehler != null) {
+      return _zeile(
+        theme,
+        Icons.cloud_off_outlined,
+        'Zuletzt nicht geschrieben.',
+        farben.outline,
+      );
+    }
+
     final satz = switch (stand) {
       RegisterSpiegelErgebnis(geschrieben: true, docxPfad: final pfad?) =>
         'Geschrieben nach $pfad',

@@ -5,6 +5,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/register_histo
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_historie_repository.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/register_zeilen_repository.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/register_reihenfolge.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -58,6 +59,10 @@ class RegisterCubit extends Cubit<RegisterState> {
   /// Setzt die Auswahl. Sie liegt im Cubit und nicht in der Seite, damit ein
   /// Nachladen sie nicht zurückwirft.
   void filtern(RegisterFilter filter) => emit(state.copyWith(filter: filter));
+
+  /// Dreht die Leserichtung — aus demselben Grund hier und nicht in der Seite.
+  void sortieren(RegisterReihenfolge reihenfolge) =>
+      emit(state.copyWith(reihenfolge: reihenfolge));
 
   /// Holt den Rohstand einer historischen Zeile — die Einzelfelder, mit denen
   /// der Bearbeiten-Dialog aufgeht. `null`, wenn der Dienst sie nicht liefert;
