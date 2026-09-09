@@ -10,8 +10,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// auswählen lassen.
 ///
 /// Der zweite Knopf ist kein Beiwerk. Die Datei entsteht außerhalb dieser App,
-/// und wer sie erzeugt, braucht das Format wortgleich — deshalb liegt der
-/// fertige Auftrag hier zum Kopieren, statt in einer Anleitung, die man erst
+/// und wer sie erzeugt, braucht das Format wortgleich — deshalb liegt die
+/// fertige Anleitung hier zum Kopieren, statt an einer Stelle, die man erst
 /// suchen und dann abschreiben müsste.
 class ImportDateiAuswahl extends StatelessWidget {
   const ImportDateiAuswahl({super.key});
@@ -48,13 +48,13 @@ class ImportDateiAuswahl extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: () => _anleitungKopieren(context),
               icon: const Icon(Icons.copy_all_outlined),
-              label: const Text('Auftrag für den Erzeuger kopieren'),
+              label: const Text('Anleitung für den Erzeuger kopieren'),
             ),
           ],
         ),
         const SizedBox(height: 24),
         ExpansionTile(
-          title: const Text('Format und Auftrag ansehen'),
+          title: const Text('Format und Anleitung ansehen'),
           childrenPadding: const EdgeInsets.all(12),
           children: [
             SelectableText(
@@ -85,7 +85,7 @@ class ImportDateiAuswahl extends StatelessWidget {
     final bote = Rueckmeldung.von(context);
     await Clipboard.setData(ClipboardData(text: ImportAnleitung.text.trim()));
     bote.erfolg(
-      'Auftrag kopiert — auf dem Kanzleirechner einfügen, den Stammordner '
+      'Anleitung kopiert — auf dem Kanzleirechner einfügen, den Stammordner '
       'eintragen und die Datei erzeugen lassen.',
     );
   }

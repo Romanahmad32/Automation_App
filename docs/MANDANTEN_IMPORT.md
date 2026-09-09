@@ -6,6 +6,26 @@ Zuordnungsstapels. Dieser Weg dreht die Richtung um: die Zuordnung entsteht **au
 dort, wo die Akten liegen, kommt als JSON-Datei herein und wird hier geprüft, gezeigt und erst nach
 Freigabe geschrieben.
 
+## Zwei Dateien, zwei Richtungen
+
+Es gibt **zwei** JSON-Formate, nicht eines — und beide „gehören zum Import", laufen aber
+gegenläufig. Wer das nicht vor Augen hat, liest die beiden leicht als zwei konkurrierende
+Umsetzungen derselben Sache:
+
+```
+App ──(Arbeitspaket)──▶  Erzeuger/Agent  ──(Importdatei)──▶  App
+```
+
+| Datei | Richtung | Wozu |
+|---|---|---|
+| **Arbeitspaket** (Abschnitt „Arbeitspakete" unten) | App → Erzeuger | portioniert 4000 offene Ordner in Häppchen, die ein Agent in einer Sitzung schafft |
+| **Importdatei** (Fassung 1, nächster Abschnitt) | Erzeuger → App | das Ergebnis, das tatsächlich geprüft und ins Register übernommen wird |
+
+Die Importdatei ist die **einzige**, die zwingend nötig ist: Ein Erzeuger, der den ganzen
+Stammordner selbst abarbeiten kann, liefert sie direkt, ohne je ein Arbeitspaket gesehen zu haben.
+Das Arbeitspaket kommt nur dazu, wenn der Bestand zu groß für einen Durchgang ist (siehe unten) —
+es ist eine Portionierungshilfe *vor* der Importdatei, kein zweiter Weg, Mandanten anzulegen.
+
 Die drei Beteiligten:
 
 | Wer | Was |
@@ -59,8 +79,8 @@ Alle übrigen Felder dürfen leer bleiben oder fehlen. Unbekannte Felder werden 
 Erzeuger ist ein Programm, kein Formular, und eine Datei mit 4000 brauchbaren und einer krummen
 Zeile darf nicht als Ganzes scheitern.
 
-Den fertigen Arbeitsauftrag für den Erzeuger hält die App zum Kopieren bereit
-(*Aus Datei übernehmen* → **Auftrag für den Erzeuger kopieren**); der Wortlaut liegt in
+Die fertige Anleitung für den Erzeuger hält die App zum Kopieren bereit
+(*Aus Datei übernehmen* → **Anleitung für den Erzeuger kopieren**); der Wortlaut liegt in
 `Automation_App_Frontend/lib/features/mandanten/presentation/utils/import_anleitung.dart`.
 
 ## Arbeitspakete: die Zuordnung entsteht portionsweise

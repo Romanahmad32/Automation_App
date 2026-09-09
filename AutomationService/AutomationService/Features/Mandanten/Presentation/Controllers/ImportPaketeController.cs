@@ -1,6 +1,7 @@
 using AutomationService.Features.Mandanten.Domain.Services;
 using AutomationService.Features.Mandanten.Presentation.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutomationService.Features.Mandanten.Presentation.Controllers;
 
@@ -36,6 +37,7 @@ public class ImportPaketeController(IImportPaketBuch buch) : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ImportPaketDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ImportPaketDto>> Notiere(
         [FromBody] NotiereImportPaketDto dto,
         CancellationToken cancellationToken)
@@ -48,6 +50,18 @@ public class ImportPaketeController(IImportPaketBuch buch) : ControllerBase
         catch (ArgumentException exception)
         {
             return Problem(detail: exception.Message, statusCode: StatusCodes.Status400BadRequest);
+        }
+        catch (DbUpdateException)
+        {
+            // Der Unique-Index auf `Nummer` (ImportPaketEntityConfiguration) ist
+            // der Wächter über die Vergabe „Maximum + 1": Kommt ein zweiter
+            // Aufruf dazwischen, bevor dieser sein SaveChanges abgeschlossen hat,
+            // verletzt einer der beiden den Index. Das ist kein falscher Auftrag
+            // wie bei ArgumentException, sondern ein vorübergehender Zusammenstoß
+            // — ein erneuter Versuch vergibt die nächste freie Nummer.
+            return Problem(
+                detail: "Die Paketnummer wurde soeben anderweitig vergeben — bitte erneut versuchen.",
+                statusCode: StatusCodes.Status409Conflict);
         }
     }
 }

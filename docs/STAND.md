@@ -196,7 +196,7 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Zeilen lassen sich in der Vorschau berichtigen oder weglassen
   (`POST /api/MandantenImport`, Format in [`docs/MANDANTEN_IMPORT.md`](MANDANTEN_IMPORT.md)).
   Vorschau und Übernahme sind derselbe Aufruf; ergänzt wird nur, überschrieben nie, und ein zweiter
-  Lauf derselben Datei ändert nichts. Der Auftrag für den Erzeuger der Datei ist in der App
+  Lauf derselben Datei ändert nichts. Die Anleitung für den Erzeuger der Datei ist in der App
   kopierbar.
 - Bei diesem Umfang lässt sich die Zuordnung zusätzlich in **Arbeitspakete** zerlegen (#108): Die App
   gibt die nächsten N offenen **Mandanten** samt aller ihrer Ordner als JSON-Datei heraus

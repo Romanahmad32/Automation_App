@@ -85,6 +85,11 @@ Lauf seiner Bearbeitung entstehen.
   sie wird eine eingehende Zentralruf-Antwort dem richtigen Vorgang zugeordnet (siehe 4.3).
 - **[M] Nachvollziehbarer Lebenszyklus:** Jeder Vorgang hat einen ablesbaren Bearbeitungsstand:
   *Anfrage gestellt → Antwort eingegangen → Schreiben erstellt → abgelegt → abgeschlossen.*
+- **[M] Wiederaufnahme über Sitzungen hinweg:** Jeder Stand des Lebenszyklus lässt sich dort
+  fortsetzen, wo er zuletzt stand — auch nach einem Neustart der App. Das erstellte Schreiben
+  gehört zum Vorgang, nicht zur Sitzung: Prüfen, Ablegen, Versenden und Abschließen (siehe 4.5
+  bis 4.8) bleiben erreichbar, **ohne es neu erzeugen zu müssen**. Ein Absprung, der einen
+  dieser Schritte anbietet (siehe „Übersicht als Startpunkt"), führt ihn auch aus.
 - **[M] Mehrere Schreiben je Vorgang:** Ein Vorgang bleibt nach dem ersten Anspruchsschreiben offen
   und kann weitere Schreiben tragen (siehe 4.9). Zeichen, Akte und Auftragsnummer bleiben dabei
   dieselben.
@@ -732,6 +737,15 @@ Konfigurierbar sein müssen mindestens:
   eigene Abteilung (die Zeilen liefen unter `C01`) und steht deshalb **nicht** im Katalog:
   Bestehende Werte bleiben wortgetreu erhalten und sichtbar; ein eigenes Kürzel kann es später
   über die Pflege (siehe unten) bekommen.
+  - **[M] Das Rechtsgebiet folgt der Abteilung.** Beide benennen dieselbe Katalogzeile. Erfasst
+    wird deshalb nur die Abteilung; das Rechtsgebiet **ergibt sich aus ihrem Hauptsachgebiet**
+    (`C05/3` → Strafrecht), wird als abgeleitet kenntlich angezeigt und nicht ein zweites Mal
+    abgefragt. Es bleibt änderbar: Wer es von Hand setzt, dessen Wahl gilt, bis er sie
+    zurücknimmt — vorschlagen statt entscheiden (siehe 1.3). Zweimal dasselbe zu wählen wäre
+    nicht nur doppelte Arbeit, es geht auseinander: Eine Abteilung `C05` neben einem
+    stehengebliebenen „Verkehrsrecht" trägt die falsche Zeile ins Register (siehe 6.2), hält
+    die Unfallfelder für Pflicht und hängt ein Kennzeichen an die Referenz (siehe 4.2), das
+    dort nichts zu suchen hat.
   - **[M] Überschneidungen:** Eine Abteilung kann neben dem Hauptsachgebiet ein Nebensachgebiet
     tragen, geschrieben als `Hauptkürzel/Nebenteil` (`C05/3` = Strafrecht mit Verkehrsbezug). Der
     Nebenteil ist das Kürzel des Nebensachgebiets ohne das Präfix `C0` (`C03` → `3`, `C03o` →
