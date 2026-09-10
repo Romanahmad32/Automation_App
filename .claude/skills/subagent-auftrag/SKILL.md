@@ -1,77 +1,61 @@
 ---
 name: subagent-auftrag
 description: >-
-  Boilerplate, das ein koordinierender Agent (Master) jedem Subagenten mitgibt, statt es jedes
-  Mal neu zu tippen: Rollen- und Modellwahl, Umgebungsfallstricke, verbindliche Regeln und was
-  der Subagent selbst noch pruefen darf, bevor er berichtet. Verwenden, sobald ein Agent einen
-  Auftrag an einen Subagenten formuliert -- Subagent beauftragen, das Agent-Tool aufrufen,
-  Umsetzung delegieren.
+  Wie ein koordinierender Agent (Master) einen Auftrag an einen Subagenten zuschneidet: welche
+  Agentendefinition bzw. welches Modell, wie die Dateimengen getrennt werden, was in den Auftrag
+  gehoert und was der Master danach selbst verifiziert. Verwenden, sobald ein Agent einen Auftrag
+  an einen Subagenten formuliert -- Subagent beauftragen, das Agent-Tool aufrufen, Umsetzung
+  delegieren.
 ---
 
-# Auftrag an einen Subagenten: der Baustein
+# Auftrag an einen Subagenten: der Zuschnitt
 
-Jeder Auftrag an einen frischen Subagenten braucht dieselben vier Dinge: welches Modell, welche
-Umgebungsfallstricke, welche Regeln gelten und was er selbst noch prüfen darf, bevor er
-berichtet. Ohne diesen Baustein tippt jeder Master-Agent das neu — unterschiedlich vollständig,
-und ein vergessener Punkt (Zweig nicht wechseln, kein Hintergrundprozess) hat schon Sitzungen
-gekostet. Die drei Textbausteine unten gehören wörtlich in den `prompt` des Agent-Tools.
+Die verbindlichen Regeln und die Umgebungsfallstricke stehen **nicht mehr hier**, sondern in der
+Agentendefinition [`.claude/agents/umsetzer.md`](../../agents/umsetzer.md): Dateilängen, private
+Typen, gepinntes SDK, kein Hintergrundprozess, Berichtsformat. Wer den `umsetzer` beauftragt,
+bekommt sie automatisch — sie mussten vorher in jeden Auftrag hineinkopiert werden, und ein
+vergessener Punkt (Zweig gewechselt, Hintergrundtest gestartet) hat schon Sitzungen gekostet.
 
-## Rollen und Modelle
+Dieser Skill sagt nur noch, was der Master selbst entscheiden muss.
 
-- **Opus** für Recherche und Bausteine mit Architekturanteil (neue Schnittstelle, neuer
-  senkrechter Schnitt) — hier zahlt sich das teurere Modell aus, weil ein falscher Zuschnitt
-  jede Umstellung danach mitreißt.
-- **Sonnet** für die Umstellung vieler gleichartiger Stellen, Doku und Korrekturen — mechanische
-  Arbeit nach vorgegebenem Muster, bei der ein teureres Modell nichts zusätzlich liefert.
-- **`model` im Agent-Tool IMMER explizit setzen.** Ohne Angabe läuft der Agent auf dem teuren
-  Hauptmodell statt auf Sonnet — das Kontingent leidet, ohne dass es beim Start auffällt.
-- **Parallele Agenten bekommen disjunkte Dateimengen.** Zwei Agenten, die dieselbe Datei
-  anfassen, überschreiben sich gegenseitig oder bauen gegen den Zwischenstand des anderen.
-- **Erhebungsagenten laufen nicht parallel zu Bauagenten an denselben Dateien** — sonst sehen
-  sie einen Stand, der sich noch ändert, und ihr Befund ist beim Bericht schon veraltet.
+## Wen beauftragen
 
-## Textbaustein „Umgebung" (wörtlich einfügen)
+- **`umsetzer`** (`subagent_type: "umsetzer"`, läuft auf Sonnet) für mechanische Arbeit nach
+  vorgegebenem Muster: viele gleichartige Aufrufstellen umstellen, Doku nachziehen, Befunde
+  beheben. Der Regelteil ist damit erledigt; der Auftrag beschreibt nur noch die Sache.
+- **Opus** für Recherche und für Bausteine mit Architekturanteil (neue Schnittstelle, neuer
+  senkrechter Schnitt) — hier zahlt sich das teurere Modell aus, weil ein falscher Zuschnitt jede
+  Umstellung danach mitreißt. Dabei `model` **immer explizit setzen**: ohne Angabe läuft der Agent
+  auf dem teuren Hauptmodell, das Kontingent leidet, und beim Start fällt es nicht auf.
+- Braucht ein Opus-Agent dieselben Projektregeln, verweist der Auftrag auf
+  `.claude/agents/umsetzer.md` statt sie neu zu tippen.
 
-> Zweig nicht wechseln, nicht committen, nicht pushen. Das gepinnte Flutter-SDK verwenden (Version
-> aus `FLUTTER_VERSION` bzw. `.fvmrc`; lokal liegt es unter
-> `%USERPROFILE%\fvm\versions\<Version>\bin\flutter.bat` bzw. `dart.bat`) — nie `flutter` ohne
-> Pfad, im PATH kann ein anderes SDK liegen. Alle Flutter-/PowerShell-Befehle über das
-> PowerShell-Tool, im Vordergrund, Timeout
-> 600000; KEIN `run_in_background`, keine `Wait-Process`-Schleifen, keine
-> Hintergrund-Testprozesse (Agenten hängen sich daran auf). Widget-Test-Fehler
-> „shaders/ink_sparkle.frag … Unsupported runtime stages format version" bedeutet Build-Cache aus
-> falschem SDK, kein Codefehler → `flutter clean` + `pub get` mit dem gepinnten SDK. Dateien mit
-> literalen Backslashes nur mit Edit- oder Write-Tool schreiben, nie per Bash-Heredoc (frisst
-> `\\`). Versionierte Dateien nur per `git checkout -- <datei>` zurückstellen, nie per
-> PowerShell-`Get-Content`/`Set-Content`-Roundtrip (zerstört UTF-8, setzt ein BOM). Neue Dateien
-> mit CRLF anlegen, wie die Nachbardateien.
+## Wie zuschneiden
 
-## Textbaustein „Regeln" (wörtlich einfügen)
+- **Parallele Agenten bekommen disjunkte Dateimengen.** Zwei Agenten in derselben Datei
+  überschreiben sich gegenseitig oder bauen gegen den Zwischenstand des anderen. Wo sich eine
+  gemeinsam genutzte Datei nicht vermeiden lässt (Wurzel-`CLAUDE.md`), gehört in den Auftrag:
+  nur kleine, gezielte Ersetzungen, nie die Datei neu schreiben.
+- **Der Auftrag nennt die fremden Bereiche mit.** „Agent B arbeitet an `scripts/` — nicht
+  anfassen" verhindert mehr als jede Ermahnung, sorgfältig zu sein.
+- **Erhebungsagenten laufen nicht parallel zu Bauagenten an denselben Dateien** — sonst sehen sie
+  einen Stand, der sich noch ändert, und ihr Befund ist beim Bericht schon veraltet.
 
-> Zuerst `Automation_App_Frontend/CLAUDE.md` bzw. `AutomationService/CLAUDE.md` lesen, je
-> nachdem welcher Teilbaum betroffen ist. Dazu die nicht verhandelbaren Regeln aus der
-> Wurzel-`CLAUDE.md`, eine je Satz: Dateien kurz halten (250 Anweisungszeilen, 450 insgesamt);
-> keine privaten Typen oder Top-Level-Funktionen im Frontend; Vorhandenes bevorzugen statt zu
-> verdoppeln; ein roter Test wird grün, indem der Code repariert wird, nie die Testerwartung.
-> Gehört die Änderung zu einem Feature mit Steckbrief, `FEATURE.md` mitpflegen.
+## Was in den Auftrag gehört
 
-## Textbaustein „Prüfen im Subagenten" (wörtlich einfügen)
+Vier Angaben, mehr nicht: das gewünschte Ergebnis; die Dateien bzw. Ordner, die dem Agenten
+allein gehören; die fremden Bereiche, die er nicht anfassen darf; welche Vorlage er vorher lesen
+soll (Issue, `FEATURE.md`, Erhebungsbericht).
 
-> Nur `dart format` auf die eigenen Ordner und `flutter test <eigene Testordner>` laufen lassen.
-> KEIN `flutter analyze`, KEINE Architekturtests, KEINE volle Suite — das läuft einmal zentral
-> beim Master; bei vier parallelen Agenten mit je einem eigenen `analyze`-Lauf hat sich die
-> Maschine sonst festgefahren (04.09.2026). Zum Abschluss ein `grep` als Beleg, dass der eigene
-> Umfang vollständig umgestellt ist, in den Bericht aufnehmen.
+## Was der Master danach verifiziert
 
-## Berichtsformat
+Der Bericht eines Subagenten ist eine Behauptung, keine Prüfung. Der Master sieht selbst nach —
+und zwar nur Billiges, weil alles Teurere die zentrale Prüfkette ohnehin macht:
 
-Jeder Subagent schließt mit:
+- `git status --short` und ein Stichproben-`git diff`: Wurde angefasst, was angefasst werden
+  sollte — und nichts darüber hinaus?
+- `grep` auf Vollständigkeit: Ist der gemeldete Umfang wirklich umgestellt?
+- das wörtlich zitierte Prüfergebnis im Bericht. Fehlt es oder steht dort eine Zusammenfassung
+  statt der Ausgabe, gilt der Teil als ungeprüft.
 
-- den geänderten Dateien (Pfad, keine Zusammenfassung ohne Pfad),
-- nicht offensichtlichen Entscheidungen (warum diese Stelle so und nicht anders),
-- dem Prüfergebnis **wörtlich** als letzte Zeile — nicht „Tests grün", sondern die tatsächliche
-  Ausgabe, damit der Master einen Fehlschlag nicht hinter einer Zusammenfassung übersieht,
-- offenen Punkten.
-
-Hat ein Subagent ein Ergebnis nicht gesehen (Prozess abgebrochen, Timeout), schreibt er genau
-das — „kein Ergebnis gesehen" statt einer Vermutung, was wohl passiert wäre.
+Erst wenn alle Agenten zurück sind, läuft `scripts/check.ps1` — genau einmal.

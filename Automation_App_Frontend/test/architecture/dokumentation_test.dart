@@ -14,16 +14,30 @@ import 'doku_verweise.dart';
 /// Falsche Doku ist fuer einen Agenten schlechter als keine — sie schickt ihn
 /// mit voller Ueberzeugung an die falsche Stelle.
 ///
-/// Die Zeilenbudgets sind der eigentliche Zweck der Aufteilung: die
+/// Die Budgets sind der eigentliche Zweck der Aufteilung: die
 /// Wurzel-`CLAUDE.md` wird in *jeder* Sitzung geladen, egal woran gearbeitet
 /// wird, und ist damit die teuerste Datei im Repo. Die Teilbaum-Dateien laedt
 /// Claude Code nur bei Arbeit im jeweiligen Ordner nach, die Steckbriefe nur
 /// beim betroffenen Feature.
+///
+/// **Gemessen wird in Woertern, nicht in Zeilen** (seit 09.2026, Issue #131).
+/// Ein Zeilenbudget misst die Umbrueche und nicht den Inhalt — und belohnt
+/// damit genau das, was der 130-Zeichen-Test verbietet: Wer unter sein Budget
+/// muss, zieht Absaetze zusammen, statt zu kuerzen. Beide Regeln zogen
+/// gegeneinander, und die Zeilenregel gewann: Die Backend-`CLAUDE.md` hielt
+/// ihre 200 Zeilen mit 55 ueberlangen Zeilen ein, alle drei `CLAUDE.md` und 7
+/// von 16 Steckbriefen standen am Anschlag, und ein PR fiel wegen einer
+/// einzelnen Zeile. Ein Wortbudget misst, was ein Agent tatsaechlich liest;
+/// wie es umgebrochen ist, entscheidet allein die Lesbarkeit.
+///
+/// Die Zahlen sind die alten Zeilenbudgets, gerechnet mit den rund acht
+/// Woertern, die eine umbrochene Prosazeile in diesem Repo traegt, plus dem
+/// Drittel Luft aus #131: 180 → 1900, 200 → 2100, 40 → 420.
 void main() {
-  const maxSteckbrief = 40;
+  const maxSteckbriefWoerter = 420;
   const maxDokuZeile = 130;
-  const maxWurzel = 180;
-  const maxTeilbaum = 200;
+  const maxWurzelWoerter = 1900;
+  const maxTeilbaumWoerter = 2100;
   const felder = [
     'Zweck',
     'Anforderung',
@@ -81,11 +95,13 @@ void main() {
     );
   });
 
-  test('kein Steckbrief ist laenger als $maxSteckbrief Zeilen', () {
+  test('kein Steckbrief ist laenger als $maxSteckbriefWoerter Woerter', () {
     final zuLang = <String>[];
     for (final feature in mitSteckbrief()) {
-      final zeilen = steckbrief(feature).readAsLinesSync().length;
-      if (zeilen > maxSteckbrief) zuLang.add('$feature ($zeilen Zeilen)');
+      final anzahl = woerter(steckbrief(feature));
+      if (anzahl > maxSteckbriefWoerter) {
+        zuLang.add('$feature ($anzahl Woerter)');
+      }
     }
 
     expect(
@@ -95,22 +111,21 @@ void main() {
           'Diese Steckbriefe sprengen ihr Budget:\n  ${zuLang.join('\n  ')}\n'
           'Ein Steckbrief ist ein Einstieg, keine Zweitfassung des Codes. Was '
           'laenger wird, gehoert in FALLSTRICKE.md daneben (kein Budget), in '
-          'den Code oder nach docs/.',
+          'den Code oder nach docs/. Gezaehlt werden Woerter: Absaetze '
+          'zusammenzuziehen bringt hier nichts, nur Weglassen.',
     );
   });
 
-  // Ohne diese Grenze begrenzt ein Zeilenbudget nur die Umbrueche, nicht die
-  // Menge: Wer unter sein Budget kommen muss, zieht Zeilen zusammen. Genau das
-  // war passiert — ein Steckbrief stand auf 40 Zeilen mit 449 Zeichen in der
-  // laengsten davon und war schlechter lesbar als vorher. Der Rest des Repos
-  // bricht Prosa bei rund 100 Zeichen um; 130 ist deutlich darueber und trifft
-  // deshalb keinen normal gesetzten Absatz.
+  // Der Rest des Repos bricht Prosa bei rund 100 Zeichen um; 130 ist deutlich
+  // darueber und trifft deshalb keinen normal gesetzten Absatz. Gegen das
+  // Zusammenziehen langer Zeilen steht seit dem Wortbudget zwar kein Anreiz
+  // mehr — aber der Schaden bleibt derselbe, und er ist schon einmal
+  // eingetreten: ein Steckbrief mit 449 Zeichen in der laengsten Zeile, unter
+  // Budget und schlechter lesbar als vorher.
   //
-  // Gilt fuer die CLAUDE.md mit, nicht nur fuer die Steckbriefe: Dort ist der
-  // Druck sogar groesser, weil ihre Budgets fast ausgeschoepft sind und sie in
-  // jeder Sitzung gelesen werden. Ohne die Grenze bliebe "die CLAUDE.md bleiben
-  // im Zeilenbudget" gruen, waehrend die Datei unlesbarer wird — die Regel
-  // wuerde dann genau den Schaden anrichten, gegen den sie geschrieben ist.
+  // Gilt fuer die CLAUDE.md mit, nicht nur fuer die Steckbriefe: Sie werden in
+  // jeder Sitzung gelesen, und die Backend-Datei hatte 55 Zeilen ueber 120
+  // Zeichen, als ihr Budget noch in Zeilen gemessen wurde.
   //
   // Tabellenzeilen sind ausgenommen: Eine Tabellenzeile laesst sich nicht
   // umbrechen, ohne die Tabelle zu zerschlagen.
@@ -142,10 +157,10 @@ void main() {
       reason:
           'Diese Dokumente haben ueberlange Zeilen:\n  '
           '${zuBreit.join('\n  ')}\n'
-          'Ein Zeilenbudget ist kein Grund, Absaetze zusammenzuziehen. Was '
-          'aus einem Steckbrief nicht in 40 umgebrochene Zeilen passt, gehoert '
-          'nach FALLSTRICKE.md — die hat kein Budget; was aus einer CLAUDE.md '
-          'nicht in ihre Zeilen passt, gehoert eine Ebene tiefer.',
+          'Ein Budget ist kein Grund, Absaetze zusammenzuziehen — gezaehlt '
+          'werden ohnehin Woerter. Was in einen Steckbrief nicht passt, '
+          'gehoert nach FALLSTRICKE.md (kein Budget); was in eine CLAUDE.md '
+          'nicht passt, gehoert eine Ebene tiefer.',
     );
   });
 
@@ -153,12 +168,12 @@ void main() {
     // Eine Datei, die niemand nennt, findet ein Agent mit frischem Kontext
     // nicht — und dann ist die Auslagerung ein Verlust statt einer Entlastung.
     //
-    // Die Gegenrichtung muss hier mitgeprueft werden, weil der allgemeine
-    // Verweis-Test sie nicht faengt: `FALLSTRICKE.md` traegt keinen Pfad, und
-    // Pfadverzeichnis.kennt loest einen blossen Dateinamen irgendwo im Baum
-    // auf. Solange *ein* Feature eine FALLSTRICKE.md hat, duerfte jeder andere
-    // Steckbrief auf eine geloeschte Nachbardatei zeigen, ohne dass etwas rot
-    // wird — ein toter Verweis genau der Art, gegen die es diese Tests gibt.
+    // Die Richtung "Datei da, niemand nennt sie" faengt der allgemeine
+    // Verweis-Test nicht: Er laeuft ueber die Verweise, nicht ueber die
+    // Dateien. Die andere Richtung deckt er inzwischen mit ab, seit ein
+    // blosser Dateiname unterhalb des verweisenden Dokuments aufgeloest wird
+    // (Pfadverzeichnis.kennt) — doppelt geprueft, aber mit einer Meldung, die
+    // sagt, was zu tun ist.
     final verstoesse = <String>[];
     for (final feature in features) {
       final brief = steckbrief(feature);
@@ -204,12 +219,20 @@ void main() {
         );
       }
 
+      // Gefordert sind die sieben Pflichtfelder, vollstaendig und in dieser
+      // Reihenfolge — mehr nicht: Ein Steckbrief darf ein achtes fettes
+      // Stichwort setzen (`**Hinweis:**`, `**Ablage:**`), ohne dass diese
+      // Pruefung anschlaegt. Sie hat frueher jedes zusaetzliche Feld als
+      // Verstoss gemeldet und damit eine Formvorschrift erzwungen, die
+      // niemand aufgeschrieben hatte. Gefiltert wird deshalb auf die
+      // Pflichtfelder, bevor verglichen wird.
       final gefunden = feldZeile
           .allMatches(text)
           .map((treffer) => treffer.group(1)!)
+          .where(felder.contains)
           .toList();
       if (gefunden.join(',') != felder.join(',')) {
-        verstoesse.add('$feature: Felder $gefunden statt $felder');
+        verstoesse.add('$feature: Pflichtfelder $gefunden statt $felder');
       }
 
       if (!text.contains('**Fallstricke**')) {
@@ -295,7 +318,22 @@ void main() {
   });
 
   test('die Feature-Tabelle in CLAUDE.md nennt jedes Feature', () {
-    final tabelle = File('CLAUDE.md').readAsStringSync().split('### Features');
+    // Bewusste Kopplung an die Ueberschrift: Nur unterhalb von "### Features"
+    // steht die gesuchte Tabelle, und in der Datei stehen weitere Tabellen mit
+    // Backtick-Zellen (die Regel-Tabelle am Ende). Ohne den Schnitt pruefte
+    // der Test die falsche. Wird die Ueberschrift umbenannt, faellt das hier
+    // auf, statt still die ganze Datei zu durchsuchen.
+    const ueberschrift = '### Features';
+    final wegweiser = File('CLAUDE.md').readAsStringSync();
+    expect(
+      wegweiser,
+      contains(ueberschrift),
+      reason:
+          'Die Feature-Tabelle wird unter der Ueberschrift "$ueberschrift" '
+          'gesucht. Wurde sie umbenannt, gehoert der Name hier nachgezogen.',
+    );
+
+    final tabelle = wegweiser.split(ueberschrift);
     final genannt = RegExp(
       r'^\|\s*`(\w+)`\s*\|',
       multiLine: true,
@@ -320,11 +358,11 @@ void main() {
     );
   });
 
-  test('die CLAUDE.md bleiben im Zeilenbudget', () {
+  test('die CLAUDE.md bleiben im Wortbudget', () {
     final budget = {
-      '../CLAUDE.md': maxWurzel,
-      'CLAUDE.md': maxTeilbaum,
-      '../AutomationService/CLAUDE.md': maxTeilbaum,
+      '../CLAUDE.md': maxWurzelWoerter,
+      'CLAUDE.md': maxTeilbaumWoerter,
+      '../AutomationService/CLAUDE.md': maxTeilbaumWoerter,
     };
     final verstoesse = <String>[];
 
@@ -334,9 +372,9 @@ void main() {
         verstoesse.add('$pfad fehlt');
         return;
       }
-      final zeilen = datei.readAsLinesSync().length;
-      if (zeilen > grenze) {
-        verstoesse.add('$pfad: $zeilen Zeilen (max $grenze)');
+      final anzahl = woerter(datei);
+      if (anzahl > grenze) {
+        verstoesse.add('$pfad: $anzahl Woerter (max $grenze)');
       }
     });
 
@@ -369,7 +407,9 @@ void main() {
       final datei = File(pfad);
       if (!datei.existsSync()) continue;
       for (final token in verweiseIn(datei.readAsStringSync()).toSet()) {
-        if (!verzeichnis.kennt(token)) tot.add('$pfad -> $token');
+        if (!verzeichnis.kennt(token, genanntIn: pfad)) {
+          tot.add('$pfad -> $token');
+        }
       }
     }
     tot.sort();
@@ -379,8 +419,11 @@ void main() {
       isEmpty,
       reason:
           'Diese Dateien werden in der Doku genannt, gibt es aber nicht '
-          '(mehr):\n  ${tot.join('\n  ')}\n'
-          'Verweis berichtigen. Soll ein Name absichtlich ins Leere zeigen '
+          '(mehr) — oder nicht dort, wo der Verweis sie vermuten laesst:\n  '
+          '${tot.join('\n  ')}\n'
+          'Ein blosser Dateiname wird unterhalb des Dokuments gesucht, das ihn '
+          'nennt; ist der Name im Repo eindeutig, reicht er ueberall. Sonst '
+          'den Pfad dazuschreiben. Soll ein Name absichtlich ins Leere zeigen '
           '(etwa eine abgeschaffte Datei), gehoert er mit Begruendung in '
           'verweisAusnahmen in doku_verweise.dart.',
     );

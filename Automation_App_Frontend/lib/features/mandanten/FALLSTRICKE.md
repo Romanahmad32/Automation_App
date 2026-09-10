@@ -1,7 +1,7 @@
 # mandanten — Fallstricke
 
-Der lange Rest zu `FEATURE.md`. Der Steckbrief hat ein Zeilenbudget, diese Datei nicht: was hier
-steht, musste nicht in vierzig Zeilen passen. Die Punkte, die man **vor** dem ersten Griff in das
+Der lange Rest zu `FEATURE.md`. Der Steckbrief hat ein Wortbudget, diese Datei nicht: was hier
+steht, musste nicht in 420 Wörter passen. Die Punkte, die man **vor** dem ersten Griff in das
 Feature kennen muss, stehen weiter im Steckbrief — hier steht, was einen beim zweiten erwischt.
 
 ## Zuordnungsstapel: alles hängt an der Größenordnung

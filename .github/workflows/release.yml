@@ -38,11 +38,11 @@ concurrency:
 permissions:
   contents: write
 
-env:
-  # Muss mit ci.yml uebereinstimmen: ein Release soll mit derselben Toolchain
-  # gebaut werden, mit der die CI es geprueft hat. Das .NET-SDK steuert
-  # global.json.
-  FLUTTER_VERSION: "3.41.2"
+# Die Flutter-Fassung steht hier nicht: Sie kommt — wie in ci.yml — aus
+# Automation_App_Frontend/.fvmrc, der Datei, die fvm selbst liest. Damit *kann*
+# der Release nicht mehr aus einer anderen Toolchain entstehen als die, gegen
+# die geprueft wurde; vorher war das eine zweite Zahl, die jemand beim
+# Versionssprung mitziehen musste. Das .NET-SDK steuert global.json.
 
 jobs:
   release:
@@ -65,6 +65,16 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', 'global.json') }}
           restore-keys: |
             nuget-${{ runner.os }}-
+
+      # Wortgleich zu ci.yml, dort steht die Begruendung.
+      - name: Gepinnte Flutter-Fassung
+        shell: pwsh
+        run: |
+          $pfad = Join-Path $env:GITHUB_WORKSPACE 'Automation_App_Frontend/.fvmrc'
+          $fassung = (Get-Content -LiteralPath $pfad -Raw | ConvertFrom-Json).flutter
+          if (-not $fassung) { throw "In $pfad steht keine Flutter-Fassung." }
+          "FLUTTER_VERSION=$fassung" >> $env:GITHUB_ENV
+          Write-Host "Flutter $fassung (aus .fvmrc)"
 
       - uses: subosito/flutter-action@v2
         with:

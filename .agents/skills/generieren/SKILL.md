@@ -8,8 +8,10 @@ description: >-
 
 # Flutter-Code generieren
 
-Lies `.claude/commands/generieren.md` vollständig und führe den dort beschriebenen Ablauf mit dem
-gepinnten Flutter-/Dart-SDK aus, sofern es lokal verfügbar ist.
+Lies den Befehlsabschnitt von `Automation_App_Frontend/CLAUDE.md` (dort steht der Aufruf, welche
+generierten Dateien versioniert sind und dass generierte Dateien nie von Hand geändert werden) und
+führe `dart run build_runner build` mit dem gepinnten Flutter-/Dart-SDK aus, sofern es lokal
+verfügbar ist.
 
 Arbeite aus `Automation_App_Frontend/`. Bearbeite generierte Dateien nie von Hand. Prüfe danach
 mit `git status --short` und einem gezielten Diff ausschließlich, ob die erwarteten versionierten

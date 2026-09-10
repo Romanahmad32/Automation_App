@@ -3,8 +3,9 @@
     Prueft die installierten Werkzeugfassungen gegen die gepinnten.
 
 .DESCRIPTION
-    Die Pruefkette verlaesst sich auf die gepinnte Toolchain: ci.yml legt die
-    Flutter-Fassung fest, global.json das .NET-SDK. Laeuft sie mit einer
+    Die Pruefkette verlaesst sich auf die gepinnte Toolchain:
+    Automation_App_Frontend/.fvmrc legt die Flutter-Fassung fest, global.json
+    das .NET-SDK. Laeuft sie mit einer
     anderen, entstehen Fehler, die wie Codefehler aussehen, aber keine sind:
     ein fremdes Flutter schreibt pubspec.lock um und faellt durch die
     Sperrdatei-Pruefung, ein fremdes SDK bringt eine andere Analyzer-
@@ -12,6 +13,13 @@
     Toolchain waren das zuletzt sechs rote Schritte ohne einen einzigen
     Defekt im Repo — und wer solche Laeufe oft sieht, lernt das Falsche:
     rote Schritte wegzuerklaeren.
+
+    .fvmrc ist die *einzige* Stelle, an der die Fassung steht. Die Workflows
+    lesen sie von dort in ihre Umgebung (Schritt "Gepinnte Flutter-Fassung" in
+    ci.yml und release.yml), statt sie ein zweites und drittes Mal zu nennen.
+    Bis zum 10.09.2026 stand sie dreifach da, und der groessere Teil dieses
+    Skripts verglich nur die drei Stellen gegeneinander — Aufwand fuer ein
+    Problem, das sich beseitigen laesst, statt es zu bewachen.
 
     Fuer Flutter loest das Skript das SDK selbst auf: zuerst die projektlokale
     Junction .fvm/flutter_sdk (aus `fvm use`), sonst die in .fvmrc gepinnte
@@ -49,9 +57,8 @@ $fehler = @()
 $sdkBin = ''
 
 if (-not $NurBackend) {
-    # Die gepinnte Fassung von dort lesen, wo sie gilt (ci.yml), statt sie
-    # hier zu wiederholen: zwei Stellen liefen auseinander, und dieses Skript
-    # pruefte dann gegen die falsche.
+    # .fvmrc ist die eine Stelle, an der die Fassung steht — hier wird sie
+    # gelesen, nicht wiederholt.
     #
     # Erst pruefen, ob die Datei da ist: `Get-Content` auf einen fehlenden Pfad
     # ist ein *nicht* abbrechender Fehler. Das Skript lief bisher darueber
@@ -60,51 +67,10 @@ if (-not $NurBackend) {
     # Versionsvergleich, der nie stattgefunden hatte, und fuhr die ganze Kette
     # gegen ein ungeprueftes Flutter. Ein Waechter, der bei eigener Stoerung
     # gruen meldet, ist schlimmer als keiner.
-    $ciDatei = Join-Path $wurzel '.github/workflows/ci.yml'
-    $gepinnt = ''
-    if (Test-Path -LiteralPath $ciDatei) {
-        $inhalt = Get-Content -LiteralPath $ciDatei -Raw
-        $gepinnt = [regex]::Match($inhalt, 'FLUTTER_VERSION:\s*"([^"]+)"').Groups[1].Value
-    }
-
-    # .fvmrc pinnt dieselbe Fassung ein zweites Mal, weil fvm nur sie liest.
-    # Laufen die beiden auseinander, benutzte die Kette hier ein anderes SDK,
-    # als die CI prueft — genau der Zustand, den dieses Skript verhindert.
     $fvmrc = Join-Path $wurzel 'Automation_App_Frontend/.fvmrc'
-    $fvmrcFassung = ''
+    $gepinnt = ''
     if (Test-Path -LiteralPath $fvmrc) {
-        $fvmrcFassung = (Get-Content -LiteralPath $fvmrc -Raw | ConvertFrom-Json).flutter
-        if ($gepinnt -and $fvmrcFassung -ne $gepinnt) {
-            $fehler += ".fvmrc nennt Flutter $fvmrcFassung, ci.yml FLUTTER_VERSION $gepinnt. " +
-                'Ein Versionssprung aendert beide zusammen, in einem eigenen Commit (docs/RELEASE.md).'
-        }
-    }
-
-    # release.yml pinnt die Fassung ein *drittes* Mal, und diese Stelle war bis
-    # hierher die einzige unbewachte. Sie ist die unangenehmste von allen: Aus
-    # ihr entsteht das ausgelieferte Paket. Wer die Pinnung anhebt und nur
-    # ci.yml und .fvmrc nachzieht, bekommt eine gruene Kette und eine gruene
-    # CI — und ein Release aus einer anderen Toolchain als die, gegen die
-    # geprueft wurde. docs/RELEASE.md hat das als Handarbeit vermerkt („wer die
-    # Pinnung anhebt, aendert alle drei zusammen"); ein Merkzettel ist aber
-    # genau das, was beim Versionssprung uebersehen wird.
-    $releaseDatei = Join-Path $wurzel '.github/workflows/release.yml'
-    if (Test-Path -LiteralPath $releaseDatei) {
-        $releaseInhalt = Get-Content -LiteralPath $releaseDatei -Raw
-        $releaseFassung = [regex]::Match(
-            $releaseInhalt, 'FLUTTER_VERSION:\s*"([^"]+)"').Groups[1].Value
-        if (-not $releaseFassung) {
-            # Dieselbe Ueberlegung wie bei ci.yml: Findet die Pruefung ihre
-            # eigene Vergleichsgrundlage nicht mehr, sagt sie das, statt still
-            # nichts zu vergleichen.
-            $fehler += "In $releaseDatei steht keine FLUTTER_VERSION mehr — die Pinnung " +
-                'des Auslieferungsbaus ist umgezogen, und dieses Skript muss ihr folgen.'
-        }
-        elseif ($gepinnt -and $releaseFassung -ne $gepinnt) {
-            $fehler += "release.yml nennt Flutter $releaseFassung, ci.yml FLUTTER_VERSION $gepinnt. " +
-                'Aus release.yml entsteht das ausgelieferte Paket — ein Versionssprung aendert ' +
-                'ci.yml, release.yml und .fvmrc zusammen (docs/RELEASE.md).'
-        }
+        $gepinnt = (Get-Content -LiteralPath $fvmrc -Raw | ConvertFrom-Json).flutter
     }
 
     # Wo das SDK gesucht wird, in dieser Reihenfolge:
@@ -126,20 +92,18 @@ if (-not $NurBackend) {
     # bleibt es beim Abbruch weiter unten mit dem Hinweis auf `fvm install`:
     # ein *pruefendes* Skript soll weder den Arbeitsbaum aendern noch
     # ungefragt ins Netz greifen.
-    # Gesucht wird nach .fvmrc, denn nur die liest fvm beim Anlegen des Cache-
-    # Eintrags. Fehlt sie, zaehlt die Pinnung aus ci.yml: Ein Klon ohne .fvmrc
-    # soll nicht stillschweigend am Cache vorbeilaufen — und wichen die beiden
-    # voneinander ab, stuende der Abbruch schon oben.
+    #
+    # Gesucht wird die Fassung aus .fvmrc, denn genau die legt fvm beim Anlegen
+    # des Cache-Eintrags unter ihrem Namen ab.
     $kandidaten = @(Join-Path $wurzel 'Automation_App_Frontend/.fvm/flutter_sdk/bin')
-    $imCache = if ($fvmrcFassung) { $fvmrcFassung } else { $gepinnt }
-    if ($imCache) {
+    if ($gepinnt) {
         # fvm legt seine SDKs unter <Cache>/versions/<Fassung> ab; der Cache
         # ist FVM_CACHE_PATH, sonst ~/fvm (nachzusehen in `fvm api context`).
         # Ein per `fvm config --cache-path` verstellter Cache steht nur in
         # fvms eigener Konfiguration und bleibt hier unsichtbar — dann greift
         # der Abbruch unten, nicht ein falsches SDK.
         $fvmCache = if ($env:FVM_CACHE_PATH) { $env:FVM_CACHE_PATH } else { Join-Path $HOME 'fvm' }
-        $kandidaten += Join-Path $fvmCache "versions/$imCache/bin"
+        $kandidaten += Join-Path $fvmCache "versions/$gepinnt/bin"
     }
 
     # -LiteralPath, weil Test-Path den Pfad sonst als Platzhaltermuster liest:
@@ -156,8 +120,8 @@ if (-not $NurBackend) {
     $flutterBefehl = if ($sdkBin) { Join-Path $sdkBin 'flutter.bat' } else { 'flutter' }
 
     if (-not $gepinnt) {
-        $fehler += "In $ciDatei steht keine FLUTTER_VERSION mehr — die Pinnung ist " +
-            'umgezogen, und dieses Skript muss ihr folgen.'
+        $fehler += "In $fvmrc steht keine Flutter-Fassung — die Pinnung ist umgezogen, " +
+            'und dieses Skript, ci.yml und release.yml muessen ihr folgen (docs/RELEASE.md).'
     }
     elseif ($flutterBefehl -eq 'flutter' -and -not (Get-Command flutter -ErrorAction SilentlyContinue)) {
         $fehler += "Flutter ist nicht im PATH und kein FVM-SDK liegt vor. Gepinnt ist $gepinnt — " +
@@ -189,8 +153,8 @@ if (-not $NurBackend) {
         if ($installiert -ne $gepinnt) {
             $fehler += "Flutter $installiert statt der gepinnten $gepinnt. In Automation_App_Frontend " +
                 "'fvm install $gepinnt' und 'fvm use $gepinnt' ausfuehren (die Kette greift dann von " +
-                'selbst zum SDK unter .fvm/) — oder die Pinnung anheben: eigener Commit mit ci.yml ' +
-                'FLUTTER_VERSION, .fvmrc und pubspec.lock zusammen.'
+                'selbst zum SDK unter .fvm/) — oder die Pinnung anheben: eigener Commit mit .fvmrc ' +
+                'und pubspec.lock zusammen.'
         }
     }
 }

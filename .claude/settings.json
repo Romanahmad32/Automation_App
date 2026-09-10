@@ -18,37 +18,26 @@
       "Bash(git clean *)",
       "Bash(git rebase *)",
       "Bash(git checkout -- *)",
+      "Bash(git checkout .)",
+      "Bash(git checkout HEAD -- *)",
+      "Bash(git restore *)",
+      "Bash(git branch -D *)",
+      "Bash(git stash drop*)",
       "PowerShell(git push *)",
       "PowerShell(git reset --hard *)",
       "PowerShell(git clean *)",
       "PowerShell(git rebase *)",
-      "PowerShell(git checkout -- *)"
+      "PowerShell(git checkout -- *)",
+      "PowerShell(git checkout .)",
+      "PowerShell(git checkout HEAD -- *)",
+      "PowerShell(git restore *)",
+      "PowerShell(git branch -D *)",
+      "PowerShell(git stash drop*)"
     ]
   },
   "hooks": {
-    "PreToolUse": [
+    "Stop": [
       {
-        "matcher": "Bash|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell",
-            "args": [
-              "-NoProfile",
-              "-ExecutionPolicy",
-              "Bypass",
-              "-File",
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/zweigname.ps1"
-            ],
-            "timeout": 15,
-            "statusMessage": "Zweigname"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
@@ -60,7 +49,7 @@
               "-File",
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/dart-format.ps1"
             ],
-            "timeout": 30,
+            "timeout": 60,
             "statusMessage": "dart format"
           }
         ]

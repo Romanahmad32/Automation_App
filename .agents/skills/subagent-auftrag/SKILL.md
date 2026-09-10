@@ -19,7 +19,7 @@ Der Auftrag muss enthalten:
 - Verweis auf Wurzel-`AGENTS.md`, betroffene Teilbaum-`AGENTS.md`, `REQUIREMENTS.md` bei
   Fachverhalten und die passenden `FEATURE.md`,
 - Hinweis auf vorhandene Nutzeränderungen und das Verbot, sie zurückzusetzen,
-- für Flutter das gepinnte SDK aus `FLUTTER_VERSION`/`.fvmrc`, Befehle im Vordergrund, keine
+- für Flutter das gepinnte SDK aus `.fvmrc`, Befehle im Vordergrund, keine
   `Wait-Process`- oder Hintergrund-Testschleifen,
 - genau die gezielten Prüfungen, die der Agent selbst ausführen soll; zentrale Analyse,
   Architekturtests und volle Prüfkette bleiben beim koordinierenden Agenten,

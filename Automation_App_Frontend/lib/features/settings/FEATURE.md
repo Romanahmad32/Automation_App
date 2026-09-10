@@ -37,4 +37,4 @@ Zustandszeile, OneDrive-Erkennung, Schriftgröße) · indirekt
   `AbweichendeOrdnerAufklapper`, Name/Zeitpunkt/Filter des Registers dagegen daneben in `RegisterSpiegelFelder` — sie sind
   keine Ordnerwahl und dürfen nicht mit eingeklappt werden.
 - Die **Mail-Signatur** (Reiter „E-Mail") und die **relativ abgelegten Ordnerpfade** haben jeweils eine Geschichte, die hier
-  nicht in vierzig Zeilen passt — beides steht in `FALLSTRICKE.md`.
+  nicht in das Wortbudget passt — beides steht in `FALLSTRICKE.md`.
