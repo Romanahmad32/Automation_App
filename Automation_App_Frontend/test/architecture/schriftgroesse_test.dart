@@ -36,8 +36,7 @@ void main() {
   const erlaubtesVerzeichnis = 'lib/core/theme/presentation/';
 
   // Namentliche Ausnahmen außerhalb des Themes. Jede nennt ihren Grund — eine
-  // neue kommt nur mit einem dazu (Vorbild: die `erlaubt`-Map in
-  // zeichen_anzeige_test.dart).
+  // neue kommt nur mit einem dazu.
   const ausnahmen = <String, String>{
     'lib/features/email_versand/presentation/widgets/signatur_ansicht.dart':
         'Grundschrift des HTML-Renders der Mail-Signatur — die Signatur '

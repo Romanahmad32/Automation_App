@@ -71,12 +71,13 @@ Kanzleidaten, Arbeitsplatzwechsel, Registerhistorie), und der Steckbrief eines F
 nicht, dass es Teil einer ist. Wer eine Kette an einer Stelle ändert und die andere stehen
 lässt, bricht sie — kein Test fängt das.
 
-Der Steckbrief hat ein Budget (40 Zeilen, keine über 130 Zeichen) — es hält ihn zum Einstieg
-tauglich. Wo mehr zu erklären ist, liegt daneben eine **`FALLSTRICKE.md` ohne Budget** (welche
-Features eine haben, sagt `ls lib/features/*/FALLSTRICKE.md` — eine Aufzählung hier veraltet
-stillschweigend); der Steckbrief verweist darauf, ein Test besteht darauf.
-Was nicht mehr in die vierzig Zeilen passt, wandert **dorthin** — nie in kürzere Sätze: Absätze
-zusammenzuziehen, um unter das Budget zu kommen, hat schon einmal lesbare Doku unlesbar gemacht.
+Der Steckbrief hat ein Budget (420 Wörter, keine Zeile über 130 Zeichen) — es hält ihn zum Einstieg
+tauglich. Gezählt werden **Wörter, nicht Zeilen**: Wie der Text umgebrochen ist, entscheidet allein
+die Lesbarkeit, und Absätze zusammenzuziehen bringt am Budget nichts. Wo mehr zu erklären ist, liegt
+daneben eine **`FALLSTRICKE.md` ohne Budget** (welche Features eine haben, sagt
+`ls lib/features/*/FALLSTRICKE.md` — eine Aufzählung hier veraltet stillschweigend); der Steckbrief
+verweist darauf, ein Test besteht darauf. Was nicht mehr hineinpasst, wandert **dorthin** — nie in
+kürzere Sätze.
 
 | Feature | wofür |
 |---|---|
@@ -111,8 +112,9 @@ der Anwalt direkt nach dem Öffnen der App.
 - **Dateien kurz halten.** Handgeschriebene Dart-Dateien max. **250 Anweisungszeilen** und **450
   Zeilen insgesamt**. Kommentare und Leerzeilen zählen nicht mit — eine Datei aufzuteilen, um
   Kommentar unterzubringen, wäre ein Schnitt aus der Zählung statt aus dem Entwurf. Wird eine Datei
-  länger, in mehrere Widgets/Klassen aufteilen. Zwei Formularseiten liegen noch darüber und stehen
-  namentlich in `file_length_test.dart`; sie dürfen nur noch schrumpfen.
+  länger, in mehrere Widgets/Klassen aufteilen. **Altlasten gibt es keine** — die Liste in
+  `file_length_test.dart` ist leer und soll es bleiben: Eine zu lange Datei wird aufgeteilt, nicht
+  eingetragen.
 - **Keine privaten Typen und keine privaten Top-Level-Funktionen** (kein `_WidgetXyz`, kein
   `_hilfsfunktion()`). Ein privates Widget ist außerhalb seiner Datei kein benennbarer Typ mehr:
   nicht wiederverwendbar, nicht einzeln testbar — und die nächste Änderung baut daneben eine zweite
@@ -160,7 +162,7 @@ der Anwalt direkt nach dem Öffnen der App.
 | Kein `fontSize` außerhalb des Themes | `test/architecture/schriftgroesse_test.dart` |
 | Schichten `domain`/`data`/`presentation` (vier Regeln) | `test/architecture/clean_architecture_test.dart` |
 | HTTP-Vertrag gegen `docs/openapi.json` (Wurzel-`CLAUDE.md`) | `test/architecture/http_vertrag_test.dart` |
-| Steckbrief je Feature, Feature-Tabelle, Zeilenbudget der `CLAUDE.md`, lebende Verweise | `test/architecture/dokumentation_test.dart` |
+| Steckbrief je Feature, Feature-Tabelle, Wortbudget der `CLAUDE.md`, lebende Verweise | `test/architecture/dokumentation_test.dart` |
 | Anforderungsverweise (`§4.8`, nie `Req. …`) gegen den Index, Index gegen `REQUIREMENTS.md` | `test/architecture/anforderungen_test.dart` |
 | Formatierung | `dart format --set-exit-if-changed` (CI) |
 

@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Was tatsächlich auf dem Bildschirm steht.
 ///
-/// `zeichen_anzeige_test.dart` verbietet die *falsche* Schreibweise, sagt aber
-/// nichts darüber, ob die richtige auch das Richtige liefert — beides zusammen
-/// ergibt die Regel. Und der Rückfall („Referenz nicht zerlegbar") ist der
+/// Geprüft wird, ob die richtige Schreibweise auch das Richtige liefert —
+/// dass `ZeichenText` also wirklich das Zeichen zeigt und nicht die Referenz,
+/// aus der es stammt. Und der Rückfall („Referenz nicht zerlegbar") ist der
 /// Fall, in dem Zeichen und Referenz zusammenfallen: Er entscheidet, ob die
 /// Kachel eine Nebenzeile bekommt oder dieselbe Zeichenkette doppelt zeigt.
 void main() {

@@ -1,6 +1,6 @@
 # settings — Fallstricke
 
-Was im Steckbrief (`FEATURE.md`) nicht mehr in vierzig Zeilen passt. Hier steht das *Warum*; das
+Was im Steckbrief (`FEATURE.md`) nicht mehr in sein Wortbudget passt. Hier steht das *Warum*; das
 *Was* steht dort.
 
 ## Eine Ordnerwahl im Alltag
@@ -111,8 +111,8 @@ einem Backend-DTO aus `docs/openapi.json` zugeordnet sein, und es dürfen nur de
 vorkommen. Ein Tippfehler im Schlüssel ist sonst zur Laufzeit ein stilles `null` — kein Compilerfehler
 und keine rote Prüfkette.
 
-Und der Steckbrief nebenan hat **40 Zeilen, keine über 130 Zeichen**, beides erzwungen von
+Und der Steckbrief nebenan hat **420 Wörter, keine Zeile über 130 Zeichen**, beides erzwungen von
 `test/architecture/dokumentation_test.dart`. Was nicht hineinpasst, gehört hierher — nie in kürzere
-Sätze: Absätze zusammenzuziehen, um unter das Budget zu kommen, hat schon einmal lesbare Doku
+Sätze: Absätze zusammenzuziehen bringt am Wortbudget nichts und hat schon einmal lesbare Doku
 unlesbar gemacht. Der Verweis wird in **beide** Richtungen geprüft: Steckbrief ohne diese Datei ist
 so rot wie diese Datei ohne Verweis im Steckbrief.

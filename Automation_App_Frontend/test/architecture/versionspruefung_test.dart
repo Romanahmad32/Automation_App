@@ -13,11 +13,16 @@ import 'package:flutter_test/flutter_test.dart';
 /// rot sieht, lernt das Falsche: rote Schritte wegzuerklären.
 ///
 /// Getestet wird an einem Wegwerf-Repo im Temp-Verzeichnis: Im Frontend-Modus
-/// liest das Skript nur `.github/workflows/ci.yml`,
-/// `Automation_App_Frontend/.fvmrc` und das SDK selbst, und die lassen sich
-/// vollständig nachbauen. Nur so sind die interessanten Fälle überhaupt
-/// herstellbar — „Junction fehlt" ist im Arbeitsverzeichnis dessen, der den
-/// Test fährt, nicht erreichbar, ohne sie ihm wegzunehmen.
+/// liest das Skript nur `Automation_App_Frontend/.fvmrc` und das SDK selbst,
+/// und beides lässt sich vollständig nachbauen. Nur so sind die interessanten
+/// Fälle überhaupt herstellbar — „Junction fehlt" ist im Arbeitsverzeichnis
+/// dessen, der den Test fährt, nicht erreichbar, ohne sie ihm wegzunehmen.
+///
+/// Was dieser Test **nicht** mehr prüft: dass die gepinnte Fassung an mehreren
+/// Stellen dieselbe ist. Sie steht seit dem 10.09.2026 nur noch in `.fvmrc`;
+/// `ci.yml` und `release.yml` lesen sie von dort. Vier Testfälle bewachten
+/// zuvor, dass die drei nicht auseinanderlaufen — Wächter für ein Problem, das
+/// sich beseitigen ließ, statt es zu bewachen.
 ///
 /// Die SDKs sind Attrappen: eine `flutter.bat`, die eine Versionszeile ausgibt.
 /// Das genügt, weil das Skript die Fassung nie aus dem Pfad ableitet, sondern
@@ -120,101 +125,8 @@ void main() {
         );
       });
 
-      test('nimmt ohne .fvmrc die Pinnung aus ci.yml', () async {
+      test('meldet nicht grün, wenn .fvmrc fehlt', () async {
         File('${tmp.path}\\Automation_App_Frontend\\.fvmrc').deleteSync();
-        final cache = Directory('${tmp.path}\\cache');
-        final bin = legeSdkAn(cache, testfassung);
-
-        final lauf = await pruefe(tmp, cache: cache);
-
-        expect(
-          lauf.exitCode,
-          0,
-          reason:
-              'Ohne .fvmrc bleibt die Pinnung aus ci.yml — daran am Cache '
-              'vorbeizulaufen, wäre genau der Rückfall auf den PATH, den '
-              'diese Auflösung abstellt.\n${protokoll(lauf)}',
-        );
-        expect(alsPfad(lauf.stdout), alsPfad(bin.path));
-      });
-
-      test(
-        'hält an, wenn .fvmrc und FLUTTER_VERSION auseinanderlaufen',
-        () async {
-          File(
-            '${tmp.path}\\Automation_App_Frontend\\.fvmrc',
-          ).writeAsStringSync('{ "flutter": "1.2.3" }');
-          final cache = Directory('${tmp.path}\\cache');
-          legeSdkAn(cache, '1.2.3');
-
-          final lauf = await pruefe(tmp, cache: cache);
-
-          expect(lauf.exitCode, 1, reason: protokoll(lauf));
-          expect(
-            protokoll(lauf),
-            contains('.fvmrc nennt Flutter 1.2.3, ci.yml FLUTTER_VERSION'),
-            reason:
-                'Der Cache-Weg löst nach .fvmrc auf, die CI prüft nach '
-                'FLUTTER_VERSION. Laufen die beiden auseinander, fährt die Kette '
-                'ein anderes SDK als die CI — der Zustand, den dieses Skript '
-                'verhindert.',
-          );
-        },
-      );
-
-      /// Die dritte Pinnungsstelle. Sie war bis zum 03.09.2026 die einzige
-      /// unbewachte — und die unangenehmste: Aus `release.yml` entsteht das
-      /// ausgelieferte Paket. Wer die Pinnung anhebt und nur `ci.yml` und
-      /// `.fvmrc` nachzieht, bekam eine grüne Kette, eine grüne CI und ein
-      /// Release aus einer ungeprüften Toolchain. `docs/RELEASE.md` hielt das
-      /// als Handarbeit fest („wer die Pinnung anhebt, ändert alle drei
-      /// zusammen") — ein Merkzettel ist aber genau das, was beim
-      /// Versionssprung übersehen wird.
-      test('hält an, wenn release.yml und ci.yml auseinanderlaufen', () async {
-        File(
-          '${tmp.path}\\.github\\workflows\\release.yml',
-        ).writeAsStringSync('env:\n  FLUTTER_VERSION: "1.2.3"\n');
-        final cache = Directory('${tmp.path}\\cache');
-        legeSdkAn(cache, testfassung);
-
-        final lauf = await pruefe(tmp, cache: cache);
-
-        expect(lauf.exitCode, 1, reason: protokoll(lauf));
-        expect(
-          protokoll(lauf),
-          contains('release.yml nennt Flutter 1.2.3, ci.yml FLUTTER_VERSION'),
-          reason:
-              'Der Auslieferungsbau fährt die Fassung aus release.yml. Läuft '
-              'sie gegen ci.yml, entsteht das Paket aus einer anderen '
-              'Toolchain als die, gegen die geprüft wurde — und ein Paket aus '
-              'ungeprüfter Toolchain ist schlimmer als keins, denn es sieht '
-              'fertig aus.',
-        );
-      });
-
-      test('meldet nicht grün, wenn release.yml die Pinnung verliert', () async {
-        File(
-          '${tmp.path}\\.github\\workflows\\release.yml',
-        ).writeAsStringSync('env:\n  FLUTTER_FASSUNG: "$testfassung"\n');
-        final cache = Directory('${tmp.path}\\cache');
-        legeSdkAn(cache, testfassung);
-
-        final lauf = await pruefe(tmp, cache: cache);
-
-        expect(
-          lauf.exitCode,
-          1,
-          reason:
-              'Die Datei liegt da, die Pinnung darin nicht — verglichen wurde '
-              'also nichts. Dieselbe Überlegung wie bei ci.yml: Ein Wächter, '
-              'der bei eigener Störung grün meldet, ist schlimmer als '
-              'keiner.\n${protokoll(lauf)}',
-        );
-        expect(protokoll(lauf), contains('release.yml'));
-      });
-
-      test('meldet nicht grün, wenn ci.yml fehlt', () async {
-        File('${tmp.path}\\.github\\workflows\\ci.yml').deleteSync();
         final cache = Directory('${tmp.path}\\cache');
         legeSdkAn(cache, testfassung);
 
@@ -231,7 +143,7 @@ void main() {
               'gab. Ein Wächter, der bei eigener Störung grün meldet, ist '
               'schlimmer als keiner.\n${protokoll(lauf)}',
         );
-        expect(protokoll(lauf), contains('FLUTTER_VERSION'));
+        expect(protokoll(lauf), contains('.fvmrc'));
       });
     },
     skip: Platform.isWindows
@@ -297,18 +209,6 @@ const String testfassung = '9.9.9';
 void legeTestrepoAn(Directory wurzel, File skript) {
   Directory('${wurzel.path}\\scripts').createSync(recursive: true);
   skript.copySync('${wurzel.path}\\scripts\\versionspruefung.ps1');
-
-  Directory('${wurzel.path}\\.github\\workflows').createSync(recursive: true);
-  File(
-    '${wurzel.path}\\.github\\workflows\\ci.yml',
-  ).writeAsStringSync('env:\n  FLUTTER_VERSION: "$testfassung"\n');
-
-  // release.yml pinnt ein drittes Mal und muss hier mitliegen, sonst
-  // überspringt das Skript den Vergleich (`Test-Path`) und die Fälle, die ihn
-  // prüfen, liefen gegen eine Prüfung, die gar nicht stattfindet.
-  File(
-    '${wurzel.path}\\.github\\workflows\\release.yml',
-  ).writeAsStringSync('env:\n  FLUTTER_VERSION: "$testfassung"\n');
 
   Directory('${wurzel.path}\\Automation_App_Frontend').createSync();
   File(

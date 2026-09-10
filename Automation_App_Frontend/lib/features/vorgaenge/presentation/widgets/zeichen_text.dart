@@ -14,7 +14,8 @@ import 'package:flutter/material.dart';
 /// Die volle Referenz gehört an genau drei Stellen — ins Zentralruf-Formular,
 /// in die Zuordnung einer Antwort und als Nebenzeile auf die Vorgangskachel.
 /// Dort steht sie bewusst als `Text(vorgang.referenz)` und nicht über diesen
-/// Baustein; `test/architecture/zeichen_anzeige_test.dart` führt die Liste.
+/// Baustein. Überall sonst gehört sie hierher: `Text(vorgang.referenz)` in
+/// einer neuen Anzeigestelle ist ein Rückfall, kein Sonderfall.
 class ZeichenText extends StatelessWidget {
   /// Der Vorgang, dessen Zeichen gezeigt wird. Null bei [ZeichenText.ausReferenz].
   final Vorgang? vorgang;

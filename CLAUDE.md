@@ -71,8 +71,8 @@ Automation_App/                  ← dieser Ordner IST das Git-Repo (Romanahmad3
 Das Backend lauscht auf `http://localhost:5143` (net10.0, SignalR für die Postfach-Meldungen).
 CI: `.github/workflows/ci.yml`; Auslieferung läuft über Git-Tags
 (`git tag v1.2.0 && git push origin v1.2.0`, Einzelheiten in [`docs/RELEASE.md`](docs/RELEASE.md)).
-Die Toolchain ist festgenagelt (`global.json`, `FLUTTER_VERSION`, `.fvmrc`); ein Versionssprung
-gehört in einen eigenen Commit.
+Die Toolchain ist festgenagelt (`global.json` für .NET, `Automation_App_Frontend/.fvmrc` für Flutter,
+von ci.yml und release.yml gelesen); ein Versionssprung gehört in einen eigenen Commit.
 
 Ein Fachthema, zwei Orte — die Zuordnung Feature ↔ Slice:
 
@@ -159,12 +159,12 @@ Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Tes
 | Schichten (Clean Architecture / senkrechte Schnitte) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
 | Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs`, `test/architecture/http_vertrag_test.dart` |
-| Doku: Steckbrief je Feature, Zeilenbudgets, lebende Verweise | `test/architecture/dokumentation_test.dart`, `Architecture/DokumentationTests.cs` |
+| Doku: Steckbrief je Feature, Wortbudgets, lebende Verweise | `test/architecture/dokumentation_test.dart`, `Architecture/DokumentationTests.cs` |
 | Anforderungsverweise (`§4.8`) gegen `docs/ANFORDERUNGEN_INDEX.md`, und dessen Gliederung gegen `REQUIREMENTS.md` | `test/architecture/anforderungen_test.dart`, `Architecture/DokumentationTests.cs` |
 | Formatierung | `dart format --set-exit-if-changed`, `dotnet format --verify-no-changes` (CI) |
 | Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
 | `pubspec.lock` passt zur gepinnten Flutter-Fassung | `pub get` + `git diff --exit-code` (CI, `check.ps1`) |
-| Zweigname beginnt mit `feature/` oder `bugfix/` ([`docs/RELEASE.md`](docs/RELEASE.md)) | `.claude/hooks/zweigname.ps1`, CI-Schritt „Zweigname"; der Hook selbst durch `zweigname_hook_test.dart` |
+| Zweigname beginnt mit `feature/` oder `bugfix/` ([`docs/RELEASE.md`](docs/RELEASE.md)) | CI-Schritt „Zweigname" in `.github/workflows/ci.yml` |
 
 Schlägt eine davon fehl, ist die Antwort **nie**, die Regel zu lockern oder das Limit
 hochzusetzen. Begründete Ausnahmen gehören namentlich in den jeweiligen Test.
@@ -173,8 +173,8 @@ hochzusetzen. Begründete Ausnahmen gehören namentlich in den jeweiligen Test.
 
 Versioniert, damit jeder Agent dieselbe Umgebung vorfindet — hier, im Worktree, in der Cloud:
 Rechte und Hooks (`settings.json`), die Hooks selbst (`hooks/`), Slash-Befehle (`commands/`),
-Skills (`skills/`). **Was davon welche Regel durchsetzt und warum, steht in
-[`.claude/README.md`](.claude/README.md)** — dort auch, warum der Geheimnis-Wächter bewusst ein
-Git-Hook ist und keiner von diesen, und was ein Hook kostet, der vor *jedem* Werkzeugaufruf läuft.
+Skills (`skills/`), Subagenten (`agents/`). **Was davon welche Regel durchsetzt und warum, steht
+in [`.claude/README.md`](.claude/README.md)** — dort auch, warum der Geheimnis-Wächter bewusst ein
+Git-Hook ist und keiner von diesen, und was ein Hook je Ereignis kostet (gemessen).
 
 Maschinenlokales gehört in `.claude/settings.local.json` — die bleibt ignoriert.
