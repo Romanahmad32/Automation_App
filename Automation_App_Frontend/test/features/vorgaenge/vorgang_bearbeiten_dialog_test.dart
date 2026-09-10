@@ -87,33 +87,44 @@ void main() {
     expect(gespeichert?.geschaedigtenKennzeichen, 'HG-E 1427');
   });
 
-  testWidgets('weist ein unlesbares Kennzeichen ab, statt es zu speichern', (
+  /// Ein Versicherungskennzeichen (E-Scooter) geht unverändert in den Bestand:
+  /// Welche Fahrzeuge in die Kanzlei kommen, entscheidet nicht die App (§4.1).
+  /// Der Hinweis darunter steht schon beim Tippen, nicht erst beim Speichern —
+  /// und hält es nicht auf (#130).
+  testWidgets('speichert ein Kennzeichen ausserhalb des Pkw-Schemas', (
     tester,
   ) async {
     await zeigeDialog(tester, basis(kennzeichen: 'HG-E 1427'));
 
-    await tester.enterText(kennzeichenFeld(), 'der blaue Kombi');
+    await tester.enterText(kennzeichenFeld(), '123 ABC');
+    await tester.pump();
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsOneWidget);
+
     await speichere(tester);
 
-    expect(gespeichert, isNull);
-    expect(find.text(KennzeichenField.hinweis), findsOneWidget);
+    expect(gespeichert?.geschaedigtenKennzeichen, '123 ABC');
   });
 
-  /// Mehrdeutig ist kein Tippfehler, sondern eine fehlende Angabe — und die
-  /// Meldung sagt genau das, statt die Konvention noch einmal vorzubeten.
-  /// Geraten wird nichts: Ein falsch aufgeteiltes Kennzeichen benennt ein
-  /// anderes Fahrzeug und träfe die Zuordnung der Zentralruf-Antwort.
-  testWidgets('weist ein mehrdeutiges Kennzeichen ab', (tester) async {
+  /// Mehrdeutig ist kein Tippfehler, sondern eine fehlende Angabe — und der
+  /// Hinweis sagt genau das, statt die Konvention noch einmal vorzubeten.
+  /// **Geraten** wird nichts: Ein falsch aufgeteiltes Kennzeichen benennt ein
+  /// anderes Fahrzeug und träfe die Zuordnung der Zentralruf-Antwort. Der Wert
+  /// bleibt deshalb ungeteilt stehen — abgewiesen wird er nicht.
+  testWidgets('speichert ein mehrdeutiges Kennzeichen ungeteilt', (
+    tester,
+  ) async {
     await zeigeDialog(tester, basis(kennzeichen: 'HG-E 1427'));
 
     await tester.enterText(kennzeichenFeld(), 'hge1427');
-    await speichere(tester);
-
-    expect(gespeichert, isNull);
+    await tester.pump();
     expect(
       find.text('Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427'),
       findsOneWidget,
     );
+
+    await speichere(tester);
+
+    expect(gespeichert?.geschaedigtenKennzeichen, 'hge1427');
   });
 
   /// Ein leeres Feld heißt „nicht erfasst" — kein Grund, das Speichern

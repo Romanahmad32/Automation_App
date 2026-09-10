@@ -18,10 +18,14 @@ import 'vorgang_starten_doubles.dart';
 /// speichern"). Bei "Am größten" (Issue #57) sind die Beschriftungen deutlich
 /// breiter, und auf einem schmalen Fenster (~700 px) reicht der Platz nicht
 /// mehr für beide Knöpfe nebeneinander — die Zeile läuft rechts über.
+///
+/// Dazu seit #130 die Zeile darüber: Kein Knopf hier stirbt mehr stumm, und
+/// kein Kennzeichen sperrt ihn mehr.
 void main() {
   Future<void> zeigeLeiste(
     WidgetTester tester, {
     required double breite,
+    void Function(FormGroup form)? fuelle,
   }) async {
     final bloc = VorgangStartenBloc(
       FesterZentralrufPrefill(
@@ -39,6 +43,7 @@ void main() {
     );
     addTearDown(bloc.close);
     final formular = createVorgangForm();
+    fuelle?.call(formular);
 
     tester.view.physicalSize = Size(breite, 400);
     tester.view.devicePixelRatio = 1;
@@ -86,4 +91,60 @@ void main() {
       );
     },
   );
+
+  /// Der Fall aus der Kanzlei: ein E-Scooter-Mandat. Das
+  /// Versicherungskennzeichen (drei Ziffern über drei Buchstaben) passt nicht
+  /// ins Pkw-Schema — und darf trotzdem nichts aufhalten (#130).
+  testWidgets('ein Versicherungskennzeichen sperrt die Knoepfe nicht', (
+    tester,
+  ) async {
+    await zeigeLeiste(
+      tester,
+      breite: 1200,
+      fuelle: (form) {
+        form.control('auftragsnummer').value = '17';
+        form.control('kennzeichenGegner').value = '123 ABC';
+      },
+    );
+
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Vorgang speichern'),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    expect(find.textContaining('Pflichtfeld'), findsNothing);
+  });
+
+  /// Und der zweite Teil des Issues, hier am Datum: Ein halb getipptes
+  /// `TT.MM.JJJJ` sperrte den Knopf, ohne dass irgendwo stand, welches Feld
+  /// gemeint ist — das Feld war nie „touched", also blieb es weiss.
+  testWidgets('ein ungueltiges Datum wird ueber dem Knopf benannt', (
+    tester,
+  ) async {
+    await zeigeLeiste(
+      tester,
+      breite: 1200,
+      fuelle: (form) {
+        form.control('auftragsnummer').value = '17';
+        form.control('schadentag').value = '1.1.';
+      },
+    );
+
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Vorgang speichern'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(find.text('1 Feld ist noch zu berichtigen:'), findsOneWidget);
+    expect(
+      find.text('Unfalldatum: Datum im Format TT.MM.JJJJ angeben'),
+      findsOneWidget,
+    );
+  });
 }

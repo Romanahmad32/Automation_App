@@ -118,6 +118,13 @@ dabei erfassten Daten gehören zu **einem Vorgang** (siehe 3).
   das des Geschädigten — in der Oberfläche, in den Datenquellen der Vorlagenfelder und in den
   Platzhaltern der Word-Dateien. Vorlagen, die noch das blosse `{{Kennzeichen}}` tragen, werden
   weiterhin als Gegnerkennzeichen gefüllt: Das Umbenennen darf keine bestehende Word-Datei brechen.
+- **[M] Die Bauart des Fahrzeugs ist kein Aufnahmekriterium.** Welche Fahrzeuge in die Kanzlei
+  kommen, entscheidet nicht die App: Ein E-Scooter trägt ein **Versicherungskennzeichen** (drei
+  Ziffern über drei Buchstaben), ein Behördenfahrzeug ein Bundeswehr-, NATO- oder THW-Kennzeichen,
+  ein Händlerfahrzeug ein Kurzzeitkennzeichen — und der Unfallgegner womöglich ein ausländisches.
+  Kein Kennzeichenfeld der App darf einen Wert deshalb zurückweisen oder eine Handlung sperren.
+  Was die App nicht als Kfz-Kennzeichen liest, übernimmt sie unverändert und sagt es dazu (siehe
+  4.2 zur Schreibweise, 1.3 zum Hinweis statt Entscheidung).
 - **[M]** Bei einem bereits bekannten Mandanten werden dessen Stammdaten aus dem Mandantenregister
   übernommen statt erneut eingegeben (siehe 5.1). Neue Mandanten werden bei dieser Gelegenheit
   erfasst.
@@ -137,7 +144,13 @@ dabei erfassten Daten gehören zu **einem Vorgang** (siehe 3).
   Beispiel: 84/26 C03_HG-E 1427
   ```
 
-  Kfz-Kennzeichen werden durchgängig mit Bindestrich geschrieben (`HG-E 1427`).
+  Kfz-Kennzeichen werden mit Bindestrich geschrieben (`HG-E 1427`) — **soweit sie diesem Schema
+  entsprechen**. Die Konvention ist eine Schreibweise, kein Aufnahmekriterium: Was ihr nicht
+  entspricht, wird übernommen, wie es erfasst wurde, und die App stellt die Schreibweise nur dort
+  her, wo die Aufteilung eindeutig ist (`hg-e1427` → `HG-E 1427`). Ist sie es nicht (`HGE1427` —
+  `HG-E 1427` oder `H-GE 1427`?), bleibt der Wert stehen und die App weist darauf hin, statt zu
+  raten: Ein falsch aufgeteiltes Kennzeichen benennt ein anderes Fahrzeug und stünde danach im
+  Anspruchsschreiben (siehe 1.3).
 - **[M] Zeichen und Referenz sind zweierlei.** Der vordere Teil ohne Kennzeichen — `84/26 C03` —
   heißt **Zeichen**. Er ist der Bezeichner der Kanzlei und steht in den Briefen, im Register, im
   Mailbetreff und überall in der Oberfläche — **nicht** im Dateinamen des erzeugten Schreibens

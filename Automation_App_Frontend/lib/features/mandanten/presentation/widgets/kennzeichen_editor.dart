@@ -14,10 +14,13 @@ import 'package:flutter/material.dart';
 /// der **normalisierte** Wert: So steht in der Liste die Konvention, und
 /// `hg-e1427` fällt als Dublette zu `HG-E 1427` auf statt als zweiter Wagen.
 ///
-/// Ein mehrdeutiger Wert (`HGE1427` — `HG-E 1427` oder `H-GE 1427`?) kommt gar
-/// nicht erst in die Liste: `KennzeichenField.beanstandung` nennt am Feld die
-/// Lesarten. Ein hier geratenes Kennzeichen hinge dauerhaft am Mandanten und
-/// träfe später die Zuordnung einer Zentralruf-Antwort.
+/// **Aufgenommen wird jeder Wert.** Ein Roller mit Versicherungskennzeichen
+/// (`123 ABC`) gehört so gut in die Liste wie ein Pkw; welche Fahrzeuge ein
+/// Mandant fährt, entscheidet nicht die App (#130). Was sie nicht als
+/// Kfz-Kennzeichen liest oder was mehrdeutig ist (`HGE1427` — `HG-E 1427` oder
+/// `H-GE 1427`?), merkt `KennzeichenField.beanstandung` unter dem Feld an —
+/// geraten wird nichts: Ein hier falsch aufgeteiltes Kennzeichen hinge dauerhaft
+/// am Mandanten und träfe später die Zuordnung einer Zentralruf-Antwort.
 class KennzeichenEditor extends StatelessWidget {
   /// Bereits hinterlegte Kennzeichen (Ausgangswert).
   final List<String> initialKennzeichen;
@@ -44,7 +47,7 @@ class KennzeichenEditor extends StatelessWidget {
       textCapitalization: TextCapitalization.characters,
       dublettenHinweis: 'Dieses Kennzeichen ist bereits hinterlegt',
       normalisiere: (eingabe) => normalizeKennzeichen(eingabe) ?? eingabe,
-      pruefe: KennzeichenField.beanstandung,
+      anmerke: KennzeichenField.beanstandung,
     );
   }
 }

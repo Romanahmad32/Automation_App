@@ -36,6 +36,14 @@ class TexteListenEditor extends StatefulWidget {
   /// das Ergebnis die Meldung am Feld.
   final String? Function(String eingabe)? pruefe;
 
+  /// Was zur **gerade getippten** Eingabe anzumerken ist; `null` heißt: nichts.
+  /// Anders als [pruefe] hält das nichts auf — der Text steht als Hinweis unter
+  /// dem Feld, in der Aufmerksamkeitsfarbe, und der Wert wird trotzdem
+  /// aufgenommen. Für Bestände, in denen die App eine Konvention **kennt**,
+  /// aber nicht darüber zu entscheiden hat, was hineingehört (Kennzeichen,
+  /// #130).
+  final String? Function(String eingabe)? anmerke;
+
   /// Meldung, wenn der Wert schon in der Liste steht.
   final String dublettenHinweis;
 
@@ -51,6 +59,7 @@ class TexteListenEditor extends StatefulWidget {
     this.textCapitalization = TextCapitalization.sentences,
     this.normalisiere,
     this.pruefe,
+    this.anmerke,
     this.dublettenHinweis = 'Dieser Eintrag steht bereits in der Liste',
   });
 
@@ -98,6 +107,14 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
     _focusNode.requestFocus();
   }
 
+  /// Die Anmerkung zur getippten Eingabe — **normalisiert** befragt, wie sie
+  /// auch aufgenommen würde: `hg-e1427` ist `HG-E 1427` und damit anmerkungsfrei.
+  String? _anmerkung(String getippt) {
+    final eingabe = getippt.trim();
+    if (eingabe.isEmpty) return null;
+    return widget.anmerke?.call(widget.normalisiere?.call(eingabe) ?? eingabe);
+  }
+
   void _entfernen(String wert) {
     setState(() => _werte.remove(wert));
     widget.onChanged(List.unmodifiable(_werte));
@@ -130,19 +147,31 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                textCapitalization: widget.textCapitalization,
-                onSubmitted: (_) => _hinzufuegen(),
-                decoration: InputDecoration(
-                  labelText: widget.labelText,
-                  helperText: widget.helperText,
-                  errorText: _fehler,
-                  border:
-                      theme.inputDecorationTheme.border ??
-                      const OutlineInputBorder(),
-                ),
+              // Auf den Text hören, damit die Anmerkung schon beim Tippen
+              // steht und nicht erst, wenn jemand „Hinzufügen" drückt.
+              child: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _controller,
+                builder: (context, wert, child) {
+                  final anmerkung = _anmerkung(wert.text);
+                  return TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    textCapitalization: widget.textCapitalization,
+                    onSubmitted: (_) => _hinzufuegen(),
+                    decoration: InputDecoration(
+                      labelText: widget.labelText,
+                      helperText: anmerkung ?? widget.helperText,
+                      helperMaxLines: anmerkung == null ? null : 2,
+                      helperStyle: anmerkung == null
+                          ? null
+                          : TextStyle(color: theme.colorScheme.tertiary),
+                      errorText: _fehler,
+                      border:
+                          theme.inputDecorationTheme.border ??
+                          const OutlineInputBorder(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),

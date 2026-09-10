@@ -13,6 +13,9 @@ namespace AutomationService.Tests.Unit;
 /// dessen absolute Bestandspfade darin werden relativiert — aussenliegende
 /// bleiben stehen. Ohne das hilft der einstellbare Ordner niemandem, dessen
 /// Datenbank weiter auf C:\Users\&lt;Name&gt;\... zeigt.
+///
+/// Der zweite Fall ist der teurere und stand lange nicht hier: ein Bestand, der
+/// schon relativ ist — gegen den <em>alten</em> Ordner (#130).
 /// </summary>
 public sealed class VorlagenPfadUmstellungTests : IDisposable
 {
@@ -50,7 +53,7 @@ public sealed class VorlagenPfadUmstellungTests : IDisposable
         await _db.SaveChangesAsync();
 
         var geaendert = await VorlagenPfadUmstellung.StelleUmAsync(
-            _db, @"C:\Kanzlei\Vorlagen", CancellationToken.None);
+            _db, @"C:\Alt\Vorlagen", @"C:\Kanzlei\Vorlagen", CancellationToken.None);
         _db.ChangeTracker.Clear();
 
         geaendert.Should().Be(1);
@@ -75,9 +78,65 @@ public sealed class VorlagenPfadUmstellungTests : IDisposable
         await _db.SaveChangesAsync();
 
         var geaendert = await VorlagenPfadUmstellung.StelleUmAsync(
-            _db, @"C:\Kanzlei\Vorlagen", CancellationToken.None);
+            _db, @"C:\Kanzlei\Vorlagen", @"C:\Kanzlei\Vorlagen", CancellationToken.None);
 
         geaendert.Should().Be(0);
+    }
+
+    /// <summary>
+    /// Der Fall aus der Kanzlei (#130): Der Bestand steht relativ zu Ordner A,
+    /// dann setzt der Anwalt den App-Daten-Ordner und der wirksame Vorlagen-
+    /// ordner wird B. Frueher blieb "Anspruch.docx" stehen und wurde ab da
+    /// gegen B gelesen — dort lag die Datei nie, und alle vier Vorlagen
+    /// meldeten "Die verknuepfte Word-Datei wurde nicht gefunden". Jetzt zeigt
+    /// der Pfad weiter auf die Datei, auch wenn er dafuer absolut werden muss.
+    /// </summary>
+    [Fact]
+    public async Task StelleUm_HaeltEinenRelativenBestandAuffindbar()
+    {
+        _db.FormTemplates.Add(new FormTemplateEntity
+        {
+            Id = 1,
+            TemplateName = "Relativ zu A",
+            WordFilePathOhneAuflistung = "Anspruch.docx",
+            WordFilePathMitAuflistung = @"Unterordner\Auflistung.docx",
+        });
+        await _db.SaveChangesAsync();
+
+        var geaendert = await VorlagenPfadUmstellung.StelleUmAsync(
+            _db, @"C:\A\Vorlagen", @"C:\B\Vorlagen", CancellationToken.None);
+        _db.ChangeTracker.Clear();
+
+        geaendert.Should().Be(1);
+        var vorlage = await _db.FormTemplates.SingleAsync(t => t.Id == 1);
+        VorlagenPfad.LoeseAuf(@"C:\B\Vorlagen", vorlage.WordFilePathOhneAuflistung)
+            .Should().Be(@"C:\A\Vorlagen\Anspruch.docx");
+        VorlagenPfad.LoeseAuf(@"C:\B\Vorlagen", vorlage.WordFilePathMitAuflistung)
+            .Should().Be(@"C:\A\Vorlagen\Unterordner\Auflistung.docx");
+    }
+
+    /// <summary>
+    /// Zieht der Anwalt die Dateien mit, wird aus dem Bestand wieder eine kurze
+    /// Schreibweise — relativ zum neuen Ordner, nicht der absolute Umweg.
+    /// </summary>
+    [Fact]
+    public async Task StelleUm_BleibtRelativWennDerBestandMitwandert()
+    {
+        _db.FormTemplates.Add(new FormTemplateEntity
+        {
+            Id = 1,
+            TemplateName = "Wandert mit",
+            WordFilePathOhneAuflistung = @"C:\B\Vorlagen\Anspruch.docx",
+            WordFilePathMitAuflistung = null,
+        });
+        await _db.SaveChangesAsync();
+
+        await VorlagenPfadUmstellung.StelleUmAsync(
+            _db, @"C:\A\Vorlagen", @"C:\B\Vorlagen", CancellationToken.None);
+        _db.ChangeTracker.Clear();
+
+        var vorlage = await _db.FormTemplates.SingleAsync(t => t.Id == 1);
+        vorlage.WordFilePathOhneAuflistung.Should().Be("Anspruch.docx");
     }
 
     public void Dispose()
