@@ -126,6 +126,29 @@ public sealed class OrdnerZustaendeTests : IDisposable
         vorlagen.Anker.Should().BeEmpty("ein absoluter Pfad hat keinen Anker");
     }
 
+    /// <summary>
+    /// Der Fall aus der Kanzlei (#130): Der App-Daten-Ordner ist gesetzt und
+    /// liegt da, der daraus abgeleitete Vorlagenordner aber nicht — angelegt
+    /// hat ihn niemand. Der Zustand bleibt richtigerweise "abgeleitet", und
+    /// genau deshalb braucht es das zweite Feld: Ohne es sagte die
+    /// Einstellungsseite kein Wort dazu, dass der Ordner fehlt, waehrend jede
+    /// Vorlage ins Leere zeigte.
+    /// </summary>
+    [Fact]
+    public void Ein_abgeleiteter_Ordner_der_fehlt_wird_als_fehlend_gemeldet()
+    {
+        Speichere(satz => satz.AppDatenOrdner = @"%OneDriveCommercial%\Kanzlei App Daten");
+        var appDaten = Path.Combine(Wurzel, "Kanzlei App Daten");
+
+        var zustaende = OrdnerZustaende.Ermittle(
+            _db, MitGeschaeftskonto, pfad => pfad == appDaten);
+
+        var vorlagen = zustaende.Single(z => z.Feld == "vorlagenOrdner");
+        vorlagen.Zustand.Should().Be(OrdnerZustandArten.Abgeleitet);
+        vorlagen.WirksamFehlt.Should().BeTrue();
+        zustaende.Single(z => z.Feld == "appDatenOrdner").WirksamFehlt.Should().BeFalse();
+    }
+
     IReadOnlyList<OrdnerZustand> Ermittle(bool alleDa) =>
         OrdnerZustaende.Ermittle(_db, MitGeschaeftskonto, _ => alleDa);
 

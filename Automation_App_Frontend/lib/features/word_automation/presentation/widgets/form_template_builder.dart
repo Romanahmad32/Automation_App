@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
+import 'package:automation_app/core/general_widgets/form/formular_fehler_hinweis.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
-import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
@@ -11,7 +11,6 @@ import 'package:automation_app/features/form_template_setup/domain/services/verw
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ausfuell_feld.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/nicht_verwendete_felder.dart';
-import 'package:automation_app/features/word_automation/presentation/widgets/pflichtfelder_hinweis.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -115,10 +114,10 @@ class FormTemplateBuilder extends StatelessWidget {
             // blockieren noch heimlich mitreden — beides hängt an derselben
             // Frage wie seine Sichtbarkeit:
             //
-            // * **Keine Formatprüfung.** Ihr Fehler wäre unsichtbar (das
-            //   Control ist zugeklappt nicht gebaut) und `PflichtfelderHinweis`
-            //   meldet nur `required`: der Knopf stünde ohne erkennbaren Grund
-            //   tot da — genau das, was #35 Teil 3 beseitigt hat.
+            // * **Keine Formatprüfung.** Ihr Fehler wäre unsichtbar — das
+            //   Control ist zugeklappt nicht gebaut, und die Sammelzeile
+            //   nennt zwar den Feldnamen, aber es gibt kein Feld, in das ihr
+            //   Sprung führen könnte.
             // * **Keine erfundene Vorbelegung.** Das heutige Datum ist als
             //   *sichtbarer* Vorschlag gedacht; zugeklappt liefe es
             //   unkorrigierbar über `ursachendatumAusFormular` in den
@@ -145,8 +144,9 @@ class FormTemplateBuilder extends StatelessWidget {
                   if (_istPflicht(e)) Validators.required,
                   if (e.inputType == InputType.date && verwendet)
                     GermanDateField.validator(),
-                  if (e.inputType == InputType.kennzeichen && verwendet)
-                    Validators.delegate(KennzeichenField.validator),
+                  // Kein Kennzeichen-Validator: Ein Versicherungs-, Behörden-
+                  // oder Auslandskennzeichen ist kein Grund, das Schreiben
+                  // aufzuhalten (#130). Was auffällt, sagt das Feld selbst.
                 ],
               ),
             );
@@ -173,15 +173,12 @@ class FormTemplateBuilder extends StatelessWidget {
                   ],
                 ),
               const SizedBox(height: 8),
-              // Sagt, welche leeren Pflichtfelder den Knopf sperren, und
-              // springt beim Anklicken hin — statt eines kommentarlos toten
-              // Knopfs (#35 Teil 3).
-              PflichtfelderHinweis(
-                pflichtFelder: [
-                  for (final field in formTemplate!.fields)
-                    if (_istPflicht(field)) field.label,
-                ],
-              ),
+              // Sagt, welches Feld den Knopf sperrt und warum, und springt
+              // beim Anklicken hin — statt eines kommentarlos toten Knopfs
+              // (#35 Teil 3, seit #130 auch für Format-Beanstandungen). Ohne
+              // [felder] gilt die ganze Gruppe: Eingeklappte Felder tragen
+              // keine Validatoren und können deshalb gar nicht auftauchen.
+              const FormularFehlerHinweis(),
               ReactiveFormConsumer(
                 builder: (context, formGroup, child) {
                   return CustomRectangularButton(

@@ -18,6 +18,14 @@ class GermanDateField extends StatelessWidget {
   /// Fehlerschlüssel des [validator] bei Datum außerhalb der Grenzen.
   static const rangeError = 'dateRange';
 
+  /// Die Meldungen dieses Felds — hier und nicht im `build`, damit auch die
+  /// Sammelzeile über einem gesperrten Knopf (`FormularFehlerHinweis`) den
+  /// **gleichen** Satz nennen kann wie das Feld selbst.
+  static Map<String, String Function(Object)> get meldungen => {
+    formatError: (_) => 'Datum im Format TT.MM.JJJJ angeben',
+    rangeError: (_) => 'Datum außerhalb des zulässigen Zeitraums',
+  };
+
   final String formControlName;
   final String? labelText;
   final String? helperText;
@@ -50,11 +58,7 @@ class GermanDateField extends StatelessWidget {
       formControlName: formControlName,
       keyboardType: TextInputType.datetime,
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-      validationMessages: {
-        formatError: (_) => 'Datum im Format TT.MM.JJJJ angeben',
-        rangeError: (_) => 'Datum außerhalb des zulässigen Zeitraums',
-        ...?validationMessages,
-      },
+      validationMessages: {...meldungen, ...?validationMessages},
       decoration: InputDecoration(
         labelText: labelText,
         helperText: helperText,

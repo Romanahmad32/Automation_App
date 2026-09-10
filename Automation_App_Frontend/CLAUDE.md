@@ -172,11 +172,14 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 - `form/` — `GeneralTextField`, `GermanDateField`, `AuswahlTextField` (Textfeld, dessen Symbol den
   `AuswahlDialog` über bekannte Werte öffnet — je Wert ein `AuswahlKandidat` mit Herkunftszeile;
-  ohne Kandidaten kein Symbol), `KennzeichenField` (**jedes** Kfz-Kennzeichen-Feld der App: prüft
-  tolerant `KennzeichenField.validator` und stellt die Konvention `HG-E 1427` beim Verlassen selbst
-  her — nie eine zweite Kennzeichenprüfung danebenbauen), `FormSection`, `FormWertBeobachter`,
-  `TexteListenEditor` (Chips über einem Eingabefeld, mit `normalisiere` vor Prüfung und
-  Dublettenvergleich); dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
+  ohne Kandidaten kein Symbol), `KennzeichenField` (**jedes** Kfz-Kennzeichen-Feld der App: stellt
+  die Konvention `HG-E 1427` beim Verlassen selbst her und **sperrt nichts** — ein Versicherungs-,
+  Behörden- oder Auslandskennzeichen kommt durch und wird nur angemerkt, `beanstandung`; nie eine
+  zweite Kennzeichenprüfung danebenbauen), `FormularFehlerHinweis` (die Zeile über einem gesperrten
+  Knopf: welches Feld ihn sperrt und warum, anklickbar — hört auf den **Wert**, nicht auf
+  `touched`), `FormSection`, `FormWertBeobachter`, `TexteListenEditor` (Chips über einem
+  Eingabefeld, mit `normalisiere` vor Prüfung und Dublettenvergleich, `anmerke` für Hinweise, die
+  nichts aufhalten); dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
   (rechtsbündig, mit Ring beim Schreiben; `kompakt: true` für eine Kopfzeile) und
   `HinzufuegenButton` (linksbündig, **unter** der Liste — eine Handlung sieht anders aus
   als der Bestand, an dem sie arbeitet)

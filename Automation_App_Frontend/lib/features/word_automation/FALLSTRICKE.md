@@ -296,14 +296,14 @@ schon beim Verknüpfen der Datei.
   sich also von einer **älteren** App-Fassung nicht mehr laden. Beim Erkennen aus dem Namen steht
   das Kennzeichen **vor** der Datumsprüfung (`_feldtypFuer`): sonst fischte deren Wortliste
   `{{KennzeichenAmUnfalltag}}` ab und das Feld verlangte ein Datum.
-- **Es gibt nur noch einen Kennzeichen-Validator.** `KennzeichenField`
+- **Ein Kennzeichenfeld sperrt nichts.** `KennzeichenField`
   (`core/general_widgets/form/kennzeichen_field.dart`) ist der Baustein für jedes Kennzeichenfeld
   der App — hier im Ausfüllschritt wie beim Erfassen in „Vorgang starten"; `AusfuellFeld` setzt ihn
-  für `InputType.kennzeichen` ein, `FormTemplateBuilder` hängt `KennzeichenField.validator` ans
-  Control. Früher standen hier zwei Auffassungen nebeneinander: ein toleranter Validator im
-  Ausfüllschritt und ein strenger beim Erfassen, der den Bindestrich verlangte. Der strenge ist
-  weg, und das ist die Richtung: Die Werte kommen aus mehreren Beständen und laufen ohnehin durch
-  `normalizeKennzeichen` — eine strengere Prüfung beanstandete einen Wert, den die App selbst
+  für `InputType.kennzeichen` ein. Am Control hängt seit #130 **kein** Kennzeichen-Validator mehr:
+  Ein Versicherungs-, Behörden- oder Auslandskennzeichen (§4.1) ist kein Grund, „Dokument erstellen"
+  aufzuhalten. Das Feld normalisiert, was eindeutig ist, und beanstandet den Rest unter dem Feld.
+  Die Richtung war schon vorher die: Die Werte kommen aus mehreren Beständen und laufen ohnehin
+  durch `normalizeKennzeichen` — eine Prüfung darüber hinaus beanstandete Werte, die die App selbst
   angeboten hat.
 
 ## Mehrdeutige Kennzeichen werden nicht geraten
@@ -315,11 +315,13 @@ das Ergebnis wortlos in Referenz, Registereintrag und Anspruchsschreiben.
 
 `normalizeKennzeichen` teilt deshalb nur auf, wenn `kennzeichenLesarten`
 (`core/general_classes/kennzeichen_normalisierung.dart`) genau **eine** Lesart findet; sonst bleibt
-der Wert bereinigt stehen. Am Feld meldet `KennzeichenField.validator` den eigenen Schlüssel
-`mehrdeutigError` und legt die Lesarten als **Fehlerwert** ab — reactive_forms reicht ihn an die
-Meldungsfunktion durch (`String Function(Object error)`), und die Meldung nennt sie: „Mehrdeutig,
-bitte mit Bindestrich: HG-E 1427 oder H-GE 1427". Eine Meldung, die nur „ungültig" sagt, schickte
-den Anwalt auf die Suche nach einem Tippfehler, den es nicht gibt.
+der Wert bereinigt stehen. Am Feld **beanstandet** `KennzeichenField.beanstandung` ihn und nennt
+die Lesarten: „Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427". Eine Meldung, die nur
+„ungültig" sagt, schickte den Anwalt auf die Suche nach einem Tippfehler, den es nicht gibt.
+
+Beanstandet, nicht **gesperrt** (#130): Der Hinweis hängt am Wert und nicht an einem Validator, der
+Knopf bleibt frei. Die Sperre sollte verhindern, dass die App rät — das tut schon
+`normalizeKennzeichen`, das mehrdeutige Werte gar nicht erst aufteilt.
 
 Eindeutig bleibt, was ein Trennzeichen trägt (`HG E1427`, `hg-e 1427`) — und ohne Trennzeichen die
 Fälle, in denen nur eine Aufteilung passt: 2 Buchstaben (`HE1427` → `H-E 1427`) und 5

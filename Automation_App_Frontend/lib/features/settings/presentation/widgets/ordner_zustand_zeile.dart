@@ -32,7 +32,21 @@ class OrdnerZustandZeile extends StatelessWidget {
   /// Der Satz zu einem Zustand. Der Anker steht im Fehlerfall ausdrücklich
   /// mit Namen da: „nicht auflösbar" allein sagt dem Anwalt nicht, dass sein
   /// Geschäfts-OneDrive auf diesem Rechner fehlt.
-  static String satz(OrdnerZustand zustand) => switch (zustand.zustand) {
+  ///
+  /// Fehlt der wirksame Ordner, hängt der Satz das an — auch an einen
+  /// abgeleiteten oder standardmäßigen: Dass die App ihn beim ersten Schreiben
+  /// anlegt, stimmt für die *Ablage*, nicht für die Vorlagen, die dort gesucht
+  /// werden (#130).
+  static String satz(OrdnerZustand zustand) {
+    final text = _lage(zustand);
+    if (!zustand.wirksamFehlt ||
+        zustand.zustand == OrdnerZustandArten.ordnerFehlt) {
+      return text;
+    }
+    return '$text (dieser Ordner ist noch nicht vorhanden)';
+  }
+
+  static String _lage(OrdnerZustand zustand) => switch (zustand.zustand) {
     OrdnerZustandArten.ankerFehlt =>
       'OneDrive-Konto „${zustand.anker}" ist auf diesem Rechner nicht '
           'vorhanden — der Ordner lässt sich hier nicht auflösen.',

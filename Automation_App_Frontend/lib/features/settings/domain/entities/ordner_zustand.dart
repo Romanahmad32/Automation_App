@@ -61,12 +61,21 @@ class OrdnerZustand extends Equatable {
   /// leer.
   final String anker;
 
+  /// Ob es [wirksam] auf der Platte gar nicht gibt. Eigenes Merkmal neben
+  /// [zustand], weil beides zugleich zutreffen kann: Ein **abgeleiteter**
+  /// Vorlagenordner ist abgeleitet — und existiert trotzdem nicht, solange ihn
+  /// niemand angelegt hat. Genau diese Lage hat alle Vorlagen ins Leere zeigen
+  /// lassen, während diese Seite „automatisch im gemeinsamen OneDrive-Ordner"
+  /// meldete und damit im Recht war (#130).
+  final bool wirksamFehlt;
+
   const OrdnerZustand({
     required this.feld,
     required this.zustand,
     this.gespeichert = '',
     this.wirksam = '',
     this.anker = '',
+    this.wirksamFehlt = false,
   });
 
   factory OrdnerZustand.fromJson(Map<String, dynamic> json) => OrdnerZustand(
@@ -75,6 +84,7 @@ class OrdnerZustand extends Equatable {
     gespeichert: json['gespeichert'] as String? ?? '',
     wirksam: json['wirksam'] as String? ?? '',
     anker: json['anker'] as String? ?? '',
+    wirksamFehlt: json['wirksamFehlt'] as bool? ?? false,
   );
 
   /// Ob dieser Ordner auf diesem Rechner nicht aufzulösen ist — der eine
@@ -82,5 +92,12 @@ class OrdnerZustand extends Equatable {
   bool get stoert => zustand == OrdnerZustandArten.ankerFehlt;
 
   @override
-  List<Object?> get props => [feld, zustand, gespeichert, wirksam, anker];
+  List<Object?> get props => [
+    feld,
+    zustand,
+    gespeichert,
+    wirksam,
+    anker,
+    wirksamFehlt,
+  ];
 }

@@ -26,6 +26,11 @@ class AuswahlTextField extends StatelessWidget {
   /// das zu wenig, dort gehören 2 hin.
   final int? helperMaxLines;
 
+  /// Schrift des [helperText]. Ohne Angabe die Vorgabe des Themes; gesetzt
+  /// wird sie dort, wo der Hilfetext gerade ein **Hinweis** ist und auffallen
+  /// soll, ohne die Fehlerfarbe zu beanspruchen (`KennzeichenField`).
+  final TextStyle? helperStyle;
+
   final Map<String, String Function(Object)>? validationMessages;
 
   /// Die Werte, die zur Wahl stehen. **Leer heißt: kein Symbol** — ein Knopf,
@@ -47,6 +52,7 @@ class AuswahlTextField extends StatelessWidget {
     this.labelText,
     this.helperText,
     this.helperMaxLines,
+    this.helperStyle,
     this.validationMessages,
     this.normalisiere,
   });
@@ -62,6 +68,7 @@ class AuswahlTextField extends StatelessWidget {
         labelText: labelText,
         helperText: helperText,
         helperMaxLines: helperMaxLines,
+        helperStyle: helperStyle,
         border: theme.inputDecorationTheme.border ?? const OutlineInputBorder(),
         suffixIcon: kandidaten.isEmpty
             ? null

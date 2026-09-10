@@ -6972,7 +6972,8 @@
           "gespeichert",
           "wirksam",
           "zustand",
-          "anker"
+          "anker",
+          "wirksamFehlt"
         ],
         "type": "object",
         "properties": {
@@ -6990,9 +6991,12 @@
           },
           "anker": {
             "type": "string"
+          },
+          "wirksamFehlt": {
+            "type": "boolean"
           }
         },
-        "description": "Was in den Einstellungen \u00FCber einen der f\u00FCnf Ordner zu sagen ist (#103):\r\ndie Speicherform, der wirksame Ordner, und in einem Wort, warum die beiden\r\ngleich oder verschieden sind.\r\n\r\nDie Oberfl\u00E4che formt daraus einen Satz in Klartext (\u201EOneDrive-Konto\r\n(OneDriveCommercial) auf diesem Rechner nicht vorhanden\u0022) \u2014 deshalb gehen\r\nhier Zust\u00E4nde hinaus und keine fertigen Meldungen: Der Dienst kennt die\r\nLage, die Oberfl\u00E4che die Worte."
+        "description": "Was in den Einstellungen \u00FCber einen der f\u00FCnf Ordner zu sagen ist (#103):\r\ndie Speicherform, der wirksame Ordner, und in einem Wort, warum die beiden\r\ngleich oder verschieden sind.\r\n\r\nDie Oberfl\u00E4che formt daraus einen Satz in Klartext (\u201EOneDrive-Konto\r\n(OneDriveCommercial) auf diesem Rechner nicht vorhanden\u0022) \u2014 deshalb gehen\r\nhier Zust\u00E4nde hinaus und keine fertigen Meldungen: Der Dienst kennt die\r\nLage, die Oberfl\u00E4che die Worte.\r\n\r\n\u0060WirksamFehlt\u0060 steht neben \u0060Zustand\u0060 und nicht darin: Ein\r\nabgeleiteter Ordner ist abgeleitet \u2014 und existiert trotzdem nicht, solange\r\nihn niemand angelegt hat. Ohne dieses zweite Merkmal war er von einem\r\nvorhandenen nicht zu unterscheiden, und genau das hat alle vier Vorlagen ins\r\nLeere zeigen lassen, w\u00E4hrend die Einstellungsseite im Recht war (#130)."
       },
       "OutlookAnhaengeDto": {
         "required": [

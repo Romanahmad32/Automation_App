@@ -269,10 +269,12 @@ beobachteten, uneinheitlichen; eine unbekannte kostet nichts, sie landet nur unt
 
 ## Kennzeichen am Mandanten: aufgenommen wird die Konvention
 
-`KennzeichenEditor` prüft mit `istKennzeichen` und zeigt `KennzeichenField.hinweis` — dieselbe
-Auffassung davon, was ein Kennzeichen ist, wie jedes Eingabefeld der App. Aufgenommen wird der
-**normalisierte** Wert: `TexteListenEditor.normalisiere` läuft vor Prüfung, Dublettenvergleich und
-Aufnahme.
+`KennzeichenEditor` merkt mit `KennzeichenField.beanstandung` an, was auffällt, und **nimmt jeden
+Wert auf** — dieselbe Auffassung davon, was ein Kennzeichen ist, wie jedes Eingabefeld der App.
+Angemerkt heißt nicht abgelehnt (`TexteListenEditor.anmerke`, nicht `pruefe`): Ein Roller mit
+Versicherungskennzeichen gehört so gut in die Liste wie ein Pkw, und welche Fahrzeuge der Mandant
+fährt, entscheidet nicht die App (§4.1, #130). Aufgenommen wird der **normalisierte** Wert:
+`TexteListenEditor.normalisiere` läuft vor Anmerkung, Dublettenvergleich und Aufnahme.
 
 Diese Reihenfolge ist der Zweck. Ohne sie stünde derselbe Wagen zweimal in der Liste — einmal als
 `HG-E 1427`, einmal als `hge1427` — und die Auswahlhilfe im Ausfüllschritt böte ihn zweimal an,

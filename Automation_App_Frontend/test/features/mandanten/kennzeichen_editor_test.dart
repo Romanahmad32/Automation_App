@@ -63,19 +63,45 @@ void main() {
     },
   );
 
-  /// Dieselbe Auskunft wie im Formular: Ein Wert, bei dem offen ist, wo das
-  /// Unterscheidungszeichen endet, kommt nicht in die Liste — er hinge dauerhaft
-  /// am Mandanten und träfe später die Zuordnung einer Zentralruf-Antwort.
-  testWidgets('nimmt ein mehrdeutiges Kennzeichen nicht auf', (tester) async {
+  /// Dieselbe Auskunft wie im Formular — und dieselbe Zurückhaltung: Bei einem
+  /// Wert, bei dem offen ist, wo das Unterscheidungszeichen endet, **rät die
+  /// App nicht**. Aufgenommen wird er trotzdem, und zwar wie getippt: Ein
+  /// abgelehnter Wert hälfe niemandem, ein geratener hinge dauerhaft am
+  /// Mandanten und träfe später die Zuordnung einer Zentralruf-Antwort (#130).
+  testWidgets('nimmt ein mehrdeutiges Kennzeichen ungeteilt auf', (
+    tester,
+  ) async {
     await zeigeEditor(tester);
-
     await fuegeHinzu(tester, 'hge1427');
 
-    expect(gemeldet, isEmpty);
+    // Kleingeschrieben wie getippt: Grossschreiben ist Teil der Normalisierung,
+    // und die greift nur bei eindeutiger Lesart.
+    expect(gemeldet, ['hge1427']);
+    expect(find.widgetWithText(Chip, 'hge1427'), findsOneWidget);
+  });
+
+  /// Der Hinweis dazu steht am Feld, solange der Wert dort steht — er hält
+  /// nichts auf, er sagt nur, was ein Bindestrich klären würde.
+  testWidgets('merkt einen mehrdeutigen Wert beim Tippen an', (tester) async {
+    await zeigeEditor(tester);
+
+    await tester.enterText(find.byType(TextField), 'hge1427');
+    await tester.pump();
+
     expect(
       find.text('Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427'),
       findsOneWidget,
     );
+  });
+
+  /// Der Fall aus der Kanzlei: Ein Roller trägt ein Versicherungskennzeichen.
+  /// Welche Fahrzeuge der Mandant fährt, entscheidet nicht die App (§4.1).
+  testWidgets('nimmt ein Versicherungskennzeichen auf', (tester) async {
+    await zeigeEditor(tester);
+    await fuegeHinzu(tester, '123 ABC');
+
+    expect(gemeldet, ['123 ABC']);
+    expect(find.widgetWithText(Chip, '123 ABC'), findsOneWidget);
   });
 
   testWidgets('zeigt die hinterlegten Kennzeichen als Chips', (tester) async {

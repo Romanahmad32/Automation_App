@@ -47,6 +47,23 @@ void main() {
     expect(zustand.stoert, isFalse);
   });
 
+  /// Der Fall, der 2026 alle Vorlagen ins Leere zeigen liess (#130): Der
+  /// Zustand ist „abgeleitet" und damit im Recht — den Ordner gibt es trotzdem
+  /// nicht. Ohne das zweite Merkmal sagte die Seite dazu kein Wort.
+  test('ein abgeleiteter Ordner kann zugleich fehlen', () {
+    final zustand = OrdnerZustand.fromJson(const {
+      'feld': 'vorlagenOrdner',
+      'gespeichert': '',
+      'wirksam': r'C:\OneDrive\Kanzlei App Daten\Vorlagen',
+      'zustand': 'abgeleitet',
+      'anker': '',
+      'wirksamFehlt': true,
+    });
+
+    expect(zustand.zustand, OrdnerZustandArten.abgeleitet);
+    expect(zustand.wirksamFehlt, isTrue);
+  });
+
   /// Fehlende Schlüssel dürfen die Anzeige nicht sprengen: Ein älterer Dienst
   /// neben einer neueren App ist beim Entwickeln der Normalfall.
   test('fällt bei fehlenden Schlüsseln auf leere Werte zurück', () {
@@ -56,6 +73,7 @@ void main() {
     expect(zustand.gespeichert, isEmpty);
     expect(zustand.wirksam, isEmpty);
     expect(zustand.anker, isEmpty);
+    expect(zustand.wirksamFehlt, isFalse);
   });
 
   /// Der eine Zustand, der als Fehler gezeigt gehört — und der einzige, den

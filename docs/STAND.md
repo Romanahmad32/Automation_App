@@ -202,6 +202,26 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
   Grunde nach).
 
+- **Jede Schreibweise eines Kennzeichens wird angenommen (§4.1, 10.09.2026)** — ein E-Scooter-Mandat
+  blieb liegen: Das **Versicherungskennzeichen** (`123 ABC`) fiel durch die Prüfung, die nur das
+  Pkw-Schema kannte, und sperrte damit „Vorgang speichern", „Zentralruf-Formular ausfüllen" und
+  „Dokument erstellen" — **wortlos**, weil reactive_forms einen Fehler am Feld erst nach `touched`
+  zeigt und ein gesperrter Knopf keinen Fokus nimmt. Kein Kennzeichenfeld trägt jetzt noch einen
+  Validator; was die App nicht als Pkw-Kennzeichen liest (Behörden-, Kurzzeit-, Auslandskennzeichen),
+  übernimmt sie unverändert und merkt es unter dem Feld an (`KennzeichenField.beanstandung`).
+  Normalisiert wird weiterhin nur bei eindeutiger Lesart (`hg-e1427` → `HG-E 1427`), und ein
+  mehrdeutiges `HGE1427` bleibt stehen, statt geraten zu werden. Dazu der zweite, allgemeinere Teil:
+  `FormularFehlerHinweis` (`core/general_widgets/form/`) sagt über jedem gesperrten Knopf, **welches**
+  Feld ihn sperrt und **warum** — nicht mehr nur bei fehlenden Pflichtfeldern, und in „Vorgang
+  starten" überhaupt zum ersten Mal.
+- **Ein Ordnerwechsel entwertet keine Vorlagenverknüpfung mehr (10.09.2026)** — wer den
+  App-Daten-Ordner setzte (#103), verschob damit den Anker, gegen den jeder gespeicherte relative
+  Vorlagenpfad gelesen wird; `VorlagenPfadUmstellung` kannte nur den neuen Ordner und liess den
+  Bestand unverändert stehen. Danach zeigten **alle vier Vorlagen** ins Leere („Die verknüpfte
+  Word-Datei wurde nicht gefunden"), und das Ausfüllformular erschien gar nicht. Die Umstellung
+  bekommt jetzt beide Ordner und löst den Bestand zuerst gegen den alten auf. Dazu meldet
+  `GET /api/Settings/ordner` je Ordner ein `wirksamFehlt` — ein *abgeleiteter* Ordner, den niemand
+  angelegt hat, war vorher nicht von einem vorhandenen zu unterscheiden.
 - **Das Rechtsgebiet folgt der Abteilung (§7.1, 09.09.2026)** — „Vorgang starten" fragte dasselbe
   zweimal: Abteilung und Rechtsgebiet standen als zwei gleichrangige Auswahllisten aus demselben
   Katalog untereinander, ohne Verbindung. Wer die Abteilung auf `C05` stellte, behielt
