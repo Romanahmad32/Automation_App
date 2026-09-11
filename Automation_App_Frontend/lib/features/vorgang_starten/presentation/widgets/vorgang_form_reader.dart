@@ -1,5 +1,4 @@
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/sachgebiete/domain/services/rechtsgebiet_ableitung.dart';
@@ -11,7 +10,8 @@ import 'package:reactive_forms/reactive_forms.dart';
 
 /// Baut die Referenz `Nr/Jahr Abteilung[_Kennzeichen]` aus den Formularwerten.
 /// Außerhalb von Verkehrsrecht (kein Gegner-Kennzeichen) entfällt der
-/// Kennzeichen-Teil.
+/// Kennzeichen-Teil. Das Kennzeichen steht darin, wie es eingegeben wurde
+/// ([kennzeichenAusFormular], §4.2).
 String baueReferenz(FormGroup form, String rechtsgebiet) {
   String valueOf(String c) => (form.control(c).value as String?)?.trim() ?? '';
   final nummer = valueOf('auftragsnummer');
@@ -66,13 +66,14 @@ VorgangStartenDaten leseVorgangDaten(FormGroup form, String rechtsgebiet) {
   );
 }
 
-/// Ein Kennzeichen in der Konvention `HG-E 1427`.
+/// Ein Kennzeichen, **wie es eingegeben wurde** — gestutzt und mit
+/// vereinheitlichtem Leerraum, sonst unverändert (§4.2, geändert am
+/// 11.09.2026). Bis dahin brachte diese Stelle den Wert in die Konvention
+/// `HG-E 1427`; jetzt schreibt die App kein Kennzeichen mehr um.
 ///
-/// Das Feld stellt sie beim Verlassen selbst her (`KennzeichenField`) — hier
-/// wird sie ein zweites Mal angewandt, weil ein eingefügter Wert das Feld nie
-/// verlassen haben muss: Wer `hge1427` einfügt und sofort auf „Speichern"
-/// klickt, hätte den Rohwert in Referenz, Vorgang und Registereintrag stehen.
-/// Was sich nicht als Kennzeichen lesen lässt, bleibt großgeschrieben stehen
-/// statt zu verschwinden.
+/// Der Leerraum wird nicht der Schreibweise wegen vereinheitlicht:
+/// `ZentralrufReplyParser` zieht ihn in „Ihr Zeichen" ebenso zusammen, und mit
+/// einem doppelten Leerzeichen gliche die gespeicherte Referenz der aus der
+/// Antwort zurückgelesenen nicht mehr.
 String kennzeichenAusFormular(String wert) =>
-    normalizeKennzeichen(wert) ?? wert.toUpperCase();
+    wert.trim().replaceAll(RegExp(r'\s+'), ' ');

@@ -17,8 +17,8 @@ class UnfallSection extends StatelessWidget {
       title: 'Unfall',
       children: [
         // Ohne Kandidaten: Welches Fahrzeug dem Gegner gehört, weiß die App
-        // vor der Zentralruf-Antwort nicht — angeboten wird hier nichts, die
-        // Schreibweise stellt das Feld beim Verlassen trotzdem selbst her.
+        // vor der Zentralruf-Antwort nicht — angeboten wird hier nichts. Der
+        // Wert geht, wie eingegeben, in die Referenz (§4.2).
         const KennzeichenField(
           labelText: 'Kennzeichen des Unfallgegners (z. B. HG-E 1427)',
           formControlName: 'kennzeichenGegner',

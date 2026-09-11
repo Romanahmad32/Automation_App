@@ -6,13 +6,14 @@ import 'package:flutter/material.dart';
 /// Editor für die optionalen Kfz-Kennzeichen eines Mandanten (0..n). Die
 /// Bauform — löschbare Chips über einem Eingabefeld — kommt aus
 /// [TexteListenEditor]; hier steht nur, was am Kennzeichen besonders ist:
-/// Großschreibung, die Konvention `HG-E 1427` und deren Prüfung beim
-/// Hinzufügen.
+/// Großschreibung beim Tippen, der Hinweis und der Dublettenvergleich.
 ///
-/// Prüfung und Hinweistext kommen von [KennzeichenField], damit hier keine
-/// zweite Auffassung davon entsteht, was ein Kennzeichen ist. Aufgenommen wird
-/// der **normalisierte** Wert: So steht in der Liste die Konvention, und
-/// `hg-e1427` fällt als Dublette zu `HG-E 1427` auf statt als zweiter Wagen.
+/// Der Hinweistext kommt von [KennzeichenField], damit hier keine zweite
+/// Auffassung davon entsteht, was ein Kennzeichen ist. Aufgenommen wird der
+/// Wert, **wie er getippt wurde** (§4.2, geändert am 11.09.2026) — bis dahin
+/// stand in der Liste die Konvention `HG-E 1427`. Als Dublette fällt
+/// `hg-e1427` neben `HG-E 1427` trotzdem auf: Verglichen wird über
+/// [gleichesKennzeichen], nicht über die Zeichen.
 ///
 /// **Aufgenommen wird jeder Wert.** Ein Roller mit Versicherungskennzeichen
 /// (`123 ABC`) gehört so gut in die Liste wie ein Pkw; welche Fahrzeuge ein
@@ -46,8 +47,8 @@ class KennzeichenEditor extends StatelessWidget {
       hinzufuegenTooltip: 'Kennzeichen hinzufügen',
       textCapitalization: TextCapitalization.characters,
       dublettenHinweis: 'Dieses Kennzeichen ist bereits hinterlegt',
-      normalisiere: (eingabe) => normalizeKennzeichen(eingabe) ?? eingabe,
       anmerke: KennzeichenField.beanstandung,
+      gleich: gleichesKennzeichen,
     );
   }
 }

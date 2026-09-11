@@ -32,8 +32,8 @@ gewöhnliche Windows-Anwendung, kein separater Serverstart, kein Terminal. **Das
 `AppBootstrap` (`lib/core/backend/`) startet den Dienst als Kindprozess, `ParentProcessWatchdog`
 beendet ihn wieder.
 
-Fachliche Konvention: Kfz-Kennzeichen mit Bindestrich, z. B. `HG-E 1427` — **soweit ein Wert dem
-Schema entspricht**; alles andere (E-Scooter, Behörde, Ausland) kommt unverändert durch (§4.1, §4.2).
+Fachliche Konvention: Kfz-Kennzeichen mit Bindestrich, z. B. `HG-E 1427` — **empfohlen, nicht hergestellt**:
+jeder Wert kommt durch, wie er eingegeben wurde; Vergleiche sehen von der Schreibweise ab (§4.1, §4.2).
 
 ## Bevor du anfängst — was lesen?
 

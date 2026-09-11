@@ -214,17 +214,17 @@ void main() {
     expect(knopf.onPressed, isNull);
   });
 
-  /// Das Kennzeichen wird im Register verglichen — gegen die Zentralruf-Antwort
-  /// und gegen das Feld im Anspruchsschreiben. Ein eingefügter Rohwert kommt
-  /// hier an, ohne dass das Feld je verlassen wurde: `leseVorgangDaten` zieht
-  /// ihn deshalb ein zweites Mal gerade, bevor er in die Anlage-Anfrage geht.
-  testWidgets('legt ein getipptes Kennzeichen in der Konvention an', (
+  /// Das Kennzeichen geht so ins Register, **wie es getippt wurde** — nur
+  /// gestutzt (§4.2, geändert am 11.09.2026; bis dahin zog `leseVorgangDaten`
+  /// es in die Konvention `HG-E 1427`). Verglichen wird es dort ohne Rücksicht
+  /// auf die Schreibweise (`gleichesKennzeichen`).
+  testWidgets('legt ein getipptes Kennzeichen an, wie es getippt wurde', (
     tester,
   ) async {
-    await zeigeFormular(tester, mandantKennzeichen: 'hg-e1427');
+    await zeigeFormular(tester, mandantKennzeichen: ' hg-e1427 ');
     await zentralrufAusfuellen(tester);
 
-    expect(register.bestand.single.kennzeichen, ['HG-E 1427']);
+    expect(register.bestand.single.kennzeichen, ['hg-e1427']);
   });
 
   /// Der Weg, auf dem die Reparatur sonst vorbeiläuft: Der Mandant ist

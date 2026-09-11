@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Eingabefeld für ein Kfz-Kennzeichen — **der** Baustein dafür, überall wo
-/// eines erfasst wird: eine Normalisierung, ein Hinweis, eine Auffassung.
+/// eines erfasst wird: ein Hinweis, eine Auffassung.
 ///
 /// Gebaut wie `GermanDateField`: Das Widget zeigt das Feld und darunter, was
 /// aufgefallen ist. Darunter steckt ein [AuswahlTextField] — das Symbol rechts
@@ -18,19 +18,20 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Alles davon ist Alltag und keines passt ins Pkw-Schema. Früher hing hier ein
 /// blockierender Validator; er hat ein E-Scooter-Mandat komplett aufgehalten
 /// (#130) — weder „Vorgang speichern" noch „Dokument erstellen" waren
-/// erreichbar. Was die App nicht als Pkw-Kennzeichen liest, übernimmt sie
-/// deshalb **unverändert** (nur gestutzt, mit vereinheitlichtem Leerraum).
+/// erreichbar.
 ///
-/// **Normalisiert wird trotzdem, wo die Lesart feststeht.** Beim Verlassen des
-/// Felds und für jede Eingabe im Auswahldialog läuft der Wert durch
-/// [normalizeKennzeichen]: aus `hg-e1427` wird von allein `HG-E 1427` (§4.2).
+/// **Und es schreibt nichts um** (§4.2, geändert am 11.09.2026). Bis dahin
+/// stellte es beim Verlassen die Schreibweise mit Bindestrich her, sobald die
+/// Lesart feststand (`hg-e1427` → `HG-E 1427`); jetzt steht im Feld — und
+/// damit in Referenz, Vorgang und Schreiben —, was eingegeben wurde. Wo die
+/// App zwei Werte vergleicht, sieht sie von der Schreibweise ab
+/// ([gleichesKennzeichen]).
 ///
-/// **Und was auffällt, wird gesagt — unaufgefordert.** Unter dem Feld steht,
+/// **Was auffällt, wird gesagt — unaufgefordert.** Unter dem Feld steht,
 /// wenn der Wert kein Pkw-Kennzeichen ist ([unbekanntHinweis]) oder wenn er
 /// mehrdeutig ist (`HGE1427` → `HG-E 1427` oder `H-GE 1427`?). Als **Hinweis**
-/// in der Aufmerksamkeitsfarbe, nicht als Fehler: Geraten wird nichts —
-/// [normalizeKennzeichen] teilt einen mehrdeutigen Wert gar nicht erst auf —,
-/// aber der Anwalt sieht, dass ein Bindestrich die Sache klären würde.
+/// in der Aufmerksamkeitsfarbe, nicht als Fehler: Der Anwalt sieht, dass ein
+/// Bindestrich die Sache klären würde, und entscheidet selbst.
 /// Unaufgefordert heißt nicht ungeduldig: Was noch ein Kennzeichen werden
 /// kann (`HG-E 1`), bleibt unkommentiert, bis feststeht, dass es keines wird
 /// ([beanstandung]).
@@ -102,9 +103,6 @@ class KennzeichenField extends StatelessWidget {
           validationMessages: validationMessages,
           kandidaten: kandidaten,
           dialogTitel: dialogTitel,
-          // Aus `hg-e1427` wird `HG-E 1427`; was mehrdeutig oder unbekannt
-          // ist, bleibt stehen — Raten wäre hier schlimmer als ein Hinweis.
-          normalisiere: (eingabe) => normalizeKennzeichen(eingabe) ?? eingabe,
         );
       },
     );

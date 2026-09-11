@@ -301,10 +301,10 @@ schon beim Verknüpfen der Datei.
   der App — hier im Ausfüllschritt wie beim Erfassen in „Vorgang starten"; `AusfuellFeld` setzt ihn
   für `InputType.kennzeichen` ein. Am Control hängt seit #130 **kein** Kennzeichen-Validator mehr:
   Ein Versicherungs-, Behörden- oder Auslandskennzeichen (§4.1) ist kein Grund, „Dokument erstellen"
-  aufzuhalten. Das Feld normalisiert, was eindeutig ist, und beanstandet den Rest unter dem Feld.
-  Die Richtung war schon vorher die: Die Werte kommen aus mehreren Beständen und laufen ohnehin
-  durch `normalizeKennzeichen` — eine Prüfung darüber hinaus beanstandete Werte, die die App selbst
-  angeboten hat. Die Anmerkung tritt **neben** die Hinweiszeile dieses Schritts
+  aufzuhalten. Das Feld beanstandet unter dem Feld, was auffällt, und schreibt nichts um — auch
+  nicht in die Konvention `HG-E 1427` (§4.2, geändert am 11.09.2026). Eine Prüfung beanstandete hier
+  ohnehin Werte, die die App selbst angeboten hat: Die Vorschläge kommen aus mehreren Beständen,
+  und `DatenquelleVorschlaege` bietet sie an, wie sie dort stehen. Die Anmerkung tritt **neben** die Hinweiszeile dieses Schritts
   („* Pflichtfeld · Vorbelegt aus …"), sie ersetzt sie nicht (`KennzeichenField.hilfetext`): Sonst
   verlöre ausgerechnet das ungewöhnliche Kennzeichen die Auskunft, dass das Feld Pflicht ist und
   welchem Bestand sein Wert entstammt.
@@ -316,22 +316,21 @@ Erkennungsbuchstaben (1–2) sind beide variabel lang, und ohne Bindestrich sagt
 eine endet. Das sind **zwei verschiedene Fahrzeuge.** Der frühere Ausdruck riet gierig und schrieb
 das Ergebnis wortlos in Referenz, Registereintrag und Anspruchsschreiben.
 
-`normalizeKennzeichen` teilt deshalb nur auf, wenn `kennzeichenLesarten`
-(`core/general_classes/kennzeichen_normalisierung.dart`) genau **eine** Lesart findet; sonst bleibt
-der Wert bereinigt stehen. Am Feld **beanstandet** `KennzeichenField.beanstandung` ihn und nennt
-die Lesarten: „Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427". Eine Meldung, die nur
-„ungültig" sagt, schickte den Anwalt auf die Suche nach einem Tippfehler, den es nicht gibt.
+Seit dem 11.09.2026 schreibt die App gar kein Kennzeichen mehr um (§4.2) — geraten wird damit auch
+nichts. Am Feld **beanstandet** `KennzeichenField.beanstandung` einen mehrdeutigen Wert und nennt
+die Lesarten (`kennzeichenLesarten`, `core/general_classes/kennzeichen_normalisierung.dart`):
+„Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427". Eine Meldung, die nur „ungültig"
+sagt, schickte den Anwalt auf die Suche nach einem Tippfehler, den es nicht gibt.
 
 Beanstandet, nicht **gesperrt** (#130): Der Hinweis hängt am Wert und nicht an einem Validator, der
-Knopf bleibt frei. Die Sperre sollte verhindern, dass die App rät — das tut schon
-`normalizeKennzeichen`, das mehrdeutige Werte gar nicht erst aufteilt.
+Knopf bleibt frei.
 
-Eindeutig bleibt, was ein Trennzeichen trägt (`HG E1427`, `hg-e 1427`) — und ohne Trennzeichen die
+Eindeutig ist, was ein Trennzeichen trägt (`HG E1427`, `hg-e 1427`) — und ohne Trennzeichen die
 Fälle, in denen nur eine Aufteilung passt: 2 Buchstaben (`HE1427` → `H-E 1427`) und 5
-(`ABCDE123` → `ABC-DE 123`).
+(`ABCDE123` → `ABC-DE 123`). Dazu steht kein Hinweis am Feld; der Wert bleibt trotzdem, wie er ist.
 
-Für die Auswahlhilfe heißt das: Steht ein mehrdeutiger Wert im Bestand, wird er **so angeboten, wie
-er dort steht** — die Liste zeigt, was da ist, statt eine Aufteilung als Tatsache hinzustellen.
+Für die Auswahlhilfe heißt das: Jeder Wert wird **so angeboten, wie er im Bestand steht** — die
+Liste zeigt, was da ist, statt eine Schreibweise oder Aufteilung als Tatsache hinzustellen.
 Beim *Wiedererkennen* ist `gleichesKennzeichen` dagegen großzügig: Sagt eine Seite die Aufteilung,
 gilt der Wagen als derselbe (`HGE1427` = `HG-E 1427`). Die Gefahr ist dort die umgekehrte — wer
 nicht wiedererkennt, bietet denselben Wagen zweimal an und ordnet eine Zentralruf-Antwort keinem

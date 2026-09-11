@@ -28,7 +28,8 @@ FormGroup createVorgangForm() {
     // Versicherungskennzeichen, ein Behördenwagen `THW-12345`, der Gegner
     // womöglich ein französisches — nichts davon passt ins Pkw-Schema, und
     // keines ist ein Grund, den Vorgang aufzuhalten (#130). `KennzeichenField`
-    // normalisiert, was eindeutig ist, und merkt den Rest sichtbar an.
+    // merkt sichtbar an, was auffällt; umgeschrieben wird der Wert hier nicht,
+    // er geht wörtlich in die Referenz (§4.2).
     'kennzeichenGegner': FormControl<String>(),
     'schadentag': FormControl<String>(),
     // Mandantendaten (Geschädigter).

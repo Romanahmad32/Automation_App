@@ -159,10 +159,10 @@ zweiten Druck verleitet, der dieselbe Arbeit noch einmal anstößt. Dieselbe Vor
 ## Der Bearbeiten-Dialog prüft von Hand — er hat kein reactive_forms
 
 `VorgangBearbeitenDialog` arbeitet mit `TextEditingController`n, nicht mit einer FormGroup. Das
-Kennzeichen des Mandanten läuft beim Speichern trotzdem durch `normalizeKennzeichen` — sonst wäre
-dies der eine Weg, auf dem ein Rohwert in den Bestand käme: Beim Erfassen stellt `KennzeichenField`
-die Konvention selbst her, hier stand das Feld ungeprüft da. An dem Wert hängt die Zuordnung einer
-Zentralruf-Antwort über das Kennzeichen (`gleichesKennzeichen`).
+Kennzeichen des Mandanten geht beim Speichern so in den Bestand, **wie es eingegeben wurde** — nur
+gestutzt (§4.2, geändert am 11.09.2026; bis dahin lief es durch `normalizeKennzeichen`, wie jedes
+Kennzeichenfeld der App). Die Zuordnung einer Zentralruf-Antwort über das Kennzeichen hängt daran
+nicht: `gleichesKennzeichen` vergleicht ohne Rücksicht auf die Schreibweise.
 
 **Aufgehalten wird dabei nichts** (#130). Was die App nicht liest oder was mehrdeutig ist, geht
 unverändert in den Bestand; `KennzeichenField.beanstandung` steht als

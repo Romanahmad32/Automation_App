@@ -47,8 +47,8 @@ void main() {
   /// weiterwandert. Der Knopf ist dagegen sofort gesperrt (`formGroup.valid`).
   ///
   /// Der echte Fokusverlust (nicht nur `markAsTouched`) steht mit dabei, damit
-  /// derselbe Helfer auch die Normalisierung beim Verlassen des Felds auslöst
-  /// (`AuswahlTextField`, `normalisiere`).
+  /// derselbe Helfer auch zeigt, was beim Verlassen des Felds geschieht — bei
+  /// einem Kennzeichen seit dem 11.09.2026: nichts (§4.2).
   Future<void> verlasse(WidgetTester tester, String name) async {
     FocusManager.instance.primaryFocus?.unfocus();
     tester
@@ -390,10 +390,10 @@ void main() {
       expect(knopfAktiv(tester), isTrue);
     });
 
-    /// Nicht nur die freie Eingabe im Auswahldialog, auch der direkt
-    /// getippte Wert soll die Konvention tragen — sonst hinge es vom Zufall
-    /// ab, ob der Anwalt den Dialog benutzt oder gleich tippt.
-    testWidgets('ein direkt getippter Wert wird beim Verlassen normalisiert', (
+    /// Auch hier schreibt das Feld nichts um (§4.2, geändert am 11.09.2026):
+    /// Was getippt wurde, geht so ins Schreiben — bis dahin wurde beim
+    /// Verlassen `HG-E 1427` daraus.
+    testWidgets('ein direkt getippter Wert bleibt beim Verlassen stehen', (
       tester,
     ) async {
       await zeige(tester, vorlage([kennzeichenfeld()]));
@@ -401,7 +401,7 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'hg-e1427');
       await verlasse(tester, 'Fahrzeug');
 
-      expect(imFeld(tester, 'Fahrzeug'), 'HG-E 1427');
+      expect(imFeld(tester, 'Fahrzeug'), 'hg-e1427');
     });
 
     testWidgets('leer sperrt, wenn das Feld Pflicht ist', (tester) async {

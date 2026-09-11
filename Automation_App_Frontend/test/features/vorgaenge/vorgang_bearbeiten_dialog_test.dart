@@ -9,14 +9,11 @@ import 'package:flutter_test/flutter_test.dart';
 import '../sachgebiete/sachgebiet_test_katalog.dart';
 
 /// Der Bearbeiten-Dialog ist der zweite Weg, auf dem ein Kennzeichen in den
-/// Bestand kommt — und der einzige ohne reactive_forms. Er hatte deshalb weder
-/// Prüfung noch Normalisierung: Was hier getippt wurde, landete roh im Vorgang,
-/// während dasselbe Feld beim Erfassen die Konvention `HG-E 1427` herstellte.
-///
-/// An dem Wert hängt die Zuordnung einer Zentralruf-Antwort
-/// (`gleichesKennzeichen`), also gilt hier dieselbe Regel wie am Feld: lesbare
-/// Schreibweisen werden geradegezogen, Unlesbares wird gar nicht erst
-/// gespeichert.
+/// Bestand kommt — und der einzige ohne reactive_forms. Hier gilt dieselbe
+/// Regel wie am Feld: Der Wert geht, wie er getippt wurde, in den Bestand
+/// (§4.2, geändert am 11.09.2026), und was auffällt, steht als Hinweis
+/// darunter. Die Zuordnung einer Zentralruf-Antwort hängt an der Schreibweise
+/// nicht, sie vergleicht über `gleichesKennzeichen`.
 void main() {
   setUp(registriereSachgebietKatalog);
   tearDown(() => getIt.reset());
@@ -78,13 +75,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('speichert das Kennzeichen in der Konvention', (tester) async {
+  /// Umgeschrieben wird nichts (§4.2, geändert am 11.09.2026) — bis dahin
+  /// ging hier `HG-E 1427` in den Bestand.
+  testWidgets('speichert das Kennzeichen, wie es getippt wurde', (
+    tester,
+  ) async {
     await zeigeDialog(tester, basis());
 
-    await tester.enterText(kennzeichenFeld(), 'hg-e1427');
+    await tester.enterText(kennzeichenFeld(), ' hg-e1427 ');
     await speichere(tester);
 
-    expect(gespeichert?.geschaedigtenKennzeichen, 'HG-E 1427');
+    expect(gespeichert?.geschaedigtenKennzeichen, 'hg-e1427');
   });
 
   /// Ein Versicherungskennzeichen (E-Scooter) geht unverändert in den Bestand:

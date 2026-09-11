@@ -1,4 +1,3 @@
-import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/sachgebiet_katalog_builder.dart';
@@ -92,15 +91,13 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
   }
 
   Future<void> _speichern() async {
-    // Was eindeutig lesbar ist, geht in der Konvention `HG-E 1427` in den
-    // Bestand — an dem Wert hängt die Zuordnung einer Zentralruf-Antwort, und
-    // die vergleicht normalisiert (`gleichesKennzeichen`). Alles andere geht
-    // **unverändert** hinein: ein Versicherungs-, Behörden- oder
-    // Auslandskennzeichen ebenso wie ein mehrdeutiges `HGE1427`, das nicht
-    // geraten werden darf (#130). Der Hinweis dazu steht am Feld, er hält das
-    // Speichern aber nicht auf.
-    final kennzeichen =
-        normalizeKennzeichen(_geschaedigtenKennzeichen.text)?.trim() ?? '';
+    // Das Kennzeichen geht, **wie es eingegeben wurde**, in den Bestand (§4.2,
+    // geändert am 11.09.2026 — bis dahin in der Konvention `HG-E 1427`, wo die
+    // Lesart feststand). Die Zuordnung einer Zentralruf-Antwort hängt daran
+    // nicht, sie vergleicht ohne Rücksicht auf die Schreibweise
+    // (`gleichesKennzeichen`). Aufgehalten wird nichts (#130); der Hinweis
+    // steht am Feld.
+    final kennzeichen = _geschaedigtenKennzeichen.text.trim();
 
     setState(() {
       _referenzFehler = null;
@@ -186,9 +183,7 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
                 builder: (context, wert, child) => VorgangDialogField(
                   controller: _geschaedigtenKennzeichen,
                   label: 'Kennzeichen Mandant (z. B. HG-E 1427)',
-                  hinweisText: KennzeichenField.beanstandung(
-                    normalizeKennzeichen(wert.text)?.trim() ?? '',
-                  ),
+                  hinweisText: KennzeichenField.beanstandung(wert.text.trim()),
                 ),
               ),
               VorgangDialogField(
