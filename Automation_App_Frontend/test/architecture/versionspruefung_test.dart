@@ -31,125 +31,119 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   final skript = File('../scripts/versionspruefung.ps1');
 
-  group(
-    'Auflösung des Flutter-SDK',
-    () {
-      late Directory tmp;
+  group('Auflösung des Flutter-SDK', () {
+    late Directory tmp;
 
-      setUp(() {
-        tmp = Directory.systemTemp.createTempSync('versionspruefung');
-        legeTestrepoAn(tmp, skript);
-      });
+    setUp(() {
+      tmp = Directory.systemTemp.createTempSync('versionspruefung');
+      legeTestrepoAn(tmp, skript);
+    });
 
-      tearDown(() => tmp.deleteSync(recursive: true));
+    tearDown(() => tmp.deleteSync(recursive: true));
 
-      test('nimmt die gepinnte Fassung aus FVM_CACHE_PATH', () async {
-        final cache = Directory('${tmp.path}\\cache');
-        final bin = legeSdkAn(cache, testfassung);
+    test('nimmt die gepinnte Fassung aus FVM_CACHE_PATH', () async {
+      final cache = Directory('${tmp.path}\\cache');
+      final bin = legeSdkAn(cache, testfassung);
 
-        final lauf = await pruefe(tmp, cache: cache);
+      final lauf = await pruefe(tmp, cache: cache);
 
-        expect(
-          lauf.exitCode,
-          0,
-          reason: 'Das SDK lag im Cache:\n${protokoll(lauf)}',
-        );
-        expect(alsPfad(lauf.stdout), alsPfad(bin.path));
-      });
-
-      test('nimmt sie ohne FVM_CACHE_PATH aus ~/fvm', () async {
-        final heim = Directory('${tmp.path}\\heim');
-        final bin = legeSdkAn(Directory('${heim.path}\\fvm'), testfassung);
-
-        final lauf = await pruefe(tmp, heim: heim);
-
-        expect(
-          lauf.exitCode,
-          0,
-          reason: 'Das SDK lag unter ~/fvm:\n${protokoll(lauf)}',
-        );
-        expect(alsPfad(lauf.stdout), alsPfad(bin.path));
-      });
-
-      test(
-        'bricht mit der gewohnten Meldung ab, wenn sie im Cache fehlt',
-        () async {
-          // Ein Flutter im PATH, das die falsche Fassung meldet: der Zustand, den
-          // ein wirklich frischer Rechner erzeugt. Ohne diese Attrappe hinge das
-          // Ergebnis daran, was auf dem Rechner des Prüfenden installiert ist.
-          final ausDemPfad = legeSdkAn(Directory('${tmp.path}\\pfad'), '3.0.0');
-
-          final lauf = await pruefe(
-            tmp,
-            cache: Directory('${tmp.path}\\leer'),
-            zusatzPfad: ausDemPfad,
-          );
-
-          expect(lauf.exitCode, 1, reason: protokoll(lauf));
-          expect(
-            protokoll(lauf),
-            allOf(
-              contains('Flutter 3.0.0 statt der gepinnten $testfassung'),
-              contains("'fvm install $testfassung'"),
-            ),
-            reason:
-                'Die Meldung bleibt wortgleich stehen: Auf einem wirklich '
-                'frischen Rechner ist `fvm install` ein Download, und den soll '
-                'ein prüfendes Skript nicht stillschweigend auslösen. Sie ist '
-                'dann die richtige Antwort und nicht der Fehler.',
-          );
-        },
+      expect(
+        lauf.exitCode,
+        0,
+        reason: 'Das SDK lag im Cache:\n${protokoll(lauf)}',
       );
+      expect(alsPfad(lauf.stdout), alsPfad(bin.path));
+    });
 
-      test('lässt der Junction den Vortritt vor dem Cache', () async {
-        // Ein gewöhnliches Verzeichnis steht hier für die Junction: Das Skript
-        // fragt `Test-Path .../flutter_sdk/bin/flutter.bat` und interessiert
-        // sich nicht dafür, wie der Ordner dorthin kam.
-        final junction = legeSdkAn(
-          Directory('${tmp.path}\\Automation_App_Frontend\\.fvm'),
-          testfassung,
-          unter: 'flutter_sdk',
+    test('nimmt sie ohne FVM_CACHE_PATH aus ~/fvm', () async {
+      final heim = Directory('${tmp.path}\\heim');
+      final bin = legeSdkAn(Directory('${heim.path}\\fvm'), testfassung);
+
+      final lauf = await pruefe(tmp, heim: heim);
+
+      expect(
+        lauf.exitCode,
+        0,
+        reason: 'Das SDK lag unter ~/fvm:\n${protokoll(lauf)}',
+      );
+      expect(alsPfad(lauf.stdout), alsPfad(bin.path));
+    });
+
+    test(
+      'bricht mit der gewohnten Meldung ab, wenn sie im Cache fehlt',
+      () async {
+        // Ein Flutter im PATH, das die falsche Fassung meldet: der Zustand, den
+        // ein wirklich frischer Rechner erzeugt. Ohne diese Attrappe hinge das
+        // Ergebnis daran, was auf dem Rechner des Prüfenden installiert ist.
+        final ausDemPfad = legeSdkAn(Directory('${tmp.path}\\pfad'), '3.0.0');
+
+        final lauf = await pruefe(
+          tmp,
+          cache: Directory('${tmp.path}\\leer'),
+          zusatzPfad: ausDemPfad,
         );
-        final cache = Directory('${tmp.path}\\cache');
-        legeSdkAn(cache, testfassung);
 
-        final lauf = await pruefe(tmp, cache: cache);
-
-        expect(lauf.exitCode, 0, reason: protokoll(lauf));
+        expect(lauf.exitCode, 1, reason: protokoll(lauf));
         expect(
-          alsPfad(lauf.stdout),
-          alsPfad(junction.path),
+          protokoll(lauf),
+          allOf(
+            contains('Flutter 3.0.0 statt der gepinnten $testfassung'),
+            contains("'fvm install $testfassung'"),
+          ),
           reason:
-              'Wer `fvm use` gefahren ist, hat sich für dieses SDK entschieden '
-              '— auch wenn im Cache dieselbe Fassung liegt.',
+              'Die Meldung bleibt wortgleich stehen: Auf einem wirklich '
+              'frischen Rechner ist `fvm install` ein Download, und den soll '
+              'ein prüfendes Skript nicht stillschweigend auslösen. Sie ist '
+              'dann die richtige Antwort und nicht der Fehler.',
         );
-      });
+      },
+    );
 
-      test('meldet nicht grün, wenn .fvmrc fehlt', () async {
-        File('${tmp.path}\\Automation_App_Frontend\\.fvmrc').deleteSync();
-        final cache = Directory('${tmp.path}\\cache');
-        legeSdkAn(cache, testfassung);
+    test('lässt der Junction den Vortritt vor dem Cache', () async {
+      // Ein gewöhnliches Verzeichnis steht hier für die Junction: Das Skript
+      // fragt `Test-Path .../flutter_sdk/bin/flutter.bat` und interessiert
+      // sich nicht dafür, wie der Ordner dorthin kam.
+      final junction = legeSdkAn(
+        Directory('${tmp.path}\\Automation_App_Frontend\\.fvm'),
+        testfassung,
+        unter: 'flutter_sdk',
+      );
+      final cache = Directory('${tmp.path}\\cache');
+      legeSdkAn(cache, testfassung);
 
-        final lauf = await pruefe(tmp, cache: cache);
+      final lauf = await pruefe(tmp, cache: cache);
 
-        expect(
-          lauf.exitCode,
-          1,
-          reason:
-              'Ohne die Pinnung hat kein Vergleich stattgefunden. `Get-Content` '
-              'auf einen fehlenden Pfad bricht nicht ab: Das Skript lief '
-              r'darüber hinweg, setzte kein $fehler und endete mit 0 — '
-              'check.ps1 sah einen bestandenen Versionsvergleich, den es nie '
-              'gab. Ein Wächter, der bei eigener Störung grün meldet, ist '
-              'schlimmer als keiner.\n${protokoll(lauf)}',
-        );
-        expect(protokoll(lauf), contains('.fvmrc'));
-      });
-    },
-    skip: Platform.isWindows
-        ? null
-        : 'Die Prüfkette ist ein PowerShell-Skript.',
-  );
+      expect(lauf.exitCode, 0, reason: protokoll(lauf));
+      expect(
+        alsPfad(lauf.stdout),
+        alsPfad(junction.path),
+        reason:
+            'Wer `fvm use` gefahren ist, hat sich für dieses SDK entschieden '
+            '— auch wenn im Cache dieselbe Fassung liegt.',
+      );
+    });
+
+    test('meldet nicht grün, wenn .fvmrc fehlt', () async {
+      File('${tmp.path}\\Automation_App_Frontend\\.fvmrc').deleteSync();
+      final cache = Directory('${tmp.path}\\cache');
+      legeSdkAn(cache, testfassung);
+
+      final lauf = await pruefe(tmp, cache: cache);
+
+      expect(
+        lauf.exitCode,
+        1,
+        reason:
+            'Ohne die Pinnung hat kein Vergleich stattgefunden. `Get-Content` '
+            'auf einen fehlenden Pfad bricht nicht ab: Das Skript lief '
+            r'darüber hinweg, setzte kein $fehler und endete mit 0 — '
+            'check.ps1 sah einen bestandenen Versionsvergleich, den es nie '
+            'gab. Ein Wächter, der bei eigener Störung grün meldet, ist '
+            'schlimmer als keiner.\n${protokoll(lauf)}',
+      );
+      expect(protokoll(lauf), contains('.fvmrc'));
+    });
+  }, skip: Platform.isWindows ? null : 'Die Prüfkette ist ein PowerShell-Skript.');
 
   /// Die Skripte, die Flutter aufrufen, muessen es ueber diese Aufloesung tun.
   ///

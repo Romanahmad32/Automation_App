@@ -308,11 +308,10 @@ void main() {
         ),
       );
 
-      expect(
-        befunde.map((befund) => befund.name),
-        ['MandantName', 'Referenz'],
-        reason: 'der Betreff zaehlt zuerst, Dubletten entfallen',
-      );
+      expect(befunde.map((befund) => befund.name), [
+        'MandantName',
+        'Referenz',
+      ], reason: 'der Betreff zaehlt zuerst, Dubletten entfallen');
       expect(befunde.first.zeile, 0, reason: 'aus dem Betreff');
       expect(befunde.last.zeile, 1);
     });
