@@ -14,7 +14,7 @@ namespace AutomationService.Tests.Architecture;
 /// beim naechsten neuen Slice geraeuschlos unvollstaendig werden -- und ein
 /// Slice, der dort fehlt, existiert fuer einen frischen Agenten nicht.
 ///
-/// Zwei Aufzaehlungen, zwei Tests. Das Zeilenbudget der CLAUDE.md-Dateien
+/// Zwei Aufzaehlungen, zwei Tests. Das Wortbudget der CLAUDE.md-Dateien
 /// prueft die Gegenseite (Frontend, dokumentation_test.dart) fuer alle drei
 /// gemeinsam -- eine Regel, ein Ort.
 /// </summary>
@@ -48,7 +48,8 @@ public class DokumentationTests
         abweichungen.Should().BeEmpty(
             "die Slice-Liste in AutomationService/CLAUDE.md ist der Einstieg in das Backend. " +
             "Ein neuer Slice gehoert mit hoechstens vier Zeilen dazu (Zweck, Besonderheit, " +
-            "Fallstrick), ein entfernter wieder heraus");
+            "Fallstrick), ein entfernter wieder heraus. Was laenger wird, gehoert in eine " +
+            "FALLSTRICKE.md neben den Slice -- wie bei EmailVersand");
     }
 
     static HashSet<string> GueltigeParagraphen()

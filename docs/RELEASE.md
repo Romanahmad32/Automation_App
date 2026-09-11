@@ -291,29 +291,25 @@ entscheidet, wie man liest — bei einem Fehler sucht man die Ursache und den Te
 fängt, bei einem Feature den Umfang. Ein Repository, in dem beides gleich heißt, verschenkt diese
 Auskunft an jeder Stelle, an der Zweige aufgelistet werden.
 
-**Erzwungen an zwei Stellen:**
+**Erzwungen an einer Stelle:** dem CI-Schritt **„Zweigname"** in `.github/workflows/ci.yml`. Er
+prüft den Namen am Pull Request, egal woher der Zweig kommt — Kommandozeile, Weboberfläche,
+fremder Klon, anderer Rechner.
 
-- `.claude/hooks/zweigname.ps1` hält schon das Anlegen an — `git checkout -b`, `git switch -c`
-  samt `--create`, `git branch <name>` und das Umbenennen mit `git branch -m` — und nennt den
-  fertigen Ersatzbefehl. Vor dem ersten Commit kostet Umbenennen nichts; hängen erst Commits und
-  ein Push daran, bleibt ein schiefer Name meistens stehen.
-- Der CI-Schritt **„Zweigname"** prüft denselben Satz am Pull Request — für alles, was nicht über
-  den Hook entstanden ist (Weboberfläche, fremder Klon, anderer Rechner).
+Bis September 2026 hielt zusätzlich ein Agenten-Hook unter `.claude/hooks/` schon das Anlegen
+an. Der Gedanke war richtig — vor dem ersten Commit kostet Umbenennen nichts —, die
+Rechnung ging trotzdem nicht auf: Der Hook lief 1,37 s vor *jedem* Bash- und PowerShell-Aufruf,
+weil ein PreToolUse-Matcher nur das Werkzeug trifft, nicht den Befehl. Er musste zweimal
+nachgebessert werden, weil er bei Alltagsbefehlen anschlug (`git branch | grep master`,
+`git branch -a`), und fing in 200 CI-Läufen keinen einzigen schiefen Zweignamen. Ein Wächter, der
+bei jedem Aufruf zahlt und nie etwas fängt, wird gestrichen; Einzelheiten in
+[`.claude/README.md`](../.claude/README.md).
 
-Groß- und Kleinschreibung zählt an beiden Stellen mit: `Feature/x` ist kein `feature/x`. Das ist
-keine Strenge um ihrer selbst willen, sondern Gleichlauf — das `case` in der CI vergleicht
-ohnehin genau, und ein Hook, der großzügiger ist als die CI, verschiebt den Fund nur nach hinten.
+Groß- und Kleinschreibung zählt mit: `Feature/x` ist kein `feature/x`. Das `case` in der CI
+vergleicht genau, und wer den Zweig von Hand anlegt, schreibt das Präfix klein.
 
 **Eine Ausnahme, und sie ist keine Nachlässigkeit:** `dependabot/…`. Diese Zweige legt niemand von
 Hand an, ihr Name kommt von Dependabot und lässt sich nicht wählen. Ohne die Ausnahme wäre jeder
-Abhängigkeits-PR rot — und ein Schritt, der immer rot ist, wird ignoriert. Der Hook kennt sie
-ebenfalls: `gh pr checkout` legt für einen Abhängigkeits-PR lokal genau so einen Zweig an.
-
-Wer den zulässigen Satz ändert, ändert ihn in **beiden** Prüfungen: `$erlaubt` im Hook und das
-`case` in `ci.yml`. Dass beide gleich lauten, prüft
-`Automation_App_Frontend/test/architecture/zweigname_hook_test.dart` — zusammen mit dem Verhalten
-des Hooks an echten Befehlszeilen. Der Satz musste zweimal nachgebessert werden, beide Male weil
-er bei Alltagsbefehlen anschlug; ein Wächter, der das tut, wird abgeschaltet.
+Abhängigkeits-PR rot — und ein Schritt, der immer rot ist, wird ignoriert.
 
 ## Geheimnisse bleiben draußen
 
@@ -343,17 +339,19 @@ auf etwas anderem, lässt `check.ps1` es stehen und sagt es nur.
 
 ## Toolchain ist festgenagelt
 
-`global.json` legt das .NET-SDK fest, `FLUTTER_VERSION` in beiden Workflows die
-Flutter-Version.
+`global.json` legt das .NET-SDK fest, `Automation_App_Frontend/.fvmrc` die
+Flutter-Version — **und zwar als einzige Stelle.** `ci.yml` und `release.yml`
+lesen sie zur Laufzeit von dort in ihre Umgebung (Schritt „Gepinnte
+Flutter-Fassung"), statt sie ein zweites und drittes Mal zu nennen. Gewählt ist
+`.fvmrc`, weil das die Datei ist, die fvm selbst liest: Wer `fvm use` fährt und
+wer die CI fährt, greift damit garantiert dieselbe Fassung.
 
-Für die Flutter-Seite liegt daneben eine `.fvmrc` (in `Automation_App_Frontend/`)
-mit derselben Fassung. Sie ist versioniert und genügt der Prüfkette:
+Sie ist versioniert und genügt der Prüfkette:
 `scripts/versionspruefung.ps1` sucht das SDK zuerst unter `.fvm/flutter_sdk`
 und, wenn das fehlt, unter der in `.fvmrc` gepinnten Fassung im
 [FVM](https://fvm.app)-Cache (`FVM_CACHE_PATH`, sonst `~/fvm`) — geprüft wird
 die Fassung, die dabei herauskommt, und die Frontend-Schritte fahren genau
-dieses SDK. Zusätzlich schlägt sie an, wenn `.fvmrc` und `FLUTTER_VERSION`
-auseinanderlaufen.
+dieses SDK.
 
 **Der Paketbau geht denselben Weg** (behoben am 03.09.2026).
 `scripts/build-package.ps1` rief bis dahin blankes `flutter`. In der CI ist das
@@ -369,20 +367,22 @@ schlimmer als keins, denn es sieht fertig aus. Dass kein Skript unter
 `scripts/` mehr blankes `flutter` oder `dart` ruft, hält
 `test/architecture/versionspruefung_test.dart` fest.
 
-> **Für einen Versionssprung heißt das:** Die Pinnung steht an drei Stellen —
-> `FLUTTER_VERSION` in `ci.yml` **und** in `release.yml`, `.fvmrc` daneben. Wer
-> sie anhebt, ändert alle drei zusammen, in einem eigenen Commit.
+> **Für einen Versionssprung heißt das:** Die Fassung in `.fvmrc` ändern, mit
+> `pubspec.lock` zusammen, in einem eigenen Commit. Sonst nichts.
 
-Die Prüfung vergleicht seither **alle drei** gegeneinander. `release.yml` war
-dabei die letzte unbewachte Stelle und die unangenehmste: Aus ihr entsteht das
-ausgelieferte Paket. Wer nur `ci.yml` und `.fvmrc` nachzog, bekam eine grüne
-Kette, eine grüne CI — und ein Release aus einer Toolchain, gegen die nie
-geprüft wurde. Der Satz oben stand hier vorher als Merkzettel; genau das ist
-aber, was beim Versionssprung übersehen wird, und deshalb ist er jetzt ein
-Test (`versionspruefung_test.dart`). Fehlt `FLUTTER_VERSION` in einer der
-beiden Workflow-Dateien, meldet die Prüfung das statt still nichts zu
+Bis zum 10.09.2026 stand sie an drei Stellen — `FLUTTER_VERSION` in `ci.yml`
+**und** in `release.yml`, `.fvmrc` daneben —, und dieser Absatz war ein
+Merkzettel („wer sie anhebt, ändert alle drei zusammen"). Weil genau so ein
+Merkzettel beim Versionssprung übersehen wird, wurde daraus erst ein Vergleich
+in `versionspruefung.ps1` und ein Test, der ihn festhielt: zusammen rund
+120 Zeilen, die nichts prüften als die Gleichheit dreier Zahlen. Jetzt gibt es
+nur noch eine Zahl, und der Vergleich ist mit ihr weggefallen. Ein Problem, das
+sich beseitigen lässt, wird beseitigt und nicht bewacht.
+
+Fehlt die Fassung in `.fvmrc`, meldet die Prüfung das, statt still nichts zu
 vergleichen — ein Wächter, der bei eigener Störung grün meldet, ist schlimmer
-als keiner.
+als keiner. Denselben Abbruch fahren `ci.yml` und `release.yml`: Ohne Angabe
+zöge `flutter-action` sonst das neueste stable, und die Pinnung wäre still weg.
 
 **`fvm use` ist damit Komfort, keine Voraussetzung.** Es legt die Junction
 `.fvm/flutter_sdk` an, und die hat weiterhin Vorrang — wer sie bewusst gesetzt
@@ -406,7 +406,7 @@ Festgenagelt ist das Ganze durch
 `Automation_App_Frontend/test/architecture/versionspruefung_test.dart`: Es fährt
 `versionspruefung.ps1` gegen Wegwerf-Repos und prüft beide Cache-Wege, den
 Vorrang der Junction, den Abbruch bei fehlender Fassung — und dass die Prüfung
-nicht grün meldet, wenn ihr selbst eine Datei fehlt.
+nicht grün meldet, wenn ihr selbst `.fvmrc` fehlt.
 
 Der Grund steht in der Historie: die CI war ab dem 01.08.2026 eine Woche lang rot,
 ohne dass jemand Code angefasst hätte. Beide Jobs zogen mit `channel: stable` und
@@ -428,14 +428,24 @@ CI zerlegt.
 `pubspec.lock` ist Teil dieser Festlegung, und sie kann dem Pin widersprechen:
 Flutter pinnt `meta`, `matcher` und `test_api` **exakt** (nicht mit Caret), und
 Dependabot sieht diese Pins nicht — es löst mit dem reinen Dart-SDK auf und trägt
-Fassungen ein, die es mit `FLUTTER_VERSION` nicht geben kann. `pub get` stuft sie
-dann bei jedem Lauf still zurück, und die Sperrdatei beschreibt einen Stand, der
-nie gelaufen ist.
+Fassungen ein, die es mit der gepinnten Fassung nicht geben kann. `pub get` stuft
+sie dann bei jedem Lauf still zurück, und die Sperrdatei beschreibt einen Stand,
+der nie gelaufen ist.
 
 Der Schritt **„Sperrdatei passt zur Toolchain"** in `ci.yml` und `check.ps1` macht
 das sichtbar: nach `flutter pub get` darf sich die Datei nicht ändern. Tut sie es,
 ist die aufgelöste Fassung die richtige und gehört in den Commit — nicht
 zurückgeworfen.
+
+Das ist der häufigste rote Lauf überhaupt: 9 von 20 roten CI-Läufen zwischen dem
+06.07. und dem 09.09.2026 kamen von Dependabot, 8 davon aus der pub-Gruppe.
+Deshalb steht derselbe Schritt seit dem 10.09.2026 **auch im Job `paket`**, und
+zwar vor dem Paketbau: Der Job endet damit nach gut einer Minute statt nach
+sechs. `needs: [frontend]` wäre die naheliegende Alternative gewesen, kostet
+aber die falsche Währung — die beiden Jobs liefen dann hintereinander statt
+nebeneinander, rund 15 Minuten Wanduhr in *jedem* Lauf, um in etwa jedem
+zwanzigsten sechs Minuten Rechenzeit zu sparen. `.github/dependabot.yml` hält
+daneben fest, welche Pakete gar nicht erst als Vorschlag hereinkommen sollen.
 
 ## CI-Caching
 

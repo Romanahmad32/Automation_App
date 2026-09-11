@@ -67,15 +67,31 @@ updates:
   # Ergebnis. Dependabot hat kein Flutter zur Hand und loest mit dem reinen
   # Dart-SDK auf; die exakten Pins des Frameworks (meta, matcher, test_api in
   # packages/flutter{,_test}/pubspec.yaml) sieht es deshalb nicht und traegt
-  # Fassungen ein, die es mit FLUTTER_VERSION nicht geben kann. Genau so ist
-  # 5e80b05 hereingekommen: ein Stand, den jeder `pub get` still zurueckstufte.
+  # Fassungen ein, die es mit der in .fvmrc gepinnten Fassung nicht geben kann.
+  # Genau so ist 5e80b05 hereingekommen: ein Stand, den jeder `pub get` still
+  # zurueckstufte.
   #
-  # Ein "ignore"-Eintrag hilft dagegen nicht — die betroffenen Pakete sind
-  # transitiv, sie werden nicht aktualisiert, sondern beim Aufloesen mitgewaehlt.
-  # Was hilft, ist der Schritt "Sperrdatei passt zur Toolchain" in ci.yml: er
-  # macht so einen PR rot statt still. Die Behebung ist immer dieselbe —
-  # `flutter pub get` mit der gepinnten Fassung laufen lassen und die dabei
-  # entstandene pubspec.lock in den PR nachtragen.
+  # Das ist der teuerste Dauerbrenner der CI: 9 von 20 roten Laeufen zwischen
+  # dem 06.07. und dem 09.09.2026 kamen von Dependabot, 8 davon aus dieser
+  # Gruppe.
+  #
+  # Zwei Wege, auf denen so ein Paket hereinkommt, und sie brauchen
+  # verschiedene Antworten:
+  #
+  #   1. Als *Nebenwirkung* der Aufloesung. So ist 5e80b05 entstanden: Der PR
+  #      hob elf direkte Pakete, und meta, matcher und test_api wanderten
+  #      unangekuendigt mit — sie stehen in keiner Zeile des PR-Textes. Dagegen
+  #      hilft die "ignore"-Liste unten *nicht*, denn Dependabot aktualisiert
+  #      sie ja gar nicht, es waehlt sie beim Aufloesen mit. Was hier hilft,
+  #      ist der Schritt "Sperrdatei passt zur Toolchain" in ci.yml: er macht
+  #      so einen PR rot statt still. Die Behebung ist immer dieselbe —
+  #      `flutter pub get` mit der gepinnten Fassung laufen lassen und die
+  #      dabei entstandene pubspec.lock in den PR nachtragen.
+  #   2. Als angekuendigte Aktualisierung — Dependabot kann auch transitive
+  #      Pakete einzeln heben. Genau dafuer steht die Liste unten: Ein solcher
+  #      PR waere garantiert rot, weil das Framework die Fassung exakt vorgibt.
+  #      Ihn gar nicht erst aufmachen zu lassen, ist billiger, als ihn jede
+  #      Woche wegzuraeumen.
   - package-ecosystem: "pub"
     directory: "/Automation_App_Frontend"
     schedule:
@@ -88,6 +104,19 @@ updates:
       pub:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      # Was das Framework in packages/flutter{,_test}/pubspec.yaml **exakt**
+      # pinnt, gehoert zur Toolchain und nicht in einen Abhaengigkeits-PR. Die
+      # Liste nennt die drei, die hier tatsaechlich gedriftet sind (c644476:
+      # matcher, meta, test_api). Das Framework pinnt noch mehr auf diese Weise
+      # — characters, collection, path, stack_trace, clock, fake_async,
+      # stream_channel, vector_math, material_color_utilities,
+      # leak_tracker_flutter_testing. Sie stehen hier bewusst nicht auf Vorrat:
+      # Taucht eine davon in einem roten PR auf, kommt sie dazu, und dann steht
+      # ein Beleg daneben statt einer Vermutung.
+      - dependency-name: "meta"
+      - dependency-name: "matcher"
+      - dependency-name: "test_api"
     commit-message:
       prefix: "Flutter"
 

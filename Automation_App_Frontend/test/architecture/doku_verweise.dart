@@ -15,6 +15,11 @@ const Set<String> nichtDurchsucht = {
   'packages',
   'ephemeral',
   'Generated',
+  // Der gepackte Auslieferstand (`.gitignore`). Er enthaelt Zweitfassungen
+  // versionierter Dateien — `appsettings.json` liegt dort ein zweites Mal.
+  // Ohne diesen Eintrag entschiede eine Build-Ausgabe darueber, ob ein blosser
+  // Dateiname im Repo eindeutig ist (siehe Pfadverzeichnis.kennt).
+  'dist',
   // Ein Worktree ist eine zweite, vollstaendige Kopie des Repos — womoeglich
   // auf einem anderen Zweig. Seine Doku gegen den Dateibestand *dieses*
   // Arbeitsverzeichnisses zu pruefen, beantwortet keine Frage und schlaegt
@@ -75,6 +80,26 @@ const Map<String, String> verweisAusnahmen = {
       'letzten automatischen Sicherungslaufs (#39), entsteht erst im Betrieb',
 };
 
+/// Namen, die eine **Gattung** benennen statt einer bestimmten Datei — wie
+/// `.g.dart` eine Dateiklasse benennt. Jeder von ihnen kommt im Repo je
+/// Teilbaum, Feature oder Programm genau einmal vor; welcher gemeint ist,
+/// sagt der Satz drumherum („die `FEATURE.md` des Features", „aus der
+/// Wurzel-`CLAUDE.md`"). Einen Pfad hineinzuschreiben machte solche Saetze
+/// falsch, nicht genauer.
+///
+/// Dass es sie gibt, bewacht je ein eigener Test: die drei `CLAUDE.md` das
+/// Wortbudget, die Steckbriefe der Steckbrief-Test, das Paar aus Steckbrief
+/// und `FALLSTRICKE.md` der Nennt-einander-Test. Nur `Program.cs` steht ohne
+/// Wache da — ohne ihn gaebe es kein Programm.
+const Map<String, String> gattungsnamen = {
+  'CLAUDE.md': 'eine je Teilbaum, dazu die Wurzel-Datei',
+  'FEATURE.md': 'ein Steckbrief je Feature',
+  'FALLSTRICKE.md': 'hoechstens einer je Feature',
+  'Program.cs':
+      'Pflichtname des .NET-Einstiegspunkts, einer je Programm '
+      '(Dienst und die zwei Werkzeuge unter tools/)',
+};
+
 /// Vereinheitlicht Pfadtrenner zu `/`, damit Vergleiche und Meldungen auf
 /// jedem Betriebssystem gleich aussehen (unter POSIX ein No-Op).
 String normalisiert(String pfad) =>
@@ -83,6 +108,36 @@ String normalisiert(String pfad) =>
 /// Der letzte Pfadbestandteil, unabhaengig vom Trennzeichen.
 String dateiname(String pfad) => normalisiert(pfad).split('/').last;
 
+/// Woerter einer Doku-Datei: alles, was durch Leerraum getrennt ist. Zaehlt
+/// Aufzaehlungsstriche und Tabellenbalken mit — es geht um die
+/// Groessenordnung, nicht um eine Zaehlung auf das Wort genau.
+int woerter(File datei) => datei
+    .readAsStringSync()
+    .split(RegExp(r'\s+'))
+    .where((wort) => wort.isNotEmpty)
+    .length;
+
+/// Der Ordneranteil eines `/`-getrennten Pfades, leer bei einer Datei ganz
+/// oben.
+String ordnerAnteil(String pfad) {
+  final teile = pfad.split('/');
+  return teile.length < 2 ? '' : teile.sublist(0, teile.length - 1).join('/');
+}
+
+/// Ein relativ angegebener Pfad, absolut und ohne `.`/`..`-Schritte.
+String aufgeloest(String pfad) {
+  final teile = <String>[];
+  for (final teil in normalisiert(File(pfad).absolute.path).split('/')) {
+    if (teil == '.' || teil.isEmpty) continue;
+    if (teil == '..') {
+      if (teile.isNotEmpty) teile.removeLast();
+      continue;
+    }
+    teile.add(teil);
+  }
+  return teile.join('/');
+}
+
 /// Alle Dateien unterhalb der Repo-Wurzel, einmal eingelesen.
 ///
 /// Der Doku-Test loest jeden Verweis gegen dieses Verzeichnis auf, statt eine
@@ -90,17 +145,25 @@ String dateiname(String pfad) => normalisiert(pfad).split('/').last;
 /// Teilpfad (`Architecture/DateilaengeTests.cs`), mal blank
 /// (`vorgang_cubit.dart`), und beide Schreibweisen sind gewollt.
 class Pfadverzeichnis {
-  Pfadverzeichnis._(this.pfade, this.dateinamen);
+  Pfadverzeichnis._(this.wurzel, this.pfade, this.haeufigkeit);
+
+  /// Absoluter, aufgeloester Pfad der Repo-Wurzel, `/`-getrennt.
+  final String wurzel;
 
   /// Repo-relative Pfade, `/`-getrennt.
   final Set<String> pfade;
 
-  /// Blosse Dateinamen ohne Ordneranteil.
-  final Set<String> dateinamen;
+  /// Wie oft ein blosser Dateiname im Repo vorkommt.
+  final Map<String, int> haeufigkeit;
 
   factory Pfadverzeichnis.ab(Directory wurzel) {
     final pfade = <String>{};
-    final namen = <String>{};
+    final haeufigkeit = <String, int>{};
+    // Der Walker liefert die Pfade so, wie [wurzel] angegeben wurde (also
+    // relativ, `../…`); abgeschnitten wird deshalb dieser Anfang, nicht der
+    // aufgeloeste. Der aufgeloeste dient nur dazu, einen anderswo relativ
+    // angegebenen Pfad auf dieselbe Repo-Sicht umzurechnen (repoRelativ).
+    final absolut = aufgeloest(wurzel.path);
     final praefix = '${normalisiert(wurzel.path)}/';
 
     for (final datei in dateienUnter(wurzel)) {
@@ -108,16 +171,49 @@ class Pfadverzeichnis {
       pfade.add(
         pfad.startsWith(praefix) ? pfad.substring(praefix.length) : pfad,
       );
-      namen.add(dateiname(datei.path));
+      final name = dateiname(datei.path);
+      haeufigkeit[name] = (haeufigkeit[name] ?? 0) + 1;
     }
-    return Pfadverzeichnis._(pfade, namen);
+    return Pfadverzeichnis._(absolut, pfade, haeufigkeit);
   }
 
-  /// Ob [token] auf eine vorhandene Datei zeigt. Ein Token mit Ordneranteil
-  /// muss als Pfadende vorkommen, ein blosser Dateiname irgendwo im Baum.
-  bool kennt(String token) => token.contains('/')
-      ? pfade.contains(token) || pfade.any((pfad) => pfad.endsWith('/$token'))
-      : dateinamen.contains(token);
+  /// Der repo-relative Pfad zu [pfad], der wie im Test relativ zum
+  /// Arbeitsverzeichnis (dem Paket-Stammverzeichnis) angegeben ist.
+  String repoRelativ(String pfad) {
+    final absolut = aufgeloest(pfad);
+    return absolut.startsWith('$wurzel/')
+        ? absolut.substring(wurzel.length + 1)
+        : absolut;
+  }
+
+  /// Ob [token] auf eine vorhandene Datei zeigt, genannt in [genanntIn].
+  ///
+  /// Ein Token mit Ordneranteil muss als Pfadende vorkommen. Ein **blosser
+  /// Dateiname** dagegen wird unterhalb des Dokuments aufgeloest, das ihn
+  /// nennt — ausser der Name kommt im Repo nur ein einziges Mal vor, dann ist
+  /// er ohnehin eindeutig.
+  ///
+  /// Vorher galt jeder blosse Name als bekannt, sobald *irgendwo* im Baum eine
+  /// Datei so hiess. Das ist bei den Doku-Dateinamen, die es je Feature einmal
+  /// gibt, ein Freibrief: Solange *ein* Feature eine `FALLSTRICKE.md` hat,
+  /// darf jeder andere Steckbrief auf eine geloeschte Nachbardatei zeigen,
+  /// ohne dass etwas rot wird — ein toter Verweis genau der Art, gegen die es
+  /// diesen Test gibt.
+  bool kennt(String token, {required String genanntIn}) {
+    if (token.contains('/')) {
+      return pfade.contains(token) ||
+          pfade.any((pfad) => pfad.endsWith('/$token'));
+    }
+    if (haeufigkeit[token] == 1) return true;
+
+    final ordner = ordnerAnteil(repoRelativ(genanntIn));
+    final praefix = ordner.isEmpty ? '' : '$ordner/';
+    return pfade.any(
+      (pfad) =>
+          pfad == '$praefix$token' ||
+          (pfad.startsWith(praefix) && pfad.endsWith('/$token')),
+    );
+  }
 }
 
 /// Alle Markdown-Dateien unterhalb von [pfad], stabil sortiert. Leere Liste,
@@ -143,6 +239,7 @@ Iterable<String> verweiseIn(String markdown) sync* {
     final token = treffer.group(1)!;
     if (!verweisEndung.hasMatch(token)) continue;
     if (verweisAusnahmen.containsKey(token)) continue;
+    if (gattungsnamen.containsKey(token)) continue;
     if (keinVerweisZeichen.any(token.contains)) continue;
     // Blosse Endungen wie `.g.dart` benennen eine Dateiklasse, keine Datei.
     if (token.startsWith('.') && !token.contains('/')) continue;

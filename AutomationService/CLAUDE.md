@@ -70,86 +70,53 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Antwort, legt `AntwortAnhaenge` sie unter `%APPDATA%\AutomationService\Anhaenge\<Schlüssel>` ab
   (§4.3) — der Versand bietet sie zum Anhängen an. Kein Posteingang: aufgehoben wird nur, was an
   einer **erfassten** Antwort hängt.
-- **EmailVersand** — versendet die fertig verfasste Mail zum Vorgang (§4.7, `POST api/EmailVersand/senden`, `GET
-  api/EmailVersand/bereitschaft`). Sendet per SMTP über **denselben** Zugang wie der `MailboxMonitor` (`SmtpZugang.Aus` leitet den
-  Postausgang aus dem Posteingang ab; `EmailVersand:SmtpHost` überschreibt). Alles oder nichts: Zugang, Anhänge und Adressen
-  werden geprüft, **bevor** verbunden wird (`AnhangPruefung`, `EmailNachrichtBauer`) — ein Fehler heißt: nichts ist
-  hinausgegangen. Danach trägt `GesendetOrdnerAblage` die Nachricht per IMAP in "Gesendet" nach, außer der Anbieter tut es selbst
-  (Gmail). Was nach außen wirkt, hängt an drei Nähten, damit der Weg ausführbar prüfbar ist (`VersandwegTests`): `ISmtpUebergabe`
-  (Einlieferung), `IGesendetOrdnerAblage` (Kopie), `IMailboxConfigSource` (der Zugang — der `MailboxConfigStore` dahinter liest im
-  Konstruktor aus `%APPDATA%`, ein Test an der Klasse läse das echte Postfach). Zweiter Weg: `POST api/EmailVersand/entwurf`
-  öffnet die Nachricht als Entwurf in Outlook, sonst als `.eml` (`EntwurfDatei`, `EntwurfOeffner` entscheidet).
-  `OutlookVerbindung` hält COM per **Late Binding** (kein PIA) auf einem **dauerhaften** STA-Thread — sonst kostet jeder Entwurf
-  den Outlook-Kaltstart; `POST api/EmailVersand/entwurf/vorwaermen` bezahlt ihn, während der Anwalt tippt. **Jeder Einzelgriff
-  wird losgelassen** (`ComFreigabe`), die Instanz beim Herunterfahren auf ihrem STA-Thread — sonst bleibt outlook.exe stehen. `GET
-  api/EmailVersand/outlook/anhaenge` holt die Anhänge der in Outlook offenen Nachricht (`OutlookAuswahl`, ein Ordner **je
-  Nachricht** nach EntryID, damit der zweite Griff dieselben Pfade liefert statt "… (2).pdf") — der Ersatz für das Ziehen von
-  Anhang zu Anhang: Outlook reicht sie als *virtuelle* Dateien durch, nicht als Pfade. Zurück geht ein `OutlookAnhaenge` mit
-  Betreff, Absender und der Angabe, ob aus offenem Fenster oder Liste gelesen — welche Nachricht gemeint war, entscheidet Outlook;
-  ohne die Angabe sähe ein Griff in die falsche Mail aus wie ein richtiger. `OutlookErreicht` trennt "Outlook schweigt" von
-  "nichts ausgewählt". `DELETE` darauf wirft eine geholte Datei weg (nur dieser Ordner, die Antwort-Anhänge bleiben). **Alle drei
-  Outlook-Wege** (Entwurf, Anhang-Griff, Signatur-Übernahme) brauchen das *klassische* Outlook — das neue (Store-App) meldet keine
-  COM-Schnittstelle an und legt keine Signaturdateien ab, alle drei täten dann wortlos nichts. `OutlookErkennung` sieht deshalb
-  **beim Start** nach (Singleton *und* `IHostedService`, sonst baut der Container sie erst beim ersten Klick), `GET
-  api/EmailVersand/outlook/stand` liefert den Grund im Klartext; der Direktversand über SMTP ist unberührt. **Versandprotokoll**
-  (§4.7): `VersandProtokoll` hält je Vorgang fest, was hinausging — Zeitpunkt, Weg, Empfänger, Anhangnamen wie versendet, ob die
-  Kopie in „Gesendet" landete, und die Message-ID als Nachweis. Geschrieben **nach** der Einlieferung, nie davor; ein Fehlschlag
-  dabei hält den Versand nicht auf (die Mail ist ja beim Empfänger). Adressiert über die *Referenz* statt einen Fremdschlüssel —
-  die Slice darf `Vorgaenge` nicht kennen. `VersandProtokollController` (`api/EmailVersand/protokoll`, `/letzte`) liest; die
-  Outlook-Übergabe steht darin als `OutlookEntwurf` und **nicht** als Versand (§4.8). `AnhangAblage` räumt alle Zwischenlager nach
-  14 Tagen ab (`AnhangAufraeumService` beim Start) — dieselbe Regel wie beim Arbeitsordner. Im Outlook-Entwurf setzt Outlook seine
-  eigene Signatur — deshalb hängt `KanzleiSignatur` die aus den Einstellungen **nur** beim Direktversand an. **Signatur** (§4.7):
-  `GET signaturen` listet die in Outlook eingerichteten, `POST signaturen/uebernehmen` liest eine ein — Nur-Text (`.txt`) **und**
-  formatiert (`.htm` samt Bildern; `OutlookSignaturHtml` schneidet den Rumpf und kürzt Bildverweise auf den blanken Dateinamen).
-  Die Bilder liegen in `SignaturAblage` (`%APPDATA%\AutomationService\Signatur`), das HTML in `KanzleiSettings.MailSignaturHtml`;
-  `GET signaturen/stand` meldet beides, `DELETE signaturen/format` wirft sie weg; **`GET signaturen/vorschau?name=` liest ohne zu
-  schreiben** (§4.7) — geschrieben wird erst über `uebernehmen` beim Speichern. `GET
-  signaturen/bild?dateiname=&ausOutlook=&marke=` liefert **ein** Bild: ohne `ausOutlook` aus der Ablage, mit ihm aus Outlooks
-  Beiordner — das braucht die Vorschau, deren Bilder noch nirgends abgelegt sind; `marke` wertet der Dienst nicht aus, sie macht
-  nur die Adresse eindeutig (Begründung an `SignaturMarke`). Beim Versand baut `MailRumpf` daraus HTML **und** Text und hängt die
-  Bilder als `cid:`-Ressourcen an. Je Mail abwählbar (`EmailNachricht.OhneSignaturBilder`, `SignaturHtmlFilter`) — Word schreibt
-  jedes Bild **zweimal** (VML und `<img>`), und nur eins davon zu entfernen hiesse: abgewählt und trotzdem sichtbar; das Muster
-  für alle drei Fälle steht samt Begründung an `BildVerweis`. Die Bilder zählen über `zusatzBytes` in `AnhangPruefung` zur
-  Größengrenze, denn sie gehen im selben Umschlag hinaus. **Mail-Textvorlagen** (§4.7, §5.3): `MailVorlagenController`
-  (`api/MailVorlagen`, CRUD) über `MailVorlagenRepository`, Name eindeutig (409). Ausgangsbestand ist das echte
-  Kanzlei-Anschreiben; Abweichungen vom Original und das erzwungene LF stehen an `MailVorlagenVorgabe`. Daneben
-  `GrussformelnController` (`api/Grussformeln`, CRUD): die Textbausteine für den Zusatzgruss — eine Liste von Bausteinen, kein
-  Merkmal von Personen (Art. 9 DSGVO), geseedet mit den beiden aus der Kanzlei-Mail. Der Platzhalter heisst `{{Zusatzgruß}}` (bis
-  02.09.2026 `{{Grussformel}}`); wo er steht, entscheidet die Vorlage — der Bestand hier weiss davon nichts. Ebenso
-  `AnredebausteineController` (`api/Anredebausteine`, CRUD): je Eintrag der **Anfang** einer Anrede in drei Beugungsformen,
-  Unique-Index ueber alle drei. Begründung an `AnredeBausteinEntity` und `AnredeBausteineVorgabe`.
+- **EmailVersand** — versendet die fertig verfasste Mail zum Vorgang (§4.7, `POST
+  api/EmailVersand/senden`) oder öffnet sie als Entwurf in Outlook; dazu Versandprotokoll (§4.8),
+  Signatur-Übernahme und die Mail-Textvorlagen. Die Einzelheiten — SMTP-Zugang, COM auf dem
+  STA-Thread, Anhang-Griff, Signaturbilder, Vorlagen — stehen in
+  [`Features/EmailVersand/FALLSTRICKE.md`](AutomationService/Features/EmailVersand/FALLSTRICKE.md).
 - **DevSimulation** — Entwickler-Slice (`POST api/Simulation/zentralruf-antwort`): baut einen
   realistischen Antwortmailtext
   (`ZentralrufAntwortMailBuilder`), schickt ihn durch den **echten** Parser, legt ihn im Store ab und
   pusht über `MailboxHub` — für die App nicht von einem IMAP-Treffer unterscheidbar. Hinter
   `Simulation:Enabled` (nur in `appsettings.Development.json` true), sonst 404. Einzige zugelassene
   Ausnahme der Slice-Isolation (darf `MailboxMonitor.Presentation` verwenden).
-- **Versicherer** — Wissensbasis über Versicherer (`VersichererWissen`, Tabelle `Versicherer`), aus jeder übernommenen
-  Zentralruf-Antwort gefüllt und aktualisiert. Schließt `missingFields`-Lücken späterer Antworten; nach außen nur lesend.
-- **Sachgebiete** — der Sachgebietskatalog als Stammdaten (§7.1): zwölf Kürzel mit Sachgebiet und Rechtsgebiet-Vorschlag,
-  geseedet per `HasData`, gelesen über `GET api/Sachgebiete` (`SachgebietKatalog`); dazu `AbteilungKuerzel` (Kürzel ohne
-  Leerzeichen, `C05/3` zerlegen) als C#-Gegenstück zur gleichnamigen Dart-Datei. Nur lesend, Pflege in der App ist [S].
-- **RegisterHistorie** — das gewachsene Kanzleiregister, jahrgangsweise übernommen (§6.2): `POST api/RegisterImport` prüft
-  (Lücken, Doppelte, Spalte 1, Abteilung↔Rechtsgebiet) und schreibt erst mit `?uebernehmen=true`; Widersprüche werden benannt, nie
-  berichtigt, abgelehnt nur Dubletten. Schlüssel (Jahr, Nummer, Zusatz): `10/19-I` ist eine eigene Akte. `api/RegisterHistorie`
-  gibt Stand, berichtigt, löscht (`DELETE {id}`) und nimmt auf (`UebernehmeAsync`: Zeile eines gelöschten Vorgangs wird
-  eigenständig, §6.3; `AddRegisterHistorieServices`). Kante nur Vorgaenge → RegisterHistorie → Sachgebiete, nie zurück.
-- **PdfConversion** — docx→PDF für die Vorschau in der App. Standard-Engine ist Word-COM per Late Binding
-  (`WordInteropPdfConversionService`, eigener STA-Thread + Warmup), FreeSpire.Doc ist der Rückfall über eine
-  Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter `Generated/PdfCache` (`PdfPreviewCache`).
+- **Versicherer** — Wissensbasis über Versicherer (`VersichererWissen`, Tabelle `Versicherer`), aus
+  jeder übernommenen Zentralruf-Antwort gefüllt und aktualisiert. Schließt `missingFields`-Lücken
+  späterer Antworten; nach außen nur lesend.
+- **Sachgebiete** — der Sachgebietskatalog als Stammdaten (§7.1): zwölf Kürzel mit Sachgebiet und
+  Rechtsgebiet-Vorschlag, geseedet per `HasData`, gelesen über `GET api/Sachgebiete`
+  (`SachgebietKatalog`); dazu `AbteilungKuerzel` (Kürzel ohne Leerzeichen, `C05/3` zerlegen) als
+  C#-Gegenstück zur gleichnamigen Dart-Datei. Nur lesend, Pflege in der App ist [S].
+- **RegisterHistorie** — das gewachsene Kanzleiregister, jahrgangsweise übernommen (§6.2): `POST
+  api/RegisterImport` prüft (Lücken, Doppelte, Spalte 1, Abteilung↔Rechtsgebiet) und schreibt erst
+  mit `?uebernehmen=true`; Widersprüche werden benannt, nie berichtigt, abgelehnt nur Dubletten.
+  Schlüssel (Jahr, Nummer, Zusatz): `10/19-I` ist eine eigene Akte. `api/RegisterHistorie` gibt
+  Stand, berichtigt, löscht (`DELETE {id}`) und nimmt auf (`UebernehmeAsync`: Zeile eines gelöschten
+  Vorgangs wird eigenständig, §6.3; `AddRegisterHistorieServices`). Kante nur Vorgaenge →
+  RegisterHistorie → Sachgebiete, nie zurück.
+- **PdfConversion** — docx→PDF für die Vorschau in der App. Standard-Engine ist Word-COM per Late
+  Binding (`WordInteropPdfConversionService`, eigener STA-Thread + Warmup), FreeSpire.Doc ist der
+  Rückfall über eine Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter
+  `Generated/PdfCache` (`PdfPreviewCache`).
 - **Vorgaenge** — Lebenszyklus des Vorgangs/Auftrags (Liste, Einzelabruf, Upsert, Löschen,
   Referenzänderung, angefangener Ausfüllstand über `PUT|DELETE api/Vorgaenge/entwurf`).
-  `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und Auftragsnummer in **einer** Transaktion,
-  idempotent (§4.8, §7.1); auf den Spiegel wartet er **nicht**. `RegisterSpiegelService` schreibt ihn in einen Ordner
-  aus den Einstellungen (§6.2, `…/register/export|stand`): `.docx` sofort, PDF über `RegisterPdfNachzug`, gemeldet über
-  `RegisterHub`; dazu §6.3 (`RegisterNummern`, `VorgangLoeschung`). Ketten: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
-- **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei doppeltem Namen).
-  Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier. Dazu das Paketbuch des Imports (`ImportPakete`, #108).
-- **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST api/Settings/auftragsnummer/erhoehe`
-  und die Standardpositionen der Schadensaufstellung (§4.4, `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle =
-  Vorgabe, leeres Speichern setzt zurück). Dazu die fünf Ordnerpfade (#103): `AppDatenOrdner` trägt Vorlagen, Register und
-  Sicherungen als **abgeleitete** Unterordner (je eine `…Vorgabe`; die Verbraucher hängen daran, nicht am Feld), gespeichert
-  wird relativ mit Anker und aufgelöst **nur hier** (`AppOrdnerPfad`); `GET api/Settings/ordner` meldet den Zustand.
+  `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und Auftragsnummer in **einer**
+  Transaktion, idempotent (§4.8, §7.1); auf den Spiegel wartet er **nicht**.
+  `RegisterSpiegelService` schreibt ihn in einen Ordner aus den Einstellungen (§6.2,
+  `…/register/export|stand`): `.docx` sofort, PDF über `RegisterPdfNachzug`, gemeldet über
+  `RegisterHub`; dazu §6.3 (`RegisterNummern`, `VorgangLoeschung`). Ketten:
+  [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
+- **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
+  doppeltem Namen). Die Akten/Fälle im Dateisystem liegen im Frontend, nicht hier. Dazu das
+  Paketbuch des Imports (`ImportPakete`, #108).
+- **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST
+  api/Settings/auftragsnummer/erhoehe` und die Standardpositionen der Schadensaufstellung (§4.4,
+  `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle = Vorgabe, leeres Speichern setzt
+  zurück). Dazu die fünf Ordnerpfade (#103): `AppDatenOrdner` trägt Vorlagen, Register und
+  Sicherungen als **abgeleitete** Unterordner (je eine `…Vorgabe`; die Verbraucher hängen daran,
+  nicht am Feld), gespeichert wird relativ mit Anker und aufgelöst **nur hier** (`AppOrdnerPfad`);
+  `GET api/Settings/ordner` meldet den Zustand.
 - **FormTemplates** — benutzerdefinierte Formularvorlagen (Feldbeschreibung zu einer Word-Vorlage),
   CRUD mit Namenskonflikt-Prüfung.
 - **Backup** — Export/Import einer Sicherung. `SicherungsArchiv` ist ein ZIP aus `automation.db`
@@ -157,7 +124,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   einspielbar. Der Import validiert, sichert den alten Stand daneben und hebt auf den Schemastand.
   Dazu die **Arbeitsplatz-Übergabe** (§7.2, `AutomatischeSicherung`/`ArbeitsplatzAkte`/
   `ArbeitsplatzUebergabe`, `api/Backup/uebergabe`), seit #112 auch `SicherungsZeitgeber` (30 Min,
-  nur bei Änderung) und `Aufbewahrungsregel` (Alter statt Anzahl); Kette: [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
+  nur bei Änderung) und `Aufbewahrungsregel` (Alter statt Anzahl); Kette:
+  [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 
 ## Core/ — querschnittlich, kein Slice
 
@@ -176,8 +144,8 @@ EF Core auf eingebettetem SQLite: `AutomationDbContext` über
 ausschließlich über HTTP zu; das schließt die früheren Lost-Update-Races der parallel schreibenden
 JSON-Speicher aus. Der Context bündelt zwingend alle `DbSet<>` (EF erlaubt keinen verteilten
 Context), das Schema-Mapping liegt aber je beim Slice (`IEntityTypeConfiguration`, eingesammelt per
-`ApplyConfigurationsFromAssembly`). Migrationen unter `Core/Persistence/Migrations` laufen beim Start
-(`DatabaseMigrationService`, danach `LegacyJsonImportService`; Hosted Services starten in
+`ApplyConfigurationsFromAssembly`). Migrationen unter `Core/Persistence/Migrations` laufen beim
+Start (`DatabaseMigrationService`, danach `LegacyJsonImportService`; Hosted Services starten in
 Registrierungsreihenfolge).
 
 ## Tests
@@ -187,9 +155,10 @@ Das Testprojekt liegt *innerhalb* des Web-Projektordners (`AutomationService.Tes
 ab, es mitzuziehen — **nicht entfernen**.
 
 Gliederung: `Unit/` (Fachlogik ohne Host), `Integration/` (über `WebApplicationFactory<Program>`:
-Health, WordAutomation-Controller, HTTP-Vertrag), `Support/` (Helfer: `RepoWurzel`, `FakeHostEnvironment`,
-`WordVorlagenUmgebung`, `TestAppDataUmgebung`), `Architecture/` (ausführbare Regeln; Grundlage sind
-`CsQuelldateien`/`Quelldatei`, die Pfad, Namespace und `using`s der handgeschriebenen Quellen lesen).
+Health, WordAutomation-Controller, HTTP-Vertrag), `Support/` (Helfer: `RepoWurzel`,
+`FakeHostEnvironment`, `WordVorlagenUmgebung`, `TestAppDataUmgebung`), `Architecture/` (ausführbare
+Regeln; Grundlage sind `CsQuelldateien`/`Quelldatei`, die Pfad, Namespace und `using`s der
+handgeschriebenen Quellen lesen).
 
 Welche Regel welcher Test erzwingt, steht **einmal** in der Wurzel-`CLAUDE.md` („Diese Regeln sind
 ausführbar") — Dateilänge, Namespace, Schnittregeln, HTTP-Vertrag, Doku und Anforderungsverweise mit

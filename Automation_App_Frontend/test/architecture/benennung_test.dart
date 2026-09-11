@@ -59,19 +59,6 @@ void main() {
   // Praefixe, mit denen eine konkrete Datasource ihre Herkunft benennen darf.
   const erlaubtePraefixe = ['Api', 'Local', 'Filesystem', 'InMemory'];
 
-  // Dateien unter data/datasources/, die bewusst keine Datasource sind.
-  const keineDatasource = {
-    // injectable-Modul, das die konfigurierte Dio-Instanz bereitstellt.
-    'lib/core/di/data/datasources/datasource_module.dart',
-    // SignalR-Hub: eine Push-Verbindung, die von sich aus meldet, statt auf
-    // Abruf zu liefern. Als `…Datasource` benannt wuerde sie das Gegenteil
-    // ihrer Arbeitsweise behaupten.
-    'lib/features/mailbox/data/datasources/mailbox_hub.dart',
-    // Derselbe Fall fuer das Register (§6.2/§6.3): Push-Verbindung zum Hub
-    // `/hubs/register`, kein Abruf auf Anfrage.
-    'lib/features/vorgaenge/data/datasources/register_hub.dart',
-  };
-
   final klassenkopf = RegExp(r'^(abstract\s+)?class\s+(\w+)', multiLine: true);
 
   List<Quelldatei> datasourceDateien() => dartQuelldateien('lib')
@@ -173,24 +160,13 @@ void main() {
     );
   });
 
-  test('unter data/datasources/ liegen nur Datasources', () {
-    final verstoesse = dartQuelldateien('lib')
-        .map(relPfad)
-        .where((pfad) => pfad.contains('/data/datasources/'))
-        .where((pfad) => !pfad.endsWith('_datasource.dart'))
-        .where((pfad) => !keineDatasource.contains(pfad))
-        .toList();
-
-    expect(
-      verstoesse,
-      isEmpty,
-      reason:
-          'Wer hier etwas anderes ablegt, versteckt es vor jedem, der den '
-          'Ordner nach seinem Namen durchsucht. Entweder umbenennen auf '
-          '<sache>_datasource.dart oder — mit Begruendung — oben in '
-          '"keineDatasource" eintragen.\n${verstoesse.join('\n')}',
-    );
-  });
+  // Bis 09.2026 stand hier ein vierter Teiltest: "unter data/datasources/
+  // liegen nur Datasources". Er prueft keine Benennung mehr, sondern
+  // Ordnerhygiene — welche Datei in einem Ordner liegen darf — und ist damit
+  // Geschmack: Ein `mailbox_hub.dart` neben den Datasources findet, wer den
+  // Ordner oeffnet, und die Regel oben (Sache im Dateinamen) gilt fuer ihn
+  // ohnehin nicht. Was er einbrachte, war eine dritte Ausnahmeliste, die bei
+  // jedem neuen Hub gepflegt werden musste; gefangen hat er nie etwas.
 }
 
 /// Pfad und Inhalt einer eingelesenen Datei — damit jede Datei genau einmal

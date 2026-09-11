@@ -40,6 +40,14 @@ void main() {
     multiLine: true,
   );
 
+  // Die zugelassene Ausnahme: die State-Klasse eines StatefulWidget. Als
+  // Muster statt als Literal `extends State<`, damit auch eine State-Klasse
+  // durchgeht, die von einer gemeinsamen Basis erbt (`extends BaseState<Foo>`,
+  // `extends ConsumerState<Foo>`). Eine solche Basis ist genau der Weg, den
+  // die Regel will — geteilter Zustandscode statt einer zweiten Fassung
+  // daneben; ein Literal haette ihn bestraft.
+  final zustandsKlasse = RegExp(r'extends \w*State<');
+
   test('keine privaten Typen ausser State-Klassen', () {
     final verstoesse = <String>[];
 
@@ -51,7 +59,7 @@ void main() {
         final kopf = treffer.group(3)!;
 
         // `class _FooState extends State<Foo>` ist die zugelassene Ausnahme.
-        if (art == 'class' && kopf.contains('extends State<')) continue;
+        if (art == 'class' && zustandsKlasse.hasMatch(kopf)) continue;
 
         verstoesse.add('${relPfad(datei)}: $art $name');
       }

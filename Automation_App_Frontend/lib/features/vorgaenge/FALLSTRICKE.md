@@ -11,8 +11,8 @@ Er steht in Suchen, im Zentralruf-Formular, in HTTP-Parametern und in Widget-Key
 **In der Oberfläche steht das Zeichen** (§4.2), über `ZeichenText` bzw. `vorgang.zeichen`; wo nur
 eine Zeichenkette vorliegt, über `ReferenzTeile.zeichenAus(referenz)`. Die volle Referenz erscheint
 nur, wo das Kennzeichen die Frage beantwortet: im Zentralruf-Formular, beim Zuordnen einer Antwort
-und als Nebenzeile auf der Vorgangskachel. `test/architecture/zeichen_anzeige_test.dart` hält das
-fest und führt die Ausnahmen namentlich.
+und als Nebenzeile auf der Vorgangskachel. Wer eine neue Anzeigestelle baut, greift also nicht zu
+`vorgang.referenz` — der Doc-Kommentar an `ZeichenText` sagt, warum.
 
 Der Rückfall zählt: Lässt sich die Referenz nicht zerlegen (freihändig eingetragen), *ist* das
 Zeichen die volle Referenz. Deshalb prüfen Kachel und Dashboard vor der Nebenzeile auf
