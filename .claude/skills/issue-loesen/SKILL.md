@@ -10,9 +10,9 @@ description: >-
 
 # Ein GitHub-Issue lösen: der Ablauf
 
-Checkliste für den Master-Agenten. Die Umsetzungsschritte (5–7) delegieren an Subagenten — deren
-Auftrag baut auf dem Skill `.claude/skills/subagent-auftrag/SKILL.md` auf, damit Modellwahl,
-Umgebungsfallstricke und Regeln nicht jedes Mal neu formuliert werden.
+Checkliste für den Master-Agenten. Die Umsetzungsschritte (5–7) delegieren an Subagenten — an den
+`umsetzer` (`.claude/agents/umsetzer.md`), der Regeln und Umgebungsfallstricke schon mitbringt.
+Wie ein Auftrag zugeschnitten wird, sagt der Skill `.claude/skills/subagent-auftrag/SKILL.md`.
 
 1. **Issue lesen** (`gh issue view <nr>`). Zahlen im Issue misstrauen — der Bestand wächst
    zwischen Anlage und Bearbeitung, heute per `grep` nachzählen statt der im Issue genannten
@@ -41,20 +41,23 @@ Umgebungsfallstricke und Regeln nicht jedes Mal neu formuliert werden.
    Tests. *Warum:* eine Schnittstelle, die sich noch ändert, bricht jede parallele Umstellung,
    die schon dagegen baut.
 
-6. **Umstellung parallel** (Sonnet), disjunkte Dateimengen je Agent, Auftrag über den Skill
-   `subagent-auftrag`. *Warum:* das ist mechanische Arbeit, für die Sonnet reicht, und
-   disjunkte Dateien verhindern, dass sich Agenten gegenseitig überschreiben.
+6. **Umstellung parallel** über den Agenten `umsetzer`, disjunkte Dateimengen je Agent,
+   Zuschnitt nach dem Skill `subagent-auftrag`. *Warum:* das ist mechanische Arbeit, für die
+   Sonnet reicht, und disjunkte Dateien verhindern, dass sich Agenten gegenseitig überschreiben.
 
 7. **Doku und Wächter** (Sonnet): `docs/STAND.md`, die zutreffende Regeltabelle (Wurzel-
    `CLAUDE.md` oder die des betroffenen Teilbaums), ein Architekturtest, wenn sich die Regel
    prüfen lässt (mit Negativtest belegt). *Warum:* eine Regel ohne Test verfällt beim nächsten
    Refactor unbemerkt — genau das, wogegen die Prüfkette dieses Repos steht.
 
-8. **Review-Agent** (Sonnet, nur lesend) PARALLEL zu `scripts/check.ps1 -Regeln` laufen
-   lassen; Befunde beheben lassen. Erst danach die volle Kette `scripts/check.ps1` GENAU
-   EINMAL — per PowerShell-Tool mit absolutem Pfad, im Hintergrund mit Timeout 600000 (dauert
-   rund zehn Minuten). *Warum:* die volle Kette zweimal laufen zu lassen, verdoppelt zehn
-   Minuten Wartezeit ohne neuen Erkenntnisgewinn, wenn die Regeln schon grün sind.
+8. **Review-Agent** (Sonnet, nur lesend) PARALLEL zu `scripts/check.ps1 -Regeln` (rund 105 s;
+   nur der Frontend-Teil mit `-Regeln -NurFrontend` rund 60 s) laufen lassen; Befunde beheben
+   lassen. Erst danach die volle Kette `scripts/check.ps1` GENAU EINMAL — per PowerShell-Tool
+   mit absolutem Pfad, **im Vordergrund** mit Timeout 600000; die Kette braucht warm rund
+   zweieinhalb Minuten, kalt bis zu elf (gemessen am 10.09.2026 nach drei parallelen Agenten).
+   *Warum:* im Hintergrund
+   gestartete Läufe haben die Sitzung schon festgefahren (siehe unten), und die volle Kette
+   zweimal zu fahren, zahlt dieselbe Wartezeit doppelt, wenn die Regeln schon grün sind.
 
 9. **Master prüft selbst nur Billiges**: `grep` auf Vollständigkeit, `git status`,
    Stichproben-`git diff`. *Warum:* alles Teurere hat Schritt 8 schon erledigt — der Master
@@ -72,7 +75,7 @@ Umgebungsfallstricke und Regeln nicht jedes Mal neu formuliert werden.
   parallel gestarteter Vorschau-Agent las den halbfertigen Code und meldete Abweichungen, die es
   am Ende nicht gab.
 - **Volle Kette zweimal**: `scripts/check.ps1` lief vor und nach den Korrekturen komplett
-  durch — zehn Minuten Wartezeit doppelt bezahlt, obwohl `-Regeln` plus Review-Agent gereicht
-  hätten.
+  durch — die Wartezeit doppelt bezahlt, obwohl `-Regeln` plus Review-Agent gereicht hätten.
 - **Hängender Hintergrund-Test**: ein Subagent startete einen Test im Hintergrund und wartete
-  mit `Wait-Process` darauf — die Sitzung hing fest (04.09.2026, Issue #56).
+  mit `Wait-Process` darauf — die Sitzung hing fest (04.09.2026, Issue #56). Seither laufen
+  Prüfläufe im Vordergrund mit Timeout, auch der lange in Schritt 8.

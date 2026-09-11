@@ -1,6 +1,6 @@
 # word_automation — Fallstricke
 
-Der lange Rest zu `FEATURE.md`. Der Steckbrief hat ein Zeilenbudget, diese Datei nicht. Was man
+Der lange Rest zu `FEATURE.md`. Der Steckbrief hat ein Wortbudget, diese Datei nicht. Was man
 **vor** dem ersten Griff kennen muss — Schrittfolge, Arbeitsordner, Zeitgrenzen — steht weiter
 im Steckbrief; hier steht, was einen beim zweiten Griff erwischt. Dieses Feature ist mit rund
 sechzig Dateien das größte der App, entsprechend viel davon.

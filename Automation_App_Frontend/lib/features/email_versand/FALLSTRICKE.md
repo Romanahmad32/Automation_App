@@ -1,7 +1,7 @@
 # email_versand — Fallstricke
 
-Der lange Rest zu `FEATURE.md`. Der Steckbrief hat ein Zeilenbudget, diese Datei nicht: was
-hier steht, musste nicht in vierzig Zeilen passen und ist deshalb ausgeschrieben. Die vier,
+Der lange Rest zu `FEATURE.md`. Der Steckbrief hat ein Wortbudget, diese Datei nicht: was
+hier steht, musste nicht in 420 Wörter passen und ist deshalb ausgeschrieben. Die vier,
 fünf Punkte, die man **vor** dem ersten Griff in das Feature kennen muss, stehen weiter im
 Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
 
@@ -362,7 +362,7 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
   Datei in der Akte behält ihren Namen — für Outlook legt das Backend eine Kopie an, weil COM
   nach Pfad anhängt. Versand, Entwurf und Outlook-Anhänge brauchen `receiveTimeout: 120 s`
   (global 3 s); ein Versandfehler lässt den Entwurf **vollständig** stehen.
-  *(Stand hier bis zum 02.09.2026 im Steckbrief — der ist auf 40 Zeilen begrenzt, diese Datei
+  *(Stand hier bis zum 02.09.2026 im Steckbrief — der hat ein Wortbudget, diese Datei
   nicht.)*
 
 ## Outlook-Entwurf
@@ -374,7 +374,7 @@ Steckbrief — hier steht, was einen beim zweiten Griff erwischt.
   Das neue (Store-App) hat kein COM und liesse sie wortlos leer ausgehen. `OutlookStand` (der
   Dienst sieht beim Start einmal nach, `outlook/stand`) trägt den Grund, jede der drei Stellen
   schreibt ihn hin (`OutlookHinweisZeile`) — der **Direktversand** ist davon nicht betroffen.
-  *(Stand hier bis zum 06.09.2026 im Steckbrief — der ist auf 40 Zeilen begrenzt, diese Datei
+  *(Stand hier bis zum 06.09.2026 im Steckbrief — der hat ein Wortbudget, diese Datei
   nicht.)*
 
 ## Versandprotokoll

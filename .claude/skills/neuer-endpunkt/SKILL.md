@@ -29,7 +29,7 @@ die es noch nicht gibt.
 | 3 | `Features/<Name>/Presentation/Dtos/<Name>Dto.cs` | Was über die Leitung geht |
 | 4 | `Features/<Name>/Presentation/Controllers/<Name>Controller.cs` | Route und Statuscodes |
 | 5 | `Features/<Name>/Presentation/DependencyInjection/<Name>Injection.cs` | `Add<Name>Services()` |
-| 6 | `Program.cs` | ein Aufruf von `Add<Name>Services()` |
+| 6 | `AutomationService/Program.cs` | ein Aufruf von `Add<Name>Services()` |
 | **Vertrag** | | |
 | 7 | `docs/openapi.json` | **nicht von Hand** — siehe unten |
 | **Frontend** | | |
@@ -81,7 +81,7 @@ public class VersichererController(IVersichererWissen wissen) : ControllerBase
 }
 ```
 
-**Verdrahtung** — eine Erweiterungsmethode je Slice, ein Aufruf in `Program.cs`:
+**Verdrahtung** — eine Erweiterungsmethode je Slice, ein Aufruf in `AutomationService/Program.cs`:
 
 ```csharp
 public static IServiceCollection AddVersichererServices(this IServiceCollection services)
