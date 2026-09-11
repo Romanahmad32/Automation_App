@@ -23,9 +23,14 @@ public class ZentralrufPrefillDto
     public string Abteilung { get; set; } = string.Empty;
 
     /// <summary>Amtliches Kennzeichen des Unfallgegners, z. B. "GG-XY 123".</summary>
+    // Ohne Laengengrenze — §4.1: Die Bauart des Fahrzeugs ist kein
+    // Aufnahmekriterium, und kein Kennzeichenfeld der App darf einen Wert
+    // deshalb zurueckweisen. Die 12 Zeichen liessen ein "AB-123-CD" (Frankreich)
+    // gerade noch durch, ein "THW-12345 (Anhaenger)" nicht mehr — und weil das
+    // Feld im Frontend seit #130 keinen Validator mehr traegt, kaeme die
+    // Ablehnung als 400 zurueck, ohne dass am Feld je etwas gestanden haette.
     [Display(Name = "Das Kennzeichen des Unfallgegners")]
     [Required(ErrorMessage = Validierungstexte.Pflicht)]
-    [MaxLength(12, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string KennzeichenSchaediger { get; set; } = string.Empty;
 
     /// <summary>Unfalldatum.</summary>
@@ -71,7 +76,7 @@ public class ZentralrufGeschaedigterDto
     public string Ort { get; set; } = string.Empty;
 
     /// <summary>Kennzeichen des Fahrzeugs des Geschädigten.</summary>
+    // Ohne Laengengrenze, aus demselben Grund wie beim Gegnerkennzeichen (§4.1).
     [Display(Name = "Das Kennzeichen des Mandanten")]
-    [MaxLength(12, ErrorMessage = Validierungstexte.MaxZeichen)]
     public string Kennzeichen { get; set; } = string.Empty;
 }

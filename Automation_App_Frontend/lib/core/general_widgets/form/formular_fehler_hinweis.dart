@@ -44,14 +44,21 @@ class FormularFehlerHinweis extends StatelessWidget {
   /// Die Grundtexte, die jedes Formular teilt. Die Datumstexte kommen von
   /// [GermanDateField], damit hier keine zweite Fassung derselben Meldung
   /// entsteht.
-  static Map<String, String Function(Object)> get standardGruende => {
-    ...GermanDateField.meldungen,
-    ValidationMessage.email: (_) => 'keine gültige E-Mail-Adresse',
-    ValidationMessage.number: (_) => 'nur Ziffern',
-    ValidationMessage.pattern: (_) => 'Format prüfen, siehe Hinweis am Feld',
-    ValidationMessage.minLength: (_) => 'zu kurz',
-    ValidationMessage.maxLength: (_) => 'zu lang',
-  };
+  ///
+  /// Ein Feld und keine Getter-Eigenschaft: Diese Karte ist konstante Auskunft
+  /// und wird je ungültigem Control gefragt — in einem `ReactiveFormConsumer`,
+  /// der bei jedem Tastendruck neu aufbaut. Als Getter entstünde sie dabei
+  /// jedes Mal neu, samt der Karte aus [GermanDateField] darin.
+  static final Map<String, String Function(Object)> standardGruende =
+      Map.unmodifiable({
+        ...GermanDateField.meldungen,
+        ValidationMessage.email: (_) => 'keine gültige E-Mail-Adresse',
+        ValidationMessage.number: (_) => 'nur Ziffern',
+        ValidationMessage.pattern: (_) =>
+            'Format prüfen, siehe Hinweis am Feld',
+        ValidationMessage.minLength: (_) => 'zu kurz',
+        ValidationMessage.maxLength: (_) => 'zu lang',
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +112,22 @@ class FormularFehlerHinweis extends StatelessWidget {
   /// Der Grund zum ersten Fehler des Controls. Der erste genügt: Wer ihn
   /// behebt, sieht den nächsten — eine Aufzählung aller Beanstandungen eines
   /// Feldes in einer Sammelzeile wäre länger als das Formular selbst.
+  ///
+  /// **Ohne Fehlerschlüssel ist der Grund unbekannt, kein Absturz.** Ein
+  /// Control in `ControlStatus.pending` kommt durch die Prüfung oben (`valid`
+  /// ist `status == valid`, `pending` also nicht valide) und trägt zugleich
+  /// eine leere Fehlerkarte. `keys.first` hätte hier geworfen — mitten im
+  /// `build` eines Bausteins, den `core` überall einsetzt, und damit die ganze
+  /// Seite mitgenommen statt einer Zeile.
+  ///
+  /// Die eigene Meldung des Felds geht vor, ohne dass dafür zwei Karten
+  /// verschmolzen werden: Das geschähe je Control und je Neuaufbau.
   String _grund(String name, Map<String, dynamic> fehler) {
+    if (fehler.isEmpty) return 'bitte prüfen';
     final schluessel = fehler.keys.first;
-    final texte = {...standardGruende, ...?feldMeldungen[name]};
-    return texte[schluessel]?.call(fehler[schluessel] as Object) ??
-        'bitte prüfen';
+    final text =
+        feldMeldungen[name]?[schluessel] ?? standardGruende[schluessel];
+    return text?.call(fehler[schluessel] as Object) ?? 'bitte prüfen';
   }
 
   String _name(String control) => beschriftungen[control] ?? control;

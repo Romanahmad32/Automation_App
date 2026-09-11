@@ -34,24 +34,42 @@ class OrdnerZustandZeile extends StatelessWidget {
   /// Geschäfts-OneDrive auf diesem Rechner fehlt.
   ///
   /// Fehlt der wirksame Ordner, hängt der Satz das an — auch an einen
-  /// abgeleiteten oder standardmäßigen: Dass die App ihn beim ersten Schreiben
-  /// anlegt, stimmt für die *Ablage*, nicht für die Vorlagen, die dort gesucht
-  /// werden (#130).
+  /// abgeleiteten oder standardmäßigen. **Was** es bedeutet, sagt [_fehltSatz].
   static String satz(OrdnerZustand zustand) {
-    final text = _lage(zustand);
-    if (!zustand.wirksamFehlt ||
-        zustand.zustand == OrdnerZustandArten.ordnerFehlt) {
-      return text;
+    final lage = _lage(zustand);
+    // Zwei Wege zur selben Auskunft: `ordnerFehlt` sagt es über die
+    // Speicherform, `wirksamFehlt` über den wirksamen Ordner.
+    final fehlt =
+        zustand.wirksamFehlt ||
+        zustand.zustand == OrdnerZustandArten.ordnerFehlt;
+    // Beim fehlenden Anker ist der fehlende Ordner nur die Folge — ihn
+    // daneben zu melden verdeckte die Ursache.
+    if (!fehlt || zustand.zustand == OrdnerZustandArten.ankerFehlt) {
+      return lage;
     }
-    return '$text (dieser Ordner ist noch nicht vorhanden)';
+    return '$lage ${_fehltSatz(zustand.feld)}';
   }
+
+  /// Was ein fehlender Ordner bedeutet — und das ist **nicht überall
+  /// dasselbe**.
+  ///
+  /// In vier der fünf Ordner *schreibt* die App, und was sie schreibt, legt
+  /// sie beim ersten Mal selbst an: Dort ist „gibt es noch nicht" die
+  /// Normalform direkt nach der Wahl und keine Meldung wert — vier Fehlalarme
+  /// nebeneinander machen den einen unsichtbar, auf den es ankommt. Aus dem
+  /// Vorlagenordner *liest* sie dagegen. Fehlt der, findet sie keine Vorlage,
+  /// und genau das ist unbemerkt geblieben: Die Seite meldete „automatisch im
+  /// gemeinsamen OneDrive-Ordner" und war damit im Recht, während alle vier
+  /// Vorlagen ins Leere zeigten (#130).
+  static String _fehltSatz(String feld) => feld == 'vorlagenOrdner'
+      ? 'Diesen Ordner gibt es noch nicht — hier findet die App keine Vorlage.'
+      : 'Ordner wird beim ersten Schreiben angelegt.';
 
   static String _lage(OrdnerZustand zustand) => switch (zustand.zustand) {
     OrdnerZustandArten.ankerFehlt =>
       'OneDrive-Konto „${zustand.anker}" ist auf diesem Rechner nicht '
           'vorhanden — der Ordner lässt sich hier nicht auflösen.',
-    OrdnerZustandArten.ordnerFehlt =>
-      '${zustand.wirksam} — Ordner wird beim ersten Schreiben angelegt.',
+    OrdnerZustandArten.ordnerFehlt => zustand.wirksam,
     OrdnerZustandArten.abgeleitet =>
       '${zustand.wirksam} — automatisch im gemeinsamen OneDrive-Ordner.',
     OrdnerZustandArten.standard =>

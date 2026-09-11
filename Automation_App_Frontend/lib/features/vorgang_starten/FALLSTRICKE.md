@@ -125,6 +125,16 @@ Feld mit Grund und springt beim Anklicken hin; die Anzeigenamen dazu stehen in
 reactive_forms einen Fehler am Feld erst nach `touched` zeigt — ein vorbelegter Wert wird das nie,
 und ein gesperrter Knopf nimmt keinen Fokus.
 
+**Ausserhalb des Verkehrsrechts trägt der ganze Unfallteil keine Prüfung mehr.** Nicht nur die
+Pflicht fällt weg, auch die Formatprüfungen von Unfalltag, Uhrzeit und Vorgangsnummer
+(`setzeUnfallPruefungen` in `vorgang_form_group.dart`, aufgerufen aus `_applyUnfallValidators`).
+Der Grund ist derselbe wie beim eingeklappten Vorlagenfeld (#82): Ihre beiden Abschnitte stehen dann
+gar nicht mehr auf der Seite, die Controls aber weiter in der Gruppe. Eine `25:99`, die aus dem
+vorherigen Rechtsgebiet stehengeblieben ist, sperrte sonst „Vorgang speichern", ohne dass irgendwo
+ein Feld zu sehen wäre, das man berichtigen könnte — und die Zeile darüber verwiese auf ein Feld,
+zu dem kein Widget mehr gehört, der Sprung dorthin liefe ins Leere. Die **Werte** bleiben stehen und
+gelten beim Zurückwechseln samt ihrer Beanstandung wieder.
+
 Die gespeicherten Kennzeichen des verknüpften Mandanten sind seit #17/#18 **Kandidaten des
 Auswahldialogs** am Feld, nicht mehr eine eigene Chipreihe darüber (`MandantKennzeichenAuswahl` ist
 weg, samt der Callback-Kette `onKennzeichenGewaehlt` durch `VorgangStartenSektionen` und die View).

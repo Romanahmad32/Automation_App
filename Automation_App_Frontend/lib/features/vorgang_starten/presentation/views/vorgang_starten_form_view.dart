@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/di/injection.dart';
-import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_cubit.dart';
@@ -101,27 +100,11 @@ class _VorgangStartenFormViewState extends State<VorgangStartenFormView> {
     super.dispose();
   }
 
-  /// Setzt die Pflicht der Unfall-Felder je nach Rechtsgebiet: Kennzeichen des
-  /// Gegners und Unfalltag sind nur bei Verkehrsrecht erforderlich.
-  void _applyUnfallValidators() {
-    final kennzeichen = _form.control('kennzeichenGegner');
-    final schadentag = _form.control('schadentag');
-    final dateValidator = GermanDateField.validator(
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-    // Am Kennzeichen steht nur die Pflicht, nie eine Formatprüfung — wieso,
-    // steht bei `createVorgangForm` (#130).
-    if (_istVerkehrsunfall) {
-      kennzeichen.setValidators([Validators.required]);
-      schadentag.setValidators([Validators.required, dateValidator]);
-    } else {
-      kennzeichen.setValidators([]);
-      schadentag.setValidators([dateValidator]);
-    }
-    kennzeichen.updateValueAndValidity();
-    schadentag.updateValueAndValidity();
-  }
+  /// Zieht die Prüfungen der Unfall-Felder dem Rechtsgebiet nach — was das
+  /// heisst und warum ausserhalb des Verkehrsrechts *gar keine* mehr gilt,
+  /// steht bei [setzeUnfallPruefungen].
+  void _applyUnfallValidators() =>
+      setzeUnfallPruefungen(_form, istVerkehrsunfall: _istVerkehrsunfall);
 
   /// Übernimmt ein Rechtsgebiet und zieht nach, was daran hängt: die Pflicht
   /// der Unfallfelder und der Kennzeichen-Teil der Referenz.

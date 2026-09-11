@@ -19,26 +19,53 @@ namespace AutomationService.Features.FormTemplates.Domain.Services;
 /// den neuen Ordner, in dem die Datei nie lag. Genau das ist passiert, als der
 /// App-Daten-Ordner gesetzt wurde (#103) und damit den Anker verschob — alle
 /// vier Vorlagen meldeten „Die verknuepfte Word-Datei wurde nicht gefunden"
-/// (#130). Deshalb zuerst gegen den <c>vorher</c>-Ordner aufloesen und erst
-/// den absoluten Pfad gegen <c>nachher</c> relativieren: Ein
-/// Ordnerwechsel darf bestehende Verknuepfungen nicht entwerten.
+/// (#130).
+/// </para>
+///
+/// <para>
+/// <b>Welcher der beiden gilt, entscheidet die Platte.</b> Ein relativer
+/// Bestandspfad meint zwei verschiedene Dateien, je nachdem gegen welchen
+/// Ordner man ihn liest, und die Datenbank sagt nicht, welche gemeint war:
+/// Der Anwalt kann den Anker verschoben haben (die Dateien liegen weiter in
+/// <c>vorher</c>) oder seine Vorlagen mitgenommen haben (sie liegen jetzt in
+/// <c>nachher</c>). Deshalb wird nachgesehen. Liegt die Datei im neuen Ordner,
+/// <b>bleibt der Pfad relativ</b> — ihn dann gegen den alten Ordner absolut zu
+/// machen, machte aus einer mitnehmbaren Verknuepfung wieder ein
+/// <c>C:\Users\&lt;Name&gt;\…</c>, das auf dem zweiten Arbeitsplatz ins Leere
+/// zeigt, und damit #33 rueckgaengig. Nur wenn sie dort fehlt und im alten
+/// Ordner liegt, wird der absolute Pfad daraus: Er zeigt weiter auf die Datei,
+/// und das ist mehr wert als eine kurze Schreibweise ins Nichts.
 /// </para>
 /// </summary>
 public static class VorlagenPfadUmstellung
 {
+    /// <inheritdoc cref="StelleUmAsync(AutomationDbContext, string, string, Func{string, bool}, CancellationToken)"/>
+    public static Task<int> StelleUmAsync(
+        AutomationDbContext db, string vorher, string nachher, CancellationToken cancellationToken) =>
+        StelleUmAsync(db, vorher, nachher, File.Exists, cancellationToken);
+
     /// <summary>
     /// Stellt alle Bestandspfade von <paramref name="vorher"/> auf
     /// <paramref name="nachher"/> um; liefert die Zahl der geaenderten Vorlagen.
+    ///
+    /// <paramref name="existiert"/> ist die einzige IO dieser Klasse und
+    /// deshalb injizierbar — wie bei <c>OrdnerZustaende</c>: Ein Test, der
+    /// echte Dateien anlegen muesste, um eine Fallunterscheidung zu pruefen,
+    /// prueft am Ende das Dateisystem.
     /// </summary>
     public static async Task<int> StelleUmAsync(
-        AutomationDbContext db, string vorher, string nachher, CancellationToken cancellationToken)
+        AutomationDbContext db,
+        string vorher,
+        string nachher,
+        Func<string, bool> existiert,
+        CancellationToken cancellationToken)
     {
         var geaendert = 0;
         var vorlagen = await db.FormTemplates.ToListAsync(cancellationToken);
         foreach (var vorlage in vorlagen)
         {
-            var ohne = StelleUm(vorher, nachher, vorlage.WordFilePathOhneAuflistung);
-            var mit = StelleUm(vorher, nachher, vorlage.WordFilePathMitAuflistung);
+            var ohne = StelleUm(vorher, nachher, vorlage.WordFilePathOhneAuflistung, existiert);
+            var mit = StelleUm(vorher, nachher, vorlage.WordFilePathMitAuflistung, existiert);
             if (ohne == vorlage.WordFilePathOhneAuflistung && mit == vorlage.WordFilePathMitAuflistung)
             {
                 continue;
@@ -58,12 +85,33 @@ public static class VorlagenPfadUmstellung
     }
 
     /// <summary>
-    /// Ein Pfad: gegen den alten Ordner auf seine echte Lage aufgeloest, dann
-    /// gegen den neuen gespeichert. Liegt die Datei ausserhalb des neuen
-    /// Ordners, bleibt der absolute Pfad stehen — er zeigt weiter auf die
-    /// Datei, und das ist mehr wert als eine kurze Schreibweise, die ins Leere
-    /// zeigt.
+    /// Ein Pfad. Ein absoluter wird gegen den neuen Ordner gespeichert — liegt
+    /// er ausserhalb, bleibt er stehen. Ein relativer bleibt relativ, solange
+    /// die Datei im neuen Ordner liegt; nur wenn sie dort fehlt und im alten zu
+    /// finden ist, wird er gegen den alten aufgeloest (siehe Klassenkommentar).
+    /// Ist sie in beiden nicht zu finden, ist nichts zu entscheiden: Dann
+    /// bleibt die kurze, mitnehmbare Schreibweise stehen.
     /// </summary>
-    static string? StelleUm(string vorher, string nachher, string? gespeichert) =>
-        VorlagenPfad.MacheRelativ(nachher, VorlagenPfad.LoeseAuf(vorher, gespeichert));
+    static string? StelleUm(
+        string vorher, string nachher, string? gespeichert, Func<string, bool> existiert)
+    {
+        if (string.IsNullOrWhiteSpace(gespeichert))
+        {
+            return gespeichert;
+        }
+
+        if (Path.IsPathRooted(gespeichert.Trim()))
+        {
+            return VorlagenPfad.MacheRelativ(nachher, gespeichert);
+        }
+
+        var imNeuen = VorlagenPfad.LoeseAuf(nachher, gespeichert);
+        var imAlten = VorlagenPfad.LoeseAuf(vorher, gespeichert);
+        if (imNeuen is null || imAlten is null || existiert(imNeuen) || !existiert(imAlten))
+        {
+            return gespeichert;
+        }
+
+        return VorlagenPfad.MacheRelativ(nachher, imAlten);
+    }
 }
