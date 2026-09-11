@@ -30,10 +30,20 @@ import 'package:automation_app/features/mandanten/domain/services/mandant_erkenn
 /// Dazu die Kennzeichen: das stärkste Signal von [MandantErkennung] hängt gar
 /// nicht am Namen, und ein Filter, der nur Namen kennt, nähme es ihr weg.
 ///
-/// Normalisiert wird über [MandantErkennung.normalisiereName] bzw.
-/// [MandantErkennung.normalisiereKennzeichen] — dieselbe Schreibweise wie beim
-/// Vergleich selbst. Eine zweite Normalisierung hier wäre genau die Art
-/// Abweichung, die still Treffer verschluckt.
+/// Der Name wird über [MandantErkennung.normalisiereName] normalisiert —
+/// dieselbe Schreibweise wie beim Vergleich selbst. Eine zweite
+/// Normalisierung hier wäre genau die Art Abweichung, die still Treffer
+/// verschluckt.
+///
+/// Beim Kennzeichen ist es bewusst **nicht** dieselbe: Der Eimer hängt am
+/// [MandantErkennung.kennzeichenGrobschluessel], verglichen wird danach in
+/// [MandantErkennung.finde] über `gleichesKennzeichen` (#147). Der
+/// Grobschlüssel ist eine Obermenge — wo `gleichesKennzeichen` „gleich" sagt,
+/// stimmt er überein —, der Index verschluckt also nichts. Er lässt dafür
+/// mehr durch: `H-GE 1427` kommt zu `HG-E 1427` mit, aussortiert wird erst
+/// dort. Einen genauen Schlüssel gibt es nicht, weil die Gleichheit nicht
+/// transitiv ist: `HGE1427` gleicht `HG-E 1427` und `H-GE 1427`, die beiden
+/// einander aber nicht.
 class MandantenNamensindex {
   /// Erste [MandantErkennung.minPraefixLaenge] Zeichen → Mandanten.
   final Map<String, List<Mandant>> _nachAnfang = {};
@@ -41,7 +51,7 @@ class MandantenNamensindex {
   /// Löschvariante → Mandanten.
   final Map<String, List<Mandant>> _nachLoeschung = {};
 
-  /// Normalisiertes Kennzeichen → Mandanten.
+  /// Grobschlüssel des Kennzeichens → Mandanten.
   final Map<String, List<Mandant>> _nachKennzeichen = {};
 
   /// Mandanten mit sehr kurzem Nachnamen — immer Kandidat.
@@ -73,7 +83,7 @@ class MandantenNamensindex {
     }
 
     for (final zeichen in kennzeichen) {
-      final wert = MandantErkennung.normalisiereKennzeichen(zeichen);
+      final wert = MandantErkennung.kennzeichenGrobschluessel(zeichen);
       if (wert.isNotEmpty) _sammle(gefunden, _nachKennzeichen[wert]);
     }
 
@@ -105,7 +115,7 @@ class MandantenNamensindex {
       }
     }
     for (final zeichen in mandant.kennzeichen) {
-      final wert = MandantErkennung.normalisiereKennzeichen(zeichen);
+      final wert = MandantErkennung.kennzeichenGrobschluessel(zeichen);
       if (wert.isNotEmpty) _eintragen(_nachKennzeichen, wert, mandant);
     }
   }

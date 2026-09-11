@@ -279,3 +279,12 @@ fährt, entscheidet nicht die App (§4.1, #130). Aufgenommen wird der Wert, **wi
 Als Dublette zählt trotzdem nicht nur der gleiche Text: `TexteListenEditor.gleich` bekommt
 `gleichesKennzeichen`. Ohne das stünde derselbe Wagen zweimal in der Liste — einmal als
 `HG-E 1427`, einmal als `hge1427`.
+
+Die **Mandanten-Erkennung** vergleicht nach derselben Regel (`MandantErkennung.finde`, #147). Bis
+dahin strich sie alle Trennzeichen und hielt `HG-E 1427` und `H-GE 1427` für einen Wagen: Der
+„Meinten Sie …?"-Vorschlag nannte den falschen Mandanten, mit einer Begründung, die nicht stimmte.
+Den gestrichenen Wert gibt es noch, als `MandantErkennung.kennzeichenGrobschluessel` — er ist der
+Eimer von `MandantenNamensindex` und taugt dort, weil er eine Obermenge ist: Wo
+`gleichesKennzeichen` gleich sagt, stimmt er überein. Einen genauen Schlüssel gibt es nicht, denn
+die Gleichheit ist nicht transitiv (`HGE1427` gleicht `HG-E 1427` und `H-GE 1427`, die beiden
+einander nicht). **Zum Vergleichen nie den Grobschlüssel.**
