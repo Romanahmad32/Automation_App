@@ -20,8 +20,9 @@ public interface IVorgangRepository
     /// <summary>
     /// Fallback-Suche für die Antwort-Zuordnung, wenn die Referenz nicht passt
     /// (z. B. in der Mail verstümmelt): angefragte Vorgänge, deren
-    /// Gegner-Kennzeichen (normalisiert) und Unfalldatum mit der Antwort
-    /// übereinstimmen. Nur ein Hinweis — die Zuordnung bestätigt der Anwalt.
+    /// Gegner-Kennzeichen und Unfalldatum mit der Antwort übereinstimmen — das
+    /// Kennzeichen ohne Rücksicht auf die Schreibweise (<c>KennzeichenVergleich</c>,
+    /// §4.2). Nur ein Hinweis — die Zuordnung bestätigt der Anwalt.
     /// </summary>
     Task<IReadOnlyList<VorgangEntity>> FindeAngefragteZuUnfallAsync(
         string kennzeichen,

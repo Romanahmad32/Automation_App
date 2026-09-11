@@ -18,7 +18,7 @@ public sealed record ZentralrufReplyData
     /// <summary>Abteilungskürzel aus der Referenz.</summary>
     public string? ReferenzAbteilung { get; init; }
 
-    /// <summary>Kennzeichen aus der Referenz, normalisiert (z. B. "GG-XY 123").</summary>
+    /// <summary>Kennzeichen aus der Referenz, wie es dort steht (z. B. "GG-XY 123") — nur Leerraum vereinheitlicht.</summary>
     public string? ReferenzKennzeichen { get; init; }
 
     /// <summary>
@@ -39,8 +39,10 @@ public sealed record ZentralrufReplyData
     public string? AnfrageDatum { get; init; }
 
     /// <summary>
-    /// Kennzeichen des gegnerischen (angefragten) Fahrzeugs, normalisiert in
-    /// die Domänen-Konvention mit Bindestrich (z. B. "GG-XY 123").
+    /// Kennzeichen des gegnerischen (angefragten) Fahrzeugs, wie es in der Mail
+    /// steht (z. B. "GG XY 123") — nur Leerraum vereinheitlicht, nicht in die
+    /// Schreibweise mit Bindestrich gebracht (§4.2). Ob es zu einem Vorgang
+    /// passt, sagt KennzeichenVergleich.
     /// </summary>
     public string? Kennzeichen { get; init; }
 

@@ -52,9 +52,9 @@ public class ZentralrufReplyParserTests
 
         data.Referenz.Should().Be("84/26 C03_GG-XY 123");
         data.AnfrageDatum.Should().Be("08.04.2026");
-        // Die Mail schreibt "GG XY 123"; die App normalisiert in die
-        // Domänen-Konvention mit Bindestrich.
-        data.Kennzeichen.Should().Be("GG-XY 123");
+        // Die Mail schreibt "GG XY 123", und so bleibt es: Die App bringt kein
+        // Kennzeichen von sich aus in die Schreibweise mit Bindestrich (§4.2, #144).
+        data.Kennzeichen.Should().Be("GG XY 123");
         data.UnfallDatum.Should().Be("09.03.2026");
         data.KeinVersichererErmittelt.Should().BeFalse();
     }
@@ -70,18 +70,25 @@ public class ZentralrufReplyParserTests
         data.ReferenzKennzeichen.Should().Be("GG-XY 123");
     }
 
+    /// <summary>
+    /// Kein Umschreiben (§4.2, #144): Was in der Mail steht, kommt durch — nur
+    /// der Leerraum wird vereinheitlicht, im angefragten Kennzeichen wie in der
+    /// Referenz. Bis #144 machte der Parser aus <c>HGE1427</c> geraten
+    /// <c>HG-E 1427</c> und benannte damit womöglich ein anderes Fahrzeug.
+    /// </summary>
     [Theory]
-    [InlineData("GG XY 123", "GG-XY 123")]
-    [InlineData("GG-XY 123", "GG-XY 123")]
+    [InlineData("GG XY 123", "GG XY 123")]
+    [InlineData("gg xy 123", "gg xy 123")]
+    [InlineData("HGE1427", "HGE1427")]
     [InlineData("HG-E 1427", "HG-E 1427")]
-    [InlineData("M AB 1234", "M-AB 1234")]
-    [InlineData("gg xy 123", "GG-XY 123")]
-    [InlineData("B XY 12 H", "B-XY 12H")]
-    // Nicht erkennbare Schreibweisen bleiben (bis auf Whitespace) unverändert.
+    [InlineData("123 ABC", "123 ABC")]
     [InlineData("UNBEKANNT  123 456", "UNBEKANNT 123 456")]
-    public void NormalizeKennzeichen_UeberfuehrtInBindestrichKonvention(string roh, string erwartet)
+    public void Parse_UebernimmtKennzeichenWieInDerMail(string roh, string erwartet)
     {
-        ZentralrufReplyParser.NormalizeKennzeichen(roh).Should().Be(erwartet);
+        var data = _parser.Parse($"Ihr Zeichen: 84/26 C03_{roh}\nAngefragtes Kennzeichen: {roh}\n");
+
+        data.Kennzeichen.Should().Be(erwartet);
+        data.ReferenzKennzeichen.Should().Be(erwartet);
     }
 
     [Fact]
@@ -105,7 +112,7 @@ public class ZentralrufReplyParserTests
         data.KeinVersichererErmittelt.Should().BeTrue();
         data.VersichererName.Should().BeNull();
         data.Referenz.Should().Be("84/26 C03_GG-XY 123");
-        data.Kennzeichen.Should().Be("GG-XY 123");
+        data.Kennzeichen.Should().Be("GG XY 123");
     }
 
     [Fact]
@@ -181,7 +188,7 @@ public class ZentralrufReplyParserTests
         var data = _parser.Parse(File.ReadAllText(path));
 
         data.Referenz.Should().Be("84/26 C03_GG-XY 123");
-        data.Kennzeichen.Should().Be("GG-XY 123");
+        data.Kennzeichen.Should().Be("GG XY 123");
         data.UnfallDatum.Should().Be("09.03.2026");
         data.VersicherungsscheinNr.Should().Be("999/123456-X");
         data.VersichererEmail.Should().Be("info@huk-coburg.de");

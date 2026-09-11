@@ -88,9 +88,6 @@ List<String> kennzeichenLesarten(String? wert) {
 /// Fahrzeug** — geriete das in einen Vergleich, hielte die App zwei Wagen für
 /// einen.
 ///
-/// Spiegelt `ZentralrufReplyParser.NormalizeKennzeichen` im Backend, damit
-/// Vergleiche (z. B. Fallback-Zuordnung einer Antwort über das
-/// Gegner-Kennzeichen) tolerant gegenüber Schreibvarianten sind.
 /// Nicht erkennbare Schreibweisen bleiben (bereinigt) unverändert.
 String? normalizeKennzeichen(String? kennzeichen) {
   if (kennzeichen == null || kennzeichen.trim().isEmpty) return kennzeichen;
@@ -111,11 +108,21 @@ String? normalizeKennzeichen(String? kennzeichen) {
 /// Aufteilung sagt. Die Gefahr ist hier auch die andere — wer nicht
 /// wiedererkennt, bietet denselben Wagen zweimal an oder ordnet eine
 /// Zentralruf-Antwort keinem Vorgang zu.
+///
+/// **Das Backend vergleicht nach derselben Regel** (`KennzeichenVergleich`):
+/// Es ordnet Antworten im Postfach zu, das Frontend in der Auswahlhilfe. Bis
+/// #144 teilte das Backend `HGE1427` geraten auf und fand deshalb den Vorgang
+/// `H-GE 1427` nicht. Beide Seiten prüfen sich jetzt gegen dieselbe
+/// Falltabelle, `docs/kennzeichen_faelle.json`.
 bool gleichesKennzeichen(String? a, String? b) {
   final na = normalizeKennzeichen(a);
   final nb = normalizeKennzeichen(b);
-  if (na == null || na.isEmpty || nb == null || nb.isEmpty) return false;
-  if (na == nb) return true;
+  if (na == null || na.trim().isEmpty || nb == null || nb.trim().isEmpty) {
+    return false;
+  }
+  // Groß-/Kleinschreibung zählt nie — auch nicht bei einem Wert, den die App
+  // nicht als Kfz-Kennzeichen liest (`123 abc` ↔ `123 ABC`, #144).
+  if (na.toUpperCase() == nb.toUpperCase()) return true;
 
   // Zwei Buchstabenblöcke liefern nur dann eine gemeinsame Lesart, wenn sie
   // Zeichen für Zeichen derselbe Block sind — die Schnittmenge ist also kein
