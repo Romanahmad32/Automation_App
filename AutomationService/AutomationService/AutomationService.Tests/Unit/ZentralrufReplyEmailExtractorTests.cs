@@ -60,7 +60,7 @@ public class ZentralrufReplyEmailExtractorTests
         var data = new ZentralrufReplyParser().Parse(text);
 
         data.Referenz.Should().Be("84/26 C03_GG-XY 123");
-        data.Kennzeichen.Should().Be("GG-XY 123");
+        data.Kennzeichen.Should().Be("GG XY 123");
         data.VersichererName.Should().Be("HUK-COBURG");
         data.VersicherungsscheinNr.Should().Be("999/123456-X");
     }

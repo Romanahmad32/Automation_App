@@ -202,6 +202,15 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
   Grunde nach).
 
+- **Das Backend vergleicht Kennzeichen wie das Frontend (§4.2, 11.09.2026, #144)** — der
+  Zentralruf-Parser schrieb Kennzeichen aus der Antwort weiter in die Schreibweise mit Bindestrich
+  um und teilte dabei ein mehrdeutiges `HGE1427` geraten als `HG-E 1427` auf; über die
+  Antwortübernahme konnte das im Vorgang und im Schreiben landen. Er übernimmt sie jetzt, wie sie
+  in der Mail stehen. Verglichen wird auf beiden Seiten nach einer Regel (`KennzeichenVergleich` ↔
+  `gleichesKennzeichen`), gegen eine gemeinsame Falltabelle geprüft (`docs/kennzeichen_faelle.json`):
+  Die vermutete Zuordnung im Postfach findet den Vorgang `H-GE 1427` jetzt auch zu `HGE1427`, und
+  Groß-/Kleinschreibung zählt auch bei einem Versicherungskennzeichen nicht mehr (`123 abc` ↔
+  `123 ABC`).
 - **Kennzeichen werden übernommen, wie sie eingegeben wurden (§4.2, 11.09.2026)** — die App
   schrieb sie in die Schreibweise mit Bindestrich um, sobald die Lesart feststand (`hg-e1427` →
   `HG-E 1427`): beim Verlassen jedes Kennzeichenfelds, im Chip-Editor am Mandanten, im

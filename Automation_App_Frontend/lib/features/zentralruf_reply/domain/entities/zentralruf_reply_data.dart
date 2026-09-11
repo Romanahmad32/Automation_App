@@ -14,7 +14,9 @@ class ZentralrufReplyData extends Equatable {
 
   final String? anfrageDatum;
 
-  /// Gegnerisches Kennzeichen, vom Backend normalisiert (z. B. "GG-XY 123").
+  /// Gegnerisches Kennzeichen, wie es in der Mail steht (z. B. "GG XY 123") —
+  /// das Backend vereinheitlicht nur den Leerraum (§4.2, #144). Vergleichen
+  /// nur über `gleichesKennzeichen`, nie mit `==`.
   final String? kennzeichen;
   final String? unfallDatum;
   final String? versichererName;
