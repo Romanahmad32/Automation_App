@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 /// Feld, das man auch einfach tippen könnte, und darf deshalb nie eine
 /// Sackgasse sein. Wer ein viertes Fahrzeug abrechnet, das im Register noch
 /// nicht steht, kommt hier genauso heraus wie über die Kandidatenliste — und
-/// sein Wert läuft durch dieselbe Normalisierung.
+/// sein Wert kommt so an, wie er getippt wurde (nur gestutzt), wie im Feld
+/// darunter auch.
 ///
 /// Gibt den gewählten Wert zurück; `null` bei Abbruch (auch beim Wegtippen
 /// neben den Dialog) — dann bleibt das Feld unverändert.
@@ -16,18 +17,10 @@ class AuswahlDialog extends StatefulWidget {
   final String titel;
   final List<AuswahlKandidat> kandidaten;
 
-  /// Wird auf die **freie** Eingabe angewandt, bevor sie zurückgegeben wird
-  /// (z. B. ein Kennzeichen in die Konvention `HG-E 1427`). Ohne Angabe kommt
-  /// der getippte Text unverändert heraus. Die Kandidaten laufen nicht
-  /// hierdurch: Sie stehen sichtbar in der Liste und müssen genau so
-  /// herauskommen, wie sie dort stehen.
-  final String Function(String)? normalisiere;
-
   const AuswahlDialog({
     super.key,
     required this.titel,
     required this.kandidaten,
-    this.normalisiere,
   });
 
   /// Öffnet den Dialog und liefert den gewählten Wert (oder `null`).
@@ -35,14 +28,9 @@ class AuswahlDialog extends StatefulWidget {
     BuildContext context, {
     required String titel,
     required List<AuswahlKandidat> kandidaten,
-    String Function(String)? normalisiere,
   }) => showDialog<String>(
     context: context,
-    builder: (_) => AuswahlDialog(
-      titel: titel,
-      kandidaten: kandidaten,
-      normalisiere: normalisiere,
-    ),
+    builder: (_) => AuswahlDialog(titel: titel, kandidaten: kandidaten),
   );
 
   @override
@@ -115,6 +103,6 @@ class _AuswahlDialogState extends State<AuswahlDialog> {
   void _uebernehmen() {
     final eingabe = _freieEingabe.text.trim();
     if (eingabe.isEmpty) return;
-    Navigator.of(context).pop(widget.normalisiere?.call(eingabe) ?? eingabe);
+    Navigator.of(context).pop(eingabe);
   }
 }

@@ -178,7 +178,7 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
   zweite Kennzeichenprüfung danebenbauen), `FormularFehlerHinweis` (die Zeile über einem gesperrten
   Knopf: welches Feld ihn sperrt und warum, anklickbar — hört auf den **Wert**, nicht auf
   `touched`), `FormSection`, `FormWertBeobachter`, `TexteListenEditor` (Chips über einem
-  Eingabefeld, mit `normalisiere` vor Prüfung und Dublettenvergleich, `anmerke` für Hinweise, die
+  Eingabefeld, `gleich` für den Dublettenvergleich, `anmerke` für Hinweise, die
   nichts aufhalten); dazu die zwei Knöpfe jeder Einstellungsmaske: `SpeichernButton`
   (rechtsbündig, mit Ring beim Schreiben; `kompakt: true` für eine Kopfzeile) und
   `HinzufuegenButton` (linksbündig, **unter** der Liste — eine Handlung sieht anders aus

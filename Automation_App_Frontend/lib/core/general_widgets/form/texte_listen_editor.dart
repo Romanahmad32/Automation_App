@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 /// unterscheidet, ist nur Beschriftung und Prüfung — beides steckt in den
 /// Parametern, damit nicht zwei Fassungen derselben Liste nebeneinander
 /// altern.
+///
+/// Aufgenommen wird die Eingabe, wie sie getippt wurde — nur gestutzt.
 class TexteListenEditor extends StatefulWidget {
   /// Ausgangswerte.
   final List<String> initialWerte;
@@ -21,16 +23,6 @@ class TexteListenEditor extends StatefulWidget {
   final String entfernenTooltip;
   final String hinzufuegenTooltip;
   final TextCapitalization textCapitalization;
-
-  /// Bringt eine Eingabe in die Schreibweise ihres Fachs, **bevor** [pruefe],
-  /// der Dublettenvergleich und die Aufnahme in die Liste sie sehen. Ohne
-  /// Angabe wird die Eingabe nur gestutzt.
-  ///
-  /// Diese Reihenfolge ist der Zweck: Sonst beanstandete die Prüfung eine
-  /// Schreibvariante, die der Editor gleich darauf selbst geradegezogen hätte.
-  /// Kennzeichen nutzen das nicht mehr — sie werden aufgenommen, wie sie
-  /// getippt wurden (§4.2), und über [gleich] als Dublette erkannt.
-  final String Function(String eingabe)? normalisiere;
 
   /// Prüft eine Eingabe vor dem Aufnehmen: `null` heißt in Ordnung, sonst ist
   /// das Ergebnis die Meldung am Feld.
@@ -65,7 +57,6 @@ class TexteListenEditor extends StatefulWidget {
     required this.hinzufuegenTooltip,
     this.helperText,
     this.textCapitalization = TextCapitalization.sentences,
-    this.normalisiere,
     this.pruefe,
     this.anmerke,
     this.gleich,
@@ -90,8 +81,7 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
   }
 
   void _hinzufuegen() {
-    final getippt = _controller.text.trim();
-    final eingabe = widget.normalisiere?.call(getippt) ?? getippt;
+    final eingabe = _controller.text.trim();
     if (eingabe.isEmpty) {
       setState(() => _fehler = null);
       return;
@@ -119,12 +109,12 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
   bool _gleich(String a, String b) =>
       widget.gleich?.call(a, b) ?? a.toLowerCase() == b.toLowerCase();
 
-  /// Die Anmerkung zur getippten Eingabe — so befragt, wie sie auch
-  /// aufgenommen würde (mit [TexteListenEditor.normalisiere], falls gesetzt).
+  /// Die Anmerkung zur getippten Eingabe — gestutzt befragt, wie sie auch
+  /// aufgenommen würde.
   String? _anmerkung(String getippt) {
     final eingabe = getippt.trim();
     if (eingabe.isEmpty) return null;
-    return widget.anmerke?.call(widget.normalisiere?.call(eingabe) ?? eingabe);
+    return widget.anmerke?.call(eingabe);
   }
 
   void _entfernen(String wert) {

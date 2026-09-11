@@ -16,7 +16,6 @@ void main() {
   Future<FormGroup> zeige(
     WidgetTester tester, {
     required List<AuswahlKandidat> kandidaten,
-    String Function(String)? normalisiere,
   }) async {
     final form = gruppe();
     await tester.pumpWidget(
@@ -29,7 +28,6 @@ void main() {
               labelText: 'Kennzeichen',
               kandidaten: kandidaten,
               dialogTitel: 'Kennzeichen wählen',
-              normalisiere: normalisiere,
             ),
           ),
         ),
@@ -95,14 +93,14 @@ void main() {
     expect(form.control(feldname).touched, isTrue);
   });
 
-  testWidgets('die freie Eingabe wird normalisiert übernommen', (tester) async {
+  /// Umgeschrieben wird nichts (§4.2, geändert am 11.09.2026): Die freie
+  /// Eingabe kommt so an, wie sie getippt wurde — nur gestutzt.
+  testWidgets('die freie Eingabe wird gestutzt übernommen, sonst unverändert', (
+    tester,
+  ) async {
     final form = await zeige(
       tester,
       kandidaten: const [AuswahlKandidat('F-AB 12', 'aus dem Register')],
-      // Steht hier fuer jede Konvention, die ein Feature mitbringt (beim
-      // Kennzeichen `normalizeKennzeichen`): geprueft wird, dass sie auf die
-      // freie Eingabe angewandt wird — nicht, was sie rechnet.
-      normalisiere: (eingabe) => eingabe.toUpperCase(),
     );
 
     await tester.tap(find.byIcon(Icons.list_alt));
@@ -111,8 +109,7 @@ void main() {
     await tester.tap(find.text('Übernehmen'));
     await tester.pumpAndSettle();
 
-    // Gestutzt (das macht der Dialog) und normalisiert (das macht das Feature).
-    expect(imFeld(form), 'HG-E 1427');
+    expect(imFeld(form), 'hg-e 1427');
   });
 
   /// „Übernehmen" auf einem leeren Feld wäre sonst ein zweites „Abbrechen" —
@@ -135,50 +132,20 @@ void main() {
     expect(imFeld(form), isNull);
   });
 
-  testWidgets(
-    'eine direkt getippte Eingabe wird beim Verlassen des Felds normalisiert',
-    (tester) async {
-      // Steht hier fuer jede Konvention, die ein Feature mitbringt (beim
-      // Kennzeichen `normalizeKennzeichen`) — geprueft wird, dass sie auch
-      // auf die direkt getippte Eingabe angewandt wird, nicht nur auf die
-      // freie Eingabe im Dialog.
-      final form = await zeige(
-        tester,
-        kandidaten: const [AuswahlKandidat('F-AB 12', 'aus dem Register')],
-        normalisiere: (eingabe) => eingabe.toUpperCase(),
-      );
+  testWidgets('eine direkt getippte Eingabe bleibt beim Verlassen stehen', (
+    tester,
+  ) async {
+    final form = await zeige(
+      tester,
+      kandidaten: const [AuswahlKandidat('F-AB 12', 'aus dem Register')],
+    );
 
-      await tester.enterText(find.byType(TextField).first, 'hg-e 1427');
-      // Noch nicht normalisiert — erst beim Verlassen des Felds, nicht bei
-      // jedem Tastendruck.
-      expect(imFeld(form), 'hg-e 1427');
+    await tester.enterText(find.byType(TextField).first, 'hg-e 1427');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
 
-      FocusManager.instance.primaryFocus?.unfocus();
-      await tester.pump();
-
-      expect(imFeld(form), 'HG-E 1427');
-    },
-  );
-
-  testWidgets(
-    'eine leere direkt getippte Eingabe bleibt beim Verlassen des Felds leer',
-    (tester) async {
-      final form = await zeige(
-        tester,
-        kandidaten: const [AuswahlKandidat('F-AB 12', 'aus dem Register')],
-        normalisiere: (eingabe) => eingabe.toUpperCase(),
-      );
-
-      // Erst füllen, dann leeren — sonst bliebe der Wert `null` und der
-      // Test prüfte gar keine Änderung.
-      await tester.enterText(find.byType(TextField).first, 'x');
-      await tester.enterText(find.byType(TextField).first, '');
-      FocusManager.instance.primaryFocus?.unfocus();
-      await tester.pump();
-
-      expect(imFeld(form), '');
-    },
-  );
+    expect(imFeld(form), 'hg-e 1427');
+  });
 
   testWidgets('Abbrechen lässt den Wert stehen', (tester) async {
     final form = await zeige(
