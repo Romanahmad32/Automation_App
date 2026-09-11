@@ -64,9 +64,11 @@ Wie ein Auftrag zugeschnitten wird, sagt der Skill `.claude/skills/subagent-auft
    wiederholt es nicht, er stichprobt nur.
 
 10. **Commit** auf dem Zweig mit Warum-Text und `Co-Authored-By` — ohne Nachfrage, sobald die
-    Kette grün ist. **Push und Pull Request** (`gh pr create`, „Schließt #<nr>") erst auf
+    Kette grün ist. **Push und Pull Request** (`gh pr create`, im Text „Closes #<nr>") erst auf
     ausdrückliche Anweisung des Nutzers. *Warum:* ein lokaler Commit sichert die Arbeit, ein Push
-    macht sie nach außen sichtbar — über diesen Zeitpunkt entscheidet der Nutzer.
+    macht sie nach außen sichtbar — über diesen Zeitpunkt entscheidet der Nutzer. Das
+    Schlüsselwort bleibt **englisch**: GitHub schließt ein Issue beim Merge nur auf `Closes`,
+    `Fixes` oder `Resolves` — ein „Schließt #130" ließ #130 nach dem Merge offen.
 
 ## Woran es zuletzt gescheitert ist
 
