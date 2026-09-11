@@ -1,4 +1,3 @@
-import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/sachgebiet_katalog_builder.dart';
@@ -58,8 +57,6 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
   /// Fehlermeldung einer abgewiesenen Referenzänderung (z. B. schon vergeben).
   String? _referenzFehler;
 
-  /// Meldung am Kennzeichenfeld, wenn der Wert sich nicht lesen lässt.
-  String? _kennzeichenFehler;
   bool _speichert = false;
 
   @override
@@ -94,25 +91,16 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
   }
 
   Future<void> _speichern() async {
-    // Der Dialog führt kein reactive_forms mit sich; geprüft wird deshalb hier,
-    // beim Speichern. Was eindeutig lesbar ist, geht in der Konvention
-    // `HG-E 1427` in den Bestand — an dem Wert hängt die Zuordnung einer
-    // Zentralruf-Antwort, und die vergleicht normalisiert
-    // (`gleichesKennzeichen`). Mehrdeutiges bleibt stehen und wird beanstandet,
-    // statt geraten zu werden: `HGE1427` ist zwei verschiedene Fahrzeuge.
-    final kennzeichen =
-        normalizeKennzeichen(_geschaedigtenKennzeichen.text)?.trim() ?? '';
-    final beanstandung = kennzeichen.isEmpty
-        ? null
-        : KennzeichenField.beanstandung(kennzeichen);
-    if (beanstandung != null) {
-      setState(() => _kennzeichenFehler = beanstandung);
-      return;
-    }
+    // Das Kennzeichen geht, **wie es eingegeben wurde**, in den Bestand (§4.2,
+    // geändert am 11.09.2026 — bis dahin in der Konvention `HG-E 1427`, wo die
+    // Lesart feststand). Die Zuordnung einer Zentralruf-Antwort hängt daran
+    // nicht, sie vergleicht ohne Rücksicht auf die Schreibweise
+    // (`gleichesKennzeichen`). Aufgehalten wird nichts (#130); der Hinweis
+    // steht am Feld.
+    final kennzeichen = _geschaedigtenKennzeichen.text.trim();
 
     setState(() {
       _referenzFehler = null;
-      _kennzeichenFehler = null;
       _speichert = true;
     });
 
@@ -186,10 +174,17 @@ class _VorgangBearbeitenDialogState extends State<VorgangBearbeitenDialog> {
                 controller: _gegner,
                 label: 'Gegner / gegnerische Versicherung',
               ),
-              VorgangDialogField(
-                controller: _geschaedigtenKennzeichen,
-                label: 'Kennzeichen Mandant (z. B. HG-E 1427)',
-                errorText: _kennzeichenFehler,
+              // Auf den Text hören: Der Hinweis steht beim Tippen da und
+              // ebenso an einem Wert, den der Dialog nur mitgebracht hat —
+              // eine Prüfung erst beim Speichern hätte an einem vorbelegten
+              // Kennzeichen nie etwas gesagt (#130).
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _geschaedigtenKennzeichen,
+                builder: (context, wert, child) => VorgangDialogField(
+                  controller: _geschaedigtenKennzeichen,
+                  label: 'Kennzeichen Mandant (z. B. HG-E 1427)',
+                  hinweisText: KennzeichenField.beanstandung(wert.text.trim()),
+                ),
               ),
               VorgangDialogField(
                 controller: _unfallDatum,

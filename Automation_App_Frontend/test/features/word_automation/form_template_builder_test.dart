@@ -7,6 +7,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/inpu
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
+import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -46,8 +47,8 @@ void main() {
   /// weiterwandert. Der Knopf ist dagegen sofort gesperrt (`formGroup.valid`).
   ///
   /// Der echte Fokusverlust (nicht nur `markAsTouched`) steht mit dabei, damit
-  /// derselbe Helfer auch die Normalisierung beim Verlassen des Felds auslöst
-  /// (`AuswahlTextField`, `normalisiere`).
+  /// derselbe Helfer auch zeigt, was beim Verlassen des Felds geschieht — bei
+  /// einem Kennzeichen seit dem 11.09.2026: nichts (§4.2).
   Future<void> verlasse(WidgetTester tester, String name) async {
     FocusManager.instance.primaryFocus?.unfocus();
     tester
@@ -349,33 +350,33 @@ void main() {
     expect(gemeldet, const {'Versicherer': 'HUK-COBURG'});
   });
 
-  /// #17: Das Kennzeichenfeld prüft sein Format. Beanstandet wird am
-  /// **Wortlaut der Konvention** und nicht mit „ungültig": `HG-E 1427` erklärt
-  /// in vier Zeichen, was drei Sätze bräuchten.
+  /// #17: Das Kennzeichenfeld merkt an, was ihm auffällt — seit #130
+  /// **ohne** zu sperren. „Dokument erstellen" darf an keinem Kennzeichen
+  /// hängenbleiben: Ein E-Scooter trägt ein Versicherungskennzeichen, ein
+  /// Behördenwagen `THW-12345`, der Gegner womöglich ein ausländisches (§4.1).
   group('Kennzeichenfeld', () {
     FieldData kennzeichenfeld({bool required = false}) =>
         feld('Fahrzeug', required: required, inputType: InputType.kennzeichen);
 
-    testWidgets('ein unlesbarer Wert wird beanstandet und sperrt den Knopf', (
+    testWidgets('ein unbekannter Wert wird angemerkt, sperrt aber nicht', (
       tester,
     ) async {
       await zeige(tester, vorlage([kennzeichenfeld()]));
 
-      await tester.enterText(find.byType(TextField).first, 'kein kennzeichen');
+      await tester.enterText(find.byType(TextField).first, '123 ABC');
       await tester.pump();
-      expect(knopfAktiv(tester), isFalse);
 
-      await verlasse(tester, 'Fahrzeug');
-      expect(find.text('Kennzeichen wie HG-E 1427 eingeben'), findsOneWidget);
+      expect(knopfAktiv(tester), isTrue);
+      expect(find.text(KennzeichenField.unbekanntHinweis), findsOneWidget);
     });
 
-    testWidgets('ein lesbarer Wert geht durch', (tester) async {
+    testWidgets('ein lesbarer Wert bleibt unkommentiert', (tester) async {
       await zeige(tester, vorlage([kennzeichenfeld()]));
 
       await tester.enterText(find.byType(TextField).first, 'HG-E 1427');
       await verlasse(tester, 'Fahrzeug');
 
-      expect(find.text('Kennzeichen wie HG-E 1427 eingeben'), findsNothing);
+      expect(find.text(KennzeichenField.unbekanntHinweis), findsNothing);
       expect(knopfAktiv(tester), isTrue);
     });
 
@@ -385,14 +386,14 @@ void main() {
       await zeige(tester, vorlage([kennzeichenfeld()]));
       await verlasse(tester, 'Fahrzeug');
 
-      expect(find.text('Kennzeichen wie HG-E 1427 eingeben'), findsNothing);
+      expect(find.text(KennzeichenField.unbekanntHinweis), findsNothing);
       expect(knopfAktiv(tester), isTrue);
     });
 
-    /// Nicht nur die freie Eingabe im Auswahldialog, auch der direkt
-    /// getippte Wert soll die Konvention tragen — sonst hinge es vom Zufall
-    /// ab, ob der Anwalt den Dialog benutzt oder gleich tippt.
-    testWidgets('ein direkt getippter Wert wird beim Verlassen normalisiert', (
+    /// Auch hier schreibt das Feld nichts um (§4.2, geändert am 11.09.2026):
+    /// Was getippt wurde, geht so ins Schreiben — bis dahin wurde beim
+    /// Verlassen `HG-E 1427` daraus.
+    testWidgets('ein direkt getippter Wert bleibt beim Verlassen stehen', (
       tester,
     ) async {
       await zeige(tester, vorlage([kennzeichenfeld()]));
@@ -400,7 +401,7 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'hg-e1427');
       await verlasse(tester, 'Fahrzeug');
 
-      expect(imFeld(tester, 'Fahrzeug'), 'HG-E 1427');
+      expect(imFeld(tester, 'Fahrzeug'), 'hg-e1427');
     });
 
     testWidgets('leer sperrt, wenn das Feld Pflicht ist', (tester) async {

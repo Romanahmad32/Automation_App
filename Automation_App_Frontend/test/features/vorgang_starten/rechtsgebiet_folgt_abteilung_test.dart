@@ -6,6 +6,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_per
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/views/vorgang_starten_form_view.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/auftrag_section.dart';
+import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_validators.dart';
 import 'package:automation_app/features/zentralruf_request/domain/entities/zentralruf_prefill_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -113,6 +114,43 @@ void main() {
     expect(find.text('Unfall'), findsNothing);
     expect(formular(tester).control('schadentag').valid, isTrue);
     expect(formular(tester).control('referenz').value, '84/26 C05');
+  });
+
+  /// Die zweite Hälfte von #130: Kein Knopf wird stumm gesperrt. Ein Wert, den
+  /// die App unter Verkehrsrecht zu Recht beanstandet, darf nichts mehr
+  /// aufhalten, sobald sein Abschnitt gar nicht mehr auf der Seite steht — dort
+  /// gäbe es kein Feld mehr, das man berichtigen könnte, und die Zeile über dem
+  /// Knopf verwiese auf ein Nichts.
+  testWidgets('ein ausgeblendetes Unfallfeld hält den Vorgang nicht mehr auf', (
+    tester,
+  ) async {
+    await zeigeFormular(tester);
+    formular(tester).control('auftragsnummer').updateValue('84');
+    formular(tester).control('kennzeichenGegner').updateValue('GG-XY 123');
+    formular(tester).control('unfalluhrzeit').updateValue('25:99');
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unfalluhrzeit: $uhrzeitHinweis'),
+      findsOneWidget,
+      reason: 'unter Verkehrsrecht steht das Feld da und wird geprüft',
+    );
+
+    await setzeAbteilung(tester, 'C05');
+
+    expect(find.text('Unfallhergang'), findsNothing);
+    expect(find.textContaining('Unfalluhrzeit'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Vorgang speichern'),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    // Der Wert ist nicht weg, nur abgeschaltet — der Rückweg bringt ihn samt
+    // seiner Beanstandung wieder.
+    expect(formular(tester).control('unfalluhrzeit').value, '25:99');
   });
 
   testWidgets('die Überschneidung C05/3 zählt zum Hauptsachgebiet', (

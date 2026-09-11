@@ -16,6 +16,11 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// hierher: Sie wird beim Aufbau der FormGroup am Control registriert und ihre
 /// Meldung über [validationMessages] hereingegeben — so wie das Datumsfeld es
 /// mit `GermanDateField.validator` hält.
+///
+/// Umgeschrieben wird nichts: Was getippt oder im Dialog eingetragen wurde,
+/// steht so im Control. Bis zum 11.09.2026 konnte ein Aufrufer hier einen
+/// Normalisierer einhängen; sein einziger Nutzer, das Kennzeichen, übernimmt
+/// Werte seitdem, wie sie eingegeben wurden (§4.2).
 class AuswahlTextField extends StatelessWidget {
   final String formControlName;
   final String? labelText;
@@ -25,6 +30,11 @@ class AuswahlTextField extends StatelessWidget {
   /// Vorgabe von Material (eine Zeile, danach „…") — in schmalen Spalten ist
   /// das zu wenig, dort gehören 2 hin.
   final int? helperMaxLines;
+
+  /// Schrift des [helperText]. Ohne Angabe die Vorgabe des Themes; gesetzt
+  /// wird sie dort, wo der Hilfetext gerade ein **Hinweis** ist und auffallen
+  /// soll, ohne die Fehlerfarbe zu beanspruchen (`KennzeichenField`).
+  final TextStyle? helperStyle;
 
   final Map<String, String Function(Object)>? validationMessages;
 
@@ -36,9 +46,6 @@ class AuswahlTextField extends StatelessWidget {
   /// Überschrift des Auswahldialogs, z. B. „Kennzeichen wählen".
   final String dialogTitel;
 
-  /// Wird auf die freie Eingabe im Dialog angewandt (siehe [AuswahlDialog]).
-  final String Function(String)? normalisiere;
-
   const AuswahlTextField({
     super.key,
     required this.formControlName,
@@ -47,14 +54,14 @@ class AuswahlTextField extends StatelessWidget {
     this.labelText,
     this.helperText,
     this.helperMaxLines,
+    this.helperStyle,
     this.validationMessages,
-    this.normalisiere,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final feld = ReactiveTextField<String>(
+    return ReactiveTextField<String>(
       formControlName: formControlName,
       keyboardType: TextInputType.text,
       validationMessages: validationMessages,
@@ -62,6 +69,7 @@ class AuswahlTextField extends StatelessWidget {
         labelText: labelText,
         helperText: helperText,
         helperMaxLines: helperMaxLines,
+        helperStyle: helperStyle,
         border: theme.inputDecorationTheme.border ?? const OutlineInputBorder(),
         suffixIcon: kandidaten.isEmpty
             ? null
@@ -72,36 +80,6 @@ class AuswahlTextField extends StatelessWidget {
               ),
       ),
     );
-
-    if (normalisiere == null) return feld;
-
-    // Erst beim Verlassen des Felds normalisieren, nicht bei jedem
-    // Tastendruck: Der Cursor säße mitten in einem Wert, der sich unter ihm
-    // umformt, und eine noch halbfertige Eingabe (`HGE14`) würde vom
-    // Normalisierer zerlegt, bevor der Anwalt sie zu Ende getippt hat.
-    return Focus(
-      onFocusChange: (hatFokus) {
-        if (!hatFokus) _normalisiereGetipptenWert(context);
-      },
-      child: feld,
-    );
-  }
-
-  /// Übernimmt [normalisiere] auf einen direkt getippten (nicht über den
-  /// Dialog gewählten) Wert, sobald das Feld den Fokus verliert.
-  void _normalisiereGetipptenWert(BuildContext context) {
-    final form = ReactiveForm.of(context, listen: false) as FormGroup;
-    final control = form.control(formControlName) as FormControl<String>;
-
-    final wert = control.value;
-    if (wert == null || wert.isEmpty) return;
-
-    final normalisiert = normalisiere!(wert);
-    // Nur zurückschreiben, wenn sich etwas ändert — sonst löst das Control
-    // ein `valueChanges`-Ereignis ohne fachlichen Anlass aus.
-    if (normalisiert != wert) {
-      control.value = normalisiert;
-    }
   }
 
   Future<void> _waehle(BuildContext context) async {
@@ -115,7 +93,6 @@ class AuswahlTextField extends StatelessWidget {
       context,
       titel: dialogTitel,
       kandidaten: kandidaten,
-      normalisiere: normalisiere,
     );
     if (gewaehlt == null) return;
 

@@ -6,24 +6,44 @@
 # Zeichenketten muessen VOR ihren Teilzeichenketten stehen, sonst ersetzt
 # die kuerzere zuerst und die laengere findet nichts mehr.
 #
+# Die Platzhalternamen sind nicht frei waehlbar. Massgeblich sind:
+#   * FeldDatenquelle.platzhalter (Frontend, form_template_setup) fuer alles,
+#     was aus dem Vorgang kommt - dort steht die vollstaendige Liste, und ein
+#     Test haelt sie mit der Erkennung zusammen.
+#   * RvgPlatzhalter.Namen (Backend, WordAutomation) fuer das, was die App
+#     selbst rechnet: {{Gegenstandswert}}, {{Gebuehrensatz}},
+#     {{Geschaeftsgebuehr}}, {{Auslagenpauschale}}, {{RvgNetto}},
+#     {{RvgUmsatzsteuer}}, {{RvgBrutto}}, {{Gesamtforderung}}.
+# Ein Name ausserhalb beider Listen bleibt ein Eingabefeld - er wird nicht
+# vorbelegt, sondern im Ausfuellschritt von Hand gefuellt ({{Frist}} etwa).
+#
+# EIN Platzhalter meint EINE Angabe. {{VersichererPlzOrt}} bliebe ungebunden,
+# weil der Name zwei Angaben nennt; nebeneinander in derselben Word-Zeile
+# ergeben zwei Platzhalter dasselbe Bild.
+#
 # Diese Datei enthaelt nur Platzhalterwerte. Die echte Tabelle bildet die
 # Mandantendaten des Ausgangsschreibens ab und gehoert nach
-# ersetzungen.local.tsv — die ist per .gitignore ausgeschlossen.
-Musterversicherung AG auf Gegenseitigkeit	{{VersicherungName}}
-Musterstrasse 1	{{VersicherungStrasse}}
-12345 Musterstadt	{{VersicherungPlzOrt}}
-schaden@musterversicherung.de	{{VersicherungEmail}}
+# ersetzungen.local.tsv - die ist per .gitignore ausgeschlossen.
+Musterversicherung AG auf Gegenseitigkeit	{{VersichererName}}
+Musterstrasse 1	{{VersichererStrasse}}
+# Die Mandantenanschrift traegt die PLZ/Ort-Zeile des Versicherers als
+# Teilzeichenkette und muss deshalb VOR ihr stehen. Sonst greift die
+# kuerzere zuerst, und in der Anschrift des Mandanten stehen am Ende die
+# Platzhalter des Versicherers -- {{MandantStrasse}} bliebe ungebunden.
+Musterweg 2, 12345 Musterstadt	{{MandantStrasse}}, {{MandantPlz}} {{MandantOrt}}
+12345 Musterstadt	{{VersichererPlz}} {{VersichererOrt}}
+schaden@musterversicherung.de	{{VersichererEmail}}
 1234567890	{{VersicherungsscheinNr}}
 Erika Mustermann	{{MandantName}}
-Musterweg 2, 12345 Musterstadt	{{MandantAdresse}}
 Musterstadt an der Muster	{{Unfallort}}
 01.01.2025	{{Unfalldatum}}
-12:00	{{Unfallzeit}}
-M-AB 1234	{{Mandantenkennzeichen}}
+12:00	{{Unfalluhrzeit}}
+M-AB 1234	{{MandantKennzeichen}}
 M-CD 5678	{{Gegnerkennzeichen}}
-Hauptstrasse	{{Vorfahrtstrasse}}
-Nebenstrasse	{{Nebenstrasse}}
+Hauptstraße	{{Vorfahrtstrasse}}
+Nebenstraße	{{Nebenstrasse}}
+15.01.2025	{{Datum}}
 31.12.2025	{{Frist}}
-001/25 A01	{{Referenz}}
+001/25 A01	{{Zeichen}}
 123,45	{{RvgNetto}}
 1,3 Geschäftsgebühr	{{Gebuehrensatz}} Geschäftsgebühr

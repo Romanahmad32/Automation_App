@@ -169,4 +169,59 @@ void main() {
       findsOneWidget,
     );
   });
+
+  /// Der Fall aus der Kanzlei (#130): Der abgeleitete Vorlagenordner ist im
+  /// Recht — und existiert trotzdem nicht. Aus ihm wird **gelesen**, also ist
+  /// „wird beim ersten Schreiben angelegt" hier die falsche Beruhigung.
+  testWidgets('sagt am fehlenden Vorlagenordner, was er bedeutet', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: OrdnerZustandZeile(
+            zustand: OrdnerZustand(
+              feld: 'vorlagenOrdner',
+              zustand: OrdnerZustandArten.abgeleitet,
+              wirksam: r'C:\OneDrive\Kanzlei App Daten\Vorlagen',
+              wirksamFehlt: true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('findet die App keine Vorlage'), findsOneWidget);
+    expect(find.textContaining('beim ersten Schreiben'), findsNothing);
+  });
+
+  /// Die Kehrseite, und der Grund für die Unterscheidung: Dieselbe Lage an
+  /// einem Ordner, in den **geschrieben** wird, ist keine Meldung wert — sonst
+  /// stünden auf einer frischen Einrichtung drei Warnungen neben der einen,
+  /// auf die es ankommt.
+  testWidgets('lässt den abgeleiteten Ablageordner unaufgeregt', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: OrdnerZustandZeile(
+            zustand: OrdnerZustand(
+              feld: 'registerAblageOrdner',
+              zustand: OrdnerZustandArten.abgeleitet,
+              wirksam: r'C:\OneDrive\Kanzlei App Daten\Register',
+              wirksamFehlt: true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(FehlerHinweis), findsNothing);
+    expect(
+      find.textContaining('beim ersten Schreiben angelegt'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('keine Vorlage'), findsNothing);
+  });
 }

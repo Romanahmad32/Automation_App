@@ -75,13 +75,15 @@ void main() {
       ]);
     });
 
-    test('bringt jeden Wert in die Konvention HG-E 1427', () {
+    /// Die Auswahl zeigt, was im Bestand steht, und schreibt nichts um (§4.2,
+    /// geändert am 11.09.2026) — bis dahin kam hier `GG-XY 123` heraus.
+    test('bietet jeden Wert an, wie er im Bestand steht', () {
       final vorschlaege = DatenquelleVorschlaege.fuer(
         FeldDatenquelle.kennzeichenMandant,
         mandant: mandant(kennzeichen: ['gg-xy123', 'HG-E1427H']),
       );
 
-      expect(vorschlaege.map((v) => v.wert), ['GG-XY 123', 'HG-E 1427H']);
+      expect(vorschlaege.map((v) => v.wert), ['gg-xy123', 'HG-E1427H']);
     });
 
     test('lässt Leeres weg, statt eine leere Zeile anzubieten', () {

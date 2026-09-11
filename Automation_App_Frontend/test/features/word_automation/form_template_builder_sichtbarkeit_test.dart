@@ -140,9 +140,9 @@ void main() {
   });
 
   /// Der eingeklappte Teil darf den Knopf nicht sperren: Sein Fehler wäre
-  /// unsichtbar (das Control ist zugeklappt nicht gebaut) und
-  /// `PflichtfelderHinweis` meldet nur fehlende Pflichtfelder — der Knopf
-  /// stünde ohne erkennbaren Grund tot da.
+  /// unsichtbar (das Control ist zugeklappt nicht gebaut), und der Sprung aus
+  /// `FormularFehlerHinweis` fände kein Feld — der Knopf stünde ohne
+  /// erreichbaren Grund tot da.
   testWidgets('ein ungültiges Datum im eingeklappten Teil sperrt den Knopf '
       'nicht', (tester) async {
     await tester.pumpWidget(
