@@ -27,11 +27,13 @@ public static class ZentralrufReplyWarnings
                 "Bitte Kennzeichen und Unfalldatum prüfen und die Anfrage ggf. wiederholen.");
         }
 
-        // Die Referenz trägt das Kennzeichen des Vorgangs in sich — weicht es vom
-        // angefragten Kennzeichen ab, ist die Antwort womöglich falsch zugeordnet.
+        // Die Referenz trägt das Kennzeichen des Vorgangs in sich — benennt es ein
+        // anderes Fahrzeug als das angefragte, ist die Antwort womöglich falsch
+        // zugeordnet. Eine andere Schreibweise desselben Wagens (GG XY 123 in der
+        // Mail, GG-XY 123 in der Referenz) ist keine Abweichung (§4.2, #144).
         if (data.Kennzeichen is not null
             && data.ReferenzKennzeichen is not null
-            && !string.Equals(data.Kennzeichen, data.ReferenzKennzeichen, StringComparison.OrdinalIgnoreCase))
+            && !KennzeichenVergleich.Gleich(data.Kennzeichen, data.ReferenzKennzeichen))
         {
             warnings.Add(
                 $"Das angefragte Kennzeichen ({data.Kennzeichen}) stimmt nicht mit dem Kennzeichen " +

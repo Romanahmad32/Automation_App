@@ -9199,7 +9199,7 @@
               "null",
               "string"
             ],
-            "description": "Kennzeichen aus der Referenz, normalisiert (z. B. \u0022GG-XY 123\u0022)."
+            "description": "Kennzeichen aus der Referenz, wie es dort steht (z. B. \u0022GG-XY 123\u0022) \u2014 nur Leerraum vereinheitlicht."
           },
           "keinVersichererErmittelt": {
             "type": "boolean",
@@ -9221,7 +9221,7 @@
               "null",
               "string"
             ],
-            "description": "Kennzeichen des gegnerischen (angefragten) Fahrzeugs, normalisiert in\r\ndie Dom\u00E4nen-Konvention mit Bindestrich (z. B. \u0022GG-XY 123\u0022)."
+            "description": "Kennzeichen des gegnerischen (angefragten) Fahrzeugs, wie es in der Mail\r\nsteht (z. B. \u0022GG XY 123\u0022) \u2014 nur Leerraum vereinheitlicht, nicht in die\r\nSchreibweise mit Bindestrich gebracht (\u00A74.2). Ob es zu einem Vorgang\r\npasst, sagt KennzeichenVergleich."
           },
           "unfallDatum": {
             "type": [
