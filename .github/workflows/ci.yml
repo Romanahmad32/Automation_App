@@ -115,7 +115,7 @@ jobs:
       # Cache derselben Restore-Kette zurueck (restore-keys), statt jedes Mal
       # neu zu laden.
       - name: NuGet-Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', 'global.json') }}
@@ -222,7 +222,7 @@ jobs:
       # hinfaellig; restore-keys nehmen sonst wenigstens den letzten Stand
       # derselben Flutter-Fassung.
       - name: Pub-Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~\AppData\Local\Pub\Cache
           key: pub-${{ env.FLUTTER_VERSION }}-${{ hashFiles('Automation_App_Frontend/pubspec.lock') }}
@@ -304,7 +304,7 @@ jobs:
           global-json-file: global.json
 
       - name: NuGet-Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', 'global.json') }}
@@ -328,7 +328,7 @@ jobs:
           cache: true
 
       - name: Pub-Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~\AppData\Local\Pub\Cache
           key: pub-${{ env.FLUTTER_VERSION }}-${{ hashFiles('Automation_App_Frontend/pubspec.lock') }}
