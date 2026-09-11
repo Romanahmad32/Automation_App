@@ -112,7 +112,7 @@ stehen in den beiden Teilbaum-Dateien.
 ## Prüfkette
 
 ```powershell
-./scripts/check.ps1                       # alles (~2:30) — das Tor vor dem PR
+./scripts/check.ps1                       # alles (~2:30 warm, kalt bis ~11 min) — das Tor vor dem PR
 ./scripts/check.ps1 -Regeln -NurFrontend  # die Dart-Regeln (~60 s) — die Arbeitsschleife
 ./scripts/check.ps1 -Regeln               # Regeln beider Seiten (~105 s)
 ./scripts/check.ps1 -Beheben              # Formatierer vorher schreibend laufen lassen

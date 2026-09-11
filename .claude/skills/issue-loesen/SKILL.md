@@ -53,8 +53,9 @@ Wie ein Auftrag zugeschnitten wird, sagt der Skill `.claude/skills/subagent-auft
 8. **Review-Agent** (Sonnet, nur lesend) PARALLEL zu `scripts/check.ps1 -Regeln` (rund 105 s;
    nur der Frontend-Teil mit `-Regeln -NurFrontend` rund 60 s) laufen lassen; Befunde beheben
    lassen. Erst danach die volle Kette `scripts/check.ps1` GENAU EINMAL — per PowerShell-Tool
-   mit absolutem Pfad, **im Vordergrund** mit Timeout 600000; die Kette braucht rund
-   zweieinhalb Minuten (die Zeiten stehen in der Wurzel-`CLAUDE.md`). *Warum:* im Hintergrund
+   mit absolutem Pfad, **im Vordergrund** mit Timeout 600000; die Kette braucht warm rund
+   zweieinhalb Minuten, kalt bis zu elf (gemessen am 10.09.2026 nach drei parallelen Agenten).
+   *Warum:* im Hintergrund
    gestartete Läufe haben die Sitzung schon festgefahren (siehe unten), und die volle Kette
    zweimal zu fahren, zahlt dieselbe Wartezeit doppelt, wenn die Regeln schon grün sind.
 
