@@ -50,7 +50,7 @@ dependencies:
   path_provider: ^2.1.6
   path_provider_windows: ^2.3.0
   google_fonts: ^8.2.1
-  pdfrx: ^2.4.7
+  pdfrx: ^2.6.1
   bloc_concurrency: ^0.3.0
   # Direkt importiert von den reinen Logik-Blocs (z. B. document_bloc.dart), die
   # ohne Flutter auskommen. Kam bisher nur transitiv ueber flutter_bloc herein —
