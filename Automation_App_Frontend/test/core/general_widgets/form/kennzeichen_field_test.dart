@@ -5,32 +5,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Der eine Baustein für jedes Kennzeichenfeld der App — und damit die eine
-/// Stelle, an der festliegt, was ein Kennzeichen ist.
+/// Stelle, an der festliegt, wie die App mit einem Kennzeichen umgeht.
 ///
-/// Die beiden Hälften gehören zusammen und laufen leicht auseinander: Das Feld
-/// **stellt die Konvention selbst her** (`hg-e1427` → `HG-E 1427`), also darf
-/// der Validator nur beanstanden, was sich gar nicht lesen lässt. Verlangte er
-/// mehr, beanstandete er Werte, die die App im selben Atemzug geradezieht — und
-/// solche, die sie aus dem eigenen Register angeboten hat.
+/// **Sperren tut er nichts** (#130). Welche Fahrzeuge in eine Kanzlei kommen,
+/// entscheidet nicht die App: Versicherungskennzeichen (E-Scooter), Behörden-,
+/// Kurzzeit- und Auslandskennzeichen sind Alltag und passen alle nicht ins
+/// Pkw-Schema. Vor #130 hing hier ein Validator, der genau das durchfallen
+/// liess — ein E-Scooter-Mandat war damit weder zu starten noch zu beschreiben.
 ///
-/// Die eine Ausnahme von der Toleranz ist die **Mehrdeutigkeit**: `HGE1427`
-/// kann `HG-E 1427` oder `H-GE 1427` heissen, und das sind zwei Fahrzeuge.
-/// Geraten wird da nichts — das Feld nennt die Lesarten und lässt den Wert
-/// stehen, wie er getippt wurde.
+/// Umgeschrieben wird auch nichts (§4.2, geändert am 11.09.2026): Der Wert
+/// bleibt, wie er getippt wurde. Was auffällt, steht als Hinweis unter dem
+/// Feld — sichtbar, ohne dass jemand das Feld anfassen muss.
+///
+/// Die Mehrdeutigkeit bleibt der eigene Fall: `HGE1427` kann `HG-E 1427` oder
+/// `H-GE 1427` heissen, und das sind zwei Fahrzeuge. Geraten wird da nichts —
+/// der Wert bleibt stehen, wie er getippt wurde, und der Hinweis nennt beide.
 void main() {
   const feldname = 'kennzeichen';
-
-  FormGroup gruppe() => FormGroup({
-    feldname: FormControl<String>(
-      validators: [Validators.delegate(KennzeichenField.validator)],
-    ),
-  });
 
   Future<FormGroup> zeige(
     WidgetTester tester, {
     List<AuswahlKandidat> kandidaten = const [],
+    String? vorbelegt,
+    String? helperText,
   }) async {
-    final form = gruppe();
+    final form = FormGroup({feldname: FormControl<String>(value: vorbelegt)});
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -39,6 +38,7 @@ void main() {
             child: KennzeichenField(
               formControlName: feldname,
               kandidaten: kandidaten,
+              helperText: helperText,
             ),
           ),
         ),
@@ -47,73 +47,64 @@ void main() {
     return form;
   }
 
-  /// Setzt einen Wert **und** rührt das Feld an: Ohne `touched` zeigt
-  /// reactive_forms den Fehler nicht — der Test prüfte dann die Vorgabe des
-  /// Formulars statt die Meldung.
-  Future<void> trageEin(
-    WidgetTester tester,
-    FormGroup form,
-    String wert,
-  ) async {
-    form.control(feldname)
-      ..value = wert
-      ..markAsTouched();
-    await tester.pump();
-  }
-
-  testWidgets('beanstandet, was sich nicht als Kennzeichen lesen lässt', (
+  /// Der Kern des Issues: Ein Wert, den die App nicht als Pkw-Kennzeichen
+  /// liest, hält **nichts** auf — er bekommt nur seinen Hinweis.
+  testWidgets('nimmt ein Versicherungskennzeichen an und merkt es an', (
     tester,
   ) async {
-    final form = await zeige(tester);
+    final form = await zeige(tester, vorbelegt: '123 ABC');
 
-    await trageEin(tester, form, 'mein Auto');
-
-    expect(form.control(feldname).valid, isFalse);
-    expect(find.text(KennzeichenField.hinweis), findsOneWidget);
+    expect(form.valid, isTrue);
+    expect(form.control(feldname).value, '123 ABC');
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsOneWidget);
   });
 
-  testWidgets('nimmt ein Kennzeichen in der Konvention an', (tester) async {
-    final form = await zeige(tester);
+  /// Ohne Anfassen: Ein vorbelegter Wert wird nie `touched`, und ein Hinweis,
+  /// den man erst durch Anfassen zu sehen bekommt, schweigt genau dort, wo er
+  /// gebraucht wird (#130).
+  testWidgets('zeigt den Hinweis an einem vorbelegten Wert ungefragt', (
+    tester,
+  ) async {
+    final form = await zeige(tester, vorbelegt: 'mein Auto');
 
-    await trageEin(tester, form, 'HG-E 1427');
-
-    expect(form.control(feldname).valid, isTrue);
-    expect(find.text(KennzeichenField.hinweis), findsNothing);
+    expect(form.control(feldname).touched, isFalse);
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsOneWidget);
   });
 
-  /// Ob ein Kennzeichen Pflicht ist, entscheidet der Required-Validator
-  /// daneben — dieses Feld sagt dazu nichts.
-  testWidgets('lässt ein leeres Feld gelten', (tester) async {
-    final form = await zeige(tester);
+  testWidgets('sagt zu einem Kennzeichen in der Konvention nichts', (
+    tester,
+  ) async {
+    await zeige(tester, vorbelegt: 'HG-E 1427');
 
-    await trageEin(tester, form, '   ');
-
-    expect(form.control(feldname).valid, isTrue);
-    expect(find.text(KennzeichenField.hinweis), findsNothing);
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsNothing);
   });
 
-  testWidgets('stellt die Konvention beim Verlassen des Felds selbst her', (
+  testWidgets('lässt ein leeres Feld unkommentiert', (tester) async {
+    await zeige(tester, vorbelegt: '   ');
+
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsNothing);
+  });
+
+  /// Das Feld schreibt nichts um (§4.2, geändert am 11.09.2026) — bis dahin
+  /// wurde hier beim Verlassen `HG-E 1427` daraus. Was eingegeben wurde, geht
+  /// so in Referenz, Vorgang und Schreiben.
+  testWidgets('lässt den Wert beim Verlassen stehen, wie er getippt wurde', (
     tester,
   ) async {
     final form = await zeige(tester);
 
     await tester.enterText(find.byType(TextField), 'hg-e1427');
-    // Noch nicht umgeformt: Unter dem Cursor soll sich nichts bewegen, solange
-    // getippt wird.
-    expect(form.control(feldname).value, 'hg-e1427');
-
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pump();
 
-    expect(form.control(feldname).value, 'HG-E 1427');
-    expect(form.control(feldname).valid, isTrue);
+    expect(form.control(feldname).value, 'hg-e1427');
   });
 
-  /// Der Gegenfall dazu, und der Grund für die ganze Unterscheidung: Bei
-  /// `HGE1427` steht nicht fest, wo das Unterscheidungszeichen endet. Das Feld
-  /// darf sich hier **nicht** entscheiden — ein falsch aufgeteiltes
-  /// Kennzeichen benennt ein anderes Fahrzeug und ginge unbemerkt in die
-  /// Referenz und ins Anspruchsschreiben.
+  /// Der Gegenfall, und der Grund für die ganze Unterscheidung: Bei `HGE1427`
+  /// steht nicht fest, wo das Unterscheidungszeichen endet. Das Feld darf sich
+  /// hier **nicht** entscheiden — ein falsch aufgeteiltes Kennzeichen benennt
+  /// ein anderes Fahrzeug und ginge unbemerkt in die Referenz und ins
+  /// Anspruchsschreiben. Aufhalten darf es die Arbeit trotzdem nicht.
   testWidgets('lässt einen mehrdeutigen Wert stehen und nennt die Lesarten', (
     tester,
   ) async {
@@ -121,18 +112,71 @@ void main() {
 
     await tester.enterText(find.byType(TextField), 'HGE1427');
     FocusManager.instance.primaryFocus?.unfocus();
-    form.control(feldname).markAsTouched();
     await tester.pump();
 
     expect(form.control(feldname).value, 'HGE1427');
-    expect(form.control(feldname).valid, isFalse);
+    expect(form.valid, isTrue);
     expect(
       find.text('Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427'),
       findsOneWidget,
     );
-    // Nicht die allgemeine Meldung: „so eingeben wie HG-E 1427" hätte der
-    // Anwalt hier ja getan — er hat nur den Bindestrich weggelassen.
-    expect(find.text(KennzeichenField.hinweis), findsNothing);
+    // Nicht der allgemeine Hinweis: „nicht erkannt" wäre hier falsch — die App
+    // erkennt zwei Lesarten und weiss nur nicht, welche gemeint ist.
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsNothing);
+  });
+
+  /// Der Hinweis hört auf den Wert und damit auf **jeden Tastendruck**. Er
+  /// darf deshalb nicht bei jedem Zwischenstand anschlagen: `HG-E 1427` wird
+  /// Zeichen für Zeichen getippt, und acht dieser neun Stände sind für sich
+  /// genommen kein Kennzeichen.
+  testWidgets('schweigt, solange ein Kennzeichen noch entstehen kann', (
+    tester,
+  ) async {
+    await zeige(tester);
+
+    for (final zwischenstand in ['H', 'HG', 'HG-', 'HG-E', 'HG-E 1']) {
+      await tester.enterText(find.byType(TextField), zwischenstand);
+      await tester.pump();
+      expect(
+        find.text(KennzeichenField.unbekanntHinweis),
+        findsNothing,
+        reason: 'bei „$zwischenstand" ist noch nichts entschieden',
+      );
+    }
+  });
+
+  /// Der Gegenfall dazu, damit die Stille nicht zur Regel wird: Aus `123` wird
+  /// nie ein Pkw-Kennzeichen, also steht der Hinweis sofort da.
+  testWidgets('sagt sofort etwas, wo kein Kennzeichen mehr entstehen kann', (
+    tester,
+  ) async {
+    await zeige(tester);
+
+    await tester.enterText(find.byType(TextField), '123 ');
+    await tester.pump();
+
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsOneWidget);
+  });
+
+  /// Die Hilfszeile des Aufrufers darf der Hinweis nicht verdrängen: Im
+  /// Ausfüllschritt steht dort „* Pflichtfeld · Vorbelegt …", und beide
+  /// Auskünfte werden gerade an einem ungewöhnlichen Wert gebraucht.
+  testWidgets('stellt den Hinweis neben die Zeile des Aufrufers', (
+    tester,
+  ) async {
+    await zeige(
+      tester,
+      vorbelegt: '123 ABC',
+      helperText: '* Pflichtfeld · Vorbelegt aus der Zentralruf-Antwort',
+    );
+
+    expect(
+      find.text(
+        '* Pflichtfeld · Vorbelegt aus der Zentralruf-Antwort · '
+        '${KennzeichenField.unbekanntHinweis}',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('trägt ohne Kandidaten kein Auswahlsymbol', (tester) async {
@@ -156,85 +200,77 @@ void main() {
     expect(form.control(feldname).value, 'F-AB 12');
   });
 
-  group('validator', () {
-    Map<String, dynamic>? pruefe(String? wert) =>
-        KennzeichenField.validator(FormControl<String>(value: wert));
-
-    test('leere Werte sind gültig', () {
-      expect(pruefe(null), isNull);
-      expect(pruefe(''), isNull);
-      expect(pruefe('   '), isNull);
-    });
-
-    /// Auch die Schreibvarianten: Was das Feld normalisieren kann, ist gültig —
-    /// sonst stünde die Beanstandung an einem Wert, den es gleich darauf selbst
-    /// geradezieht.
-    test('jede eindeutig lesbare Schreibweise ist gültig', () {
-      expect(pruefe('HG-E 1427'), isNull);
-      expect(pruefe('hg-e1427'), isNull);
-      expect(pruefe('GG XY 123'), isNull);
-      expect(pruefe('HG-E1427H'), isNull);
-      // Zwei Buchstaben lassen nur eine Aufteilung zu — kein Bindestrich nötig.
-      expect(pruefe('he1427'), isNull);
-    });
-
-    test('Unlesbares meldet den eigenen Fehlerschlüssel', () {
-      expect(pruefe('mein Auto'), {KennzeichenField.formatError: true});
-      expect(KennzeichenField.formatError, 'kennzeichen');
-    });
-
-    /// Der Fehlerwert **ist** die Liste der Lesarten und nicht `true`:
-    /// reactive_forms reicht ihn an die Meldungsfunktion durch, und nur so
-    /// kann die Meldung sagen, zwischen welchen Werten zu wählen ist.
-    test('Mehrdeutiges meldet die Lesarten als Fehlerwert', () {
-      expect(pruefe('HGE1427'), {
-        KennzeichenField.mehrdeutigError: ['HG-E 1427', 'H-GE 1427'],
-      });
-      expect(pruefe('FABC12'), {
-        KennzeichenField.mehrdeutigError: ['FAB-C 12', 'FA-BC 12'],
-      });
-      expect(KennzeichenField.mehrdeutigError, 'kennzeichenMehrdeutig');
-    });
-
-    test('die Meldung nennt die Konvention mit Beispiel', () {
-      final melden = KennzeichenField.meldungen[KennzeichenField.formatError]!;
-      expect(melden(true), KennzeichenField.hinweis);
-      expect(KennzeichenField.hinweis, contains('HG-E 1427'));
-    });
-
-    test('die Mehrdeutig-Meldung zählt die Lesarten auf', () {
-      final melden =
-          KennzeichenField.meldungen[KennzeichenField.mehrdeutigError]!;
-
-      expect(
-        melden(const ['HG-E 1427', 'H-GE 1427']),
-        'Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427',
-      );
-      // Drei und mehr: Komma dazwischen, „oder" vor der letzten.
-      expect(
-        melden(const ['A-BC 1', 'AB-C 1', 'ABC-D 1']),
-        'Mehrdeutig, bitte mit Bindestrich: A-BC 1, AB-C 1 oder ABC-D 1',
-      );
-    });
-  });
-
-  /// Für die Prüfstellen ausserhalb von reactive_forms (Chip-Editor am
-  /// Mandanten, Bearbeiten-Dialog eines Vorgangs). Sie sollen dieselbe Auskunft
-  /// geben wie das Formular — sonst hängt es am Eingabeort, ob der Anwalt
-  /// erfährt, was der App fehlt.
+  /// Die Auskunft selbst — sie ist dieselbe an jedem Eingabeort (Formular,
+  /// Chip-Editor am Mandanten, Bearbeiten-Dialog eines Vorgangs). Sonst hinge
+  /// es am Ort, ob der Anwalt erfährt, was der App aufgefallen ist.
   group('beanstandung', () {
-    test('eindeutig ist in Ordnung, Unlesbares nennt die Konvention', () {
-      expect(KennzeichenField.beanstandung('hg-e 1427'), isNull);
-      expect(
-        KennzeichenField.beanstandung('mein Auto'),
-        KennzeichenField.hinweis,
-      );
+    test('leere Werte sind unauffällig', () {
+      expect(KennzeichenField.beanstandung(''), isNull);
+      expect(KennzeichenField.beanstandung('   '), isNull);
+    });
+
+    /// Was das Feld normalisieren kann, ist unauffällig — sonst stünde ein
+    /// Hinweis an einem Wert, den es gleich darauf selbst geradezieht.
+    test('jede eindeutig lesbare Schreibweise ist unauffällig', () {
+      expect(KennzeichenField.beanstandung('HG-E 1427'), isNull);
+      expect(KennzeichenField.beanstandung('hg-e1427'), isNull);
+      expect(KennzeichenField.beanstandung('GG XY 123'), isNull);
+      expect(KennzeichenField.beanstandung('HG-E1427H'), isNull);
+      // Zwei Buchstaben lassen nur eine Aufteilung zu — kein Bindestrich nötig.
+      expect(KennzeichenField.beanstandung('he1427'), isNull);
+    });
+
+    /// Ein Zwischenstand beim Tippen ist noch keine Beanstandung.
+    test('ein halb getipptes Kennzeichen bleibt unkommentiert', () {
+      expect(KennzeichenField.beanstandung('HG'), isNull);
+      expect(KennzeichenField.beanstandung('HG-'), isNull);
+      expect(KennzeichenField.beanstandung('HG-E'), isNull);
+      expect(KennzeichenField.beanstandung('HG-E 1'), isNull);
+    });
+
+    /// Die Bauarten namentlich: Keine davon ist ein Fehler, jede bekommt
+    /// denselben Hinweis — „wird übernommen, wie eingegeben".
+    test('fremde Bauarten werden angemerkt, nicht abgelehnt', () {
+      for (final wert in [
+        '123 ABC', // Versicherungskennzeichen (E-Scooter, Moped)
+        '123-ABC',
+        'Y-123456', // Bundeswehr
+        'X-1234', // NATO
+        'THW-12345',
+        '0 12-345', // Diplomatenkennzeichen
+        'HG-04711', // Kurzzeitkennzeichen, fünf Ziffern
+        'AB-123-CD', // Frankreich
+        '1-ABC-234', // Belgien
+        'AB 12345', // Polen
+        'mein Auto',
+      ]) {
+        expect(
+          KennzeichenField.beanstandung(wert),
+          KennzeichenField.unbekanntHinweis,
+          reason: '$wert ist kein Pkw-Kennzeichen, aber ein gültiger Wert',
+        );
+      }
     });
 
     test('mehrdeutig nennt die Lesarten', () {
       expect(
         KennzeichenField.beanstandung('HGE1427'),
         'Mehrdeutig, bitte mit Bindestrich: HG-E 1427 oder H-GE 1427',
+      );
+      expect(
+        KennzeichenField.beanstandung('FABC12'),
+        'Mehrdeutig, bitte mit Bindestrich: FAB-C 12 oder FA-BC 12',
+      );
+    });
+
+    test('drei Lesarten: Komma dazwischen, „oder" vor der letzten', () {
+      expect(
+        KennzeichenField.mehrdeutigHinweis(const [
+          'A-BC 1',
+          'AB-C 1',
+          'ABC-D 1',
+        ]),
+        'Mehrdeutig, bitte mit Bindestrich: A-BC 1, AB-C 1 oder ABC-D 1',
       );
     });
   });

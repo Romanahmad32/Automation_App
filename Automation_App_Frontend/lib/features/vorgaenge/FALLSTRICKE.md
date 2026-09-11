@@ -159,14 +159,17 @@ zweiten Druck verleitet, der dieselbe Arbeit noch einmal anstößt. Dieselbe Vor
 ## Der Bearbeiten-Dialog prüft von Hand — er hat kein reactive_forms
 
 `VorgangBearbeitenDialog` arbeitet mit `TextEditingController`n, nicht mit einer FormGroup. Das
-Kennzeichen des Mandanten wird deshalb **beim Speichern** geprüft: `normalizeKennzeichen` zieht die
-Schreibweise gerade, und was `istKennzeichen` nicht lesen kann, wird gar nicht erst gespeichert —
-der Dialog bleibt offen und zeigt `KennzeichenField.hinweis` als `errorText` am Feld
-(`VorgangDialogField.errorText`).
+Kennzeichen des Mandanten geht beim Speichern so in den Bestand, **wie es eingegeben wurde** — nur
+gestutzt (§4.2, geändert am 11.09.2026; bis dahin lief es durch `normalizeKennzeichen`, wie jedes
+Kennzeichenfeld der App). Die Zuordnung einer Zentralruf-Antwort über das Kennzeichen hängt daran
+nicht: `gleichesKennzeichen` vergleicht ohne Rücksicht auf die Schreibweise.
 
-Ohne das wäre dies der eine Weg, auf dem ein Rohwert in den Bestand käme: Beim Erfassen stellt
-`KennzeichenField` die Konvention selbst her, hier stand das Feld ungeprüft da. An dem Wert hängt
-die Zuordnung einer Zentralruf-Antwort über das Kennzeichen (`gleichesKennzeichen`).
+**Aufgehalten wird dabei nichts** (#130). Was die App nicht liest oder was mehrdeutig ist, geht
+unverändert in den Bestand; `KennzeichenField.beanstandung` steht als
+`VorgangDialogField.hinweisText` unter dem Feld, in der Aufmerksamkeitsfarbe statt in Rot. Der
+Hinweis hängt an einem `ValueListenableBuilder` auf dem Controller und nicht am Speichern-Knopf:
+Eine Prüfung erst beim Speichern hätte zu einem Wert, den der Dialog nur mitgebracht hat, nie etwas
+gesagt.
 
 ## Löschen: zwei Richtungen, ein Vertrag (§6.3)
 

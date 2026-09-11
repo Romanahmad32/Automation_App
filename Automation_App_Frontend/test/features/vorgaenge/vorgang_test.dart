@@ -23,6 +23,18 @@ void main() {
       expect(vorgang.zeichen, '84/26 C03');
     });
 
+    /// Die Referenz trägt das Kennzeichen, wie es eingegeben wurde (§4.2), und
+    /// genau so geht es in den Vorgang — und von dort ins Anspruchsschreiben.
+    /// Umgeschrieben wird es auf dem Weg nicht, aufgeteilt erst recht nicht.
+    test('übernimmt das Kennzeichen, wie es in der Referenz steht', () {
+      final vorgang = Vorgang.ausAnfrage(
+        referenz: '84/26 C03_hge1427',
+        angefragtAm: DateTime(2026, 6, 20),
+      );
+
+      expect(vorgang.kennzeichen, 'hge1427');
+    });
+
     test(
       'lässt Bestandteile leer, wenn die Referenz dem Schema nicht folgt',
       () {

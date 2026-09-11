@@ -108,24 +108,21 @@ class DatenquelleVorschlaege {
     return ergebnis;
   }
 
-  /// Kennzeichen in die Konvention `HG-E 1427` gebracht — soweit die
-  /// Aufteilung eindeutig ist —, Leeres verworfen, Doppelte entfernt.
-  ///
-  /// Ein mehrdeutiger Bestandswert (`HGE1427` — `HG-E 1427` oder `H-GE 1427`?)
-  /// wird **nicht geraten**, sondern so angeboten, wie er im Bestand steht:
-  /// Die Auswahl zeigt, was da ist, und stellt nicht eine Aufteilung als
-  /// Tatsache hin, die niemand entschieden hat.
+  /// Kennzeichen, **wie sie im Bestand stehen** — Leeres verworfen, Doppelte
+  /// entfernt. Die Auswahl zeigt, was da ist, und schreibt nichts in eine
+  /// Konvention um (§4.2, geändert am 11.09.2026): Was der Anwalt eingegeben
+  /// hat, bekommt er so zurück, und ein mehrdeutiger Wert (`HGE1427` —
+  /// `HG-E 1427` oder `H-GE 1427`?) wird erst recht nicht aufgeteilt.
   ///
   /// Verglichen wird über [gleichesKennzeichen] und nicht über die Zeichen:
   /// Derselbe Wagen steht im Vorgang als `HG-E 1427` und im Register als
   /// `HGE1427`, und zweimal dasselbe Fahrzeug in einer Auswahl sieht nach zwei
   /// Fahrzeugen aus. Der **erste** Treffer gewinnt, deshalb steht der Vorgang
-  /// in [fuer] vorn: Er ist der Bestand zu genau diesem Unfall — und der ist
-  /// dank Referenz-Konvention auch der eindeutig geschriebene.
+  /// in [fuer] vorn: Er ist der Bestand zu genau diesem Unfall.
   static List<FeldVorschlag> _kennzeichen(List<FeldVorschlag> rohe) {
     final ergebnis = <FeldVorschlag>[];
     for (final vorschlag in rohe) {
-      final wert = normalizeKennzeichen(vorschlag.wert)?.trim() ?? '';
+      final wert = vorschlag.wert.trim();
       if (wert.isEmpty) continue;
       final schonDa = ergebnis.any(
         (vorhanden) => gleichesKennzeichen(vorhanden.wert, wert),

@@ -10,11 +10,17 @@ class VorgangDialogField extends StatelessWidget {
   /// Speichern, die Meldung entsteht also nicht beim Tippen.
   final String? errorText;
 
+  /// Ein Hinweis, der **nichts aufhält** — in der Aufmerksamkeitsfarbe unter
+  /// dem Feld. Für das, was die App bemerkt, aber nicht zu entscheiden hat
+  /// (ein Kennzeichen außerhalb des Pkw-Schemas, #130).
+  final String? hinweisText;
+
   const VorgangDialogField({
     super.key,
     required this.controller,
     required this.label,
     this.errorText,
+    this.hinweisText,
   });
 
   @override
@@ -27,6 +33,11 @@ class VorgangDialogField extends StatelessWidget {
           labelText: label,
           errorText: errorText,
           errorMaxLines: 2,
+          helperText: hinweisText,
+          helperMaxLines: 2,
+          helperStyle: hinweisText == null
+              ? null
+              : TextStyle(color: Theme.of(context).colorScheme.tertiary),
           border: const OutlineInputBorder(),
           isDense: true,
         ),

@@ -14,6 +14,17 @@ final _ohneTrenner = RegExp(r'^([A-ZÄÖÜ]{2,5})[ \-]?(\d{1,4})\s*([HE])?$');
 
 final _mehrfachLeerraum = RegExp(r'\s+');
 
+/// Der **Anfang** eines Kennzeichens: die Vereinigung aller Vorsilben von
+/// [_mitTrenner] und [_ohneTrenner] — der Buchstabenblock im Werden, der
+/// gesetzte Trenner, die zweite Buchstabengruppe, die begonnene Nummer.
+/// Wozu, steht bei [beginntWieKennzeichen].
+final _kennzeichenAnfang = RegExp(
+  r'^(?:[A-ZÄÖÜ]{1,5}'
+  r'|[A-ZÄÖÜ]{1,3}-'
+  r'|[A-ZÄÖÜ]{1,3}[ \-][A-ZÄÖÜ]{1,2}[ \-]?\d{0,4} ?[HE]?'
+  r'|[A-ZÄÖÜ]{2,5}[ \-]?\d{0,4} ?[HE]?)$',
+);
+
 /// **Alle** gültigen Lesarten eines Kfz-Kennzeichens in der Domänen-Konvention
 /// „Unterscheidungszeichen-Erkennungsbuchstaben Nummer" — leer, wenn sich
 /// [wert] gar nicht als Kennzeichen lesen lässt.
@@ -67,12 +78,15 @@ List<String> kennzeichenLesarten(String? wert) {
 /// „Unterscheidungszeichen-Erkennungsbuchstaben Nummer" (z. B. „HG-E 1427") —
 /// **aber nur, wenn die Aufteilung eindeutig ist.**
 ///
+/// **Nur zum Vergleichen** ([gleichesKennzeichen]). Seit dem 11.09.2026 schreibt
+/// die App keinen eingegebenen Wert mehr damit um (§4.2): Was im Feld steht,
+/// geht so in Referenz, Vorgang und Schreiben.
+///
 /// Gibt es mehrere [kennzeichenLesarten] (`HGE1427` → `HG-E 1427` oder
 /// `H-GE 1427`), bleibt der Wert bereinigt stehen, statt dass eine davon
 /// geraten wird. Ein falsch aufgeteiltes Kennzeichen benennt ein **anderes
-/// Fahrzeug**; es steht danach in der Referenz, im Registereintrag und im
-/// Anspruchsschreiben, und niemand sieht ihm an, dass es geraten wurde. Eine
-/// Rückfrage kostet einen Bindestrich, ein falscher Wagen einen Schriftsatz.
+/// Fahrzeug** — geriete das in einen Vergleich, hielte die App zwei Wagen für
+/// einen.
 ///
 /// Spiegelt `ZentralrufReplyParser.NormalizeKennzeichen` im Backend, damit
 /// Vergleiche (z. B. Fallback-Zuordnung einer Antwort über das
@@ -88,9 +102,11 @@ String? normalizeKennzeichen(String? kennzeichen) {
 
 /// True, wenn beide Kennzeichen vorhanden sind und dasselbe Fahrzeug benennen.
 ///
-/// **Wiedererkennen darf großzügiger sein als Erfassen.** Beim Erfassen wird
-/// eine mehrdeutige Eingabe zurückgewiesen ([istMehrdeutigesKennzeichen]);
-/// beim Vergleich zweier Werte reicht es, dass ihre Lesarten sich treffen:
+/// **Wiedererkennen darf großzügiger sein als Anmerken.** Erfasst wird jeder
+/// Wert: Ein mehrdeutiger bleibt stehen, wie er getippt wurde, und bekommt
+/// unter dem Feld einen Hinweis (`KennzeichenField.beanstandung`) —
+/// zurückgewiesen wird nichts (#130).
+/// Beim Vergleich zweier Werte reicht es, dass ihre Lesarten sich treffen:
 /// `HGE1427` und `HG-E 1427` sind derselbe Wagen, sobald eine Seite die
 /// Aufteilung sagt. Die Gefahr ist hier auch die andere — wer nicht
 /// wiedererkennt, bietet denselben Wagen zweimal an oder ordnet eine
@@ -108,16 +124,28 @@ bool gleichesKennzeichen(String? a, String? b) {
   return lesartenA.intersection(kennzeichenLesarten(b).toSet()).isNotEmpty;
 }
 
-/// Ob [wert] **eindeutig** als Kfz-Kennzeichen lesbar ist — genau das, was
-/// [normalizeKennzeichen] in die Konvention überführen kann. Leer und `null`
-/// sind **kein** Kennzeichen; ob ein leeres Feld erlaubt ist, entscheidet der
-/// Pflicht-Validator daneben und nicht diese Frage. Ein mehrdeutiger Wert ist
-/// hier ebenfalls `false` — er ist nicht falsch, aber noch nicht entschieden
-/// ([istMehrdeutigesKennzeichen] trennt die beiden Fälle für die Meldung).
-bool istKennzeichen(String? wert) => kennzeichenLesarten(wert).length == 1;
-
-/// Ob [wert] sich als Kennzeichen lesen lässt, aber auf **mehr als eine** Art
-/// (`HGE1427`, `FABC12`). Das ist kein Tippfehler, sondern eine fehlende
-/// Angabe: Der Bindestrich sagt, wo das Unterscheidungszeichen endet.
-bool istMehrdeutigesKennzeichen(String? wert) =>
-    kennzeichenLesarten(wert).length > 1;
+/// Ob [wert] der **Anfang** eines Kfz-Kennzeichens sein kann — ob sich durch
+/// Weitertippen also noch eine Lesart ergeben könnte.
+///
+/// Gebraucht wird das für die Anmerkung unter dem Feld. Sie hört auf den
+/// **Wert** und nicht auf `touched`, damit ein vorbelegtes Kennzeichen nicht
+/// stumm bleibt (#130) — dieselbe Frage steht damit aber auch nach jedem
+/// Tastendruck an, und `H`, `HG`, `HG-`, `HG-E`, `HG-E 1` sind allesamt kein
+/// Kennzeichen. Ohne diese Frage stünde „nicht erkannt" unter dem Feld,
+/// während der Anwalt ein völlig gewöhnliches `HG-E 1427` tippt, und
+/// verschwände erst beim letzten Zeichen.
+///
+/// Beantwortet wird sie am Muster und nicht durch Ausprobieren: Ein Wert ist
+/// ein Anfang, wenn er zu einem der beiden Muster passt, sobald man das noch
+/// Fehlende wegdenkt. `X-1234` ist deshalb **keiner** — hinter der Nummer
+/// lässt sich keine Buchstabengruppe mehr nachschieben, und ohne die zweite
+/// wird daraus nie ein Kennzeichen. Ein NATO-Kennzeichen bekommt seine
+/// Anmerkung also sofort, ein halb getipptes Pkw-Kennzeichen gar keine.
+bool beginntWieKennzeichen(String? wert) {
+  if (wert == null) return false;
+  final bereinigt = wert
+      .replaceAll(_mehrfachLeerraum, ' ')
+      .trim()
+      .toUpperCase();
+  return bereinigt.isNotEmpty && _kennzeichenAnfang.hasMatch(bereinigt);
+}

@@ -6,18 +6,22 @@ import 'package:flutter/material.dart';
 /// Editor für die optionalen Kfz-Kennzeichen eines Mandanten (0..n). Die
 /// Bauform — löschbare Chips über einem Eingabefeld — kommt aus
 /// [TexteListenEditor]; hier steht nur, was am Kennzeichen besonders ist:
-/// Großschreibung, die Konvention `HG-E 1427` und deren Prüfung beim
-/// Hinzufügen.
+/// Großschreibung beim Tippen, der Hinweis und der Dublettenvergleich.
 ///
-/// Prüfung und Hinweistext kommen von [KennzeichenField], damit hier keine
-/// zweite Auffassung davon entsteht, was ein Kennzeichen ist. Aufgenommen wird
-/// der **normalisierte** Wert: So steht in der Liste die Konvention, und
-/// `hg-e1427` fällt als Dublette zu `HG-E 1427` auf statt als zweiter Wagen.
+/// Der Hinweistext kommt von [KennzeichenField], damit hier keine zweite
+/// Auffassung davon entsteht, was ein Kennzeichen ist. Aufgenommen wird der
+/// Wert, **wie er getippt wurde** (§4.2, geändert am 11.09.2026) — bis dahin
+/// stand in der Liste die Konvention `HG-E 1427`. Als Dublette fällt
+/// `hg-e1427` neben `HG-E 1427` trotzdem auf: Verglichen wird über
+/// [gleichesKennzeichen], nicht über die Zeichen.
 ///
-/// Ein mehrdeutiger Wert (`HGE1427` — `HG-E 1427` oder `H-GE 1427`?) kommt gar
-/// nicht erst in die Liste: `KennzeichenField.beanstandung` nennt am Feld die
-/// Lesarten. Ein hier geratenes Kennzeichen hinge dauerhaft am Mandanten und
-/// träfe später die Zuordnung einer Zentralruf-Antwort.
+/// **Aufgenommen wird jeder Wert.** Ein Roller mit Versicherungskennzeichen
+/// (`123 ABC`) gehört so gut in die Liste wie ein Pkw; welche Fahrzeuge ein
+/// Mandant fährt, entscheidet nicht die App (#130). Was sie nicht als
+/// Kfz-Kennzeichen liest oder was mehrdeutig ist (`HGE1427` — `HG-E 1427` oder
+/// `H-GE 1427`?), merkt `KennzeichenField.beanstandung` unter dem Feld an —
+/// geraten wird nichts: Ein hier falsch aufgeteiltes Kennzeichen hinge dauerhaft
+/// am Mandanten und träfe später die Zuordnung einer Zentralruf-Antwort.
 class KennzeichenEditor extends StatelessWidget {
   /// Bereits hinterlegte Kennzeichen (Ausgangswert).
   final List<String> initialKennzeichen;
@@ -43,8 +47,8 @@ class KennzeichenEditor extends StatelessWidget {
       hinzufuegenTooltip: 'Kennzeichen hinzufügen',
       textCapitalization: TextCapitalization.characters,
       dublettenHinweis: 'Dieses Kennzeichen ist bereits hinterlegt',
-      normalisiere: (eingabe) => normalizeKennzeichen(eingabe) ?? eingabe,
-      pruefe: KennzeichenField.beanstandung,
+      anmerke: KennzeichenField.beanstandung,
+      gleich: gleichesKennzeichen,
     );
   }
 }

@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 /// unterscheidet, ist nur Beschriftung und Prüfung — beides steckt in den
 /// Parametern, damit nicht zwei Fassungen derselben Liste nebeneinander
 /// altern.
+///
+/// Aufgenommen wird die Eingabe, wie sie getippt wurde — nur gestutzt.
 class TexteListenEditor extends StatefulWidget {
   /// Ausgangswerte.
   final List<String> initialWerte;
@@ -22,19 +24,25 @@ class TexteListenEditor extends StatefulWidget {
   final String hinzufuegenTooltip;
   final TextCapitalization textCapitalization;
 
-  /// Bringt eine Eingabe in die Schreibweise ihres Fachs (z. B. `hge1427` →
-  /// `HG-E 1427`), **bevor** [pruefe], der Dublettenvergleich und die Aufnahme
-  /// in die Liste sie sehen. Ohne Angabe wird die Eingabe nur gestutzt.
-  ///
-  /// Diese Reihenfolge ist der Zweck: Sonst beanstandete die Prüfung eine
-  /// Schreibvariante, die der Editor gleich darauf selbst geradegezogen hätte,
-  /// und derselbe Wagen stünde zweimal in der Liste — einmal als `HG-E 1427`,
-  /// einmal als `hge1427`.
-  final String Function(String eingabe)? normalisiere;
-
   /// Prüft eine Eingabe vor dem Aufnehmen: `null` heißt in Ordnung, sonst ist
   /// das Ergebnis die Meldung am Feld.
   final String? Function(String eingabe)? pruefe;
+
+  /// Was zur **gerade getippten** Eingabe anzumerken ist; `null` heißt: nichts.
+  /// Anders als [pruefe] hält das nichts auf — der Text steht als Hinweis unter
+  /// dem Feld, in der Aufmerksamkeitsfarbe, und der Wert wird trotzdem
+  /// aufgenommen. Für Bestände, in denen die App eine Konvention **kennt**,
+  /// aber nicht darüber zu entscheiden hat, was hineingehört (Kennzeichen,
+  /// #130).
+  final String? Function(String eingabe)? anmerke;
+
+  /// Ob zwei Einträge **dasselbe** meinen — für den Dublettenvergleich. Ohne
+  /// Angabe zählt der Text ohne Rücksicht auf Groß- und Kleinschreibung.
+  ///
+  /// Kennzeichen brauchen mehr: `hge1427` und `HG-E 1427` sind derselbe Wagen,
+  /// auch wenn die Liste jeden so aufnimmt, wie er getippt wurde (§4.2). Ohne
+  /// diesen Vergleich stünde er zweimal darin.
+  final bool Function(String a, String b)? gleich;
 
   /// Meldung, wenn der Wert schon in der Liste steht.
   final String dublettenHinweis;
@@ -49,8 +57,9 @@ class TexteListenEditor extends StatefulWidget {
     required this.hinzufuegenTooltip,
     this.helperText,
     this.textCapitalization = TextCapitalization.sentences,
-    this.normalisiere,
     this.pruefe,
+    this.anmerke,
+    this.gleich,
     this.dublettenHinweis = 'Dieser Eintrag steht bereits in der Liste',
   });
 
@@ -72,8 +81,7 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
   }
 
   void _hinzufuegen() {
-    final getippt = _controller.text.trim();
-    final eingabe = widget.normalisiere?.call(getippt) ?? getippt;
+    final eingabe = _controller.text.trim();
     if (eingabe.isEmpty) {
       setState(() => _fehler = null);
       return;
@@ -84,7 +92,7 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
       setState(() => _fehler = beanstandung);
       return;
     }
-    if (_werte.any((w) => w.toLowerCase() == eingabe.toLowerCase())) {
+    if (_werte.any((w) => _gleich(w, eingabe))) {
       setState(() => _fehler = widget.dublettenHinweis);
       return;
     }
@@ -96,6 +104,17 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
     });
     widget.onChanged(List.unmodifiable(_werte));
     _focusNode.requestFocus();
+  }
+
+  bool _gleich(String a, String b) =>
+      widget.gleich?.call(a, b) ?? a.toLowerCase() == b.toLowerCase();
+
+  /// Die Anmerkung zur getippten Eingabe — gestutzt befragt, wie sie auch
+  /// aufgenommen würde.
+  String? _anmerkung(String getippt) {
+    final eingabe = getippt.trim();
+    if (eingabe.isEmpty) return null;
+    return widget.anmerke?.call(eingabe);
   }
 
   void _entfernen(String wert) {
@@ -130,19 +149,31 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                textCapitalization: widget.textCapitalization,
-                onSubmitted: (_) => _hinzufuegen(),
-                decoration: InputDecoration(
-                  labelText: widget.labelText,
-                  helperText: widget.helperText,
-                  errorText: _fehler,
-                  border:
-                      theme.inputDecorationTheme.border ??
-                      const OutlineInputBorder(),
-                ),
+              // Auf den Text hören, damit die Anmerkung schon beim Tippen
+              // steht und nicht erst, wenn jemand „Hinzufügen" drückt.
+              child: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _controller,
+                builder: (context, wert, child) {
+                  final anmerkung = _anmerkung(wert.text);
+                  return TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    textCapitalization: widget.textCapitalization,
+                    onSubmitted: (_) => _hinzufuegen(),
+                    decoration: InputDecoration(
+                      labelText: widget.labelText,
+                      helperText: anmerkung ?? widget.helperText,
+                      helperMaxLines: anmerkung == null ? null : 2,
+                      helperStyle: anmerkung == null
+                          ? null
+                          : TextStyle(color: theme.colorScheme.tertiary),
+                      errorText: _fehler,
+                      border:
+                          theme.inputDecorationTheme.border ??
+                          const OutlineInputBorder(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),

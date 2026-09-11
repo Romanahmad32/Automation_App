@@ -22,49 +22,49 @@ void main() {
     expect(gleichesKennzeichen(null, null), isFalse);
   });
 
-  group('istKennzeichen', () {
-    /// Dieselbe Toleranz wie [normalizeKennzeichen]: Was sich in die
-    /// Konvention überführen lässt, ist ein Kennzeichen. Liefen die beiden
-    /// auseinander, beanstandete das Formular einen Wert, den die App selbst
-    /// aus dem Register angeboten hat.
-    test('erkennt jede Schreibweise, die normalisiert werden kann', () {
-      for (final wert in [
-        'HG-E 1427',
-        'hg-e 1427',
-        'HE1427',
-        'GG XY 123',
-        '  HG-E 1427 ',
-        'HG-E1427H',
-        'B-A 1',
-      ]) {
-        expect(istKennzeichen(wert), isTrue, reason: wert);
+  /// Die Frage, die den Hinweis unter dem Feld still hält, solange noch
+  /// getippt wird (#130). Sie hat nur einen Auftrag: **kein Fehlalarm auf dem
+  /// Weg zu einem gewöhnlichen Kennzeichen** — und trotzdem sofort etwas
+  /// sagen, wo nie eines entstehen kann.
+  group('beginntWieKennzeichen', () {
+    /// Zeichen für Zeichen `HG-E 1427`: Auf diesem ganzen Weg darf nichts
+    /// beanstandet werden. Genau das tat die erste Fassung — sie meldete bei
+    /// acht von neun Zeichen „nicht erkannt".
+    test('jede Vorsilbe eines Kennzeichens ist ein Anfang', () {
+      const ziel = 'HG-E 1427';
+      for (var laenge = 1; laenge <= ziel.length; laenge++) {
+        final vorsilbe = ziel.substring(0, laenge);
+        expect(beginntWieKennzeichen(vorsilbe), isTrue, reason: vorsilbe);
       }
     });
 
-    test('leer und null sind kein Kennzeichen', () {
-      expect(istKennzeichen(null), isFalse);
-      expect(istKennzeichen(''), isFalse);
-      expect(istKennzeichen('   '), isFalse);
+    test('auch klein getippt und ohne Trennzeichen', () {
+      for (final wert in ['h', 'hg', 'hg-', 'hg-e', 'hge', 'hge14', 'abcde']) {
+        expect(beginntWieKennzeichen(wert), isTrue, reason: wert);
+      }
     });
 
-    test('was kein Kennzeichen ist, wird nicht dazu erklärt', () {
+    /// Der Gegenbeweis, und der Grund, das am Muster zu entscheiden statt am
+    /// „ist noch kurz": Hinter der Nummer lässt sich keine Buchstabengruppe
+    /// mehr nachschieben. Ein NATO-Kennzeichen bekommt seinen Hinweis deshalb
+    /// sofort und nicht erst beim Verlassen des Felds.
+    test('was nie ein Kennzeichen wird, ist kein Anfang', () {
       for (final wert in [
-        'kein kennzeichen',
-        'HG-E',
-        '1427',
-        'HGEF-XY 1427',
+        'X-1234', // NATO: nur eine Buchstabengruppe, Nummer schon da
+        'Y-123456',
+        'THW-12345',
+        '123 ABC', // Versicherungskennzeichen
+        '0 12-345',
         'HG-E 12345',
-        'HG-E 1427X',
+        'HGEF-XY 1427',
+        'mein Auto',
+        'der blaue Kombi',
+        '',
+        '   ',
       ]) {
-        expect(istKennzeichen(wert), isFalse, reason: wert);
+        expect(beginntWieKennzeichen(wert), isFalse, reason: wert);
       }
-    });
-
-    /// Mehrdeutig heisst „noch nicht entschieden", nicht „gültig": Ein geratenes
-    /// Kennzeichen benennt ein anderes Fahrzeug.
-    test('ein mehrdeutiger Wert gilt (noch) nicht als Kennzeichen', () {
-      expect(istKennzeichen('HGE1427'), isFalse);
-      expect(istKennzeichen('FABC12'), isFalse);
+      expect(beginntWieKennzeichen(null), isFalse);
     });
   });
 
@@ -99,17 +99,6 @@ void main() {
     });
   });
 
-  group('istMehrdeutigesKennzeichen', () {
-    test('trennt „mehrdeutig" von „eindeutig" und „unlesbar"', () {
-      expect(istMehrdeutigesKennzeichen('HGE1427'), isTrue);
-      expect(istMehrdeutigesKennzeichen('FABC12'), isTrue);
-      expect(istMehrdeutigesKennzeichen('HG-E 1427'), isFalse);
-      expect(istMehrdeutigesKennzeichen('HE1427'), isFalse);
-      expect(istMehrdeutigesKennzeichen('kein kennzeichen'), isFalse);
-      expect(istMehrdeutigesKennzeichen(null), isFalse);
-    });
-  });
-
   /// Der Kern der Regel: Ein mehrdeutiger Wert wird **nicht** aufgeteilt.
   /// Falsch aufgeteilt benennt er ein anderes Fahrzeug, und das stünde danach
   /// unbemerkt in Referenz, Registereintrag und Anspruchsschreiben.
@@ -119,7 +108,7 @@ void main() {
     expect(normalizeKennzeichen(' HGE  1427 '), 'HGE 1427');
   });
 
-  /// Wiedererkennen darf großzügiger sein als Erfassen: Sagt **eine** Seite die
+  /// Wiedererkennen darf großzügiger sein als Anmerken: Sagt **eine** Seite die
   /// Aufteilung, ist der Wagen derselbe. Sonst böte die Auswahlhilfe ihn
   /// zweimal an, und eine Zentralruf-Antwort fände ihren Vorgang nicht.
   test('gleichesKennzeichen erkennt einen mehrdeutigen Wert wieder', () {

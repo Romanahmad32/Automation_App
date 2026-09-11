@@ -66,8 +66,8 @@ Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 4.1 | Mandantendaten erfassen; Stammdaten bekannter Mandanten übernehmen |
-| 4.2 | Zentralruf-Anfrage: Formular vorbefüllen, Captcha bleibt beim Anwalt, Aufbau der Referenz |
+| 4.1 | Mandantendaten erfassen; Kennzeichen des Mandanten und des Gegners getrennt geführt; **die Bauart des Fahrzeugs ist kein Aufnahmekriterium** — Versicherungs- (E-Scooter), Behörden-, Kurzzeit- und Auslandskennzeichen weist kein Feld zurück und sperrt keine Handlung; Stammdaten bekannter Mandanten übernehmen |
+| 4.2 | Zentralruf-Anfrage: Formular vorbefüllen, Captcha bleibt beim Anwalt, Aufbau der Referenz; Kennzeichen werden übernommen, wie eingegeben — die Schreibweise mit Bindestrich wird empfohlen und angemerkt, nicht hergestellt |
 | 4.3 | Zentralruf-Antwort verarbeiten: Auslesen, Zuordnen, manueller Weg und Postfach-Überwachung, bestätigte Übernahme, Negativ-Antwort; vollständiger, seitenweise geladener Posteingang |
 | 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, Standardpositionen der Schadensaufstellung, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |

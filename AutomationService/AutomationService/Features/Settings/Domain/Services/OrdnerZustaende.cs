@@ -85,10 +85,17 @@ public static class OrdnerZustaende
         Func<string, string?> umgebung,
         Func<string, bool> existiert)
     {
+        // Der wirksame Ordner wird immer nachgesehen — auch bei leerem Feld.
+        // Ein abgeleiteter Ordner, den niemand angelegt hat, ist der Fall, der
+        // die Vorlagen ins Leere zeigen liess (#130); ohne diese Frage haette
+        // die Einstellungsseite ihn nie erwaehnt.
+        var wirksamFehlt = wirksam.Length > 0 && !existiert(wirksam);
+
         var gespeichert = rohGespeichert.Trim();
         if (gespeichert.Length == 0)
         {
-            return new OrdnerZustand(feld, string.Empty, wirksam, leerZustand, string.Empty);
+            return new OrdnerZustand(
+                feld, string.Empty, wirksam, leerZustand, string.Empty, wirksamFehlt);
         }
 
         var aufgeloest = AppOrdnerPfad.LoeseAuf(gespeichert, umgebung);
@@ -97,6 +104,7 @@ public static class OrdnerZustaende
             : existiert(aufgeloest) ? OrdnerZustandArten.Bereit : OrdnerZustandArten.OrdnerFehlt;
 
         return new OrdnerZustand(
-            feld, gespeichert, wirksam, zustand, AppOrdnerPfad.Anker(gespeichert) ?? string.Empty);
+            feld, gespeichert, wirksam, zustand,
+            AppOrdnerPfad.Anker(gespeichert) ?? string.Empty, wirksamFehlt);
     }
 }

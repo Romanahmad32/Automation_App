@@ -91,29 +91,51 @@ Was der Anwalt stattdessen tun soll, wenn ein **anderer** Mensch gemeint ist, st
 selbst: oben „(neuer Mandant)" wählen. Ein automatisches Lösen der Verknüpfung wäre der andere
 Weg gewesen und ist bewusst nicht gewählt worden — er nimmt die Korrektur eines Vertippers mit.
 
-## Das Kennzeichen: ein Baustein, keine zweite Prüfung
+## Das Kennzeichen: ein Baustein, und **keine** Sperre
 
 Beide Kennzeichenfelder dieser Seite — Gegner (`UnfallSection`) und Mandant (`MandantSection`) —
-sind `KennzeichenField` aus `core/general_widgets/form/`. Am Control hängt
-`KennzeichenField.validator` (`vorgang_form_group.dart`, und in
-`_applyUnfallValidators` noch einmal, weil das Gegner-Feld je nach Rechtsgebiet zusätzlich Pflicht
-wird). Eine eigene Kennzeichen-Prüfung gehört hier nicht mehr hin: Die frühere strenge Fassung
-verlangte den Bindestrich vom Anwalt und beanstandete damit Werte, die die App selbst aus dem
-Register angeboten hatte.
+sind `KennzeichenField` aus `core/general_widgets/form/`. Am Control hängt seit #130 **kein
+Formatvalidator** mehr, nur noch die Pflicht am Gegnerfeld, und die auch nur bei Verkehrsrecht
+(`_applyUnfallValidators`). Eine eigene Kennzeichen-Prüfung gehört hier erst recht nicht hin.
 
-Das Feld stellt die Konvention `HG-E 1427` beim **Verlassen** her. `leseVorgangDaten` normalisiert
-trotzdem ein zweites Mal (`kennzeichenAusFormular`) — ein eingefügter Wert muss das Feld nie
-verlassen haben, und wer `hg-e1427` einfügt und sofort speichert, hätte den Rohwert in Referenz,
-Vorgang und Registereintrag stehen.
+Der Grund steht in §4.1: Welche Fahrzeuge in die Kanzlei kommen, entscheidet nicht die App. Ein
+E-Scooter trägt ein Versicherungskennzeichen (`123 ABC`), ein Behördenwagen `THW-12345`, der
+Unfallgegner womöglich ein französisches `AB-123-CD` — nichts davon passt ins Pkw-Schema. Die
+frühere Prüfung liess alles davon durchfallen und sperrte damit „Vorgang speichern" **und**
+„Zentralruf-Formular ausfüllen"; ein E-Scooter-Mandat blieb schlicht liegen.
 
-**Mehrdeutige Kennzeichen werden nicht geraten.** `HGE1427` kann `HG-E 1427` oder `H-GE 1427`
-heißen — zwei verschiedene Fahrzeuge. Solche Werte lässt `normalizeKennzeichen` stehen, statt eine
-Aufteilung zu wählen, und `KennzeichenField.validator` meldet sie mit ihren Lesarten
-(`mehrdeutigError`, Meldung „Mehrdeutig, bitte mit Bindestrich: …"). Auf dieser Seite hängt der
-Validator am Control, ein mehrdeutiges Kennzeichen **sperrt hier also das Speichern** — und das ist
-richtig: An dem Wert hängen die Referenz (`Nr/Jahr Abteilung_Kennzeichen`), die Zentralruf-Anfrage
-und die spätere Zuordnung der Antwort. Ein Bindestrich mehr ist billiger als ein Vorgang zum
-falschen Wagen. Die ganze Regel steht in `word_automation/FALLSTRICKE.md`.
+**Beide Felder schreiben nichts um** (§4.2, geändert am 11.09.2026). Bis dahin stellten sie beim
+Verlassen die Konvention `HG-E 1427` her, und `leseVorgangDaten` wandte sie ein zweites Mal an —
+für eingefügte Werte, die das Feld nie verlassen hatten. Jetzt geht der Wert so in Referenz und
+Vorgang, wie er eingegeben wurde; `kennzeichenAusFormular` stutzt ihn nur und vereinheitlicht den
+Leerraum. Das nicht der Schreibweise wegen: `ZentralrufReplyParser` zieht den Leerraum in „Ihr
+Zeichen" ebenso zusammen, und mit einem doppelten Leerzeichen gliche die gespeicherte Referenz der
+zurückgelesenen nicht mehr. Ins Kennzeichenfeld des Zentralruf-Formulars geht der Wert
+großgeschrieben (`VorgangStartenBloc._zuRequest`), wie schon vorher.
+
+**Mehrdeutige Kennzeichen werden nicht geraten — aber auch nicht gesperrt.** `HGE1427` kann
+`HG-E 1427` oder `H-GE 1427` heißen, zwei verschiedene Fahrzeuge. `KennzeichenField`
+**beanstandet** solche Werte unter dem Feld („Mehrdeutig, bitte mit Bindestrich: …"). Gesperrt wird
+dadurch nichts: `HGE1427` bleibt einfach stehen, wie es getippt wurde, und niemand steht vor einem
+toten Knopf. Die ganze Regel steht in `word_automation/FALLSTRICKE.md`.
+
+**Warum der Knopf gesperrt ist, steht jetzt darüber.** `VorgangAktionsleiste` trägt seit #130 einen
+`FormularFehlerHinweis` — diese Seite hatte eine solche Zeile gar nicht. Sie nennt jedes ungültige
+Feld mit Grund und springt beim Anklicken hin; die Anzeigenamen dazu stehen in
+`vorgangFeldBeschriftungen` (`vorgang_form_group.dart`), die beiden Sonderfälle von
+`ValidationMessage.pattern` (Uhrzeit, Vorgangsnummer) in der Leiste selbst. Nötig ist das, weil
+reactive_forms einen Fehler am Feld erst nach `touched` zeigt — ein vorbelegter Wert wird das nie,
+und ein gesperrter Knopf nimmt keinen Fokus.
+
+**Ausserhalb des Verkehrsrechts trägt der ganze Unfallteil keine Prüfung mehr.** Nicht nur die
+Pflicht fällt weg, auch die Formatprüfungen von Unfalltag, Uhrzeit und Vorgangsnummer
+(`setzeUnfallPruefungen` in `vorgang_form_group.dart`, aufgerufen aus `_applyUnfallValidators`).
+Der Grund ist derselbe wie beim eingeklappten Vorlagenfeld (#82): Ihre beiden Abschnitte stehen dann
+gar nicht mehr auf der Seite, die Controls aber weiter in der Gruppe. Eine `25:99`, die aus dem
+vorherigen Rechtsgebiet stehengeblieben ist, sperrte sonst „Vorgang speichern", ohne dass irgendwo
+ein Feld zu sehen wäre, das man berichtigen könnte — und die Zeile darüber verwiese auf ein Feld,
+zu dem kein Widget mehr gehört, der Sprung dorthin liefe ins Leere. Die **Werte** bleiben stehen und
+gelten beim Zurückwechseln samt ihrer Beanstandung wieder.
 
 Die gespeicherten Kennzeichen des verknüpften Mandanten sind seit #17/#18 **Kandidaten des
 Auswahldialogs** am Feld, nicht mehr eine eigene Chipreihe darüber (`MandantKennzeichenAuswahl` ist

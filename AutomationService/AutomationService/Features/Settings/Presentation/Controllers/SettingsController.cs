@@ -50,9 +50,12 @@ public class SettingsController(
         // Vorlagenordner (neu), werden absolute Pfade darin ab sofort relativ
         // gespeichert — sonst hilft der einstellbare Ordner niemandem, dessen
         // Datenbank weiter auf C:\Users\<Name>\... zeigt.
+        // Der bisherige Ordner geht mit: Gegen ihn steht der Bestand
+        // geschrieben, und ohne ihn zeigt jede relative Verknuepfung nachher
+        // ins Leere (#130).
         if (!string.Equals(nachher, vorher, StringComparison.OrdinalIgnoreCase))
         {
-            await VorlagenPfadUmstellung.StelleUmAsync(db, nachher, cancellationToken);
+            await VorlagenPfadUmstellung.StelleUmAsync(db, vorher, nachher, cancellationToken);
         }
 
         return Ok(KanzleiSettingsDto.From(saved));
