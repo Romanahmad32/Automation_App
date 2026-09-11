@@ -202,6 +202,14 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
   Grunde nach).
 
+- **Die Mandanten-Erkennung hält `HG-E 1427` und `H-GE 1427` nicht mehr für einen Wagen (§4.2,
+  11.09.2026, #147)** — sie strich beim Vergleichen alle Trennzeichen, eine dritte Kennzeichenregel
+  neben Frontend und Backend. Der „Meinten Sie …?"-Vorschlag in „Vorgang starten" und im
+  Mandanten-Import nannte deshalb zu `H-GE 1427` den Mandanten mit `HG-E 1427`, samt einer
+  Begründung, die nicht stimmte. Verglichen wird jetzt über `gleichesKennzeichen`. Damit gelten
+  dort auch `123ABC` und `123 ABC` nicht mehr als gleich: Bei einem Wert, den die App nicht als
+  Kfz-Kennzeichen liest, zählen die Trennzeichen mit — sonst wären es auch `HG-E 12345` und
+  `H-GE 12345`.
 - **Das Backend vergleicht Kennzeichen wie das Frontend (§4.2, 11.09.2026, #144)** — der
   Zentralruf-Parser schrieb Kennzeichen aus der Antwort weiter in die Schreibweise mit Bindestrich
   um und teilte dabei ein mehrdeutiges `HGE1427` geraten als `HG-E 1427` auf; über die

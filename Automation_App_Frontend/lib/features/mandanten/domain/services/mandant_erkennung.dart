@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 
 /// Ein Wiedererkennungs-Treffer: welcher Registereintrag zu den freien
@@ -13,8 +14,11 @@ class MandantVorschlag {
 /// zu einem bereits gespeicherten Mandanten passen — bevor versehentlich ein
 /// Duplikat entsteht. Zwei Signale:
 ///
-/// * ein beim Mandanten hinterlegtes **Kfz-Kennzeichen** (exakter Vergleich,
-///   tolerant gegenüber Schreibweise) — das stärkste Signal,
+/// * ein beim Mandanten hinterlegtes **Kfz-Kennzeichen** — das stärkste
+///   Signal. Verglichen über `gleichesKennzeichen`, dieselbe Regel wie
+///   Zuordnung, Auswahlhilfe und Backend: Die Schreibweise zählt nicht, die
+///   Aufteilung schon (`hge 1427` trifft `HG-E 1427`, `H-GE 1427` nicht — das
+///   ist ein anderer Wagen, §4.2),
 /// * ein **ähnlicher Nachname** (gleich, Tippbeginn oder ein Tippfehler),
 ///   verfeinert über den Vornamen, damit nicht jedes Familienmitglied
 ///   vorgeschlagen wird.
@@ -39,6 +43,10 @@ class MandantErkennung {
   /// Der kürzeste Nachname, zu dem überhaupt gesucht wird.
   static const int minNachnameLaenge = 2;
 
+  /// Erst ab so vielen Zeichen — ohne Trennzeichen gezählt
+  /// ([kennzeichenGrobschluessel]) — wird zum Kennzeichen gesucht.
+  static const int minKennzeichenLaenge = 4;
+
   /// Liefert die passenden Registereinträge zu den aktuellen Eingaben,
   /// Kennzeichen-Treffer zuerst. Leer, wenn nichts (sicher genug) passt.
   static List<MandantVorschlag> finde({
@@ -50,11 +58,16 @@ class MandantErkennung {
     final ergebnis = <MandantVorschlag>[];
     final gesehen = <int>{};
 
-    final kz = normalisiereKennzeichen(kennzeichen);
-    if (kz.length >= 4) {
+    final schluessel = kennzeichenGrobschluessel(kennzeichen);
+    if (schluessel.length >= minKennzeichenLaenge) {
       for (final mandant in mandanten) {
+        // Der Grobschlüssel zuerst, weil er billig ist und der Banner bei
+        // jedem Tastendruck das ganze Register fragt: Wo er abweicht, kann
+        // `gleichesKennzeichen` nicht „gleich" sagen. Entscheiden tut nur das.
         final passt = mandant.kennzeichen.any(
-          (k) => normalisiereKennzeichen(k) == kz,
+          (k) =>
+              kennzeichenGrobschluessel(k) == schluessel &&
+              gleichesKennzeichen(k, kennzeichen),
         );
         if (passt && gesehen.add(mandant.id)) {
           ergebnis.add(
@@ -123,9 +136,20 @@ class MandantErkennung {
     return gespeichert.startsWith(eingabe) || eingabe.startsWith(gespeichert);
   }
 
-  /// Kennzeichen auf die reinen Zeichen reduzieren (Bindestrich/Leerzeichen
-  /// egal): „HG-E 1427" und „hge1427" gelten als gleich.
-  static String normalisiereKennzeichen(String kennzeichen) =>
+  /// Der **Grobschlüssel** eines Kennzeichens: nur Buchstaben und Ziffern,
+  /// großgeschrieben — `HG-E 1427`, `H-GE 1427` und `hge1427` ergeben alle
+  /// `HGE1427`.
+  ///
+  /// **Nie zum Vergleichen.** Er wirft weg, wo die Buchstabengruppen getrennt
+  /// sind, und damit das Unterscheidungszeichen: `HG-E 1427` und `H-GE 1427`
+  /// sind zwei Wagen (§4.2), hier aber ein Schlüssel. Bis #147 verglich
+  /// [finde] damit und schlug zum einen Wagen den Mandanten des anderen vor.
+  ///
+  /// Er taugt als Vorfilter ([finde], `MandantenNamensindex`) und als
+  /// Längenmaß, weil er eine **Obermenge** ist: Wo `gleichesKennzeichen`
+  /// „gleich" sagt, stimmen die Grobschlüssel überein — dieselben Zeichen, nur
+  /// anders getrennt. Umgekehrt gilt das nicht.
+  static String kennzeichenGrobschluessel(String kennzeichen) =>
       kennzeichen.toUpperCase().replaceAll(RegExp(r'[^A-ZÄÖÜ0-9]'), '');
 
   /// Namen vergleichbar machen: getrimmt, kleingeschrieben, Umlaute
