@@ -59,7 +59,7 @@ jobs:
       # Dieselben Caches wie in ci.yml (dort Einzelheiten zu den Keys) — ein
       # Release baut mit derselben Toolchain und profitiert genauso.
       - name: NuGet-Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', 'global.json') }}
@@ -83,7 +83,7 @@ jobs:
           cache: true
 
       - name: Pub-Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~\AppData\Local\Pub\Cache
           key: pub-${{ env.FLUTTER_VERSION }}-${{ hashFiles('Automation_App_Frontend/pubspec.lock') }}
