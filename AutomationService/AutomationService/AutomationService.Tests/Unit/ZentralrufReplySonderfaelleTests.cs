@@ -104,7 +104,7 @@ public class ZentralrufReplySonderfaelleTests
 
         var data = _parser.Parse(datenblattMail);
 
-        data.Kennzeichen.Should().Be("GG-XY 123");
+        data.Kennzeichen.Should().Be("GG XY 123");
         data.UnfallDatum.Should().Be("09.03.2026");
         data.VersichererName.Should().Be("Allianz Versicherungs-AG");
         data.VersicherungsscheinNr.Should().Be("40/1234/56789");

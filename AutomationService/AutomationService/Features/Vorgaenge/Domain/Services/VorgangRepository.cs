@@ -39,22 +39,22 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         string unfallDatum,
         CancellationToken cancellationToken = default)
     {
-        var gesuchtesKennzeichen = ZentralrufReplyParser.NormalizeKennzeichen(kennzeichen);
         var gesuchtesDatum = unfallDatum.Trim();
-        if (string.IsNullOrEmpty(gesuchtesKennzeichen) || gesuchtesDatum.Length == 0)
+        if (string.IsNullOrWhiteSpace(kennzeichen) || gesuchtesDatum.Length == 0)
         {
             return [];
         }
 
-        // Kennzeichen-Normalisierung ist nicht in SQL abbildbar — die angefragten
-        // Vorgänge sind wenige, der Feinvergleich läuft im Speicher.
+        // Der Kennzeichenvergleich ist nicht in SQL abbildbar — die angefragten
+        // Vorgänge sind wenige, der Feinvergleich läuft im Speicher. Verglichen
+        // wird nach derselben Regel wie im Frontend (KennzeichenVergleich, #144).
         var angefragte = await db.Vorgaenge
             .Where(v => v.Status == "angefragt" && v.Kennzeichen != null && v.UnfallDatum != null)
             .ToListAsync(cancellationToken);
 
         return angefragte
             .Where(v =>
-                ZentralrufReplyParser.NormalizeKennzeichen(v.Kennzeichen) == gesuchtesKennzeichen
+                KennzeichenVergleich.Gleich(v.Kennzeichen, kennzeichen)
                 && v.UnfallDatum!.Trim() == gesuchtesDatum)
             .ToList();
     }

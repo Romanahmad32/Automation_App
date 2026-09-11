@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -117,5 +120,38 @@ void main() {
     expect(gleichesKennzeichen('HGE1427', 'H-GE 1427'), isTrue);
     expect(gleichesKennzeichen('HGE1427', 'HG-E 1428'), isFalse);
     expect(gleichesKennzeichen('HGE1427', 'FABC12'), isFalse);
+  });
+
+  /// Dieselbe Tabelle liest das Backend (`KennzeichenVergleichTests`). Beide
+  /// Seiten ordnen Zentralruf-Antworten Vorgängen zu und rechneten bis #144
+  /// verschieden — ein neuer Fall gehört deshalb in die Tabelle, nicht hierher.
+  group('gemeinsame Falltabelle docs/kennzeichen_faelle.json', () {
+    final faelle =
+        jsonDecode(File('../docs/kennzeichen_faelle.json').readAsStringSync())
+            as Map<String, dynamic>;
+    List<Map<String, dynamic>> abschnitt(String name) =>
+        (faelle[name] as List<dynamic>).cast<Map<String, dynamic>>();
+
+    test('Lesarten wie im Backend', () {
+      for (final fall in abschnitt('lesarten')) {
+        final eingabe = fall['eingabe'] as String?;
+        final erwartet = (fall['lesarten'] as List<dynamic>).cast<String>();
+        expect(
+          kennzeichenLesarten(eingabe),
+          erwartet,
+          reason: 'Eingabe: $eingabe',
+        );
+      }
+    });
+
+    test('Vergleich wie im Backend, in beiden Richtungen', () {
+      for (final fall in abschnitt('vergleiche')) {
+        final a = fall['a'] as String?;
+        final b = fall['b'] as String?;
+        final gleich = fall['gleich'] as bool;
+        expect(gleichesKennzeichen(a, b), gleich, reason: '"$a" gegen "$b"');
+        expect(gleichesKennzeichen(b, a), gleich, reason: '"$b" gegen "$a"');
+      }
+    });
   });
 }

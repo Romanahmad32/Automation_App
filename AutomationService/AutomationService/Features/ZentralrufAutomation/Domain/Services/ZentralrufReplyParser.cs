@@ -31,13 +31,6 @@ public sealed partial class ZentralrufReplyParser : IZentralrufReplyParser
     [GeneratedRegex(@"^(\d+)\s*/\s*(\d{2})\s+(\S+)_(.+)$")]
     private static partial Regex ReferenzSchemaRegex();
 
-    /// <summary>
-    /// Deutsches Kennzeichen in beliebiger Schreibweise: Unterscheidungszeichen,
-    /// Erkennungsbuchstaben, Nummer, optional H/E-Suffix.
-    /// </summary>
-    [GeneratedRegex(@"^([A-ZÄÖÜ]{1,3})[ \-]?([A-ZÄÖÜ]{1,2})[ \-]?(\d{1,4})\s*([HE])?$")]
-    private static partial Regex KennzeichenSchemaRegex();
-
     /// <summary>Negativ-Antwort: "... konnte kein Versicherer ... ermittelt werden".</summary>
     [GeneratedRegex(@"kein\w*\s+\S*[Vv]ersicherer", RegexOptions.IgnoreCase)]
     private static partial Regex KeinVersichererRegex();
@@ -59,7 +52,9 @@ public sealed partial class ZentralrufReplyParser : IZentralrufReplyParser
         {
             Referenz = FirstGroup(ReferenzRegex(), emailText),
             AnfrageDatum = FirstGroup(AnfrageDatumRegex(), emailText),
-            Kennzeichen = NormalizeKennzeichen(FirstGroup(KennzeichenRegex(), emailText)),
+            // Wie in der Mail, nur Leerraum vereinheitlicht — nicht umgeschrieben
+            // (§4.2, #144); ob es zu einem Vorgang passt, sagt KennzeichenVergleich.
+            Kennzeichen = FirstGroup(KennzeichenRegex(), emailText),
             UnfallDatum = FirstGroup(UnfallDatumRegex(), emailText),
         };
 
@@ -112,30 +107,8 @@ public sealed partial class ZentralrufReplyParser : IZentralrufReplyParser
             ReferenzAuftragsnummer = match.Groups[1].Value,
             ReferenzJahr = match.Groups[2].Value,
             ReferenzAbteilung = match.Groups[3].Value,
-            ReferenzKennzeichen = NormalizeKennzeichen(match.Groups[4].Value),
+            ReferenzKennzeichen = Normalize(match.Groups[4].Value),
         };
-    }
-
-    /// <summary>
-    /// Überführt ein Kennzeichen in die Domänen-Konvention
-    /// "Unterscheidungszeichen-Erkennungsbuchstaben Nummer" (z. B. "GG-XY 123").
-    /// Nicht erkennbare Schreibweisen bleiben unverändert.
-    /// </summary>
-    public static string? NormalizeKennzeichen(string? kennzeichen)
-    {
-        if (string.IsNullOrWhiteSpace(kennzeichen))
-        {
-            return kennzeichen;
-        }
-
-        var match = KennzeichenSchemaRegex().Match(Normalize(kennzeichen).ToUpperInvariant());
-        if (!match.Success)
-        {
-            return Normalize(kennzeichen);
-        }
-
-        var suffix = match.Groups[4].Success ? match.Groups[4].Value : string.Empty;
-        return $"{match.Groups[1].Value}-{match.Groups[2].Value} {match.Groups[3].Value}{suffix}";
     }
 
     private static string? FirstGroup(Regex regex, string text)

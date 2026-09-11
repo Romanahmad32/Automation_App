@@ -52,7 +52,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   sind fest verdrahtet, `tools/ZentralrufDomDump` liest das Live-Formular neu ein. Hier entsteht
   auch die Referenz (`Nr/Jahr Abteilung_Kennzeichen`). (b) Antwort-Parsing
   (`ZentralrufReplyParser`, `POST api/Zentralruf/antwort/parse`; Text oder Base64-`.eml` via
-  `ZentralrufReplyEmailExtractor`/MimeKit): Kennzeichen normalisieren, Referenz zerlegen,
+  `ZentralrufReplyEmailExtractor`/MimeKit): Kennzeichen übernehmen, wie sie in der Mail stehen
+  (verglichen über `KennzeichenVergleich`, §4.2), Referenz zerlegen,
   Negativantworten/Abweichungen als `warnings` (`ZentralrufReplyWarnings`), Lücken als
   `missingFields`.
 - **MailboxMonitor** — ereignisbasierte Postfachüberwachung (MailKit, IMAP IDLE), Filter über den
