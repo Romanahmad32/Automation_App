@@ -287,10 +287,15 @@ class VorlagenBearbeitung {
   }
 
   /// Zieht das Feld von [alterIndex] nach [neuerIndex] — die Zählweise von
-  /// `ReorderableListView`: Der Zielindex zählt die Lücke **vor** dem
-  /// Herausnehmen.
+  /// `onReorderItem`: Der Zielindex zählt die Stelle **nach** dem
+  /// Herausnehmen, ist also schon fertig verrechnet.
+  ///
+  /// Bis Flutter 3.41 lief das über `onReorder`, dessen Zielindex die Lücke
+  /// noch mitzählte — daher stand hier ein `if (neuerIndex > alterIndex)
+  /// neuerIndex--;`. `onReorderItem` nimmt einem genau diese Korrektur ab;
+  /// stünde sie noch hier, zöge sie ein zweites Mal ab und jedes Ziehen nach
+  /// unten landete eine Stelle zu weit vorn.
   void verschiebe(int alterIndex, int neuerIndex) {
-    if (neuerIndex > alterIndex) neuerIndex--;
     final feld = fields.removeAt(alterIndex);
     fields.insert(neuerIndex, feld);
   }

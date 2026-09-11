@@ -153,7 +153,7 @@ class _TemplateFieldsCardState extends State<TemplateFieldsCard> {
           ? null
           : const NeverScrollableScrollPhysics(),
       buildDefaultDragHandles: false,
-      onReorder: widget.onReorder,
+      onReorderItem: widget.onReorder,
       // Das gezogene Element wird in ein Overlay außerhalb des ReactiveForm
       // UND der Bloc-Provider der Seite gehoben — hier beides neu umschließen
       // (die Warnung in der Zeile braucht den TemplatePlaceholdersBloc).
