@@ -44,5 +44,7 @@ Beschreibung geladen:
 - `subagent-auftrag`: nur bei ausdrücklich gewünschter oder erlaubter Delegation einen sicheren,
   abgegrenzten Subagentenauftrag formulieren.
 
+Für delegierte Umsetzungsarbeit gibt es den Projektagenten `umsetzer` (`.codex/agents/umsetzer.toml`).
+
 Die gemeinsame Quelle und die Abgrenzung zur Claude-Konfiguration stehen in
 `.agents/README.md`.

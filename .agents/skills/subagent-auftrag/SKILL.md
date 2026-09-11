@@ -12,6 +12,10 @@ Vor dem Start prüfen, dass Delegation zulässig ist, die Teilaufgabe unabhängi
 Agent dieselben Dateien bearbeitet. Keine separate nutzerseitige Codex-Aufgabe anlegen; dafür die
 verfügbaren internen Kollaborationswerkzeuge verwenden.
 
+Für mechanische Umsetzungsarbeit den Projektagenten `umsetzer` (`.codex/agents/umsetzer.toml`)
+wählen. Er bringt Regeln, Umgebungsfallstricke, Prüfumfang und Berichtsformat schon mit; von der
+Liste unten braucht sein Auftrag dann nur noch Ergebnis und exklusiven Dateiumfang.
+
 Der Auftrag muss enthalten:
 
 - konkretes Ergebnis und exklusiven Datei-/Rechercheumfang,
