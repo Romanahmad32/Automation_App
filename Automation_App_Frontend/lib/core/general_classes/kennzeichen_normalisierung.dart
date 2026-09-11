@@ -78,12 +78,15 @@ List<String> kennzeichenLesarten(String? wert) {
 /// „Unterscheidungszeichen-Erkennungsbuchstaben Nummer" (z. B. „HG-E 1427") —
 /// **aber nur, wenn die Aufteilung eindeutig ist.**
 ///
+/// **Nur zum Vergleichen** ([gleichesKennzeichen]). Seit dem 11.09.2026 schreibt
+/// die App keinen eingegebenen Wert mehr damit um (§4.2): Was im Feld steht,
+/// geht so in Referenz, Vorgang und Schreiben.
+///
 /// Gibt es mehrere [kennzeichenLesarten] (`HGE1427` → `HG-E 1427` oder
 /// `H-GE 1427`), bleibt der Wert bereinigt stehen, statt dass eine davon
 /// geraten wird. Ein falsch aufgeteiltes Kennzeichen benennt ein **anderes
-/// Fahrzeug**; es steht danach in der Referenz, im Registereintrag und im
-/// Anspruchsschreiben, und niemand sieht ihm an, dass es geraten wurde. Eine
-/// Rückfrage kostet einen Bindestrich, ein falscher Wagen einen Schriftsatz.
+/// Fahrzeug** — geriete das in einen Vergleich, hielte die App zwei Wagen für
+/// einen.
 ///
 /// Spiegelt `ZentralrufReplyParser.NormalizeKennzeichen` im Backend, damit
 /// Vergleiche (z. B. Fallback-Zuordnung einer Antwort über das

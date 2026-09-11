@@ -202,6 +202,13 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
   Grunde nach).
 
+- **Kennzeichen werden übernommen, wie sie eingegeben wurden (§4.2, 11.09.2026)** — die App
+  schrieb sie in die Schreibweise mit Bindestrich um, sobald die Lesart feststand (`hg-e1427` →
+  `HG-E 1427`): beim Verlassen jedes Kennzeichenfelds, im Chip-Editor am Mandanten, im
+  Bearbeiten-Dialog des Vorgangs, in den Vorschlägen des Ausfüllschritts und beim Bau der Referenz.
+  Das tut sie jetzt nirgends mehr; vereinheitlicht wird nur der Leerraum. Beim **Vergleichen**
+  bleibt sie großzügig (`gleichesKennzeichen`): Dubletten und die Zuordnung einer Antwort erkennen
+  `hge1427` und `HG-E 1427` weiter als denselben Wagen. Die Hinweise unter dem Feld bleiben.
 - **Jede Schreibweise eines Kennzeichens wird angenommen (§4.1, 10.09.2026)** — ein E-Scooter-Mandat
   blieb liegen: Das **Versicherungskennzeichen** (`123 ABC`) fiel durch die Prüfung, die nur das
   Pkw-Schema kannte, und sperrte damit „Vorgang speichern", „Zentralruf-Formular ausfüllen" und
@@ -210,8 +217,8 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Validator; was die App nicht als Pkw-Kennzeichen liest (Behörden-, Kurzzeit-, Auslandskennzeichen),
   übernimmt sie unverändert und merkt es unter dem Feld an (`KennzeichenField.beanstandung`) —
   sobald feststeht, dass daraus keines mehr wird, und nicht schon beim zweiten Tastendruck.
-  Normalisiert wird weiterhin nur bei eindeutiger Lesart (`hg-e1427` → `HG-E 1427`), und ein
-  mehrdeutiges `HGE1427` bleibt stehen, statt geraten zu werden. Dazu der zweite, allgemeinere Teil:
+  Normalisiert wurde danach nur bei eindeutiger Lesart (`hg-e1427` → `HG-E 1427`; seit 11.09.2026
+  gar nicht mehr, siehe oben), und ein mehrdeutiges `HGE1427` blieb stehen, statt geraten zu werden. Dazu der zweite, allgemeinere Teil:
   `FormularFehlerHinweis` (`core/general_widgets/form/`) sagt über jedem gesperrten Knopf, **welches**
   Feld ihn sperrt und **warum** — nicht mehr nur bei fehlenden Pflichtfeldern, und in „Vorgang
   starten" überhaupt zum ersten Mal.

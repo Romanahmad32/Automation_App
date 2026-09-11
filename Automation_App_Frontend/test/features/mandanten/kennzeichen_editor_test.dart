@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Am Mandanten hängen 0..n Kennzeichen, und sie werden später verglichen —
-/// gegen die Zentralruf-Antwort, gegen das Feld im Anspruchsschreiben. Deshalb
-/// nimmt der Editor den **normalisierten** Wert auf: Stünde `hg-e1427` neben
-/// `HG-E 1427` in derselben Liste, wäre derselbe Wagen zweimal hinterlegt, und
-/// die Auswahlhilfe böte ihn zweimal an.
+/// gegen die Zentralruf-Antwort, gegen das Feld im Anspruchsschreiben.
+/// Aufgenommen wird jeder Wert, **wie er getippt wurde** (§4.2, geändert am
+/// 11.09.2026 — bis dahin der normalisierte). Als Dublette zählt er trotzdem
+/// in jeder Schreibweise: Stünde `hg-e1427` neben `HG-E 1427` in derselben
+/// Liste, wäre derselbe Wagen zweimal hinterlegt.
 void main() {
   /// Die zuletzt gemeldete Liste — der Wert, der beim Speichern am Mandanten
   /// landet. Absichtlich nicht die Chips: Die zeigen nur, was gemeldet wurde.
@@ -35,15 +36,15 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('nimmt eine Schreibvariante in der Konvention auf', (
+  testWidgets('nimmt eine Schreibvariante auf, wie sie getippt wurde', (
     tester,
   ) async {
     await zeigeEditor(tester);
 
     await fuegeHinzu(tester, 'hg-e 1427');
 
-    expect(gemeldet, ['HG-E 1427']);
-    expect(find.widgetWithText(Chip, 'HG-E 1427'), findsOneWidget);
+    expect(gemeldet, ['hg-e 1427']);
+    expect(find.widgetWithText(Chip, 'hg-e 1427'), findsOneWidget);
   });
 
   testWidgets(
@@ -58,8 +59,8 @@ void main() {
         find.text('Dieses Kennzeichen ist bereits hinterlegt'),
         findsOneWidget,
       );
-      expect(gemeldet, ['HG-E 1427']);
-      expect(find.widgetWithText(Chip, 'HG-E 1427'), findsOneWidget);
+      expect(gemeldet, ['hg-e 1427']);
+      expect(find.byType(Chip), findsOneWidget);
     },
   );
 
@@ -74,8 +75,6 @@ void main() {
     await zeigeEditor(tester);
     await fuegeHinzu(tester, 'hge1427');
 
-    // Kleingeschrieben wie getippt: Grossschreiben ist Teil der Normalisierung,
-    // und die greift nur bei eindeutiger Lesart.
     expect(gemeldet, ['hge1427']);
     expect(find.widgetWithText(Chip, 'hge1427'), findsOneWidget);
   });

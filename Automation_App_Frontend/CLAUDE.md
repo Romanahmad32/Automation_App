@@ -172,8 +172,8 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 - `form/` — `GeneralTextField`, `GermanDateField`, `AuswahlTextField` (Textfeld, dessen Symbol den
   `AuswahlDialog` über bekannte Werte öffnet — je Wert ein `AuswahlKandidat` mit Herkunftszeile;
-  ohne Kandidaten kein Symbol), `KennzeichenField` (**jedes** Kfz-Kennzeichen-Feld der App: stellt
-  die Konvention `HG-E 1427` beim Verlassen selbst her und **sperrt nichts** — ein Versicherungs-,
+  ohne Kandidaten kein Symbol), `KennzeichenField` (**jedes** Kfz-Kennzeichen-Feld der App: schreibt
+  den Wert **nicht** um, auch nicht in `HG-E 1427`, und **sperrt nichts** — ein Versicherungs-,
   Behörden- oder Auslandskennzeichen kommt durch und wird nur angemerkt, `beanstandung`; nie eine
   zweite Kennzeichenprüfung danebenbauen), `FormularFehlerHinweis` (die Zeile über einem gesperrten
   Knopf: welches Feld ihn sperrt und warum, anklickbar — hört auf den **Wert**, nicht auf

@@ -104,18 +104,20 @@ Unfallgegner womöglich ein französisches `AB-123-CD` — nichts davon passt in
 frühere Prüfung liess alles davon durchfallen und sperrte damit „Vorgang speichern" **und**
 „Zentralruf-Formular ausfüllen"; ein E-Scooter-Mandat blieb schlicht liegen.
 
-Das Feld stellt die Konvention `HG-E 1427` beim **Verlassen** her. `leseVorgangDaten` normalisiert
-trotzdem ein zweites Mal (`kennzeichenAusFormular`) — ein eingefügter Wert muss das Feld nie
-verlassen haben, und wer `hg-e1427` einfügt und sofort speichert, hätte den Rohwert in Referenz,
-Vorgang und Registereintrag stehen.
+**Beide Felder schreiben nichts um** (§4.2, geändert am 11.09.2026). Bis dahin stellten sie beim
+Verlassen die Konvention `HG-E 1427` her, und `leseVorgangDaten` wandte sie ein zweites Mal an —
+für eingefügte Werte, die das Feld nie verlassen hatten. Jetzt geht der Wert so in Referenz und
+Vorgang, wie er eingegeben wurde; `kennzeichenAusFormular` stutzt ihn nur und vereinheitlicht den
+Leerraum. Das nicht der Schreibweise wegen: `ZentralrufReplyParser` zieht den Leerraum in „Ihr
+Zeichen" ebenso zusammen, und mit einem doppelten Leerzeichen gliche die gespeicherte Referenz der
+zurückgelesenen nicht mehr. Ins Kennzeichenfeld des Zentralruf-Formulars geht der Wert
+großgeschrieben (`VorgangStartenBloc._zuRequest`), wie schon vorher.
 
 **Mehrdeutige Kennzeichen werden nicht geraten — aber auch nicht gesperrt.** `HGE1427` kann
-`HG-E 1427` oder `H-GE 1427` heißen, zwei verschiedene Fahrzeuge. Solche Werte lässt
-`normalizeKennzeichen` stehen, statt eine Aufteilung zu wählen, und `KennzeichenField`
-**beanstandet** sie unter dem Feld („Mehrdeutig, bitte mit Bindestrich: …"). Gesperrt wird dadurch
-nichts: Die Sperre sollte verhindern, dass die App rät — das tut aber schon der Normalisierer. Ohne
-sie bleibt `HGE1427` einfach stehen, wie es getippt wurde, und niemand steht vor einem toten Knopf.
-Die ganze Regel steht in `word_automation/FALLSTRICKE.md`.
+`HG-E 1427` oder `H-GE 1427` heißen, zwei verschiedene Fahrzeuge. `KennzeichenField`
+**beanstandet** solche Werte unter dem Feld („Mehrdeutig, bitte mit Bindestrich: …"). Gesperrt wird
+dadurch nichts: `HGE1427` bleibt einfach stehen, wie es getippt wurde, und niemand steht vor einem
+toten Knopf. Die ganze Regel steht in `word_automation/FALLSTRICKE.md`.
 
 **Warum der Knopf gesperrt ist, steht jetzt darüber.** `VorgangAktionsleiste` trägt seit #130 einen
 `FormularFehlerHinweis` — diese Seite hatte eine solche Zeile gar nicht. Sie nennt jedes ungültige

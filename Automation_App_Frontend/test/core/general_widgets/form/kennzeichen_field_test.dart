@@ -13,9 +13,9 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// Pkw-Schema. Vor #130 hing hier ein Validator, der genau das durchfallen
 /// liess — ein E-Scooter-Mandat war damit weder zu starten noch zu beschreiben.
 ///
-/// Was bleibt: Die Konvention wird **hergestellt**, wo die Lesart feststeht
-/// (`hg-e1427` → `HG-E 1427`, §4.2), und was auffällt, steht als Hinweis unter
-/// dem Feld — sichtbar, ohne dass jemand das Feld anfassen muss.
+/// Umgeschrieben wird auch nichts (§4.2, geändert am 11.09.2026): Der Wert
+/// bleibt, wie er getippt wurde. Was auffällt, steht als Hinweis unter dem
+/// Feld — sichtbar, ohne dass jemand das Feld anfassen muss.
 ///
 /// Die Mehrdeutigkeit bleibt der eigene Fall: `HGE1427` kann `HG-E 1427` oder
 /// `H-GE 1427` heissen, und das sind zwei Fahrzeuge. Geraten wird da nichts —
@@ -85,20 +85,19 @@ void main() {
     expect(find.text(KennzeichenField.unbekanntHinweis), findsNothing);
   });
 
-  testWidgets('stellt die Konvention beim Verlassen des Felds selbst her', (
+  /// Das Feld schreibt nichts um (§4.2, geändert am 11.09.2026) — bis dahin
+  /// wurde hier beim Verlassen `HG-E 1427` daraus. Was eingegeben wurde, geht
+  /// so in Referenz, Vorgang und Schreiben.
+  testWidgets('lässt den Wert beim Verlassen stehen, wie er getippt wurde', (
     tester,
   ) async {
     final form = await zeige(tester);
 
     await tester.enterText(find.byType(TextField), 'hg-e1427');
-    // Noch nicht umgeformt: Unter dem Cursor soll sich nichts bewegen, solange
-    // getippt wird.
-    expect(form.control(feldname).value, 'hg-e1427');
-
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pump();
 
-    expect(form.control(feldname).value, 'HG-E 1427');
+    expect(form.control(feldname).value, 'hg-e1427');
   });
 
   /// Der Gegenfall, und der Grund für die ganze Unterscheidung: Bei `HGE1427`

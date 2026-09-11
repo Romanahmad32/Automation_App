@@ -144,13 +144,17 @@ dabei erfassten Daten gehören zu **einem Vorgang** (siehe 3).
   Beispiel: 84/26 C03_HG-E 1427
   ```
 
-  Kfz-Kennzeichen werden mit Bindestrich geschrieben (`HG-E 1427`) — **soweit sie diesem Schema
-  entsprechen**. Die Konvention ist eine Schreibweise, kein Aufnahmekriterium: Was ihr nicht
-  entspricht, wird übernommen, wie es erfasst wurde, und die App stellt die Schreibweise nur dort
-  her, wo die Aufteilung eindeutig ist (`hg-e1427` → `HG-E 1427`). Ist sie es nicht (`HGE1427` —
-  `HG-E 1427` oder `H-GE 1427`?), bleibt der Wert stehen und die App weist darauf hin, statt zu
-  raten: Ein falsch aufgeteiltes Kennzeichen benennt ein anderes Fahrzeug und stünde danach im
-  Anspruchsschreiben (siehe 1.3).
+  **Kennzeichen werden übernommen, wie sie eingegeben wurden.** Die App bringt keines von sich aus
+  in die Schreibweise mit Bindestrich (`HG-E 1427`) — weder im Feld noch in Referenz, Vorgang oder
+  Anspruchsschreiben. *Geändert am 11.09.2026:* Bis dahin stellte sie diese Schreibweise selbst
+  her, wo die Aufteilung eindeutig war (`hg-e1427` → `HG-E 1427`).
+
+  Die Schreibweise mit Bindestrich bleibt die empfohlene, und die App **weist darauf hin**, wo ein
+  Wert ihr nicht folgt: Ist die Aufteilung mehrdeutig (`HGE1427` — `HG-E 1427` oder `H-GE 1427`?),
+  nennt sie beide Lesarten; ein Kennzeichen, das sie gar nicht liest, übernimmt sie mit einem
+  Hinweis (siehe 4.1). Geraten wird nichts: Ein falsch aufgeteiltes Kennzeichen benennt ein anderes
+  Fahrzeug und stünde danach im Anspruchsschreiben (siehe 1.3). Wo die App zwei Kennzeichen
+  **vergleicht** — Dubletten, Zuordnung einer Antwort (siehe 4.3) —, zählt die Schreibweise nicht.
 - **[M] Zeichen und Referenz sind zweierlei.** Der vordere Teil ohne Kennzeichen — `84/26 C03` —
   heißt **Zeichen**. Er ist der Bezeichner der Kanzlei und steht in den Briefen, im Register, im
   Mailbetreff und überall in der Oberfläche — **nicht** im Dateinamen des erzeugten Schreibens

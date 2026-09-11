@@ -22,14 +22,14 @@ class TexteListenEditor extends StatefulWidget {
   final String hinzufuegenTooltip;
   final TextCapitalization textCapitalization;
 
-  /// Bringt eine Eingabe in die Schreibweise ihres Fachs (z. B. `hge1427` →
-  /// `HG-E 1427`), **bevor** [pruefe], der Dublettenvergleich und die Aufnahme
-  /// in die Liste sie sehen. Ohne Angabe wird die Eingabe nur gestutzt.
+  /// Bringt eine Eingabe in die Schreibweise ihres Fachs, **bevor** [pruefe],
+  /// der Dublettenvergleich und die Aufnahme in die Liste sie sehen. Ohne
+  /// Angabe wird die Eingabe nur gestutzt.
   ///
   /// Diese Reihenfolge ist der Zweck: Sonst beanstandete die Prüfung eine
-  /// Schreibvariante, die der Editor gleich darauf selbst geradegezogen hätte,
-  /// und derselbe Wagen stünde zweimal in der Liste — einmal als `HG-E 1427`,
-  /// einmal als `hge1427`.
+  /// Schreibvariante, die der Editor gleich darauf selbst geradegezogen hätte.
+  /// Kennzeichen nutzen das nicht mehr — sie werden aufgenommen, wie sie
+  /// getippt wurden (§4.2), und über [gleich] als Dublette erkannt.
   final String Function(String eingabe)? normalisiere;
 
   /// Prüft eine Eingabe vor dem Aufnehmen: `null` heißt in Ordnung, sonst ist
@@ -43,6 +43,14 @@ class TexteListenEditor extends StatefulWidget {
   /// aber nicht darüber zu entscheiden hat, was hineingehört (Kennzeichen,
   /// #130).
   final String? Function(String eingabe)? anmerke;
+
+  /// Ob zwei Einträge **dasselbe** meinen — für den Dublettenvergleich. Ohne
+  /// Angabe zählt der Text ohne Rücksicht auf Groß- und Kleinschreibung.
+  ///
+  /// Kennzeichen brauchen mehr: `hge1427` und `HG-E 1427` sind derselbe Wagen,
+  /// auch wenn die Liste jeden so aufnimmt, wie er getippt wurde (§4.2). Ohne
+  /// diesen Vergleich stünde er zweimal darin.
+  final bool Function(String a, String b)? gleich;
 
   /// Meldung, wenn der Wert schon in der Liste steht.
   final String dublettenHinweis;
@@ -60,6 +68,7 @@ class TexteListenEditor extends StatefulWidget {
     this.normalisiere,
     this.pruefe,
     this.anmerke,
+    this.gleich,
     this.dublettenHinweis = 'Dieser Eintrag steht bereits in der Liste',
   });
 
@@ -93,7 +102,7 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
       setState(() => _fehler = beanstandung);
       return;
     }
-    if (_werte.any((w) => w.toLowerCase() == eingabe.toLowerCase())) {
+    if (_werte.any((w) => _gleich(w, eingabe))) {
       setState(() => _fehler = widget.dublettenHinweis);
       return;
     }
@@ -107,8 +116,11 @@ class _TexteListenEditorState extends State<TexteListenEditor> {
     _focusNode.requestFocus();
   }
 
-  /// Die Anmerkung zur getippten Eingabe — **normalisiert** befragt, wie sie
-  /// auch aufgenommen würde: `hg-e1427` ist `HG-E 1427` und damit anmerkungsfrei.
+  bool _gleich(String a, String b) =>
+      widget.gleich?.call(a, b) ?? a.toLowerCase() == b.toLowerCase();
+
+  /// Die Anmerkung zur getippten Eingabe — so befragt, wie sie auch
+  /// aufgenommen würde (mit [TexteListenEditor.normalisiere], falls gesetzt).
   String? _anmerkung(String getippt) {
     final eingabe = getippt.trim();
     if (eingabe.isEmpty) return null;
