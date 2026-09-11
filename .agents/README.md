@@ -16,6 +16,10 @@ gemeinsame Quelle unter `.claude/` aktualisieren und danach prüfen, ob ein Code
 abweichende Übersetzungsregel braucht. Rein Codex-spezifische Hinweise gehören in `AGENTS.md` oder
 den betreffenden Adapter.
 
+`.codex/agents/` enthält Projektagenten nach demselben Muster: `umsetzer.toml` verweist auf
+`.claude/agents/umsetzer.md` und übersetzt nur Dateinamen und Werkzeugbegriffe. Ein Modell legt
+er nicht fest — er erbt es vom Aufrufer.
+
 Eine `.codex/config.toml` gibt es absichtlich nicht: Modell, Sandbox, Freigaben und persönliche
 MCP-Verbindungen sind laufzeit- bzw. nutzerspezifisch. Das Repository legt nur seine fachlichen
 Regeln, Befehle und Prüfabläufe fest.
