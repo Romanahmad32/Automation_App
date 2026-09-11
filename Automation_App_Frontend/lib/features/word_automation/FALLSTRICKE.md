@@ -304,7 +304,10 @@ schon beim Verknüpfen der Datei.
   aufzuhalten. Das Feld normalisiert, was eindeutig ist, und beanstandet den Rest unter dem Feld.
   Die Richtung war schon vorher die: Die Werte kommen aus mehreren Beständen und laufen ohnehin
   durch `normalizeKennzeichen` — eine Prüfung darüber hinaus beanstandete Werte, die die App selbst
-  angeboten hat.
+  angeboten hat. Die Anmerkung tritt **neben** die Hinweiszeile dieses Schritts
+  („* Pflichtfeld · Vorbelegt aus …"), sie ersetzt sie nicht (`KennzeichenField.hilfetext`): Sonst
+  verlöre ausgerechnet das ungewöhnliche Kennzeichen die Auskunft, dass das Feld Pflicht ist und
+  welchem Bestand sein Wert entstammt.
 
 ## Mehrdeutige Kennzeichen werden nicht geraten
 

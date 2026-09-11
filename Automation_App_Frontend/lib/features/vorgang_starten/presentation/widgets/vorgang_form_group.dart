@@ -3,11 +3,13 @@ import 'package:automation_app/features/vorgang_starten/presentation/widgets/vor
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Baut die FormGroup des „Vorgang starten"-Formulars mit allen Feldern,
-/// Vorbelegungen und Validatoren. Die Pflicht der Unfall-Felder (Kennzeichen
-/// Gegner, Unfalltag) hängt vom Rechtsgebiet ab und wird in der View dynamisch
-/// gesetzt — hier stehen nur die rechtsgebietsunabhängigen Formatprüfungen.
+/// Vorbelegungen und Validatoren.
+///
+/// Der ganze Unfallteil hängt am Rechtsgebiet und wird von der View gesetzt,
+/// sobald sie es kennt ([setzeUnfallPruefungen]); hier steht davon nur der
+/// Ausgangsstand — die Formatprüfungen, noch ohne Pflicht.
 FormGroup createVorgangForm() {
-  return FormGroup({
+  final form = FormGroup({
     'auftragsnummer': FormControl<String>(
       validators: [Validators.required, Validators.number()],
     ),
@@ -28,14 +30,7 @@ FormGroup createVorgangForm() {
     // keines ist ein Grund, den Vorgang aufzuhalten (#130). `KennzeichenField`
     // normalisiert, was eindeutig ist, und merkt den Rest sichtbar an.
     'kennzeichenGegner': FormControl<String>(),
-    'schadentag': FormControl<String>(
-      validators: [
-        GermanDateField.validator(
-          firstDate: DateTime(2000),
-          lastDate: DateTime.now(),
-        ),
-      ],
-    ),
+    'schadentag': FormControl<String>(),
     // Mandantendaten (Geschädigter).
     'mandantVorname': FormControl<String>(),
     'mandantNachname': FormControl<String>(),
@@ -47,16 +42,70 @@ FormGroup createVorgangForm() {
     'mandantKennzeichen': FormControl<String>(),
     // Unfallhergang (nur bei Verkehrsrecht).
     'unfallort': FormControl<String>(),
-    'unfalluhrzeit': FormControl<String>(
-      validators: [Validators.delegate(uhrzeitValidator)],
-    ),
-    'polizeiVorgangsnummer': FormControl<String>(
-      validators: [Validators.delegate(vorgangsnummerValidator)],
-    ),
+    'unfalluhrzeit': FormControl<String>(),
+    'polizeiVorgangsnummer': FormControl<String>(),
     // Vorschau der resultierenden Referenz; wird automatisch befüllt, bis der
     // Anwender sie selbst bearbeitet.
     'referenz': FormControl<String>(),
   });
+  // Ohne die Pflicht: Die hängt am Rechtsgebiet und wird von der View gesetzt,
+  // sobald sie es kennt ([setzeUnfallPruefungen]).
+  unfallFormatPruefungen().forEach((name, validatoren) {
+    form.control(name)
+      ..setValidators(validatoren)
+      ..updateValueAndValidity();
+  });
+  return form;
+}
+
+/// Die **Formatprüfungen** der Unfall-Felder, genau einmal beschrieben: Zwei
+/// Stellen brauchen sie — der Aufbau oben und [setzeUnfallPruefungen], wenn
+/// das Rechtsgebiet sie zurückholt.
+///
+/// Eine Funktion und keine Konstante, weil `DateTime.now()` darin steckt: Eine
+/// einmal berechnete Obergrenze veraltete in einer App, die tagelang offen
+/// steht.
+Map<String, List<Validator<dynamic>>> unfallFormatPruefungen() => {
+  // Am Kennzeichen steht nie eine Formatprüfung — wieso, steht oben (#130).
+  'kennzeichenGegner': const [],
+  'schadentag': [
+    GermanDateField.validator(
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    ),
+  ],
+  'unfallort': const [],
+  'unfalluhrzeit': [Validators.delegate(uhrzeitValidator)],
+  'polizeiVorgangsnummer': [Validators.delegate(vorgangsnummerValidator)],
+};
+
+/// Setzt die Prüfungen der Unfall-Felder; sie hängen am Rechtsgebiet.
+///
+/// Pflicht sind bei Verkehrsrecht das Kennzeichen des Gegners und der
+/// Unfalltag — beide gehen in die Referenz und ins Zentralruf-Formular ein.
+///
+/// **Ausserhalb des Verkehrsrechts trägt keines der fünf einen Validator**,
+/// auch keine Formatprüfung: Ihre beiden Abschnitte stehen dann nicht mehr auf
+/// der Seite, die Controls aber weiter in der Gruppe. Eine `25:99`, aus dem
+/// vorherigen Rechtsgebiet stehengeblieben, sperrte damit „Vorgang speichern",
+/// ohne dass irgendwo ein Feld zu sehen wäre, das man berichtigen könnte —
+/// genau der stumm gesperrte Knopf, den #130 abschafft. Dieselbe Regel wie
+/// beim eingeklappten Vorlagenfeld (#82): Was nicht sichtbar ist, prüft nichts
+/// und hält nichts auf. Die Werte bleiben stehen und gelten beim
+/// Zurückwechseln wieder.
+void setzeUnfallPruefungen(FormGroup form, {required bool istVerkehrsunfall}) {
+  const pflichtfelder = ['kennzeichenGegner', 'schadentag'];
+  final format = unfallFormatPruefungen();
+  for (final name in vorgangVerkehrsFelder) {
+    form.control(name)
+      ..setValidators([
+        if (istVerkehrsunfall) ...[
+          if (pflichtfelder.contains(name)) Validators.required,
+          ...format[name]!,
+        ],
+      ])
+      ..updateValueAndValidity();
+  }
 }
 
 /// Anzeigenamen der Controls für die Sammelzeile über der Aktionsleiste
@@ -83,3 +132,16 @@ const vorgangFeldBeschriftungen = {
   'polizeiVorgangsnummer': 'Polizei-Vorgangsnummer',
   'referenz': 'Referenz',
 };
+
+/// Die Controls der beiden Abschnitte, die **nur bei Verkehrsrecht** auf der
+/// Seite stehen (`UnfallSection`, `UnfallhergangSection`).
+///
+/// Genau diese fünf nimmt [setzeUnfallPruefungen] die Prüfung ab, sobald ihre
+/// Abschnitte von der Seite verschwinden — warum, steht dort.
+const vorgangVerkehrsFelder = [
+  'kennzeichenGegner',
+  'schadentag',
+  'unfallort',
+  'unfalluhrzeit',
+  'polizeiVorgangsnummer',
+];

@@ -31,6 +31,9 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// in der Aufmerksamkeitsfarbe, nicht als Fehler: Geraten wird nichts —
 /// [normalizeKennzeichen] teilt einen mehrdeutigen Wert gar nicht erst auf —,
 /// aber der Anwalt sieht, dass ein Bindestrich die Sache klären würde.
+/// Unaufgefordert heißt nicht ungeduldig: Was noch ein Kennzeichen werden
+/// kann (`HG-E 1`), bleibt unkommentiert, bis feststeht, dass es keines wird
+/// ([beanstandung]).
 class KennzeichenField extends StatelessWidget {
   /// Der neutrale Hilfetext eines leeren Felds: Er **nennt die Konvention mit
   /// Beispiel**, statt „ungültig" zu sagen — `HG-E 1427` erklärt in vier
@@ -86,10 +89,13 @@ class KennzeichenField extends StatelessWidget {
         return AuswahlTextField(
           formControlName: formControlName,
           labelText: labelText,
-          helperText: notiz ?? helperText,
-          // Der Hinweis nennt bei Mehrdeutigkeit beide Lesarten und braucht
-          // dafür mehr als die eine Zeile, die Material vorgibt.
-          helperMaxLines: notiz == null ? helperMaxLines : 2,
+          helperText: hilfetext(helperText, notiz),
+          // Der Hinweis nennt bei Mehrdeutigkeit beide Lesarten und tritt zu
+          // dem, was der Aufrufer schon sagt — beides zusammen braucht mehr
+          // als die eine Zeile, die Material vorgibt.
+          helperMaxLines: notiz == null
+              ? helperMaxLines
+              : (helperMaxLines ?? 1) + 2,
           helperStyle: notiz == null
               ? null
               : TextStyle(color: Theme.of(context).colorScheme.tertiary),
@@ -111,11 +117,31 @@ class KennzeichenField extends StatelessWidget {
   /// Drei Fälle, und die beiden beanstandeten bleiben unterscheidbar:
   /// eindeutig lesbar → nichts; mehrfach lesbar → [mehrdeutigHinweis] mit den
   /// Lesarten; sonst → [unbekanntHinweis].
+  ///
+  /// **Ein halb getipptes Kennzeichen ist noch keines** und wird deshalb nicht
+  /// angemerkt ([beginntWieKennzeichen]): Sonst stünde „nicht erkannt" unter
+  /// dem Feld, während `HG-E 1427` entsteht — bei acht von neun Zeichen —, und
+  /// verschwände erst beim letzten. Ein Wert, aus dem nie ein Kennzeichen
+  /// werden kann (`123 ABC`, `mein Auto`), bekommt seinen Hinweis dagegen
+  /// sofort und ohne Anfassen.
   static String? beanstandung(String eingabe) {
     final lesarten = kennzeichenLesarten(eingabe);
     if (lesarten.length == 1) return null;
     if (lesarten.length > 1) return mehrdeutigHinweis(lesarten);
-    return eingabe.trim().isEmpty ? null : unbekanntHinweis;
+    if (eingabe.trim().isEmpty) return null;
+    return beginntWieKennzeichen(eingabe) ? null : unbekanntHinweis;
+  }
+
+  /// Die Hilfszeile unter dem Feld: die des Aufrufers **und** die Anmerkung,
+  /// nicht die eine statt der anderen.
+  ///
+  /// Der Aufrufer sagt dort Dinge, die nicht wegfallen dürfen, weil ein Wert
+  /// ungewöhnlich ist: „* Pflichtfeld" und die Herkunft der Vorbelegung
+  /// (`FormTemplateBuilder`). Genau am E-Scooter-Kennzeichen, für das dieses
+  /// Feld gebaut ist, verschwänden sie sonst beide.
+  static String? hilfetext(String? basis, String? notiz) {
+    if (notiz == null) return basis;
+    return basis == null || basis.isEmpty ? notiz : '$basis · $notiz';
   }
 
   /// Die Meldung zu einem mehrdeutigen Wert. Die [lesarten] **werden

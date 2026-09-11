@@ -136,6 +136,21 @@ void main() {
     expect(find.text('zugeklappt'), findsNothing);
   });
 
+  /// Nicht jeder nicht-gültige Zustand bringt einen Fehlerschlüssel mit: Ein
+  /// Control in `pending` — was jeder asynchrone Validator auslöst — ist weder
+  /// `valid` noch `disabled` und trägt trotzdem eine leere Fehlerkarte. Diese
+  /// Zeile ist ein `core`-Baustein und steht in fremden Formularen; sie darf
+  /// daran nicht zerbrechen und die Seite mitnehmen.
+  testWidgets('überlebt ein Control ohne Fehlerschlüssel', (tester) async {
+    final form = FormGroup({'name': FormControl<String>(value: 'Meier')});
+    form.control('name').markAsPending();
+
+    await zeige(tester, form, beschriftungen: {'name': 'Name'});
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Name: bitte prüfen'), findsOneWidget);
+  });
+
   testWidgets('springt beim Anklicken in sein Feld', (tester) async {
     final form = FormGroup({
       'nachname': FormControl<String>(validators: [Validators.required]),

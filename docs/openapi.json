@@ -9036,7 +9036,6 @@
             "type": "string"
           },
           "kennzeichen": {
-            "maxLength": 12,
             "type": "string",
             "description": "Kennzeichen des Fahrzeugs des Gesch\u00E4digten."
           }
@@ -9079,7 +9078,6 @@
             "description": "Abteilung, z. B. \u0022C03\u0022."
           },
           "kennzeichenSchaediger": {
-            "maxLength": 12,
             "type": "string",
             "description": "Amtliches Kennzeichen des Unfallgegners, z. B. \u0022GG-XY 123\u0022."
           },

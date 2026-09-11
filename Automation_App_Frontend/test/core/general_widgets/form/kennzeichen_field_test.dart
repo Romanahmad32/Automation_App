@@ -27,6 +27,7 @@ void main() {
     WidgetTester tester, {
     List<AuswahlKandidat> kandidaten = const [],
     String? vorbelegt,
+    String? helperText,
   }) async {
     final form = FormGroup({feldname: FormControl<String>(value: vorbelegt)});
     await tester.pumpWidget(
@@ -37,6 +38,7 @@ void main() {
             child: KennzeichenField(
               formControlName: feldname,
               kandidaten: kandidaten,
+              helperText: helperText,
             ),
           ),
         ),
@@ -124,6 +126,60 @@ void main() {
     expect(find.text(KennzeichenField.unbekanntHinweis), findsNothing);
   });
 
+  /// Der Hinweis hört auf den Wert und damit auf **jeden Tastendruck**. Er
+  /// darf deshalb nicht bei jedem Zwischenstand anschlagen: `HG-E 1427` wird
+  /// Zeichen für Zeichen getippt, und acht dieser neun Stände sind für sich
+  /// genommen kein Kennzeichen.
+  testWidgets('schweigt, solange ein Kennzeichen noch entstehen kann', (
+    tester,
+  ) async {
+    await zeige(tester);
+
+    for (final zwischenstand in ['H', 'HG', 'HG-', 'HG-E', 'HG-E 1']) {
+      await tester.enterText(find.byType(TextField), zwischenstand);
+      await tester.pump();
+      expect(
+        find.text(KennzeichenField.unbekanntHinweis),
+        findsNothing,
+        reason: 'bei „$zwischenstand" ist noch nichts entschieden',
+      );
+    }
+  });
+
+  /// Der Gegenfall dazu, damit die Stille nicht zur Regel wird: Aus `123` wird
+  /// nie ein Pkw-Kennzeichen, also steht der Hinweis sofort da.
+  testWidgets('sagt sofort etwas, wo kein Kennzeichen mehr entstehen kann', (
+    tester,
+  ) async {
+    await zeige(tester);
+
+    await tester.enterText(find.byType(TextField), '123 ');
+    await tester.pump();
+
+    expect(find.text(KennzeichenField.unbekanntHinweis), findsOneWidget);
+  });
+
+  /// Die Hilfszeile des Aufrufers darf der Hinweis nicht verdrängen: Im
+  /// Ausfüllschritt steht dort „* Pflichtfeld · Vorbelegt …", und beide
+  /// Auskünfte werden gerade an einem ungewöhnlichen Wert gebraucht.
+  testWidgets('stellt den Hinweis neben die Zeile des Aufrufers', (
+    tester,
+  ) async {
+    await zeige(
+      tester,
+      vorbelegt: '123 ABC',
+      helperText: '* Pflichtfeld · Vorbelegt aus der Zentralruf-Antwort',
+    );
+
+    expect(
+      find.text(
+        '* Pflichtfeld · Vorbelegt aus der Zentralruf-Antwort · '
+        '${KennzeichenField.unbekanntHinweis}',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('trägt ohne Kandidaten kein Auswahlsymbol', (tester) async {
     await zeige(tester);
 
@@ -163,6 +219,14 @@ void main() {
       expect(KennzeichenField.beanstandung('HG-E1427H'), isNull);
       // Zwei Buchstaben lassen nur eine Aufteilung zu — kein Bindestrich nötig.
       expect(KennzeichenField.beanstandung('he1427'), isNull);
+    });
+
+    /// Ein Zwischenstand beim Tippen ist noch keine Beanstandung.
+    test('ein halb getipptes Kennzeichen bleibt unkommentiert', () {
+      expect(KennzeichenField.beanstandung('HG'), isNull);
+      expect(KennzeichenField.beanstandung('HG-'), isNull);
+      expect(KennzeichenField.beanstandung('HG-E'), isNull);
+      expect(KennzeichenField.beanstandung('HG-E 1'), isNull);
     });
 
     /// Die Bauarten namentlich: Keine davon ist ein Fehler, jede bekommt

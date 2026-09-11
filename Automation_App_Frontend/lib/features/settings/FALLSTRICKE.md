@@ -54,6 +54,14 @@ Ordner werden **nicht beim Speichern angelegt**, sondern beim ersten Schreiben. 
 `ordnerFehlt` ist deshalb kein Fehler, sondern die Normalform direkt nach der Wahl — und der Satz
 dazu sagt genau das.
 
+**Für den Vorlagenordner stimmt dieser Satz nicht.** In vier der fünf Ordner *schreibt* die App, in
+den Vorlagenordner nicht: Aus ihm wird **gelesen**. Fehlt er, entsteht er also nie von allein, und
+es findet sich keine Vorlage — genau die Lage, in der die Einstellungsseite „automatisch im
+gemeinsamen OneDrive-Ordner" meldete, im Recht war und trotzdem nichts Nützliches sagte (#130).
+`OrdnerZustandZeile._fehltSatz` unterscheidet deshalb nach dem Feld. Beide Sätze auf alle fünf
+Ordner anzuwenden wäre der leichte Weg und der falsche: Vier Warnungen, von denen drei nichts
+bedeuten, machen die vierte unsichtbar.
+
 ## Der Ordner wird vorgeschlagen, nie gesetzt
 
 `SynchronisierterOrdner` liest die Umgebungsvariablen, die der OneDrive-Client selbst setzt, und

@@ -21,10 +21,16 @@ class GermanDateField extends StatelessWidget {
   /// Die Meldungen dieses Felds — hier und nicht im `build`, damit auch die
   /// Sammelzeile über einem gesperrten Knopf (`FormularFehlerHinweis`) den
   /// **gleichen** Satz nennen kann wie das Feld selbst.
-  static Map<String, String Function(Object)> get meldungen => {
-    formatError: (_) => 'Datum im Format TT.MM.JJJJ angeben',
-    rangeError: (_) => 'Datum außerhalb des zulässigen Zeitraums',
-  };
+  ///
+  /// Ein Feld und keine Getter-Eigenschaft: Der Getter baute die Karte bei
+  /// jedem Zugriff neu, und die Sammelzeile fragt sie je ungültigem Control
+  /// und je Neuaufbau — bei einem Formular, das auf jeden Tastendruck neu
+  /// aufbaut. Unveränderlich, weil sie nun geteilt wird.
+  static final Map<String, String Function(Object)> meldungen =
+      Map.unmodifiable({
+        formatError: (_) => 'Datum im Format TT.MM.JJJJ angeben',
+        rangeError: (_) => 'Datum außerhalb des zulässigen Zeitraums',
+      });
 
   final String formControlName;
   final String? labelText;

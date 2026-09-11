@@ -50,6 +50,12 @@ class VorgangAktionsleiste extends StatelessWidget {
                       spacing: 8,
                       children: [
                         FormularFehlerHinweis(
+                          // Ohne [felder] gilt die ganze Gruppe — hier richtig,
+                          // weil die Unfall-Felder ausserhalb des
+                          // Verkehrsrechts abgeschaltet sind und deshalb gar
+                          // nicht auftauchen können (`_applyUnfallValidators`).
+                          // Ein Feld zu nennen, dessen Abschnitt nicht auf der
+                          // Seite steht, hiesse in ein Nichts zu springen.
                           beschriftungen: vorgangFeldBeschriftungen,
                           // Beide teilen sich `ValidationMessage.pattern` und
                           // meinen Verschiedenes — ohne diese Zuordnung stünde in

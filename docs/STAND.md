@@ -208,7 +208,8 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   „Dokument erstellen" — **wortlos**, weil reactive_forms einen Fehler am Feld erst nach `touched`
   zeigt und ein gesperrter Knopf keinen Fokus nimmt. Kein Kennzeichenfeld trägt jetzt noch einen
   Validator; was die App nicht als Pkw-Kennzeichen liest (Behörden-, Kurzzeit-, Auslandskennzeichen),
-  übernimmt sie unverändert und merkt es unter dem Feld an (`KennzeichenField.beanstandung`).
+  übernimmt sie unverändert und merkt es unter dem Feld an (`KennzeichenField.beanstandung`) —
+  sobald feststeht, dass daraus keines mehr wird, und nicht schon beim zweiten Tastendruck.
   Normalisiert wird weiterhin nur bei eindeutiger Lesart (`hg-e1427` → `HG-E 1427`), und ein
   mehrdeutiges `HGE1427` bleibt stehen, statt geraten zu werden. Dazu der zweite, allgemeinere Teil:
   `FormularFehlerHinweis` (`core/general_widgets/form/`) sagt über jedem gesperrten Knopf, **welches**
