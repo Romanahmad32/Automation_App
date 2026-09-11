@@ -245,18 +245,18 @@ packages:
     dependency: "direct main"
     description:
       name: desktop_drop
-      sha256: c65d1f959ccf4bb6803f984303d03e1e0dd4c0f73a3a2eca2d1b46d48ea16999
+      sha256: "47ded09c85909edfed644fd4cbb5051b040d0aed5c79e7e062ea4b3b7156dbe4"
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.2"
+    version: "0.8.4"
   dio:
     dependency: "direct main"
     description:
       name: dio
-      sha256: "0df44ebba85e503958eb75d07eedd3c86275a58c1d3eda2f2ce8f0a2c3abbb3c"
+      sha256: "852ec3b48cc431ac04fff978413c541502b67ffc3e26921e74e3d994694192c1"
       url: "https://pub.dev"
     source: hosted
-    version: "5.11.0"
+    version: "5.11.1"
   dio_web_adapter:
     dependency: transitive
     description:
@@ -365,22 +365,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.17.2"
-  freezed:
-    dependency: "direct main"
-    description:
-      name: freezed
-      sha256: f23ea33b3863f119b58ed1b586e881a46bd28715ddcc4dbc33104524e3434131
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.5"
-  freezed_annotation:
-    dependency: transitive
-    description:
-      name: freezed_annotation
-      sha256: "7294967ff0a6d98638e7acb774aac3af2550777accd8149c90af5b014e6d44d8"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.0"
   frontend_server_client:
     dependency: transitive
     description:
@@ -517,14 +501,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.12.0"
-  json_serializable:
-    dependency: "direct main"
-    description:
-      name: json_serializable
-      sha256: e45aefa0324f08c683caafbb94b72837aa6193c61822799c916e45f4a263113d
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.14.1"
   leak_tracker:
     dependency: transitive
     description:
@@ -850,14 +826,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.2.0"
-  source_helper:
-    dependency: transitive
-    description:
-      name: source_helper
-      sha256: "4a85e90b50694e652075cbe4575665539d253e6ec10e46e76b45368ab5e3caae"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.3.10"
   source_span:
     dependency: transitive
     description:
