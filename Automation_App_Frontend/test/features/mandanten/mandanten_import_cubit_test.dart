@@ -199,11 +199,9 @@ void main() {
     aufbau.cubit.zuruecksetzen();
 
     expect(aufbau.scan.aufrufe, 1);
-    expect(
-      aufbau.cubit.state.umfeld.ordnernamen,
-      ['VUnfallursache Schmidt 0'],
-      reason: '„Andere Datei" wirft die Datei weg, nicht den Scan',
-    );
+    expect(aufbau.cubit.state.umfeld.ordnernamen, [
+      'VUnfallursache Schmidt 0',
+    ], reason: '„Andere Datei" wirft die Datei weg, nicht den Scan');
   });
 
   // Wo der Dienst den Mandanten schon gefunden hat, wäre ein Vorschlag daneben
