@@ -22,6 +22,19 @@ enum VorgangStatus {
   /// der Auftragsnummer und den Registereintrag.
   bool get istAbgeschlossen => this == VorgangStatus.versendet;
 
+  /// Der Status, der nach einem Fortschritt auf [ziel] gilt: [ziel] selbst,
+  /// solange es hinter dem eigenen liegt — sonst der eigene.
+  ///
+  /// Der Vorgang läuft **nur vorwärts**: Wer zum zweiten Schreiben ablegt, hat
+  /// deshalb keinen versendeten Vorgang zurück auf „abgelegt" gesetzt. Steht
+  /// hier und nicht als `status.index < ziel.index` an jeder Aufrufstelle, weil
+  /// jede davon die Regel sonst selbst noch einmal richtig treffen muss — und
+  /// weil ein `if` um die Zuweisung herum die Zuweisung **ganz** ausliess: So
+  /// entstand der Fehler aus #133, bei dem die zweite Ablage auch Dokumentpfad
+  /// und Aktenordner nicht mehr schrieb.
+  VorgangStatus vorwaertsAuf(VorgangStatus ziel) =>
+      ziel.index > index ? ziel : this;
+
   /// Liest einen [VorgangStatus] aus seinem persistierten [value]. Unbekannte
   /// oder fehlende Werte fallen tolerant auf [VorgangStatus.angefragt] zurück.
   static VorgangStatus fromValue(String? input) {

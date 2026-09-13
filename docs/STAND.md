@@ -261,6 +261,17 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   `DokumentAusVorgangEvent` holt `Vorgang.dokumentPfad` zurück, `wiederaufnahmeSchritt` springt in
   den Schritt, den der Absprung verspricht. Ein in der Sitzung erzeugtes Dokument wird dabei nie
   verdrängt.
+- **Die Schreiben-Nummer zählt erst beim Speichern (§4.9, §4.6, 13.09.2026, #133 Teil A)** —
+  `SchreibenNummerHinweis` fragte „Korrektur oder neues Schreiben?" schon nach dem blossen
+  Erzeugen, vorbelegt mit „Korrektur"; wer erzeugte und zurückging, sah die Frage zu einem
+  Schreiben, das nirgends lag, und `schliesseAblageAb` hielt nur die erste Ablage am Vorgang fest.
+  `schreibenNummer` bedeutet jetzt „Nummer des zuletzt gespeicherten Schreibens" und wird im
+  Speicherschritt gesetzt — bei Ablage in der Akte wie beim freien „anderswo gespeichert"; das
+  Erzeugen setzt nur noch `dokumentPfad`. Die Frage erscheint deshalb erst, wenn ein Schreiben
+  gespeichert ist, ist nicht vorbelegt, nennt Nummer und Dateiname des gespeicherten Schreibens
+  und sagt die Folge je Wahl. `schliesseAblageAb` hält jetzt jede Ablage am Vorgang fest, nicht
+  nur die erste — der Status läuft weiterhin nur vorwärts. Eine Migration setzt `SchreibenNummer`
+  auf NULL, wo der Vorgang nie gespeichert wurde.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
@@ -317,3 +328,7 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 - **Bestätigung vor dem Hochzählen (§7.1)** — die Auftragsnummer wird nach dem Abschluss immer
   automatisch erhöht. Die geforderte Einstellung „automatisch oder erst nach Bestätigung" gibt es
   weder in `KanzleiSettings` noch im Backend.
+- **Der angefangene Stand, wann er angeboten wird (#133 Teil B)** — Teil A dieses Issues
+  (Schreiben-Nummer, siehe oben) ist umgesetzt. Die Leiste „Angefangener Stand" bleibt unverändert:
+  Sie erscheint weiterhin auch dann, wenn der Stand der Vorbelegung gleicht oder derselbe Vorgang
+  erneut gewählt wird, und „Verwerfen"/„Weiterarbeiten" sagen nicht, was sie bewirken.
