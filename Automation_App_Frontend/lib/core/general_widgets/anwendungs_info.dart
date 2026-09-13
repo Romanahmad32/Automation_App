@@ -94,9 +94,8 @@ class AnwendungsInfo extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: farbton),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: farbton),
           ),
         ),
       ],
@@ -113,9 +112,8 @@ class AnwendungsInfo extends StatelessWidget {
       const SizedBox(height: 8),
       SelectableText(
         'Baustand für Rückfragen: ${teile[1]}',
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.outline,
-        ),
+        style: Theme.of(context).textTheme.labelSmall
+            ?.copyWith(color: Theme.of(context).colorScheme.outline),
       ),
     ];
   }

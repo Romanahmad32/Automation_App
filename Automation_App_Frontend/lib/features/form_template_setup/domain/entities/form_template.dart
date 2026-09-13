@@ -46,9 +46,9 @@ class FormTemplate extends Equatable {
     // [GespeicherterStand] kennt beide — hier wird nicht danach gefragt.
     final rohFelder = json['fields'];
     final fields =
-        GespeicherterStand.felderAus(
-            rohFelder,
-          ).map((e) => FieldData.fromJson(e as Map<String, dynamic>)).toList()
+        GespeicherterStand.felderAus(rohFelder)
+            .map((e) => FieldData.fromJson(e as Map<String, dynamic>))
+            .toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
     // Ein früherer Zweig hob hier Altbestände mit `wordFilePath` +

@@ -81,9 +81,8 @@ class ArbeitsplatzUebergabeScreen extends StatelessWidget {
         if (fehler != null) ...[
           Text(
             fehler!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.error,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.error),
           ),
           const SizedBox(height: 16),
         ],

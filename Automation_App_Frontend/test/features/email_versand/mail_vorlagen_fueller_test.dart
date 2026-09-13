@@ -372,9 +372,8 @@ void main() {
     });
 
     test('die Beugung gilt auch im Betreff', () {
-      final betreff = mitAnredeart(
-        Anrede.frau,
-      ).fuelleBetreff('Ansprüche {{unseres/unserer}} {{Mandant/Mandantin}}');
+      final betreff = mitAnredeart(Anrede.frau)
+          .fuelleBetreff('Ansprüche {{unseres/unserer}} {{Mandant/Mandantin}}');
 
       expect(betreff, 'Ansprüche unserer Mandantin');
     });

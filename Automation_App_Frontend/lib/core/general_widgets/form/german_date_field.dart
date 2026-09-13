@@ -108,9 +108,8 @@ class GermanDateField extends StatelessWidget {
   /// Liest ein Datum im Format T(T).M(M).JJJJ; null bei leerem,
   /// formal ungültigem oder nicht existierendem Wert (z. B. 31.02.).
   static DateTime? parseDate(String? value) {
-    final match = RegExp(
-      r'^\s*(\d{1,2})\.(\d{1,2})\.(\d{4})\s*$',
-    ).firstMatch(value ?? '');
+    final match = RegExp(r'^\s*(\d{1,2})\.(\d{1,2})\.(\d{4})\s*$')
+        .firstMatch(value ?? '');
     if (match == null) return null;
     final day = int.parse(match.group(1)!);
     final month = int.parse(match.group(2)!);

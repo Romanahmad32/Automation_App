@@ -9,12 +9,11 @@ import 'package:flutter/material.dart';
 
 /// Die Rückfrage nach einem Dateiwechsel — [zeigeAbgleichDialog] in
 /// Funktionsform, damit [EinleseReaktion] ohne echten Dialog prüfbar bleibt.
-typedef AbgleichFrage =
-    Future<List<String>> Function(
-      BuildContext context, {
-      required String dateiname,
-      required List<String> felder,
-    });
+typedef AbgleichFrage = Future<List<String>> Function(
+  BuildContext context, {
+  required String dateiname,
+  required List<String> felder,
+});
 
 /// Was passiert, wenn eine Word-Datei **fertig gelesen** ist (#104 Stufe 3c) —
 /// die beiden Reaktionen des Ablaufs „Datei zuerst":

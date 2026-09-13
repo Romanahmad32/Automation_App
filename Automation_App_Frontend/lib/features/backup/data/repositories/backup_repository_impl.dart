@@ -104,8 +104,7 @@ class BackupRepositoryImpl implements BackupRepository {
       return await ausfuehren();
     } on DioException catch (e) {
       throw SynchronisationsFehler(
-        backendFehlertext(e) ??
-            'Die App hat keine Bestätigung erhalten. Bitte den Stand erneut prüfen.',
+        backendFehlertext(e) ?? 'Die App hat keine Bestätigung erhalten. Bitte den Stand erneut prüfen.',
       );
     }
   }

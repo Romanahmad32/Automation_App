@@ -126,9 +126,8 @@ class VorlagentextKopf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stil = Theme.of(context).textTheme.labelSmall?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    );
+    final stil = Theme.of(context).textTheme.labelSmall
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
 
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 2),

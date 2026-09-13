@@ -50,9 +50,7 @@ class _AppBootstrapState extends State<AppBootstrap> {
 
     if (!ergebnis.erfolgreich) {
       setState(
-        () => _fehler =
-            ergebnis.meldung ??
-            'Der Dienst hat sich beim Start beendet, ohne einen Grund zu melden.',
+        () => _fehler = ergebnis.meldung ?? 'Der Dienst hat sich beim Start beendet, ohne einen Grund zu melden.',
       );
       return;
     }

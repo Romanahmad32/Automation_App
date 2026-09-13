@@ -61,10 +61,11 @@ void main() {
 
   final klassenkopf = RegExp(r'^(abstract\s+)?class\s+(\w+)', multiLine: true);
 
-  List<Quelldatei> datasourceDateien() => dartQuelldateien('lib')
-      .map((datei) => Quelldatei(relPfad(datei), datei.readAsStringSync()))
-      .where((datei) => datei.pfad.endsWith('_datasource.dart'))
-      .toList();
+  List<Quelldatei> datasourceDateien() =>
+      dartQuelldateien('lib')
+          .map((datei) => Quelldatei(relPfad(datei), datei.readAsStringSync()))
+          .where((datei) => datei.pfad.endsWith('_datasource.dart'))
+          .toList();
 
   test('Dateinamen von Datasources nennen die Sache, nicht die Technik', () {
     final verstoesse = <String>[];

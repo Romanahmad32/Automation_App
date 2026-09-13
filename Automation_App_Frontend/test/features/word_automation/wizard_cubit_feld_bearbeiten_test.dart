@@ -174,25 +174,28 @@ void main() {
       antwort: mitAntwort,
     );
 
-    test('der getippte Wert weicht der Vorbelegung und wird angeboten', () async {
-      final wizard = umgebung.wizard;
-      await wizard.selectVorgang(vorgang());
-      final alt = feld('Versicherer');
-      wizard.selectFormTemplate(vorlage([alt]));
-      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
-      final marke = wizard.state.aufbauMarke;
+    test(
+      'der getippte Wert weicht der Vorbelegung und wird angeboten',
+      () async {
+        final wizard = umgebung.wizard;
+        await wizard.selectVorgang(vorgang());
+        final alt = feld('Versicherer');
+        wizard.selectFormTemplate(vorlage([alt]));
+        wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+        final marke = wizard.state.aufbauMarke;
 
-      final aenderung = await wizard.aktualisiereFeld(
-        alt,
-        feld('Versicherer', quelle: FeldDatenquelle.versichererName),
-      );
+        final aenderung = await wizard.aktualisiereFeld(
+          alt,
+          feld('Versicherer', quelle: FeldDatenquelle.versichererName),
+        );
 
-      expect(aenderung.verdraengterWert, 'von Hand getippt');
-      // Weg aus dem erfassten Stand: Nur so gewinnt die Vorbelegung im Formular.
-      expect(wizard.state.formDataEntwurf, isEmpty);
-      // Und der Neuaufbau, weil der erfasste Stand nicht im Schlüssel steht.
-      expect(wizard.state.aufbauMarke, marke + 1);
-    });
+        expect(aenderung.verdraengterWert, 'von Hand getippt');
+        // Weg aus dem erfassten Stand: Nur so gewinnt die Vorbelegung im Formular.
+        expect(wizard.state.formDataEntwurf, isEmpty);
+        // Und der Neuaufbau, weil der erfasste Stand nicht im Schlüssel steht.
+        expect(wizard.state.aufbauMarke, marke + 1);
+      },
+    );
 
     /// Sonst nähme der Dialog dem Anwalt die Eingabe weg und setzte nichts an
     /// ihre Stelle.

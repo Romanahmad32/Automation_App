@@ -60,13 +60,10 @@ void main() {
     bloc.add(
       const DokumentAbgelegtEvent(r'C:\Akten\Mustermann\Unfall\Brief.docx'),
     );
-    final abgelegt =
-        await bloc.stream.firstWhere(
-              (state) =>
-                  state is EditedDocumentLoaded &&
-                  state.path.startsWith(r'C:\Akten'),
-            )
-            as EditedDocumentLoaded;
+    final abgelegt = await bloc.stream.firstWhere(
+      (state) =>
+          state is EditedDocumentLoaded && state.path.startsWith(r'C:\Akten'),
+    ) as EditedDocumentLoaded;
 
     // Der Arbeitsordner wird nach der Ablage gelöscht — ein Pfad dorthin
     // liefe ins Leere. Die Warnungen der Erzeugung gelten weiter.
@@ -86,9 +83,9 @@ void main() {
         path: r'C:\Vorlagen\VORLAGE HGn.docx',
       ),
     );
-    final erzeugt =
-        await bloc.stream.firstWhere((state) => state is EditedDocumentLoaded)
-            as EditedDocumentLoaded;
+    final erzeugt = await bloc.stream.firstWhere(
+      (state) => state is EditedDocumentLoaded,
+    ) as EditedDocumentLoaded;
 
     expect(erzeugt.inAkteAbgelegt, isFalse);
   });
