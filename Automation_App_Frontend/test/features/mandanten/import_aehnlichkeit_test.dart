@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/services/import_aehnlichkeit.dart';
@@ -127,6 +130,54 @@ void main() {
       final kandidaten = kandidatenZu([mandant(1, 'Ho')], 'Hoff');
 
       expect(kandidaten.map((m) => m.id), contains(1));
+    });
+
+    // Der Kennzeichen-Eimer haengt am Grobschluessel, verglichen wird danach
+    // ueber gleichesKennzeichen (#147). Das traegt nur, solange der Schluessel
+    // eine Obermenge ist: Jedes Paar, das die gemeinsame Falltabelle gleich
+    // nennt, muss durch den Vorfilter UND durch MandantErkennung kommen.
+    test('jede gleiche Schreibweise eines Kennzeichens ueberlebt den '
+        'Vorfilter', () {
+      final faelle =
+          jsonDecode(File('../docs/kennzeichen_faelle.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final gleiche = (faelle['vergleiche'] as List<dynamic>)
+          .cast<Map<String, dynamic>>()
+          .where((fall) => fall['gleich'] == true)
+          .toList();
+      expect(gleiche, isNotEmpty);
+
+      for (final fall in gleiche) {
+        final a = fall['a'] as String;
+        final b = fall['b'] as String;
+        for (final (eingabe, hinterlegt) in [(a, b), (b, a)]) {
+          final kandidaten = MandantenNamensindex([
+            mandant(1, 'Schmidt', kennzeichen: [hinterlegt]),
+          ]).kandidaten(nachname: '', kennzeichen: [eingabe]);
+
+          expect(
+            MandantErkennung.finde(
+              mandanten: kandidaten,
+              kennzeichen: eingabe,
+            ).map((v) => v.mandant.id),
+            [1],
+            reason: '"$eingabe" gegen hinterlegtes "$hinterlegt"',
+          );
+        }
+      }
+    });
+
+    test('der Vorfilter laesst ein anders aufgeteiltes Kennzeichen durch, '
+        'MandantErkennung sortiert es aus', () {
+      final kandidaten = MandantenNamensindex([
+        mandant(1, 'Schmidt', kennzeichen: ['HG-E 1427']),
+      ]).kandidaten(nachname: '', kennzeichen: ['H-GE 1427']);
+
+      expect(kandidaten.map((m) => m.id), [1]);
+      expect(
+        MandantErkennung.finde(mandanten: kandidaten, kennzeichen: 'H-GE 1427'),
+        isEmpty,
+      );
     });
   });
 
