@@ -160,5 +160,7 @@ void main() {
       for (final a in stand().nichtZugeordneteAkten) a.ordnername,
     ], isEmpty);
     expect(aufbau.getAkten.aufrufe, 1);
+    // Die Karte ist aufgeklappt: Die Fälle der neuen Akte kommen nach.
+    expect(aufbau.getFaelle.aufrufe, 2);
   });
 }

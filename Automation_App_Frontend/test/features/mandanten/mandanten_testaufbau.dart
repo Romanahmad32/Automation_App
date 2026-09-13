@@ -63,6 +63,9 @@ class MandantenSpeicher {
   final List<Mandant> mandanten;
   int seitenAufrufe = 0;
 
+  /// Scheitert die nächste Zuordnung — etwa am 409 eines fremden Ordners?
+  String? fehlerBeimVerknuepfen;
+
   MandantenSpeicher(this.mandanten);
 
   List<Mandant> treffer(String suche) {
@@ -377,7 +380,7 @@ class MandantenTestaufbau {
         FesteOrdnerStatus(vermerke),
         FakeSetzeOrdnerStatus(vermerke),
         FakeLoeschen(),
-        FakeVerknuepfen(speicher),
+        FakeVerknuepfen(speicher, vermerke),
         FakeLoesen(speicher),
         FesteImportPakete(paketeSpeicher),
         mandantenQuelle,

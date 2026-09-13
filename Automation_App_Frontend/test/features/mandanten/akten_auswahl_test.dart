@@ -108,6 +108,32 @@ void main() {
     test('ohne Nachnamen am Mandanten gibt es keinen Vorschlag', () {
       expect(AktenAuswahl.passtZumNamen('Irgendwas', mandant(2, '')), false);
     });
+
+    // Der Namensvorschlag teilt am ersten Leerzeichen — „von" wäre dort der
+    // Vorname, und der Nachname „der Heide" passte zu keinem Mandanten.
+    test('ein mehrteiliger Nachname passt, auch mit Vornamen davor', () {
+      final heide = mandant(3, 'von der Heide', vorname: 'Anna');
+
+      expect(
+        AktenAuswahl.passtZumNamen('VUnfallursache von der Heide', heide),
+        true,
+      );
+      expect(AktenAuswahl.passtZumNamen('Anna  von der Heide', heide), true);
+      expect(AktenAuswahl.passtZumNamen('Erika von der Heide', heide), false);
+      expect(AktenAuswahl.passtZumNamen('VUnfallursache Heide', heide), false);
+    });
+
+    test('Nachname vor dem Vornamen passt', () {
+      expect(AktenAuswahl.passtZumNamen('Müller Max', mueller), true);
+      expect(AktenAuswahl.passtZumNamen('Müller Erika', mueller), false);
+    });
+
+    test('ohne Vornamen am Mandanten darf der Ordner genau einen nennen', () {
+      final ohneVorname = mandant(4, 'Müller');
+
+      expect(AktenAuswahl.passtZumNamen('Max Müller', ohneVorname), true);
+      expect(AktenAuswahl.passtZumNamen('Max Otto Müller', ohneVorname), false);
+    });
   });
 
   test('die Suche filtert in der Reihenfolge der Auswahl', () {

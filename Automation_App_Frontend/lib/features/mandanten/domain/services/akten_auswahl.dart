@@ -63,21 +63,34 @@ class AktenAuswahl {
     ];
   }
 
-  /// Ob der Ordner dem Namen nach zu [mandant] gehört: Der Nachname aus
-  /// `nameVorschlagAusOrdner` muss gleich sein; nennen Ordner **und** Mandant
-  /// einen Vornamen, auch der. Die echten Ordner tragen meist nur den
-  /// Nachnamen (siehe dort) — ein fehlender Vorname schließt nichts aus.
+  /// Ob der Ordner dem Namen nach zu [mandant] gehört. Verglichen wird der
+  /// **ganze** Rest hinter dem Aktentyp-Präfix mit dem Namen des Mandanten —
+  /// als Nachname allein, als „Vorname Nachname" oder als „Nachname Vorname".
+  /// Die echten Ordner tragen meist nur den Nachnamen (siehe
+  /// `nameVorschlagAusOrdner`); ein fehlender Vorname schließt nichts aus.
+  ///
+  /// Nicht über Vor- und Nachname aus `nameVorschlagAusOrdner`: Der teilt am
+  /// ersten Leerzeichen und hält bei „VUnfallursache von der Heide" „von" für
+  /// den Vornamen — ein mehrteiliger Nachname passte dann nie.
   static bool passtZumNamen(String ordnername, Mandant mandant) {
-    final nachname = mandant.nachname.trim().toLowerCase();
+    final nachname = _vergleichsform(mandant.nachname);
     if (nachname.isEmpty) return false;
 
     final vorschlag = nameVorschlagAusOrdner(ordnername);
-    if (vorschlag.nachname.toLowerCase() != nachname) return false;
+    final rest = _vergleichsform('${vorschlag.vorname} ${vorschlag.nachname}');
+    if (rest == nachname) return true;
 
-    final vorname = mandant.vorname.trim().toLowerCase();
-    final vorschlagVorname = vorschlag.vorname.toLowerCase();
-    return vorname.isEmpty ||
-        vorschlagVorname.isEmpty ||
-        vorname == vorschlagVorname;
+    final vorname = _vergleichsform(mandant.vorname);
+    if (vorname.isNotEmpty) {
+      return rest == '$vorname $nachname' || rest == '$nachname $vorname';
+    }
+    // Der Ordner nennt einen Vornamen, der Mandant keinen: Genau ein Wort
+    // vor dem Nachnamen darf dann stehen.
+    if (!rest.endsWith(' $nachname')) return false;
+    return !rest.substring(0, rest.length - nachname.length - 1).contains(' ');
   }
+
+  /// Kleingeschrieben, getrimmt, Leerraum zu je einem Leerzeichen.
+  static String _vergleichsform(String text) =>
+      text.trim().toLowerCase().split(RegExp(r'\s+')).join(' ');
 }

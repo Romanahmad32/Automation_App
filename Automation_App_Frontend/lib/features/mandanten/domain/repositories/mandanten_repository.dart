@@ -102,7 +102,8 @@ abstract class MandantenRepository {
   /// Ordnet einem Mandanten einen vorhandenen Akten-Ordner zu (manuelle
   /// Zuordnung). Gibt den aktualisierten Mandanten zurück. Gehört der Ordner
   /// schon einem anderen Mandanten, lehnt das Backend ab (409) — die Meldung
-  /// nennt den Besitzer.
+  /// nennt den Besitzer. Ein Vermerk „ohne Mandantenbezug" auf dem Ordner
+  /// nimmt das Backend mit der Zuordnung zurück.
   Future<Either<Failure, Mandant>> verknuepfeOrdner({
     required int mandantId,
     required String ordnername,

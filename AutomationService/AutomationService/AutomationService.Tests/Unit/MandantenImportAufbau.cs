@@ -43,7 +43,7 @@ public sealed class MandantenImportAufbau : IDisposable
         Db = new AutomationDbContext(optionen);
         Db.Database.EnsureCreated();
         OrdnerStatus = new OrdnerStatusRegister(Db);
-        Register = new MandantenRepository(Db);
+        Register = new MandantenRepository(Db, OrdnerStatus);
         PaketBuch = new ImportPaketBuch(Db, Register, OrdnerStatus);
         Import = new MandantenImport(
             Db, OrdnerStatus, PaketBuch, NullLogger<MandantenImport>.Instance);

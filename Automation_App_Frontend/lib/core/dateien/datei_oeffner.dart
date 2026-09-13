@@ -45,7 +45,8 @@ class DateiOeffner {
   /// Datei ist weg oder Windows kennt kein Programm dafür — beides gehört dem
   /// Anwalt gesagt, statt es zu verschlucken.
   static Future<bool> ueberWindowsShell(String pfad) async {
-    if (!File(pfad).existsSync()) return false;
+    // Asynchron geprüft — Begründung an [ordnerImExplorer].
+    if (!await File(pfad).exists()) return false;
 
     try {
       await Process.start('rundll32', ['url.dll,FileProtocolHandler', pfad]);
@@ -68,17 +69,31 @@ class DateiOeffner {
   /// Öffnet den Ordner selbst im Explorer. True, wenn sich das anstoßen ließ;
   /// false heißt fast immer: Der Ordner ist umbenannt oder verschoben.
   ///
-  /// Nicht über [ueberWindowsShell]: Das prüft `File.existsSync`, und das ist
-  /// für einen Ordner immer falsch. Und nicht über [imExplorer]: `/select,`
-  /// öffnet den **übergeordneten** Ordner und markiert den gemeinten darin —
-  /// wer die Akte öffnen will, stünde dann im Stammordner zwischen 4000
-  /// anderen. Wie dort geht der Pfad als eigenes Argument und nicht durch eine
-  /// Shell, damit ein `&` im Ordnernamen den Aufruf nicht zerlegt.
+  /// Nicht über [ueberWindowsShell]: Das prüft, ob eine **Datei** da ist, und
+  /// das ist für einen Ordner immer falsch. Und nicht über [imExplorer]:
+  /// `/select,` öffnet den **übergeordneten** Ordner und markiert den gemeinten
+  /// darin — wer die Akte öffnen will, stünde dann im Stammordner zwischen
+  /// 4000 anderen.
+  ///
+  /// **Asynchron geprüft, nie `existsSync`:** Die Akten liegen gern auf einem
+  /// Netzlaufwerk, und ein weggebrochenes hält die Abfrage bis zum
+  /// SMB-Timeout fest — auf dem UI-Isolat eine eingefrorene App ohne jede
+  /// Rückmeldung.
+  ///
+  /// **Über `rundll32` und nicht `explorer <pfad>`:** Der Explorer zerlegt
+  /// seine Befehlszeile an Kommas, und Dart setzt ein Argument nur bei
+  /// Leerzeichen, Tab oder Anführungszeichen in Anführungszeichen. „Müller,Hans"
+  /// öffnete dann die Dokumente — und die Funktion meldete Erfolg.
+  /// `rundll32` wertet nur sein erstes Argument aus und reicht den Rest an
+  /// `FileProtocolHandler` weiter, das einen Ordner im Explorer öffnet (am
+  /// 13.09.2026 mit „Müller,Hans" und „Müller, Hans" nachgeprüft). Wie bei
+  /// [ueberWindowsShell] geht der Pfad nicht durch eine Shell, ein `&` im
+  /// Ordnernamen zerlegt den Aufruf also auch nicht.
   static Future<bool> ordnerImExplorer(String pfad) async {
-    if (!Directory(pfad).existsSync()) return false;
+    if (!await Directory(pfad).exists()) return false;
 
     try {
-      await Process.start('explorer', [pfad]);
+      await Process.start('rundll32', ['url.dll,FileProtocolHandler', pfad]);
       return true;
     } on ProcessException {
       return false;
