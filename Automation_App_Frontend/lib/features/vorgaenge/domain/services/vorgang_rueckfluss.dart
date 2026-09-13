@@ -17,7 +17,13 @@ import 'package:automation_app/features/word_automation/domain/entities/damage_l
 ///   zurückgeschrieben (lieber gar nicht als falsch, §1.3); das aus der
 ///   Referenz abgeleitete Gegner-Kennzeichen bleibt ebenfalls unberührt.
 /// * Ein offener [Vorgang.entwurf] fällt dabei weg: Bestätigt schlägt
-///   angefangen, und was hier ankommt, ist bestätigt.
+///   angefangen, und was hier ankommt, ist bestätigt. Das räumt ihn nur im
+///   **lokal zurückgegebenen** Vorgang weg — der anschließende Upsert schreibt
+///   das Feld seit #133 nicht mehr zum Dienst durch (`VorgangRepository.
+///   CopyInto`); wer den bestätigten Stand tatsächlich ablegt, muss den
+///   gespeicherten Entwurf zusätzlich über seinen eigenen Weg löschen
+///   (`VorgangCubit.sichereEntwurf(referenz, null)`, siehe
+///   `word_automation_page.dart`).
 class VorgangRueckfluss {
   const VorgangRueckfluss._();
 

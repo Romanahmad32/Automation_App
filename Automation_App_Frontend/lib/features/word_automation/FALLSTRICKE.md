@@ -202,23 +202,71 @@ schon beim Verknüpfen der Datei.
   Schadensaufstellung aus `steps`.
 - **`formData` ist die Freigabe, `formDataEntwurf` der Tippstand.** An `formData` hängen
   `WizardStepBar._isEnabled` und der Erzeugen-Knopf des Schadensaufstellungs-Schritts, es entsteht
-  also erst beim Absenden. Der laufend mitgeschriebene Stand (`FormWertBeobachter`, 2 s entprellt)
-  gehört deshalb in das zweite Feld — im ersten schaltete das erste getippte Zeichen den nächsten
-  Schritt frei. Beim Vorgangswechsel fällt der Entwurf weg, sonst schlüge er die Vorbelegung des
-  neuen Vorgangs.
-- **Der angefangene Stand liegt am Vorgang, nicht im Wizard.** `WizardCubit` sichert ihn entprellt
-  (2 s), beim Wechsel zwischen den Eingabeschritten und beim Schließen der Seite über
-  `VorgangCubit.sichereEntwurf` → `PUT api/Vorgaenge/entwurf`. Bewusst **nicht** über den Upsert des
-  ganzen Vorgangs: Der schickte bei jedem Takt den Vorgang aus der Sicht des Wizards mit und
-  überschriebe eine inzwischen eingetroffene Zentralruf-Antwort. Nach der Erzeugung wird nicht mehr
-  gesichert (`_standIstBestaetigt`) — sonst käme der gerade bestätigte Stand als Angebot zurück,
+  also erst beim Absenden. Der laufend mitgeschriebene Stand (`FormWertBeobachter`, seit #133 Teil B
+  rund 300 ms entprellt) gehört deshalb in das zweite Feld — im ersten schaltete das erste getippte
+  Zeichen den nächsten Schritt frei. Beim Vorgangswechsel fällt der Entwurf weg, sonst schlüge er
+  die Vorbelegung des neuen Vorgangs.
+- **Der angefangene Stand liegt am Vorgang, nicht im Wizard.** `EntwurfSicherungSteuerung` sichert
+  ihn (rund 300 ms nach dem letzten Tastendruck, sofort beim Verlassen der Seite über `dispose`)
+  über `VorgangCubit.sichereEntwurf` → `PUT api/Vorgaenge/entwurf`. Bewusst **nicht** über den
+  Upsert des ganzen Vorgangs: Der schickte bei jedem Takt den Vorgang aus der Sicht des Wizards mit
+  und überschriebe eine inzwischen eingetroffene Zentralruf-Antwort. Nach der Erzeugung wird nicht
+  mehr gesichert (`_standIstBestaetigt`) — sonst käme der gerade bestätigte Stand still zurück,
   während der Rückfluss ihn im selben Atemzug löscht.
-- **Der Entwurf wird angeboten, nie eingesetzt.** `selectVorgang` legt ihn nach
-  `WizardState.entwurfAngebot`, die Leiste (`EntwurfHinweis`) zeigt Zeitpunkt und beide Wege. Erst
-  „Weiterarbeiten" schreibt die Werte in `formDataEntwurf` — **und erhöht `aufbauMarke`**, sonst
-  bliebe die FormGroup stehen (Vorlage und Vorbelegung sind ja unverändert) und der Anwalt sähe auf
-  seinen Klick hin nichts geschehen. Ohne gewählten Vorgang gibt es keinen Ablageort: freie
-  Erfassung hält keinen Entwurf.
+- **Nur die Abweichung wird gesichert, sonst friert der Entwurf die Vorbelegung ein.**
+  `EntwurfAbweichung.nurAbweichende` (`domain/services/entwurf_abweichung.dart`) vergleicht jedes
+  Feld `trim()`-genau mit dem, was die Vorbelegung ohnehin zeigen würde; gesichert werden nur die
+  abweichenden Felder plus die Schadensaufstellung, wenn sie nicht leer ist — nie das ganze
+  Formular. Ein voller Formularwert würde ein vorbelegtes Feld einfrieren: Träfe danach eine neue
+  Zentralruf-Antwort mit einem anderen Versicherer ein, bliebe sie unter dem eingefrorenen Wert
+  unsichtbar. Ohne Abweichung gibt es nichts zu sichern, und ein bereits gesicherter Entwurf wird
+  gelöscht — leer ist kein Sonderfall, den man extra behandeln müsste.
+- **Der angefangene Stand wird ohne Nachfrage übernommen, still und feldweise.** Wählt der Anwalt
+  einen Vorgang erneut oder wechselt die Vorlage hin und zurück, zeigt das Formular Vorbelegung und
+  gespeicherte Abweichung gemeinsam: Die Abweichung gewinnt an ihren Feldern, sonst gilt die
+  Vorbelegung. Es gibt weder eine Frage noch eine Karte, die das Formular verdeckt — Vorbelegung und
+  Abweichung stehen von Anfang an in denselben Feldern. Gehört der gespeicherte Stand zu einer
+  anderen Vorlage, gilt an einem Feld nur, was die **gewählte** Vorlage kennt; ein fremdes Feld läge
+  sonst unter einem Namen, den kein Formular mehr zeigt.
+- **Die Vergleichsbasis liefert das Widget, die Abweichung rechnet der Cubit.**
+  `ausfuell_formular.dart` baut mit `AusgangsBelegung.vollstaendig` die Vergleichsbasis
+  (Vorbelegung plus Datumsvorschlag für leere, verwendete Datumsfelder) und reicht sie dem
+  `WizardCubit` weiter: Der Mandant lädt in `selectVorgang` asynchron nach, die Vorbelegung wäre
+  zu diesem Zeitpunkt noch unvollständig — und welche Felder überhaupt zählen, hängt von der
+  **gewählten Vorlage** ab, die dem Cubit an dieser Stelle ebenfalls fehlt; beides liegt nur im
+  Widget vor. Der Cubit nimmt die Vergleichsbasis entgegen und führt Tippstand und Vorbelegung in
+  `EntwurfSicherungSteuerung.zusammengefuehrt` zusammen, das seinerseits
+  `EntwurfAbweichung.nurAbweichende` aufruft — die Zusammenführung selbst bleibt damit dort, wo
+  auch die übrigen Entwurf-Übergänge stehen.
+- **`AusgangsBelegung` ist die eine Quelle für den Ausgangswert eines Feldes**
+  (`domain/services/ausgangs_belegung.dart`): Vorbelegung plus Datumsvorschlag — „heute" bzw. die
+  eingestellte `DatumsVorbelegung` — für jedes leere, tatsächlich verwendete Datumsfeld. Genutzt
+  vom `FormTemplateBuilder` als Feldwert **und** vom Ausfüllformular als Vergleichsbasis (siehe
+  oben). **Wer den Datumsvorschlag an einer Stelle ändert, muss ihn an beiden ändern** — sonst
+  zählt jedes leere Datumsfeld als Abweichung, und der Zurücksetzen-Link erscheint, ohne dass der
+  Anwalt getippt hat. Bekannte Grenze: Der Vorschlag wird bei jedem Aufruf neu gerechnet, nicht
+  einmalig beim Öffnen gemerkt — ein über Mitternacht offen gelassenes Formular mit leerem
+  Datumsfeld zählt danach als Abweichung, obwohl niemand etwas geändert hat.
+- **Zurückgesetzt ist nicht weg.** Der Textknopf „Eingaben auf Vorbelegung zurücksetzen" (nur
+  sichtbar bei Abweichung) leert den Tippstand und legt `null` an den Vorgang (der gespeicherte
+  Entwurf ist damit gelöscht); eine `Rueckmeldung` „Eingaben zurückgesetzt." mit der Aktion
+  „Rückgängig" ruft `WizardCubit.stelleEingabenWiederHer` und legt ihn erneut ab — solange die Meldung steht,
+  bleibt das Zurücksetzen ein Kurzweg zurück, kein endgültiger Schritt.
+- **Das Entwurf-Schema lebt nur im Dart, nicht im Vertrag.** `entwurf` ist in `docs/openapi.json`
+  ein opakes `JsonElement` — der `VorgangEntwurf` ist wieder nur `gespeichertAm`, `feldWerte` und
+  `schadensaufstellung` (#133 Teil B, die Felder `formTemplateId`/`vorlagenName`/`mitAuflistung` sind
+  entfallen). Wer das Schema ändert, muss nur `VorgangEntwurf.fromJson` tolerant halten (ein
+  fehlendes Feld ist `null`, kein Fehler) — nicht `docs/openapi.json` und nicht `OpenApiVertragTests`.
+- **Der generische Upsert schrieb den Entwurf versehentlich mit.** `VorgangRepository.CopyInto`
+  übernimmt `EntwurfJson` seit #133 **nicht** mehr, auch beim Insert nicht: Ein `source`, der den
+  angefangenen Stand nur zufällig mitträgt (eine ältere Kopie, ein Client, der einen fremden Vorgang
+  mitschickt), darf keinen Entwurf entstehen lassen, den niemand über `PUT api/Vorgaenge/entwurf`
+  gesetzt hat. Der Entwurf hat seinen eigenen Schreibweg; der Upsert des ganzen Vorgangs (etwa nach
+  einer eingetroffenen Zentralruf-Antwort) trägt sonst einen veralteten Stand aus Sicht des Wizards
+  mit und überschriebe einen inzwischen aktuelleren. Deshalb löscht auch der Rückfluss nach dem
+  Speichern eines Schreibens den Entwurf **explizit** (`sichereEntwurf(referenz, null)` in
+  `word_automation_page.dart`), statt sich darauf zu verlassen, dass ihn irgendein Upsert schon
+  mitnimmt.
 - **Der Stift am Feld ändert die Vorlage, nicht nur die Anzeige.** `FeldEinstellungDialog` liefert
   ein geändertes `FieldData` ab, `WizardCubit.aktualisiereFeld` speichert es über `UpdateFormTemplate`.
   Der Dialog prüft den Namen nach derselben Regel wie der Dienst (`^[\p{L}\p{N} _-]+$`) und gegen die

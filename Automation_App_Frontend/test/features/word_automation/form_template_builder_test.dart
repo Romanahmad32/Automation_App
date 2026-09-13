@@ -7,6 +7,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/inpu
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
+import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
 import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -343,10 +344,13 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextField).first, 'HUK-COBURG');
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(gemeldet, isNull, reason: 'nicht bei jedem Tastendruck');
 
-    await tester.pump(const Duration(seconds: 2));
+    // 300 ms statt der früheren zwei Sekunden (#133): Seit die Meldung die
+    // Sicherung am Vorgang unmittelbar auslöst, ist diese Wartezeit die einzige
+    // zwischen Tastendruck und abgelegtem Stand.
+    await tester.pump(FormWertBeobachter.standardEntprellung);
     expect(gemeldet, const {'Versicherer': 'HUK-COBURG'});
   });
 

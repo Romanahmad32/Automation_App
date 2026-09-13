@@ -4,11 +4,11 @@ import 'package:automation_app/features/form_template_setup/domain/entities/form
 import 'package:automation_app/features/form_template_setup/domain/usecases/update_form_template.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
-import 'package:automation_app/features/word_automation/presentation/utils/entwurfs_sicherung.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/entwurf_sicherung_steuerung.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/feld_stand.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/vorlagen_fassung.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -25,23 +25,15 @@ class WizardCubit extends Cubit<WizardState> {
   final UseCase<FormTemplate, UpdateFormTemplateParams> _updateFormTemplate;
   final UseCase<List<Mandant>, NoParams> _getMandanten;
 
-  /// Der app-weite Vorgangsspeicher — hier nur noch, um einen verworfenen
-  /// Entwurf auch am Vorgang wegzuräumen.
-  final VorgangCubit _vorgaenge;
-
-  /// Ablage des angefangenen Stands; hält Zeitgeber und Bestätigt-Marke.
-  final EntwurfsSicherung _entwurf;
-
-  /// Wie lange nach der letzten Änderung gewartet wird, bevor der Entwurf zum
-  /// Dienst geht — die Zusage, an der sich Aufrufer und Tests ausrichten.
-  static const entwurfVerzoegerung = EntwurfsSicherung.verzoegerung;
+  /// Die Ablage des angefangenen Stands — Bestätigt-Marke und der Weg zum
+  /// Vorgang liegen dort, nicht hier.
+  final EntwurfSicherungSteuerung _entwurf;
 
   WizardCubit(
     this._updateFormTemplate,
     this._getMandanten,
     VorgangCubit vorgaenge,
-  ) : _vorgaenge = vorgaenge,
-      _entwurf = EntwurfsSicherung(vorgaenge),
+  ) : _entwurf = EntwurfSicherungSteuerung(vorgaenge),
       super(const WizardState());
 
   /// Wählt den Vorgang, aus dem das Schreiben erstellt wird. Die Auswahl wird
@@ -49,26 +41,58 @@ class WizardCubit extends Cubit<WizardState> {
   /// dem Register danach asynchron nachgeladen — die Antwortdaten stecken schon
   /// im Vorgang, die Mandanten-Stammdaten ergänzen Name und Anschrift.
   ///
-  /// Die Schadensaufstellung fällt dabei weg, wie schon bei [selectFormTemplate]
-  /// und [setMitAuflistung]: Sie gehört zum vorigen Vorgang. Blieb sie stehen,
-  /// zeigte der nächste Vorgang die Positionen des vorigen — und der
-  /// Listener des Schadensaufstellungs-Schritts lud die **eigene** gespeicherte
-  /// Aufstellung nie nach, weil er nur bei `damageListing == null` greift.
+  /// Die Schadensaufstellung des vorigen Vorgangs fällt dabei weg — sie gehört
+  /// dorthin, und blieb sie stehen, zeigte der nächste Vorgang die Positionen
+  /// des vorigen. An ihre Stelle tritt die des **neuen** Vorgangs, soweit sein
+  /// angefangener Stand eine trägt; hat er keine, bleibt `null`, und der
+  /// Listener des Schadensaufstellungs-Schritts lädt die gespeicherte nach (er
+  /// greift nur bei `damageListing == null`).
   ///
-  /// Aus demselben Grund fällt der Tippstand weg: Er gehört zum vorigen
-  /// Vorgang und hätte beim Neuaufbau des Formulars Vorrang vor der Vorbelegung
-  /// des neuen. Ein am neuen Vorgang liegender Entwurf wird **angeboten**
-  /// ([WizardState.entwurfAngebot]), nicht eingesetzt.
+  /// Der Tippstand wird **ausgetauscht**, nicht geleert: Der des vorigen
+  /// Vorgangs geht, der am neuen liegende kommt — ohne Nachfrage (#133). Das
+  /// Formular zeigt dann Vorbelegung und diese Werte gemischt; weil der Entwurf
+  /// nur die Abweichungen trägt, verdeckt er keine frische Vorbelegung. Wer
+  /// zwischen zwei Vorgängen hin- und herspringt, findet an jedem wieder vor,
+  /// was er dort zuletzt getippt hat.
+  ///
+  /// **Derselbe Vorgang noch einmal ist keine Wahl** (#133): Der Absprung aus
+  /// Übersicht oder Vorgängen wählt den bereits gewählten erneut. Vorher leerte
+  /// das den Tippstand — sichtbar geschah nichts, denn die FormGroup hängt an
+  /// Vorlage und Vorbelegung und blieb stehen; der Stand war trotzdem weg.
+  /// Verglichen wird die **Vorgangsreferenz**, nicht die
+  /// Objektidentität: `vorgang_selector.dart` reicht Vorgänge aus der geladenen
+  /// Liste und aus dem Vorauswahl-Vorschlag durch, und nach jedem Neuladen sind
+  /// das neue Instanzen derselben Sache — mit `identical` wäre jede davon
+  /// wieder ein voller Reset. Ein inhaltlich geänderter Vorgang derselben
+  /// Referenz ist kein Wechsel, sondern ein neuer Stand und geht weiter über
+  /// [uebernehmeVorgangsStand].
   Future<void> selectVorgang(Vorgang? vorgang) async {
-    _entwurf.beende();
+    final alt = state.selectedVorgang?.referenz;
+    final neu = vorgang?.referenz;
+    if (alt != null && neu != null && Vorgang.gleicheReferenz(alt, neu)) {
+      // Kein Wechsel, aber ein neuer Stand derselben Sache (z. B. Zentralruf-
+      // Antwort eingetroffen, #150): Die Anzeige bekommt die frischen Daten,
+      // sonst wird nichts angerührt — insbesondere bleibt der Tippstand stehen,
+      // statt durch den am Vorgang liegenden (womöglich älteren) ersetzt zu
+      // werden. Deshalb der minimale eigene Emit.
+      emit(state.copyWith(selectedVorgang: () => vorgang));
+      return;
+    }
+    final entwurf = vorgang?.entwurf;
     emit(
       state.copyWith(
         selectedVorgang: () => vorgang,
         selectedMandant: () => null,
-        damageListing: () => null,
         schadenspositionFehler: const [],
-        formDataEntwurf: () => null,
-        entwurfAngebot: () => vorgang?.entwurf,
+        // Der angefangene Stand des neuen Vorgangs, still eingesetzt (#133).
+        // Beides zusammen, weil beides zusammen gesichert wurde: Felder ohne
+        // die Positionen wären ein halber Stand.
+        formDataEntwurf: () => entwurf?.feldWerte,
+        damageListing: () => entwurf?.schadensaufstellung,
+        // Vorlage und Vorbelegung ändern sich mit dem Vorgang, der Schlüssel der
+        // FormGroup also meistens ohnehin — aber eben nur meistens. Die Marke
+        // macht aus „meistens" ein „immer".
+        aufbauMarke: state.aufbauMarke + 1,
         // Die Entscheidung gehört dem Vorgang, aus dem sie stammt: Am neuen
         // steht eine andere Nummer, und „neues Schreiben" hiesse dort etwas
         // anderes als hier. Zurück auf „noch nicht gewählt", nicht auf
@@ -97,29 +121,31 @@ class WizardCubit extends Cubit<WizardState> {
     }
   }
 
-  /// Übernimmt den angebotenen Entwurf in die Eingabe: Werte und Aufstellung
-  /// werden gesetzt, die Leiste verschwindet, und [WizardState.aufbauMarke]
-  /// zwingt das Formular zum Neuaufbau — ohne sie hätte der Anwalt auf
-  /// „Weiterarbeiten" gedrückt und nichts passieren sehen.
-  void uebernimmEntwurf() {
-    final angebot = state.entwurfAngebot;
-    if (angebot == null) return;
-    emit(
-      state.copyWith(
-        formDataEntwurf: () => angebot.feldWerte,
-        damageListing: () => angebot.schadensaufstellung,
-        entwurfAngebot: () => null,
-        aufbauMarke: state.aufbauMarke + 1,
-      ),
-    );
+  /// Wirft die eigenen Eingaben weg und lässt wieder die Vorbelegung gelten —
+  /// der Weg zurück, den der stille Wiedereinstieg braucht (#133): Wer seinen
+  /// angefangenen Stand nicht mehr will, bekäme ihn sonst bei jeder Rückkehr
+  /// wieder vorgesetzt.
+  ///
+  /// Gelöscht wird auch am Vorgang, sonst stünde er beim nächsten Einstieg
+  /// wieder da. Weil das der einzige Griff ist, der Getipptes **wegwirft**,
+  /// gibt er es zurück: Die Meldung darüber bietet es über
+  /// [stelleEingabenWiederHer] an, solange sie steht.
+  ///
+  /// Die Schadensaufstellung bleibt unberührt — der Knopf steht über dem
+  /// Ausfüll**formular** und meint dessen Felder. Sie liegt in einem eigenen
+  /// Schritt mit eigenen Griffen.
+  Map<String, String>? setzeEingabenZurueck() {
+    final bisher = state.formDataEntwurf;
+    emit(EntwurfSicherungSteuerung.nachZuruecksetzen(state));
+    _entwurf.nachEingabe(state);
+    return (bisher == null || bisher.isEmpty) ? null : bisher;
   }
 
-  /// Verwirft den angebotenen Entwurf — auch am Vorgang, sonst stünde er beim
-  /// nächsten Einstieg wieder da.
-  void verwirfEntwurf() {
-    final referenz = state.selectedVorgang?.referenz;
-    emit(state.copyWith(entwurfAngebot: () => null));
-    if (referenz != null) _vorgaenge.sichereEntwurf(referenz, null);
+  /// Nimmt ein [setzeEingabenZurueck] zurück: Die Eingaben stehen wieder im
+  /// Formular und wieder am Vorgang.
+  void stelleEingabenWiederHer(Map<String, String> werte) {
+    emit(EntwurfSicherungSteuerung.nachWiederherstellung(state, werte));
+    _entwurf.nachEingabe(state);
   }
 
   /// Ersetzt den gewählten Vorgang durch seinen aktualisierten Stand (z. B.
@@ -127,11 +153,7 @@ class WizardCubit extends Cubit<WizardState> {
   /// Mandanten neu zu laden. No-op, wenn inzwischen ein anderer Vorgang
   /// gewählt wurde.
   void uebernehmeVorgangsStand(Vorgang vorgang) {
-    final aktuell = state.selectedVorgang;
-    if (aktuell == null ||
-        !Vorgang.gleicheReferenz(aktuell.referenz, vorgang.referenz)) {
-      return;
-    }
+    if (!_entwurf.passtZuAktuellemVorgang(state, vorgang.referenz)) return;
     _entwurf.markiereBestaetigt();
     // Die Wahl „Korrektur oder neues Schreiben" bleibt stehen: Sie gilt bis zum
     // **Speichern**, nicht bis zum Erzeugen (#133). Wer dreimal erzeugt und
@@ -158,9 +180,10 @@ class WizardCubit extends Cubit<WizardState> {
     }
     emit(state.copyWith(currentStep: step));
     // Einen Eingabeschritt zu verlassen ist der Punkt, an dem der Anwalt mit
-    // dem Bisherigen fertig ist — hier wird nicht auf den Takt gewartet. Der
-    // Sprung ins Begutachten ist keiner: Dorthin kommt man nur über ein
-    // erzeugtes Dokument, und dann ist der Stand bestätigt statt angefangen.
+    // dem Bisherigen fertig ist — hier wird nicht auf die Entprellung des
+    // Formulars gewartet. Der Sprung ins Begutachten ist keiner: Dorthin kommt
+    // man nur über ein erzeugtes Dokument, und dann ist der Stand bestätigt
+    // statt angefangen.
     if (step == WizardStep.fillOut || step == WizardStep.schadensaufstellung) {
       sichereEntwurfJetzt();
     }
@@ -169,8 +192,12 @@ class WizardCubit extends Cubit<WizardState> {
   /// Setzt die gewählte Vorlage — und unterscheidet dabei zwei Fälle, die
   /// vorher denselben Weg gingen:
   ///
-  /// **Wechsel** (andere Vorlage, oder gar keine mehr): Die Eingaben gehören
-  /// zur vorherigen Vorlage und werden verworfen.
+  /// **Wechsel** (andere Vorlage, oder gar keine mehr): Der abgesendete Stand
+  /// und die Schadensaufstellung gehören zur vorherigen Vorlage und fallen weg.
+  /// Der **angefangene** Stand bleibt: Er ist nach Feldbezeichnung geschlüsselt,
+  /// nicht nach Vorlage, und wer zwischen zwei Vorlagen hin- und herschaut, will
+  /// beim Zurückkommen sein Getipptes wiederfinden (#133). Was die neue Vorlage
+  /// nicht kennt, zeigt sie nicht an — verloren ist es deshalb nicht.
   ///
   /// **Aktualisierung** (dieselbe ID, neuer Stand): Sie kommt nicht vom
   /// Anwalt, sondern vom Abgleich im `TemplateSelector` — der vergleicht die
@@ -183,10 +210,13 @@ class WizardCubit extends Cubit<WizardState> {
   void selectFormTemplate(FormTemplate? template) {
     if (template != null && template.id == state.selectedFormTemplate?.id) {
       emit(
-        _mitGueltigemSchritt(
+        VorlagenFassung.mitGueltigemSchritt(
           state.copyWith(
             selectedFormTemplate: () => template,
-            mitAuflistung: _fassungFuer(template, state.mitAuflistung),
+            mitAuflistung: VorlagenFassung.fuer(
+              template,
+              bisher: state.mitAuflistung,
+            ),
           ),
         ),
       );
@@ -194,15 +224,15 @@ class WizardCubit extends Cubit<WizardState> {
     }
 
     emit(
-      _mitGueltigemSchritt(
+      VorlagenFassung.mitGueltigemSchritt(
         state.copyWith(
           selectedFormTemplate: () => template,
-          mitAuflistung: template != null && _fassungFuer(template, false),
+          mitAuflistung:
+              template != null && VorlagenFassung.fuer(template, bisher: false),
           vorsteuerabzugsberechtigt: true,
           damageListing: () => null,
           schadenspositionFehler: const [],
           formData: () => null,
-          formDataEntwurf: () => null,
         ),
       ),
     );
@@ -212,7 +242,7 @@ class WizardCubit extends Cubit<WizardState> {
   /// Schadensaufstellungs-Schritts werden beim Wechsel verworfen.
   void setMitAuflistung(bool mitAuflistung) {
     emit(
-      _mitGueltigemSchritt(
+      VorlagenFassung.mitGueltigemSchritt(
         state.copyWith(
           mitAuflistung: mitAuflistung,
           damageListing: () => null,
@@ -221,20 +251,6 @@ class WizardCubit extends Cubit<WizardState> {
       ),
     );
   }
-
-  /// Welche Fassung nach dem Setzen von [template] gilt: die bisherige, solange
-  /// die Vorlage sie hat — sonst die einzige, die sie hat. Mit `bisher: false`
-  /// ist das die alte Regel „hat sie nur eine Fassung mit Auflistung, nimm sie".
-  static bool _fassungFuer(FormTemplate template, bool bisher) =>
-      template.hasMitAuflistung && (bisher || !template.hasOhneAuflistung);
-
-  /// Sichert zu, dass der aktuelle Schritt in [WizardState.steps] vorkommt —
-  /// die Schrittliste hängt an [WizardState.mitAuflistung] und kann sich mit
-  /// der Vorlage geändert haben.
-  static WizardState _mitGueltigemSchritt(WizardState zustand) =>
-      zustand.steps.contains(zustand.currentStep)
-      ? zustand
-      : zustand.copyWith(currentStep: WizardStep.fillOut);
 
   void setVorsteuerabzugsberechtigt(bool value) {
     emit(state.copyWith(vorsteuerabzugsberechtigt: value));
@@ -253,41 +269,67 @@ class WizardCubit extends Cubit<WizardState> {
         schadenspositionFehler: fehler,
       ),
     );
-    _planeSicherung();
+    _entwurf.nachEingabe(state);
   }
 
-  /// Übernimmt den **abgesendeten** Stand des Ausfüll-Formulars. Der Entwurf
-  /// zieht mit, damit ein späterer Neuaufbau nicht auf einen älteren Tippstand
-  /// zurückfällt.
-  void setFormData(Map<String, String>? formData) {
+  /// Übernimmt den **abgesendeten** Stand des Ausfüll-Formulars. Der angefangene
+  /// Stand zieht mit, damit ein späterer Neuaufbau nicht auf ein älteres
+  /// Getipptes zurückfällt.
+  void setFormData(
+    Map<String, String>? formData, {
+    Map<String, String> vorbelegung = const {},
+  }) {
+    final stand = formData == null
+        ? state.formDataEntwurf
+        : _mitAbweichungen(formData, vorbelegung);
     emit(
-      state.copyWith(
-        formData: () => formData,
-        formDataEntwurf: () => formData ?? state.formDataEntwurf,
-      ),
+      state.copyWith(formData: () => formData, formDataEntwurf: () => stand),
     );
-    _planeSicherung();
+    _entwurf.nachEingabe(state);
   }
 
-  /// Schreibt den laufenden Tippstand mit (entprellt aus dem Formular). Gibt
-  /// **keine** Freigabe: Dafür ist [setFormData] zuständig.
-  void setFormDataEntwurf(Map<String, String> werte) {
-    emit(state.copyWith(formDataEntwurf: () => werte));
-    _planeSicherung();
+  /// Schreibt den laufenden Tippstand mit (entprellt aus dem Formular) und legt
+  /// ihn sofort am Vorgang ab. Gibt **keine** Freigabe: Dafür ist [setFormData]
+  /// zuständig.
+  ///
+  /// [werte] ist der **vollständige** Formularstand, [vorbelegung] das, was das
+  /// Formular ohne ihn zeigen würde; aufgehoben wird nur der Unterschied
+  /// ([EntwurfAbweichung.nurAbweichende]). Ohne [vorbelegung] gilt alles als
+  /// abweichend — der Weg der freien Erfassung, die keine Vorbelegung hat.
+  ///
+  /// [fuerReferenz] ist die Referenz des Vorgangs, für den das meldende
+  /// Formular gebaut wurde — der Aufrufer bindet sie beim Bauen ein, nicht
+  /// erst hier ([AusfuellFormular]). Weicht sie von [WizardState.selectedVorgang]
+  /// ab, wird die Meldung verworfen ([EntwurfSicherungSteuerung.passtZuAktuellemVorgang]):
+  /// Der `FormWertBeobachter` des alten Formulars meldet aus seinem
+  /// `dispose()` heraus manchmal erst **nach** einem Vorgangswechsel, und ohne
+  /// diesen Abgleich schriebe sie die Werte des alten Vorgangs auf den neuen
+  /// fort (Review-Nachbesserung #133).
+  void setFormDataEntwurf(
+    Map<String, String> werte, {
+    Map<String, String> vorbelegung = const {},
+    required String? fuerReferenz,
+  }) {
+    if (!_entwurf.passtZuAktuellemVorgang(state, fuerReferenz)) return;
+    final stand = _mitAbweichungen(werte, vorbelegung);
+    emit(state.copyWith(formDataEntwurf: () => stand));
+    _entwurf.nachEingabe(state);
   }
+
+  /// Der bisherige Stand, überschrieben mit den Abweichungen aus [werte] —
+  /// siehe [EntwurfSicherungSteuerung.zusammengefuehrt].
+  Map<String, String> _mitAbweichungen(
+    Map<String, String> werte,
+    Map<String, String> vorbelegung,
+  ) => EntwurfSicherungSteuerung.zusammengefuehrt(
+    bisher: state.formDataEntwurf,
+    werte: werte,
+    vorbelegung: vorbelegung,
+  );
 
   /// Legt den angefangenen Stand sofort am Vorgang ab (Einzelheiten und
-  /// Abbruchgründe in [EntwurfsSicherung.jetzt]).
-  void sichereEntwurfJetzt() => _entwurf.jetzt(
-    referenz: state.selectedVorgang?.referenz,
-    werte: state.formDataEntwurf,
-    aufstellung: state.damageListing,
-  );
-
-  void _planeSicherung() => _entwurf.plane(
-    sichereEntwurfJetzt,
-    hatVorgang: state.selectedVorgang != null,
-  );
+  /// Abbruchgründe in [EntwurfSicherungSteuerung.sichereJetzt]).
+  void sichereEntwurfJetzt() => _entwurf.sichereJetzt(state);
 
   /// Speichert eine im **Ausfüllschritt** geänderte Feldeinstellung direkt an
   /// der Vorlage. Das ist der Griff, der #37 den Auslöser nimmt: Wer bloß ein
@@ -397,13 +439,12 @@ class WizardCubit extends Cubit<WizardState> {
   }
 
   /// Beim Verlassen der Seite noch einmal sichern — das schließt die Lücke der
-  /// letzten Sekunden, die der Takt sonst kostet. Der Empfänger
+  /// letzten 300 ms, die die Entprellung des Formulars kostet. Der Empfänger
   /// ([VorgangCubit]) lebt weiter, seine Ablage läuft also auch dann noch, wenn
   /// dieser Cubit schon geschlossen ist.
   @override
   Future<void> close() {
     sichereEntwurfJetzt();
-    _entwurf.beende();
     return super.close();
   }
 }

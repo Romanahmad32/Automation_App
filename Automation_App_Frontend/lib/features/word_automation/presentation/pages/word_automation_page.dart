@@ -176,6 +176,19 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                     );
                   }
                   getIt<VorgangCubit>().aktualisiere(aktualisiert);
+                  // Der Upsert schreibt den Entwurf seit #133 nicht mehr mit
+                  // (VorgangRepository.CopyInto) — ein bestätigter Stand muss
+                  // ihn deshalb ausdrücklich über seinen eigenen Weg abräumen,
+                  // sonst böte die Leiste beim nächsten Einstieg den gerade
+                  // verdrängten Entwurf wieder an. Nur, wenn hier tatsächlich
+                  // etwas bestätigt wurde (formData != null) — sonst gibt es
+                  // nichts, was einen angefangenen Stand verdrängt hätte.
+                  if (formData != null) {
+                    getIt<VorgangCubit>().sichereEntwurf(
+                      aktualisiert.referenz,
+                      null,
+                    );
+                  }
                   // Auswahl im Wizard auf den neuen Stand heben, damit ein
                   // weiteres Schreiben im selben Durchlauf die gerade
                   // bestätigten Werte vorbelegt bekommt.

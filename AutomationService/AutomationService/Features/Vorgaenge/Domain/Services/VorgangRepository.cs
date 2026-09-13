@@ -67,6 +67,13 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
 
         if (existing is null)
         {
+            // Auch beim Neuanlegen entsteht der Entwurf nur über den eigenen
+            // Weg (SetzeEntwurfAsync, PUT/DELETE api/Vorgaenge/entwurf) — ein
+            // eingehender Datensatz, der selbst schon ein EntwurfJson trägt
+            // (ein Client, der einen alten Stand kopiert oder einen fremden
+            // mitschickt), darf keinen Entwurf entstehen lassen, den niemand
+            // je darüber gesetzt hat (#133).
+            vorgang.EntwurfJson = null;
             db.Vorgaenge.Add(vorgang);
             await db.SaveChangesAsync(cancellationToken);
             return vorgang;
@@ -187,7 +194,14 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         target.AntwortJson = source.AntwortJson;
         target.FeldWerteJson = source.FeldWerteJson;
         target.SchadensaufstellungJson = source.SchadensaufstellungJson;
-        target.EntwurfJson = source.EntwurfJson;
+        // EntwurfJson bewusst NICHT übernehmen: Der angefangene Ausfüllstand
+        // hat seinen eigenen Schreibweg (SetzeEntwurfAsync, PUT/DELETE
+        // api/Vorgaenge/entwurf), der laufend beim Tippen schreibt. Ein Upsert
+        // des ganzen Vorgangs (z. B. weil zwischenzeitlich eine
+        // Zentralruf-Antwort eintraf) trägt in `source` oft nur eine veraltete
+        // Kopie dieses Felds aus Sicht eines Clients — sie würde sonst einen
+        // frischeren, noch nicht abgeholten Entwurf löschen oder einen bereits
+        // verworfenen zurückholen (#133).
         target.SchreibenNummer = source.SchreibenNummer;
         target.DokumentPfad = source.DokumentPfad;
         target.AktenOrdner = source.AktenOrdner;

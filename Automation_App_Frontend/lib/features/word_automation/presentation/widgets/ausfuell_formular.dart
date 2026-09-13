@@ -5,13 +5,14 @@ import 'package:automation_app/features/form_template_setup/domain/services/verw
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/prefill_wert.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_prefill_matcher.dart';
+import 'package:automation_app/features/word_automation/domain/services/ausgangs_belegung.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/domain/services/schreiben_dateiname.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/neuerzeugung_bestaetigung.dart';
-import 'package:automation_app/features/word_automation/presentation/widgets/entwurf_hinweis.dart';
+import 'package:automation_app/features/word_automation/presentation/widgets/eingaben_zuruecksetzen_button.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/feld_einstellung_dialog.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/schreiben_nummer_hinweis.dart';
@@ -76,13 +77,22 @@ class AusfuellFormular extends StatelessWidget {
     final quellen = herkunft.map(
       (label, wert) => MapEntry(label, wert.quelle.beschreibung),
     );
+    // Wo der angefangene Stand den vorbelegten Wert überschreibt, nennt das
+    // Feld **keine** Herkunft mehr (#133): Im Feld steht dann der Wert des
+    // Anwalts, und „Vorbelegt aus dem Mandantenregister" darunter behauptete
+    // eine Herkunft, die zum Angezeigten nicht mehr passt. Aus demselben Grund
+    // zählt die Sammelzeile darüber diese Felder nicht mit.
+    final ueberschrieben =
+        wizardState.formDataEntwurf?.keys.toSet() ?? const <String>{};
+    quellen.removeWhere((label, _) => ueberschrieben.contains(label));
     // Der Hinweis zählt nur, was dieses Schreiben auch einsetzt (#82) — sonst
     // nennt er sechs vorbelegte Felder, während oben drei stehen, und der
     // Anwalt sucht die anderen drei. Vorbelegt werden weiterhin alle: Die
     // eingeklappten behalten ihren Wert für die andere Vorlagenfassung.
     final sichtbarVorbelegt = [
       for (final eintrag in herkunft.entries)
-        if (VerwendeteFelder.wirdVerwendet(eintrag.key, aktivePlatzhalter))
+        if (!ueberschrieben.contains(eintrag.key) &&
+            VerwendeteFelder.wirdVerwendet(eintrag.key, aktivePlatzhalter))
           eintrag.value,
     ];
     final anzahlGespeichert = sichtbarVorbelegt
@@ -98,7 +108,16 @@ class AusfuellFormular extends StatelessWidget {
       mandant: wizardState.selectedMandant,
     );
 
-    final angebot = wizardState.entwurfAngebot;
+    // Der Abweichungsvergleich braucht mehr als [prefill]: Ein leeres
+    // Datumsfeld zeigt das Formular selbst nicht leer, sondern mit dem
+    // Datumsvorschlag (#133 Mangel 2) — ohne ihn hier zählte dieser Vorschlag
+    // als Eingabe des Anwalts, der Zurücksetzen-Link erschiene ungefragt.
+    final vorbelegungFuerVergleich = AusgangsBelegung.vollstaendig(
+      fields: template.fields,
+      initialValues: prefill,
+      aktivePlatzhalter: aktivePlatzhalter,
+    );
+
     // Sobald zum Vorgang ein Schreiben **gespeichert** ist: Korrektur oder
     // neues Schreiben? Null heisst „noch keins gespeichert" — dann ist die
     // Nummer die 1 und es gibt nichts zu fragen (§4.9, #133). Ein bloss
@@ -111,16 +130,45 @@ class AusfuellFormular extends StatelessWidget {
     // sondern sagt darüber, was fehlt (vgl. #130).
     final wahlFehlt = gibtGespeichertes && wizardState.neuesSchreiben == null;
 
+    final formular = FormTemplateBuilder(
+      formTemplate: template,
+      initialValues: prefill,
+      initialValueQuellen: quellen,
+      // Der mitgeschriebene Tippstand überlebt damit den Neuaufbau des
+      // Formulars, den eine nebenan bearbeitete Vorlage auslöst.
+      erfassteWerte: wizardState.formDataEntwurf ?? const {},
+      aufbauMarke: wizardState.aufbauMarke,
+      aktivePlatzhalter: aktivePlatzhalter,
+      vorschlaege: vorschlaege,
+      weitereFehlende: [if (wahlFehlt) SchreibenNummerHinweis.wahlFehltHinweis],
+      // Die Vorbelegung reist mit: Aufgehoben wird nur, was von ihr abweicht
+      // (#133) — und was das ist, weiß nur diese Stelle, an der beides
+      // zusammenläuft.
+      //
+      // `vorgang` ist an den Bau **dieses** Formulars gebunden. Meldet sich
+      // sein `FormWertBeobachter` erst nach einem Vorgangswechsel (er meldet
+      // eine ausstehende Änderung aus seinem `dispose()` heraus, das nach dem
+      // Wechsel läuft), verwirft der Cubit die Meldung über genau diese
+      // Referenz (Review-Nachbesserung #133).
+      onWerteGeaendert: (werte) =>
+          context.read<WizardCubit>().setFormDataEntwurf(
+            werte,
+            vorbelegung: vorbelegungFuerVergleich,
+            fuerReferenz: vorgang?.referenz,
+          ),
+      onFeldBearbeiten: (feld) => _feldBearbeiten(context, feld),
+      submitButtonLabel: Text(
+        wizardState.mitAuflistung
+            ? 'Weiter zur Schadensaufstellung'
+            : 'Dokument erstellen',
+      ),
+      onSubmitted: (formData) =>
+          _absenden(context, formData, vorbelegungFuerVergleich),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (angebot != null)
-          EntwurfHinweis(
-            entwurf: angebot,
-            onWeiterarbeiten: () =>
-                context.read<WizardCubit>().uebernimmEntwurf(),
-            onVerwerfen: () => context.read<WizardCubit>().verwirfEntwurf(),
-          ),
         if (gibtGespeichertes)
           SchreibenNummerHinweis(
             bisherigeNummer: gespeicherteNummer,
@@ -134,29 +182,16 @@ class AusfuellFormular extends StatelessWidget {
             anzahlFelder: sichtbarVorbelegt.length,
             anzahlGespeichert: anzahlGespeichert,
           ),
-        FormTemplateBuilder(
-          formTemplate: template,
-          initialValues: prefill,
-          initialValueQuellen: quellen,
-          // Der mitgeschriebene Tippstand überlebt damit den Neuaufbau des
-          // Formulars, den eine nebenan bearbeitete Vorlage auslöst.
-          erfassteWerte: wizardState.formDataEntwurf ?? const {},
-          aufbauMarke: wizardState.aufbauMarke,
-          aktivePlatzhalter: aktivePlatzhalter,
-          vorschlaege: vorschlaege,
-          weitereFehlende: [
-            if (wahlFehlt) SchreibenNummerHinweis.wahlFehltHinweis,
-          ],
-          onWerteGeaendert: (werte) =>
-              context.read<WizardCubit>().setFormDataEntwurf(werte),
-          onFeldBearbeiten: (feld) => _feldBearbeiten(context, feld),
-          submitButtonLabel: Text(
-            wizardState.mitAuflistung
-                ? 'Weiter zur Schadensaufstellung'
-                : 'Dokument erstellen',
+        // Der Weg zurück zur Vorbelegung — nur sichtbar, wenn ein Feld **dieser**
+        // Vorlage überschrieben ist. Der Stand darf auch Felder anderer Vorlagen
+        // tragen; die hier anzubieten hieße, einen Knopf zu zeigen, dessen
+        // Wirkung nirgends zu sehen ist.
+        EingabenZuruecksetzenButton(
+          sichtbar: template.fields.any(
+            (feld) => ueberschrieben.contains(feld.label),
           ),
-          onSubmitted: (formData) => _absenden(context, formData),
         ),
+        formular,
       ],
     );
   }
@@ -228,10 +263,11 @@ class AusfuellFormular extends StatelessWidget {
   Future<void> _absenden(
     BuildContext context,
     Map<String, String> formData,
+    Map<String, String> vorbelegung,
   ) async {
     final cubit = context.read<WizardCubit>();
     final bloc = context.read<EditedDocumentBloc>();
-    cubit.setFormData(formData);
+    cubit.setFormData(formData, vorbelegung: vorbelegung);
     if (cubit.state.mitAuflistung) {
       // Generierung erst am Ende des Schadensaufstellungs-Schritts.
       cubit.goToStep(WizardStep.schadensaufstellung);
