@@ -106,6 +106,11 @@ class _LeereVorgangAblage implements VorgangRepository {
   Future<Vorgang?> abschliessenVorgang(String referenz) async => null;
   @override
   Future<Vorgang?> aendereReferenz(String von, String nach) async => null;
+  @override
+  Future<Vorgang?> setzeVollmachtVermerk(
+    String referenz, {
+    required bool gedruckt,
+  }) async => null;
 }
 
 List<ReceivedReply> _dreiEintraege() => [

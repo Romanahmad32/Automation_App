@@ -54,6 +54,9 @@ Vorgang vorgangAusJson(Map<String, dynamic> json) {
     abgeschlossenAm: DateTime.tryParse(
       json['abgeschlossenAm'] as String? ?? '',
     ),
+    vollmachtGedrucktAm: DateTime.tryParse(
+      json['vollmachtGedrucktAm'] as String? ?? '',
+    ),
   );
 }
 
@@ -83,5 +86,6 @@ extension VorgangAlsJson on Vorgang {
     'dokumentPfad': dokumentPfad,
     'aktenOrdner': aktenOrdner,
     'abgeschlossenAm': abgeschlossenAm?.toIso8601String(),
+    'vollmachtGedrucktAm': vollmachtGedrucktAm?.toIso8601String(),
   };
 }

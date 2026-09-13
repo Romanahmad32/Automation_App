@@ -50,6 +50,17 @@ public interface IVorgangRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Setzt den Vermerk „Vollmacht gedruckt" (<see cref="VorgangEntity.VollmachtGedrucktAm"/>)
+    /// oder nimmt ihn zurück (<paramref name="gedrucktAm"/> = null), §4.11. Eigener
+    /// Weg aus demselben Grund wie beim Entwurf. Null, wenn kein Vorgang zur
+    /// Referenz existiert.
+    /// </summary>
+    Task<VorgangEntity?> SetzeVollmachtGedrucktAsync(
+        string referenz,
+        DateTime? gedrucktAm,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Benennt den Vorgang von <paramref name="von"/> auf <paramref name="nach"/> um
     /// (Referenz korrigieren, z. B. Tippfehler). Die Referenz-Bestandteile
     /// (Nr/Jahr/Abteilung/Kennzeichen) werden dabei neu aus der Zielreferenz

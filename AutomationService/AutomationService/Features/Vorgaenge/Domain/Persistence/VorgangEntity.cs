@@ -84,4 +84,15 @@ public class VorgangEntity
     public string? DokumentPfad { get; set; }
     public string? AktenOrdner { get; set; }
     public DateTime? AbgeschlossenAm { get; set; }
+
+    /// <summary>
+    /// Wann die Vollmacht zu diesem Vorgang zuletzt gedruckt — oder von Hand als
+    /// gedruckt vermerkt — wurde (§4.11). Null: noch nicht. Ein Merkmal neben dem
+    /// Lebenszyklus, kein Schritt darin: Die Vollmacht hält keinen Status auf.
+    ///
+    /// Geschrieben nur über den eigenen Weg <c>PUT|DELETE api/Vorgaenge/vollmacht</c>,
+    /// nie über den Upsert — der schickt den ganzen Vorgang aus der Sicht des
+    /// Aufrufers, und eine ältere Kopie nähme den Vermerk sonst wieder zurück.
+    /// </summary>
+    public DateTime? VollmachtGedrucktAm { get; set; }
 }

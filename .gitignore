@@ -30,8 +30,10 @@ Beispiele/**
 # Kanzleibezug; die echten Vorlagen gehoeren in den Vorlagenordner des
 # Anwenders (%APPDATA%\AutomationService\Vorlagen), wohin der
 # TemplateParametrizer sie auch schreibt.
-AutomationService/AutomationService/Templates/*.docx
-!AutomationService/AutomationService/Templates/Muster_*.docx
+# Samt Unterordnern: Templates/Vollmacht/ traegt die Vollmacht-Muster (§4.11),
+# und eine echte Vollmacht der Kanzlei hiesse dort genau wie im Vorlagenordner.
+AutomationService/AutomationService/Templates/**/*.docx
+!AutomationService/AutomationService/Templates/**/Muster_*.docx
 # Die Ersetzungstabelle des TemplateParametrizer bildet die Mandantendaten des
 # Ausgangsschreibens auf Platzhalter ab und ist damit selbst eine Sammlung
 # echter Personendaten. Muster ohne Echtdaten: ersetzungen.example.tsv

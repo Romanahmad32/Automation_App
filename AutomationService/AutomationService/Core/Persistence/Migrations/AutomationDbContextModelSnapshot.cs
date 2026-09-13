@@ -15,7 +15,7 @@ namespace AutomationService.Core.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
             modelBuilder.Entity("AutomationService.Features.EmailVersand.Domain.Persistence.AnredeBausteinEntity", b =>
                 {
@@ -907,6 +907,9 @@ namespace AutomationService.Core.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Unfalluhrzeit")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("VollmachtGedrucktAm")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

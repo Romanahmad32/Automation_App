@@ -24,16 +24,21 @@ public interface IWordInteropPdfConverter
 /// Laufzeit nicht auflösbar und würden den Prozess crashen.
 /// Word-COM ist nicht threadsafe: alle Aufrufe werden über eine Queue auf einem
 /// dedizierten STA-Thread serialisiert; die Word-Instanz bleibt zwischen den
-/// Aufrufen am Leben (Startkosten fallen nur einmal an).
+/// Aufrufen am Leben (Startkosten fallen nur einmal an). Über dieselbe Queue
+/// laufen auch Druckaufträge (<see cref="IWordDrucker"/>, §4.11) — sie treffen
+/// so eine schon gestartete Instanz, statt eine zweite neben ihr aufzumachen.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, IAsyncDisposable
+public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, IWordDrucker, IAsyncDisposable
 {
     private const int WdExportFormatPdf = 17;     // WdExportFormat.wdExportFormatPDF
     private const int WdDoNotSaveChanges = 0;     // WdSaveOptions.wdDoNotSaveChanges
     private const int WdAlertsNone = 0;           // WdAlertLevel.wdAlertsNone
 
-    private sealed record ConversionJob(string? DocxPath, TaskCompletionSource<byte[]> Completion);
+    private sealed record ConversionJob(
+        string? DocxPath,
+        TaskCompletionSource<byte[]> Completion,
+        bool Drucken = false);
 
     private readonly BlockingCollection<ConversionJob> _jobs = [];
     private readonly Thread _workerThread;
@@ -77,6 +82,24 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         return await job.Completion.Task.WaitAsync(timeoutSource.Token);
     }
 
+    public async Task DruckeAsync(string docxPfad, CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(docxPfad))
+            throw new FileNotFoundException($"Zu druckende Datei nicht gefunden: {docxPfad}");
+        if (_wordUnavailable)
+            throw new PdfConversionUnavailableException("Microsoft Word ist auf diesem System nicht verfügbar.");
+
+        var job = new ConversionJob(
+            Path.GetFullPath(docxPfad),
+            new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously),
+            Drucken: true);
+        _jobs.Add(job, cancellationToken);
+
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(_conversionTimeout);
+        await job.Completion.Task.WaitAsync(timeoutSource.Token);
+    }
+
     public Task WarmupAsync()
     {
         var job = new ConversionJob(null, new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously));
@@ -100,14 +123,14 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
                 byte[] pdfBytes;
                 try
                 {
-                    pdfBytes = ConvertOnWorkerThread(job.DocxPath);
+                    pdfBytes = Ausfuehren(job);
                 }
                 catch (COMException)
                 {
                     // Word-Instanz könnte abgestürzt/extern beendet worden sein:
                     // einmal frisch aufbauen und den Job wiederholen.
                     TearDownWordApplication();
-                    pdfBytes = ConvertOnWorkerThread(job.DocxPath);
+                    pdfBytes = Ausfuehren(job);
                 }
 
                 job.Completion.TrySetResult(pdfBytes);
@@ -119,6 +142,76 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         }
 
         TearDownWordApplication();
+    }
+
+    private byte[] Ausfuehren(ConversionJob job)
+    {
+        if (!job.Drucken)
+            return ConvertOnWorkerThread(job.DocxPath!);
+
+        PrintOnWorkerThread(job.DocxPath!);
+        return [];
+    }
+
+    /// <summary>
+    /// <c>Background: false</c> ist der Punkt: Im Hintergrunddruck kehrte
+    /// <c>PrintOut</c> sofort zurück, das anschließende <c>Close</c> nähme Word
+    /// den Auftrag unter der Hand weg, und der Aufrufer löschte eine Datei, die
+    /// noch gar nicht in der Warteschlange stand.
+    ///
+    /// Wiederholt wird nur, was <b>vor</b> dem Druck scheitert. Die Queue baut
+    /// Word nach einer <see cref="COMException"/> neu auf und führt den Auftrag
+    /// ein zweites Mal aus — für eine PDF harmlos, für einen Druck ein zweites
+    /// Blatt. Deshalb verlässt ein Fehler ab <c>PrintOut</c> diese Methode nie
+    /// als <see cref="COMException"/>: Ob Word das Blatt schon an die
+    /// Warteschlange gegeben hat, weiß dann niemand.
+    /// </summary>
+    private void PrintOnWorkerThread(string docxPath)
+    {
+        var word = EnsureWordApplication();
+        dynamic? document = null;
+        try
+        {
+            // Scheitert das Öffnen an einer weggebrochenen Instanz, darf die
+            // Queue neu aufbauen und wiederholen — gedruckt ist noch nichts.
+            document = word.Documents.Open(
+                docxPath,
+                ReadOnly: true,
+                AddToRecentFiles: false,
+                Visible: false);
+            try
+            {
+                document!.PrintOut(Background: false);
+            }
+            catch (COMException exception)
+            {
+                throw new InvalidOperationException("Word hat den Druckauftrag abgebrochen.", exception);
+            }
+        }
+        finally
+        {
+            if (document is not null)
+            {
+                SchliesseNachDruck(document);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Ein Fehler beim Schließen ist nicht der Fehler des Druckauftrags — und
+    /// dürfte als <see cref="COMException"/> den Wiederholungsdruck auslösen.
+    /// </summary>
+    private void SchliesseNachDruck(dynamic document)
+    {
+        try
+        {
+            document.Close(WdDoNotSaveChanges);
+            Marshal.ReleaseComObject(document);
+        }
+        catch (COMException exception)
+        {
+            _logger.LogWarning(exception, "Word-Dokument ließ sich nach dem Druck nicht schließen.");
+        }
     }
 
     private byte[] ConvertOnWorkerThread(string docxPath)
@@ -201,7 +294,7 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         exception switch
         {
             PdfConversionUnavailableException or FileNotFoundException => exception,
-            _ => new InvalidOperationException("Fehler bei der Konvertierung von .docx zu .pdf über Word.", exception),
+            _ => new InvalidOperationException("Word konnte das Dokument nicht verarbeiten.", exception),
         };
 
     public ValueTask DisposeAsync()
