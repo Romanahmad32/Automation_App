@@ -7,8 +7,8 @@ namespace AutomationService.Features.Mandanten.Presentation.Controllers;
 
 /// <summary>
 /// CRUD über das Mandantenregister (§5.1). Ersetzt den früheren lokalen
-/// JSON-Speicher des Frontends (mandanten.json). Namens-Dubletten ergeben 409,
-/// unbekannte IDs 404.
+/// JSON-Speicher des Frontends (mandanten.json). Namens-Dubletten und schon
+/// vergebene Akten-Ordner ergeben 409, unbekannte IDs 404.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]

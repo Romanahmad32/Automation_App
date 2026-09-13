@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/core/general_classes/failures/als_either.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
@@ -170,14 +171,39 @@ class MandantenRepositoryImpl implements MandantenRepository {
     required int mandantId,
     required String ordnername,
   }) => alsEither(
-    () => _verknuepfe(mandantId, ordnername),
+    () async =>
+        _verknuepfe(await _datasource.loadMandanten(), mandantId, ordnername),
     uebersetzen: _localFailure,
   );
+
+  @override
+  Future<Either<Failure, Mandant>> loeseOrdner({
+    required int mandantId,
+    required String ordnername,
+  }) => alsEither(() async {
+    final mandant = _finde(await _datasource.loadMandanten(), mandantId);
+    final geloest = OrdnernamenMenge([ordnername]);
+    return _datasource.updateMandant(
+      mandant.copyWith(
+        aktenOrdnernamen: [
+          for (final name in mandant.aktenOrdnernamen)
+            if (!geloest.enthaelt(name)) name,
+        ],
+      ),
+    );
+  }, uebersetzen: _localFailure);
 
   @override
   Future<Either<Failure, AblageErgebnis>> legeDokumentAb(
     LegeDokumentAbParams params,
   ) => alsEither(() async {
+    // Vor dem Kopieren: Das Backend lehnte die Zuordnung sonst erst ab, wenn
+    // die Datei schon in der fremden Akte liegt.
+    _pruefeOrdnerFrei(
+      await _datasource.loadMandanten(),
+      params.mandantId,
+      params.aktenOrdnername,
+    );
     final stammordner = await _ladeStammordner();
     final ergebnis = await _aktenDatasource.legeDokumentAb(
       stammordner: stammordner,
@@ -189,21 +215,30 @@ class MandantenRepositoryImpl implements MandantenRepository {
     // Register und Dateisystem in Einklang halten: den (ggf. neu angelegten)
     // Akten-Ordner dem Mandanten zuordnen. Bei einer offenen Rückfrage liegt
     // noch nichts in der Akte — dann auch nichts zu verknüpfen.
+    //
+    // Das Register **neu** laden statt die Liste von vor dem Kopieren zu
+    // nehmen: Gespeichert wird der ganze Mandant, und eine Änderung an ihm
+    // während des Kopierens ginge sonst verloren. Ein zweiter Abruf bei der
+    // seltenen Ablage ist billiger als ein stilles Überschreiben.
     if (!ergebnis.konflikt) {
-      await _verknuepfe(params.mandantId, params.aktenOrdnername);
+      await _verknuepfe(
+        await _datasource.loadMandanten(),
+        params.mandantId,
+        params.aktenOrdnername,
+      );
     }
     return ergebnis;
   }, uebersetzen: _localFailure);
 
   /// Fügt [ordnername] zu den Akten des Mandanten hinzu (idempotent) und
-  /// speichert. Gibt den aktualisierten Mandanten zurück.
-  Future<Mandant> _verknuepfe(int mandantId, String ordnername) async {
-    final mandanten = await _datasource.loadMandanten();
-    final mandant = mandanten.firstWhere(
-      (m) => m.id == mandantId,
-      orElse: () =>
-          throw StateError('Mandant mit ID $mandantId nicht gefunden'),
-    );
+  /// speichert. Gibt den aktualisierten Mandanten zurück. [mandanten] ist das
+  /// frisch geladene Register.
+  Future<Mandant> _verknuepfe(
+    List<Mandant> mandanten,
+    int mandantId,
+    String ordnername,
+  ) async {
+    final mandant = _finde(mandanten, mandantId);
     // Ohne Rücksicht auf die Schreibweise: der Ordnername kommt aus dem
     // Dateisystem, und „VUnfallursache Mark" zweimal verschieden geschrieben
     // stünde sonst zweimal am Mandanten.
@@ -214,6 +249,34 @@ class MandantenRepositoryImpl implements MandantenRepository {
       aktenOrdnernamen: [...mandant.aktenOrdnernamen, ordnername],
     );
     return _datasource.updateMandant(aktualisiert);
+  }
+
+  Mandant _finde(List<Mandant> mandanten, int mandantId) =>
+      mandanten.firstWhere(
+        (m) => m.id == mandantId,
+        orElse: () =>
+            throw StateError('Mandant mit ID $mandantId nicht gefunden'),
+      );
+
+  /// Wirft, wenn [ordnername] einem anderen als [mandantId] gehört — mit
+  /// derselben Aussage wie das 409 des Backends, das die Regel ebenso
+  /// durchsetzt. Hier nur, damit die Ablage vor dem Kopieren abbricht.
+  void _pruefeOrdnerFrei(
+    List<Mandant> mandanten,
+    int mandantId,
+    String ordnername,
+  ) {
+    for (final m in mandanten) {
+      if (m.id == mandantId) continue;
+      if (!OrdnernamenMenge(m.aktenOrdnernamen).enthaelt(ordnername)) continue;
+      final besitzer = m.anzeigename.isEmpty
+          ? 'einem anderen Mandanten'
+          : m.anzeigename;
+      throw MandantException(
+        'Der Ordner „$ordnername" gehört bereits $besitzer — ein Ordner kann '
+        'nur einem Mandanten zugeordnet sein. Es wurde nichts abgelegt.',
+      );
+    }
   }
 
   Future<String> _ladeStammordner() async {

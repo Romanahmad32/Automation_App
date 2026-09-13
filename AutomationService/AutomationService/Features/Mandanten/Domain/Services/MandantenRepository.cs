@@ -93,6 +93,8 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
     public async Task<MandantEntity> CreateAsync(MandantEntity neu, CancellationToken cancellationToken = default)
     {
         await EnsureNameUniqueAsync(neu.Vorname, neu.Nachname, eigeneId: null, cancellationToken);
+        await EnsureOrdnerFreiAsync(
+            MandantListen.Lies(neu.AktenOrdnernamenJson), eigeneId: null, cancellationToken);
 
         var maxId = await db.Mandanten.AnyAsync(cancellationToken)
             ? await db.Mandanten.MaxAsync(m => m.Id, cancellationToken)
@@ -112,6 +114,16 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
         if (existing is null) return null;
 
         await EnsureNameUniqueAsync(mandant.Vorname, mandant.Nachname, eigeneId: mandant.Id, cancellationToken);
+
+        // Nur die Ordner prüfen, die dieser Mandant vorher noch nicht hatte:
+        // im Altbestand kann ein Ordner schon zwei Mandanten zugeordnet sein,
+        // und die Regel darf nicht verhindern, dass ein solcher Mandant
+        // weiter bearbeitet wird (Adresse ändern, Ordner lösen).
+        var bisherige = new HashSet<string>(
+            MandantListen.Lies(existing.AktenOrdnernamenJson), StringComparer.OrdinalIgnoreCase);
+        var neueOrdner = MandantListen.Lies(mandant.AktenOrdnernamenJson)
+            .Where(ordner => !bisherige.Contains(ordner));
+        await EnsureOrdnerFreiAsync(neueOrdner, eigeneId: mandant.Id, cancellationToken);
 
         existing.Anrede = mandant.Anrede;
         existing.Vorname = mandant.Vorname;
@@ -163,6 +175,41 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
             var anzeige = MandantName.Anzeige(vorname, nachname);
             throw new MandantNameConflictException(
                 $"Ein Mandant mit dem Namen „{anzeige}“ ist bereits vorhanden.");
+        }
+    }
+
+    /// <summary>
+    /// Wirft, wenn einer der übergebenen Ordner bereits einem anderen
+    /// Mandanten gehört. Im Speicher geprüft, weil die Ordner je Mandant als
+    /// JSON-Spalte liegen (<see cref="MandantListen.Lies"/>) und sich nicht
+    /// per SQL abfragen lassen; Vergleich ohne Rücksicht auf
+    /// Groß-/Kleinschreibung, wie im Import (<see cref="MandantenImportLauf"/>).
+    /// Getrimmte leere Namen werden übergangen.
+    /// </summary>
+    async Task EnsureOrdnerFreiAsync(IEnumerable<string> ordnernamen, int? eigeneId, CancellationToken ct)
+    {
+        var gepruefte = ordnernamen
+            .Select(ordner => ordner.Trim())
+            .Where(ordner => ordner.Length > 0)
+            .ToList();
+        if (gepruefte.Count == 0) return;
+
+        var andere = await db.Mandanten
+            .Where(m => m.Id != eigeneId)
+            .Select(m => new { m.Vorname, m.Nachname, m.AktenOrdnernamenJson })
+            .ToListAsync(ct);
+
+        foreach (var ordner in gepruefte)
+        {
+            var inhaber = andere.FirstOrDefault(m => MandantListen.Lies(m.AktenOrdnernamenJson)
+                .Contains(ordner, StringComparer.OrdinalIgnoreCase));
+            if (inhaber is null) continue;
+
+            var anzeige = MandantName.Anzeige(inhaber.Vorname, inhaber.Nachname);
+            var besitzer = anzeige.Length == 0 ? "einem anderen Mandanten" : anzeige;
+            throw new MandantOrdnerConflictException(
+                $"Der Ordner „{ordner}“ gehört bereits {besitzer} — " +
+                "ein Ordner kann nur einem Mandanten zugeordnet sein.");
         }
     }
 }
