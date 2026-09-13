@@ -240,10 +240,14 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                                             .selectedFormTemplate
                                             ?.templateName ??
                                         '',
+                                    // Ohne gespeichertes Schreiben ist die
+                                    // Nummer die 1; mit einem kommt der Anwalt
+                                    // ohne getroffene Wahl gar nicht bis
+                                    // hierher (§4.9, #133).
                                     nummer: naechsteSchreibenNummer(
                                       vorgang,
                                       neuesSchreiben:
-                                          wizardState.neuesSchreiben,
+                                          wizardState.neuesSchreiben ?? false,
                                     ),
                                     versicherer: empfaengerFuerDateiname(
                                       vorgang,

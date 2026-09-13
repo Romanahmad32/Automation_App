@@ -61,15 +61,23 @@ public class VorgangEntity
     public string? EntwurfJson { get; set; }
 
     /// <summary>
-    /// Laufende Nummer des zuletzt erzeugten Schreibens innerhalb des Vorgangs
-    /// (§4.9): das erste hat 1, das zweite 2. Steht im Dateinamen und trennt
-    /// dort die Schreiben, die alle im selben Aktenunterordner landen.
+    /// Laufende Nummer des zuletzt <b>gespeicherten</b> Schreibens innerhalb des
+    /// Vorgangs (§4.9): das erste hat 1, das zweite 2. Steht im Dateinamen und
+    /// trennt dort die Schreiben, die alle im selben Aktenunterordner landen.
     ///
-    /// Sie steigt nur, wenn der Anwalt beim Erzeugen ausdrücklich ein
-    /// <em>neues</em> Schreiben verlangt — eine Korrektur behält ihre Nummer und
-    /// ersetzt damit die vorige Fassung. Geraten wird das nicht; die
-    /// Änderungszeit der Datei kann beides nicht unterscheiden. Null, solange
-    /// noch kein Schreiben erzeugt wurde.
+    /// Gesetzt wird sie vom Frontend im Speicherschritt — bei der Ablage in der
+    /// Akte wie beim freien „an anderem Ort speichern"; gespeichert ist
+    /// gespeichert. Das bloße <em>Erzeugen</em> eines Dokuments rührt sie nicht
+    /// an (#133): Wer zehnmal auf „Dokument erstellen" drückt und einmal ablegt,
+    /// hat ein Schreiben und nicht zehn.
+    ///
+    /// Sie steigt nur, wenn der Anwalt ausdrücklich ein <em>neues</em> Schreiben
+    /// verlangt — eine Korrektur behält ihre Nummer und ersetzt damit die vorige
+    /// Fassung. Geraten wird das nicht; die Änderungszeit der Datei kann beides
+    /// nicht unterscheiden. Null, solange noch keines gespeichert wurde — und
+    /// genau daran hängt im Frontend die Frage „Korrektur oder neues Schreiben".
+    /// Den Bestand hebt die Migration <c>SchreibenNummerNurGespeicherte</c> auf
+    /// diese Bedeutung.
     /// </summary>
     public int? SchreibenNummer { get; set; }
 

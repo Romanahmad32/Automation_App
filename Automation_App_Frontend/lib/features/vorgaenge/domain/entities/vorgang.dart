@@ -79,13 +79,19 @@ class Vorgang extends Equatable {
   /// bestätigte Stand ihn ([VorgangRueckfluss]).
   final VorgangEntwurf? entwurf;
 
-  /// Laufende Nummer des zuletzt erzeugten Schreibens innerhalb des Vorgangs
-  /// (§4.9): das erste hat 1, das zweite 2. Sie steht im Dateinamen und trennt
-  /// dort die Schreiben, die alle im selben Aktenunterordner landen.
+  /// Laufende Nummer des zuletzt **gespeicherten** Schreibens innerhalb des
+  /// Vorgangs (§4.9): das erste hat 1, das zweite 2. Sie steht im Dateinamen und
+  /// trennt dort die Schreiben, die alle im selben Aktenunterordner landen.
   ///
-  /// Sie steigt nur, wenn der Anwalt beim Erzeugen ausdrücklich ein *neues*
-  /// Schreiben verlangt; eine Korrektur behält ihre Nummer und ersetzt damit
-  /// die vorige Fassung. Null, solange noch kein Schreiben erzeugt wurde.
+  /// Gesetzt wird sie im Speicherschritt — bei der Ablage in der Akte wie beim
+  /// freien „an anderem Ort speichern"; gespeichert ist gespeichert. Das
+  /// **Erzeugen** rührt sie nicht an (#133): Wer zehnmal auf „Dokument
+  /// erstellen" drückt und einmal ablegt, hat ein Schreiben und nicht zehn.
+  ///
+  /// Sie steigt nur, wenn der Anwalt ausdrücklich ein *neues* Schreiben
+  /// verlangt; eine Korrektur behält ihre Nummer und ersetzt damit die vorige
+  /// Fassung. Null, solange noch keines gespeichert wurde — und genau daran
+  /// hängt die Frage „Korrektur oder neues Schreiben".
   final int? schreibenNummer;
 
   /// Pfad des erzeugten Anspruchsschreibens bzw. der Ablageort in der Akte.
