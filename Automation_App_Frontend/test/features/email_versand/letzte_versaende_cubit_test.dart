@@ -41,6 +41,10 @@ class ProtokollDienst implements EmailVersandRepository {
       const [];
 
   @override
+  Future<List<VersandEintrag>> ladeAlleVersaende({int limit = 200}) =>
+      throw UnimplementedError();
+
+  @override
   Future<EmailVersandBereitschaft> ladeBereitschaft() async =>
       const EmailVersandBereitschaft(bereit: false);
 

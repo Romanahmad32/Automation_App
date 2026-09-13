@@ -69,6 +69,10 @@ class StoerrischerVersandDienst implements EmailVersandRepository {
       const [];
 
   @override
+  Future<List<VersandEintrag>> ladeAlleVersaende({int limit = 200}) =>
+      throw UnimplementedError();
+
+  @override
   Future<List<VersandEintrag>> ladeLetzteVersaende() async => const [];
 
   @override

@@ -144,6 +144,9 @@ public sealed class DbReceivedReplyStore(
         Warnings = DeserializeListe(e.WarnungenJson),
         AnhangPfade = DeserializeListe(e.AnhaengeJson),
         RawText = e.Rohtext,
+        // Derselbe Wert, der die Doppelerfassung verhindert, ist nach außen die
+        // Verknüpfung zur Posteingangszeile — dafür braucht es keine Spalte mehr.
+        MailSchluessel = e.DedupeKey,
         Acknowledged = e.Quittiert,
         ZuordnungVermutet = e.ZuordnungVermutet,
     };

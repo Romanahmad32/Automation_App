@@ -4,9 +4,10 @@ import 'package:automation_app/features/mailbox/presentation/widgets/zwischennac
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Das Badge sitzt in der Praxis im `subtitle` eines `ListTile` innerhalb der
-/// auf 360 px festen Trefferspalte (`mailbox_reply_list.dart`) — dort bleibt
-/// nach Leading-Icon und Innenabstand deutlich weniger als 360 px übrig. Der
+/// Das Badge sitzt in der Praxis im `subtitle` eines `ListTile` innerhalb
+/// einer rund 360 px schmalen Spalte (Antwortkarte der Startseite; bis Issue
+/// #134 auch die Trefferliste des Postfachs) — dort bleibt nach Leading-Icon
+/// und Innenabstand deutlich weniger als 360 px übrig. Der
 /// `Row` im Badge hat `mainAxisSize: MainAxisSize.min` und kein Flex-Kind:
 /// Bei "Am größten" (Issue #57) und dieser schmalen Spalte kann Icon + Text
 /// breiter sein als der verfügbare Platz.

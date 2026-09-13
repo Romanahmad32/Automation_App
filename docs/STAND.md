@@ -28,7 +28,7 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   sind anklickbar, Anrede und Betreff aus den Vorgangsdaten vorbelegt, das Anspruchsschreiben als
   PDF vorausgewählt. Geprüft wird **vor** dem Verbindungsaufbau: Fehlt ein Anhang, geht nichts
   hinaus. Erreichbar an zwei Stellen: im Speicherschritt/Abschlussdialog der Word-Automation und
-  im Postfach (`MailboxVersandLeiste`, dort ohne Anhang und ohne Vorgang auch als leeres
+  im Postfach (`MailboxWerkzeugleiste`, dort ohne Anhang und ohne Vorgang auch als leeres
   Anschreiben). Der Abschluss (§4.8) bleibt der eigene Schritt — das Häkchen ist nach dem Versand nur
   vorbelegt und begründet. Zweiter Weg statt Direktversand: **Entwurf in Outlook öffnen** — mit
   Empfängern, Betreff, Text und Anhängen; dort gelten Signatur und Vorlage der Kanzlei, und was
@@ -286,6 +286,26 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   und sagt die Folge je Wahl. `schliesseAblageAb` hält jetzt jede Ablage am Vorgang fest, nicht
   nur die erste — der Status läuft weiterhin nur vorwärts. Eine Migration setzt `SchreibenNummer`
   auf NULL, wo der Vorgang nie gespeichert wurde.
+- **Posteingang mit Vorgangsbezug, Handgriffen und Gesendet-Bereich (§4.3, §4.7, 13.09.2026,
+  #134)** — der allgemeine Posteingang (`mailbox`) zeigt zu jeder Nachricht einen vorgeschlagenen
+  Vorgangsbezug (`VorgangsbezugErkenner`: Zeichen oder Schadennummer im Betreff, sonst
+  Absenderadresse eines noch offenen Vorgangs; mehrdeutig zählt als kein Bezug, ohne auf eine
+  schwächere Stufe auszuweichen) und bietet zu einer geöffneten Nachricht genau vier Handgriffe:
+  Anhang **öffnen**, Anhang oder die Nachricht als `.eml` **in die Akte legen** (über die
+  vorhandene Ablage samt Konfliktfrage), eine Datei **beim Versand weiterverwenden** und
+  **antworten** — `EmailVersandButton`/`EmailVersandDialog` sind dafür additiv um
+  `empfaengerVorauswahl` und `betreffVorgabe` erweitert, alle bisherigen Aufrufstellen bleiben
+  unverändert. Anhang und `.eml` legt das Backend bei Bedarf ins Zwischenlager
+  `Anhaenge/Posteingang/<Konto>/<Uid>/` (derselbe 14-Tage-Aufräumer wie bei den Anhängen einer
+  erfassten Antwort; Grenzen 30 MB je Anhang, 50 MB je Nachrichtenordner bzw. `.eml`, sonst eine
+  413-Antwort). Die HTML-Fassung einer Nachricht wird serverseitig entschärft
+  (`PosteingangHtmlFilter`: kein Skript, keine nachladenden Verweise, keine eingebetteten Bilder)
+  und im Frontend zusätzlich ohne `<img>` gerendert. Seiten werden jetzt **angehängt statt
+  ersetzt**, gedeckelt bei 500 Zeilen (10 Seiten) — darüber verweist die Fußzeile aufs
+  Mailprogramm. Eine erfasste Zentralruf-Antwort erscheint als markierte Zeile mit eigenem Detail
+  (`PosteingangZentralrufDetail`) statt in einem eigenen Bereich; daneben zeigt „Gesendet"
+  (`GesendetCubit`) das Versandprotokoll über alle Vorgänge chronologisch
+  (`GET api/EmailVersand/protokoll/alle`).
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

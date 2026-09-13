@@ -188,6 +188,19 @@ Versicherungsschein-/Schadennummer, Kontaktdaten).
   Auch große Postfächer dürfen die Oberfläche nicht blockieren oder einen unbegrenzt wachsenden
   Speicherbestand erzeugen. Neue Nachrichten werden nachgeladen, die Zentralruf-Auswertung bleibt
   als eigener Bereich erhalten. *Ergänzt am 09.09.2026 auf ausdrücklichen Nutzerwunsch.*
+- **[S] Handgriffe an einer eingegangenen Nachricht:** Der Posteingang zeigt zu jeder Nachricht,
+  zu welchem Vorgang sie **vermutlich** gehört — erkannt am Zeichen oder der Schadennummer im
+  Betreff oder an der Absenderadresse, aus dem vorhandenen Vorgangsbestand und ohne eigenen
+  Speicher. Das ist ein Vorschlag: Am Vorgang ändert sich dadurch nichts (siehe 1.3). Zu einer
+  geöffneten Nachricht bietet die App vier Handgriffe an, und nur diese vier: einen Anhang
+  **öffnen** (bei Bedarf geladen und wie die übrigen Dateien im Zwischenlager nach zwei Wochen
+  wieder weggeräumt), einen Anhang oder die Nachricht selbst als `.eml` **in die Akte legen**
+  (über die vorhandene Ablage samt Konfliktfrage, siehe 6.1), eine Datei **beim Versand
+  weiterverwenden** (siehe 4.7) und **antworten** — der Versanddialog geht mit dem Absender als
+  Empfänger, „AW:" im Betreff und dem erkannten Vorgang auf. Kein Zitieren, kein Weiterleiten.
+  Daneben zeigt die App als eigenen Bereich, was aus ihr heraus hinausgegangen ist (das
+  Versandprotokoll aus 4.7 über alle Vorgänge). *Ergänzt am 13.09.2026 nach Festlegung im
+  Issue #134.*
 - **[S] Anhänge der erfassten Antwort aufheben:** Bringt eine erfasste Antwort Dateien mit, hebt
   die App sie auf und bietet sie beim Versand zum Anhängen an (siehe 4.7). Beobachtet wurde, dass
   der Anwalt genau diese Dateien im Mailprogramm von Hand in die ausgehende Nachricht zieht — ein
@@ -955,9 +968,11 @@ Konfigurierbar sein müssen mindestens:
   Anfragen oder Schreiben. Die nach Bearbeitungsstand gruppierte Übersicht (siehe 3) genügt, um zu
   sehen, was offen ist.
 - **Kein vollständiges Mailprogramm:** Die App bietet einen seitenweise geladenen, lesenden
-  Posteingang (siehe 4.3) und versendet die Mails des Workflows selbst (siehe 4.7).
-  Ordnerverwaltung, Suche, Löschen und ein vollständiger Antwort-Workflow bleiben beim gewohnten
-  Mailprogramm. *Abgrenzung am 09.09.2026 um den ausdrücklich gewünschten Posteingang erweitert.*
+  Posteingang (siehe 4.3), versendet die Mails des Workflows selbst (siehe 4.7) und kennt an
+  einer eingegangenen Nachricht genau vier Handgriffe: Anhang öffnen, in die Akte legen, beim
+  Versand weiterverwenden, antworten (siehe 4.3). Ordnerverwaltung, Suche, Löschen, das Setzen
+  der Gelesen-Markierung, Zitieren und Weiterleiten bleiben beim gewohnten Mailprogramm.
+  *Abgrenzung am 09.09.2026 um den Posteingang, am 13.09.2026 um die vier Handgriffe erweitert.*
 - **Keine Vollautomatisierung ohne Anwalt:** Captcha-Lösung, inhaltliche Freigabe, Übernahme der
   Zentralruf-Antwort und Auftragsabschluss bleiben bewusst bestätigte Schritte.
 - **Andere Rechtsgebiete zunächst nur getragen, nicht ausgebaut:** Über die gemeinsame Vorgangs-,

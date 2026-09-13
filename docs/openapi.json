@@ -3395,6 +3395,294 @@
         }
       }
     },
+    "/api/mailbox/nachrichten/{id}/anhaenge/{anhangId}": {
+      "get": {
+        "tags": [
+          "Posteingang"
+        ],
+        "summary": "Holt einen Anhang ins Zwischenlager und liefert seinen \u003Cb\u003EPfad\u003C/b\u003E, nicht\r\nseine Bytes: Was danach damit geschieht \u2014 \u00F6ffnen, an eine Mail h\u00E4ngen, in\r\ndie Akte legen \u2014, arbeitet in dieser App durchweg mit lokalen Pfaden.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "anhangId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangAnhangAblageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangAnhangAblageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangAnhangAblageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mailbox/nachrichten/{id}/eml": {
+      "get": {
+        "tags": [
+          "Posteingang"
+        ],
+        "summary": "Legt die ganze Nachricht als \u0060.eml\u0060 ab \u2014 die Fassung f\u00FCr die Akte.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangAnhangAblageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangAnhangAblageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosteingangAnhangAblageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/FormTemplates": {
       "get": {
         "tags": [
@@ -5171,6 +5459,60 @@
           "VersandProtokoll"
         ],
         "summary": "Je Vorgang der j\u00FCngste Versand \u2014 f\u00FCr die Liste in der\r\nVorgangsverwaltung. Ein Aufruf statt einer Nachfrage je Zeile.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersandEintragDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/EmailVersand/protokoll/alle": {
+      "get": {
+        "tags": [
+          "VersandProtokoll"
+        ],
+        "summary": "Alles, was hinausging \u2014 \u00FCber alle Vorg\u00E4nge, das J\u00FCngste zuerst. Das ist\r\ndie Antwort auf \u201Ewas ist heute rausgegangen?\u0022; \u0060letzte\u0060 kann sie\r\nnicht geben, weil dort je Vorgang nur ein Eintrag \u00FCbrig bleibt.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 200
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -7302,14 +7644,79 @@
         },
         "description": "Welches Outlook auf diesem Rechner steht (\u00A74.7). Die Oberfl\u00E4che fragt es,\r\nbevor sie Kn\u00F6pfe anbietet, die es brauchen \u2014 und schreibt hin, warum sie\r\nnichts liefern, statt es geschehen zu lassen."
       },
+      "PosteingangAnhangAblageDto": {
+        "required": [
+          "dateiname",
+          "pfad",
+          "groesse"
+        ],
+        "type": "object",
+        "properties": {
+          "dateiname": {
+            "type": "string"
+          },
+          "pfad": {
+            "type": "string"
+          },
+          "groesse": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        },
+        "description": "Eine ins Zwischenlager geholte Datei. Zur\u00FCck geht der \u003Cb\u003EPfad\u003C/b\u003E und nicht\r\nder Inhalt: \u00D6ffnen, Anh\u00E4ngen beim Versand und Ablegen in die Akte arbeiten\r\nin dieser App durchweg mit lokalen Pfaden, und Frontend wie Backend laufen\r\nauf demselben Rechner."
+      },
+      "PosteingangAnhangDto": {
+        "required": [
+          "id",
+          "dateiname",
+          "groesse",
+          "medientyp"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Der IMAP-Teilbezeichner (\u0060\u00222\u0022\u0060, \u0060\u00222.1\u0022\u0060). Damit fordert die\r\nOberfl\u00E4che genau diesen Anhang an; er gilt nur innerhalb dieser Nachricht."
+          },
+          "dateiname": {
+            "type": "string",
+            "description": "Der Name, unter dem er in der Mail steht."
+          },
+          "groesse": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Gr\u00F6\u00DFe in Bytes aus der Struktur \u2014 ohne Abruf.",
+            "format": "int64"
+          },
+          "medientyp": {
+            "type": "string",
+            "description": "Etwa \u0060application/pdf\u0060; bestimmt das Symbol in der Liste."
+          }
+        },
+        "description": "Ein Anhang, wie ihn die Nachrichtenstruktur beschreibt \u2014 noch nicht geladen."
+      },
       "PosteingangEintragDto": {
         "required": [
           "id",
           "betreff",
           "absender",
+          "absenderName",
+          "absenderAdresse",
+          "an",
+          "cc",
+          "messageId",
           "datum",
           "gelesen",
-          "groesse"
+          "groesse",
+          "hatAnhaenge",
+          "anzahlAnhaenge"
         ],
         "type": "object",
         "properties": {
@@ -7321,6 +7728,36 @@
           },
           "absender": {
             "type": "string"
+          },
+          "absenderName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "absenderAdresse": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "an": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "messageId": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "datum": {
             "type": [
@@ -7339,13 +7776,34 @@
               "string"
             ],
             "format": "uint32"
+          },
+          "hatAnhaenge": {
+            "type": "boolean"
+          },
+          "anzahlAnhaenge": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
-        }
+        },
+        "description": "Eine Zeile im Posteingang. \u0060Absender\u0060 bleibt die ungeteilte Fassung und\r\ndamit der R\u00FCckfall; \u0060AbsenderName\u0060/\u0060AbsenderAdresse\u0060 sind das, was\r\ndie Liste zeigt. \u0060MessageId\u0060 ist die Br\u00FCcke zur erfassten\r\nZentralruf-Antwort: die Message-Id, bei fehlendem Header ersatzweise\r\n\u0060uidValidity:uid\u0060 \u2014 identisch mit \u0060ReceivedReplyDto.mailSchluessel\u0060."
       },
       "PosteingangInhaltDto": {
         "required": [
           "text",
           "gekuerzt",
+          "html",
+          "htmlGekuerzt",
+          "bilderBlockiert",
+          "absenderName",
+          "absenderAdresse",
+          "an",
+          "cc",
+          "datum",
+          "messageId",
           "anhaenge"
         ],
         "type": "object",
@@ -7356,13 +7814,63 @@
           "gekuerzt": {
             "type": "boolean"
           },
-          "anhaenge": {
+          "html": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "htmlGekuerzt": {
+            "type": "boolean"
+          },
+          "bilderBlockiert": {
+            "type": "boolean"
+          },
+          "absenderName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "absenderAdresse": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "an": {
             "type": "array",
             "items": {
               "type": "string"
             }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "datum": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "messageId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "anhaenge": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosteingangAnhangDto"
+            }
           }
-        }
+        },
+        "description": "Der ge\u00F6ffnete Inhalt. \u0060Html\u0060 ist bereits entsch\u00E4rft \u2014 ohne Skripte und\r\nohne Verweis, der beim Anzeigen etwas nachl\u00E4dt; \u0060Text\u0060 steht daneben\r\nund ist die Fassung f\u00FCr Suche, Kopieren und schmale Fenster.\r\n\r\n\u0060MessageId\u0060 ist die Message-Id, bei fehlendem Header ersatzweise\r\n\u0060uidValidity:uid\u0060 \u2014 identisch mit \u0060ReceivedReplyDto.mailSchluessel\u0060.\r\n\u0060BilderBlockiert\u0060 ist true, wenn der Filter daf\u00FCr mindestens eine\r\nnachladende Quelle oder ein \u0060\u0026lt;base\u0026gt;\u0060 entfernen musste; die\r\nMarke \u0060data-blockiert\u0060 im Html bleibt daneben bestehen."
       },
       "PosteingangSeiteDto": {
         "required": [
@@ -7443,7 +7951,8 @@
           "warnings",
           "anhangPfade",
           "rawText",
-          "zuordnungVermutet"
+          "zuordnungVermutet",
+          "mailSchluessel"
         ],
         "type": "object",
         "properties": {
@@ -7492,6 +8001,12 @@
           },
           "zuordnungVermutet": {
             "type": "boolean"
+          },
+          "mailSchluessel": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "description": "Ein vom Monitor erfasster Antwort-Treffer, wie ihn die Oberfl\u00E4che abruft."
