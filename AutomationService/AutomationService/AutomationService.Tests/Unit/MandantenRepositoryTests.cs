@@ -50,6 +50,15 @@ public sealed class MandantenRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task GetByIdAsync_FindetDenMandantenUndSonstNichts()
+    {
+        var angelegt = await _repository.CreateAsync(Neu("Anna", "Mustermann"));
+
+        (await _repository.GetByIdAsync(angelegt.Id))!.Nachname.Should().Be("Mustermann");
+        (await _repository.GetByIdAsync(angelegt.Id + 1)).Should().BeNull();
+    }
+
+    [Fact]
     public async Task CreateAsync_DoppelterNormalisierterName_Wirft()
     {
         await _repository.CreateAsync(Neu("Max", "Müller"));

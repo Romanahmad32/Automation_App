@@ -81,6 +81,15 @@ Seine echten Vorlagen kommen deshalb auf anderem Weg auf den Rechner: einmal in
 `%APPDATA%\AutomationService\Vorlagen` legen (dorthin schreibt auch der
 `TemplateParametrizer`), und die Sicherung nimmt sie von da an mit.
 
+**Vollmacht (§4.11, seit #151):** eigener Unterordner `Vollmacht/` im Vorlagenordner, mit drei
+festen Dateinamen (`Vollmacht Unfallsachen.docx`, `Vollmacht Bussgeldsachen.docx`,
+`Vollmacht Strafsache.docx`). Saatgut sind die neutralen `Templates/Vollmacht/Muster_Vollmacht_*.docx`,
+nach derselben Regel kopiert wie oben — nur wenn kein eigener Vorlagenordner eingestellt ist,
+überschrieben wird nie. Die echten, mit Kanzleikopf versehenen Vollmachten werden einmal mit
+`tools/TemplateParametrizer` parametrisiert und unter den festen Namen in
+`<Vorlagenordner>\Vollmacht\` gelegt. Die Sicherung nimmt den Unterordner mit, ohne dass sie dafür
+etwas Eigenes wüsste: `SicherungsArchiv` liest `Vorlagen/**/*.docx`, samt Unterordnern.
+
 ### Sicherung
 
 Einrichtung und Bedienung: [OneDrive-Arbeitsplatzwechsel](ONEDRIVE_ARBEITSPLATZWECHSEL.md).

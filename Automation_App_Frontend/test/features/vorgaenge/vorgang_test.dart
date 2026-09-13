@@ -104,4 +104,41 @@ void main() {
     expect(vorgang.rechtsgebiet, 'voelkerrecht');
     expect(vorgang.status, VorgangStatus.angefragt);
   });
+
+  group('vollmachtGedrucktAm (§4.11)', () {
+    test('geht bei toJson/fromJson nicht verloren', () {
+      final original = Vorgang.ausAnfrage(
+        referenz: '12/26 C03_HG-E 1427',
+        angefragtAm: DateTime(2026, 6, 1),
+      ).copyWith(vollmachtGedrucktAm: () => DateTime(2026, 7, 3, 9, 15));
+
+      final kopie = vorgangAusJson(original.toJson());
+
+      expect(kopie.vollmachtGedrucktAm, DateTime(2026, 7, 3, 9, 15));
+    });
+
+    test('mitAntwort behält einen gesetzten Vermerk', () {
+      final vorgang = Vorgang.ausAnfrage(
+        referenz: '12/26 C03_HG-E 1427',
+        angefragtAm: DateTime(2026, 6, 1),
+      ).copyWith(vollmachtGedrucktAm: () => DateTime(2026, 7, 3));
+
+      final mitAntwort = vorgang.mitAntwort(
+        const ZentralrufReplyData(versichererName: 'HUK'),
+      );
+
+      expect(mitAntwort.vollmachtGedrucktAm, DateTime(2026, 7, 3));
+    });
+
+    test('copyWith kann den Vermerk löschen', () {
+      final vorgang = Vorgang.ausAnfrage(
+        referenz: '12/26 C03_HG-E 1427',
+        angefragtAm: DateTime(2026, 6, 1),
+      ).copyWith(vollmachtGedrucktAm: () => DateTime(2026, 7, 3));
+
+      final zurueckgenommen = vorgang.copyWith(vollmachtGedrucktAm: () => null);
+
+      expect(zurueckgenommen.vollmachtGedrucktAm, isNull);
+    });
+  });
 }

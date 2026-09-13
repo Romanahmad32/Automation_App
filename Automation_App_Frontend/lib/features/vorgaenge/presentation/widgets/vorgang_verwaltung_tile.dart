@@ -1,4 +1,6 @@
 import 'package:automation_app/features/dev_simulation/presentation/widgets/simulation_menu.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_dialog.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_stand_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_fehlende_daten_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_naechster_schritt.dart';
@@ -10,8 +12,8 @@ import 'package:flutter/material.dart';
 
 /// Eine Zeile in der Vorgänge-Verwaltung: Zeichen, Parteien und Status, der
 /// statusabhängige „Nächster Schritt"-Sprung ([VorgangNaechsterSchritt]) samt
-/// Warte-Hinweis bei lange offenen Anfragen sowie Aktionen zum Bearbeiten und
-/// Löschen.
+/// Warte-Hinweis bei lange offenen Anfragen, der Stand der Vollmacht (§4.11)
+/// sowie Aktionen für Vollmacht, Bearbeiten und Löschen.
 class VorgangVerwaltungTile extends StatelessWidget {
   final Vorgang vorgang;
   final VoidCallback onEdit;
@@ -90,6 +92,7 @@ class VorgangVerwaltungTile extends StatelessWidget {
                   VorgangVersandZeile(referenz: vorgang.referenz),
                   VorgangWarteHinweis(vorgang: vorgang),
                   VorgangFehlendeDatenHinweis(vorgang: vorgang),
+                  VollmachtStandZeile(vorgang: vorgang),
                 ],
               ),
             ),
@@ -97,6 +100,11 @@ class VorgangVerwaltungTile extends StatelessWidget {
             SimulationMenu(vorgang: vorgang),
             VorgangNaechsterSchritt(vorgang: vorgang),
             const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Vollmacht',
+              icon: const Icon(Icons.draw_outlined),
+              onPressed: () => VollmachtDialog.zeige(context, vorgang),
+            ),
             IconButton(
               tooltip: 'Bearbeiten',
               icon: const Icon(Icons.edit_outlined),

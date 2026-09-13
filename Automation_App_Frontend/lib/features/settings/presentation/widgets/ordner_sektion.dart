@@ -3,6 +3,7 @@ import 'package:automation_app/features/settings/presentation/widgets/abweichend
 import 'package:automation_app/features/settings/presentation/widgets/app_daten_ordner_feld.dart';
 import 'package:automation_app/features/settings/presentation/widgets/ordner_zustand_liste.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_vorlagen_sektion.dart';
 import 'package:flutter/material.dart';
 
 /// **Alle** Ordner der App an einer Stelle (#103) — vorher standen sie zu
@@ -19,6 +20,9 @@ import 'package:flutter/material.dart';
 /// 3. **Der Aufklapper** für den Sonderfall, dass Vorlagen, Register oder
 ///    Sicherungen woanders liegen sollen.
 /// 4. **Der Zustandsfuß**: was der Dienst mit alldem tatsächlich macht.
+/// 5. **Die Vollmacht-Vorlagen** (§4.11): drei feste Dateien im Unterordner
+///    `Vollmacht` des Vorlagenordners — hier sichtbar, weil es keine
+///    Pflegeoberfläche für sie gibt.
 class OrdnerSektion extends StatelessWidget {
   const OrdnerSektion({super.key});
 
@@ -39,6 +43,7 @@ class OrdnerSektion extends StatelessWidget {
       StammordnerField(),
       AbweichendeOrdnerAufklapper(),
       OrdnerZustandListe(),
+      VollmachtVorlagenSektion(),
     ],
   );
 }

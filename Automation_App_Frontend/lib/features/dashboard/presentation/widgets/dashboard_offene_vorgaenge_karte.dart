@@ -2,6 +2,7 @@ import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/dashboard/domain/services/dashboard_uebersicht.dart';
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_karte.dart';
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_leer_hinweis.dart';
+import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_vollmacht_hinweis.dart';
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_vorgang_zeile.dart';
 import 'package:flutter/material.dart';
 
@@ -24,22 +25,25 @@ class DashboardOffeneVorgaengeKarte extends StatelessWidget {
           : null,
       aktionLabel: 'Alle Vorgänge',
       zielTab: AppTabIndex.vorgaenge,
-      child: vorgaenge.isEmpty
-          ? const DashboardLeerHinweis(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (uebersicht.anzahlOhneVollmacht > 0)
+            DashboardVollmachtHinweis(anzahl: uebersicht.anzahlOhneVollmacht),
+          if (vorgaenge.isEmpty)
+            const DashboardLeerHinweis(
               icon: Icons.task_alt,
               text:
                   'Kein Vorgang wartet auf eine Handlung. Neue Vorgänge '
                   'entstehen über „Vorgang starten".',
             )
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final (index, vorgang) in vorgaenge.indexed) ...[
-                  if (index > 0) const Divider(height: 1, indent: 16),
-                  DashboardVorgangZeile(vorgang: vorgang),
-                ],
-              ],
-            ),
+          else
+            for (final (index, vorgang) in vorgaenge.indexed) ...[
+              if (index > 0) const Divider(height: 1, indent: 16),
+              DashboardVorgangZeile(vorgang: vorgang),
+            ],
+        ],
+      ),
     );
   }
 }

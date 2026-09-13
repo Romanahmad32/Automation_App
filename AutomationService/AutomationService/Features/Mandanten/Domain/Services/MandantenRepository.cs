@@ -30,6 +30,11 @@ public sealed class MandantenRepository(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<MandantEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await db.Mandanten.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+    }
+
     public async Task<MandantenSeite> GetSeiteAsync(
         string? suche,
         int ueberspringen,

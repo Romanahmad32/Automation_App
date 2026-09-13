@@ -13,6 +13,7 @@ using AutomationService.Features.RegisterHistorie.Presentation.DependencyInjecti
 using AutomationService.Features.Sachgebiete.Presentation.DependencyInjection;
 using AutomationService.Features.Settings.Presentation.DependencyInjection;
 using AutomationService.Features.Versicherer.Presentation.DependencyInjection;
+using AutomationService.Features.Vollmacht.Presentation.DependencyInjection;
 using AutomationService.Features.Vorgaenge.Presentation.DependencyInjection;
 using AutomationService.Features.Vorgaenge.Presentation.Hubs;
 using AutomationService.Features.WordAutomation.Presentation.DependencyInjection;
@@ -74,6 +75,7 @@ builder.Services.AddSachgebieteServices();
 builder.Services.AddRegisterHistorieServices();
 builder.Services.AddVorgaengeServices();
 builder.Services.AddFormTemplatesServices();
+builder.Services.AddVollmachtServices();
 builder.Services.AddBackupServices(builder.Configuration);
 builder.Services.AddDevSimulationServices(builder.Configuration);
 
