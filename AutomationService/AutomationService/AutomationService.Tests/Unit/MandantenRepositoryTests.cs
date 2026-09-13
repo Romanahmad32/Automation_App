@@ -28,7 +28,7 @@ public sealed class MandantenRepositoryTests : IDisposable
             .Options;
         _db = new AutomationDbContext(options);
         _db.Database.EnsureCreated();
-        _repository = new MandantenRepository(_db);
+        _repository = new MandantenRepository(_db, new OrdnerStatusRegister(_db));
     }
 
     private static MandantEntity Neu(string vorname = "", string nachname = "") => new()

@@ -5,11 +5,20 @@ using Microsoft.EntityFrameworkCore;
 namespace AutomationService.Features.Mandanten.Domain.Services;
 
 /// <summary>
-/// EF-Core-Mandantenregister. ID-Vergabe (max+1) und Namens-Dublettenprüfung
-/// laufen serverseitig — als einziger Schreiber kann das Backend beides ohne
-/// Race garantieren.
+/// EF-Core-Mandantenregister. ID-Vergabe (max+1), Namens-Dublettenprüfung und
+/// „ein Ordner, ein Mandant" laufen serverseitig.
+///
+/// Alleiniger Schreiber zu sein genügt dafür <b>nicht</b>: Zwei Anfragen, die
+/// sich überschneiden (Ablage im Word-Reiter, Zuordnung an der Karte), prüften
+/// beide gegen denselben Stand und schrieben dann beide. Jede schreibende
+/// Methode liest und schreibt deshalb in <b>einer</b> Transaktion.
+/// <c>BeginTransactionAsync</c> ist bei Microsoft.Data.Sqlite ein
+/// <c>BEGIN IMMEDIATE</c>: Die Schreibsperre fällt schon beim Öffnen, die zweite
+/// Anfrage wartet, bis die erste fertig ist, und prüft dann gegen deren Ergebnis.
 /// </summary>
-public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepository
+public sealed class MandantenRepository(
+    AutomationDbContext db,
+    IOrdnerStatusRegister ordnerStatus) : IMandantenRepository
 {
     /// <summary>Größe eines Ausschnitts, wenn der Aufrufer keine nennt.</summary>
     public const int SeitenGroesse = 50;
@@ -92,38 +101,43 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
 
     public async Task<MandantEntity> CreateAsync(MandantEntity neu, CancellationToken cancellationToken = default)
     {
-        await EnsureNameUniqueAsync(neu.Vorname, neu.Nachname, eigeneId: null, cancellationToken);
-        await EnsureOrdnerFreiAsync(
-            MandantListen.Lies(neu.AktenOrdnernamenJson), eigeneId: null, cancellationToken);
+        await using var transaktion = await db.Database.BeginTransactionAsync(cancellationToken);
 
-        var maxId = await db.Mandanten.AnyAsync(cancellationToken)
-            ? await db.Mandanten.MaxAsync(m => m.Id, cancellationToken)
-            : 0;
-        neu.Id = maxId + 1;
+        var bestand = await MandantenBestand.LadeAsync(db, cancellationToken);
+        var ordner = MandantListen.Lies(neu.AktenOrdnernamenJson);
+        bestand.PruefeNameFrei(neu.Vorname, neu.Nachname, eigeneId: null);
+        bestand.PruefeOrdnerFrei(ordner, eigeneId: null);
+
+        neu.Id = bestand.HoechsteId + 1;
         neu.ErstelltAm = DateTime.Now;
 
         db.Mandanten.Add(neu);
         await db.SaveChangesAsync(cancellationToken);
+        await NimmVermerkeZurueckAsync(ordner, cancellationToken);
+        await transaktion.CommitAsync(cancellationToken);
         return neu;
     }
 
     public async Task<MandantEntity?> UpdateAsync(MandantEntity mandant, CancellationToken cancellationToken = default)
     {
+        await using var transaktion = await db.Database.BeginTransactionAsync(cancellationToken);
+
         var existing = await db.Mandanten
             .FirstOrDefaultAsync(m => m.Id == mandant.Id, cancellationToken);
         if (existing is null) return null;
 
-        await EnsureNameUniqueAsync(mandant.Vorname, mandant.Nachname, eigeneId: mandant.Id, cancellationToken);
+        var bestand = await MandantenBestand.LadeAsync(db, cancellationToken);
+        bestand.PruefeNameFrei(mandant.Vorname, mandant.Nachname, eigeneId: mandant.Id);
 
         // Nur die Ordner prüfen, die dieser Mandant vorher noch nicht hatte:
         // im Altbestand kann ein Ordner schon zwei Mandanten zugeordnet sein,
         // und die Regel darf nicht verhindern, dass ein solcher Mandant
         // weiter bearbeitet wird (Adresse ändern, Ordner lösen).
-        var bisherige = new HashSet<string>(
-            MandantListen.Lies(existing.AktenOrdnernamenJson), StringComparer.OrdinalIgnoreCase);
+        var bisherige = new OrdnernamenMenge(MandantListen.Lies(existing.AktenOrdnernamenJson));
         var neueOrdner = MandantListen.Lies(mandant.AktenOrdnernamenJson)
-            .Where(ordner => !bisherige.Contains(ordner));
-        await EnsureOrdnerFreiAsync(neueOrdner, eigeneId: mandant.Id, cancellationToken);
+            .Where(ordner => !bisherige.Enthaelt(ordner))
+            .ToList();
+        bestand.PruefeOrdnerFrei(neueOrdner, eigeneId: mandant.Id);
 
         existing.Anrede = mandant.Anrede;
         existing.Vorname = mandant.Vorname;
@@ -140,7 +154,71 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
         // ErstelltAm bleibt unverändert.
 
         await db.SaveChangesAsync(cancellationToken);
+        await NimmVermerkeZurueckAsync(neueOrdner, cancellationToken);
+        await transaktion.CommitAsync(cancellationToken);
         return existing;
+    }
+
+    public async Task<MandantEntity?> OrdnerZuordnenAsync(
+        int mandantId,
+        string ordnername,
+        bool nurPruefen,
+        CancellationToken cancellationToken = default)
+    {
+        var name = OrdnernamenMenge.Schluessel(ordnername);
+        if (name.Length == 0)
+        {
+            throw new ArgumentException("Ohne Ordnernamen lässt sich nichts zuordnen.", nameof(ordnername));
+        }
+
+        await using var transaktion = await db.Database.BeginTransactionAsync(cancellationToken);
+
+        var mandant = await db.Mandanten.FirstOrDefaultAsync(m => m.Id == mandantId, cancellationToken);
+        if (mandant is null) return null;
+
+        // Hat er ihn schon, gibt es nichts zu prüfen — auch dann nicht, wenn
+        // derselbe Ordner im Altbestand zusätzlich einem zweiten Mandanten
+        // gehört. Sonst ginge die Ablage in die eigene Akte nicht mehr.
+        var ordner = MandantListen.Lies(mandant.AktenOrdnernamenJson);
+        var hatIhnSchon = new OrdnernamenMenge(ordner).Enthaelt(name);
+        if (!hatIhnSchon)
+        {
+            var bestand = await MandantenBestand.LadeAsync(db, cancellationToken);
+            bestand.PruefeOrdnerFrei([name], eigeneId: mandantId);
+        }
+
+        if (nurPruefen) return mandant;
+
+        if (!hatIhnSchon)
+        {
+            mandant.AktenOrdnernamenJson = MandantListen.Schreib([.. ordner, name]);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        await NimmVermerkeZurueckAsync([name], cancellationToken);
+        await transaktion.CommitAsync(cancellationToken);
+        return mandant;
+    }
+
+    public async Task<MandantEntity?> OrdnerLoesenAsync(
+        int mandantId,
+        string ordnername,
+        CancellationToken cancellationToken = default)
+    {
+        await using var transaktion = await db.Database.BeginTransactionAsync(cancellationToken);
+
+        var mandant = await db.Mandanten.FirstOrDefaultAsync(m => m.Id == mandantId, cancellationToken);
+        if (mandant is null) return null;
+
+        var geloest = new OrdnernamenMenge([ordnername]);
+        var ordner = MandantListen.Lies(mandant.AktenOrdnernamenJson);
+        var verbleibend = ordner.Where(o => !geloest.Enthaelt(o)).ToList();
+        if (verbleibend.Count == ordner.Count) return mandant;
+
+        mandant.AktenOrdnernamenJson = MandantListen.Schreib(verbleibend);
+        await db.SaveChangesAsync(cancellationToken);
+        await transaktion.CommitAsync(cancellationToken);
+        return mandant;
     }
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -154,62 +232,14 @@ public sealed class MandantenRepository(AutomationDbContext db) : IMandantenRepo
     }
 
     /// <summary>
-    /// Wirft, wenn ein anderer Mandant denselben normalisierten Namen (Vor- +
-    /// Nachname, getrimmt/kleingeschrieben) trägt. Namenlose Datensätze sind erlaubt.
+    /// Zuordnung sticht Vermerk — wie beim Import (<see cref="MandantenImport"/>).
+    /// Bliebe „ohne Mandantenbezug" an einem zugeordneten Ordner stehen, fiele er
+    /// nach dem Lösen unter „Beiseitegelegt" statt in den Arbeitsvorrat. Hier und
+    /// nicht im Frontend, weil jeder Weg zu einer Zuordnung hier vorbeikommt:
+    /// Karte, Stapel, Ablage und der neue Mandant mit vorbelegtem Ordner.
     /// </summary>
-    async Task EnsureNameUniqueAsync(string vorname, string nachname, int? eigeneId, CancellationToken ct)
+    async Task NimmVermerkeZurueckAsync(List<string> ordner, CancellationToken ct)
     {
-        var norm = MandantName.Normalisiere(vorname, nachname);
-        if (norm.Length == 0) return;
-
-        // In-Memory normalisieren, weil SQLite Trim/Lower nicht identisch abbildet.
-        var alle = await db.Mandanten
-            .Select(m => new { m.Id, m.Vorname, m.Nachname })
-            .ToListAsync(ct);
-
-        var konflikt = alle.Any(m =>
-            m.Id != eigeneId && MandantName.Normalisiere(m.Vorname, m.Nachname) == norm);
-
-        if (konflikt)
-        {
-            var anzeige = MandantName.Anzeige(vorname, nachname);
-            throw new MandantNameConflictException(
-                $"Ein Mandant mit dem Namen „{anzeige}“ ist bereits vorhanden.");
-        }
-    }
-
-    /// <summary>
-    /// Wirft, wenn einer der übergebenen Ordner bereits einem anderen
-    /// Mandanten gehört. Im Speicher geprüft, weil die Ordner je Mandant als
-    /// JSON-Spalte liegen (<see cref="MandantListen.Lies"/>) und sich nicht
-    /// per SQL abfragen lassen; Vergleich ohne Rücksicht auf
-    /// Groß-/Kleinschreibung, wie im Import (<see cref="MandantenImportLauf"/>).
-    /// Getrimmte leere Namen werden übergangen.
-    /// </summary>
-    async Task EnsureOrdnerFreiAsync(IEnumerable<string> ordnernamen, int? eigeneId, CancellationToken ct)
-    {
-        var gepruefte = ordnernamen
-            .Select(ordner => ordner.Trim())
-            .Where(ordner => ordner.Length > 0)
-            .ToList();
-        if (gepruefte.Count == 0) return;
-
-        var andere = await db.Mandanten
-            .Where(m => m.Id != eigeneId)
-            .Select(m => new { m.Vorname, m.Nachname, m.AktenOrdnernamenJson })
-            .ToListAsync(ct);
-
-        foreach (var ordner in gepruefte)
-        {
-            var inhaber = andere.FirstOrDefault(m => MandantListen.Lies(m.AktenOrdnernamenJson)
-                .Contains(ordner, StringComparer.OrdinalIgnoreCase));
-            if (inhaber is null) continue;
-
-            var anzeige = MandantName.Anzeige(inhaber.Vorname, inhaber.Nachname);
-            var besitzer = anzeige.Length == 0 ? "einem anderen Mandanten" : anzeige;
-            throw new MandantOrdnerConflictException(
-                $"Der Ordner „{ordner}“ gehört bereits {besitzer} — " +
-                "ein Ordner kann nur einem Mandanten zugeordnet sein.");
-        }
+        if (ordner.Count > 0) await ordnerStatus.SetzeAsync(ordner, status: null, ct);
     }
 }

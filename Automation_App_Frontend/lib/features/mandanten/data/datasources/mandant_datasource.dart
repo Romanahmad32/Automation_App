@@ -28,6 +28,23 @@ abstract class MandantDatasource {
   Future<Mandant> updateMandant(Mandant mandant);
 
   Future<void> deleteMandant(int id);
+
+  /// Gibt dem Mandanten **einen** Ordner — im Dienst in einer Transaktion,
+  /// ohne den übrigen Datensatz anzufassen. Idempotent; ein Vermerk „ohne
+  /// Mandantenbezug" auf dem Ordner fällt dabei weg. [nurPruefen] schreibt
+  /// nichts und scheitert genauso, wie die Zuordnung scheitern würde.
+  Future<Mandant> ordneOrdnerZu({
+    required int mandantId,
+    required String ordnername,
+    bool nurPruefen = false,
+  });
+
+  /// Nimmt dem Mandanten den Ordner, gleich in welcher Schreibweise er dort
+  /// steht.
+  Future<Mandant> loeseOrdner({
+    required int mandantId,
+    required String ordnername,
+  });
 }
 
 @Injectable(as: MandantDatasource)
@@ -100,6 +117,44 @@ class ApiMandantDatasource implements MandantDatasource {
   Future<void> deleteMandant(int id) async {
     try {
       await _dio.delete('/api/Mandanten/$id');
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<Mandant> ordneOrdnerZu({
+    required int mandantId,
+    required String ordnername,
+    bool nurPruefen = false,
+  }) => _aendereOrdner(
+    '/api/Mandanten/$mandantId/aktenordner/zuordnen',
+    ordnername,
+    queryParameters: {if (nurPruefen) 'nurPruefen': true},
+  );
+
+  @override
+  Future<Mandant> loeseOrdner({
+    required int mandantId,
+    required String ordnername,
+  }) => _aendereOrdner(
+    '/api/Mandanten/$mandantId/aktenordner/loesen',
+    ordnername,
+  );
+
+  Future<Mandant> _aendereOrdner(
+    String pfad,
+    String ordnername, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      final response = await _dio.post(
+        pfad,
+        queryParameters: queryParameters,
+        data: {'ordnername': ordnername},
+        options: Options(contentType: Headers.jsonContentType),
+      );
+      return Mandant.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapError(e);
     }

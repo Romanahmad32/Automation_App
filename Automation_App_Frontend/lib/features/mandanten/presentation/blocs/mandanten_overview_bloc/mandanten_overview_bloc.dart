@@ -98,8 +98,7 @@ class MandantenOverviewBloc
   final MandantenArbeitspaketAbruf _arbeitspaket;
   final UseCase<List<Fall>, GetFaelleParams> _getFaelle;
 
-  /// Erfüllt zugleich die abstrakten Getter aus [ZuordnungsstapelGriff] und
-  /// [AktenzuordnungGriff].
+  /// Erfüllt zugleich den abstrakten Getter aus [ZuordnungsstapelGriff].
   @override
   final UseCase<List<OrdnerStatus>, SetzeOrdnerStatusParams> _setzeOrdnerStatus;
   final UseCase<void, DeleteMandantParams> _deleteMandant;

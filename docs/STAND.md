@@ -210,8 +210,12 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   lösen — ohne Rescan. Nicht mehr gefundene Ordner stehen an der Karte, außer wenn der Scan gar
   nichts fand. Das Backend lehnt einen schon vergebenen Ordner mit 409 ab
   (`MandantOrdnerConflictException`, geprüft werden nur neu hinzukommende Ordner — der Altbestand
-  bleibt bearbeitbar); die Ablage prüft das **vor** dem Kopieren. Zuordnen nimmt einen Vermerk „ohne
-  Mandantenbezug" jetzt auch auf dem Einzelweg zurück, nicht nur beim Import.
+  bleibt bearbeitbar); die Ablage fragt dieselbe Prüfung **vor** dem Kopieren ab. Einen Ordner
+  geben und nehmen eigene Endpunkte (`POST …/{id}/aktenordner/zuordnen|loesen`), die nur diesen
+  Ordner ändern; alle Schreibwege des Registers lesen und schreiben in einer Transaktion, sodass
+  gleichzeitige Anfragen weder denselben Ordner zweimal vergeben noch einander überschreiben. Jede
+  Zuordnung — auch Ablage und neuer Mandant mit vorbelegtem Ordner — nimmt einen Vermerk „ohne
+  Mandantenbezug" zurück, nicht nur der Import.
 - **Die Mandanten-Erkennung hält `HG-E 1427` und `H-GE 1427` nicht mehr für einen Wagen (§4.2,
   11.09.2026, #147)** — sie strich beim Vergleichen alle Trennzeichen, eine dritte Kennzeichenregel
   neben Frontend und Backend. Der „Meinten Sie …?"-Vorschlag in „Vorgang starten" und im

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/data/datasources/akten_datasource.dart';
@@ -18,21 +19,29 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'mandanten_testaufbau.dart';
 
-/// Das Register im Speicher; merkt sich, was gespeichert wurde. Alles andere
-/// an [MandantDatasource] braucht dieser Test nicht.
+/// Antwortet auf `aktenordner/zuordnen` wie der Dienst: 409 als
+/// [MandantException], wenn der Ordner einem anderen gehört — die Regel selbst
+/// prüfen die Backend-Tests (`MandantenOrdnerZuordnungTests`). Merkt sich jeden
+/// Aufruf. Alles andere an [MandantDatasource] braucht dieser Test nicht.
 class MerkendeMandantDatasource implements MandantDatasource {
-  final List<Mandant> mandanten;
-  final List<Mandant> gespeichert = [];
+  /// Ordnername → ID des Mandanten, dem er gehört.
+  final Map<String, int> inhaber;
+  final List<({String ordnername, bool nurPruefen})> zuordnungen = [];
 
-  MerkendeMandantDatasource(this.mandanten);
-
-  @override
-  Future<List<Mandant>> loadMandanten() async => mandanten;
+  MerkendeMandantDatasource(this.inhaber);
 
   @override
-  Future<Mandant> updateMandant(Mandant mandant) async {
-    gespeichert.add(mandant);
-    return mandant;
+  Future<Mandant> ordneOrdnerZu({
+    required int mandantId,
+    required String ordnername,
+    bool nurPruefen = false,
+  }) async {
+    zuordnungen.add((ordnername: ordnername, nurPruefen: nurPruefen));
+    final besitzer = inhaber[ordnername];
+    if (besitzer != null && besitzer != mandantId) {
+      throw MandantException('Der Ordner „$ordnername" gehört bereits Müller.');
+    }
+    return mandant(mandantId, 'Meier', ordner: [ordnername]);
   }
 
   @override
@@ -84,10 +93,7 @@ void main() {
     brief = File('${arbeitsordner.path}/Anspruchsschreiben.docx')
       ..writeAsStringSync('Schreiben');
 
-    register = MerkendeMandantDatasource([
-      mandant(1, 'Müller', ordner: ['VUnfallursache Müller']),
-      mandant(2, 'Meier'),
-    ]);
+    register = MerkendeMandantDatasource({'VUnfallursache Müller': 1});
     final ungenutzt = UngenutzteDatasources();
     repository = MandantenRepositoryImpl(
       register,
@@ -108,7 +114,7 @@ void main() {
     final ergebnis = await repository.legeDokumentAb(
       LegeDokumentAbParams(
         mandantId: 2,
-        aktenOrdnername: 'vunfallursache MÜLLER',
+        aktenOrdnername: 'VUnfallursache Müller',
         unterordnerName: 'Unfall v. 01.01.2026',
         quelldateiPfade: [brief.path],
       ),
@@ -117,31 +123,33 @@ void main() {
     expect(ergebnis, isA<Left<Failure, Object>>());
     final meldung = (ergebnis as Left).value as Failure;
     expect(meldung.message, contains('gehört bereits Müller'));
+    expect(meldung.message, contains('Es wurde nichts abgelegt.'));
     expect(stammordner.listSync(), isEmpty);
-    expect(register.gespeichert, isEmpty);
+    expect(register.zuordnungen, [
+      (ordnername: 'VUnfallursache Müller', nurPruefen: true),
+    ]);
   });
 
-  test('die Ablage in den eigenen Ordner geht durch', () async {
-    final ergebnis = await repository.legeDokumentAb(
-      LegeDokumentAbParams(
-        mandantId: 1,
-        aktenOrdnername: 'VUnfallursache Müller',
-        unterordnerName: 'Unfall v. 01.01.2026',
-        quelldateiPfade: [brief.path],
-      ),
-    );
+  // Erst prüfen, dann kopieren, dann zuordnen — ohne dafür das Register zu
+  // holen (die Attrappe kennt `loadMandanten` gar nicht).
+  test(
+    'die Ablage in den eigenen Ordner prüft, kopiert und ordnet zu',
+    () async {
+      final ergebnis = await repository.legeDokumentAb(
+        LegeDokumentAbParams(
+          mandantId: 1,
+          aktenOrdnername: 'VUnfallursache Müller',
+          unterordnerName: 'Unfall v. 01.01.2026',
+          quelldateiPfade: [brief.path],
+        ),
+      );
 
-    expect(ergebnis, isA<Right<Failure, Object>>());
-    expect(stammordner.listSync(), hasLength(1));
-  });
-
-  test('Lösen nimmt den Ordner in jeder Schreibweise vom Mandanten', () async {
-    final ergebnis = await repository.loeseOrdner(
-      mandantId: 1,
-      ordnername: 'VUNFALLURSACHE müller',
-    );
-
-    expect(ergebnis, isA<Right<Failure, Mandant>>());
-    expect(register.gespeichert.single.aktenOrdnernamen, isEmpty);
-  });
+      expect(ergebnis, isA<Right<Failure, Object>>());
+      expect(stammordner.listSync(), hasLength(1));
+      expect(register.zuordnungen, [
+        (ordnername: 'VUnfallursache Müller', nurPruefen: true),
+        (ordnername: 'VUnfallursache Müller', nurPruefen: false),
+      ]);
+    },
+  );
 }

@@ -56,7 +56,11 @@ void main() {
     expect(stapel(nachher), contains('VUnfallursache Mark'));
   });
 
-  test('Zuordnen nimmt den Vermerk „ohne Mandantenbezug" zurück', () async {
+  // Den Vermerk nimmt der Dienst mit der Zuordnung zurück (und ebenso bei
+  // Ablage und neuem Mandanten). Der Bloc streicht ihn nur aus dem Zustand —
+  // ohne eigenen Aufruf, in demselben Zustandswechsel wie die Zuordnung.
+  test('Zuordnen streicht den Vermerk „ohne Mandantenbezug" aus dem '
+      'Zustand', () async {
     aufbau = mit();
     aufbau.ordnerStatus.eintraege['Bußgeldsache Saeed'] = OrdnerStatus(
       ordnername: 'Bußgeldsache Saeed',
@@ -66,24 +70,19 @@ void main() {
     final geladen = await aufbau.laden();
     expect(geladen.ohneMandantenbezug.enthaelt('Bußgeldsache Saeed'), isTrue);
 
-    // Vor dem Ereignis abonnieren: Die Zuordnung und die Rücknahme des
-    // Vermerks sind zwei Zustände kurz hintereinander, und zwischen zwei
-    // `stream.first` ginge der zweite verloren.
-    final ohneVermerk = aufbau.bloc.stream.firstWhere(
-      (s) => s is MandantenOverviewLoaded && s.ohneMandantenbezug.isEmpty,
-    );
     aufbau.bloc.add(
       const VerknuepfeOrdnerEvent(
         mandantId: 1,
-        ordnername: 'Bußgeldsache Saeed',
+        ordnername: 'bußgeldsache SAEED',
       ),
     );
-    final zugeordnet = await ohneVermerk as MandantenOverviewLoaded;
+    final zugeordnet = await aufbau.naechster();
 
     expect(zugeordnet.mandanten.single.aktenOrdnernamen, [
-      'Bußgeldsache Saeed',
+      'bußgeldsache SAEED',
     ]);
-    expect(aufbau.ordnerStatus.setzAufrufe, 1);
+    expect(zugeordnet.ohneMandantenbezug.isEmpty, isTrue);
+    expect(aufbau.ordnerStatus.setzAufrufe, 0);
 
     // Und nach dem Lösen landet er im Arbeitsvorrat, nicht unter
     // „Beiseitegelegt".
@@ -96,21 +95,59 @@ void main() {
     ], contains('Bußgeldsache Saeed'));
   });
 
-  test('ein Ordner ohne Vermerk kostet beim Zuordnen keinen zweiten '
-      'Aufruf', () async {
-    aufbau = mit();
-    await aufbau.laden();
+  group('faelleNachladen', () {
+    VerknuepfeOrdnerEvent zuordnen({required bool faelleNachladen}) =>
+        VerknuepfeOrdnerEvent(
+          mandantId: 1,
+          ordnername: 'VUnfallursache Mark',
+          faelleNachladen: faelleNachladen,
+        );
 
-    aufbau.bloc.add(
-      const VerknuepfeOrdnerEvent(
-        mandantId: 1,
-        ordnername: 'VUnfallursache Mark',
-      ),
-    );
-    await aufbau.naechster();
-    await Future<void>.delayed(const Duration(milliseconds: 20));
+    test('von der Karte liest die Fälle der neuen Akte nach', () async {
+      aufbau = mit();
+      await aufbau.laden();
 
-    expect(aufbau.ordnerStatus.setzAufrufe, 0);
+      // Vor dem Ereignis abonnieren: Zuordnung und Fälle sind zwei Zustände
+      // kurz hintereinander, und zwischen zwei `stream.first` ginge der
+      // zweite verloren.
+      final mitFaellen = aufbau.bloc.stream.firstWhere(
+        (s) =>
+            s is MandantenOverviewLoaded &&
+            s.akten.any(
+              (a) => a.ordnername == 'VUnfallursache Mark' && a.faelleGeladen,
+            ),
+      );
+      aufbau.bloc.add(zuordnen(faelleNachladen: true));
+      await mitFaellen;
+
+      expect(aufbau.getFaelle.aufrufe, 1);
+    });
+
+    test('aus dem Stapel liest keine Fälle', () async {
+      aufbau = mit();
+      await aufbau.laden();
+
+      aufbau.bloc.add(zuordnen(faelleNachladen: false));
+      await aufbau.naechster();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(aufbau.getFaelle.aufrufe, 0);
+    });
+
+    // Bei einem 409 gehört die Akte einem anderen — ihre Fälle vom
+    // Netzlaufwerk zu lesen wäre Arbeit für eine Karte, an der sie nie steht.
+    test('eine gescheiterte Zuordnung liest keine Fälle', () async {
+      aufbau = mit();
+      await aufbau.laden();
+      aufbau.register.fehlerBeimVerknuepfen = 'gehört bereits Schulz';
+
+      aufbau.bloc.add(zuordnen(faelleNachladen: true));
+      final nachher = await aufbau.naechster();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(nachher.fehler, 'gehört bereits Schulz');
+      expect(aufbau.getFaelle.aufrufe, 0);
+    });
   });
 
   group('nichtGefundeneOrdnerFuer', () {

@@ -82,15 +82,16 @@ class MandantAktenListe extends StatelessWidget {
     );
     if (ordnername == null) return;
 
-    bloc.add(
-      VerknuepfeOrdnerEvent(mandantId: mandant.id, ordnername: ordnername),
-    );
     // Die Karte ist aufgeklappt, ihre Fälle hat sie beim Aufklappen gelesen —
-    // die der neuen Akte nicht. Ohne das stünde dort „Fälle werden gelesen …",
-    // bis jemand die Karte zu- und wieder aufklappt.
-    for (final akte in state.akten) {
-      if (akte.ordnername == ordnername) bloc.add(LadeFaelleEvent(akte));
-    }
+    // die der neuen Akte nicht. Ohne `faelleNachladen` stünde dort „Fälle
+    // werden gelesen …", bis jemand die Karte zu- und wieder aufklappt.
+    bloc.add(
+      VerknuepfeOrdnerEvent(
+        mandantId: mandant.id,
+        ordnername: ordnername,
+        faelleNachladen: true,
+      ),
+    );
   }
 
   Future<void> _loesen(BuildContext context, String ordnername) async {

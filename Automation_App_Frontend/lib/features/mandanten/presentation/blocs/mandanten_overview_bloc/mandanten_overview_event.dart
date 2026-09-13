@@ -102,13 +102,20 @@ final class VerknuepfeOrdnerEvent extends MandantenOverviewEvent {
   final int mandantId;
   final String ordnername;
 
+  /// Nach gelungener Zuordnung die Fälle der Akte lesen — für die
+  /// aufgeklappte Mandantenkarte, die ihre Fälle beim Aufklappen gelesen hat,
+  /// die der neuen Akte aber nicht. Der Stapel braucht sie nicht, und je
+  /// Zuordnung ein Blick ins Netzlaufwerk wäre dort nur Wartezeit.
+  final bool faelleNachladen;
+
   const VerknuepfeOrdnerEvent({
     required this.mandantId,
     required this.ordnername,
+    this.faelleNachladen = false,
   });
 
   @override
-  List<Object> get props => [mandantId, ordnername];
+  List<Object> get props => [mandantId, ordnername, faelleNachladen];
 }
 
 /// Nimmt einem Mandanten einen Ordner wieder ab (#132). Der Ordner im

@@ -11,11 +11,16 @@ part of 'mandanten_overview_bloc.dart';
 /// Beide schreiben den Zustand fort und scannen **nicht** neu — der Ordner
 /// wechselt zwischen Karte und Stapel, weil `zugeordneteOrdnernamen` sich
 /// ändert (`FALLSTRICKE.md`: „Kein Rescan nach einer Änderung am Register").
+///
+/// Den Vermerk „ohne Mandantenbezug" nimmt der Dienst mit der Zuordnung
+/// zurück, hier wird er nur aus dem Zustand gestrichen
+/// ([MandantenOverviewLoaded.mitZuordnung]). Das Frontend dafür selbst
+/// anzusprechen ließe die übrigen Wege zu einer Zuordnung — Ablage, neuer
+/// Mandant mit vorbelegtem Ordner — ohne die Regel.
 mixin AktenzuordnungGriff
     on Bloc<MandantenOverviewEvent, MandantenOverviewState> {
   UseCase<Mandant, VerknuepfeOrdnerParams> get _verknuepfeOrdner;
   UseCase<Mandant, LoeseOrdnerParams> get _loeseOrdner;
-  UseCase<List<OrdnerStatus>, SetzeOrdnerStatusParams> get _setzeOrdnerStatus;
 
   Future<void> _onVerknuepfe(
     VerknuepfeOrdnerEvent event,
@@ -36,9 +41,7 @@ mixin AktenzuordnungGriff
         emit(aktuell.copyWith(fehler: failure.message));
       case Right(value: final aktualisiert):
         emit(aktuell.mitZuordnung(aktualisiert, event.ordnername));
-        if (aktuell.ohneMandantenbezug.enthaelt(event.ordnername)) {
-          await _vermerkZuruecknehmen(event.ordnername, emit);
-        }
+        if (event.faelleNachladen) _ladeFaelleVon(aktuell, event.ordnername);
     }
   }
 
@@ -62,27 +65,13 @@ mixin AktenzuordnungGriff
     }
   }
 
-  /// Zuordnung sticht Vermerk — wie beim Import. Bliebe der Vermerk stehen,
-  /// wäre der Ordner einem Mandanten zugeordnet **und** „ohne
-  /// Mandantenbezug", und nach dem Lösen fiele er nicht in den Arbeitsvorrat
-  /// zurück, sondern unter „Beiseitegelegt".
-  ///
-  /// Scheitert das, bleibt die Zuordnung trotzdem stehen: Sie ist gespeichert,
-  /// und der Vermerk wirkt nicht, solange der Ordner zugeordnet ist.
-  Future<void> _vermerkZuruecknehmen(
-    String ordnername,
-    Emitter<MandantenOverviewState> emit,
-  ) async {
-    final result = await _setzeOrdnerStatus(
-      SetzeOrdnerStatusParams(ordnernamen: [ordnername], art: null),
-    );
-    final aktuell = state;
-    if (aktuell is! MandantenOverviewLoaded) return;
-    switch (result) {
-      case Left(value: final failure):
-        emit(aktuell.copyWith(fehler: failure.message));
-      case Right(value: final stand):
-        emit(aktuell.copyWith(ordnerStatus: stand));
+  /// Erst nach gelungener Zuordnung: Bei einem 409 gehört die Akte jemand
+  /// anderem, und ihre Fälle auf einem womöglich langsamen Netzlaufwerk zu
+  /// lesen wäre Arbeit für eine Karte, an der sie gar nicht erscheint.
+  void _ladeFaelleVon(MandantenOverviewLoaded stand, String ordnername) {
+    final gemeint = OrdnernamenMenge([ordnername]);
+    for (final akte in stand.akten) {
+      if (gemeint.enthaelt(akte.ordnername)) add(LadeFaelleEvent(akte));
     }
   }
 }

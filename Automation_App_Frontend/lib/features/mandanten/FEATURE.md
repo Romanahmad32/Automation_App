@@ -18,9 +18,10 @@ Dateisystem zu ihm gehören. Grundlage für Wiederverwendung der Daten, Aktenabl
 `LoeseOrdnerVonMandant`,
 `LegeDokumentAb`, `GetImportPakete`, `NotiereImportPaket`, `LoescheImportPaket`, `SchreibeArbeitspaket`
 **Backend:** `Features/Mandanten/` · `GET/POST /api/Mandanten`, `GET /api/Mandanten/seite`, `GET /api/Mandanten/aktenordner`,
-`PUT/DELETE /api/Mandanten/{id}`, `GET/PUT /api/OrdnerStatus`, `POST /api/MandantenImport` (Format: `docs/MANDANTEN_IMPORT.md`),
-`GET`/`POST /api/ImportPakete`, `DELETE /api/ImportPakete/{nummer}` (nur offene) — Akten und Fälle laufen über keinen
-Endpunkt, sie kommen direkt aus dem Dateisystem.
+`PUT/DELETE /api/Mandanten/{id}`, `POST /api/Mandanten/{id}/aktenordner/zuordnen|loesen`, `GET/PUT /api/OrdnerStatus`,
+`POST /api/MandantenImport` (Format: `docs/MANDANTEN_IMPORT.md`), `GET`/`POST /api/ImportPakete`,
+`DELETE /api/ImportPakete/{nummer}` (nur offene) — Akten und Fälle laufen über keinen Endpunkt, sie kommen direkt aus
+dem Dateisystem.
 **Tests:** `test/features/mandanten/`, Einstieg `test/features/mandanten/mandanten_overview_bloc_test.dart`,
 `test/features/mandanten/mandanten_import_cubit_test.dart`
 
@@ -38,7 +39,8 @@ Endpunkt, sie kommen direkt aus dem Dateisystem.
 - **Ein Ordner hat drei Zustände**, nicht zwei: zugeordnet (steht am Mandanten), offen, oder
   „ohne Mandantenbezug" (`OrdnerStatus`). `ZuordnungFilter.ansichtVon` teilt danach auf.
 - **Ein Ordner gehört höchstens einem Mandanten** (§5.1): Das Backend lehnt einen vergebenen mit 409 ab, die Ablage
-  prüft vor dem Kopieren, die Auswahl an der Karte sperrt ihn. Zuordnen und Lösen an der Karte: `FALLSTRICKE.md`.
+  fragt vorher dieselbe Prüfung ab (`nurPruefen`). Einen Ordner geben oder nehmen nie per `PUT` des ganzen Mandanten:
+  `FALLSTRICKE.md`.
 - Verknüpfung **und** Vermerk hängen am **Ordnernamen**, nicht am Pfad — und der vergleicht sich
   ohne Rücksicht auf Groß-/Kleinschreibung (`OrdnernamenMenge`, im Backend `NOCASE`): Das
   Dateisystem kennt „VUnfallursache Mark" und „Vunfallursache Mark" als einen Ordner.

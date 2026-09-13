@@ -247,15 +247,36 @@ Die Karte öffnet, ordnet zu und löst — das Gegenstück zum Zuordnungsstapel.
 `AkteZuordnenDialog` mit `AktenAuswahlKachel`, dazu `AktenAuswahl` in der Domain und
 `AktenzuordnungGriff` am Bloc.
 
-- **Ein Ordner gehört höchstens einem Mandanten — an drei Stellen durchgesetzt.** Im Backend
-  (`MandantenRepository`, 409 `MandantOrdnerConflictException`), in der Ablage vor dem Kopieren
-  (`MandantenRepositoryImpl._pruefeOrdnerFrei`) und in der Auswahl (fremd zugeordnet = gesperrt).
-  Das Backend ist die Regel, die beiden anderen sind der Zeitpunkt: Kam das 409 erst nach dem
-  Kopieren, läge das Schreiben in der fremden Akte und die App meldete trotzdem einen Fehler.
+- **Ein Ordner gehört höchstens einem Mandanten — die Regel steht nur im Backend.**
+  `MandantenRepository` lehnt mit 409 ab (`MandantOrdnerConflictException`); die Ablage fragt vor dem
+  Kopieren mit `aktenordner/zuordnen?nurPruefen=true` **dieselbe** Prüfung ab, und die Auswahl an der
+  Karte sperrt fremd zugeordnete Ordner nur, damit man sie gar nicht erst wählt. Bis 13.09.2026 prüfte
+  die Ablage im Frontend selbst, über das ganze Register — und sperrte dabei auch den **eigenen**
+  Ordner, sobald er im Altbestand zusätzlich einem zweiten gehörte. Eine zweite Auslegung derselben
+  Regel läuft beim ersten Sonderfall auseinander.
+- **Einen Ordner geben oder nehmen heißt `POST /api/Mandanten/{id}/aktenordner/zuordnen|loesen`,
+  nie „Mandant laden, Liste ändern, `PUT`".** Der alte Weg holte je Aufruf das ganze Register
+  (~4000 Mandanten) und schrieb den ganzen Datensatz zurück: Zwei Aufrufe, die sich überschnitten
+  (Ablage im Word-Reiter und Zuordnung an der Karte, oder zwei schnelle Klicks — der Bloc arbeitet
+  Ereignisse gleichzeitig ab), lasen denselben Stand, und der zweite überschrieb den ersten. Ein
+  gelöster Ordner stand danach wieder am Mandanten, und der Dienst nahm ihn als „neu und frei" an.
+- **Jede schreibende Methode von `MandantenRepository` liest und schreibt in einer Transaktion.**
+  Alleiniger Schreiber zu sein genügt nicht: Prüfen und Speichern zweier gleichzeitiger Anfragen
+  verzahnten sich sonst, und derselbe Ordner ginge an zwei Mandanten. `BeginTransactionAsync` ist bei
+  Microsoft.Data.Sqlite ein `BEGIN IMMEDIATE` — die Sperre fällt beim Öffnen, nicht erst beim
+  Schreiben. `MandantenGleichzeitigkeitTests` prüft das gegen eine Datenbankdatei mit zwei
+  Verbindungen und bremst jede Abfrage künstlich; ohne die Bremse blieben die Tests auch ohne
+  Transaktion meist grün.
 - **Das Backend prüft nur Ordner, die der Mandant vorher nicht hatte.** Im Altbestand kann ein Ordner
   schon zwei Mandanten gehören (vor der Regel zugeordnet). Prüfte es die ganze Liste, ließe sich ein
   solcher Mandant nicht einmal mehr umbenennen — und auch das Lösen, das den Konflikt beheben soll,
-  ginge nicht.
+  ginge nicht. Aus demselben Grund ist `zuordnen` für einen Ordner, den der Mandant schon hat, ohne
+  Prüfung erfolgreich: sonst ginge die Ablage in die eigene Akte nicht mehr.
+- **Getrimmt wird auf beiden Seiten des Vergleichs**, in Dart (`OrdnernamenMenge`) wie in C#
+  (`OrdnernamenMenge`, `MandantenBestand`). Kürzte nur die geprüfte Seite, gälte ein gespeichertes
+  „ Foo" im Backend als frei und im Frontend als vergeben. `MandantenBestand` liest Namen und Ordner
+  aller Mandanten einmal je Anfrage — vorher las jede Prüfung die Tabelle für sich, und die
+  Ordnerprüfung die JSON-Spalte jedes Mandanten je geprüftem Ordner neu.
 - **Fremd zugeordnet heißt gesperrt, nicht umhängbar.** Umhängen bräuchte den Besitzer, und die
   Übersicht kennt nur `zugeordneteOrdnernamen` — die Namen, nicht wem sie gehören; die Mandanten
   liegen seitenweise vor. Wer umhängen will, löst beim Besitzer und ordnet dann zu.
@@ -267,15 +288,27 @@ Die Karte öffnet, ordnet zu und löst — das Gegenstück zum Zuordnungsstapel.
 - **„Nicht gefunden" nur, wenn der Scan überhaupt etwas fand** (`nichtGefundeneOrdnerFuer`). Ein
   fehlender Stammordner liefert eine leere Liste statt eines Fehlers (siehe oben); ohne diese Sperre
   stünde an jeder Karte jede Akte als verschwunden, mit einem Lösen-Knopf daneben.
-- **Zuordnung sticht Vermerk — jetzt auch auf dem Einzelweg.** `AktenzuordnungGriff` nimmt den Vermerk
-  „ohne Mandantenbezug" nach einer Zuordnung zurück, egal ob aus dem Stapel oder von der Karte. Blieb
-  er stehen, fiel ein gelöster Ordner unter „Beiseitegelegt" statt in den Arbeitsvorrat.
+- **Zuordnung sticht Vermerk — auf jedem Weg, und darum im Backend.** `CreateAsync`, `UpdateAsync`
+  (für neu hinzugekommene Ordner) und `OrdnerZuordnenAsync` nehmen den Vermerk „ohne Mandantenbezug"
+  in derselben Transaktion zurück; der Bloc streicht ihn nur aus dem Zustand
+  (`MandantenOverviewLoaded.mitZuordnung`). Zuerst stand die Rücknahme im Bloc — und fehlte damit bei
+  der Ablage und beim neuen Mandanten mit vorbelegtem Ordner. Blieb der Vermerk stehen, fiel ein
+  gelöster Ordner unter „Beiseitegelegt" statt in den Arbeitsvorrat.
 - **Lösen nimmt den Namen aus `zugeordneteOrdnernamen`, auch wenn er im Altbestand noch einem zweiten
   Mandanten gehört.** Die Übersicht kann das nicht wissen (siehe oben); der Ordner stünde dann bis
   zum nächsten Laden im Stapel. Ein Zuordnen dort scheitert am 409 mit einer Meldung, die den
   Besitzer nennt — kein stiller Schaden.
-- **Nach dem Zuordnen liest die Karte die Fälle der neuen Akte nach** (`LadeFaelleEvent`). Sie ist
-  aufgeklappt und hat ihre Fälle beim Aufklappen gelesen — die der neuen Akte nicht.
+- **Nach dem Zuordnen liest die Karte die Fälle der neuen Akte nach** —
+  `VerknuepfeOrdnerEvent(faelleNachladen: true)`, und zwar erst im Erfolgszweig des Blocs. Sie ist
+  aufgeklappt und hat ihre Fälle beim Aufklappen gelesen, die der neuen Akte nicht. Das Widget schickte
+  `LadeFaelleEvent` zuerst direkt hinter der Zuordnung her; scheiterte die am 409, las die App die
+  Fälle einer fremden Akte vom Netzlaufwerk. Der Stapel lässt das Feld aus: dort wäre es je Zuordnung
+  ein Blick ins Laufwerk für nichts.
+- **Explorer: asynchron prüfen, über `rundll32` öffnen** (`DateiOeffner.ordnerImExplorer`). `existsSync`
+  auf einem weggebrochenen Netzlaufwerk friert das UI-Isolat bis zum SMB-Timeout ein. Und `explorer
+  <pfad>` zerlegt seine Befehlszeile an Kommas, die Dart nur bei Leerzeichen in Anführungszeichen
+  setzt — „Müller,Hans" öffnete die Dokumente und meldete Erfolg. `imExplorer` (`/select,`) hat
+  dieselbe Schwäche noch; es zeigt Dateien, die die App selbst benennt.
 - **Widget-Tests bauen den Bloc im Test, nicht in `setUp`.** `testWidgets` läuft in einer
   Fake-Async-Zone; ein außerhalb gebauter Bloc verarbeitet seine Ereignisse in der echten, und der
   Test wartet dann ohne Zeitgrenze auf einen Zustand, der nie kommt (`--timeout` greift dort nicht).
@@ -283,9 +316,9 @@ Die Karte öffnet, ordnet zu und löst — das Gegenstück zum Zuordnungsstapel.
 ## Ablage
 
 - `legeDokumentAb` schreibt an zwei Stellen: erst die Dateikopie ins Dateisystem, danach
-  `PUT /api/Mandanten/{id}` für den Ordner am Mandanten (nur wenn wirklich abgelegt wurde). Wer an
-  der Ablage arbeitet, muss beide Seiten zusammenhalten. Vor beidem prüft es, ob der Ordner einem
-  anderen Mandanten gehört, und schreibt dann gar nichts (siehe oben).
+  `POST /api/Mandanten/{id}/aktenordner/zuordnen` für den Ordner am Mandanten (nur wenn wirklich
+  abgelegt wurde). Wer an der Ablage arbeitet, muss beide Seiten zusammenhalten. Vor beidem fragt es
+  denselben Aufruf mit `nurPruefen=true` und schreibt bei einem 409 gar nichts (siehe oben).
 - Die Ablage-Oberfläche liegt nicht hier, sondern in `word_automation` (`akten_ablage_section.dart`) —
   hier liegen nur `AblageCubit` und UseCase; auch Formatwahl und Fall-Ordnername entstehen dort.
 - Eine Ablage umfasst **alle Fassungen eines Schreibens** (Word, PDF oder beide) und gelingt oder

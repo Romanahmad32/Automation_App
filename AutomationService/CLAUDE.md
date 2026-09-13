@@ -109,7 +109,8 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   `RegisterHub`; dazu §6.3 (`RegisterNummern`, `VorgangLoeschung`). Ketten:
   [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
-  doppeltem Namen, `MandantOrdnerConflictException` bei einem schon vergebenen Ordner). Die
+  doppeltem Namen, `MandantOrdnerConflictException` bei einem schon vergebenen Ordner; einzelne
+  Ordner über `POST …/{id}/aktenordner/zuordnen|loesen`, jeder Schreibweg in einer Transaktion). Die
   Akten/Fälle im Dateisystem liegen im Frontend, nicht hier. Dazu das Paketbuch des Imports
   (`ImportPakete`, #108).
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST

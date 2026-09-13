@@ -40,19 +40,62 @@ public interface IMandantenRepository
     /// </summary>
     Task<IReadOnlyList<string>> GetAktenOrdnernamenAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Legt einen Mandanten an (ID + ErstelltAm werden vergeben).</summary>
+    /// <summary>
+    /// Legt einen Mandanten an (ID + ErstelltAm werden vergeben). Vermerke
+    /// „ohne Mandantenbezug" auf seinen Ordnern fallen weg.
+    /// </summary>
     /// <exception cref="MandantNameConflictException">Name bereits vergeben.</exception>
     /// <exception cref="MandantOrdnerConflictException">
     /// Ein Akten-Ordner gehört bereits einem anderen Mandanten.
     /// </exception>
     Task<MandantEntity> CreateAsync(MandantEntity neu, CancellationToken cancellationToken = default);
 
-    /// <summary>Aktualisiert einen Mandanten. Liefert null, wenn die ID unbekannt ist.</summary>
+    /// <summary>
+    /// Aktualisiert einen Mandanten. Liefert null, wenn die ID unbekannt ist.
+    /// Vermerke „ohne Mandantenbezug" auf neu hinzugekommenen Ordnern fallen weg.
+    /// </summary>
     /// <exception cref="MandantNameConflictException">Name bereits von einem anderen vergeben.</exception>
     /// <exception cref="MandantOrdnerConflictException">
     /// Ein neu hinzugefügter Akten-Ordner gehört bereits einem anderen Mandanten.
     /// </exception>
     Task<MandantEntity?> UpdateAsync(MandantEntity mandant, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gibt dem Mandanten <b>einen</b> Akten-Ordner, ohne den übrigen Datensatz
+    /// anzufassen — idempotent, ohne Rücksicht auf die Schreibweise, und ein
+    /// Vermerk „ohne Mandantenbezug" auf dem Ordner fällt weg. Liefert null, wenn
+    /// die ID unbekannt ist.
+    ///
+    /// Anders als ein <see cref="UpdateAsync"/> mit der ganzen Liste kann eine
+    /// zweite, gleichzeitige Änderung am selben Mandanten dabei nicht verloren
+    /// gehen: gelesen und geschrieben wird in einer Transaktion.
+    /// </summary>
+    /// <param name="mandantId">Der Mandant, der den Ordner bekommt.</param>
+    /// <param name="ordnername">Der Ordner; getrimmt gespeichert.</param>
+    /// <param name="nurPruefen">
+    /// Nur prüfen, nichts schreiben — für die Ablage, die <b>vor</b> dem Kopieren
+    /// wissen muss, ob die Zuordnung danach geht. Dieselbe Prüfung wie beim
+    /// Schreiben, keine zweite Auslegung.
+    /// </param>
+    /// <param name="cancellationToken">Abbruch.</param>
+    /// <exception cref="MandantOrdnerConflictException">
+    /// Der Ordner gehört einem anderen Mandanten und diesem noch nicht.
+    /// </exception>
+    Task<MandantEntity?> OrdnerZuordnenAsync(
+        int mandantId,
+        string ordnername,
+        bool nurPruefen,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Nimmt dem Mandanten den Ordner, gleich in welcher Schreibweise er dort
+    /// steht; der Rest des Datensatzes bleibt. Liefert null, wenn die ID unbekannt
+    /// ist, und den unveränderten Mandanten, wenn er den Ordner nicht hatte.
+    /// </summary>
+    Task<MandantEntity?> OrdnerLoesenAsync(
+        int mandantId,
+        string ordnername,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Löscht den Mandanten. false, wenn die ID unbekannt war.</summary>
     Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);

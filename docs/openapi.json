@@ -2496,6 +2496,218 @@
         }
       }
     },
+    "/api/Mandanten/{id}/aktenordner/zuordnen": {
+      "post": {
+        "tags": [
+          "Mandanten"
+        ],
+        "summary": "Gibt dem Mandanten einen Akten-Ordner \u2014 aus dem Zuordnungsstapel, von der\r\nMandantenkarte und nach einer Ablage. Nur dieser eine Ordner \u00E4ndert sich:\r\nWer den ganzen Mandanten per \u0060PUT\u0060 schickte, \u00FCberschriebe eine\r\ngleichzeitige zweite \u00C4nderung an ihm.\r\n\r\n\u0060nurPruefen=true\u0060 schreibt nichts und antwortet wie die Zuordnung \u2014\r\n409, wenn der Ordner einem anderen geh\u00F6rt. Die Ablage fragt so vor dem\r\nKopieren, statt daf\u00FCr das ganze Register zu laden.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "nurPruefen",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AktenOrdnerDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AktenOrdnerDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AktenOrdnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mandanten/{id}/aktenordner/loesen": {
+      "post": {
+        "tags": [
+          "Mandanten"
+        ],
+        "summary": "Nimmt dem Mandanten einen Akten-Ordner, gleich in welcher Schreibweise er\r\ndort steht. Der Ordner im Dateisystem bleibt unber\u00FChrt.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AktenOrdnerDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AktenOrdnerDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AktenOrdnerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/MandantenImport": {
       "post": {
         "tags": [
@@ -5325,6 +5537,18 @@
   },
   "components": {
     "schemas": {
+      "AktenOrdnerDto": {
+        "required": [
+          "ordnername"
+        ],
+        "type": "object",
+        "properties": {
+          "ordnername": {
+            "type": "string"
+          }
+        },
+        "description": "Ein einzelner Akten-Ordner, der einem Mandanten gegeben oder genommen wird.\r\nIm Rumpf und nicht im Pfad: Ordnernamen tragen Leerzeichen, Umlaute und\r\n\u201E\u0026amp;\u0022, und ein Pfadsegment m\u00FCsste jedes davon maskieren."
+      },
       "AnredeBausteinDto": {
         "required": [
           "id",
