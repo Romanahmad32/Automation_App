@@ -42,10 +42,16 @@ public interface IMandantenRepository
 
     /// <summary>Legt einen Mandanten an (ID + ErstelltAm werden vergeben).</summary>
     /// <exception cref="MandantNameConflictException">Name bereits vergeben.</exception>
+    /// <exception cref="MandantOrdnerConflictException">
+    /// Ein Akten-Ordner gehört bereits einem anderen Mandanten.
+    /// </exception>
     Task<MandantEntity> CreateAsync(MandantEntity neu, CancellationToken cancellationToken = default);
 
     /// <summary>Aktualisiert einen Mandanten. Liefert null, wenn die ID unbekannt ist.</summary>
     /// <exception cref="MandantNameConflictException">Name bereits von einem anderen vergeben.</exception>
+    /// <exception cref="MandantOrdnerConflictException">
+    /// Ein neu hinzugefügter Akten-Ordner gehört bereits einem anderen Mandanten.
+    /// </exception>
     Task<MandantEntity?> UpdateAsync(MandantEntity mandant, CancellationToken cancellationToken = default);
 
     /// <summary>Löscht den Mandanten. false, wenn die ID unbekannt war.</summary>

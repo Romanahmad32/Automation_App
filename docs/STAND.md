@@ -202,6 +202,16 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ruhig, „in keiner Datei" in Fehlerfarbe und anklickbar. Die Abkürzung heißt repo-weit „HGn" (Haftung dem
   Grunde nach).
 
+- **Akten direkt am Mandanten öffnen, zuordnen und lösen (§5.1/§6.1, 13.09.2026, #132)** — die
+  Mandantenkarte zeigte die Akten nur als Text; zugeordnet wurde allein aus dem Zuordnungsstapel.
+  Jetzt öffnen sich Akte und Fall im Explorer (`DateiOeffner.oeffneOrdner`, Meldung bei fehlendem
+  Ordner), „Akte zuordnen …" sucht über alle gescannten Ordner (`AktenAuswahl`: Namensvorschläge,
+  offene, beiseitegelegte, fremd zugeordnete gesperrt), und eine Zuordnung lässt sich mit Rückfrage
+  lösen — ohne Rescan. Nicht mehr gefundene Ordner stehen an der Karte, außer wenn der Scan gar
+  nichts fand. Das Backend lehnt einen schon vergebenen Ordner mit 409 ab
+  (`MandantOrdnerConflictException`, geprüft werden nur neu hinzukommende Ordner — der Altbestand
+  bleibt bearbeitbar); die Ablage prüft das **vor** dem Kopieren. Zuordnen nimmt einen Vermerk „ohne
+  Mandantenbezug" jetzt auch auf dem Einzelweg zurück, nicht nur beim Import.
 - **Die Mandanten-Erkennung hält `HG-E 1427` und `H-GE 1427` nicht mehr für einen Wagen (§4.2,
   11.09.2026, #147)** — sie strich beim Vergleichen alle Trennzeichen, eine dritte Kennzeichenregel
   neben Frontend und Backend. Der „Meinten Sie …?"-Vorschlag in „Vorgang starten" und im

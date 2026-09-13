@@ -186,6 +186,28 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
     fehlerVerwerfen: true,
   );
 
+  /// Der Zustand nach dem Lösen einer Zuordnung — das Gegenstück zu
+  /// [mitZuordnung]: Der Mandant kommt ohne den Ordner zurück, und der Ordner
+  /// steht wieder im Stapel, ohne erneuten Scan. Verglichen wird ohne Rücksicht
+  /// auf die Schreibweise, wie überall bei Ordnernamen.
+  MandantenOverviewLoaded mitGeloesterZuordnung(
+    Mandant aktualisiert,
+    String ordnername,
+  ) {
+    final geloest = OrdnernamenMenge([ordnername]);
+    return copyWith(
+      mandanten: [
+        for (final m in mandanten)
+          if (m.id == aktualisiert.id) aktualisiert else m,
+      ],
+      zugeordneteOrdnernamen: [
+        for (final name in zugeordneteOrdnernamen)
+          if (!geloest.enthaelt(name)) name,
+      ],
+      fehlerVerwerfen: true,
+    );
+  }
+
   /// Ob es noch Mandanten nachzuladen gibt. „Die letzte Seite war voll" wäre
   /// bei genau [MandantenOverviewBloc.seitenGroesse] Treffern falsch.
   bool get gibtWeitereMandanten => mandanten.length < gefundeneMandanten;
@@ -272,6 +294,39 @@ final class MandantenOverviewLoaded extends MandantenOverviewState {
   /// Fallzahl mehr als eine Vermutung.
   bool faelleGeladenFuer(Mandant mandant) =>
       aktenFuer(mandant).every((a) => a.faelleGeladen);
+
+  /// Alle gescannten Ordnernamen — einmal gemerkt, weil jede Mandantenkarte
+  /// danach fragt ([nichtGefundeneOrdnerFuer]).
+  late final OrdnernamenMenge _gescannt = OrdnernamenMenge([
+    for (final akte in akten) akte.ordnername,
+  ]);
+
+  /// Die Ordner, die [mandant] zugeordnet sind, die der Scan aber nicht findet
+  /// — umbenannt oder verschoben. [aktenFuer] zeigt nur Gefundenes; ohne diese
+  /// Liste verschwände eine solche Zuordnung wortlos von der Karte und stünde
+  /// weiter in der Datenbank.
+  ///
+  /// **Leer, solange der Scan nichts fand.** Ist der Stammordner nicht gesetzt
+  /// oder nicht erreichbar (Netzlaufwerk), liefert der Scan eine leere Liste
+  /// (siehe `FALLSTRICKE.md`) — dann fehlte scheinbar jede Akte jedes
+  /// Mandanten, und die Karte riete zum Lösen von Zuordnungen, die stimmen.
+  List<String> nichtGefundeneOrdnerFuer(Mandant mandant) {
+    if (akten.isEmpty) return const [];
+    return [
+      for (final name in mandant.aktenOrdnernamen)
+        if (!_gescannt.enthaelt(name)) name,
+    ];
+  }
+
+  /// Die Auswahl für „Akte zuordnen" an der Karte von [mandant] — siehe
+  /// [AktenAuswahl.fuer].
+  List<AktenAuswahlEintrag> aktenAuswahlFuer(Mandant mandant) =>
+      AktenAuswahl.fuer(
+        mandant: mandant,
+        akten: akten,
+        zugeordnet: _zugeordnet,
+        ohneMandantenbezug: ohneMandantenbezug,
+      );
 
   @override
   List<Object?> get props => [

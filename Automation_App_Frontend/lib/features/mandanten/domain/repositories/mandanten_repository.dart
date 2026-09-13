@@ -100,8 +100,18 @@ abstract class MandantenRepository {
   });
 
   /// Ordnet einem Mandanten einen vorhandenen Akten-Ordner zu (manuelle
-  /// Zuordnung). Gibt den aktualisierten Mandanten zurück.
+  /// Zuordnung). Gibt den aktualisierten Mandanten zurück. Gehört der Ordner
+  /// schon einem anderen Mandanten, lehnt das Backend ab (409) — die Meldung
+  /// nennt den Besitzer.
   Future<Either<Failure, Mandant>> verknuepfeOrdner({
+    required int mandantId,
+    required String ordnername,
+  });
+
+  /// Nimmt [ordnername] vom Mandanten, gleich in welcher Schreibweise er dort
+  /// steht. Der Ordner im Dateisystem bleibt unberührt. Gibt den
+  /// aktualisierten Mandanten zurück.
+  Future<Either<Failure, Mandant>> loeseOrdner({
     required int mandantId,
     required String ordnername,
   });
@@ -109,6 +119,11 @@ abstract class MandantenRepository {
   /// Legt ein fertiges Dokument in der Akte ab (§6.1): Akten-Ordner bei Bedarf
   /// anlegen, Unterordner anlegen, Dateien hineinkopieren. Verknüpft den
   /// Ordner mit dem Mandanten und gibt die Zielpfade der Kopien zurück.
+  ///
+  /// Gehört der Ordner schon einem **anderen** Mandanten, wird nichts kopiert:
+  /// Die Ablage schlägt dann mit einer Meldung fehl, die den Besitzer nennt.
+  /// Erst nach dem Kopieren zu merken, dass die Zuordnung nicht geht, hieße
+  /// eine Datei in der Akte und eine Fehlermeldung darüber.
   Future<Either<Failure, AblageErgebnis>> legeDokumentAb(
     LegeDokumentAbParams params,
   );

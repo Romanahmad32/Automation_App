@@ -4,13 +4,14 @@ import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
-import 'package:automation_app/features/mandanten/presentation/widgets/akte_block.dart';
+import 'package:automation_app/features/mandanten/presentation/widgets/mandant_akten_liste.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandant_info_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Aufklappbare Karte eines Mandanten: Stammdaten, Kennzahlen (Akten/Fälle),
-/// Aktionen (bearbeiten/löschen) und die zugeordneten Akten.
+/// Aktionen (bearbeiten/löschen) und die zugeordneten Akten
+/// ([MandantAktenListe]: öffnen, zuordnen, lösen).
 ///
 /// Die Karte ist rund (`cardTheme`, Radius 16), die Tippfläche des
 /// `ExpansionTile` darunter ist es nicht: ohne Zutun zeichnet der Hover-Effekt
@@ -106,18 +107,10 @@ class MandantCard extends StatelessWidget {
                 ),
               ),
             ),
-          if (akten.isEmpty)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Noch keine Akte zugeordnet.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.outline,
-                ),
-              ),
-            )
-          else
-            for (final akte in akten) AkteBlock(akte: akte),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: MandantAktenListe(mandant: mandant, state: state),
+          ),
         ],
       ),
     );

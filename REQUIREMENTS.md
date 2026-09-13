@@ -657,6 +657,18 @@ werden — fachlich der Einstieg **vor** 4.1.
   betroffenen Vorgänge. Wer einen **anderen** Menschen erfassen will, wählt „(neuer Mandant)".
   *Ergänzt am 03.09.2026: Umgesetzt war bis dahin die Umbenennung, angekündigt das Gegenteil.*
 - **[M]** Einem Mandanten können mehrere **Kfz-Kennzeichen** und mehrere **Akten** zugeordnet sein.
+- **[M] Akten am Mandanten:** Beim Mandanten lässt sich jede seiner Akten — und darin jeder Fall —
+  mit einem Klick öffnen; fehlt der Ordner, sagt die App das, statt nichts zu tun. Eine Akte lässt
+  sich dort zuordnen, ohne den Zuordnungsstapel zu besuchen: gesucht wird über alle Ordner des
+  Stammordners, Ordner, die dem Namen nach passen, stehen vorn. Eine Zuordnung lässt sich dort mit
+  Rückfrage wieder lösen; der Ordner im Dateisystem bleibt unberührt und steht danach wieder zur
+  Zuordnung an. Eine Zuordnung, deren Ordner nicht mehr gefunden wird, bleibt sichtbar und lösbar.
+  Wird ein als „ohne Mandantenbezug" vermerkter Ordner zugeordnet, fällt der Vermerk weg.
+  *Ergänzt am 13.09.2026 (#132).*
+- **[M] Ein Ordner gehört höchstens einem Mandanten** — beim Import, bei der einzelnen Zuordnung
+  und bei der Ablage (siehe 6.1). Wem ein Ordner schon gehört, bei dem bleibt er: In der Auswahl
+  ist er erkennbar, aber nicht wählbar; umgehängt wird nicht. Groß- und Kleinschreibung zählen beim
+  Vergleich nicht. *Ergänzt am 13.09.2026 (#132).*
 - **[M]** Das Register ist die Grundlage für die Aktenablage (siehe 6.1) und für die
   Parteienbezeichnung „Mandant ./. Gegner" im Register (siehe 6.2).
 - **[S] Duplikatschutz:** Tippt der Anwalt Daten ein, die zu einem bekannten Mandanten passen,
@@ -701,6 +713,8 @@ werden — fachlich der Einstieg **vor** 4.1.
   (Ordner) existiert. **Match-Kriterium: Mandantenname.**
   - Akte vorhanden → neuer Unterordner in der bestehenden Akte.
   - Akte nicht vorhanden → neue Akte anlegen, darin der Unterordner.
+  - Akte gehört bereits einem **anderen** Mandanten → nichts ablegen und sagen, wem sie gehört
+    (siehe 5.1). *Ergänzt am 13.09.2026 (#132).*
 - **[M] Standard-Namensmuster** für den Unterordner:
 
   ```

@@ -240,11 +240,52 @@ Format und Fachlogik dazu stehen in `docs/MANDANTEN_IMPORT.md`; hier die Fallen 
   (Merkliste `.testdaten-manifest.txt` im Stammordner — eine *Datei*, der Akten-Scan liest nur
   Ordner). Mit einer Handvoll gleichförmiger Ordner sieht jede Zuordnungsheuristik gut aus.
 
+## Akten an der Mandantenkarte (#132)
+
+Die Karte öffnet, ordnet zu und löst — das Gegenstück zum Zuordnungsstapel. Bausteine:
+`MandantAktenListe` (die Liste samt Rückfrage), `AkteBlock`, `NichtGefundenerOrdnerBlock`,
+`AkteZuordnenDialog` mit `AktenAuswahlKachel`, dazu `AktenAuswahl` in der Domain und
+`AktenzuordnungGriff` am Bloc.
+
+- **Ein Ordner gehört höchstens einem Mandanten — an drei Stellen durchgesetzt.** Im Backend
+  (`MandantenRepository`, 409 `MandantOrdnerConflictException`), in der Ablage vor dem Kopieren
+  (`MandantenRepositoryImpl._pruefeOrdnerFrei`) und in der Auswahl (fremd zugeordnet = gesperrt).
+  Das Backend ist die Regel, die beiden anderen sind der Zeitpunkt: Kam das 409 erst nach dem
+  Kopieren, läge das Schreiben in der fremden Akte und die App meldete trotzdem einen Fehler.
+- **Das Backend prüft nur Ordner, die der Mandant vorher nicht hatte.** Im Altbestand kann ein Ordner
+  schon zwei Mandanten gehören (vor der Regel zugeordnet). Prüfte es die ganze Liste, ließe sich ein
+  solcher Mandant nicht einmal mehr umbenennen — und auch das Lösen, das den Konflikt beheben soll,
+  ginge nicht.
+- **Fremd zugeordnet heißt gesperrt, nicht umhängbar.** Umhängen bräuchte den Besitzer, und die
+  Übersicht kennt nur `zugeordneteOrdnernamen` — die Namen, nicht wem sie gehören; die Mandanten
+  liegen seitenweise vor. Wer umhängen will, löst beim Besitzer und ordnet dann zu.
+- **Die Auswahl wird einmal geordnet, danach nur gefiltert** (`AktenAuswahl.fuer` / `.filtere`). Der
+  Namensvorschlag liest je Ordner die Präfixtabelle; das bei 4000 Ordnern je Tastendruck zu
+  wiederholen, ließe die Suche hinter der Eingabe herlaufen. Die Liste im Dialog hat eine
+  **vorgegebene** Höhe in einem `Flexible`, kein `shrinkWrap` — ein schrumpfendes `ListView` baut jede
+  Zeile, um seine Höhe zu kennen.
+- **„Nicht gefunden" nur, wenn der Scan überhaupt etwas fand** (`nichtGefundeneOrdnerFuer`). Ein
+  fehlender Stammordner liefert eine leere Liste statt eines Fehlers (siehe oben); ohne diese Sperre
+  stünde an jeder Karte jede Akte als verschwunden, mit einem Lösen-Knopf daneben.
+- **Zuordnung sticht Vermerk — jetzt auch auf dem Einzelweg.** `AktenzuordnungGriff` nimmt den Vermerk
+  „ohne Mandantenbezug" nach einer Zuordnung zurück, egal ob aus dem Stapel oder von der Karte. Blieb
+  er stehen, fiel ein gelöster Ordner unter „Beiseitegelegt" statt in den Arbeitsvorrat.
+- **Lösen nimmt den Namen aus `zugeordneteOrdnernamen`, auch wenn er im Altbestand noch einem zweiten
+  Mandanten gehört.** Die Übersicht kann das nicht wissen (siehe oben); der Ordner stünde dann bis
+  zum nächsten Laden im Stapel. Ein Zuordnen dort scheitert am 409 mit einer Meldung, die den
+  Besitzer nennt — kein stiller Schaden.
+- **Nach dem Zuordnen liest die Karte die Fälle der neuen Akte nach** (`LadeFaelleEvent`). Sie ist
+  aufgeklappt und hat ihre Fälle beim Aufklappen gelesen — die der neuen Akte nicht.
+- **Widget-Tests bauen den Bloc im Test, nicht in `setUp`.** `testWidgets` läuft in einer
+  Fake-Async-Zone; ein außerhalb gebauter Bloc verarbeitet seine Ereignisse in der echten, und der
+  Test wartet dann ohne Zeitgrenze auf einen Zustand, der nie kommt (`--timeout` greift dort nicht).
+
 ## Ablage
 
 - `legeDokumentAb` schreibt an zwei Stellen: erst die Dateikopie ins Dateisystem, danach
   `PUT /api/Mandanten/{id}` für den Ordner am Mandanten (nur wenn wirklich abgelegt wurde). Wer an
-  der Ablage arbeitet, muss beide Seiten zusammenhalten.
+  der Ablage arbeitet, muss beide Seiten zusammenhalten. Vor beidem prüft es, ob der Ordner einem
+  anderen Mandanten gehört, und schreibt dann gar nichts (siehe oben).
 - Die Ablage-Oberfläche liegt nicht hier, sondern in `word_automation` (`akten_ablage_section.dart`) —
   hier liegen nur `AblageCubit` und UseCase; auch Formatwahl und Fall-Ordnername entstehen dort.
 - Eine Ablage umfasst **alle Fassungen eines Schreibens** (Word, PDF oder beide) und gelingt oder
