@@ -8,7 +8,6 @@ import 'package:automation_app/features/settings/presentation/blocs/kanzlei_sett
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_rueckfluss.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:automation_app/features/word_automation/domain/services/schreiben_dateiname.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
@@ -124,9 +123,9 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
               // Wiederhergestellt aus dem Vorgang: nur die Vorschau nachziehen.
               // Kein Sprung ins Begutachten — der Anwalt hat vielleicht nur den
               // Vorgang gewechselt —, und vor allem kein Rückfluss: Es ist
-              // nichts entstanden, und `naechsteSchreibenNummer` zählte sonst
-              // bei jedem Einstieg eine Nummer weiter (§4.9). Wohin gesprungen
-              // wird, entscheidet der Absprung selbst (`VorgangSelector`).
+              // nichts entstanden, das in den Vorgang zurückgehörte (§4.9).
+              // Wohin gesprungen wird, entscheidet der Absprung selbst
+              // (`VorgangSelector`).
               case EditedDocumentLoaded(wiederhergestellt: true, :final path):
                 context.read<ResultPdfPreviewBloc>().add(
                   LoadPdfPreviewEvent(path),
@@ -156,22 +155,15 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                           ) ??
                           gewaehlt;
                 if (vorgang != null) {
-                  final status =
-                      vorgang.status.index < VorgangStatus.erstellt.index
-                      ? VorgangStatus.erstellt
-                      : vorgang.status;
+                  // **Keine** Schreibnummer: Die entsteht erst im
+                  // Speicherschritt (§4.9, #133, `speicher_vermerk.dart`). Hier
+                  // stünde sie für eine Fassung, die bis dahin nur im
+                  // Arbeitsordner liegt — und die Leiste über dem Formular
+                  // fragte dann „Korrektur oder neues Schreiben?" zu einem
+                  // Schreiben, das die nächste Ablage wieder wegräumt.
                   var aktualisiert = vorgang.copyWith(
-                    status: status,
+                    status: vorgang.status.vorwaertsAuf(VorgangStatus.erstellt),
                     dokumentPfad: state.path,
-                    // Die Nummer, unter der das Schreiben eben entstanden ist
-                    // (§4.9). Sie muss hier aus demselben Aufruf kommen wie im
-                    // Dateinamen, sonst zeigt der Vorgang eine andere Zahl als
-                    // die Datei trägt — `neuesSchreiben` fällt gleich danach in
-                    // `uebernehmeVorgangsStand` auf false zurück.
-                    schreibenNummer: naechsteSchreibenNummer(
-                      vorgang,
-                      neuesSchreiben: wizardState.neuesSchreiben,
-                    ),
                   );
                   final formData = wizardState.formData;
                   if (formData != null) {

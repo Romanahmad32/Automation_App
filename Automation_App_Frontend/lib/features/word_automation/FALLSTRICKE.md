@@ -16,7 +16,7 @@ sechzig Dateien das größte der App, entsprechend viel davon.
   springt der Listener der Page ins Begutachten. Wer sie vergisst, wirft den Anwalt nach jeder
   Ablage aus Schritt 3.
 
-## Der Dateiname des Schreibens (§4.9, #32)
+## Der Dateiname des Schreibens (§4.9, #32, #133)
 
 `Anspruchsschreiben an {Versicherung} {Nr} {Vorlagenname}` — gebaut im **Frontend**
 (`domain/services/schreiben_dateiname.dart`), weil Versicherer, Vorlage und Vorgang dort schon
@@ -27,17 +27,25 @@ Vier Dinge daran sind leicht wieder kaputtzumachen:
 
 - **Die Nummer wird gefragt, nicht geraten.** Beide Fälle sehen von aussen gleich aus: derselbe
   Anwalt füllt dasselbe Formular aus und drückt denselben Knopf. `SchreibenNummerHinweis` stellt
-  die Frage ab dem zweiten Schreiben; `WizardState.neuesSchreiben` hält die Antwort. Der Anker,
-  den #32 ursprünglich dafür vorsah, trägt **nicht**: `neuerzeugung_bestaetigung.dart` prüft die
+  die Frage, sobald zum Vorgang ein Schreiben **gespeichert** ist — nicht schon nach blossem
+  Erzeugen (§4.9, seit #133); `WizardState.neuesSchreiben` hält die Antwort. Der Anker, den #32
+  ursprünglich dafür vorsah, trägt **nicht**: `neuerzeugung_bestaetigung.dart` prüft die
   *Änderungszeit* der Datei — ob jemand in Word nachgebessert hat — und gibt bei der Korrektur
   direkt nach dem Erzeugen stumm `true` zurück.
-- **`neuesSchreiben` fällt nach jeder Erzeugung auf `false`** (`uebernehmeVorgangsStand`). Sonst
-  zählte jeder weitere Klick auf „erstellen" eine Nummer hoch, obwohl er dasselbe Schreiben
-  korrigiert. Die Entscheidung ist mit dem erzeugten Schreiben verbraucht.
-- **Die Nummer im Dateinamen und die am Vorgang müssen aus demselben Aufruf stammen.** Beide
-  rufen `naechsteSchreibenNummer` — die Aufrufstelle beim Erzeugen und der Rückfluss in
-  `word_automation_page.dart`. Rechnete eine davon anders, trüge die Datei eine andere Zahl als
-  der Vorgang, und das nächste Schreiben setzte auf der falschen auf.
+- **Die Wahl gilt bis zum Speichern, nicht bis zur Erzeugung — und `schreibenNummer` meint seit
+  #133 die Nummer des zuletzt gespeicherten Schreibens.** Vor #133 wurde die Nummer schon beim
+  Erzeugen gesetzt, an der **Arbeitskopie** im Ordner `Generated/Arbeit/…`, nicht an der
+  tatsächlich gespeicherten Datei; `neuesSchreiben` fiel dafür nach jeder Erzeugung wieder auf
+  `false` (`uebernehmeVorgangsStand`). Das war doppelt falsch: Wer erzeugte und zurückging, sah
+  die Frage schon zu einem Schreiben, das nirgends abgelegt war — und mehrfaches Erzeugen vor dem
+  Speichern zählte die Nummer trotzdem jedes Mal hoch, obwohl noch keine zweite Fassung entstanden
+  war. Seit #133 setzt erst der Speicherschritt die Nummer (Ablage in der Akte **und** freies
+  „anderswo gespeichert" zählen gleichermaßen), und die Wahl bleibt bis dahin gültig — mehrfaches
+  Erzeugen davor verbraucht sie nicht.
+- **Die Nummer im Dateinamen und die am Vorgang müssen aus demselben Stand stammen.** Beide gehen
+  auf `naechsteSchreibenNummer` zurück, gerechnet von der zuletzt **gespeicherten** Nummer aus.
+  Rechnete eine Stelle anders, trüge die Datei eine andere Zahl als der Vorgang nach dem Speichern,
+  und das nächste Schreiben setzte auf der falschen auf.
 - **Ohne Versicherer fällt das „an" mit weg**, statt eine Lücke zu lassen: „Anspruchsschreiben  1
   HGn" mit doppeltem Leerzeichen sieht aus wie ein Fehler und ist einer. Vorgänge ohne
   Zentralruf-Antwort sind der Normalfall, solange die Antwort aussteht.

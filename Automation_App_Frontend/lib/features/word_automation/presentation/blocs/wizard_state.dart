@@ -73,18 +73,21 @@ class WizardState extends Equatable {
   /// verknüpft ist.
   final Mandant? selectedMandant;
 
-  /// Ob das nächste Erzeugen ein **neues** Schreiben ist (§4.9) — im Gegensatz
-  /// zur Korrektur des vorigen, die dessen Nummer behält und seine Fassung
+  /// Ob das nächste Schreiben ein **neues** ist (§4.9) — im Gegensatz zur
+  /// Korrektur des gespeicherten, die dessen Nummer behält und seine Fassung
   /// ersetzt. Der Anwalt entscheidet das in der Leiste des Ausfüllschritts;
   /// geraten wird es nicht.
   ///
-  /// Fällt nach jeder Erzeugung auf `false` zurück ([WizardCubit.setFormData]
-  /// setzt es nicht, der Rückfluss der Seite tut es): Die Entscheidung ist mit
-  /// dem erzeugten Schreiben verbraucht, und wer danach noch einmal auf
-  /// „erstellen" drückt, korrigiert genau dieses — sonst zählte jede Korrektur
-  /// weiter hoch. Beim ersten Schreiben eines Vorgangs ohne Wirkung: dort ist
-  /// die Nummer die 1, ob so oder so.
-  final bool neuesSchreiben;
+  /// **Null heißt: noch nicht gewählt** (#133). Vorbelegt ist nichts — eine
+  /// überlesene Vorauswahl „Korrektur" überschriebe das Schreiben, das schon in
+  /// der Akte liegt. Solange ein gespeichertes Schreiben existiert und hier
+  /// nichts steht, sagt der Ausfüllschritt vor dem Erstellen, was fehlt.
+  ///
+  /// Die Wahl gilt bis zum **Speichern**, nicht bis zum Erzeugen: Mehrfaches
+  /// Erzeugen zwischendurch ändert nichts, erst der Speicherschritt verbraucht
+  /// sie ([vermerkeGespeichertesSchreiben] setzt sie auf null zurück). Ohne
+  /// gespeichertes Schreiben ohne Wirkung: dort ist die Nummer die 1.
+  final bool? neuesSchreiben;
 
   const WizardState({
     this.currentStep = WizardStep.fillOut,
@@ -99,7 +102,7 @@ class WizardState extends Equatable {
     this.aufbauMarke = 0,
     this.selectedVorgang,
     this.selectedMandant,
-    this.neuesSchreiben = false,
+    this.neuesSchreiben,
   });
 
   /// Ob aus der erfassten Schadensaufstellung ein Dokument entstehen darf:
@@ -136,7 +139,7 @@ class WizardState extends Equatable {
     int? aufbauMarke,
     Vorgang? Function()? selectedVorgang,
     Mandant? Function()? selectedMandant,
-    bool? neuesSchreiben,
+    bool? Function()? neuesSchreiben,
   }) {
     return WizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -165,7 +168,9 @@ class WizardState extends Equatable {
       selectedMandant: selectedMandant != null
           ? selectedMandant()
           : this.selectedMandant,
-      neuesSchreiben: neuesSchreiben ?? this.neuesSchreiben,
+      neuesSchreiben: neuesSchreiben != null
+          ? neuesSchreiben()
+          : this.neuesSchreiben,
     );
   }
 
