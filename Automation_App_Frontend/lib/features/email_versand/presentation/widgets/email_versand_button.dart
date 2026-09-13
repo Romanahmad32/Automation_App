@@ -25,6 +25,17 @@ class EmailVersandButton extends StatelessWidget {
   final List<String> anhangVorauswahl;
   final List<String> ausDerAkte;
 
+  /// Empfänger, die der Versanddialog von Anfang an trägt — additiv seit
+  /// §4.3 „Antworten": ohne diese Liste bliebe das Feld „An" leer, bis der
+  /// Anwalt selbst tippt. Adressen aus dem Vorgang (`vorgang`) kommen davon
+  /// unabhängig noch dazu.
+  final List<String> empfaengerVorauswahl;
+
+  /// Überschreibt den vom Vorgang abgeleiteten Betreff — additiv seit §4.3
+  /// „Antworten" (dort `antwortBetreff(...)`). Null heißt: kein Eingriff, der
+  /// Betreff entsteht wie bisher aus Vorgang bzw. Vorlage.
+  final String? betreffVorgabe;
+
   /// Ermittelt die Anhänge erst beim Öffnen und schlägt dann die beiden Listen
   /// oben. Für Aufrufer, die dafür den Fall-Ordner lesen müssen: Beim Bauen
   /// wäre das ein Verzeichnislauf je Neubau — und beim Öffnen ist der Stand
@@ -48,6 +59,8 @@ class EmailVersandButton extends StatelessWidget {
     this.antwort,
     this.anhangVorauswahl = const [],
     this.ausDerAkte = const [],
+    this.empfaengerVorauswahl = const [],
+    this.betreffVorgabe,
     this.anhaengeErmitteln,
     this.bereitsVersendet,
     this.onVersendet,
@@ -64,6 +77,8 @@ class EmailVersandButton extends StatelessWidget {
       antwort: antwort,
       anhangVorauswahl: anhaenge?.vorauswahl ?? anhangVorauswahl,
       ausDerAkte: anhaenge?.ausDerAkte ?? ausDerAkte,
+      empfaengerVorauswahl: empfaengerVorauswahl,
+      betreffVorgabe: betreffVorgabe,
     );
     if (ergebnis == null) return;
 

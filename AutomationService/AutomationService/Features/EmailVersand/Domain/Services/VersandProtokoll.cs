@@ -104,6 +104,32 @@ public sealed class VersandProtokoll(AutomationDbContext db, ILogger<VersandProt
         ];
     }
 
+    /// <summary>
+    /// Alles, was hinausging — über alle Vorgänge hinweg, das Jüngste zuerst.
+    ///
+    /// Beantwortet die Frage „was ist heute rausgegangen?", an der
+    /// <see cref="LetzteJeVorgangAsync"/> vorbeigeht: Dort fällt jeder zweite
+    /// Versand desselben Vorgangs unter den Tisch, und gerade die Wiedervorlage
+    /// ist es, die der Anwalt am Abend sucht.
+    ///
+    /// Die Obergrenze ist keine Bequemlichkeit, sondern die Zusage, dass die
+    /// Ansicht auch nach Jahren in einem Zug lädt. Eine unsinnige Angabe wird
+    /// eingefangen statt abgelehnt — für eine Leseansicht ist ein Ergebnis
+    /// nützlicher als eine Fehlermeldung.
+    /// </summary>
+    public async Task<IReadOnlyList<VersandEintrag>> AlleAsync(
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var eintraege = await db.Versandprotokoll
+            .AsNoTracking()
+            .OrderByDescending(e => e.GesendetAm)
+            .Take(Math.Clamp(limit, 1, 1000))
+            .ToListAsync(cancellationToken);
+
+        return [.. eintraege.Select(Aus)];
+    }
+
     private static VersandEintrag Aus(VersandEintragEntity entity) => new(
         entity.VorgangReferenz,
         new DateTimeOffset(DateTime.SpecifyKind(entity.GesendetAm, DateTimeKind.Utc)),

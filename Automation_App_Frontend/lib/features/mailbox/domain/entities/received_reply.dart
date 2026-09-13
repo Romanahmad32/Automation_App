@@ -36,6 +36,14 @@ class ReceivedReply extends Equatable {
   /// Anwalt noch zu bestätigende Zuordnung.
   final bool zuordnungVermutet;
 
+  /// Der Schlüssel, unter dem das Backend diese Mail erfasst hat — die
+  /// RFC-Message-Id, ersatzweise `UIDVALIDITY:UID`. Er ist die **Brücke zum
+  /// allgemeinen Posteingang**: Eine Zeile dort ist genau dann eine bereits
+  /// erfasste Zentralruf-Antwort, wenn ihre `messageId` dazu passt (getrimmt,
+  /// ohne spitze Klammern, ohne Rücksicht auf die Schreibweise). Null bei
+  /// Altbestand, den das Backend ohne dieses Feld ausgeliefert hat.
+  final String? mailSchluessel;
+
   const ReceivedReply({
     required this.id,
     required this.receivedAt,
@@ -47,6 +55,7 @@ class ReceivedReply extends Equatable {
     this.anhangPfade = const [],
     this.rawText,
     this.zuordnungVermutet = false,
+    this.mailSchluessel,
   });
 
   factory ReceivedReply.fromJson(Map<String, dynamic> json) {
@@ -63,6 +72,7 @@ class ReceivedReply extends Equatable {
       anhangPfade: List<String>.from(json['anhangPfade'] as List? ?? const []),
       rawText: json['rawText'] as String?,
       zuordnungVermutet: json['zuordnungVermutet'] as bool? ?? false,
+      mailSchluessel: json['mailSchluessel'] as String?,
     );
   }
 
@@ -78,5 +88,6 @@ class ReceivedReply extends Equatable {
     anhangPfade,
     rawText,
     zuordnungVermutet,
+    mailSchluessel,
   ];
 }

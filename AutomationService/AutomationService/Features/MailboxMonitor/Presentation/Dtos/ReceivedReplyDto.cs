@@ -14,7 +14,8 @@ public sealed record ReceivedReplyDto(
     IReadOnlyList<string> Warnings,
     IReadOnlyList<string> AnhangPfade,
     string? RawText,
-    bool ZuordnungVermutet)
+    bool ZuordnungVermutet,
+    string? MailSchluessel)
 {
     public static ReceivedReplyDto Create(ReceivedReply reply) => new(
         reply.Id,
@@ -26,5 +27,6 @@ public sealed record ReceivedReplyDto(
         reply.Warnings,
         reply.AnhangPfade,
         reply.RawText,
-        reply.ZuordnungVermutet);
+        reply.ZuordnungVermutet,
+        reply.MailSchluessel);
 }
