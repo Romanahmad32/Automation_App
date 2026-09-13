@@ -67,9 +67,8 @@ void main() {
       // beim Parsen abbrechen.
       expect(Versicherer.fromJson(antwort()).zuletztAktualisiertAm, isNull);
       expect(
-        Versicherer.fromJson(
-          antwort(zuletztAktualisiertAm: 'unbekannt'),
-        ).zuletztAktualisiertAm,
+        Versicherer.fromJson(antwort(zuletztAktualisiertAm: 'unbekannt'))
+            .zuletztAktualisiertAm,
         isNull,
       );
     });

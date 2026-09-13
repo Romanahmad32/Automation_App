@@ -37,9 +37,8 @@ class EmailHinweisKasten extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: vordergrund),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: vordergrund),
             ),
           ),
         ],

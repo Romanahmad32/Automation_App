@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 /// scrollt sie mit der Seite und darf deshalb keinen zweiten Scrollbereich
 /// aufmachen. Die Entscheidung trifft [VorlagenEditorLayout] — es ist die
 /// einzige Stelle, die die Breite kennt.
-typedef FelderBauer =
-    Widget Function(BuildContext context, bool eigenerScrollbereich);
+typedef FelderBauer = Widget Function(
+  BuildContext context,
+  bool eigenerScrollbereich,
+);
 
 /// Die Anordnung der Seite „Vorlage bearbeiten" (#104 Stufe 3a) — und sonst
 /// nichts.

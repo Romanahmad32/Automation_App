@@ -126,9 +126,9 @@ void main() {
   /// Seiten ordnen Zentralruf-Antworten Vorgängen zu und rechneten bis #144
   /// verschieden — ein neuer Fall gehört deshalb in die Tabelle, nicht hierher.
   group('gemeinsame Falltabelle docs/kennzeichen_faelle.json', () {
-    final faelle =
-        jsonDecode(File('../docs/kennzeichen_faelle.json').readAsStringSync())
-            as Map<String, dynamic>;
+    final faelle = jsonDecode(
+      File('../docs/kennzeichen_faelle.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
     List<Map<String, dynamic>> abschnitt(String name) =>
         (faelle[name] as List<dynamic>).cast<Map<String, dynamic>>();
 

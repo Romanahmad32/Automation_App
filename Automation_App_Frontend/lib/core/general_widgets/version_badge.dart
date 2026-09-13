@@ -33,9 +33,8 @@ class VersionBadge extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Text(
             'Version ${version.anzeige}',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
             overflow: TextOverflow.ellipsis,
           ),
         ),

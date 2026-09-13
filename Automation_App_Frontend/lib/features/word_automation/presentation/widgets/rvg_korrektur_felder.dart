@@ -73,8 +73,7 @@ class RvgKorrekturFelder extends StatelessWidget {
             controller: auslagenpauschale,
             decoration: InputDecoration(
               labelText: '$auslagenpauschaleFeldName (€)',
-              helperText:
-                  'Ersetzt die Pauschale nach Nr. 7002 VV RVG (20 %, max. 20 €)',
+              helperText: 'Ersetzt die Pauschale nach Nr. 7002 VV RVG (20 %, max. 20 €)',
               border: const OutlineInputBorder(),
               errorText: korrekturbetragFehler(auslagenpauschale.text),
             ),

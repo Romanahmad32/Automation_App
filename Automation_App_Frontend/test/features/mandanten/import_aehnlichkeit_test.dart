@@ -138,9 +138,9 @@ void main() {
     // nennt, muss durch den Vorfilter UND durch MandantErkennung kommen.
     test('jede gleiche Schreibweise eines Kennzeichens ueberlebt den '
         'Vorfilter', () {
-      final faelle =
-          jsonDecode(File('../docs/kennzeichen_faelle.json').readAsStringSync())
-              as Map<String, dynamic>;
+      final faelle = jsonDecode(
+        File('../docs/kennzeichen_faelle.json').readAsStringSync(),
+      ) as Map<String, dynamic>;
       final gleiche = (faelle['vergleiche'] as List<dynamic>)
           .cast<Map<String, dynamic>>()
           .where((fall) => fall['gleich'] == true)

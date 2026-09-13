@@ -18,7 +18,7 @@ abstract class ThemePreferencesDatasource {
 class LocalThemePreferencesDatasource implements ThemePreferencesDatasource {
   final File _file;
 
-  LocalThemePreferencesDatasource._({required File file}) : _file = file;
+  LocalThemePreferencesDatasource._({required this._file});
 
   static Future<LocalThemePreferencesDatasource> create(
     PathProviderWindows pathProviderWindows,

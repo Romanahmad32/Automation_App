@@ -20,8 +20,7 @@ class UnfallhergangSection extends StatelessWidget {
           'Schreibenerstellung.',
       children: [
         const GeneralTextField<String>(
-          labelText:
-              'Unfallort (Straße und Ort, z. B. Am Ulmenrück, Frankfurt am Main)',
+          labelText: 'Unfallort (Straße und Ort, z. B. Am Ulmenrück, Frankfurt am Main)',
           formControlName: 'unfallort',
         ),
         GeneralTextField<String>(

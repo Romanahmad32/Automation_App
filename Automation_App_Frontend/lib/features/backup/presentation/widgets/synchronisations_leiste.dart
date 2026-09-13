@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_classes/datenstand_signal.dart';
+
 import 'dart:async';
 
 import 'package:automation_app/core/di/injection.dart';
@@ -71,8 +72,7 @@ class SynchronisationsLeisteState extends State<SynchronisationsLeiste>
     } catch (_) {
       if (!mounted) return;
       setState(
-        () => _meldung =
-            'Status nicht prüfbar. Bitte erneut prüfen; der lokale Stand bleibt nutzbar.',
+        () => _meldung = 'Status nicht prüfbar. Bitte erneut prüfen; der lokale Stand bleibt nutzbar.',
       );
     } finally {
       _prueft = false;

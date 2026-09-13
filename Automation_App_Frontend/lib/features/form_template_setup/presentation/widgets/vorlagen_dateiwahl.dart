@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 
 /// Wählt eine Word-Datei und liefert den Pfad, unter dem sie verknüpft werden
 /// soll — `null`, wenn nichts gewählt wurde.
-typedef VorlagenDateiwahlFunktion =
-    Future<String?> Function(BuildContext context);
+typedef VorlagenDateiwahlFunktion = Future<String?> Function(
+  BuildContext context,
+);
 
 /// **Der eine** Weg, im Vorlageneditor eine `.docx` auszuwählen: Dateidialog
 /// und, wenn die Datei außerhalb des Vorlagenordners liegt, das Angebot, sie

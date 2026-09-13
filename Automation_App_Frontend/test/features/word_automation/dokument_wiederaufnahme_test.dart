@@ -90,9 +90,9 @@ void main() {
           path: r'C:\Vorlagen\VORLAGE HGn.docx',
         ),
       );
-      final erzeugt =
-          await bloc.stream.firstWhere((s) => s is EditedDocumentLoaded)
-              as EditedDocumentLoaded;
+      final erzeugt = await bloc.stream.firstWhere(
+        (s) => s is EditedDocumentLoaded,
+      ) as EditedDocumentLoaded;
 
       // Ein ohne Vorgang erzeugtes Schreiben wird im Speicherschritt
       // nachträglich zugeordnet (§4.6). Würde die Zuordnung es durch den Stand

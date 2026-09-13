@@ -75,9 +75,9 @@ class HistorieZeileDialogState extends State<HistorieZeileDialog> {
           child: const Text('Abbrechen'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(
-            context,
-          ).pop(HistorieZeileEntscheidung(_felder.alsAenderung())),
+          onPressed: () =>
+              Navigator.of(context)
+                  .pop(HistorieZeileEntscheidung(_felder.alsAenderung())),
           child: const Text('Änderung übernehmen'),
         ),
       ],
