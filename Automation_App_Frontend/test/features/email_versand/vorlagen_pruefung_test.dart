@@ -133,11 +133,11 @@ void main() {
         ),
       );
 
-      expect(
-        beugungen.map((beugung) => beugung.maennlich),
-        ['unseres', 'Mandant', 'er'],
-        reason: 'die misslungene gehört in die Mängel, nicht in die Vorschau',
-      );
+      expect(beugungen.map((beugung) => beugung.maennlich), [
+        'unseres',
+        'Mandant',
+        'er',
+      ], reason: 'die misslungene gehört in die Mängel, nicht in die Vorschau');
     });
 
     test('ohne Beugung ist die Liste leer', () {

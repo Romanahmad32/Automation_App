@@ -157,13 +157,15 @@ void main() {
     );
   });
 
-  test('Verschieben zählt wie ReorderableListView', () {
+  test('Verschieben zählt wie onReorderItem', () {
     final bearbeitung = VorlagenBearbeitung.fuer(vorlage);
     bearbeitung.feldHinzufuegen(name: 'Frist');
 
-    // Das erste Feld hinter das letzte ziehen: Der Zielindex zählt die Lücke
-    // vor dem Herausnehmen, ist also 3 und nicht 2.
-    bearbeitung.verschiebe(0, 3);
+    // Das erste Feld hinter das letzte ziehen: Der Zielindex zählt die Stelle
+    // nach dem Herausnehmen, ist also 2 und nicht 3. Bis Flutter 3.41 kam über
+    // `onReorder` an dieser Stelle die 3 an, und `verschiebe` rechnete selbst
+    // herunter; `onReorderItem` liefert den Index bereits verrechnet.
+    bearbeitung.verschiebe(0, 2);
     expect(bearbeitung.feldnamen, ['Unfalldatum', 'Frist', 'Kennzeichen']);
 
     // Und wieder zurück nach vorn — dort zählt der Index unverändert.

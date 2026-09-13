@@ -101,44 +101,53 @@ class _StandKarteState extends State<StandKarte> {
             ohneBezug: widget.ohneBezug,
           ),
           const Divider(height: 25),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: const EdgeInsets.only(bottom: 8),
-            onExpansionChanged: (wert) => setState(() => _aufgeklappt = wert),
-            title: Row(
-              children: [
-                Text(
-                  'Pakete (${widget.pakete.length})',
-                  style: theme.textTheme.titleSmall,
-                ),
-                const Spacer(),
-                if (!_aufgeklappt && letztesPaket != null)
+          // Durchsichtiges `Material` unter der farbigen Karte: Die Kopfzeile
+          // des `ExpansionTile` ist ein `ListTile` und zeichnet ihren
+          // Tipp-Kringel auf das nächste `Material` darüber — das läge hier
+          // hinter der Kartenfarbe und bliebe unsichtbar. Seit Flutter 3.47
+          // ist das eine Zusicherung (siehe ZuordnungAblaufHinweis, gleiche
+          // Stelle, gleicher Grund).
+          Material(
+            type: MaterialType.transparency,
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              onExpansionChanged: (wert) => setState(() => _aufgeklappt = wert),
+              title: Row(
+                children: [
                   Text(
-                    'zuletzt geholt am '
-                    '${deutschesDatum(letztesPaket.geholtAm.toLocal())}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.outline,
+                    'Pakete (${widget.pakete.length})',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const Spacer(),
+                  if (!_aufgeklappt && letztesPaket != null)
+                    Text(
+                      'zuletzt geholt am '
+                      '${deutschesDatum(letztesPaket.geholtAm.toLocal())}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.outline,
+                      ),
                     ),
+                ],
+              ),
+              children: [
+                if (widget.pakete.isEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Noch kein Arbeitspaket geholt.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.outline,
+                      ),
+                    ),
+                  )
+                else
+                  PaketHistorieTabelle(
+                    pakete: widget.pakete,
+                    onLoeschen: widget.onPaketLoeschen,
                   ),
               ],
             ),
-            children: [
-              if (widget.pakete.isEmpty)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Noch kein Arbeitspaket geholt.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.outline,
-                    ),
-                  ),
-                )
-              else
-                PaketHistorieTabelle(
-                  pakete: widget.pakete,
-                  onLoeschen: widget.onPaketLoeschen,
-                ),
-            ],
           ),
         ],
       ),

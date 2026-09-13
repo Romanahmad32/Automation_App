@@ -16,6 +16,11 @@ include: package:flutter_lints/flutter.yaml
 # strict-raw-types bleiben bewusst aus: gemessen waeren das 52 rein
 # mechanische Typargumente auf Dio-Aufrufen ohne einen gefundenen Fehler.
 analyzer:
+  exclude:
+    - build/**
+    - windows/**
+    - macos/**
+    - linux/**
   language:
     strict-casts: true
 

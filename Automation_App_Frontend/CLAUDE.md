@@ -7,7 +7,7 @@ Release und CI stehen in der Wurzel-`CLAUDE.md`.
 
 ```powershell
 flutter pub get
-dart run build_runner build   # nach Änderungen an DI, Routen, freezed- oder json-Klassen
+dart run build_runner build   # nach Änderungen an DI oder Routen
 flutter run -d windows
 flutter test
 flutter analyze
