@@ -96,7 +96,9 @@ void main() {
       final wizard = umgebung.wizard;
       final alt = feld('Versicherer');
       wizard.selectFormTemplate(vorlage([alt]));
-      wizard.setFormDataEntwurf(const {'Versicherer': '   '});
+      wizard.setFormDataEntwurf(const {
+        'Versicherer': '   ',
+      }, fuerReferenz: null);
 
       await wizard.aktualisiereFeld(
         alt,
@@ -111,7 +113,9 @@ void main() {
     final wizard = umgebung.wizard;
     final alt = feld('Versicherer');
     wizard.selectFormTemplate(vorlage([alt, feld('Kennzeichen')]));
-    wizard.setFormDataEntwurf(const {'Kennzeichen': 'HG-E 1427'});
+    wizard.setFormDataEntwurf(const {
+      'Kennzeichen': 'HG-E 1427',
+    }, fuerReferenz: null);
 
     await wizard.aktualisiereFeld(
       alt,
@@ -181,7 +185,9 @@ void main() {
         await wizard.selectVorgang(vorgang());
         final alt = feld('Versicherer');
         wizard.selectFormTemplate(vorlage([alt]));
-        wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+        wizard.setFormDataEntwurf(const {
+          'Versicherer': 'von Hand getippt',
+        }, fuerReferenz: vorgang().referenz);
         final marke = wizard.state.aufbauMarke;
 
         final aenderung = await wizard.aktualisiereFeld(
@@ -204,7 +210,9 @@ void main() {
       await wizard.selectVorgang(vorgang(mitAntwort: null));
       final alt = feld('Versicherer');
       wizard.selectFormTemplate(vorlage([alt]));
-      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+      wizard.setFormDataEntwurf(const {
+        'Versicherer': 'von Hand getippt',
+      }, fuerReferenz: vorgang().referenz);
 
       final aenderung = await wizard.aktualisiereFeld(
         alt,
@@ -222,7 +230,9 @@ void main() {
       await wizard.selectVorgang(vorgang());
       final alt = feld('Versicherer', quelle: FeldDatenquelle.versichererName);
       wizard.selectFormTemplate(vorlage([alt]));
-      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+      wizard.setFormDataEntwurf(const {
+        'Versicherer': 'von Hand getippt',
+      }, fuerReferenz: vorgang().referenz);
 
       final aenderung = await wizard.aktualisiereFeld(
         alt,
@@ -244,7 +254,9 @@ void main() {
       await wizard.selectVorgang(vorgang());
       final alt = feld('Versicherer');
       wizard.selectFormTemplate(vorlage([alt]));
-      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+      wizard.setFormDataEntwurf(const {
+        'Versicherer': 'von Hand getippt',
+      }, fuerReferenz: vorgang().referenz);
       await wizard.aktualisiereFeld(
         alt,
         feld('Versicherer', quelle: FeldDatenquelle.versichererName),
@@ -267,7 +279,9 @@ void main() {
       final wizard = umgebung.wizard;
       final alt = feld('Versicherer');
       wizard.selectFormTemplate(vorlage([alt]));
-      wizard.setFormDataEntwurf(const {'Versicherer': 'von Hand getippt'});
+      wizard.setFormDataEntwurf(const {
+        'Versicherer': 'von Hand getippt',
+      }, fuerReferenz: null);
 
       final aenderung = await wizard.aktualisiereFeld(
         alt,

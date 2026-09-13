@@ -137,6 +137,29 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
             }
           },
         ),
+        // Die Einstellungen werden erst beim Öffnen von Tab 3 angefordert
+        // (word_automation_page.dart) und laden asynchron. Trifft der Schritt
+        // schon eine Aufstellung an (Listener oben) oder ändert sich die
+        // Vorsteuer-Checkbox, bevor die Antwort da ist, brennt sich die
+        // Standardfarbe ein — bis zur nächsten Eingabe, denn nur die ruft
+        // _onDamageListingChanged erneut auf. Deshalb hier nachziehen, sobald
+        // die Einstellungen tatsächlich geladen sind.
+        BlocListener<KanzleiSettingsBloc, KanzleiSettingsState>(
+          listenWhen: (previous, current) =>
+              previous is! KanzleiSettingsLoaded &&
+              current is KanzleiSettingsLoaded,
+          listener: (context, state) {
+            final wizardState = context.read<WizardCubit>().state;
+            final listing = wizardState.damageListing;
+            if (listing != null) {
+              _onDamageListingChanged(
+                context,
+                listing,
+                wizardState.schadenspositionFehler,
+              );
+            }
+          },
+        ),
       ],
       child: Stack(
         children: [
