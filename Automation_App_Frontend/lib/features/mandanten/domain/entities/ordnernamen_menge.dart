@@ -23,6 +23,23 @@ class OrdnernamenMenge extends Equatable {
   bool enthaelt(String ordnername) =>
       _kleingeschrieben.contains(ordnername.trim().toLowerCase());
 
+  /// [ordnernamen] ohne die, die in der Menge stehen — in ihrer Reihenfolge.
+  /// Der eine Weg, Namen aus einer Liste zu nehmen: Von Hand ausgeschrieben
+  /// stand dieselbe Schleife an vier Stellen, und die nächste hätte beim
+  /// Vergleich vielleicht nicht getrimmt.
+  List<String> ohne(Iterable<String> ordnernamen) =>
+      ohneEintraege(ordnernamen, (name) => name);
+
+  /// Wie [ohne], für Einträge, die einen Ordnernamen tragen —
+  /// [ordnernameVon] liest ihn.
+  List<T> ohneEintraege<T>(
+    Iterable<T> eintraege,
+    String Function(T eintrag) ordnernameVon,
+  ) => [
+    for (final eintrag in eintraege)
+      if (!enthaelt(ordnernameVon(eintrag))) eintrag,
+  ];
+
   int get length => _kleingeschrieben.length;
 
   bool get isEmpty => _kleingeschrieben.isEmpty;

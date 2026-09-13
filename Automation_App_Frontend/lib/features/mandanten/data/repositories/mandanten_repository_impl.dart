@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/core/general_classes/failures/als_either.dart';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
@@ -18,7 +19,6 @@ import 'package:automation_app/features/mandanten/domain/entities/import_paket.d
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
-import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/repositories/mandanten_repository.dart';
 import 'package:automation_app/features/settings/domain/repositories/kanzlei_settings_repository.dart';
@@ -165,12 +165,26 @@ class MandantenRepositoryImpl implements MandantenRepository {
     uebersetzen: _localFailure,
   );
 
+  /// Zuordnen und Lösen gehen über je einen eigenen Aufruf, der nur diesen
+  /// einen Ordner ändert — nicht über „Mandant laden, Liste ändern, ganzen
+  /// Mandanten speichern". Das überschrieb eine zweite Änderung, die sich
+  /// damit überschnitt, und holte dafür jedes Mal das ganze Register.
   @override
   Future<Either<Failure, Mandant>> verknuepfeOrdner({
     required int mandantId,
     required String ordnername,
   }) => alsEither(
-    () => _verknuepfe(mandantId, ordnername),
+    () =>
+        _datasource.ordneOrdnerZu(mandantId: mandantId, ordnername: ordnername),
+    uebersetzen: _localFailure,
+  );
+
+  @override
+  Future<Either<Failure, Mandant>> loeseOrdner({
+    required int mandantId,
+    required String ordnername,
+  }) => alsEither(
+    () => _datasource.loeseOrdner(mandantId: mandantId, ordnername: ordnername),
     uebersetzen: _localFailure,
   );
 
@@ -178,6 +192,19 @@ class MandantenRepositoryImpl implements MandantenRepository {
   Future<Either<Failure, AblageErgebnis>> legeDokumentAb(
     LegeDokumentAbParams params,
   ) => alsEither(() async {
+    // Vor dem Kopieren fragen, ob die Zuordnung danach geht — sonst lehnte
+    // der Dienst sie erst ab, wenn die Datei schon in der fremden Akte liegt.
+    // Dieselbe Prüfung wie beim Zuordnen, nur ohne zu schreiben: Ob der
+    // Ordner diesem Mandanten schon gehört, zählt dabei mit.
+    try {
+      await _datasource.ordneOrdnerZu(
+        mandantId: params.mandantId,
+        ordnername: params.aktenOrdnername,
+        nurPruefen: true,
+      );
+    } on MandantException catch (e) {
+      throw MandantException('${e.message} Es wurde nichts abgelegt.');
+    }
     final stammordner = await _ladeStammordner();
     final ergebnis = await _aktenDatasource.legeDokumentAb(
       stammordner: stammordner,
@@ -190,31 +217,13 @@ class MandantenRepositoryImpl implements MandantenRepository {
     // Akten-Ordner dem Mandanten zuordnen. Bei einer offenen Rückfrage liegt
     // noch nichts in der Akte — dann auch nichts zu verknüpfen.
     if (!ergebnis.konflikt) {
-      await _verknuepfe(params.mandantId, params.aktenOrdnername);
+      await _datasource.ordneOrdnerZu(
+        mandantId: params.mandantId,
+        ordnername: params.aktenOrdnername,
+      );
     }
     return ergebnis;
   }, uebersetzen: _localFailure);
-
-  /// Fügt [ordnername] zu den Akten des Mandanten hinzu (idempotent) und
-  /// speichert. Gibt den aktualisierten Mandanten zurück.
-  Future<Mandant> _verknuepfe(int mandantId, String ordnername) async {
-    final mandanten = await _datasource.loadMandanten();
-    final mandant = mandanten.firstWhere(
-      (m) => m.id == mandantId,
-      orElse: () =>
-          throw StateError('Mandant mit ID $mandantId nicht gefunden'),
-    );
-    // Ohne Rücksicht auf die Schreibweise: der Ordnername kommt aus dem
-    // Dateisystem, und „VUnfallursache Mark" zweimal verschieden geschrieben
-    // stünde sonst zweimal am Mandanten.
-    if (OrdnernamenMenge(mandant.aktenOrdnernamen).enthaelt(ordnername)) {
-      return mandant;
-    }
-    final aktualisiert = mandant.copyWith(
-      aktenOrdnernamen: [...mandant.aktenOrdnernamen, ordnername],
-    );
-    return _datasource.updateMandant(aktualisiert);
-  }
 
   Future<String> _ladeStammordner() async {
     final result = await _settingsRepository.getSettings();

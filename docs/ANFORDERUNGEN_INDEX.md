@@ -81,7 +81,7 @@ Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, Namensänderung benennt den Eintrag um (mit Rückfrage), mehrere Kennzeichen/Akten, Duplikatschutz, Anredeart als Beugungsquelle (Vorbelegung, je Mail wählbar, aus dem Versand nachtragbar), persönliche Grußformel |
+| 5.1 | Mandantenregister: Stammdaten, Wiederverwendung, Namensänderung benennt den Eintrag um (mit Rückfrage), mehrere Kennzeichen/Akten, Akten am Mandanten öffnen/zuordnen/lösen, ein Ordner gehört höchstens einem Mandanten, Duplikatschutz, Anredeart als Beugungsquelle (Vorbelegung, je Mail wählbar, aus dem Versand nachtragbar), persönliche Grußformel |
 | 5.2 | Versicherer-Wissensbasis aus Zentralruf-Antworten; Lücken aus früherem Wissen füllen |
 | 5.3 | Vorlagenverwaltung durch den Anwalt selbst: Word-Vorlagen, Felder, Mail-Textvorlagen |
 
@@ -89,7 +89,7 @@ Kapitel 4–7.
 
 | § | Thema |
 |---|---|
-| 6.1 | Aktenablage im Dateisystem: Akte je Mandant, Namensmuster der Unterordner, Stammordner |
+| 6.1 | Aktenablage im Dateisystem: Akte je Mandant (keine Ablage in die Akte eines anderen), Namensmuster der Unterordner, Stammordner |
 | 6.2 | Sachgebiete-/Auftragsregister: die App führt es, automatische Aufnahme, Spaltenschema, Ansicht und Export (Word sofort, PDF nachgezogen), Übernahme der Historie des Word-Registers |
 | 6.3 | Laufende Nummer und Kopplung von Register und Vorgang: Vorschlag aus dem Bestand (höchste + 1), belegt ab dem Anlegen, frei beim Löschen, Doublette warnt statt zu sperren, beide Löschrichtungen fragen nach der Gegenseite |
 

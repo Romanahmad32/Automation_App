@@ -36,6 +36,7 @@ public sealed class FachExceptionHandler : IExceptionHandler
         var (statusCode, title) = exception switch
         {
             MandantNameConflictException => (StatusCodes.Status409Conflict, "Namenskonflikt"),
+            MandantOrdnerConflictException => (StatusCodes.Status409Conflict, "Ordner bereits vergeben"),
             FormTemplateNameConflictException => (StatusCodes.Status409Conflict, "Namenskonflikt"),
             // Die drei Mail-Bestaende (§4.7): Ein Pflichtfeld fehlt, oder es
             // gibt den Eintrag schon. Beides kann der Anwalt im Dialog

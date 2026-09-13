@@ -14,9 +14,10 @@ import 'package:automation_app/features/mandanten/domain/usecases/loesche_import
 import 'package:automation_app/features/mandanten/domain/usecases/notiere_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/setze_ordner_status.dart';
-import 'package:automation_app/features/mandanten/domain/usecases/verknuepfe_ordner_mit_mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
+
+import 'mandanten_zuordnung_attrappen.dart';
 
 /// Attrappen und Bausteine für die Tests rund um den [MandantenOverviewBloc] —
 /// von Bloc-Test und Widget-Test gemeinsam genutzt.
@@ -61,6 +62,9 @@ class ZaehlenderAktenScan implements UseCase<List<Akte>, NoParams> {
 class MandantenSpeicher {
   final List<Mandant> mandanten;
   int seitenAufrufe = 0;
+
+  /// Scheitert die nächste Zuordnung — etwa am 409 eines fremden Ordners?
+  String? fehlerBeimVerknuepfen;
 
   MandantenSpeicher(this.mandanten);
 
@@ -131,26 +135,6 @@ class FesteFaelle implements UseCase<List<Fall>, GetFaelleParams> {
   Future<Either<Failure, List<Fall>>> call(GetFaelleParams params) async {
     aufrufe++;
     return Right(faelle);
-  }
-}
-
-/// Verknüpft, indem der Ordner am Mandanten hängend zurückkommt — genau das,
-/// was der Bloc in den Zustand fortschreiben soll.
-class FakeVerknuepfen implements UseCase<Mandant, VerknuepfeOrdnerParams> {
-  final MandantenSpeicher speicher;
-
-  FakeVerknuepfen(this.speicher);
-
-  @override
-  Future<Either<Failure, Mandant>> call(VerknuepfeOrdnerParams params) async {
-    final alt = speicher.mandanten.firstWhere((m) => m.id == params.mandantId);
-    final neu = mandant(
-      alt.id,
-      alt.nachname,
-      ordner: [...alt.aktenOrdnernamen, params.ordnername],
-    );
-    speicher.ersetze(neu);
-    return Right(neu);
   }
 }
 
@@ -396,7 +380,8 @@ class MandantenTestaufbau {
         FesteOrdnerStatus(vermerke),
         FakeSetzeOrdnerStatus(vermerke),
         FakeLoeschen(),
-        FakeVerknuepfen(speicher),
+        FakeVerknuepfen(speicher, vermerke),
+        FakeLoesen(speicher),
         FesteImportPakete(paketeSpeicher),
         mandantenQuelle,
         FesteKanzleiSettings(stammordner),

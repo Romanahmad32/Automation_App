@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
+import 'package:automation_app/features/mandanten/domain/entities/akten_auswahl_eintrag.dart';
 import 'package:automation_app/features/mandanten/domain/entities/arbeitspaket.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
@@ -10,12 +11,14 @@ import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_seite.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordner_status.dart';
 import 'package:automation_app/features/mandanten/domain/entities/ordnernamen_menge.dart';
+import 'package:automation_app/features/mandanten/domain/services/akten_auswahl.dart';
 import 'package:automation_app/features/mandanten/domain/services/arbeitspaket_bauen.dart';
 import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:automation_app/features/mandanten/domain/services/mandanten_namensindex.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/delete_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_faelle.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/get_mandanten_seite.dart';
+import 'package:automation_app/features/mandanten/domain/usecases/loese_ordner_von_mandant.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/loesche_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/notiere_import_paket.dart';
 import 'package:automation_app/features/mandanten/domain/usecases/schreibe_arbeitspaket.dart';
@@ -30,6 +33,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 
+part 'mandanten_aktenzuordnung_griff.dart';
 part 'mandanten_arbeitspaket_abruf.dart';
 part 'mandanten_arbeitspaket_griff.dart';
 part 'mandanten_overview_event.dart';
@@ -71,7 +75,7 @@ part 'mandanten_stand_abruf.dart';
 @injectable
 class MandantenOverviewBloc
     extends Bloc<MandantenOverviewEvent, MandantenOverviewState>
-    with ArbeitspaketGriff, ZuordnungsstapelGriff {
+    with ArbeitspaketGriff, ZuordnungsstapelGriff, AktenzuordnungGriff {
   /// Wie viele Mandanten ein Abruf holt.
   static const int seitenGroesse = 50;
 
@@ -98,7 +102,12 @@ class MandantenOverviewBloc
   @override
   final UseCase<List<OrdnerStatus>, SetzeOrdnerStatusParams> _setzeOrdnerStatus;
   final UseCase<void, DeleteMandantParams> _deleteMandant;
+
+  /// Erfüllen die abstrakten Getter aus [AktenzuordnungGriff].
+  @override
   final UseCase<Mandant, VerknuepfeOrdnerParams> _verknuepfeOrdner;
+  @override
+  final UseCase<Mandant, LoeseOrdnerParams> _loeseOrdner;
 
   MandantenOverviewBloc(
     UseCase<MandantenSeite, MandantenSeiteParams> getMandantenSeite,
@@ -109,6 +118,7 @@ class MandantenOverviewBloc
     this._setzeOrdnerStatus,
     this._deleteMandant,
     this._verknuepfeOrdner,
+    this._loeseOrdner,
     UseCase<List<ImportPaket>, NoParams> getImportPakete,
     UseCase<List<Mandant>, NoParams> getMandanten,
     UseCase<KanzleiSettings, NoParams> getKanzleiSettings,
@@ -141,6 +151,7 @@ class MandantenOverviewBloc
     on<FehlerVerwerfenEvent>(_onFehlerVerwerfen);
     on<DeleteMandantEvent>(_onDelete);
     on<VerknuepfeOrdnerEvent>(_onVerknuepfe);
+    on<LoeseOrdnerEvent>(_onLoese);
     on<HistorieNeuLadenEvent>(_onHistorieNeuLaden);
   }
 
@@ -280,26 +291,6 @@ class MandantenOverviewBloc
         emit(aktuell.copyWith(fehler: failure.message));
       case Right():
         emit(aktuell.ohneMandant(event.mandantId));
-    }
-  }
-
-  Future<void> _onVerknuepfe(
-    VerknuepfeOrdnerEvent event,
-    Emitter<MandantenOverviewState> emit,
-  ) async {
-    final result = await _verknuepfeOrdner(
-      VerknuepfeOrdnerParams(
-        mandantId: event.mandantId,
-        ordnername: event.ordnername,
-      ),
-    );
-    final aktuell = state;
-    if (aktuell is! MandantenOverviewLoaded) return;
-    switch (result) {
-      case Left(value: final failure):
-        emit(aktuell.copyWith(fehler: failure.message));
-      case Right(value: final aktualisiert):
-        emit(aktuell.mitZuordnung(aktualisiert, event.ordnername));
     }
   }
 }
