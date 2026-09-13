@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
+import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
 import 'package:automation_app/core/general_widgets/form/formular_fehler_hinweis.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
@@ -78,6 +79,16 @@ class FormTemplateBuilder extends StatelessWidget {
   /// stehen: vorbelegt mit dem naheliegenden Wert, umschaltbar auf die anderen.
   final Map<String, List<FeldVorschlag>> vorschlaege;
 
+  /// Was **außerhalb** des Formulars noch fehlt, je Eintrag ein fertiger Satz.
+  /// Solange hier etwas steht, bleibt der Absende-Knopf gesperrt — und jeder
+  /// Satz steht sichtbar darüber, so wie [FormularFehlerHinweis] es für die
+  /// Felder tut (#130: kein Knopf, der ohne ein Wort tot ist).
+  ///
+  /// Gebraucht von der Frage „Korrektur oder neues Schreiben" (#133): Sie hängt
+  /// an keinem Control, hält das Erstellen aber genauso auf wie ein leeres
+  /// Pflichtfeld.
+  final List<String> weitereFehlende;
+
   const FormTemplateBuilder({
     super.key,
     required this.formTemplate,
@@ -91,6 +102,7 @@ class FormTemplateBuilder extends StatelessWidget {
     this.onFeldBearbeiten,
     this.aktivePlatzhalter,
     this.vorschlaege = const {},
+    this.weitereFehlende = const [],
   });
 
   @override
@@ -179,11 +191,13 @@ class FormTemplateBuilder extends StatelessWidget {
               // [felder] gilt die ganze Gruppe: Eingeklappte Felder tragen
               // keine Validatoren und können deshalb gar nicht auftauchen.
               const FormularFehlerHinweis(),
+              for (final satz in weitereFehlende)
+                FehlerHinweis(nachricht: satz),
               ReactiveFormConsumer(
                 builder: (context, formGroup, child) {
                   return CustomRectangularButton(
                     label: submitButtonLabel ?? const Text('Formular absenden'),
-                    onPressed: formGroup.valid
+                    onPressed: formGroup.valid && weitereFehlende.isEmpty
                         ? () {
                             final data = formGroup.value.map(
                               (key, value) =>

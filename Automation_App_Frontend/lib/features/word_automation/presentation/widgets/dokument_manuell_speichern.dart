@@ -1,8 +1,13 @@
+import 'package:automation_app/core/di/injection.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/ablage_format.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/dokument_export.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/speicher_vermerk.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ablage_format_auswahl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Sekundärer Weg: das Dokument an einen frei wählbaren Ort speichern — als
 /// Word-Datei, als PDF oder beides.
@@ -47,6 +52,29 @@ class _DokumentManuellSpeichernState extends State<DokumentManuellSpeichern> {
       _gespeichert = ergebnis.gespeichert;
       _fehler = ergebnis.fehler;
     });
+    // Gespeichert ist gespeichert (§4.9, #133): Auch die frei gewählte Ablage
+    // belegt die Nummer des Schreibens, sonst fragte die App beim nächsten Mal
+    // nicht nach — und das zweite Schreiben überschriebe hier das erste. Was
+    // sie *nicht* tut: Status, Dokumentpfad und Aktenordner anfassen. Die Datei
+    // liegt nicht in der Akte; sie zum Dokument des Vorgangs zu erklären,
+    // widerspräche §4.6.
+    if (ergebnis.gespeichert.isEmpty) return;
+    _vermerke();
+  }
+
+  /// Der Vermerk am Vorgang — nur, wenn überhaupt einer gewählt ist. Der
+  /// frischeste Stand kommt aus dem [VorgangCubit]: Die Kopie im Wizard kann
+  /// seit dem Erzeugen veraltet sein (zurückgeflossene Feldwerte).
+  void _vermerke() {
+    final wizard = context.read<WizardCubit>();
+    final gewaehlt = wizard.state.selectedVorgang;
+    if (gewaehlt == null) return;
+    final vorgaenge = getIt<VorgangCubit>();
+    vermerkeGespeichertesSchreiben(
+      vorgaenge: vorgaenge,
+      wizard: wizard,
+      vorgang: vorgaenge.findeZuReferenz(gewaehlt.referenz) ?? gewaehlt,
+    );
   }
 
   /// Bei einer einzelnen Fassung wählt der Anwalt Ordner **und** Dateinamen,

@@ -99,10 +99,17 @@ class AusfuellFormular extends StatelessWidget {
     );
 
     final angebot = wizardState.entwurfAngebot;
-    // Ab dem zweiten Schreiben zum Vorgang: Korrektur oder neues Schreiben?
-    // Null heisst „noch keins erzeugt" — dann ist die Nummer die 1 und es gibt
-    // nichts zu fragen (§4.9).
-    final bisherigeNummer = wizardState.selectedVorgang?.schreibenNummer;
+    // Sobald zum Vorgang ein Schreiben **gespeichert** ist: Korrektur oder
+    // neues Schreiben? Null heisst „noch keins gespeichert" — dann ist die
+    // Nummer die 1 und es gibt nichts zu fragen (§4.9, #133). Ein bloss
+    // erzeugtes Schreiben zählt hier nicht mit: Es liegt im Arbeitsordner, den
+    // die nächste Ablage ohnehin wegräumt.
+    final gespeicherteNummer = wizardState.selectedVorgang?.schreibenNummer;
+    final gibtGespeichertes =
+        gespeicherteNummer != null && gespeicherteNummer >= 1;
+    // Ohne Wahl wird nicht erzeugt — aber der Knopf bleibt nicht wortlos tot,
+    // sondern sagt darüber, was fehlt (vgl. #130).
+    final wahlFehlt = gibtGespeichertes && wizardState.neuesSchreiben == null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -114,9 +121,9 @@ class AusfuellFormular extends StatelessWidget {
                 context.read<WizardCubit>().uebernimmEntwurf(),
             onVerwerfen: () => context.read<WizardCubit>().verwirfEntwurf(),
           ),
-        if (bisherigeNummer != null && bisherigeNummer >= 1)
+        if (gibtGespeichertes)
           SchreibenNummerHinweis(
-            bisherigeNummer: bisherigeNummer,
+            bisherigeNummer: gespeicherteNummer,
             letzterDokumentPfad: wizardState.selectedVorgang?.dokumentPfad,
             neuesSchreiben: wizardState.neuesSchreiben,
             onGeaendert: (wert) =>
@@ -137,6 +144,9 @@ class AusfuellFormular extends StatelessWidget {
           aufbauMarke: wizardState.aufbauMarke,
           aktivePlatzhalter: aktivePlatzhalter,
           vorschlaege: vorschlaege,
+          weitereFehlende: [
+            if (wahlFehlt) SchreibenNummerHinweis.wahlFehltHinweis,
+          ],
           onWerteGeaendert: (werte) =>
               context.read<WizardCubit>().setFormDataEntwurf(werte),
           onFeldBearbeiten: (feld) => _feldBearbeiten(context, feld),
@@ -243,7 +253,10 @@ class AusfuellFormular extends StatelessWidget {
           vorlagenname: template.templateName,
           nummer: naechsteSchreibenNummer(
             vorgang,
-            neuesSchreiben: cubit.state.neuesSchreiben,
+            // Hier ist die Wahl entweder getroffen oder bedeutungslos: Ohne
+            // gespeichertes Schreiben ist die Nummer die 1, und mit einem
+            // kommt der Knopf ohne Wahl gar nicht erst frei.
+            neuesSchreiben: cubit.state.neuesSchreiben ?? false,
           ),
           versicherer: empfaengerFuerDateiname(vorgang),
         ),

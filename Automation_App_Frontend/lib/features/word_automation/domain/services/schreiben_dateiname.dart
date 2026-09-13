@@ -63,10 +63,16 @@ String? empfaengerFuerDateiname(Vorgang? vorgang) {
 
 /// Die Nummer, die das **nächste** Schreiben zum Vorgang trägt.
 ///
+/// Gerechnet wird von der Nummer des zuletzt **gespeicherten** Schreibens
+/// ([Vorgang.schreibenNummer]) — nicht von der des zuletzt erzeugten (#133).
+/// Deshalb liefert der Aufruf zwischen zwei Speicherschritten immer dasselbe:
+/// Mehrfaches Erzeugen zählt nicht weiter, und die Nummer im Dateinamen stimmt
+/// mit der überein, die der Speicherschritt gleich an den Vorgang schreibt.
+///
 /// [neuesSchreiben] ist die Entscheidung des Anwalts (§4.9): Eine Korrektur
 /// behält die Nummer des vorigen und ersetzt damit dessen Fassung; ein neues
-/// Schreiben bekommt die nächste. Geraten wird das nicht — beim ersten
-/// Schreiben eines Vorgangs gibt es nichts zu entscheiden, dort ist es die 1.
+/// Schreiben bekommt die nächste. Geraten wird das nicht — solange kein
+/// Schreiben gespeichert ist, gibt es nichts zu entscheiden, dort ist es die 1.
 int naechsteSchreibenNummer(Vorgang? vorgang, {required bool neuesSchreiben}) {
   final bisher = vorgang?.schreibenNummer;
   if (bisher == null || bisher < 1) return 1;

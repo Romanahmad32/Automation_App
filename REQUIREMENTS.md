@@ -258,6 +258,9 @@ Gemeinsam:
 - **[M]** Das freigegebene Dokument wird in der Akte des Mandanten abgelegt; ist noch keine Akte
   vorhanden, wird sie angelegt. Konventionen und Namensmuster siehe 6.1.
 - **[M]** Der Ablageort wird am Vorgang festgehalten, damit das Dokument später wiederauffindbar ist.
+  Das gilt für **jede** Ablage eines Vorgangs, nicht nur die erste: Auch ein zweites oder drittes
+  Schreiben (siehe 4.9) überschreibt Ablageort, Dateipfad und Nummer am Vorgang, statt sie
+  unverändert zu lassen.
 
 ### 4.7 Versand
 
@@ -613,12 +616,15 @@ Gemeinsam:
   gehört nicht in ein fertiges Schreiben. Weder Zeichen (siehe 4.2) noch Unfalldatum stehen im
   Namen: Beide sind in der Ablage bereits bekannt, das Unfalldatum wörtlich im Ordnernamen
   (siehe 6.1).
-- **[M] Was die Nummer hochzählt, entscheidet der Anwalt.** Ab dem zweiten Schreiben eines Vorgangs
-  fragt die App, ob das gerade Erzeugte eine **Korrektur** des vorigen ist (Nummer bleibt, die
-  vorige Fassung wird ersetzt) oder ein **neues** Schreiben (nächste Nummer). Geraten wird das
-  nicht: Eine falsch geratene Korrektur legt drei Fassungen desselben Briefes nebeneinander, ein
-  falsch geratenes Folgeschreiben überschreibt ein bereits abgelegtes. Beim ersten Schreiben
-  entfällt die Frage.
+- **[M] Was die Nummer hochzählt, entscheidet der Anwalt.** Sobald zu einem Vorgang ein Schreiben
+  **gespeichert** ist — abgelegt in der Akte (siehe 4.6) oder frei anderswo gespeichert —, fragt
+  die App vor dem nächsten Erzeugen, ob das gerade Erzeugte eine **Korrektur** des gespeicherten
+  Schreibens ist (Nummer bleibt, die gespeicherte Fassung wird ersetzt) oder ein **neues** Schreiben
+  (nächste Nummer). Bloßes Erzeugen ohne Speichern zählt nicht: Erst der Speicherschritt setzt die
+  Nummer, wiederholtes Erzeugen davor legt keine weitere Fassung an. Geraten wird das nicht: Eine
+  falsch geratene Korrektur legt drei Fassungen desselben Briefes nebeneinander, ein falsch
+  geratenes Folgeschreiben überschreibt ein bereits abgelegtes. Solange zu einem Vorgang noch kein
+  Schreiben gespeichert ist, entfällt die Frage.
 - **[M]** Ein ausdrücklich gewünschter Dateiname schlägt das Muster.
 - **[S]** Am Vorgang ist erkennbar, welche Schreiben bereits erstellt wurden.
 

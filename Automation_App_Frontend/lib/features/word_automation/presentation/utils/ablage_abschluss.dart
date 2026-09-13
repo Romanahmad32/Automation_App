@@ -7,6 +7,8 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cub
 import 'package:automation_app/features/word_automation/domain/entities/arbeitsordner_aufraeumung.dart';
 import 'package:automation_app/features/word_automation/domain/usecases/arbeitsordner_aufraeumen.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/speicher_vermerk.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,8 +16,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// sind die abgelegten Fassungen — je nach Wahl des Anwalts die Word-Datei,
 /// das PDF oder beide.
 ///
-/// 1. Der Vorgang steht auf „abgelegt" und zeigt auf die abgelegte Datei
-///    (nur vorwärts — ein bereits versendeter Vorgang fällt nicht zurück).
+/// 1. Der Vorgang zeigt auf die abgelegte Datei, kennt ihren Aktenordner und
+///    trägt die Nummer des nun gespeicherten Schreibens
+///    ([vermerkeGespeichertesSchreiben]). Der **Status** läuft dabei nur
+///    vorwärts auf „abgelegt" — ein bereits versendeter Vorgang fällt nicht
+///    zurück. Vermerkt wird aber **jede** Ablage, auch die zweite und jede
+///    weitere: Vorher hing am Status eine Sperre, die den ganzen Vermerk
+///    ausliess, und `dokumentPfad` zeigte danach auf die Arbeitskopie, die
+///    gleich darauf gelöscht wurde (#133, §4.6, §3).
 /// 2. Der Wizard arbeitet ab hier mit der Word-Datei **in der Akte** weiter.
 /// 3. Der Arbeitsordner des Vorgangs verschwindet. Ab jetzt ist die Kopie in
 ///    der Akte die gültige Fassung; die Zwischenstände der Korrekturschleife
@@ -33,13 +41,14 @@ Future<void> schliesseAblageAb(
   final wordPfad = pfadMitEndung(zielpfade, '.docx');
   final abgelegterPfad = wordPfad ?? pfadMitEndung(zielpfade, '.pdf');
 
-  if (vorgang != null && vorgang.status.index < VorgangStatus.abgelegt.index) {
-    getIt<VorgangCubit>().aktualisiere(
-      vorgang.copyWith(
-        status: VorgangStatus.abgelegt,
-        dokumentPfad: abgelegterPfad,
-        aktenOrdner: aktenOrdner,
-      ),
+  if (vorgang != null) {
+    vermerkeGespeichertesSchreiben(
+      vorgaenge: getIt<VorgangCubit>(),
+      wizard: context.read<WizardCubit>(),
+      vorgang: vorgang,
+      dokumentPfad: abgelegterPfad,
+      aktenOrdner: aktenOrdner,
+      status: VorgangStatus.abgelegt,
     );
   }
 
