@@ -1263,8 +1263,7 @@ void main() {
       expect(
         gebaut.cubit.state.entwurf.an,
         ['p.schmitt@example.de'],
-        reason:
-            'nur der neue Mandant — der zweite Vorgang schlaegt sonst nichts vor',
+        reason: 'nur der neue Mandant — der zweite Vorgang schlaegt sonst nichts vor',
       );
       expect(gebaut.cubit.state.mitleserImAn, isTrue);
       expect(gebaut.cubit.state.anredePersoenlichMoeglich, isFalse);
@@ -1604,28 +1603,25 @@ void main() {
       },
     );
 
-    test(
-      'der Erzeuger zieht nach, sonst beugt die nächste Ableitung falsch',
-      () async {
-        // Der Nachtrag setzt `anredeGeschlecht` auf null zurück. Ab da fragt die
-        // Ableitung den Mandanten am Erzeuger — steht dort weiter „keine
-        // Angabe", fällt der Text auf die neutrale Form zurück, obwohl im
-        // Register nun „Frau" steht.
-        final gebaut = baue(_FakeVersandRepository(), mandanten: [ohneAngabe]);
-        await gebaut.cubit.starte(vorgang: vorgang);
-        gebaut.cubit.waehleVorlage(gebeugt);
-        gebaut.cubit.waehleGeschlecht(Anrede.frau);
-        await gebaut.cubit.merkeAnredeart();
+    test('der Erzeuger zieht nach, sonst beugt die nächste Ableitung falsch', () async {
+      // Der Nachtrag setzt `anredeGeschlecht` auf null zurück. Ab da fragt die
+      // Ableitung den Mandanten am Erzeuger — steht dort weiter „keine
+      // Angabe", fällt der Text auf die neutrale Form zurück, obwohl im
+      // Register nun „Frau" steht.
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [ohneAngabe]);
+      await gebaut.cubit.starte(vorgang: vorgang);
+      gebaut.cubit.waehleVorlage(gebeugt);
+      gebaut.cubit.waehleGeschlecht(Anrede.frau);
+      await gebaut.cubit.merkeAnredeart();
 
-        gebaut.cubit.waehleVorlage(gebeugt);
+      gebaut.cubit.waehleVorlage(gebeugt);
 
-        expect(
-          gebaut.cubit.state.entwurf.text,
-          contains('unsere Mandantin macht Ansprüche geltend.'),
-        );
-        await gebaut.cubit.close();
-      },
-    );
+      expect(
+        gebaut.cubit.state.entwurf.text,
+        contains('unsere Mandantin macht Ansprüche geltend.'),
+      );
+      await gebaut.cubit.close();
+    });
 
     test('eine hinterlegte Anredeart wird nicht überschrieben', () async {
       // `mandant` trägt „Herr". Eine Wahl „Frau" gilt für diese Mail — die

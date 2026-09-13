@@ -174,14 +174,13 @@ void main() {
       // mit -- im fertigen Entwurf steht deshalb kein {{Zusatzgruss}} mehr, an
       // dem diese Pruefung anschlagen koennte.
       final gefuellt =
-          MailVorlagenFueller(
-            anrede: 'Sehr geehrte Damen und Herren',
-          ).fuelleVorlage(
-            const MailVorlage(
-              betreff: 'Anspruchsschreiben',
-              text: '{{Anrede}},\n{{Zusatzgruß}},\n\nanbei das Schreiben.',
-            ),
-          );
+          MailVorlagenFueller(anrede: 'Sehr geehrte Damen und Herren')
+              .fuelleVorlage(
+                const MailVorlage(
+                  betreff: 'Anspruchsschreiben',
+                  text: '{{Anrede}},\n{{Zusatzgruß}},\n\nanbei das Schreiben.',
+                ),
+              );
 
       final pruefung = VersandVoraussetzungen.pruefe(
         entwurf: EmailEntwurf(

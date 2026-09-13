@@ -16,7 +16,10 @@ flutter test test/features/versicherer/versicherer_cubit_test.dart   # eine Date
 flutter test --plain-name "findet den Eintrag"                       # ein Test, überall
 ```
 
-Während der Arbeit **einzeln** testen: Die volle Suite braucht rund 30 s, eine Datei unter 2 s.
+Während der Arbeit **einzeln** testen: Die volle Suite braucht gut dreieinhalb Minuten (rund 1750
+Tests), ein Feature-Ordner eine halbe, eine einzelne Datei rund 12 s — davon das meiste Start und
+Übersetzen, nicht die Tests. Gemessen mit dem gepinnten SDK; wer die Zahlen anzweifelt, misst nach,
+statt sie fortzuschreiben.
 Steht das projektlokale FVM-SDK bereit (`docs/RELEASE.md`), `fvm flutter …` bzw. `fvm dart …`
 verwenden — sonst läuft der Befehl mit dem Flutter aus dem PATH, das von der Pinnung abweichen darf.
 
@@ -197,6 +200,10 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 - `rueckmeldung/` — `Rueckmeldung` (**der** Weg für Erfolgs-, Hinweis- und Fehlermeldungen), dazu
   `RueckmeldungsAktion`, `RueckmeldungsArt`, `RueckmeldungsKarte`, `RueckmeldungsStapel`,
   `RueckmeldungsSteuerung`
-- direkt darunter — `SeitenAppBar`, `EntitySearchBar`, `FehlerHinweis`, `AnwendungsInfo`,
+- direkt darunter — `GerundeterKasten` (farbige, gerundete Fläche mit Rand — **statt** eines
+  `Container` mit `BoxDecoration`, sobald etwas Antippbares darin sitzt: `ListTile` und `InkWell`
+  zeichnen ihren Tipp-Kringel auf das nächste `Material` und brauchen den Kasten als Fläche, an
+  deren Ecken er ihn auch abschneidet), `SeitenAppBar`, `EntitySearchBar`, `FehlerHinweis`,
+  `AnwendungsInfo`,
   `UeberAnwendungDialog`, `UpdateHerunterladenButton`, `VersionBadge`, `DateiAblageBereich`
   (nimmt aus dem Explorer gezogene Dateien entgegen, `desktop_drop`)

@@ -171,8 +171,7 @@ class FormTemplateRow extends StatelessWidget {
       context,
       icon: Icons.warning_rounded,
       titel: 'Löschen bestätigen',
-      text:
-          'Soll die Vorlage wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.',
+      text: 'Soll die Vorlage wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.',
       bestaetigung: 'Löschen',
       destruktiv: true,
     );

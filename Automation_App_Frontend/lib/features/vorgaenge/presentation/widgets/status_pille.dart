@@ -34,10 +34,8 @@ class StatusPille extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: farbe,
-          fontWeight: FontWeight.bold,
-        ),
+        style: Theme.of(context).textTheme.labelSmall
+            ?.copyWith(color: farbe, fontWeight: FontWeight.bold),
       ),
     );
     return tooltip == null ? pille : Tooltip(message: tooltip!, child: pille);

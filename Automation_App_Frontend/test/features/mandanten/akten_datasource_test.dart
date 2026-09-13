@@ -107,9 +107,8 @@ void main() {
       expect(File(ziel).existsSync(), isTrue);
       expect(ziel, endsWith('quelle.docx'));
       expect(
-        Directory(
-          '${tempDir.path}/Neumandant Müller/Unfall v. 01.01.2026',
-        ).existsSync(),
+        Directory('${tempDir.path}/Neumandant Müller/Unfall v. 01.01.2026')
+            .existsSync(),
         isTrue,
       );
       expect(File(ziel).readAsStringSync(), 'inhalt');

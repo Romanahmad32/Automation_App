@@ -148,9 +148,8 @@ class RegisterFilter extends Equatable {
   /// Die vorkommenden Jahrgänge als Zahl, neueste zuerst — die Auswahl der
   /// beiden Felder „Von" und „Bis".
   static List<int> jahre(List<RegisterZeile> zeilen) {
-    final jahre = <int>{
-      for (final zeile in zeilen) ?int.tryParse(zeile.jahr),
-    }.toList();
+    final jahre = <int>{for (final zeile in zeilen) ?int.tryParse(zeile.jahr)}
+        .toList();
     jahre.sort((a, b) => b.compareTo(a));
     return jahre;
   }

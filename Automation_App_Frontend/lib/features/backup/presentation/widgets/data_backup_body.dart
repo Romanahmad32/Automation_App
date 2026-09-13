@@ -91,8 +91,7 @@ class _DataBackupBodyState extends State<DataBackupBody> {
             const FormSection(
               icon: Icons.sync,
               title: 'Arbeitsplatzwechsel & Synchronisierung',
-              subtitle:
-                  'Daten zwischen diesem Rechner und einem anderen Arbeitsplatz über OneDrive austauschen.',
+              subtitle: 'Daten zwischen diesem Rechner und einem anderen Arbeitsplatz über OneDrive austauschen.',
               children: [SynchronisationsAnsicht()],
             ),
             FormSection(

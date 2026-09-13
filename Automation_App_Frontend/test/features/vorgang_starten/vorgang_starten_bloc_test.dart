@@ -74,9 +74,9 @@ void main() {
         ),
       );
 
-      final zustand =
-          await bloc.stream.firstWhere((s) => s is VorgangGespeichert)
-              as VorgangGespeichert;
+      final zustand = await bloc.stream.firstWhere(
+        (s) => s is VorgangGespeichert,
+      ) as VorgangGespeichert;
 
       expect(createMandant.letzteAnfrage?.nachname, 'Müller');
       // Der angelegte Mandant muss den Zustand verlassen: sonst weiß die View
@@ -130,9 +130,9 @@ void main() {
       ),
     );
 
-    final zustand =
-        await bloc.stream.firstWhere((s) => s is VorgangGespeichert)
-            as VorgangGespeichert;
+    final zustand = await bloc.stream.firstWhere(
+      (s) => s is VorgangGespeichert,
+    ) as VorgangGespeichert;
 
     expect(register.anlagen, 0);
     expect(register.aktualisierungen, 1);
@@ -148,41 +148,38 @@ void main() {
   /// angelegt, erst danach scheitert das Vorbefüllen. Ohne ihn im Fehlerzustand
   /// wüsste die Karte nichts von ihm, und der zweite Versuch käme über den
   /// Namenskonflikt des Backends nicht mehr hinaus.
-  test(
-    'meldet den Mandanten auch, wenn danach das Vorbefüllen scheitert',
-    () async {
-      final vorgaenge = VorgangCubit(
-        VorgangAblageDouble(),
-        VorgangPersistenzFehlerCubit(),
-      );
-      final register = MandantenRegisterDouble();
-      final bloc = _baue(
-        vorgaenge,
-        MandantAnlegenDouble(register),
-        vorbefuellung: ScheiterndeZentralrufVorbefuellung(),
-      );
+  test('meldet den Mandanten auch, wenn danach das Vorbefüllen scheitert', () async {
+    final vorgaenge = VorgangCubit(
+      VorgangAblageDouble(),
+      VorgangPersistenzFehlerCubit(),
+    );
+    final register = MandantenRegisterDouble();
+    final bloc = _baue(
+      vorgaenge,
+      MandantAnlegenDouble(register),
+      vorbefuellung: ScheiterndeZentralrufVorbefuellung(),
+    );
 
-      bloc.add(
-        SpeichereVorgangEvent(
-          daten: _verkehrsunfall,
-          neuerMandant: _verkehrsunfall.toCreateRequest(),
-          zentralrufAusfuellen: true,
-        ),
-      );
+    bloc.add(
+      SpeichereVorgangEvent(
+        daten: _verkehrsunfall,
+        neuerMandant: _verkehrsunfall.toCreateRequest(),
+        zentralrufAusfuellen: true,
+      ),
+    );
 
-      final zustand =
-          await bloc.stream.firstWhere((s) => s is VorgangStartenError)
-              as VorgangStartenError;
+    final zustand = await bloc.stream.firstWhere(
+      (s) => s is VorgangStartenError,
+    ) as VorgangStartenError;
 
-      expect(zustand.gespeicherterMandant?.id, 7);
-      expect(register.bestand, hasLength(1));
-      // Der Vorgang selbst entsteht nicht — das Vorbefüllen ist Teil dieses Wegs.
-      expect(vorgaenge.state, isEmpty);
+    expect(zustand.gespeicherterMandant?.id, 7);
+    expect(register.bestand, hasLength(1));
+    // Der Vorgang selbst entsteht nicht — das Vorbefüllen ist Teil dieses Wegs.
+    expect(vorgaenge.state, isEmpty);
 
-      await bloc.close();
-      await vorgaenge.close();
-    },
-  );
+    await bloc.close();
+    await vorgaenge.close();
+  });
 
   /// Was ohne die Verknüpfung passiert: kein zweiter Eintrag, sondern ein
   /// Riegel. Der Test hält fest, wovor die Übernahme schützt.
@@ -204,9 +201,9 @@ void main() {
       ),
     );
 
-    final zustand =
-        await bloc.stream.firstWhere((s) => s is VorgangStartenError)
-            as VorgangStartenError;
+    final zustand = await bloc.stream.firstWhere(
+      (s) => s is VorgangStartenError,
+    ) as VorgangStartenError;
 
     expect(zustand.message, contains('bereits vorhanden'));
     expect(register.bestand, hasLength(1));
@@ -241,9 +238,9 @@ void main() {
         ),
       );
 
-      final state =
-          await bloc.stream.firstWhere((s) => s is MandantGespeichert)
-              as MandantGespeichert;
+      final state = await bloc.stream.firstWhere(
+        (s) => s is MandantGespeichert,
+      ) as MandantGespeichert;
 
       expect(state.warNeu, isTrue);
       expect(state.mandant.id, 7);
@@ -277,9 +274,9 @@ void main() {
       );
 
       bloc.add(const SpeichereVorgangEvent(daten: daten));
-      final zustand =
-          await bloc.stream.firstWhere((s) => s is VorgangGespeichert)
-              as VorgangGespeichert;
+      final zustand = await bloc.stream.firstWhere(
+        (s) => s is VorgangGespeichert,
+      ) as VorgangGespeichert;
 
       expect(createMandant.letzteAnfrage, isNull);
       // Ohne Mandantenarbeit bleibt das Feld leer — die View hat dann nichts
@@ -322,11 +319,9 @@ void main() {
         );
 
         bloc.add(const LadeDefaultsEvent());
-        final zustand =
-            await bloc.stream.firstWhere(
-                  (s) => s is VorgangStartenDefaultsLoaded,
-                )
-                as VorgangStartenDefaultsLoaded;
+        final zustand = await bloc.stream.firstWhere(
+          (s) => s is VorgangStartenDefaultsLoaded,
+        ) as VorgangStartenDefaultsLoaded;
 
         expect(zustand.auftragsnummer, 7);
         expect(zustand.belegteNummern, [1, 4, 5, 6]);
@@ -337,36 +332,31 @@ void main() {
       },
     );
 
-    test(
-      'scheitert der Abruf, bleibt es beim Zähler der Einstellungen und ohne Warnung',
-      () async {
-        final vorgaenge = VorgangCubit(
-          VorgangAblageDouble(),
-          VorgangPersistenzFehlerCubit(),
-        );
-        final bloc = _baue(
-          vorgaenge,
-          MandantAnlegenDouble(MandantenRegisterDouble()),
-          kanzleiEinstellungen: FesteKanzleiEinstellungen(
-            KanzleiSettings.empty.copyWith(laufendeAuftragsnummer: 42),
-          ),
-          // Kein registerNummern angegeben → OhneRegisterNummern (Fehlschlag).
-        );
+    test('scheitert der Abruf, bleibt es beim Zähler der Einstellungen und ohne Warnung', () async {
+      final vorgaenge = VorgangCubit(
+        VorgangAblageDouble(),
+        VorgangPersistenzFehlerCubit(),
+      );
+      final bloc = _baue(
+        vorgaenge,
+        MandantAnlegenDouble(MandantenRegisterDouble()),
+        kanzleiEinstellungen: FesteKanzleiEinstellungen(
+          KanzleiSettings.empty.copyWith(laufendeAuftragsnummer: 42),
+        ),
+        // Kein registerNummern angegeben → OhneRegisterNummern (Fehlschlag).
+      );
 
-        bloc.add(const LadeDefaultsEvent());
-        final zustand =
-            await bloc.stream.firstWhere(
-                  (s) => s is VorgangStartenDefaultsLoaded,
-                )
-                as VorgangStartenDefaultsLoaded;
+      bloc.add(const LadeDefaultsEvent());
+      final zustand = await bloc.stream.firstWhere(
+        (s) => s is VorgangStartenDefaultsLoaded,
+      ) as VorgangStartenDefaultsLoaded;
 
-        expect(zustand.auftragsnummer, 42);
-        expect(zustand.belegteNummern, isEmpty);
-        expect(zustand.nummernJahr, isNull);
+      expect(zustand.auftragsnummer, 42);
+      expect(zustand.belegteNummern, isEmpty);
+      expect(zustand.nummernJahr, isNull);
 
-        await bloc.close();
-        await vorgaenge.close();
-      },
-    );
+      await bloc.close();
+      await vorgaenge.close();
+    });
   });
 }

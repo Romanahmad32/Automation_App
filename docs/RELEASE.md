@@ -359,12 +359,12 @@ die gepinnte Fassung — `flutter-action` installiert sie und legt sie in den
 PATH —, auf einem Entwicklerrechner mit FVM aber irgendeine. Von Hand
 aufgerufen baute das Skript deshalb ein Paket aus einer anderen Toolchain als
 die, gegen die geprüft wurde, und schrieb dabei stillschweigend `pubspec.lock`
-um. Beobachtet mit Flutter 3.44.1 statt der gepinnten 3.41.2: drei Pakete neu
-aufgelöst, und die Sperrdatei wäre so in einen Commit gewandert. Jetzt löst
-`build-package.ps1` das SDK über `versionspruefung.ps1` auf und bricht ab, wenn
-die Fassung nicht stimmt — ein Paket aus einer ungeprüften Toolchain ist
-schlimmer als keins, denn es sieht fertig aus. Dass kein Skript unter
-`scripts/` mehr blankes `flutter` oder `dart` ruft, hält
+um. Beobachtet mit Flutter 3.44.1 statt der damals gepinnten 3.41.2: drei
+Pakete neu aufgelöst, und die Sperrdatei wäre so in einen Commit gewandert.
+Jetzt löst `build-package.ps1` das SDK über `versionspruefung.ps1` auf und
+bricht ab, wenn die Fassung nicht stimmt — ein Paket aus einer ungeprüften
+Toolchain ist schlimmer als keins, denn es sieht fertig aus. Dass kein
+Skript unter `scripts/` mehr blankes `flutter` oder `dart` ruft, hält
 `test/architecture/versionspruefung_test.dart` fest.
 
 > **Für einen Versionssprung heißt das:** Die Fassung in `.fvmrc` ändern, mit

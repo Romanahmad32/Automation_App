@@ -18,8 +18,19 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
+# Die Untergrenze ist keine Vorsichtsangabe, sondern der Stand der Abhängigkeiten:
+# pdfrx 2.6.0 verlangt Dart 3.13/Flutter 3.47, die Generatoren mindestens 3.12.
+# Stünde hier weiter eine ältere Fassung, bekäme jemand mit einem älteren SDK
+# einen Auflösungsfehler über pdfrx statt der Auskunft, dass sein SDK zu alt ist.
+# Genau diese Grenzen hält `pubspec.lock` unter `sdks:` fest.
+#
+# Die Zeile ist mehr als eine Angabe: Sie setzt zugleich die **Sprachversion**
+# des Pakets. Mit 3.13 gilt hier `this._feld` auch als benannter Parameter —
+# `prefer_initializing_formals` verlangt das ab hier, siehe
+# `LocalThemePreferencesDatasource`.
 environment:
-  sdk: ^3.9.2
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions

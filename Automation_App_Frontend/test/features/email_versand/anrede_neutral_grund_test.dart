@@ -44,9 +44,8 @@ void main() {
     test('der Anwalt hat „neutral anreden" selbst angehakt', () {
       // Seine Entscheidung braucht keine Erklärung — das Häkchen steht daneben.
       expect(
-        erzeuger(
-          mit: mandant(),
-        ).neutralGrund(const ['k.mueller@example.de'], neutral: true),
+        erzeuger(mit: mandant())
+            .neutralGrund(const ['k.mueller@example.de'], neutral: true),
         isNull,
       );
     });
@@ -67,9 +66,8 @@ void main() {
   group('der Empfängerkreis — dann ist die neutrale Anrede richtig', () {
     test('die Versicherung liest mit', () {
       expect(
-        erzeuger(
-          mit: mandant(),
-        ).neutralGrund(const ['k.mueller@example.de', 'schaden@huk.de']),
+        erzeuger(mit: mandant())
+            .neutralGrund(const ['k.mueller@example.de', 'schaden@huk.de']),
         AnredeNeutralGrund.mitleser,
       );
     });
@@ -103,9 +101,8 @@ void main() {
       // die von Hand eingetippte für sie zu einem Fremden — und die Mail an
       // den Mandanten beginnt neutral, ohne dass jemand den Grund sieht.
       expect(
-        erzeuger(
-          mit: mandant(email: ''),
-        ).neutralGrund(const ['k.mueller@example.de']),
+        erzeuger(mit: mandant(email: ''))
+            .neutralGrund(const ['k.mueller@example.de']),
         AnredeNeutralGrund.keineAdresse,
       );
     });
@@ -124,9 +121,8 @@ void main() {
 
     test('ohne Nachnamen traegt die Anredeart die Zeile allein', () {
       expect(
-        erzeuger(
-          mit: mandant(nachname: '  '),
-        ).neutralGrund(const ['k.mueller@example.de']),
+        erzeuger(mit: mandant(nachname: '  '))
+            .neutralGrund(const ['k.mueller@example.de']),
         isNull,
         reason: 'die Zeile lautet „Sehr geehrter Herr" und ist nicht neutral',
       );
@@ -228,9 +224,8 @@ void main() {
 
     test('die gewählte Anredeart macht ihn wieder schaltbar', () {
       expect(
-        erzeuger(
-          mit: mandant(anrede: Anrede.keine),
-        ).anredeGebeugtMachbar(geschlecht: Anrede.frau),
+        erzeuger(mit: mandant(anrede: Anrede.keine))
+            .anredeGebeugtMachbar(geschlecht: Anrede.frau),
         isTrue,
       );
     });

@@ -43,22 +43,19 @@ void main() {
     expect(datasource.letzterJahrgang, 2026);
   });
 
-  test(
-    'eine RegisterException der Datasource landet als ServerFailure ohne Praefix',
-    () async {
-      const nachricht =
-          'Der Nummernstand des Registers konnte nicht geladen werden.';
-      final datasource = RegisterNummernDatasourceDouble.mitFehler(
-        const RegisterException(nachricht),
-      );
-      final repository = RegisterNummernRepositoryImpl(datasource);
+  test('eine RegisterException der Datasource landet als ServerFailure ohne Praefix', () async {
+    const nachricht =
+        'Der Nummernstand des Registers konnte nicht geladen werden.';
+    final datasource = RegisterNummernDatasourceDouble.mitFehler(
+      const RegisterException(nachricht),
+    );
+    final repository = RegisterNummernRepositoryImpl(datasource);
 
-      final ergebnis = await repository.ladeNummernstand();
+    final ergebnis = await repository.ladeNummernstand();
 
-      expect(ergebnis, isA<Left<Failure, RegisterNummernStand>>());
-      final failure = (ergebnis as Left<Failure, RegisterNummernStand>).value;
-      expect(failure, isA<ServerFailure>());
-      expect(failure.message, nachricht);
-    },
-  );
+    expect(ergebnis, isA<Left<Failure, RegisterNummernStand>>());
+    final failure = (ergebnis as Left<Failure, RegisterNummernStand>).value;
+    expect(failure, isA<ServerFailure>());
+    expect(failure.message, nachricht);
+  });
 }

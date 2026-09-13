@@ -79,7 +79,7 @@ void main() {
                   fields: fields,
                   formGroup: formGroup,
                   onAddField: () {},
-                  onReorder: (von, nach) => umsortiert.add((von, nach)),
+                  onReorderItem: (von, nach) => umsortiert.add((von, nach)),
                   onTypeChanged: (_, _) {},
                   onDatenquelleChanged: (_, _) {},
                   onRequiredChanged: (_, _) {},
@@ -103,6 +103,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(umsortiert, isNotEmpty);
+    // Das erste von zwei Feldern nach unten gezogen. Die erwartete 1 ist die
+    // Zählweise von `onReorderItem`: die Stelle **nach** dem Herausnehmen.
+    // Unter dem abgelösten `onReorder` käme hier die 2 an. Das ist der einzige
+    // Test, der diesen Rückruf wirklich von Flutter auslösen lässt — ohne die
+    // Erwartung auf die Indizes bliebe unbemerkt, wenn eine spätere Fassung
+    // wieder anders zählt, und jedes Ziehen nach unten landete eine Stelle zu
+    // weit vorn.
+    expect(umsortiert, [(0, 1)]);
   });
 }

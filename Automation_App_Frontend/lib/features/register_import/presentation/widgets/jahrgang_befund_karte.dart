@@ -116,9 +116,8 @@ class JahrgangBefundKarte extends StatelessWidget {
     if (uebernommen) {
       return Text(
         'übernommen',
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.secondary,
-        ),
+        style: Theme.of(context).textTheme.labelLarge
+            ?.copyWith(color: Theme.of(context).colorScheme.secondary),
       );
     }
     if (laufend) {

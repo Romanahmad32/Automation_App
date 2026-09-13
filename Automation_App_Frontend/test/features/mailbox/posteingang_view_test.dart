@@ -4,6 +4,7 @@ import 'package:automation_app/features/mailbox/presentation/views/posteingang_v
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'posteingang_cubit_test.dart';
 
 void main() {
@@ -24,8 +25,7 @@ void main() {
             (i) => PosteingangEintrag(
               id: '$i',
               betreff: 'Versicherung: Nachricht $i',
-              absender:
-                  'Versicherung mit einem langen Namen <versicherung@example.de>',
+              absender: 'Versicherung mit einem langen Namen <versicherung@example.de>',
             ),
           ),
           'weiter',

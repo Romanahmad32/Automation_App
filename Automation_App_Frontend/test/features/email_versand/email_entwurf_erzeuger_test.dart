@@ -250,9 +250,8 @@ void main() {
   test('ohne Vorgang und ohne Anhang entsteht ein leeres Anschreiben', () {
     // Der Einstieg aus dem Postfach: Anrede und Gruß stehen, den Rest
     // schreibt der Anwalt. Ein erfundener Betreff wäre schlimmer als keiner.
-    final entwurf = const EmailEntwurfErzeuger(
-      kanzlei: kanzlei,
-    ).entwurfMit(const []);
+    final entwurf = const EmailEntwurfErzeuger(kanzlei: kanzlei)
+        .entwurfMit(const []);
 
     expect(entwurf.an, isEmpty);
     expect(entwurf.betreff, isEmpty);
