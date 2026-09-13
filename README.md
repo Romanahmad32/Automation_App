@@ -16,7 +16,7 @@ reviewable as **one** commit and **one** diff.
 
 ## Demo
 
-| | |
+|Feature Description |Demo clip |
 |---|---|
 | **Client management (Mandanten)** — search, create and edit client records with their case files | ![Searching and managing clients](docs/media/client_management.gif) |
 | **Mailbox monitoring** — incoming replies are captured live (IMAP push) and their data is extracted into structured fields | ![Inbox with automatic data extraction from an insurer reply](docs/media/mailbox_extraction.gif) |
