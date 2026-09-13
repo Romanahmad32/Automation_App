@@ -21,9 +21,8 @@ class VorlagenEditorKopf extends StatelessWidget {
         // `headlineSmall` statt `titleLarge` mit fester Größe: Die
         // Seitenüberschrift soll größer sein als ein Sektionstitel, und die
         // passende Rolle dafür wächst mit der Schriftskala mit (Issue #57).
-        style: Theme.of(
-          context,
-        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.headlineSmall
+            ?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -37,9 +37,8 @@ class FeldNameHinweis extends StatelessWidget {
     return ReactiveValueListenableBuilder<String>(
       formControlName: formControlName,
       builder: (context, control, _) {
-        final hinweis = FeldDatenquelleErkennung.erkenne(
-          control.value ?? '',
-        ).hinweis;
+        final hinweis = FeldDatenquelleErkennung.erkenne(control.value ?? '')
+            .hinweis;
         if (hinweis == null) return const SizedBox.shrink();
         // Ohne eigene Einrückung: Der Hinweis steht jetzt im Aufklapper der
         // Feldzeile (`FeldAufklappInhalt`), und der rückt seinen ganzen Inhalt

@@ -39,9 +39,8 @@ class FormTemplateOverview extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: Text(
             _resultLabel(filtered.length),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(color: Theme.of(context).colorScheme.outline),
           ),
         ),
       ],

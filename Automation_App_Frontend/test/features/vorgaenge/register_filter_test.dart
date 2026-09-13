@@ -98,15 +98,15 @@ void main() {
       ];
 
       expect(
-        const RegisterFilter(
-          abgeschlossen: true,
-        ).anwenden(alle).map((z) => z.zeichen),
+        const RegisterFilter(abgeschlossen: true)
+            .anwenden(alle)
+            .map((z) => z.zeichen),
         ['fertig', 'alt'],
       );
       expect(
-        const RegisterFilter(
-          abgeschlossen: false,
-        ).anwenden(alle).map((z) => z.zeichen),
+        const RegisterFilter(abgeschlossen: false)
+            .anwenden(alle)
+            .map((z) => z.zeichen),
         ['laufend'],
       );
     });
@@ -121,15 +121,17 @@ void main() {
       ];
 
       expect(
-        const RegisterFilter(
-          quelle: RegisterQuellen.vorgang,
-        ).anwenden(alle).single.zeichen,
+        const RegisterFilter(quelle: RegisterQuellen.vorgang)
+            .anwenden(alle)
+            .single
+            .zeichen,
         'app',
       );
       expect(
-        const RegisterFilter(
-          quelle: RegisterQuellen.historie,
-        ).anwenden(alle).single.zeichen,
+        const RegisterFilter(quelle: RegisterQuellen.historie)
+            .anwenden(alle)
+            .single
+            .zeichen,
         'alt',
       );
       expect(RegisterFilter.alle.anwenden(alle), hasLength(2));

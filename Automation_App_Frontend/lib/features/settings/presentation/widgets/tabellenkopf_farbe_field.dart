@@ -71,8 +71,7 @@ class TabellenkopfFarbeField extends StatelessWidget {
               validationMessages: {
                 ValidationMessage.required: (_) =>
                     'Bitte einen Hex-Farbwert angeben (z. B. D9D9D9)',
-                ValidationMessage.pattern: (_) =>
-                    'Ungültiger Farbwert — erwartet wird "RRGGBB" (z. B. D9D9D9)',
+                ValidationMessage.pattern: (_) => 'Ungültiger Farbwert — erwartet wird "RRGGBB" (z. B. D9D9D9)',
               },
               inputDecoration: InputDecoration(
                 suffixIcon: Padding(

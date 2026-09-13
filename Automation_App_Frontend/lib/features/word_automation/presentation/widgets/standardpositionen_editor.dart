@@ -221,9 +221,8 @@ class _StandardpositionenEditorState extends State<StandardpositionenEditor>
           const SizedBox(height: 24),
           Text(
             'Vorschau',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           StandardpositionenVorschau(

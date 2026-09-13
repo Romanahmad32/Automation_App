@@ -92,9 +92,8 @@ class SchadenspositionHinzufuegenMenue extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'Position hinzufügen',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: farbe),
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(color: farbe),
             ),
           ],
         ),

@@ -16,6 +16,15 @@ include: package:flutter_lints/flutter.yaml
 # strict-raw-types bleiben bewusst aus: gemessen waeren das 52 rein
 # mechanische Typargumente auf Dio-Aufrufen ohne einen gefundenen Fehler.
 analyzer:
+  # Diese vier Zeilen schreibt Flutter selbst (AnalysisOptionsMigration, seit
+  # 3.47) bei jedem analyze/run/build wieder hinein, wenn sie fehlen — zweimal
+  # entfernt, zweimal wiedergekommen. Sie bleiben deshalb stehen, und zwar
+  # genau so: Die Migration ergaenzt nur, was fehlt, und laesst diesen
+  # Kommentar in Ruhe.
+  # Was es kostet: Unter windows/flutter/ephemeral/.plugin_symlinks/ liegen
+  # Verweise auf die Dart-Pakete der Plugins (desktop_drop, file_picker,
+  # path_provider_windows, url_launcher_windows). Die sind ab hier nicht mehr
+  # Teil der Analyse — fremder Code, den wir weder aendern noch verantworten.
   exclude:
     - build/**
     - windows/**

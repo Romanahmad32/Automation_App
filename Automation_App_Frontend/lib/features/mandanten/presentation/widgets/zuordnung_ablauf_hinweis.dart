@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/gerundeter_kasten.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:flutter/material.dart';
 
@@ -22,60 +23,50 @@ class ZuordnungAblaufHinweis extends StatelessWidget {
     final farben = theme.colorScheme;
     final tone = SoftTone.fromAccent(farben.primary, farben);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: tone.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: tone.border),
-      ),
+    // Die Kopfzeile des `ExpansionTile` reicht bis an den Rand des Kastens —
+    // deshalb muss der Kasten die Fläche für den Tipp-Kringel selbst stellen
+    // und ihn an den Ecken abschneiden, siehe [GerundeterKasten].
+    return GerundeterKasten(
+      farbe: tone.background,
+      randfarbe: tone.border,
       child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
-        // Das `ExpansionTile` baut seine Kopfzeile aus einem `ListTile`, und
-        // das zeichnet Hintergrund und Tipp-Kringel auf das nächste `Material`
-        // darüber — hier läge das *über* dem farbigen Container, der Kringel
-        // wäre also unsichtbar. Seit Flutter 3.47 ist das eine Zusicherung und
-        // kein stiller Schönheitsfehler mehr. Ein durchsichtiges `Material`
-        // direkt unter dem Kasten gibt dem Kringel eine Fläche, ohne die Farbe
-        // des Kastens zu verdecken.
-        child: Material(
-          type: MaterialType.transparency,
-          child: ExpansionTile(
-            initiallyExpanded: anfangsOffen,
-            shape: const Border(),
-            collapsedShape: const Border(),
-            iconColor: tone.foreground,
-            collapsedIconColor: tone.foreground,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            leading: Icon(Icons.route_outlined, color: tone.foreground),
-            title: Text(
-              'So werden viele Ordner auf einmal zugeordnet',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: tone.foreground,
-                fontWeight: FontWeight.w600,
-              ),
+        child: ExpansionTile(
+          initiallyExpanded: anfangsOffen,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          iconColor: tone.foreground,
+          collapsedIconColor: tone.foreground,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          leading: Icon(Icons.route_outlined, color: tone.foreground),
+          title: Text(
+            'So werden viele Ordner auf einmal zugeordnet',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: tone.foreground,
+              fontWeight: FontWeight.w600,
             ),
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '1. Arbeitspaket holen gibt eine Portion offener Ordner '
-                  'heraus — der Auftrag dazu liegt danach in der '
-                  'Zwischenablage.\n'
-                  '2. Außerhalb dieser App wird darin je Ordner der Mandant '
-                  'eingetragen.\n'
-                  '3. Aus Datei übernehmen liest das Ergebnis hier wieder ein, '
-                  'zur Prüfung vor jeder Übernahme.\n\n'
-                  'Für Ordner, die sich ohne Nachlesen sicher zuordnen lassen, '
-                  'reicht Sichere Treffer übernehmen — ganz ohne Umweg über '
-                  'eine Datei.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: tone.foreground,
-                  ),
+          ),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '1. Arbeitspaket holen gibt eine Portion offener Ordner '
+                'heraus — der Auftrag dazu liegt danach in der '
+                'Zwischenablage.\n'
+                '2. Außerhalb dieser App wird darin je Ordner der Mandant '
+                'eingetragen.\n'
+                '3. Aus Datei übernehmen liest das Ergebnis hier wieder ein, '
+                'zur Prüfung vor jeder Übernahme.\n\n'
+                'Für Ordner, die sich ohne Nachlesen sicher zuordnen lassen, '
+                'reicht Sichere Treffer übernehmen — ganz ohne Umweg über '
+                'eine Datei.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: tone.foreground,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

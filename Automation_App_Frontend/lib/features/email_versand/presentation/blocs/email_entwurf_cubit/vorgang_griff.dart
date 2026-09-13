@@ -129,8 +129,7 @@ mixin VorgangGriff on Cubit<EmailEntwurfState> {
     if (state.gewaehlteVorlage != null || state.textSelbstGeschrieben) {
       return state.entwurf.betreff;
     }
-    return EntwurfAbleitung(
-      erzeuger: erzeuger,
-    ).betreffAusVorbelegung(state.entwurf);
+    return EntwurfAbleitung(erzeuger: erzeuger)
+        .betreffAusVorbelegung(state.entwurf);
   }
 }

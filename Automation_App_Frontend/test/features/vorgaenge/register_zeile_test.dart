@@ -141,9 +141,8 @@ void main() {
     test('nur ein versendeter Vorgang gilt als abgeschlossen', () {
       expect(RegisterZeile.ausVorgang(vorgang()).abgeschlossen, isTrue);
       expect(
-        RegisterZeile.ausVorgang(
-          vorgang(status: VorgangStatus.erstellt),
-        ).abgeschlossen,
+        RegisterZeile.ausVorgang(vorgang(status: VorgangStatus.erstellt))
+            .abgeschlossen,
         isFalse,
       );
     });

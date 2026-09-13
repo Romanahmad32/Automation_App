@@ -231,9 +231,8 @@ void main() {
     test('schreibt nur die Anredeart, der Rest bleibt stehen', () async {
       final schreiber = MandantSchreiber();
 
-      final gemerkt = await quellen(
-        schreiber: schreiber,
-      ).merkeAnredeart(mandant, Anrede.frau);
+      final gemerkt = await quellen(schreiber: schreiber)
+          .merkeAnredeart(mandant, Anrede.frau);
 
       expect(gemerkt?.anrede, Anrede.frau);
       expect(
