@@ -29,7 +29,14 @@ class TemplateFieldsCard extends StatefulWidget {
   final List<FieldData> fields;
   final FormGroup formGroup;
   final VoidCallback onAddField;
-  final void Function(int oldIndex, int newIndex) onReorder;
+
+  /// Eine Feldzeile wurde gezogen. Der Name ist der von Flutters
+  /// `ReorderableListView.onReorderItem` — und zwar mit dessen Zählweise:
+  /// [neuerIndex] ist die Stelle **nach** dem Herausnehmen, also schon fertig
+  /// verrechnet. Das abgelöste `onReorder` zählte die Lücke noch mit; wer die
+  /// beiden verwechselt, baut ein `if (neuerIndex > alterIndex) neuerIndex--;`
+  /// ein, das ein zweites Mal abzöge (siehe `VorlagenBearbeitung.verschiebe`).
+  final void Function(int alterIndex, int neuerIndex) onReorderItem;
   final void Function(int index, InputType? newValue) onTypeChanged;
   final void Function(int index, FeldDatenquelle? newValue)
   onDatenquelleChanged;
@@ -67,7 +74,7 @@ class TemplateFieldsCard extends StatefulWidget {
     required this.fields,
     required this.formGroup,
     required this.onAddField,
-    required this.onReorder,
+    required this.onReorderItem,
     required this.onTypeChanged,
     required this.onDatenquelleChanged,
     required this.onRequiredChanged,
@@ -153,7 +160,7 @@ class _TemplateFieldsCardState extends State<TemplateFieldsCard> {
           ? null
           : const NeverScrollableScrollPhysics(),
       buildDefaultDragHandles: false,
-      onReorderItem: widget.onReorder,
+      onReorderItem: widget.onReorderItem,
       // Das gezogene Element wird in ein Overlay außerhalb des ReactiveForm
       // UND der Bloc-Provider der Seite gehoben — hier beides neu umschließen
       // (die Warnung in der Zeile braucht den TemplatePlaceholdersBloc).

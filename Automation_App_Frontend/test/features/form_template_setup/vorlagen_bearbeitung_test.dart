@@ -168,7 +168,9 @@ void main() {
     bearbeitung.verschiebe(0, 2);
     expect(bearbeitung.feldnamen, ['Unfalldatum', 'Frist', 'Kennzeichen']);
 
-    // Und wieder zurück nach vorn — dort zählt der Index unverändert.
+    // Und wieder zurück nach vorn: dieselbe Zählung. `onReorderItem` kennt
+    // keinen Richtungsfall — der Index ist immer die Stelle nach dem
+    // Herausnehmen, nach oben wie nach unten.
     bearbeitung.verschiebe(2, 0);
     expect(bearbeitung.feldnamen, ['Kennzeichen', 'Unfalldatum', 'Frist']);
   });
