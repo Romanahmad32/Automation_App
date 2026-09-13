@@ -125,7 +125,7 @@ Future<void> pumpeKarte(
                 formGroup: formGroup,
                 stand: stand,
                 onAddField: () {},
-                onReorder: (_, _) {},
+                onReorderItem: (_, _) {},
                 onTypeChanged: (_, _) {},
                 onDatenquelleChanged: (_, _) {},
                 onRequiredChanged: (_, _) {},

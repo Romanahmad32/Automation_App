@@ -309,7 +309,7 @@ class _FormTemplateDetailsPageState extends State<FormTemplateDetailsPage> {
           fields: _bearbeitung.fields,
           formGroup: _bearbeitung.formGroup,
           onAddField: _feldHinzufuegen,
-          onReorder: _verschiebe,
+          onReorderItem: _verschiebe,
           onTypeChanged: _aenderungen.typ,
           onDatenquelleChanged: _aenderungen.datenquelle,
           onRequiredChanged: _aenderungen.pflicht,

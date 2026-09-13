@@ -1,4 +1,5 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
+import 'package:automation_app/core/general_widgets/gerundeter_kasten.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/paket_historie_tabelle.dart';
@@ -53,13 +54,14 @@ class _StandKarteState extends State<StandKarte> {
     final scheme = theme.colorScheme;
     final letztesPaket = widget.pakete.isEmpty ? null : widget.pakete.first;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
+    // Kein `Container`: Die Karte trägt ein `ExpansionTile` und eine Tabelle
+    // mit anklickbaren Zeilen, die ihren Tipp-Kringel auf das nächste
+    // `Material` zeichnen — den stellt der Kasten, siehe [GerundeterKasten].
+    return GerundeterKasten(
+      farbe: scheme.surface,
+      randfarbe: scheme.outlineVariant,
+      rundung: 16,
+      polsterung: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -101,53 +103,44 @@ class _StandKarteState extends State<StandKarte> {
             ohneBezug: widget.ohneBezug,
           ),
           const Divider(height: 25),
-          // Durchsichtiges `Material` unter der farbigen Karte: Die Kopfzeile
-          // des `ExpansionTile` ist ein `ListTile` und zeichnet ihren
-          // Tipp-Kringel auf das nächste `Material` darüber — das läge hier
-          // hinter der Kartenfarbe und bliebe unsichtbar. Seit Flutter 3.47
-          // ist das eine Zusicherung (siehe ZuordnungAblaufHinweis, gleiche
-          // Stelle, gleicher Grund).
-          Material(
-            type: MaterialType.transparency,
-            child: ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: const EdgeInsets.only(bottom: 8),
-              onExpansionChanged: (wert) => setState(() => _aufgeklappt = wert),
-              title: Row(
-                children: [
-                  Text(
-                    'Pakete (${widget.pakete.length})',
-                    style: theme.textTheme.titleSmall,
-                  ),
-                  const Spacer(),
-                  if (!_aufgeklappt && letztesPaket != null)
-                    Text(
-                      'zuletzt geholt am '
-                      '${deutschesDatum(letztesPaket.geholtAm.toLocal())}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.outline,
-                      ),
-                    ),
-                ],
-              ),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            onExpansionChanged: (wert) => setState(() => _aufgeklappt = wert),
+            title: Row(
               children: [
-                if (widget.pakete.isEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Noch kein Arbeitspaket geholt.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.outline,
-                      ),
+                Text(
+                  'Pakete (${widget.pakete.length})',
+                  style: theme.textTheme.titleSmall,
+                ),
+                const Spacer(),
+                if (!_aufgeklappt && letztesPaket != null)
+                  Text(
+                    'zuletzt geholt am '
+                    '${deutschesDatum(letztesPaket.geholtAm.toLocal())}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.outline,
                     ),
-                  )
-                else
-                  PaketHistorieTabelle(
-                    pakete: widget.pakete,
-                    onLoeschen: widget.onPaketLoeschen,
                   ),
               ],
             ),
+            children: [
+              if (widget.pakete.isEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Noch kein Arbeitspaket geholt.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.outline,
+                    ),
+                  ),
+                )
+              else
+                PaketHistorieTabelle(
+                  pakete: widget.pakete,
+                  onLoeschen: widget.onPaketLoeschen,
+                ),
+            ],
           ),
         ],
       ),
