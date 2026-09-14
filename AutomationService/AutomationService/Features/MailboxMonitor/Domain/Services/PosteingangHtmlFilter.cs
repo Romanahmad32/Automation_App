@@ -51,7 +51,11 @@ public static partial class PosteingangHtmlFilter
         var bilderBlockiert = Basiselement().IsMatch(gefiltert);
         gefiltert = Basiselement().Replace(gefiltert, string.Empty);
         gefiltert = AktiveMarken().Replace(gefiltert, string.Empty);
-        gefiltert = Ereignisse().Replace(gefiltert, string.Empty);
+        // Nur innerhalb einer Marke ersetzt, nicht über das ganze Dokument:
+        // "Ereignisse" allein auf den Fließtext losgelassen träfe auch Wörter
+        // wie "online" ("on" + Buchstaben) und risse "Abrechnung online = 1"
+        // zu "Abrechnung" ab.
+        gefiltert = Marke().Replace(gefiltert, treffer => Ereignisse().Replace(treffer.Value, string.Empty));
 
         bilderBlockiert |= NachladendeQuelle().IsMatch(gefiltert);
         // Das Element bleibt stehen und wird markiert: Die Oberfläche sagt dem
@@ -94,8 +98,23 @@ public static partial class PosteingangHtmlFilter
     [GeneratedRegex(@"<base\b[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex Basiselement();
 
-    /// <summary>Jedes <c>on…="…"</c>-Attribut — der zweite Weg, Code auszuführen.</summary>
-    [GeneratedRegex(@"\s+on[a-zA-Z]+\s*=\s*(?:""[^""]*""|'[^']*'|[^\s>]+)", RegexOptions.IgnoreCase)]
+    /// <summary>
+    /// Eine einzelne Marke von der öffnenden bis zur schließenden spitzen
+    /// Klammer — der Rahmen, innerhalb dessen <see cref="Ereignisse"/> nach
+    /// <c>on…</c>-Attributen sucht. Ohne diesen Rahmen träfe die Regel auch
+    /// Fließtext (siehe dort).
+    /// </summary>
+    [GeneratedRegex(@"<[^>]*>")]
+    private static partial Regex Marke();
+
+    /// <summary>
+    /// Jedes <c>on…="…"</c>-Attribut — der zweite Weg, Code auszuführen. Der
+    /// Trenner davor ist <c>[\s/]+</c>, nicht nur Leerraum: HTML5 erlaubt einen
+    /// Schrägstrich statt eines Leerzeichens zwischen Attributen
+    /// (<c>&lt;img/onerror=…&gt;</c>), und genau das nutzte ein Testfall, um
+    /// den Filter zu umgehen.
+    /// </summary>
+    [GeneratedRegex(@"[\s/]+on[a-zA-Z]+\s*=\s*(?:""[^""]*""|'[^']*'|[^\s>]+)", RegexOptions.IgnoreCase)]
     private static partial Regex Ereignisse();
 
     /// <summary>
@@ -103,9 +122,17 @@ public static partial class PosteingangHtmlFilter
     /// responsives Bild), <c>poster</c> (Vorschaubild eines Videos) und
     /// <c>data</c> (bei <c>&lt;object&gt;</c>) — allesamt Attribute, die ins
     /// Netz oder auf einen eingebetteten Teil zeigen.
+    ///
+    /// Zwei Umgehungen extra abgefangen: <c>[\s/]+</c> statt nur Leerraum vor
+    /// dem Attributnamen (HTML5 erlaubt <c>&lt;img/src="…"&gt;</c>), und
+    /// <c>&amp;#</c> als eigene Quelle neben <c>https?:</c>, <c>//</c> und
+    /// <c>cid:</c> — eine entitätskodierte Adresse wie
+    /// <c>&amp;#104;ttps://…</c> beginnt mit keinem der drei Präfixe, ist aber
+    /// nach der Dekodierung durch den Browser derselbe externe Verweis.
     /// </summary>
     [GeneratedRegex(
-        @"\s+(?<attribut>srcset|src|background|poster|data)\s*=\s*(?:(?<q>[""'])\s*(?:https?:|//|cid:)[^""']*\k<q>|(?:https?:|//|cid:)[^\s>]*)",
+        @"[\s/]+(?<attribut>srcset|src|background|poster|data)\s*=\s*"
+        + @"(?:(?<q>[""'])\s*(?:https?:|//|cid:|&#)[^""']*\k<q>|(?:https?:|//|cid:|&#)[^\s>]*)",
         RegexOptions.IgnoreCase)]
     private static partial Regex NachladendeQuelle();
 

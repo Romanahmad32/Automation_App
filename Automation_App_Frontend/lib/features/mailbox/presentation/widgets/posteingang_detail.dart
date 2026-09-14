@@ -42,7 +42,7 @@ class PosteingangDetail extends StatefulWidget {
     required this.onAnhangOeffnen,
     required this.onAnhangInDieAkte,
     required this.onAnhangBeimVersand,
-    this.anhangLaedt = false,
+    this.ladenderAnhangId,
   });
 
   final PosteingangEintrag eintrag;
@@ -67,9 +67,12 @@ class PosteingangDetail extends StatefulWidget {
   final Future<void> Function(PosteingangAnhang) onAnhangInDieAkte;
   final Future<void> Function(PosteingangAnhang) onAnhangBeimVersand;
 
-  /// True, während ein Anhang oder die `.eml` gerade ins Zwischenlager
-  /// geholt wird — siehe die Begründung an `PosteingangAnhangZeile`.
-  final bool anhangLaedt;
+  /// Die Id des Anhangs, der gerade ins Zwischenlager geholt wird — `null`,
+  /// wenn nichts lädt oder die ganze Nachricht als `.eml`. Nur die eigene
+  /// Zeile in `PosteingangAnhangZeile` zeigt dann den Ring (Review #134,
+  /// Befund 7 — vorher zeigten ihn bei einem einzelnen `bool` alle Zeilen
+  /// gleichzeitig).
+  final String? ladenderAnhangId;
 
   @override
   State<PosteingangDetail> createState() => _PosteingangDetailState();
@@ -102,7 +105,7 @@ class _PosteingangDetailState extends State<PosteingangDetail> {
       onOeffnen: widget.onAnhangOeffnen,
       onInDieAkte: widget.onAnhangInDieAkte,
       onBeimVersand: widget.onAnhangBeimVersand,
-      laeuft: widget.anhangLaedt,
+      ladenderAnhangId: widget.ladenderAnhangId,
     );
 
     return GerundeterKasten(

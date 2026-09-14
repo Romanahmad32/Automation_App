@@ -65,5 +65,16 @@ void main() {
         '01.09.2026',
       );
     });
+
+    test('ueber die Sommerzeitumstellung bleibt der Vortag "Gestern" — die '
+        'Nacht 29./30.03.2026 hat lokal nur 23 Stunden', () {
+      expect(
+        posteingangTagesbeschriftung(
+          DateTime(2026, 3, 29),
+          jetzt: DateTime(2026, 3, 30),
+        ),
+        'Gestern · 29.03.2026',
+      );
+    });
   });
 }

@@ -42,7 +42,17 @@ List<PosteingangTagesgruppe> gruppierePosteingangNachTag(
 /// für Tests gedacht, sonst die tatsächliche Zeit.
 String posteingangTagesbeschriftung(DateTime tag, {DateTime? jetzt}) {
   final heute = PosteingangTagesgruppe.tagVon(jetzt ?? DateTime.now());
-  final differenz = heute.difference(tag).inDays;
+  // Kalendarisch vergleichen, nicht über die verstrichene Dauer: Zwischen den
+  // lokalen Mitternächten zweier aufeinanderfolgender Tage liegen über eine
+  // Sommerzeitumstellung nur 23 (oder 25) Stunden. `.difference().inDays`
+  // rundet das auf 0 ab, und aus „Gestern" wird fälschlich „Heute". Auf
+  // `DateTime.utc` umgerechnet — dort gibt es keine Sommerzeit — zählt jeder
+  // Kalendertag unabhängig von der Tageslänge genau einen Tag.
+  final differenz = DateTime.utc(
+    heute.year,
+    heute.month,
+    heute.day,
+  ).difference(DateTime.utc(tag.year, tag.month, tag.day)).inDays;
   final datum = deutschesDatum(tag);
   if (differenz == 0) return 'Heute · $datum';
   if (differenz == 1) return 'Gestern · $datum';

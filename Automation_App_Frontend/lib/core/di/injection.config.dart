@@ -503,7 +503,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i434.RegisterHub(),
       dispose: (i) => i.dispose(),
     );
-    gh.factory<_i367.PosteingangCubit>(
+    gh.lazySingleton<_i367.PosteingangCubit>(
       () => _i367.PosteingangCubit(
         gh<_i204.PosteingangRepository>(),
         gh<_i579.MailboxPushNotifier>(),

@@ -183,7 +183,10 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
           betreff: betreffVorgabe,
         );
       }
-      emit(state.copyWith(entwurf: vorbelegterEntwurf));
+      // Über `setzeEntwurf` (wie `empfaengerHinzufuegen`) statt eines rohen
+      // `emit`: Sonst blieben `mitleserImAn` und `anredePersoenlichMoeglich`
+      // auf dem Stand vor dieser Adresse stehen (Review #134, Befund 1).
+      setzeEntwurf(vorbelegterEntwurf);
     }
 
     // Outlook im Hintergrund hochfahren, während der Anwalt tippt. Bewusst

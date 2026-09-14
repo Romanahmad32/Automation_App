@@ -106,4 +106,43 @@ public sealed class PosteingangHtmlFilterTests
     {
         PosteingangHtmlFilter.FuerAnzeige(string.Empty).Should().BeEmpty();
     }
+
+    [Theory]
+    [InlineData("<img/src=\"https://werbe.example/pixel.gif\">")]
+    [InlineData("<p/onclick=\"stehlen()\">Hallo</p>")]
+    public void SchraegstrichStattLeerzeichen_UmgehtDenFilterNicht(string html)
+    {
+        // HTML5 laesst zwischen Attributen einen Schraegstrich statt eines
+        // Leerzeichens zu -- ein Filter, der nur "\s+" vor dem Attributnamen
+        // verlangt, liesse genau das durch.
+        var gefiltert = PosteingangHtmlFilter.FuerAnzeige(html);
+
+        gefiltert.Should().NotContain("werbe.example").And.NotContain("onclick");
+    }
+
+    [Fact]
+    public void EntitaetskodierteAdresse_GiltEbenfallsAlsExtern()
+    {
+        // "h" als &#104; kodiert: Kein https?:/​/​/cid:-Praefix passt woertlich,
+        // der Browser dekodiert die Referenz aber zum selben externen Bild.
+        var gefiltert = PosteingangHtmlFilter.FuerAnzeigeMitErgebnis(
+            "<img src=\"&#104;ttps://werbe.example/pixel.gif\">");
+
+        gefiltert.BilderBlockiert.Should().BeTrue();
+        gefiltert.Html.Should().NotContain("werbe.example").And.Contain("data-blockiert=\"1\"");
+    }
+
+    [Fact]
+    public void OnAehnlichesWortImFliesstext_BleibtStehen()
+    {
+        // Regressionsfall des Reviews: "online" beginnt wie ein on*-Attribut.
+        // Die Attributentfernung darf nur innerhalb einer Marke greifen, nicht
+        // ueber den ganzen Text.
+        const string html = "<p>Abrechnung online = 1</p><p onclick=\"stehlen()\">Klick</p>";
+
+        var gefiltert = PosteingangHtmlFilter.FuerAnzeige(html);
+
+        gefiltert.Should().Contain("Abrechnung online = 1");
+        gefiltert.Should().NotContain("onclick");
+    }
 }

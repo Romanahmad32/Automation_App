@@ -98,3 +98,16 @@ Die Zentralruf-Auswertung behält ihren bisherigen Ablauf:
 Bereichsumschalter Posteingang/Gesendet ist ein `SegmentedButton`; die Filterreihe
 [Alle | Zentralruf (n) | Mit Vorgang | Ohne Bezug] sind `ChoiceChip` (genau eine Wahl gilt), **kein**
 `FilterChip`.
+
+**Die Filterreihe steht genau einmal**, in `PosteingangListe` direkt über der Liste, die sie
+eingrenzt — **nicht** zusätzlich in `MailboxWerkzeugleiste` (Review zu #134: beide bauten sie auf,
+zwei Chip-Reihen standen untereinander, und ein Test hatte das mit `find.text(…).first` überdeckt
+statt zu melden). `MailboxWerkzeugleiste` trägt nur Handlungen (Neu laden, Antwort manuell
+einfügen, Neue E-Mail).
+
+**Tagesgruppen kalendarisch vergleichen, nie über die verstrichene Dauer.**
+`posteingangTagesbeschriftung` bildet „Heute"/„Gestern" aus der Differenz zweier lokaler
+Mitternächte. Über eine Sommerzeitumstellung liegen dazwischen nur 23 (oder 25) Stunden;
+`.difference().inDays` rundet das auf 0 ab und macht aus „Gestern" fälschlich „Heute". Beide Seiten
+zuerst auf `DateTime.utc(jahr, monat, tag)` abbilden (dort gibt es keine Sommerzeit) und erst dann
+`.difference().inDays` bilden.

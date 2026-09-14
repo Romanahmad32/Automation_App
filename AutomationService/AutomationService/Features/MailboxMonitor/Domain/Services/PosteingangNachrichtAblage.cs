@@ -22,6 +22,13 @@ public static class PosteingangNachrichtAblage
     /// <summary>Ein Dateiname bleibt handhabbar — ohne Endung höchstens so lang.</summary>
     public const int MaxNameZeichen = 80;
 
+    /// <summary>
+    /// Der eine Schlüssel je Nachrichtenordner: Eine Nachricht hat genau eine
+    /// abgelegte <c>.eml</c> — anders als Anhänge, von denen mehrere in
+    /// demselben Ordner liegen können, braucht es hier keine Anhang-Id.
+    /// </summary>
+    private const string EmlSchluessel = "eml";
+
     public static async Task<PosteingangAnhangAblage> LadeAsync(
         IMailFolder folder, string konto, UniqueId uid, CancellationToken ct)
     {
@@ -40,14 +47,38 @@ public static class PosteingangNachrichtAblage
                 + "Bitte sie im Webmailer speichern.", 413);
         }
 
-        var ordner = PosteingangZwischenlager.Ordner(konto, uid.Id);
+        string ordner;
+        try
+        {
+            ordner = PosteingangZwischenlager.Ordner(konto, uid.Id);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw PosteingangZwischenlager.SchreibfehlerAlsFachlich(ex);
+        }
+
+        // Wiedererkannt über denselben festen Schlüssel: Ohne diesen Abgleich
+        // legt jeder erneute Klick eine weitere "Name (2).eml" an, statt die
+        // schon vorhandene Ablage zurückzugeben.
+        if (PosteingangZwischenlager.Vorhanden(ordner, EmlSchluessel) is { } schonDa)
+        {
+            return new PosteingangAnhangAblage(Path.GetFileName(schonDa), schonDa, new FileInfo(schonDa).Length);
+        }
+
         var name = Dateiname(summary);
         var pfad = PosteingangZwischenlager.FreierPfad(ordner, name);
         var nachricht = await folder.GetMessageAsync(uid, ct);
-        using (nachricht)
+        try
         {
-            await using var strom = File.Create(pfad);
-            await nachricht.WriteToAsync(strom, ct);
+            using (nachricht)
+            {
+                await PosteingangZwischenlager.SchreibeAtomarAsync(strom => nachricht.WriteToAsync(strom, ct), pfad);
+            }
+            PosteingangZwischenlager.Merke(ordner, EmlSchluessel, Path.GetFileName(pfad));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw PosteingangZwischenlager.SchreibfehlerAlsFachlich(ex);
         }
 
         return new PosteingangAnhangAblage(Path.GetFileName(pfad), pfad, new FileInfo(pfad).Length);

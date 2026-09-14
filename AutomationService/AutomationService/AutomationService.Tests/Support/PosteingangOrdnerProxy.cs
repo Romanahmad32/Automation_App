@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text;
 using MailKit;
 using MimeKit;
 
@@ -43,6 +44,15 @@ public class PosteingangOrdnerProxy : DispatchProxy
 
     /// <summary>Teilbezeichner, die als Anhang geliefert werden — Bezeichner auf Bytes.</summary>
     public Dictionary<string, byte[]> Anhangsteile { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Wie <see cref="Anhangsteile"/>, aber auf der Leitung Base64-kodiert
+    /// (<see cref="ContentEncoding.Base64"/>) — für Tests, die den Unterschied
+    /// zwischen <c>Octets</c> (Größe in Transferkodierung, RFC 3501) und der
+    /// tatsächlich abgelegten, dekodierten Dateigröße brauchen: Bei Base64 ist
+    /// Ersteres rund ein Drittel größer.
+    /// </summary>
+    public Dictionary<string, byte[]> Base64Anhangsteile { get; } = new(StringComparer.Ordinal);
 
     /// <summary>Die ganze Nachricht für <c>GetMessageAsync</c>; ohne sie ist der Abruf ein Fehler.</summary>
     public MimeMessage? Nachricht { get; set; }
@@ -118,6 +128,16 @@ public class PosteingangOrdnerProxy : DispatchProxy
             return new MimePart("application", "pdf")
             {
                 Content = new MimeContent(new MemoryStream(bytes)),
+            };
+        }
+
+        if (Base64Anhangsteile.TryGetValue(kennung, out var roh))
+        {
+            AnhangAbrufe++;
+            var kodiert = Encoding.ASCII.GetBytes(Convert.ToBase64String(roh));
+            return new MimePart("application", "pdf")
+            {
+                Content = new MimeContent(new MemoryStream(kodiert), ContentEncoding.Base64),
             };
         }
 
