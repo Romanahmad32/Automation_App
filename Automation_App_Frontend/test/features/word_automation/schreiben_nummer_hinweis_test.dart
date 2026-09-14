@@ -2,9 +2,16 @@ import 'package:automation_app/features/word_automation/presentation/widgets/sch
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Die Leiste, die fragt, ob korrigiert oder neu geschrieben wird (§4.9, #32,
+/// Die Zeile, die fragt, ob korrigiert oder neu geschrieben wird (§4.9, #32,
 /// #133). Sie ist die einzige Stelle, an der diese Entscheidung fällt — geraten
 /// wird sie nirgends, und seit #133 ist sie auch nicht mehr vorbelegt.
+///
+/// Die Erwartungen an [SegmentedButton] und an den Wortlaut „Gespeichert als
+/// Nr. …"/„Korrektur von Nr. …" sind hier bewusst durch die neue, kompaktere
+/// Gestalt ersetzt (Entscheidung „Variante B" vom 14.09.2026, auf ausdrücklichen
+/// Auftrag): Der Anwender fand die frühere Karte mit acht Zeilen zu dominant.
+/// Die fachlichen Pflichten aus §4.9 — Frage statt Vorbelegung, unterscheidbare
+/// Wirkung, Sperrmeldung — bleiben unverändert und stehen in `schreiben_wahl_test.dart`.
 void main() {
   Future<void> zeige(
     WidgetTester tester, {
@@ -25,99 +32,75 @@ void main() {
     ),
   );
 
-  testWidgets('nennt beide Nummern, damit die Wahl konkret ist', (
-    tester,
-  ) async {
-    await zeige(tester, bisherigeNummer: 1);
-    expect(find.text('Korrektur von Nr. 1'), findsOneWidget);
-    expect(find.text('Neues Schreiben · Nr. 2'), findsOneWidget);
-  });
-
-  /// §4.9 verlangt, dass gefragt und nicht geraten wird: Vor der Wahl steht
-  /// **keines** der beiden Felder an. Das war vor #133 anders — „Korrektur" war
-  /// vorbelegt, und wer die Leiste überlas, überschrieb sein abgelegtes
-  /// Schreiben.
-  testWidgets('ohne Wahl ist nichts vorbelegt', (tester) async {
-    await zeige(tester, bisherigeNummer: 1);
-    final knopf = tester.widget<SegmentedButton<bool>>(
-      find.byType(SegmentedButton<bool>),
-    );
-    expect(knopf.selected, isEmpty);
-    expect(knopf.emptySelectionAllowed, isTrue);
-  });
-
-  /// Vor der Wahl stehen beide Folgen da — das ist die Auskunft, auf der der
-  /// Anwalt entscheidet.
-  testWidgets('sagt je Wahl in einem Satz die Folge', (tester) async {
+  testWidgets('zeigt beide Chips zur Wahl', (tester) async {
     await zeige(tester, bisherigeNummer: 1);
     expect(
-      find.text('Eine Korrektur ersetzt die gespeicherte Fassung.'),
+      find.text(SchreibenNummerHinweis.korrekturChipLabel),
       findsOneWidget,
     );
-    expect(
-      find.text('Ein neues Schreiben legt eine weitere daneben.'),
-      findsOneWidget,
-    );
+    expect(find.text(SchreibenNummerHinweis.neuChipLabel), findsOneWidget);
   });
 
-  /// Nach der Wahl bleibt nur noch die Folge stehen, die auch eintritt.
-  testWidgets('nach der Wahl steht nur noch deren Folge da', (tester) async {
-    await zeige(tester, bisherigeNummer: 1, neuesSchreiben: true);
-    expect(
-      find.text('Ein neues Schreiben legt eine weitere daneben.'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Eine Korrektur ersetzt die gespeicherte Fassung.'),
-      findsNothing,
-    );
+  /// §4.9 verlangt, dass gefragt und nicht geraten wird: Vor der Wahl ist
+  /// **keiner** der beiden Chips ausgewählt. Das war vor #133 anders —
+  /// „Korrektur" war vorbelegt, und wer die Zeile überlas, überschrieb sein
+  /// abgelegtes Schreiben.
+  testWidgets('ohne Wahl ist kein Chip ausgewählt', (tester) async {
+    await zeige(tester, bisherigeNummer: 1);
+    final chips = tester.widgetList<ChoiceChip>(find.byType(ChoiceChip));
+    expect(chips.every((chip) => chip.selected == false), isTrue);
   });
 
-  testWidgets('nennt Nummer und Dateinamen des gespeicherten Schreibens', (
-    tester,
-  ) async {
+  /// Vor der Wahl nennt die Unterzeile nur, was bereits gespeichert ist — noch
+  /// keine Wirkung, weil noch keine Wahl feststeht.
+  testWidgets('ohne Wahl nennt die Unterzeile nur die Nummer', (tester) async {
     await zeige(
       tester,
-      bisherigeNummer: 2,
-      letzterPfad:
-          r'C:\Akten\Mustermann\Anspruchsschreiben an Allianz 2 HGn.docx',
+      bisherigeNummer: 1,
+      letzterPfad: r'C:\Akten\Mustermann\Brief.docx',
     );
     expect(
-      find.text(
-        'Gespeichert als Nr. 2: Anspruchsschreiben an Allianz 2 HGn.docx',
-      ),
+      find.text('Zu diesem Vorgang ist Nr. 1 gespeichert.'),
       findsOneWidget,
     );
-    expect(find.text('Korrektur von Nr. 2'), findsOneWidget);
   });
 
-  /// Ohne bekannten Pfad entfällt die Zeile, statt einen leeren Namen zu
-  /// zeigen. Die Nummer steht dann an den beiden Knöpfen.
-  testWidgets('ohne Pfad keine Gespeichert-Zeile', (tester) async {
-    await zeige(tester, bisherigeNummer: 1);
-    expect(find.textContaining('Gespeichert als Nr.'), findsNothing);
+  testWidgets(
+    'Korrektur gewählt: Unterzeile nennt den Dateinamen der ersetzten Fassung',
+    (tester) async {
+      await zeige(
+        tester,
+        bisherigeNummer: 1,
+        neuesSchreiben: false,
+        letzterPfad: r'C:\Akten\Mustermann\Brief.docx',
+      );
+      expect(find.text('Ersetzt „Brief.docx" (Nr. 1).'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Korrektur gewählt, aber kein Dateiname bekannt: Unterzeile nennt nur die Nummer',
+    (tester) async {
+      await zeige(tester, bisherigeNummer: 1, neuesSchreiben: false);
+      expect(
+        find.text('Ersetzt die gespeicherte Fassung (Nr. 1).'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('Neues Schreiben gewählt: Unterzeile nennt die künftige Nummer', (
+    tester,
+  ) async {
+    await zeige(tester, bisherigeNummer: 1, neuesSchreiben: true);
+    expect(find.text('Wird als Nr. 2 abgelegt.'), findsOneWidget);
   });
 
   testWidgets('meldet die Auswahl nach oben', (tester) async {
     final gemeldet = <bool>[];
     await zeige(tester, bisherigeNummer: 1, onGeaendert: gemeldet.add);
-    await tester.tap(find.text('Neues Schreiben · Nr. 2'));
+    await tester.tap(find.text(SchreibenNummerHinweis.neuChipLabel));
     expect(gemeldet, [true]);
-  });
-
-  /// Der Text unterscheidet Ein- und Mehrzahl — „gibt es bereits 1 Schreiben"
-  /// liest sich wie ein Programmfehler.
-  testWidgets('Einzahl bei einem, Mehrzahl darüber', (tester) async {
-    await zeige(tester, bisherigeNummer: 1);
-    expect(
-      find.text('Zu diesem Vorgang ist bereits ein Schreiben gespeichert.'),
-      findsOneWidget,
-    );
-    await zeige(tester, bisherigeNummer: 3);
-    expect(
-      find.text('Zu diesem Vorgang sind bereits 3 Schreiben gespeichert.'),
-      findsOneWidget,
-    );
   });
 
   group('dateinameAus', () {
