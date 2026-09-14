@@ -65,6 +65,13 @@ class AusfuellFormular extends StatelessWidget {
     final aktivePlatzhalter = platzhalterStand.platzhalter ?? const <String>{};
 
     final wizardState = context.watch<WizardCubit>().state;
+    // Einmal hier gelesen, nicht erst in der Closure unten: `onWerteGeaendert`
+    // läuft auch aus `FormWertBeobachter.dispose()` heraus, das nach einem
+    // Tabwechsel binnen der Entprellung noch feuert — dann ist der Kontext
+    // dieses Widgets bereits deaktiviert, und ein `context.read` darin wirft
+    // „Looking up a deactivated widget's ancestor is unsafe" (Review #154 zu
+    // #133, Befund 1). Der Cubit selbst überlebt den Tabwechsel unverändert.
+    final wizardCubit = context.read<WizardCubit>();
     final vorgang = wizardState.selectedVorgang;
     final herkunft = vorgang == null
         ? const <String, PrefillWert>{}
@@ -150,12 +157,11 @@ class AusfuellFormular extends StatelessWidget {
       // eine ausstehende Änderung aus seinem `dispose()` heraus, das nach dem
       // Wechsel läuft), verwirft der Cubit die Meldung über genau diese
       // Referenz (Review-Nachbesserung #133).
-      onWerteGeaendert: (werte) =>
-          context.read<WizardCubit>().setFormDataEntwurf(
-            werte,
-            vorbelegung: vorbelegungFuerVergleich,
-            fuerReferenz: vorgang?.referenz,
-          ),
+      onWerteGeaendert: (werte) => wizardCubit.setFormDataEntwurf(
+        werte,
+        vorbelegung: vorbelegungFuerVergleich,
+        fuerReferenz: vorgang?.referenz,
+      ),
       onFeldBearbeiten: (feld) => _feldBearbeiten(context, feld),
       submitButtonLabel: Text(
         wizardState.mitAuflistung

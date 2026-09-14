@@ -429,6 +429,24 @@ void main() {
       expect(wizard.setzeEingabenZurueck(), isNull);
     });
 
+    /// Review-Nachbesserung zu #133, Befund 3: Der bestehende Test oben leert
+    /// vorher die Schadensaufstellung (`setDamageListing(items: [])`) und
+    /// prüft diesen Zweig deshalb nie. Trägt der Stand eine **nicht leere**
+    /// Aufstellung, schrieb `nichtsMehrDa` bisher einen Entwurf mit leeren
+    /// `feldWerte` statt den Vorgang ganz zu räumen — der Textknopf verspricht
+    /// Löschen, nicht „Felder leeren, Rest behalten".
+    test('löscht auch mit nicht leerer Schadensaufstellung', () async {
+      await umgebung.vorgaenge.aktualisiere(vorgang(mitEntwurf: entwurf));
+      final wizard = umgebung.wizard;
+      await wizard.selectVorgang(vorgang(mitEntwurf: entwurf));
+      expect(wizard.state.damageListing?.items, isNotEmpty);
+
+      wizard.setzeEingabenZurueck();
+
+      expect(umgebung.ablage.entwuerfe.last, isNull);
+      expect(umgebung.vorgaenge.findeZuReferenz(referenz)?.entwurf, isNull);
+    });
+
     /// Zurücksetzen löscht — deshalb ist es kurz zurücknehmbar (#133).
     test('„Rückgängig" setzt Formular und Ablage wieder', () async {
       await umgebung.vorgaenge.aktualisiere(vorgang(mitEntwurf: entwurf));

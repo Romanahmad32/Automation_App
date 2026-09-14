@@ -51,6 +51,15 @@ class EntwurfSicherungSteuerung {
   /// nichts mehr abgelegt, bis wieder jemand tippt.
   void markiereBestaetigt() => _sicherung.markiereBestaetigt();
 
+  /// Räumt den Entwurf am Vorgang **immer** — der Weg für „Eingaben auf
+  /// Vorbelegung zurücksetzen": Anders als [nachEingabe] zählt dabei eine
+  /// nicht leere Schadensaufstellung nicht als „noch etwas da" (Review-
+  /// Nachbesserung #133, Befund 3, siehe [EntwurfsSicherung.loesche]).
+  void nachZuruecksetzenGesichert(WizardState zustand) {
+    _sicherung.hebeBestaetigungAuf();
+    _sicherung.loesche(zustand.selectedVorgang?.referenz);
+  }
+
   /// Ob [referenz] noch zum **aktuell** gewählten Vorgang gehört — beide
   /// `null` (freie Erfassung) zählt als Treffer.
   ///

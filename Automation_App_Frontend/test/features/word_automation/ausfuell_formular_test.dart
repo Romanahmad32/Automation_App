@@ -265,4 +265,40 @@ void main() {
       expect(umgebung.wizard.state.formDataEntwurf, isNull);
     },
   );
+
+  /// Review-Nachbesserung zu #133, Befund 1 (kritisch): `onWerteGeaendert` las
+  /// bisher `context.read<WizardCubit>()` erst beim Aufruf der Closure. Meldet
+  /// `FormWertBeobachter` eine noch nicht entprellte Änderung aus seinem
+  /// `dispose()` heraus — hier durch einen Tabwechsel binnen der Entprellung
+  /// ausgelöst, der das ganze Formular samt Provider aus dem Baum nimmt —, ist
+  /// der Kontext von `AusfuellFormular` selbst zu diesem Zeitpunkt bereits
+  /// deaktiviert (ein entfernter Teilbaum wird als Ganzes deaktiviert, bevor
+  /// die `dispose()`-Methoden seiner Kinder laufen). Ein `context.read` darin
+  /// warf „Looking up a deactivated widget's ancestor is unsafe", und die
+  /// Sicherung unterblieb. Der Fix liest den Cubit einmal in `build`, statt
+  /// erst in der Closure.
+  testWidgets(
+    'ein Tabwechsel binnen der Entprellung wirft nicht und sichert noch',
+    (tester) async {
+      final umgebung = await zeige(tester, [
+        'Mandant Vorname',
+        'Mandant Nachname',
+      ]);
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'Getippt vor dem Wechsel',
+      );
+      await tester.pump();
+
+      // Der ganze Tab verschwindet, samt Provider — anders als der Test oben,
+      // der nur die FormGroup innerhalb desselben Baums neu aufbaut.
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+
+      expect(tester.takeException(), isNull);
+      expect(umgebung.wizard.state.formDataEntwurf, {
+        'Mandant Vorname': 'Getippt vor dem Wechsel',
+      });
+    },
+  );
 }
