@@ -21,20 +21,30 @@ class FormWertBeobachter extends StatefulWidget {
   /// Bekommt den vollständigen Stand (Feldname → Wert), auch die leeren Felder.
   final ValueChanged<Map<String, String>> onWerteGeaendert;
 
-  /// Wie lange nach dem letzten Tastendruck gewartet wird. Zwei Sekunden sind
-  /// der Kompromiss: kurz genug, dass ein Neuaufbau selten mehr als den letzten
-  /// Halbsatz kostet, lang genug, dass Tippen keine Zustandswechsel-Lawine
-  /// auslöst.
+  /// Wie lange nach dem letzten Tastendruck gewartet wird — voreingestellt
+  /// [standardEntprellung].
   final Duration entprellung;
 
   final Widget child;
+
+  /// Der Kompromiss zwischen „jeder Tastendruck ein Zustandswechsel" und „der
+  /// letzte Halbsatz geht verloren".
+  ///
+  /// Waren zwei Sekunden, solange ein eigener Takt dahinter den Stand erst
+  /// verzögert ablegte (#133). Seit die Meldung **selbst** die Sicherung
+  /// auslöst, ist diese Dauer die einzige Verzögerung zwischen Tastendruck und
+  /// abgelegtem Stand — und zwei Sekunden hießen: Wer schnell wegklickt,
+  /// verliert den letzten Satz. 300 ms liegen über der Schlagfolge beim
+  /// Tippen (ein geübter Schreiber bleibt darunter) und unter dem, was ein
+  /// Mensch als Wartezeit bemerkt.
+  static const standardEntprellung = Duration(milliseconds: 300);
 
   const FormWertBeobachter({
     super.key,
     required this.formGroup,
     required this.onWerteGeaendert,
     required this.child,
-    this.entprellung = const Duration(seconds: 2),
+    this.entprellung = standardEntprellung,
   });
 
   @override
@@ -64,7 +74,13 @@ class _FormWertBeobachterState extends State<FormWertBeobachter> {
 
   @override
   void dispose() {
+    // Eine noch nicht entprellte Änderung ginge sonst verloren: Der Anwalt
+    // tippt, verlässt binnen der Entprellung die Seite, und die letzten
+    // Zeichen würden nie gemeldet. Deshalb hier nachholen, statt nichts zu
+    // tun (§4.4, #133).
+    final ausstehendeAenderung = _wartet?.isActive ?? false;
     _beende();
+    if (ausstehendeAenderung) _melde();
     super.dispose();
   }
 
@@ -82,10 +98,15 @@ class _FormWertBeobachterState extends State<FormWertBeobachter> {
     _wartet = null;
   }
 
-  /// Bewusst **kein** Melden aus [dispose] heraus: Beim Verlassen der Seite
-  /// wird auch der Empfänger (Cubit) geschlossen, und ein `emit` danach wirft.
-  /// Was in den letzten zwei Sekunden getippt wurde, überlebt den
-  /// Seitenwechsel deshalb nicht — dafür braucht es die Ablage am Vorgang.
+  /// Meldet den aktuellen Formularwert — auch aus [dispose] heraus, seit
+  /// #133: Frühere Annahme war, der Empfänger (meist ein Cubit) sei beim
+  /// Verlassen der Seite bereits geschlossen und ein `emit` danach würfe.
+  /// Das trifft die gängige Zusammensetzung nicht — der `BlocProvider` liegt
+  /// über dem Formular und schließt seinen Cubit erst in seinem **eigenen**
+  /// `dispose`, das Flutter erst **nach** dem der Kinder aufruft (Elemente
+  /// bauen sich von den Blättern her ab). Diese Methode selbst braucht ohnehin
+  /// weder `setState` noch den `BuildContext`: Sie liest nur [formGroup] und
+  /// ruft den Callback auf, deshalb ist der Aufruf aus `dispose` unbedenklich.
   void _melde() {
     if (!mounted) return;
     widget.onWerteGeaendert(

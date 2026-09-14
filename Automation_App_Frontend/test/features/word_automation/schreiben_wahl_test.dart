@@ -125,15 +125,21 @@ void main() {
       ),
     );
 
+    // Wortlaut an die kompaktere Gestalt angepasst (Variante B, 14.09.2026,
+    // auf ausdrücklichen Auftrag): Die Zeile trägt jetzt zwei generische
+    // Chips statt nummerierter Segmente, der Dateiname steht erst nach der
+    // Wahl „Korrektur" in der Unterzeile — vor der Wahl nennt sie nur die
+    // Nummer des gespeicherten Schreibens.
     expect(find.byType(SchreibenNummerHinweis), findsOneWidget);
     expect(
-      find.text(
-        'Gespeichert als Nr. 1: Anspruchsschreiben an Allianz 1 HGn.docx',
-      ),
+      find.text('Zu diesem Vorgang ist Nr. 1 gespeichert.'),
       findsOneWidget,
     );
-    expect(find.text('Korrektur von Nr. 1'), findsOneWidget);
-    expect(find.text('Neues Schreiben · Nr. 2'), findsOneWidget);
+    expect(
+      find.text(SchreibenNummerHinweis.korrekturChipLabel),
+      findsOneWidget,
+    );
+    expect(find.text(SchreibenNummerHinweis.neuChipLabel), findsOneWidget);
   });
 
   testWidgets('ohne Wahl sagt die App, was fehlt — und erzeugt nicht', (
@@ -166,7 +172,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Neues Schreiben · Nr. 2'));
+    await tester.tap(find.text(SchreibenNummerHinweis.neuChipLabel));
     await tester.pump();
 
     expect(umgebung.wizard.state.neuesSchreiben, isTrue);

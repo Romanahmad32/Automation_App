@@ -13,6 +13,13 @@ void main() {
     erstelltAm: DateTime(2026, 1, 1),
   );
 
+  final andererMandant = Mandant(
+    id: 8,
+    vorname: 'Max',
+    nachname: 'Mueller',
+    erstelltAm: DateTime(2026, 1, 2),
+  );
+
   Vorgang vorgang({int? mandantId}) => Vorgang.ausAnfrage(
     referenz: '84/26 C03_GG-XY 123',
     angefragtAm: DateTime(2026, 4, 8),
@@ -76,6 +83,44 @@ void main() {
     expect(umgebung.wizard.state.damageListing, isNull);
     expect(umgebung.wizard.state.schadenspositionFehler, isEmpty);
     expect(umgebung.wizard.state.schadensaufstellungIstErzeugbar, isFalse);
+    await umgebung.schliesse();
+  });
+
+  /// Review-Nachbesserung zu #133, Befund 2: Wurde derselbe Vorgang erneut
+  /// gewählt (kein Wechsel, siehe Test oben zur Zentralruf-Antwort), aber
+  /// inzwischen in Tab 1 einem **anderen** Mandanten zugeordnet, blieb
+  /// `selectedMandant` bisher auf dem alten Stand stehen — der Frühausstieg
+  /// emittierte nur `selectedVorgang` neu. §1.3: lieber leer als falsch.
+  test(
+    'derselbe Vorgang mit geändertem Mandanten lädt den neuen Mandanten nach',
+    () async {
+      final umgebung = WizardUmgebung(mandanten: [mandant, andererMandant]);
+      await umgebung.wizard.selectVorgang(vorgang(mandantId: 7));
+      expect(umgebung.wizard.state.selectedMandant, mandant);
+      // Der Tippstand darf davon unberührt bleiben — er gehört zum Formular,
+      // nicht zum Mandantenabgleich.
+      umgebung.wizard.setFormDataEntwurf(const {
+        'Versicherer': 'Allianz',
+      }, fuerReferenz: '84/26 C03_GG-XY 123');
+
+      await umgebung.wizard.selectVorgang(vorgang(mandantId: 8));
+
+      expect(umgebung.wizard.state.selectedMandant, andererMandant);
+      expect(umgebung.wizard.state.formDataEntwurf, {'Versicherer': 'Allianz'});
+      await umgebung.schliesse();
+    },
+  );
+
+  /// Die Gegenprobe: Der neue Stand trägt gar keinen Mandanten mehr — dann
+  /// wird die Anzeige geleert statt den alten (jetzt falschen) zu behalten.
+  test('derselbe Vorgang ohne Mandanten mehr leert die Anzeige', () async {
+    final umgebung = WizardUmgebung(mandanten: [mandant]);
+    await umgebung.wizard.selectVorgang(vorgang(mandantId: 7));
+    expect(umgebung.wizard.state.selectedMandant, mandant);
+
+    await umgebung.wizard.selectVorgang(vorgang());
+
+    expect(umgebung.wizard.state.selectedMandant, isNull);
     await umgebung.schliesse();
   });
 }

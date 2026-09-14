@@ -77,7 +77,13 @@ void main() {
     expect(wizard.state.currentStep, WizardStep.schadensaufstellung);
   });
 
-  test('eine andere Vorlage verwirft den Eingabestand', () async {
+  /// Beim **Wechsel** fällt weg, was zur vorigen Vorlage gehört: der
+  /// abgesendete Stand, die Schadensaufstellung, die Fassung. Der angefangene
+  /// Stand bleibt (#133) — er ist nach Feldbezeichnung geschlüsselt, nicht nach
+  /// Vorlage, und wer zwischen zwei Vorlagen hin- und herschaut, will beim
+  /// Zurückkommen sein Getipptes wiederfinden. Was die neue Vorlage nicht kennt,
+  /// zeigt sie nicht an; verloren ist es deshalb nicht.
+  test('eine andere Vorlage verwirft den abgesendeten Stand', () async {
     final wizard = cubit();
     wizard.selectFormTemplate(vorlage());
     wizard.setMitAuflistung(true);
@@ -89,7 +95,7 @@ void main() {
     wizard.selectFormTemplate(vorlage(id: 2));
 
     expect(wizard.state.formData, isNull);
-    expect(wizard.state.formDataEntwurf, isNull);
+    expect(wizard.state.formDataEntwurf, {'Versicherer': 'HUK-COBURG'});
     expect(wizard.state.damageListing, isNull);
     expect(wizard.state.schadenspositionFehler, isEmpty);
     expect(wizard.state.mitAuflistung, isFalse);
@@ -98,8 +104,11 @@ void main() {
   });
 
   /// Der Selector meldet `null`, wenn die gewählte Vorlage in der frischen
-  /// Liste fehlt — sie wurde also gelöscht. Dann gibt es nichts mehr zu halten.
-  test('gelöschte Vorlage verwirft den Eingabestand', () async {
+  /// Liste fehlt — sie wurde also gelöscht. Dann gibt es keine Vorlage mehr, zu
+  /// der ein abgesendeter Stand gehören könnte. Der angefangene bleibt auch
+  /// hier: Er hängt am Vorgang, nicht an der Vorlage, und die nächste gewählte
+  /// zeigt wieder, was sie davon kennt.
+  test('gelöschte Vorlage verwirft den abgesendeten Stand', () async {
     final wizard = cubit();
     wizard.selectFormTemplate(vorlage());
     wizard.setFormData(const {'Versicherer': 'HUK-COBURG'});
@@ -108,13 +117,13 @@ void main() {
 
     expect(wizard.state.selectedFormTemplate, isNull);
     expect(wizard.state.formData, isNull);
-    expect(wizard.state.formDataEntwurf, isNull);
+    expect(wizard.state.formDataEntwurf, {'Versicherer': 'HUK-COBURG'});
   });
 
   test('Tippstand ist keine Freigabe des nächsten Schritts', () async {
     final wizard = cubit();
     wizard.selectFormTemplate(vorlage());
-    wizard.setFormDataEntwurf(const {'Versicherer': 'HUK'});
+    wizard.setFormDataEntwurf(const {'Versicherer': 'HUK'}, fuerReferenz: null);
 
     // `WizardStepBar._isEnabled` und der Erzeugen-Knopf der Schadens-
     // aufstellung hängen an formData — der bloße Tippstand schaltet nicht frei.

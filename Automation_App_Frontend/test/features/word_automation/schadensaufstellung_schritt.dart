@@ -103,7 +103,14 @@ class SchadensaufstellungSchritt {
   /// Stand (`umgebung.wizard.state.damageListing`). Erst nach [zeige] da.
   WizardUmgebung get umgebung => _umgebung!;
 
-  Future<void> zeige(WidgetTester tester) async {
+  /// [kanzleiSettingsBloc] steuert einen eigens hereingereichten Bloc bei
+  /// (z. B. einen mit steuerbarem Ladezeitpunkt) — die Lebensdauer bleibt dann
+  /// beim Aufrufer, [schliesse] rührt ihn nicht an. Ohne Angabe entsteht wie
+  /// bisher einer, der nie lädt.
+  Future<void> zeige(
+    WidgetTester tester, {
+    KanzleiSettingsBloc? kanzleiSettingsBloc,
+  }) async {
     final umgebung = WizardUmgebung();
     umgebung.wizard.setFormData({'Name': 'Mustermann'});
     final dokument = DocumentBloc(_FakeVorlagenUebersicht());
@@ -122,12 +129,14 @@ class SchadensaufstellungSchritt {
           BlocProvider(
             create: (_) => RvgCalculationBloc(_FakeCalculateRvgFees()),
           ),
-          BlocProvider(
-            create: (_) => KanzleiSettingsBloc(
-              _NieAbgerufeneSettings(),
-              _NieGespeicherteSettings(),
-            ),
-          ),
+          kanzleiSettingsBloc != null
+              ? BlocProvider.value(value: kanzleiSettingsBloc)
+              : BlocProvider(
+                  create: (_) => KanzleiSettingsBloc(
+                    _NieAbgerufeneSettings(),
+                    _NieGespeicherteSettings(),
+                  ),
+                ),
           BlocProvider(
             create: (_) =>
                 StandardpositionenCubit(_NieGeladeneStandardpositionen()),

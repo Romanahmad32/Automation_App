@@ -2,9 +2,14 @@ import 'package:automation_app/features/form_template_setup/domain/entities/feld
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
+import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_rueckfluss.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
+import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../vorgang_starten/vorgang_starten_doubles.dart';
 
 FieldData feld(String label, FeldDatenquelle quelle) => FieldData(
   order: 0,
@@ -81,4 +86,42 @@ void main() {
     // Die Formularwerte selbst sind trotzdem vollständig gespeichert.
     expect(ergebnis.feldWerte?['Unfallort'], 'Kassel');
   });
+
+  /// Der Upsert schreibt den Entwurf seit #133 nicht mehr mit
+  /// (`VorgangRepository.CopyInto`, Backend) — den lokal weggeräumten
+  /// [Vorgang.entwurf] aus [VorgangRueckfluss.uebernehmeWizardErgebnis] am
+  /// **gespeicherten** Stand loszuwerden, braucht deshalb den eigenen Weg
+  /// (`VorgangCubit.sichereEntwurf`, so wie `word_automation_page.dart` es an
+  /// der Rückfluss-Stelle jetzt zusätzlich tut).
+  test(
+    'nach dem Rückfluss ist ein gespeicherter Entwurf explizit gelöscht',
+    () async {
+      final ablage = VorgangAblageDouble();
+      final fehler = VorgangPersistenzFehlerCubit();
+      final cubit = VorgangCubit(ablage, fehler);
+
+      final entwurf = VorgangEntwurf(
+        gespeichertAm: DateTime(2026, 8, 30, 14, 32),
+        feldWerte: const {'Versicherer': 'Vorläufig'},
+      );
+      await cubit.aktualisiere(vorgang.copyWith(entwurf: () => entwurf));
+
+      final bestaetigt = VorgangRueckfluss.uebernehmeWizardErgebnis(
+        vorgang,
+        fields: [feld('Unfallort', FeldDatenquelle.unfallort)],
+        formData: const {'Unfallort': 'Bad Homburg'},
+      );
+      await cubit.aktualisiere(bestaetigt);
+      // Der eigentliche Schritt aus #133: Ohne diesen Aufruf bliebe der oben
+      // gesicherte Entwurf im Bestand des Dienstes stehen, weil der Upsert ihn
+      // nicht mehr mitschreibt.
+      await cubit.sichereEntwurf(bestaetigt.referenz, null);
+
+      expect(cubit.findeZuReferenz(bestaetigt.referenz)?.entwurf, isNull);
+      expect(ablage.entwuerfe, [null]);
+
+      await cubit.close();
+      await fehler.close();
+    },
+  );
 }

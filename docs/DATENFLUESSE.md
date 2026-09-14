@@ -25,6 +25,13 @@ form_template_setup ──▶ vorgaenge ──▶ mandanten / zentralruf_reply �
 - **Quellen:** `Vorgang` (vorgaenge), `Mandant` (mandanten) und die übernommene
   `ZentralrufReplyData` (zentralruf_reply). Zusammengesetzt wird in `mandant_anschrift.dart` —
   das liegt bei `vorgaenge`, nicht bei `mandanten`: Es dient der Vorbelegung, nicht dem Register.
+- **Eine fünfte Quelle läuft am Matcher vorbei: der angefangene Stand.** `VorgangEntwurf` (#133)
+  wird nicht über `VorgangPrefillMatcher` aufgelöst — `EntwurfAbweichung.nurAbweichende`
+  (`word_automation/domain/services/`) vergleicht ihn feldweise mit dem, was die vier Quellen oben
+  ergäben. Ohne Nachfrage überlagert die Abweichung an ihren Feldern die Vorbelegung, sonst gilt
+  die Vorbelegung; gesichert wird nur, was abweicht (Einzelheiten in
+  `word_automation/FALLSTRICKE.md`, Abschnitt „Vorlagen"). Ein Textknopf über dem Formular setzt
+  bei Abweichung auf die Vorbelegung zurück.
 
 - **Zweiter Verbraucher: die Mail-Textvorlagen** (§4.7). `MailVorlagenFueller`
   (`email_versand/domain/services/`) benutzt dieselbe Kette über

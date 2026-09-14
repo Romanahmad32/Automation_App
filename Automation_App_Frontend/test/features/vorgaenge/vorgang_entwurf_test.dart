@@ -12,6 +12,9 @@ import 'package:flutter_test/flutter_test.dart';
 /// den bestätigten `feldWerte`, verlustfrei über den HTTP-Vertrag, und mit der
 /// einen Eigenschaft, die die übrigen Vorgangsfelder nicht haben — er muss sich
 /// **löschen** lassen.
+///
+/// Seit #133 trägt er nur noch die Abweichungen von der Vorbelegung; welche das
+/// sind, rechnet `EntwurfAbweichung` aus.
 void main() {
   final entwurf = VorgangEntwurf(
     gespeichertAm: DateTime(2026, 8, 30, 14, 32),
@@ -52,15 +55,19 @@ void main() {
     expect(mitEntwurf.copyWith(gegner: 'HUK').entwurf, entwurf);
   });
 
-  test('ein leerer Entwurf ist keiner', () {
-    expect(
-      VorgangEntwurf(
-        gespeichertAm: DateTime(2026, 8, 30),
-        feldWerte: const {'Versicherer': '  '},
-      ).istLeer,
-      isTrue,
-    );
-    expect(entwurf.istLeer, isFalse);
+  /// Bestandsdaten aus der Zeit der Entscheidungskarte (#133, verworfen) tragen
+  /// `formTemplateId`, `vorlagenName` und `mitAuflistung` — sie sagten, zu
+  /// welcher Vorlage das Angebot gehört. Ohne Angebot braucht sie niemand mehr;
+  /// gelesen werden solche Stände trotzdem, statt sie als kaputt zu behandeln.
+  test('unbekannte Felder aus älteren Ständen stören nicht', () {
+    final zurueck = VorgangEntwurf.fromJson({
+      ...entwurf.toJson(),
+      'formTemplateId': 3,
+      'vorlagenName': 'Anspruchsschreiben',
+      'mitAuflistung': true,
+    });
+
+    expect(zurueck, entwurf);
   });
 
   /// „Ein bestätigter Stand gewinnt gegen einen älteren Entwurf" — hier ist der
