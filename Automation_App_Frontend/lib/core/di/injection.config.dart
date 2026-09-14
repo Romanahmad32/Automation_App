@@ -786,6 +786,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i223.UseCase<_i38.ImportPaket, _i253.NotiereImportPaketParams>>(
       () => _i253.NotiereImportPaket(gh<_i763.MandantenRepository>()),
     );
+    gh.factory<_i915.WizardCubit>(
+      () => _i915.WizardCubit(
+        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
+        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
+        gh<_i847.VorgangCubit>(),
+      ),
+    );
     gh.factory<_i1040.EditedDocumentBloc>(
       () => _i1040.EditedDocumentBloc(
         gh<
@@ -889,13 +896,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i347.FormTemplateDataBloc(
         gh<_i223.UseCase<void, _i22.CreateFormTemplateRequest>>(),
         gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
-      ),
-    );
-    gh.factory<_i915.WizardCubit>(
-      () => _i915.WizardCubit(
-        gh<_i223.UseCase<_i851.FormTemplate, _i297.UpdateFormTemplateParams>>(),
-        gh<_i223.UseCase<List<_i258.Mandant>, _i223.NoParams>>(),
-        gh<_i847.VorgangCubit>(),
       ),
     );
     gh.factory<_i318.EmailEntwurfCubit>(

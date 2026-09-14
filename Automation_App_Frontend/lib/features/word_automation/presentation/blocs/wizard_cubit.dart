@@ -7,6 +7,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/entwurf_sicherung_steuerung.dart';
+import 'package:automation_app/features/word_automation/presentation/blocs/vorgang_auswahl_steuerung.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/feld_stand.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/vorlagen_fassung.dart';
 import 'package:equatable/equatable.dart';
@@ -23,17 +24,21 @@ typedef FeldAenderung = ({bool gespeichert, String? verdraengterWert});
 @injectable
 class WizardCubit extends Cubit<WizardState> {
   final UseCase<FormTemplate, UpdateFormTemplateParams> _updateFormTemplate;
-  final UseCase<List<Mandant>, NoParams> _getMandanten;
 
   /// Die Ablage des angefangenen Stands — Bestätigt-Marke und der Weg zum
   /// Vorgang liegen dort, nicht hier.
   final EntwurfSicherungSteuerung _entwurf;
 
+  /// Der Mandantenabgleich zur Vorgangsauswahl, ausgelagert, weil diese Datei
+  /// sonst über ihre Längengrenze liefe.
+  final VorgangAuswahlSteuerung _vorgangAuswahl;
+
   WizardCubit(
     this._updateFormTemplate,
-    this._getMandanten,
+    UseCase<List<Mandant>, NoParams> getMandanten,
     VorgangCubit vorgaenge,
   ) : _entwurf = EntwurfSicherungSteuerung(vorgaenge),
+      _vorgangAuswahl = VorgangAuswahlSteuerung(getMandanten),
       super(const WizardState());
 
   /// Wählt den Vorgang, aus dem das Schreiben erstellt wird. Die Auswahl wird
@@ -56,26 +61,26 @@ class WizardCubit extends Cubit<WizardState> {
   /// was er dort zuletzt getippt hat.
   ///
   /// **Derselbe Vorgang noch einmal ist keine Wahl** (#133): Der Absprung aus
-  /// Übersicht oder Vorgängen wählt den bereits gewählten erneut. Vorher leerte
-  /// das den Tippstand — sichtbar geschah nichts, denn die FormGroup hängt an
-  /// Vorlage und Vorbelegung und blieb stehen; der Stand war trotzdem weg.
-  /// Verglichen wird die **Vorgangsreferenz**, nicht die
-  /// Objektidentität: `vorgang_selector.dart` reicht Vorgänge aus der geladenen
-  /// Liste und aus dem Vorauswahl-Vorschlag durch, und nach jedem Neuladen sind
-  /// das neue Instanzen derselben Sache — mit `identical` wäre jede davon
-  /// wieder ein voller Reset. Ein inhaltlich geänderter Vorgang derselben
-  /// Referenz ist kein Wechsel, sondern ein neuer Stand und geht weiter über
-  /// [uebernehmeVorgangsStand].
+  /// Übersicht oder Vorgängen wählt den bereits gewählten erneut — erkannt
+  /// über [VorgangAuswahlSteuerung.istGleicherVorgang] (Referenz, nicht
+  /// Objektidentität). Ein inhaltlich geänderter Vorgang derselben Referenz
+  /// ist kein Wechsel, sondern ein neuer Stand ([uebernehmeVorgangsStand]);
+  /// wechselt dabei der zugeordnete Mandant, zieht die Anzeige nach, ohne den
+  /// Tippstand anzurühren ([VorgangAuswahlSteuerung.mandantHatSichGeaendert],
+  /// §1.3, Review-Nachbesserung #154 zu #133, Befund 2).
   Future<void> selectVorgang(Vorgang? vorgang) async {
-    final alt = state.selectedVorgang?.referenz;
-    final neu = vorgang?.referenz;
-    if (alt != null && neu != null && Vorgang.gleicheReferenz(alt, neu)) {
+    final alt = state.selectedVorgang;
+    if (VorgangAuswahlSteuerung.istGleicherVorgang(alt, vorgang)) {
       // Kein Wechsel, aber ein neuer Stand derselben Sache (z. B. Zentralruf-
       // Antwort eingetroffen, #150): Die Anzeige bekommt die frischen Daten,
       // sonst wird nichts angerührt — insbesondere bleibt der Tippstand stehen,
       // statt durch den am Vorgang liegenden (womöglich älteren) ersetzt zu
       // werden. Deshalb der minimale eigene Emit.
       emit(state.copyWith(selectedVorgang: () => vorgang));
+      if (VorgangAuswahlSteuerung.mandantHatSichGeaendert(alt, vorgang)) {
+        emit(state.copyWith(selectedMandant: () => null));
+        await _ladeMandant(vorgang);
+      }
       return;
     }
     final entwurf = vorgang?.entwurf;
@@ -100,25 +105,19 @@ class WizardCubit extends Cubit<WizardState> {
         neuesSchreiben: () => null,
       ),
     );
-    if (vorgang?.mandantId == null) return;
+    await _ladeMandant(vorgang);
+  }
 
-    final result = await _getMandanten(const NoParams());
+  /// Lädt den zugeordneten Mandanten nach und übernimmt ihn — no-op ohne
+  /// zugeordneten Mandanten, wenn der Cubit inzwischen geschlossen wurde oder
+  /// zwischenzeitlich ein anderer Vorgang gewählt ist (das Ergebnis kommt dann
+  /// zu spät und würde sonst den falschen Vorgang beschriften).
+  Future<void> _ladeMandant(Vorgang? vorgang) async {
+    if (vorgang == null) return;
+    final gefunden = await _vorgangAuswahl.finde(vorgang.mandantId);
     if (isClosed) return;
-    // Inzwischen umgewählt? Dann das Ergebnis verwerfen.
-    if (state.selectedVorgang?.referenz != vorgang!.referenz) return;
-    switch (result) {
-      case Right(value: final mandanten):
-        Mandant? gefunden;
-        for (final mandant in mandanten) {
-          if (mandant.id == vorgang.mandantId) {
-            gefunden = mandant;
-            break;
-          }
-        }
-        emit(state.copyWith(selectedMandant: () => gefunden));
-      case Left():
-        break;
-    }
+    if (state.selectedVorgang?.referenz != vorgang.referenz) return;
+    emit(state.copyWith(selectedMandant: () => gefunden));
   }
 
   /// Wirft die eigenen Eingaben weg und lässt wieder die Vorbelegung gelten —
@@ -137,7 +136,7 @@ class WizardCubit extends Cubit<WizardState> {
   Map<String, String>? setzeEingabenZurueck() {
     final bisher = state.formDataEntwurf;
     emit(EntwurfSicherungSteuerung.nachZuruecksetzen(state));
-    _entwurf.nachEingabe(state);
+    _entwurf.nachZuruecksetzenGesichert(state);
     return (bisher == null || bisher.isEmpty) ? null : bisher;
   }
 
@@ -258,10 +257,15 @@ class WizardCubit extends Cubit<WizardState> {
 
   /// Stand und Beanstandungen kommen zusammen aus dem Formular und werden
   /// zusammen gesetzt — getrennt gesetzt könnten sie auseinanderlaufen, und
-  /// dann sperrte oder öffnete der Knopf zum falschen Stand.
+  /// dann sperrte oder öffnete der Knopf zum falschen Stand. [alsEingabe] ist
+  /// `false`, wenn nur eine Einstellung (Titelzeilen-Farbe) nachgezogen wird,
+  /// ohne dass der Anwalt etwas geändert hat — sonst höbe das einen bereits
+  /// bestätigten Stand wieder auf „angefangen" (Review-Nachbesserung #154 zu
+  /// #133, Befund 5).
   void setDamageListing(
     DamageListing? damageListing, {
     List<String> fehler = const [],
+    bool alsEingabe = true,
   }) {
     emit(
       state.copyWith(
@@ -269,7 +273,7 @@ class WizardCubit extends Cubit<WizardState> {
         schadenspositionFehler: fehler,
       ),
     );
-    _entwurf.nachEingabe(state);
+    if (alsEingabe) _entwurf.nachEingabe(state);
   }
 
   /// Übernimmt den **abgesendeten** Stand des Ausfüll-Formulars. Der angefangene
@@ -298,13 +302,9 @@ class WizardCubit extends Cubit<WizardState> {
   /// abweichend — der Weg der freien Erfassung, die keine Vorbelegung hat.
   ///
   /// [fuerReferenz] ist die Referenz des Vorgangs, für den das meldende
-  /// Formular gebaut wurde — der Aufrufer bindet sie beim Bauen ein, nicht
-  /// erst hier ([AusfuellFormular]). Weicht sie von [WizardState.selectedVorgang]
-  /// ab, wird die Meldung verworfen ([EntwurfSicherungSteuerung.passtZuAktuellemVorgang]):
-  /// Der `FormWertBeobachter` des alten Formulars meldet aus seinem
-  /// `dispose()` heraus manchmal erst **nach** einem Vorgangswechsel, und ohne
-  /// diesen Abgleich schriebe sie die Werte des alten Vorgangs auf den neuen
-  /// fort (Review-Nachbesserung #133).
+  /// Formular gebaut wurde ([AusfuellFormular]) — weicht sie vom aktuell
+  /// gewählten Vorgang ab, wird die Meldung verworfen (Race beim
+  /// Vorgangswechsel, siehe [EntwurfSicherungSteuerung.passtZuAktuellemVorgang]).
   void setFormDataEntwurf(
     Map<String, String> werte, {
     Map<String, String> vorbelegung = const {},

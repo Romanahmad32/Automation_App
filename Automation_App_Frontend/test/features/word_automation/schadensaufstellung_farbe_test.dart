@@ -107,4 +107,64 @@ void main() {
       );
     },
   );
+
+  /// Review-Nachbesserung zu #133, Befund 5: Trifft die Einstellungsantwort
+  /// erst ein, **nachdem** der Anwalt ein Dokument erzeugt hat (der Stand gilt
+  /// dann als bestätigt, `WizardCubit.uebernehmeVorgangsStand`), darf das
+  /// bloße Nachziehen der Farbe den Stand nicht wieder als „angefangen" am
+  /// Vorgang ablegen — sonst böte die Leiste beim nächsten Einstieg einen
+  /// Entwurf an, den es nie gab.
+  testWidgets(
+    'die späte Einstellungsantwort legt den bestätigten Stand nicht wieder '
+    'als Entwurf ab',
+    (tester) async {
+      final settings = _VerzoegerteSettings();
+      final kanzleiSettingsBloc = KanzleiSettingsBloc(
+        settings,
+        _NieGespeicherteSettings(),
+      )..add(const LoadKanzleiSettingsEvent());
+
+      final schritt = SchadensaufstellungSchritt();
+      addTearDown(schritt.schliesse);
+      addTearDown(kanzleiSettingsBloc.close);
+
+      await schritt.zeige(tester, kanzleiSettingsBloc: kanzleiSettingsBloc);
+
+      final wizard = schritt.umgebung.wizard;
+      final vorgang = vorgangMitAufstellung();
+      // `VorgangCubit.sichereEntwurf` schreibt nur zu einem Vorgang, den es
+      // bereits kennt (`findeZuReferenz`) — ohne diesen Schritt liefe jede
+      // Sicherung ins Leere, unabhängig vom zu prüfenden Verhalten.
+      await schritt.umgebung.vorgaenge.aktualisiere(vorgang);
+      await wizard.selectVorgang(vorgang);
+      // Ohne einen von `null` verschiedenen Tippstand bricht `EntwurfsSicherung
+      // .jetzt` sofort ab (`werte == null` heißt „nie getippt") — das würde
+      // hier jede Sicherung verdecken, unabhängig vom zu prüfenden Verhalten.
+      wizard.setFormDataEntwurf(const {}, fuerReferenz: vorgang.referenz);
+      wizard.setMitAuflistung(true);
+      wizard.goToStep(WizardStep.schadensaufstellung);
+      await beruhige(tester);
+
+      // Der Anwalt hat gerade ein Dokument erzeugt — ab hier wird nichts mehr
+      // gesichert, bis wieder getippt wird (siehe `EntwurfsSicherung`).
+      wizard.uebernehmeVorgangsStand(vorgang);
+      final schreibaufrufeVorAntwort = schritt.umgebung.ablage.entwuerfe.length;
+
+      // Die Einstellungen treffen erst jetzt ein — nur die Farbe soll
+      // nachziehen.
+      settings.liefere(
+        const KanzleiSettings(tabellenkopfFarbeHex: konfigurierteFarbe),
+      );
+      await beruhige(tester);
+
+      expect(kopfzeilenFarbe(tester), equals(const Color(0xFFABCDEF)));
+      expect(
+        schritt.umgebung.ablage.entwuerfe.length,
+        schreibaufrufeVorAntwort,
+        reason:
+            'Das Nachziehen der Farbe darf den bestätigten Stand nicht '
+            'wieder als „angefangen" am Vorgang ablegen.',
+      );
+    },
+  );
 }

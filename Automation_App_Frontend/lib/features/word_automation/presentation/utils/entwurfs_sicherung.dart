@@ -135,4 +135,24 @@ class EntwurfsSicherung {
       ),
     );
   }
+
+  /// Löscht den Entwurf **unbedingt** — der Weg für „Eingaben auf Vorbelegung
+  /// zurücksetzen" (Review-Nachbesserung #133, Befund 3): Anders als [jetzt]
+  /// zählt hier eine nicht leere Schadensaufstellung nicht als „noch etwas
+  /// da". Der Textknopf verspricht Löschen (`eingaben_zuruecksetzen_button.dart`),
+  /// nicht „Felder leeren, Rest behalten" — [jetzt] schrieb in diesem Fall
+  /// bisher einen Entwurf mit leeren `feldWerte`, weil `nichtsMehrDa` dort eine
+  /// vorhandene Aufstellung als „noch etwas da" zählt.
+  ///
+  /// Ohne Entwurf am Vorgang bleibt die Ablage unberührt — dieselbe
+  /// Zurückhaltung wie in [jetzt]: kein DELETE ins Leere.
+  void loesche(String? referenz) {
+    if (referenz == null) return;
+    if (_vorgaenge.findeZuReferenz(referenz)?.entwurf == null) return;
+    _letzteReferenz = referenz;
+    _hatGeschrieben = true;
+    _letzteFeldWerte = const {};
+    _letzteAufstellung = null;
+    _vorgaenge.sichereEntwurf(referenz, null);
+  }
 }
