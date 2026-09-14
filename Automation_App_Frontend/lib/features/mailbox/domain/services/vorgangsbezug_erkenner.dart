@@ -98,7 +98,7 @@ class VorgangsbezugErkenner {
         vorgang.zeichen,
         vorgang.referenz,
       }.map(Vorgang.normalizeReferenz).where((wert) => wert.isNotEmpty);
-      if (!gesucht.any(text.contains)) continue;
+      if (!gesucht.any((wert) => _alsGanzesFundstueck(text, wert))) continue;
       treffer.add(
         Vorgangsbezug(
           vorgang: vorgang,
@@ -116,7 +116,9 @@ class VorgangsbezugErkenner {
     for (final vorgang in vorgaenge) {
       final nummer = vorgang.antwort?.versicherungsscheinNr?.trim() ?? '';
       if (nummer.length < mindestlaengeSchadennummer) continue;
-      if (!text.contains(Vorgang.normalizeReferenz(nummer))) continue;
+      if (!_alsGanzesFundstueck(text, Vorgang.normalizeReferenz(nummer))) {
+        continue;
+      }
       treffer.add(
         Vorgangsbezug(
           vorgang: vorgang,
@@ -126,6 +128,19 @@ class VorgangsbezugErkenner {
       );
     }
     return treffer;
+  }
+
+  /// Ob [suchtext] in [text] als **ganzes Fundstück** steht — weder davor
+  /// noch danach ein Buchstabe oder eine Ziffer (Review #134, Befund 2).
+  /// Ohne diese Grenze träfe das Zeichen „44/26 C03" auch in „144/26 C03",
+  /// und die Schadennummer 123456 in 9123456.
+  bool _alsGanzesFundstueck(String text, String suchtext) {
+    if (suchtext.isEmpty) return false;
+    final muster = RegExp(
+      '(?<![\\p{L}\\p{N}])${RegExp.escape(suchtext)}(?![\\p{L}\\p{N}])',
+      unicode: true,
+    );
+    return muster.hasMatch(text);
   }
 
   List<Vorgangsbezug> _adressTreffer(String? absender) {

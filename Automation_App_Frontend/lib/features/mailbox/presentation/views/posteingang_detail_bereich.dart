@@ -123,7 +123,7 @@ class _PosteingangDetailBereichState extends State<PosteingangDetailBereich> {
         anhang,
         vorgang: vorgang,
       ),
-      anhangLaedt: state.anhangLaedt,
+      ladenderAnhangId: state.ladenderAnhangId,
     );
   }
 

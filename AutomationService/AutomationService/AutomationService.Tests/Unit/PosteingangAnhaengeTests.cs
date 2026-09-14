@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text;
+using AutomationService.Core.Persistence;
 using AutomationService.Features.MailboxMonitor.Domain.Services;
 using AutomationService.Tests.Support;
 using FluentAssertions;
@@ -45,6 +47,54 @@ public sealed class PosteingangAnhaengeTests
             folder, "konto", new UniqueId(9001), "3", CancellationToken.None);
         erneut.Pfad.Should().Be(ablage.Pfad);
         proxy.AnhangAbrufe.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Anhang_Base64KodiertMitGroesseAusOctets_WirdWiedererkanntUndNichtZweimalGeholt()
+    {
+        var (folder, proxy, struktur) = Ordner();
+        // Octets ist laut RFC 3501 die Groesse in Transferkodierung: Base64
+        // macht aus den 13 Bytes von "Inhalt" rund 20 kodierte Bytes -- ein
+        // Vergleich ueber die Groesse traefe hier nie, weil die abgelegte
+        // (dekodierte) Datei nur 13 Bytes hat.
+        var kodierteGroesse = (uint)Convert.ToBase64String(Inhalt).Length;
+        struktur.BodyParts.Add(PosteingangAufbau.Anhang("3", "Gutachten.pdf", kodierteGroesse));
+        proxy.Base64Anhangsteile["3"] = Inhalt;
+
+        var ablage = await PosteingangAnhaenge.LadeAsync(
+            folder, "konto", new UniqueId(9020), "3", CancellationToken.None);
+        File.ReadAllBytes(ablage.Pfad).Should().Equal(Inhalt);
+
+        var erneut = await PosteingangAnhaenge.LadeAsync(
+            folder, "konto", new UniqueId(9020), "3", CancellationToken.None);
+
+        erneut.Pfad.Should().Be(ablage.Pfad);
+        proxy.AnhangAbrufe.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task LokalerSchreibfehler_ErgibtVerstaendlicheMeldungStattEines502ers()
+    {
+        var (folder, proxy, struktur) = Ordner();
+        struktur.BodyParts.Add(PosteingangAufbau.Anhang("3", "Gutachten.pdf", 13));
+        proxy.Anhangsteile["3"] = Inhalt;
+
+        // Der Nachrichtenordner soll hier entstehen -- er liegt aber bereits
+        // als gewoehnliche DATEI da. Directory.CreateDirectory scheitert dann
+        // mit einer IOException, genau wie ein voller oder schreibgeschuetzter
+        // Datentraeger es taete.
+        var konto = "sperrkonto";
+        var uid = new UniqueId(9021);
+        var elternOrdner = Path.Combine(AppDataPaths.EnsureAnhaengeDirectory(), "Posteingang", konto);
+        Directory.CreateDirectory(elternOrdner);
+        var gesperrterPfad = Path.Combine(elternOrdner, uid.Id.ToString(CultureInfo.InvariantCulture));
+        await File.WriteAllTextAsync(gesperrterPfad, "blockiert");
+
+        var holen = () => PosteingangAnhaenge.LadeAsync(folder, konto, uid, "3", CancellationToken.None);
+
+        var ausnahme = await holen.Should().ThrowAsync<PosteingangException>();
+        ausnahme.Which.Status.Should().Be(500);
+        ausnahme.Which.Message.Should().Contain("Anhang konnte nicht im Zwischenlager gespeichert werden");
     }
 
     [Fact]
@@ -107,6 +157,21 @@ public sealed class PosteingangAnhaengeTests
             .Should().BeLessThanOrEqualTo(PosteingangNachrichtAblage.MaxNameZeichen);
         File.Exists(ablage.Pfad).Should().BeTrue();
         ablage.Groesse.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task Eml_WirdNichtZweimalGeholt_DerselbeSchluesselErkenntDieVorhandeneAblage()
+    {
+        var (folder, proxy, _) = Ordner();
+        proxy.Nachricht = Nachricht();
+
+        var ablage = await PosteingangNachrichtAblage.LadeAsync(
+            folder, "konto", new UniqueId(9022), CancellationToken.None);
+        var erneut = await PosteingangNachrichtAblage.LadeAsync(
+            folder, "konto", new UniqueId(9022), CancellationToken.None);
+
+        erneut.Pfad.Should().Be(ablage.Pfad);
+        proxy.NachrichtAbrufe.Should().Be(1);
     }
 
     [Fact]

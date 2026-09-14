@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart';
 import 'package:automation_app/features/mailbox/domain/entities/posteingang_anhang.dart';
+import 'package:automation_app/features/mailbox/domain/entities/vorgangsbezug.dart';
 import 'package:automation_app/features/mailbox/domain/repositories/mailbox_push_notifier.dart';
 import 'package:automation_app/features/mailbox/domain/repositories/posteingang_repository.dart';
 import 'package:automation_app/features/mailbox/domain/services/vorgangsbezug_erkenner.dart';
@@ -22,6 +23,11 @@ class PosteingangTestRepository implements PosteingangRepository {
   /// Was der Cubit an Dateien angefordert hat — `id` bzw. `id/anhangId`.
   final downloads = <String>[];
   int abbrueche = 0;
+
+  /// Wird geworfen, wenn gesetzt — für Tests eines scheiternden
+  /// Anhang-Downloads (Review #134, Befund 8).
+  Object? anhangFehlerWurf;
+
   @override
   Future<PosteingangSeite> ladeSeite({String? cursor}) {
     aufrufe.add(cursor);
@@ -36,6 +42,7 @@ class PosteingangTestRepository implements PosteingangRepository {
 
   @override
   Future<PosteingangAnhangAblage> ladeAnhang(String id, String anhangId) async {
+    if (anhangFehlerWurf != null) throw anhangFehlerWurf!;
     downloads.add('$id/$anhangId');
     final name = 'Anhang $anhangId.pdf';
     return PosteingangAnhangAblage(dateiname: name, pfad: '$lager/$name');
@@ -281,6 +288,37 @@ void main() {
     },
   );
 
+  test('ohne Bezug im Kopf hebt der geladene Inhalt den Vorschlag auf "sicher" '
+      '(Review #134, Befund 3)', () async {
+    final repo = PosteingangTestRepository();
+    final cubit = PosteingangCubit(repo, PosteingangTestPush());
+    addTearDown(cubit.close);
+    final vorgang = Vorgang.ausAnfrage(
+      referenz: '150/26 C03_HG-E 1432',
+      angefragtAm: DateTime(2026, 9, 1),
+    );
+    const mail = PosteingangEintrag(
+      id: 'ohne-kopf-bezug',
+      betreff: 'Rückfrage',
+      absender: 'Fremd',
+    );
+    final laden = cubit.aktualisieren();
+    repo.seiten.last.complete(const PosteingangSeite([mail], null, 1));
+    await laden;
+    cubit.bezuegeNeuRechnen(VorgangsbezugErkenner(vorgaenge: [vorgang]));
+    expect(cubit.state.bezugFuer('ohne-kopf-bezug'), isNull);
+
+    final oeffnen = cubit.oeffnen(mail);
+    repo.inhalte['ohne-kopf-bezug']!.complete(
+      const PosteingangInhalt(text: 'Zitat: Unser Zeichen: 150/26 C03'),
+    );
+    await oeffnen;
+
+    final bezug = cubit.state.bezugFuer('ohne-kopf-bezug');
+    expect(bezug?.sicherheit, BezugSicherheit.sicher);
+    expect(bezug?.grund, contains('150/26 C03'));
+  });
+
   test(
     'anhangLaden liefert den Pfad und setzt anhangLaedt kurzzeitig',
     () async {
@@ -319,4 +357,140 @@ void main() {
       await erster;
     },
   );
+
+  // Ab hier: Befunde aus dem Code-Review zu Issue #134 (5-8).
+
+  test('setzeFilter räumt die Auswahl, wenn die geöffnete Mail dadurch aus '
+      '"sichtbar" fällt (Befund 5)', () async {
+    final repo = PosteingangTestRepository();
+    final cubit = PosteingangCubit(repo, PosteingangTestPush());
+    addTearDown(cubit.close);
+    const mail = PosteingangEintrag(id: 'a', betreff: 'A', absender: 'A');
+    final laden = cubit.aktualisieren();
+    repo.seiten.last.complete(const PosteingangSeite([mail], null, 1));
+    await laden;
+    final oeffnen = cubit.oeffnen(mail);
+    repo.inhalte['a']!.complete(const PosteingangInhalt(text: 'x'));
+    await oeffnen;
+    expect(cubit.state.auswahl, mail);
+
+    // Ohne erkannten Bezug fällt "a" aus dem Filter "Mit Vorgang" heraus.
+    cubit.setzeFilter(PosteingangFilter.mitVorgang);
+
+    expect(cubit.state.auswahl, isNull);
+  });
+
+  test('nichtZuordnen räumt die Auswahl, wenn die Mail dadurch aus "sichtbar" '
+      'fällt (Befund 5)', () async {
+    final repo = PosteingangTestRepository();
+    final cubit = PosteingangCubit(repo, PosteingangTestPush());
+    addTearDown(cubit.close);
+    final vorgang = Vorgang.ausAnfrage(
+      referenz: '162/26 C03_HG-E 1442',
+      angefragtAm: DateTime(2026, 9, 1),
+    );
+    const mail = PosteingangEintrag(
+      id: 'a',
+      betreff: 'Unser Zeichen: 162/26 C03',
+      absender: 'A',
+    );
+    final laden = cubit.aktualisieren();
+    repo.seiten.last.complete(const PosteingangSeite([mail], null, 1));
+    await laden;
+    cubit.bezuegeNeuRechnen(VorgangsbezugErkenner(vorgaenge: [vorgang]));
+    cubit.setzeFilter(PosteingangFilter.mitVorgang);
+    final oeffnen = cubit.oeffnen(mail);
+    repo.inhalte['a']!.complete(const PosteingangInhalt(text: 'x'));
+    await oeffnen;
+    expect(cubit.state.auswahl, mail);
+
+    cubit.nichtZuordnen('a');
+
+    expect(cubit.state.auswahl, isNull);
+  });
+
+  test('"Ältere laden" behält die geöffnete Mail (Befund 6)', () async {
+    final repo = PosteingangTestRepository();
+    final cubit = PosteingangCubit(repo, PosteingangTestPush());
+    addTearDown(cubit.close);
+    const a = PosteingangEintrag(id: 'a', betreff: 'A', absender: 'A');
+    const b = PosteingangEintrag(id: 'b', betreff: 'B', absender: 'B');
+    final laden = cubit.aktualisieren();
+    repo.seiten.last.complete(const PosteingangSeite([a], 'weiter', 3));
+    await laden;
+    final offen = cubit.oeffnen(a);
+    repo.inhalte['a']!.complete(const PosteingangInhalt(text: 'Text A'));
+    await offen;
+    expect(cubit.state.auswahl, a);
+
+    final weiter = cubit.aeltere();
+    repo.seiten.last.complete(const PosteingangSeite([b], null, 3));
+    await weiter;
+
+    expect(cubit.state.auswahl, a);
+    expect(cubit.state.eintraege, [a, b]);
+  });
+
+  test('anhangLaden merkt sich, welcher Anhang lädt — ein anderer bleibt frei '
+      '(Befund 7)', () async {
+    final repo = PosteingangTestRepository();
+    final cubit = PosteingangCubit(repo, PosteingangTestPush());
+    addTearDown(cubit.close);
+    const anhangA = PosteingangAnhang(id: 'A', dateiname: 'a.pdf');
+    final laufend = cubit.anhangLaden('mail-1', anhangA);
+
+    expect(cubit.state.ladenderAnhangId, 'A');
+    expect(cubit.state.anhangLaedt, isTrue);
+
+    await laufend;
+
+    expect(cubit.state.ladenderAnhangId, isNull);
+    expect(cubit.state.anhangLaedt, isFalse);
+  });
+
+  test('emlLaden setzt anhangLaedt, aber keine Anhang-Id (Befund 7)', () async {
+    final repo = PosteingangTestRepository();
+    final cubit = PosteingangCubit(repo, PosteingangTestPush());
+    addTearDown(cubit.close);
+
+    final laufend = cubit.emlLaden('mail-1');
+
+    expect(cubit.state.anhangLaedt, isTrue);
+    expect(cubit.state.ladenderAnhangId, isNull);
+    await laufend;
+  });
+
+  test(
+    'ein Downloadfehler landet in anhangFehler, nicht in fehler (Befund 8)',
+    () async {
+      final repo = PosteingangTestRepository()
+        ..anhangFehlerWurf = const PosteingangFehler('Datei nicht erreichbar.');
+      final cubit = PosteingangCubit(repo, PosteingangTestPush());
+      addTearDown(cubit.close);
+      const anhang = PosteingangAnhang(id: '9', dateiname: 'z.pdf');
+
+      final pfad = await cubit.anhangLaden('mail-9', anhang);
+
+      expect(pfad, isNull);
+      expect(cubit.state.anhangFehler, 'Datei nicht erreichbar.');
+      expect(
+        cubit.state.fehler,
+        isNull,
+        reason: 'der Downloadfehler gehört nicht in das Listenfeld',
+      );
+    },
+  );
+
+  test('ein erfolgreicher Download hinterlässt keinen anhangFehler (Befund 8, '
+      'siehe auch posteingang_handgriffe_test.dart)', () async {
+    final repo = PosteingangTestRepository();
+    final cubit = PosteingangCubit(repo, PosteingangTestPush());
+    addTearDown(cubit.close);
+    const anhang = PosteingangAnhang(id: '9', dateiname: 'z.pdf');
+
+    final pfad = await cubit.anhangLaden('mail-9', anhang);
+
+    expect(pfad, isNotNull);
+    expect(cubit.state.anhangFehler, isNull);
+  });
 }

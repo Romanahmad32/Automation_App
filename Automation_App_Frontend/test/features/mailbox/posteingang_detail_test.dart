@@ -257,7 +257,7 @@ void main() {
                 onOeffnen: (_) async {},
                 onInDieAkte: (_) async {},
                 onBeimVersand: (_) async {},
-                laeuft: true,
+                ladenderAnhangId: '2',
               ),
             ),
           ),
@@ -267,6 +267,46 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byTooltip('Öffnen'), findsNothing);
     });
+
+    testWidgets(
+      'zeigt den Ring nur an der eigenen Zeile, nicht an einer anderen '
+      '(Review #134, Befund 7)',
+      (tester) async {
+        final aktionen = PosteingangAnhangAktionen(
+          onOeffnen: (_) async {},
+          onInDieAkte: (_) async {},
+          onBeimVersand: (_) async {},
+          ladenderAnhangId: '2',
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  PosteingangAnhangZeile(
+                    anhang: const PosteingangAnhang(
+                      id: '2',
+                      dateiname: 'a.pdf',
+                    ),
+                    aktionen: aktionen,
+                  ),
+                  PosteingangAnhangZeile(
+                    anhang: const PosteingangAnhang(
+                      id: '3',
+                      dateiname: 'b.pdf',
+                    ),
+                    aktionen: aktionen,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byTooltip('Öffnen'), findsOneWidget);
+      },
+    );
   });
 
   group('PosteingangDetail', () {

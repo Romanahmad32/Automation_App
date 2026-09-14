@@ -78,9 +78,16 @@ class _MailboxBereicheState extends State<MailboxBereiche> {
     ],
   );
 
+  // `PosteingangCubit` lebt als `@lazySingleton` für die Sitzung (Review
+  // #134, Befund 4) — deshalb `BlocProvider.value` statt `create`: Ein
+  // gewöhnlicher `BlocProvider(create: …)` schließt den Cubit, den er
+  // erzeugt hat, beim Verlassen des Baums; das riss "Nicht zuordnen", den
+  // Zentralruf-Bestand und die nachgeladenen Seiten bei jedem Wechsel zu
+  // "Gesendet" wieder ein. `ladenWennNoetig` ersetzt das frühere
+  // `..aktualisieren()`, das bei jedem Wechsel neu geladen hätte.
   Widget _inhalt() => switch (_bereich) {
-    MailboxBereich.posteingang => BlocProvider(
-      create: (_) => getIt<PosteingangCubit>()..aktualisieren(),
+    MailboxBereich.posteingang => BlocProvider<PosteingangCubit>.value(
+      value: getIt<PosteingangCubit>()..ladenWennNoetig(),
       child: const PosteingangView(),
     ),
     MailboxBereich.gesendet => BlocProvider(

@@ -16,7 +16,7 @@ class PosteingangAnhangAktionen {
     required this.onOeffnen,
     required this.onInDieAkte,
     required this.onBeimVersand,
-    this.laeuft = false,
+    this.ladenderAnhangId,
   });
 
   /// Lädt den Anhang bei Bedarf und öffnet ihn im dafür eingerichteten
@@ -29,8 +29,12 @@ class PosteingangAnhangAktionen {
   /// Lädt den Anhang und bietet ihn im Versanddialog als Anhang an.
   final Future<void> Function(PosteingangAnhang anhang) onBeimVersand;
 
-  /// True, während ein Anhang gerade ins Zwischenlager geholt wird — der Ring
-  /// an der Zeile; die übrigen Listenknöpfe bleiben währenddessen bedienbar
-  /// (eine laufende Downloadverbindung blockiert das Blättern nicht extra).
-  final bool laeuft;
+  /// Die Id des Anhangs, der gerade ins Zwischenlager geholt wird — `null`,
+  /// wenn keiner lädt. Jede `PosteingangAnhangZeile` vergleicht das nur mit
+  /// der **eigenen** [PosteingangAnhang.id] (Review #134, Befund 7): Alle
+  /// Zeilen teilen sich dieselbe [PosteingangAnhangAktionen]-Instanz, sonst
+  /// zeigten sie beim Download eines Anhangs alle gleichzeitig den Ring. Die
+  /// übrigen Listenknöpfe bleiben währenddessen bedienbar (eine laufende
+  /// Downloadverbindung blockiert das Blättern nicht extra).
+  final String? ladenderAnhangId;
 }

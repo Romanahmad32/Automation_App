@@ -69,6 +69,19 @@ public sealed class PosteingangController(PosteingangDienst dienst) : Controller
         {
             return Problem(title: "Postfach-Anmeldung fehlgeschlagen", detail: "Bitte die Zugangsdaten unter Einstellungen → E-Mail prüfen.", statusCode: 502);
         }
+        // Auffangnetz, kein erwarteter Weg: Ein lokaler Schreibfehler im
+        // Zwischenlager wird bereits dort in eine PosteingangException
+        // übersetzt (siehe oben) und landet gar nicht erst hier. Bleibt eine
+        // UnauthorizedAccessException dennoch unübersetzt, soll sie trotzdem
+        // eine verständliche deutsche Meldung statt eines 500ers mit
+        // Stacktrace ergeben.
+        catch (UnauthorizedAccessException)
+        {
+            return Problem(
+                title: "Zugriff verweigert",
+                detail: "Der Anhang konnte wegen fehlender Zugriffsrechte nicht im Zwischenlager abgelegt werden.",
+                statusCode: 500);
+        }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             return Problem(title: "Abruf abgebrochen", detail: "Zeitüberschreitung oder geänderter Zugang. Bitte erneut laden.", statusCode: 502);

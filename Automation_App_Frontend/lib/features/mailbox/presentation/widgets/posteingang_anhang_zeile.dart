@@ -7,12 +7,15 @@ import 'package:flutter/material.dart';
 /// nach Medientyp, Dateiname, menschliche Größe und drei Handgriffe als
 /// Symbolknöpfe (Öffnen, In die Akte, Beim Versand verwenden).
 ///
-/// Läuft gerade ein Download für **diesen** Anhang
-/// ([PosteingangAnhangAktionen.laeuft]), zeigt die Zeile einen schmalen
-/// Fortschrittsring statt der drei Knöpfe: Ein Anhang-Download blockiert die
-/// einzige Postfachverbindung für bis zu 45 s, und die Zeile darf in dieser
-/// Zeit nicht so aussehen, als liesse sich ein zweiter Handgriff parallel
-/// anstoßen.
+/// Läuft gerade ein Download für **diesen** Anhang — die eigene
+/// [PosteingangAnhang.id] steckt in
+/// [PosteingangAnhangAktionen.ladenderAnhangId] (Review #134, Befund 7) —,
+/// zeigt die Zeile einen schmalen Fortschrittsring statt der drei Knöpfe: Ein
+/// Anhang-Download blockiert die einzige Postfachverbindung für bis zu 45 s,
+/// und die Zeile darf in dieser Zeit nicht so aussehen, als liesse sich ein
+/// zweiter Handgriff parallel anstoßen. Jede Zeile vergleicht nur ihre
+/// eigene Id — sonst zeigten bei einer geteilten [PosteingangAnhangAktionen]
+/// alle Zeilen gleichzeitig den Ring.
 class PosteingangAnhangZeile extends StatelessWidget {
   const PosteingangAnhangZeile({
     super.key,
@@ -44,6 +47,7 @@ class PosteingangAnhangZeile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final eigenerRing = aktionen.ladenderAnhangId == anhang.id;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -74,7 +78,7 @@ class PosteingangAnhangZeile extends StatelessWidget {
               ],
             ),
           ),
-          if (aktionen.laeuft)
+          if (eigenerRing)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
               child: SizedBox(

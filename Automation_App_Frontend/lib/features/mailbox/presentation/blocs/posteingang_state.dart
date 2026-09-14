@@ -34,6 +34,20 @@ class PosteingangState {
   final Set<String> nichtZuordnen;
 
   final bool anhangLaedt;
+
+  /// Die Id des Anhangs, der gerade ins Zwischenlager geholt wird — `null`,
+  /// wenn nichts lädt oder die ganze Nachricht als `.eml` (Review #134,
+  /// Befund 7): Nur die eigene Zeile in `PosteingangAnhangZeile` zeigt dann
+  /// den Ring, statt dass ihn — wie vorher über [anhangLaedt] — alle Zeilen
+  /// gleichzeitig zeigen.
+  final String? ladenderAnhangId;
+
+  /// Die Meldung zum letzten Anhang- oder `.eml`-Download (Befund 8) —
+  /// getrennt von [fehler]: Der teilte sich bislang Seitenlade- und
+  /// Downloadfehler, sodass `PosteingangHandgriffe` einen alten Listenfehler
+  /// als vermeintlichen Downloadfehler zeigen konnte.
+  final String? anhangFehler;
+
   final PosteingangEintrag? auswahl;
   final PosteingangInhalt? inhalt;
   final bool laedt;
@@ -56,6 +70,8 @@ class PosteingangState {
     this.zentralrufOffen = const {},
     this.nichtZuordnen = const {},
     this.anhangLaedt = false,
+    this.ladenderAnhangId,
+    this.anhangFehler,
     this.auswahl,
     this.inhalt,
     this.laedt = false,
@@ -75,6 +91,8 @@ class PosteingangState {
     Set<String>? zentralrufOffen,
     Set<String>? nichtZuordnen,
     bool? anhangLaedt,
+    String? ladenderAnhangId,
+    String? anhangFehler,
     PosteingangEintrag? auswahl,
     PosteingangInhalt? inhalt,
     bool? laedt,
@@ -86,6 +104,8 @@ class PosteingangState {
     bool leereAuswahl = false,
     bool leereFehler = false,
     bool leereInhalt = false,
+    bool leereLadenderAnhangId = false,
+    bool leereAnhangFehler = false,
   }) => PosteingangState(
     eintraege: eintraege ?? this.eintraege,
     seite: seite ?? this.seite,
@@ -95,6 +115,10 @@ class PosteingangState {
     zentralrufOffen: zentralrufOffen ?? this.zentralrufOffen,
     nichtZuordnen: nichtZuordnen ?? this.nichtZuordnen,
     anhangLaedt: anhangLaedt ?? this.anhangLaedt,
+    ladenderAnhangId: leereLadenderAnhangId
+        ? null
+        : ladenderAnhangId ?? this.ladenderAnhangId,
+    anhangFehler: leereAnhangFehler ? null : anhangFehler ?? this.anhangFehler,
     auswahl: leereAuswahl ? null : auswahl ?? this.auswahl,
     inhalt: leereAuswahl || leereInhalt ? null : inhalt ?? this.inhalt,
     laedt: laedt ?? this.laedt,

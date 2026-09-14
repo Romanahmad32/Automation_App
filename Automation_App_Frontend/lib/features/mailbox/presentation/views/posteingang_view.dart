@@ -146,7 +146,7 @@ class _PosteingangViewState extends State<PosteingangView> {
             if (!breit && state.auswahl != null) return _vollbild(state);
             return Column(
               children: [
-                _werkzeugleiste(context, state),
+                _werkzeugleiste(context),
                 const Divider(height: 1),
                 Expanded(
                   child: breit
@@ -161,12 +161,9 @@ class _PosteingangViewState extends State<PosteingangView> {
     );
   }
 
-  Widget _werkzeugleiste(BuildContext context, PosteingangState state) {
+  Widget _werkzeugleiste(BuildContext context) {
     final cubit = context.read<PosteingangCubit>();
     return MailboxWerkzeugleiste(
-      filter: state.filter,
-      zentralrufAnzahl: state.zentralrufAnzahl,
-      onFilter: cubit.setzeFilter,
       onNeuLaden: cubit.aktualisieren,
       onManuellEinfuegen: _manuellEinfuegen,
     );

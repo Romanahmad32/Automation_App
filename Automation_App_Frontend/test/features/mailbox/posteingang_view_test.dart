@@ -191,9 +191,10 @@ void main() {
 
       expect(find.byType(PosteingangZeile), findsNWidgets(2));
 
-      // `.first`: Der Chip baut seine Beschriftung zweimal auf (einmal für
-      // das Maß), beide Male als Text — getippt wird auf den sichtbaren.
-      await tester.tap(find.text('Zentralruf (1)').first);
+      // Die Filterleiste steht genau einmal auf dem Bildschirm — über der
+      // Liste, nicht zusätzlich in der Werkzeugleiste (Review zu #134).
+      expect(find.text('Zentralruf (1)'), findsOneWidget);
+      await tester.tap(find.text('Zentralruf (1)'));
       await tester.pumpAndSettle();
 
       expect(find.byType(PosteingangZeile), findsOneWidget);

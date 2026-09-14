@@ -47,11 +47,22 @@ public static partial class PosteingangAnhaenge
                 + "Bitte diese Nachricht im Webmailer öffnen.", 413);
         }
 
-        var ordner = PosteingangZwischenlager.Ordner(konto, uid.Id);
-        var name = PosteingangZwischenlager.SichererName(PosteingangKopf.Dateiname(teil));
-        if (PosteingangZwischenlager.Vorhanden(ordner, name, teil.Octets) is { } schonDa)
+        string ordner;
+        try
         {
-            return new PosteingangAnhangAblage(name, schonDa, teil.Octets);
+            ordner = PosteingangZwischenlager.Ordner(konto, uid.Id);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw PosteingangZwischenlager.SchreibfehlerAlsFachlich(ex);
+        }
+
+        // Wiedererkannt wird über die Anhang-Id, nicht über Name+Größe: Octets
+        // ist laut RFC 3501 die Größe in Transferkodierung und bei Base64 rund
+        // ein Drittel größer als die abgelegte, dekodierte Datei (§4.3, Review).
+        if (PosteingangZwischenlager.Vorhanden(ordner, anhangId) is { } schonDa)
+        {
+            return new PosteingangAnhangAblage(Path.GetFileName(schonDa), schonDa, new FileInfo(schonDa).Length);
         }
         if (PosteingangZwischenlager.BelegteBytes(ordner) + teil.Octets > PosteingangZwischenlager.MaxOrdnerBytes)
         {
@@ -60,11 +71,20 @@ public static partial class PosteingangAnhaenge
                 + "im Zwischenlager. Bitte diese Nachricht im Webmailer öffnen.", 413);
         }
 
+        var name = PosteingangZwischenlager.SichererName(PosteingangKopf.Dateiname(teil));
         var entity = await folder.GetBodyPartAsync(uid, teil, ct);
         using (entity)
         {
             var pfad = PosteingangZwischenlager.FreierPfad(ordner, name);
-            await SchreibeAsync(entity, pfad, ct);
+            try
+            {
+                await SchreibeAsync(entity, pfad, ct);
+                PosteingangZwischenlager.Merke(ordner, anhangId, Path.GetFileName(pfad));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                throw PosteingangZwischenlager.SchreibfehlerAlsFachlich(ex);
+            }
             return new PosteingangAnhangAblage(Path.GetFileName(pfad), pfad, new FileInfo(pfad).Length);
         }
     }
@@ -72,19 +92,16 @@ public static partial class PosteingangAnhaenge
     /// <summary>
     /// Ein gewöhnlicher Anhang wird dekodiert abgelegt (Base64 gehört nicht in
     /// eine PDF-Datei); eine angehängte Nachricht oder ein mehrteiliger Anhang
-    /// wird als Ganzes geschrieben — er hat keinen einzelnen Inhalt.
+    /// wird als Ganzes geschrieben — er hat keinen einzelnen Inhalt. Geschrieben
+    /// wird atomar (<see cref="PosteingangZwischenlager.SchreibeAtomarAsync"/>):
+    /// Bricht der Abruf mittendrin ab, liegt unter dem Zielnamen kein Fragment.
     /// </summary>
-    private static async Task SchreibeAsync(MimeEntity entity, string pfad, CancellationToken ct)
-    {
-        await using var strom = File.Create(pfad);
-        if (entity is MimePart part && part.Content is not null)
-        {
-            await part.Content.DecodeToAsync(strom, ct);
-            return;
-        }
-
-        await entity.WriteToAsync(strom, ct);
-    }
+    private static Task SchreibeAsync(MimeEntity entity, string pfad, CancellationToken ct) =>
+        PosteingangZwischenlager.SchreibeAtomarAsync(
+            strom => entity is MimePart part && part.Content is not null
+                ? part.Content.DecodeToAsync(strom, ct)
+                : entity.WriteToAsync(strom, ct),
+            pfad);
 
     [GeneratedRegex(@"^[0-9]+(\.[0-9]+){0,6}$")]
     private static partial Regex Teilbezeichner();

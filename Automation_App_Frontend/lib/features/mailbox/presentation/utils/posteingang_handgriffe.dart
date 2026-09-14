@@ -126,8 +126,11 @@ class PosteingangHandgriffe {
   }
 
   /// Holt die Datei und meldet einen Fehlschlag — der Cubit legt die Meldung
-  /// in `state.fehler`, liefert aber nur `null` zurück. [Rueckmeldung.von]
-  /// **vor** dem `await`: Danach kann die Seite weg sein.
+  /// in `state.anhangFehler`, liefert aber nur `null` zurück.
+  /// **`anhangFehler`, nicht `state.fehler`** (Review #134, Befund 8): Der
+  /// teilt sich Seitenlade- und Downloadfehler — ein alter Listenfehler
+  /// zeigte sich sonst hier als vermeintlicher Downloadfehler.
+  /// [Rueckmeldung.von] **vor** dem `await`: Danach kann die Seite weg sein.
   Future<String?> _hole(
     BuildContext context,
     Future<String?> Function() laden,
@@ -136,7 +139,7 @@ class PosteingangHandgriffe {
     final pfad = await laden();
     if (pfad == null) {
       melder.fehler(
-        cubit.state.fehler ??
+        cubit.state.anhangFehler ??
             'Die Datei wird gerade schon geholt — bitte einen Augenblick '
                 'warten.',
       );

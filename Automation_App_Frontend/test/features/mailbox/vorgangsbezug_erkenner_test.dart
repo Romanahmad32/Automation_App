@@ -60,6 +60,44 @@ void main() {
     expect(bezug.grund, 'Schadennummer SCH-998877 steht im Betreff');
   });
 
+  test('Ein Zeichen trifft nicht als Teilstring eines laengeren (Review #134, '
+      'Befund 2)', () {
+    final kuerzer = vorgangMit(referenz: '44/26 C03_HG-E 1427');
+    final erkenner = VorgangsbezugErkenner(vorgaenge: [kuerzer]);
+
+    final bezug = erkenner.fuer(
+      mailMit(betreff: 'Unser Zeichen: 144/26 C03 — Schadenmeldung'),
+    );
+
+    expect(bezug, isNull);
+  });
+
+  test('Eine Schadennummer trifft nicht als Teilstring einer laengeren Zahl '
+      '(Review #134, Befund 2)', () {
+    final kurzeNummer = vorgangMit(
+      referenz: '147/26 C03_HG-E 1430',
+      antwort: const ZentralrufReplyData(versicherungsscheinNr: '123456'),
+    );
+    final erkenner = VorgangsbezugErkenner(vorgaenge: [kurzeNummer]);
+
+    final bezug = erkenner.fuer(mailMit(betreff: 'Vorgang 9123456'));
+
+    expect(bezug, isNull);
+  });
+
+  test('Ein Zeichen zwischen Satzzeichen zaehlt weiterhin als Treffer (Review '
+      '#134, Befund 2)', () {
+    final erkenner = VorgangsbezugErkenner(
+      vorgaenge: [vorgangMit(referenz: '148/26 C03_HG-E 1431')],
+    );
+
+    final bezug = erkenner.fuer(
+      mailMit(betreff: 'AW: (148/26 C03), bitte um Rückmeldung.'),
+    );
+
+    expect(bezug!.sicherheit, BezugSicherheit.sicher);
+  });
+
   test('Zu kurze Schadennummer trifft nicht zufällig', () {
     final kurz = vorgangMit(
       referenz: '146/26 C03_HG-E 1429',
