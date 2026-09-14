@@ -10,7 +10,7 @@
     <ItemGroup>
         <PackageReference Include="DocX" Version="5.2.0" />
         <PackageReference Include="FreeSpire.Doc" Version="14.4.0" />
-        <PackageReference Include="MailKit" Version="4.17.0" />
+        <PackageReference Include="MailKit" Version="4.18.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
         <!-- Explizit gepinnt, und zwar dauerhaft: Microsoft.AspNetCore.OpenApi
              fordert nur Microsoft.OpenApi ab 2.0.0 (offen nach oben), und von
@@ -37,7 +37,7 @@
         <PackageReference Include="Microsoft.Office.Interop.Excel" Version="16.0.18925.20022" />
         <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
         <PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
-        <PackageReference Include="MimeKit" Version="4.17.0" />
+        <PackageReference Include="MimeKit" Version="4.18.0" />
         <PackageReference Include="Scalar.AspNetCore" Version="2.17.3" />
         <!-- Explizit gepinnt, um die von Microsoft.Data.Sqlite transitiv gezogene
              SQLitePCLRaw 2.1.11 zu übersteuern (Sicherheitslücke GHSA-2m69-gcr7-jv3q
