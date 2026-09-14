@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:automation_app/core/general_classes/dateigroesse_format.dart';
+
 /// Wie ein Anhang in der Oberfläche erscheint: Dateiname statt vollem Pfad,
 /// Größe in einer Einheit, die ein Mensch liest.
 ///
@@ -27,12 +29,10 @@ class AnhangDarstellung {
   static int summe(Iterable<String> pfade) =>
       pfade.fold(0, (gesamt, pfad) => gesamt + (bytes(pfad) ?? 0));
 
-  /// Bytes in einer Einheit, die ein Mensch liest.
-  static String alsGroesse(int bytes) {
-    if (bytes < 1024) return '$bytes Bytes';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
+  /// Bytes in einer Einheit, die ein Mensch liest — die eine Stelle dafür
+  /// liegt in `core/general_classes/dateigroesse_format.dart`, weil
+  /// `mailbox` sie ebenso braucht.
+  static String alsGroesse(int bytes) => formatiereDateigroesse(bytes);
 
   /// Größe als Klartext, leer wenn die Datei fehlt.
   static String groesse(String pfad) {

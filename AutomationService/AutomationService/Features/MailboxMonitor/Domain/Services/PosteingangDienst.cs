@@ -16,6 +16,22 @@ public sealed class PosteingangDienst(MailboxConfigStore config, MicrosoftMailOA
         MitOrdnerAsync((folder, konto, token) => PosteingangText.LadeAsync(folder,
             new UniqueId(PosteingangKennung.Decode(id, konto, folder.UidValidity).Uid), token), ct);
 
+    /// <summary>
+    /// Holt einen einzelnen Anhang ins Zwischenlager und liefert seinen Pfad.
+    /// Er läuft über dieselbe eine Verbindung wie das Blättern — ein großer
+    /// Anhang hält den Posteingang also kurz an. Das ist die bewusste Zusage
+    /// „eine Verbindung je Postfach"; die Oberfläche zeigt so lange einen Ring
+    /// am Anhang.
+    /// </summary>
+    public Task<PosteingangAnhangAblage> LadeAnhangAsync(string id, string anhangId, CancellationToken ct) =>
+        MitOrdnerAsync((folder, konto, token) => PosteingangAnhaenge.LadeAsync(folder, konto,
+            new UniqueId(PosteingangKennung.Decode(id, konto, folder.UidValidity).Uid), anhangId, token), ct);
+
+    /// <summary>Schreibt die ganze Nachricht als <c>.eml</c> ins Zwischenlager.</summary>
+    public Task<PosteingangAnhangAblage> LadeNachrichtAsync(string id, CancellationToken ct) =>
+        MitOrdnerAsync((folder, konto, token) => PosteingangNachrichtAblage.LadeAsync(folder, konto,
+            new UniqueId(PosteingangKennung.Decode(id, konto, folder.UidValidity).Uid), token), ct);
+
     private async Task<T> MitOrdnerAsync<T>(Func<IMailFolder, string, CancellationToken, Task<T>> lesen, CancellationToken ct)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct, config.ChangeToken);

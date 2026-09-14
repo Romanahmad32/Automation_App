@@ -1,4 +1,5 @@
 import 'package:automation_app/core/network/backend_fehlertext.dart';
+import 'package:automation_app/features/email_versand/data/datasources/email_versand_protokoll_datasource.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
@@ -12,7 +13,11 @@ import 'package:automation_app/features/email_versand/domain/repositories/email_
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
-/// Postausgang über das Backend (`api/EmailVersand`).
+/// Postausgang über das Backend (`api/EmailVersand`). Das Versandprotokoll
+/// (`ladeVersandProtokoll`, `ladeLetzteVersaende`, `ladeAlleVersaende`) reicht
+/// diese Klasse unverändert an [EmailVersandProtokollDatasource] weiter — dort
+/// ausgelagert, damit diese Datei innerhalb des Zeilenlimits bleibt, ohne dass
+/// sich an `EmailVersandRepository` selbst etwas ändert.
 @Injectable(as: EmailVersandRepository)
 class ApiEmailVersandDatasource implements EmailVersandRepository {
   /// Anhänge lesen, Verbindung aufbauen, Anmelden, Übertragen — das dauert
@@ -21,8 +26,9 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
   static const Duration _versandTimeout = Duration(seconds: 120);
 
   final Dio _dio;
+  final EmailVersandProtokollDatasource _protokoll;
 
-  ApiEmailVersandDatasource(this._dio);
+  ApiEmailVersandDatasource(this._dio, this._protokoll);
 
   @override
   Future<EmailVersandBereitschaft> ladeBereitschaft() async {
@@ -117,44 +123,16 @@ class ApiEmailVersandDatasource implements EmailVersandRepository {
   }
 
   @override
-  Future<List<VersandEintrag>> ladeVersandProtokoll(String referenz) async {
-    try {
-      final response = await _dio.get(
-        '/api/EmailVersand/protokoll',
-        queryParameters: {'referenz': referenz},
-      );
-      return _eintraege(response.data);
-    } on DioException catch (e) {
-      throw Exception(
-        backendFehlertext(e) ??
-            dienstOhneAntwort(
-              e,
-              'Das Versandprotokoll konnte nicht gelesen werden',
-            ),
-      );
-    }
-  }
+  Future<List<VersandEintrag>> ladeVersandProtokoll(String referenz) =>
+      _protokoll.ladeVersandProtokoll(referenz);
 
   @override
-  Future<List<VersandEintrag>> ladeLetzteVersaende() async {
-    try {
-      final response = await _dio.get('/api/EmailVersand/protokoll/letzte');
-      return _eintraege(response.data);
-    } on DioException catch (e) {
-      throw Exception(
-        backendFehlertext(e) ??
-            dienstOhneAntwort(
-              e,
-              'Das Versandprotokoll konnte nicht gelesen werden',
-            ),
-      );
-    }
-  }
+  Future<List<VersandEintrag>> ladeLetzteVersaende() =>
+      _protokoll.ladeLetzteVersaende();
 
-  List<VersandEintrag> _eintraege(Object? daten) => [
-    for (final eintrag in (daten as List?) ?? const [])
-      VersandEintrag.fromJson(eintrag as Map<String, dynamic>),
-  ];
+  @override
+  Future<List<VersandEintrag>> ladeAlleVersaende({int limit = 200}) =>
+      _protokoll.ladeAlleVersaende(limit: limit);
 
   @override
   Future<OutlookStand> ladeOutlookStand() async {

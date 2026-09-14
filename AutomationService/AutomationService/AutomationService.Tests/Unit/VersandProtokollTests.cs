@@ -131,6 +131,42 @@ public sealed class VersandProtokollTests : IDisposable
             .GesendetAm.Minute.Should().Be(45);
     }
 
+    [Fact]
+    public async Task Alle_LiefertJedenVersandUeberVorgaengeHinwegChronologisch()
+    {
+        // Die Frage lautet "was ist heute rausgegangen?" -- und die beantwortet
+        // LetzteJeVorgang nicht: Dort faellt der zweite Versand desselben
+        // Vorgangs unter den Tisch, und genau die Wiedervorlage sucht der
+        // Anwalt am Abend.
+        await _protokoll.SchreibeAsync(Eintrag(minuten: 0), CancellationToken.None);
+        await _protokoll.SchreibeAsync(Eintrag(minuten: 45), CancellationToken.None);
+        await _protokoll.SchreibeAsync(
+            Eintrag(referenz: "85/26 C03_HG-E 9999", minuten: 20),
+            CancellationToken.None);
+
+        var alle = await _protokoll.AlleAsync(200, CancellationToken.None);
+
+        alle.Should().HaveCount(3);
+        alle.Select(e => e.GesendetAm.Minute).Should().Equal(45, 20, 0);
+    }
+
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(0, 1)]
+    [InlineData(5000, 2)]
+    public async Task Alle_FaengtEineUnsinnigeObergrenzeEin(int limit, int erwartet)
+    {
+        await _protokoll.SchreibeAsync(Eintrag(minuten: 0), CancellationToken.None);
+        await _protokoll.SchreibeAsync(Eintrag(minuten: 45), CancellationToken.None);
+
+        var alle = await _protokoll.AlleAsync(limit, CancellationToken.None);
+
+        // Fuer eine Leseansicht ist ein Ergebnis nuetzlicher als eine
+        // Fehlermeldung -- gedeckelt bleibt sie trotzdem.
+        alle.Should().HaveCount(erwartet);
+        alle[0].GesendetAm.Minute.Should().Be(45);
+    }
+
     public void Dispose()
     {
         _db.Dispose();

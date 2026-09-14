@@ -40,6 +40,16 @@ public sealed record ReceivedReply
     /// </summary>
     public IReadOnlyList<string> AnhangPfade { get; init; } = [];
 
+    /// <summary>
+    /// Der Schlüssel, unter dem der Monitor diese Mail erfasst hat: ihre
+    /// RFC-Message-Id, hilfsweise <c>UIDVALIDITY:UID</c>. Er ist die Brücke zum
+    /// Posteingang — dort trägt dieselbe Nachricht dieselbe Message-Id, und nur
+    /// darüber erkennt die Oberfläche eine Zeile als bereits erfasste
+    /// Zentralruf-Antwort wieder, ohne dass eine zweite Tabelle die Zuordnung
+    /// führen müsste.
+    /// </summary>
+    public string? MailSchluessel { get; init; }
+
     /// <summary>Vom Nutzer als gesehen/übernommen markiert.</summary>
     public bool Acknowledged { get; init; }
 

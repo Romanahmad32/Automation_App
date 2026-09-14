@@ -102,6 +102,8 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     Mandant? mandant,
     ZentralrufReplyData? antwort,
     List<String> anhangPfade = const [],
+    List<String> empfaengerVorauswahl = const [],
+    String? betreffVorgabe,
   }) async {
     // Beides nebeneinander: Die Kanzleidaten kommen aus den Einstellungen, der
     // Anredebestand aus seinem Singleton — der zweite ist beim zweiten Öffnen
@@ -166,6 +168,26 @@ class EmailEntwurfCubit extends Cubit<EmailEntwurfState>
     // damals verworfen, weil der Erzeuger noch fehlte. Jetzt steht er — sonst
     // blieb die Wahl wirkungslos, bis der Anwalt etwas anderes anfasst.
     if (state.gewaehlteVorlage != null) leiteAb(betreffAuch: true);
+
+    // Die von aussen mitgegebene Vorgabe (§4.3 „Antworten") gewinnt zuletzt:
+    // Sie ueberschreibt, was Vorbelegung und Vorlagenableitung eben gesetzt
+    // haben — und nur dann, wenn tatsaechlich etwas vorgegeben wurde, sonst
+    // aendert sich fuer die heutigen Aufrufstellen nichts (additiv, §7.3 E3).
+    if (empfaengerVorauswahl.isNotEmpty || betreffVorgabe != null) {
+      var vorbelegterEntwurf = state.entwurf;
+      for (final adresse in empfaengerVorauswahl) {
+        vorbelegterEntwurf = vorbelegterEntwurf.mitEmpfaenger(adresse);
+      }
+      if (betreffVorgabe != null) {
+        vorbelegterEntwurf = vorbelegterEntwurf.copyWith(
+          betreff: betreffVorgabe,
+        );
+      }
+      // Über `setzeEntwurf` (wie `empfaengerHinzufuegen`) statt eines rohen
+      // `emit`: Sonst blieben `mitleserImAn` und `anredePersoenlichMoeglich`
+      // auf dem Stand vor dieser Adresse stehen (Review #134, Befund 1).
+      setzeEntwurf(vorbelegterEntwurf);
+    }
 
     // Outlook im Hintergrund hochfahren, während der Anwalt tippt. Bewusst
     // ohne await: Der Entwurf steht schon, und ob es klappt, ändert hier

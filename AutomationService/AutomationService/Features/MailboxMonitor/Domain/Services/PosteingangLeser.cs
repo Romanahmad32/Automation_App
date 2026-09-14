@@ -26,18 +26,40 @@ public static class PosteingangLeser
             return new PosteingangSeite([], null, folder.Count);
         }
         var start = Math.Max(0, ende - Seitengroesse);
+        // BodyStructure gehört dazu, Body und PreviewText nicht: Die Struktur
+        // sagt, ob und wie viele Anhänge dranhängen (die Büroklammer in der
+        // Liste), lädt aber keinen Inhalt. Mailtext bleibt dem Öffnen einer
+        // einzelnen Nachricht vorbehalten.
         var summaries = await folder.FetchAsync(start, ende - 1,
             MessageSummaryItems.UniqueId | MessageSummaryItems.Envelope | MessageSummaryItems.Flags
-            | MessageSummaryItems.Size | MessageSummaryItems.InternalDate, ct);
+            | MessageSummaryItems.Size | MessageSummaryItems.InternalDate
+            | MessageSummaryItems.BodyStructure, ct);
         var mails = summaries.Where(item => item.Index >= start && item.Index < ende
                 && item.Envelope is not null && (vorUid is null || item.UniqueId.Id < vorUid))
             .OrderByDescending(item => item.UniqueId.Id).Take(Seitengroesse)
-            .Select(item => new PosteingangEintrag(
-                new PosteingangKennung(konto, folder.UidValidity, item.UniqueId.Id).Encode(),
-                item.Envelope!.Subject ?? "(Ohne Betreff)", item.Envelope.From.ToString(),
-                item.InternalDate ?? item.Envelope.Date, item.Flags?.HasFlag(MessageFlags.Seen) ?? false,
-                item.Size ?? 0)).ToList();
+            .Select(item => Abbilden(item, konto, folder.UidValidity)).ToList();
         return new PosteingangSeite(mails, start > 0 && mails.Count > 0 ? mails[^1].Id : null, folder.Count);
+    }
+
+    /// <summary>Eine Kopfzeile aus dem, was der eine Abruf mitgebracht hat — ohne Nachladen.</summary>
+    private static PosteingangEintrag Abbilden(IMessageSummary item, string konto, uint gueltigkeit)
+    {
+        var umschlag = item.Envelope!;
+        var anhaenge = item.Attachments.Count();
+        return new PosteingangEintrag(
+            new PosteingangKennung(konto, gueltigkeit, item.UniqueId.Id).Encode(),
+            umschlag.Subject ?? "(Ohne Betreff)",
+            umschlag.From.ToString(),
+            PosteingangKopf.Name(umschlag.From),
+            PosteingangKopf.Adresse(umschlag.From),
+            PosteingangKopf.Adressen(umschlag.To),
+            PosteingangKopf.Adressen(umschlag.Cc),
+            PosteingangKopf.MailSchluessel(umschlag.MessageId, gueltigkeit, item.UniqueId.Id),
+            item.InternalDate ?? umschlag.Date,
+            item.Flags?.HasFlag(MessageFlags.Seen) ?? false,
+            item.Size ?? 0,
+            anhaenge > 0,
+            anhaenge);
     }
 
     /// <summary>Erster Index mit UID >= Grenze; höchstens log2(N) einzelne UID-Abfragen.</summary>

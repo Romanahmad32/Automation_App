@@ -82,6 +82,10 @@ class _FakeVersandRepository implements EmailVersandRepository {
   Future<List<VersandEintrag>> ladeLetzteVersaende() async => const [];
 
   @override
+  Future<List<VersandEintrag>> ladeAlleVersaende({int limit = 200}) =>
+      throw UnimplementedError();
+
+  @override
   Future<void> verwirfAnhang(String pfad) async => verworfen.add(pfad);
 
   @override
@@ -280,6 +284,42 @@ void main() {
     expect(gebaut.cubit.state.kannSenden, isTrue);
     await gebaut.cubit.close();
   });
+
+  test(
+    'eine per Vorauswahl hinzugefügte Adresse zieht Mitleser und Anrede nach '
+    '(Review #134, Befund 1)',
+    () async {
+      // Ohne Antwort im Vorgang steht zunächst nur der Mandant im Feld „An" —
+      // `empfaengerVorauswahl` fügt die Versichereradresse hinzu, wie es
+      // `PosteingangHandgriffe.antworten` aus dem Posteingang heraus tut.
+      // Bis zum Fund emittierte `starte` diesen Fall roh über `copyWith`,
+      // ohne `setzeEntwurf`: `mitleserImAn` und `anredePersoenlichMoeglich`
+      // blieben auf dem Stand vor dem hinzugefügten Empfänger stehen.
+      final ohneAntwort = Vorgang(
+        referenz: '84/26 C03_GG-XY 123',
+        angefragtAm: DateTime(2026, 6, 20),
+        laufendeNummer: 84,
+        jahr: '26',
+        abteilung: 'C03',
+        mandantId: 7,
+        mandantName: 'Klaus Müller',
+      );
+      final gebaut = baue(_FakeVersandRepository(), mandanten: [mandant]);
+
+      await gebaut.cubit.starte(
+        vorgang: ohneAntwort,
+        empfaengerVorauswahl: const ['schaden@huk.de'],
+      );
+
+      expect(gebaut.cubit.state.entwurf.an, [
+        'k.mueller@example.de',
+        'schaden@huk.de',
+      ]);
+      expect(gebaut.cubit.state.mitleserImAn, isTrue);
+      expect(gebaut.cubit.state.anredePersoenlichMoeglich, isFalse);
+      await gebaut.cubit.close();
+    },
+  );
 
   test('löst den Mandanten selbst aus dem Vorgang auf', () async {
     // Damit der Aufrufer (Postfach) das Register nicht selbst befragen muss.

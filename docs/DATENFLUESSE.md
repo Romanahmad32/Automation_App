@@ -1,6 +1,6 @@
 # Datenflüsse — was durch mehrere Features läuft
 
-Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Sechs Ketten laufen
+Die Steckbriefe (`FEATURE.md`) enden am Feature-Rand, die Fachlogik nicht. Sieben Ketten laufen
 quer durch den Baum, und in keiner steht an der Nahtstelle, dass es eine gibt. Wer eine davon
 ändert, ohne sie zu kennen, ändert sie an einer Stelle und lässt die anderen stehen.
 
@@ -53,7 +53,7 @@ Postfach ──▶ ZentralrufReplyParser ──▶ mailbox ──▶ vorgaenge �
 - **Backend:** Der Monitor hängt per IMAP IDLE am Postfach, schickt den Treffer durch
   `ZentralrufReplyParser`, legt ihn im `DbReceivedReplyStore` ab und meldet ihn über den
   SignalR-Hub `MailboxHub`. `VersichererWissen` lernt dabei den Versicherer mit.
-- **Frontend:** `mailbox_inbox_view.dart` ruft `VorgangCubit.uebernehmeAntwort` — die Übernahme
+- **Frontend:** `zentralruf_uebernahme.dart` ruft `VorgangCubit.uebernehmeAntwort` — die Übernahme
   legt einen Vorgang an oder ergänzt einen vorhandenen.
 - **Ergänzung:** `versicherer_ergaenzung.dart` (in `zentralruf_reply`) füllt aus dem Register, was
   die Antwort offengelassen hat, je Feld mit Herkunftshinweis.
@@ -238,11 +238,47 @@ Die Gegenrichtung braucht keinen eigenen Weg: Eine Spiegelzeile kann ihren Vorga
 denselben Aufruf mit `registerzeileBehalten=false`. Nur eine echte historische Zeile hat einen
 eigenen Weg (`DELETE api/RegisterHistorie/{id}`).
 
+## 7. Von der eingegangenen Mail in die Akte
+
+```
+Postfach ──▶ mailbox (Posteingang) ──▶ VorgangsbezugErkenner (liest VorgangCubit)
+                                              ├──▶ Anhang/`.eml` ins Zwischenlager ──▶ AblageCubit ──▶ Fall-Ordner
+                                              └──▶ EmailVersandButton ──▶ VersandProtokoll ──▶ Bereich „Gesendet"
+```
+
+Der allgemeine Posteingang (§4.3, Issue #134) liest jede Nachricht des eingerichteten Ordners,
+nicht nur Zentralruf-Antworten. `VorgangsbezugErkenner` (`mailbox/domain/services/`) schlägt dazu
+einen Vorgang vor — er liest den Bestand aus `VorgangCubit`, ändert dort aber nie etwas: Der Bezug
+bleibt ein Vorschlag, den der Anwalt über „Zum Vorgang"/„Nicht zuordnen" bestätigt oder verwirft.
+
+Von dort laufen zwei Zweige:
+
+- **In die Akte:** Ein Anhang oder die Nachricht selbst (`.eml`) geht zuerst ins backendseitige
+  Zwischenlager (`PosteingangAnhaenge`/`PosteingangNachrichtAblage`), danach über den vorhandenen
+  `AblageCubit` (`mandanten`) in den Fall-Ordner des vorgeschlagenen oder gewählten Vorgangs —
+  dieselbe Ablage samt Konfliktfrage, die auch das Anspruchsschreiben benutzt (Kette 3).
+- **Beim Versand:** Derselbe geladene Pfad geht als Anhang in den `EmailVersandButton`
+  (`beschriftung: 'Beim Versand verwenden'`) bzw. „Antworten" setzt Absender und `AW:`-Betreff
+  vor. Jeder Versand schreibt in `VersandProtokoll` (`EmailVersand`); der Bereich „Gesendet" in
+  `mailbox` (`GesendetCubit`) liest davon **alle** Vorgänge chronologisch
+  (`GET api/EmailVersand/protokoll/alle`), nicht nur den jüngsten je Vorgang wie `protokoll/letzte`.
+
+**Die Naht:** `VorgangsbezugErkenner` und `AblageCubit`/`EmailVersandButton` kennen sich nicht —
+die Zeile, die beide verbindet (Widget `posteingang_aktionsleiste.dart`), reicht den vorgeschlagenen
+oder vom Anwalt bestätigten `Vorgang` einfach weiter. Ein neues Feld an der Vorschlagslogik (z. B.
+eine weitere Erkennungsstufe) betrifft nur diese eine Stelle; Ablage und Versand ändern sich nicht.
+
 ## Wo eine Kette anfängt zu lügen
 
-Alle sechs haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
+Alle sieben haben dieselbe Bruchstelle: **eine Seite geändert, die andere nicht.** Kein Test fängt
 das von allein — die Architektur-Tests prüfen Schichten und Verträge, nicht Fachwege. Was hilft,
 ist die Naht mitzulesen, bevor man eine Seite anfasst.
+
+**Ein Vorschlag ist kein Datenfeld (Kette 7):** `VorgangsbezugErkenner` schreibt nirgends etwas an
+den Vorgang — er wird bei jedem Öffnen des Posteingangs neu ausgewertet, aus dem gerade geladenen
+`VorgangCubit`-Bestand. Wer erwartet, einen einmal gesehenen Bezug wiederzufinden (etwa nach einem
+Neustart oder für eine Liste „welche Mails hängen an Vorgang X"), verwechselt den Vorschlag mit
+einer gespeicherten Zuordnung — die gibt es hier bewusst nicht (§1.3, §4.3).
 
 **Zwei Quellen, eine Zählung (Kette 3/6):** Seit die Registeransicht Vorgänge und Historie aus
 `RegisterZeilenBau` mischt, zählt „wie viele Zeilen zeigt das Register" nicht mehr aus einer

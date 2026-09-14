@@ -16,17 +16,18 @@ Parse-Vorgang; die editierten Feldwerte hält `VorgangsdatenForm` im eigenen Sta
 
 **Fallstricke**
 
-- Das Feature hat keine eigene Seite und keine Route: `VorgangsdatenForm` und `ManualReplyInput`
-  hängen in `MailboxDetailPane` des Postfachs. Manueller und automatischer Weg laufen bewusst
-  durch dasselbe Formular — jede Änderung wirkt auf beide.
+- Das Feature hat keine eigene Seite und keine Route: `VorgangsdatenForm` hängt in
+  `PosteingangZentralrufDetail`, `ManualReplyInput` im `MailboxManuelleAntwortDialog` — beide im
+  Postfach. Manueller und automatischer Weg laufen bewusst durch dasselbe Formular — jede
+  Änderung wirkt auf beide.
 - Zuordnung in genau dieser Reihenfolge: exakter Referenztreffer (`VorgangCubit.findeZuReferenz`)
   vor dem Fallback über Gegner-Kennzeichen + Unfalldatum (`findeWahrscheinlichenVorgang`, nur bei
   genau einem Kandidaten im Status „Angefragt"). Der Fallback ist eine Vorauswahl mit Hinweis
   („wahrscheinliche Zuordnung"); die Bestätigung durch den Anwalt darf nicht wegfallen.
 - Widersprechen Antwortwerte bereits erfassten Vorgangsdaten, zeigt
-  `MailboxInboxView._gemeinsamUebernehmen` vor der Übernahme `AntwortKonflikte.finde` +
-  `AntwortKonfliktDialog` (beide in `vorgaenge`). Bricht der Anwalt dort ab, wird nichts
-  übernommen und der Treffer bleibt offen — kein `acknowledge`.
+  `uebernimmZentralrufDaten` (`zentralruf_uebernahme.dart`, in `mailbox`) vor der Übernahme
+  `AntwortKonflikte.finde` + `AntwortKonfliktDialog` (beide in `vorgaenge`). Bricht der Anwalt
+  dort ab, wird nichts übernommen und der Treffer bleibt offen — kein `acknowledge`.
 - Wird die Referenz von Hand geändert, verwirft `_bearbeiteteDaten()` die zerlegten Bestandteile
   (`referenzAuftragsnummer`, `-Jahr`, `-Abteilung`, `-Kennzeichen`) absichtlich: sie stammen aus
   dem Parser und passen dann nicht mehr.

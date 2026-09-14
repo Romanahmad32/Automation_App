@@ -27,6 +27,34 @@ public sealed class PosteingangController(PosteingangDienst dienst) : Controller
     public Task<ActionResult<PosteingangInhaltDto>> Inhalt(string id, CancellationToken ct) =>
         AusfuehrenAsync(async () => PosteingangInhaltDto.From(await dienst.LadeInhaltAsync(id, ct)), ct);
 
+    /// <summary>
+    /// Holt einen Anhang ins Zwischenlager und liefert seinen <b>Pfad</b>, nicht
+    /// seine Bytes: Was danach damit geschieht — öffnen, an eine Mail hängen, in
+    /// die Akte legen —, arbeitet in dieser App durchweg mit lokalen Pfaden.
+    /// </summary>
+    [HttpGet("{id}/anhaenge/{anhangId}")]
+    [ProducesResponseType(typeof(PosteingangAnhangAblageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status413PayloadTooLarge)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+    public Task<ActionResult<PosteingangAnhangAblageDto>> Anhang(string id, string anhangId, CancellationToken ct) =>
+        AusfuehrenAsync(async () =>
+            PosteingangAnhangAblageDto.From(await dienst.LadeAnhangAsync(id, anhangId, ct)), ct);
+
+    /// <summary>Legt die ganze Nachricht als <c>.eml</c> ab — die Fassung für die Akte.</summary>
+    [HttpGet("{id}/eml")]
+    [ProducesResponseType(typeof(PosteingangAnhangAblageDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status413PayloadTooLarge)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+    public Task<ActionResult<PosteingangAnhangAblageDto>> Eml(string id, CancellationToken ct) =>
+        AusfuehrenAsync(async () =>
+            PosteingangAnhangAblageDto.From(await dienst.LadeNachrichtAsync(id, ct)), ct);
+
     private async Task<ActionResult<T>> AusfuehrenAsync<T>(Func<Task<T>> aktion, CancellationToken ct)
     {
         try
@@ -40,6 +68,19 @@ public sealed class PosteingangController(PosteingangDienst dienst) : Controller
         catch (AuthenticationException)
         {
             return Problem(title: "Postfach-Anmeldung fehlgeschlagen", detail: "Bitte die Zugangsdaten unter Einstellungen → E-Mail prüfen.", statusCode: 502);
+        }
+        // Auffangnetz, kein erwarteter Weg: Ein lokaler Schreibfehler im
+        // Zwischenlager wird bereits dort in eine PosteingangException
+        // übersetzt (siehe oben) und landet gar nicht erst hier. Bleibt eine
+        // UnauthorizedAccessException dennoch unübersetzt, soll sie trotzdem
+        // eine verständliche deutsche Meldung statt eines 500ers mit
+        // Stacktrace ergeben.
+        catch (UnauthorizedAccessException)
+        {
+            return Problem(
+                title: "Zugriff verweigert",
+                detail: "Der Anhang konnte wegen fehlender Zugriffsrechte nicht im Zwischenlager abgelegt werden.",
+                statusCode: 500);
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {

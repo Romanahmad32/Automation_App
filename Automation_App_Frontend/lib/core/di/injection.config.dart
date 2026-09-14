@@ -37,6 +37,8 @@ import 'package:automation_app/features/email_versand/data/datasources/anredebau
     as _i1067;
 import 'package:automation_app/features/email_versand/data/datasources/email_versand_datasource.dart'
     as _i715;
+import 'package:automation_app/features/email_versand/data/datasources/email_versand_protokoll_datasource.dart'
+    as _i828;
 import 'package:automation_app/features/email_versand/data/datasources/grussformeln_datasource.dart'
     as _i328;
 import 'package:automation_app/features/email_versand/data/datasources/mail_vorlagen_datasource.dart'
@@ -103,6 +105,8 @@ import 'package:automation_app/features/mailbox/domain/repositories/mailbox_repo
     as _i469;
 import 'package:automation_app/features/mailbox/domain/repositories/posteingang_repository.dart'
     as _i204;
+import 'package:automation_app/features/mailbox/presentation/blocs/gesendet_cubit.dart'
+    as _i967;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_auswahl_signal.dart'
     as _i277;
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart'
@@ -399,11 +403,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i738.RegisterSpiegelRepository>(
       () => _i412.ApiRegisterSpiegelDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i828.EmailVersandProtokollDatasource>(
+      () => _i828.ApiEmailVersandProtokollDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i979.RegisterNummernDatasource>(
       () => _i979.ApiRegisterNummernDatasource(gh<_i361.Dio>()),
-    );
-    gh.factory<_i67.EmailVersandRepository>(
-      () => _i715.ApiEmailVersandDatasource(gh<_i361.Dio>()),
     );
     gh.factory<_i552.ImportDateiDatasource>(
       () => _i552.FilesystemImportDateiDatasource(),
@@ -499,10 +503,16 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i434.RegisterHub(),
       dispose: (i) => i.dispose(),
     );
-    gh.factory<_i367.PosteingangCubit>(
+    gh.lazySingleton<_i367.PosteingangCubit>(
       () => _i367.PosteingangCubit(
         gh<_i204.PosteingangRepository>(),
         gh<_i579.MailboxPushNotifier>(),
+      ),
+    );
+    gh.factory<_i67.EmailVersandRepository>(
+      () => _i715.ApiEmailVersandDatasource(
+        gh<_i361.Dio>(),
+        gh<_i828.EmailVersandProtokollDatasource>(),
       ),
     );
     gh.lazySingleton<_i782.VersichererCubit>(
@@ -565,6 +575,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i103.MailVorlagenCubit>(
       () => _i103.MailVorlagenCubit(gh<_i435.MailVorlagenRepository>()),
+    );
+    gh.factory<_i967.GesendetCubit>(
+      () => _i967.GesendetCubit(gh<_i67.EmailVersandRepository>()),
     );
     gh.lazySingleton<_i161.LetzteVersaendeCubit>(
       () => _i161.LetzteVersaendeCubit(gh<_i67.EmailVersandRepository>()),

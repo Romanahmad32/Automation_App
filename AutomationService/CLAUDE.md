@@ -69,8 +69,10 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   per ChangeToken heiß nachgeladen), ab Werk aus. Treffer landen im `DbReceivedReplyStore` und gehen
   über den SignalR-Hub `MailboxHub` (`/hubs/mailbox`) an das Frontend. Hängen Dateien an der
   Antwort, legt `AntwortAnhaenge` sie unter `%APPDATA%\AutomationService\Anhaenge\<Schlüssel>` ab
-  (§4.3) — der Versand bietet sie zum Anhängen an. Kein Posteingang: aufgehoben wird nur, was an
-  einer **erfassten** Antwort hängt.
+  (§4.3) — der Versand bietet sie zum Anhängen an. Anhänge und ganze Mails (`.eml`) aus dem
+  Posteingang selbst legt `PosteingangZwischenlager` auf Anforderung unter
+  `…\Anhaenge\Posteingang\<Konto>\<Uid>` ab — Ordner und 14-Tage-Aufräumen
+  (`AnhangAblage.AltesLoeschen`) teilen sie sich mit den Antwort-Anhängen.
 - **EmailVersand** — versendet die fertig verfasste Mail zum Vorgang (§4.7, `POST
   api/EmailVersand/senden`) oder öffnet sie als Entwurf in Outlook; dazu Versandprotokoll (§4.8),
   Signatur-Übernahme und die Mail-Textvorlagen. Die Einzelheiten — SMTP-Zugang, COM auf dem

@@ -68,7 +68,7 @@ Kapitel 4–7.
 |---|---|
 | 4.1 | Mandantendaten erfassen; Kennzeichen des Mandanten und des Gegners getrennt geführt; **die Bauart des Fahrzeugs ist kein Aufnahmekriterium** — Versicherungs- (E-Scooter), Behörden-, Kurzzeit- und Auslandskennzeichen weist kein Feld zurück und sperrt keine Handlung; Stammdaten bekannter Mandanten übernehmen |
 | 4.2 | Zentralruf-Anfrage: Formular vorbefüllen, Captcha bleibt beim Anwalt, Aufbau der Referenz; Kennzeichen werden übernommen, wie eingegeben — die Schreibweise mit Bindestrich wird empfohlen und angemerkt, nicht hergestellt |
-| 4.3 | Zentralruf-Antwort verarbeiten: Auslesen, Zuordnen, manueller Weg und Postfach-Überwachung, bestätigte Übernahme, Negativ-Antwort; vollständiger, seitenweise geladener Posteingang |
+| 4.3 | Zentralruf-Antwort verarbeiten: Auslesen, Zuordnen, manueller Weg und Postfach-Überwachung, bestätigte Übernahme, Negativ-Antwort; vollständiger, seitenweise geladener Posteingang; vier Handgriffe an einer eingegangenen Nachricht (Anhang öffnen, in die Akte legen, beim Versand weiterverwenden, antworten) über einen vorgeschlagenen, nicht am Vorgang gespeicherten Vorgangsbezug |
 | 4.4 | Vorlage ausfüllen: zwei Vorlagenarten, RVG-Kostenkalkulation, Standardpositionen der Schadensaufstellung, keine unbefüllten Platzhalter |
 | 4.5 | Prüfung und Korrektur: Sichtprüfung in der Vorschau, Freigabe, Korrekturweg |
 | 4.6 | Ablage in der Akte; Ablageort am Vorgang festhalten |
@@ -112,7 +112,7 @@ Ausschluss auf welches Kapitel drückt: Wer an dem Kapitel arbeitet, liest die Z
 |---|---|
 | Keine vollständige Kanzleisoftware (kein Fristenmanagement, keine Buchhaltung, keine Mandantenkommunikation über den Workflow hinaus) | §3, §5.1, §6 |
 | Keine Fristen- oder Wiedervorlagelogik — die App erinnert nicht aktiv; die Übersicht nach Bearbeitungsstand genügt | §3, §4.9 |
-| **Kein vollständiges Mailprogramm** — lesender Posteingang in begrenzten Seiten (§4.3), Workflow-Versand (§4.7); keine Ordnerverwaltung, Suche oder vollständiger Antwort-Workflow | §4.3, §4.7, §4.9 |
+| **Kein vollständiges Mailprogramm** — lesender Posteingang in begrenzten Seiten (§4.3) mit genau vier Handgriffen (öffnen, in die Akte legen, beim Versand weiterverwenden, antworten), Workflow-Versand (§4.7); keine Ordnerverwaltung, Suche, Löschen, Gelesen-Markierung, Zitieren oder Weiterleiten | §4.3, §4.7, §4.9 |
 | Keine Vollautomatisierung ohne Anwalt — Captcha, inhaltliche Freigabe, Übernahme der Antwort und Auftragsabschluss bleiben bestätigte Schritte | §4.2, §4.3, §4.5, §4.8 |
 | Andere Rechtsgebiete nur getragen, nicht ausgebaut — der durchgängige Workflow ist nur für Verkehrsunfall-Mandate ausgearbeitet | §3, §4 |
 | Kein Mehrbenutzer- oder Netzwerkbetrieb — Einzelplatz, ein Nutzer, lokale Daten | §2, §7 |
