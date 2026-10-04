@@ -32,6 +32,16 @@ var templatesDirectory = Environment.GetEnvironmentVariable("AUTOMATION_APP_VORL
         "Vorlagen");
 var mappingPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "ersetzungen.local.tsv");
 
+// `dotnet run -- vollmacht`: nur die drei Vollmachten (§4.11), ohne die
+// Anspruchsschreiben anzufassen — siehe VollmachtParametrisierung.
+if (args is ["vollmacht", ..])
+{
+    return VollmachtParametrisierung.Lauf(
+        root,
+        templatesDirectory,
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "vollmacht.local.tsv"));
+}
+
 if (!File.Exists(mappingPath))
 {
     Console.Error.WriteLine($"""

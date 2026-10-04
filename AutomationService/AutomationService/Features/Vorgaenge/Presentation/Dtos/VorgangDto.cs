@@ -33,7 +33,8 @@ public sealed record VorgangDto(
     int? SchreibenNummer,
     string? DokumentPfad,
     string? AktenOrdner,
-    DateTime? AbgeschlossenAm)
+    DateTime? AbgeschlossenAm,
+    DateTime? VollmachtGedrucktAm = null)
 {
     public static VorgangDto From(VorgangEntity e) => new(
         e.Referenz,
@@ -59,7 +60,8 @@ public sealed record VorgangDto(
         e.SchreibenNummer,
         e.DokumentPfad,
         e.AktenOrdner,
-        e.AbgeschlossenAm);
+        e.AbgeschlossenAm,
+        e.VollmachtGedrucktAm);
 
     public VorgangEntity ToEntity() => new()
     {
@@ -88,6 +90,7 @@ public sealed record VorgangDto(
         DokumentPfad = DokumentPfad,
         AktenOrdner = AktenOrdner,
         AbgeschlossenAm = AbgeschlossenAm,
+        VollmachtGedrucktAm = VollmachtGedrucktAm,
     };
 
     static JsonElement? ParseJson(string? json)

@@ -14,6 +14,7 @@ dashboard lesen) · `RegisterCubit` (Tab 6: Zeilen, Historienstand, Filter, Reih
 `AntwortKonflikte`, `VorgangPrefillMatcher`, `VorgangRueckfluss`, `VorgangVollstaendigkeit`, `VorgangWartezeit`, `RegisterFilter`,
 `RegisterReihenfolge`, `VorgangJahrgang`, `MandantAnschrift`.
 **Backend:** `Features/Vorgaenge/` + `Features/RegisterHistorie/` · `GET|PUT /api/Vorgaenge`, `PUT|DELETE /api/Vorgaenge/entwurf`,
+`PUT|DELETE /api/Vorgaenge/vollmacht` (§4.11, Vermerk „Vollmacht gedruckt", Zeitpunkt setzt der Dienst),
 `DELETE /api/Vorgaenge?referenz=&registerzeileBehalten=`, `POST …/abschliessen|referenz`, `POST …/register/export`,
 `GET …/register/stand|zeilen`, `GET /api/RegisterHistorie/stand`, `GET|PUT|DELETE /api/RegisterHistorie/{id}`,
 `GET …/register/nummern` (§6.3) → `RegisterNummernRepository`/`RegisterNummernStand`, auch von `vorgang_starten` gelesen ·
@@ -35,6 +36,11 @@ SignalR-Hub `/hubs/register`
 - Das Register ist kein eigener Bestand und wird seit #109 **im Backend gebaut** (`register/zeilen`,
   Vorgänge und Historie in einer Folge) — Sortierung, Zellen, Filterwirkung: **`FALLSTRICKE.md`**.
 - `Vorgang.copyWith` verknüpft jedes Feld mit `??`: nicht auf null zurücksetzbar (Absicht — eine
-  erneute Anfrage darf erfasste Antwortdaten nicht verlieren). Ausnahme: `entwurf` (Rückgabe-Aufruf).
+  erneute Anfrage darf erfasste Antwortdaten nicht verlieren). Ausnahme: `entwurf`,
+  `vollmachtGedrucktAm` (beide Rückgabe-Aufruf).
+- Der Vermerk „Vollmacht gedruckt" (§4.11) läuft nie über `upsertVorgang`: Der Upsert überschreibt
+  ihn bewusst nicht, sonst risse ein zeitgleich bearbeiteter Vorgang ihn beim nächsten Speichern
+  wieder heraus. Eigener Weg: `VorgangCubit.vermerkeVollmacht` → `VorgangRepository.setzeVollmachtVermerk`
+  → `PUT|DELETE /api/Vorgaenge/vollmacht`.
 - `VorgangVersandZeile` liest den Versandstand aus **email_versand** (ein Abruf für alle Zeilen,
   Klick öffnet `VersandProtokollDialog`); leer heißt „nichts versendet **durch die App**" (§4.8).

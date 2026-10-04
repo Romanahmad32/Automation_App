@@ -90,6 +90,34 @@ public class VorgaengeController(
     }
 
     /// <summary>
+    /// Vermerkt am Vorgang, dass seine Vollmacht gedruckt ist (§4.11) — nach einem
+    /// ausgelösten Druck oder von Hand, wenn sie anders zustande kam. Den
+    /// Zeitpunkt setzt der Dienst; ein erneuter Druck setzt ihn neu.
+    /// </summary>
+    [HttpPut("vollmacht")]
+    [ProducesResponseType(typeof(VorgangDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VorgangDto>> VermerkeVollmacht(
+        [FromQuery] string referenz,
+        CancellationToken cancellationToken)
+    {
+        var vorgang = await repository.SetzeVollmachtGedrucktAsync(referenz, DateTime.Now, cancellationToken);
+        return vorgang is null ? NotFound() : Ok(VorgangDto.From(vorgang));
+    }
+
+    /// <summary>Nimmt den Vermerk „Vollmacht gedruckt" zurück (§4.11).</summary>
+    [HttpDelete("vollmacht")]
+    [ProducesResponseType(typeof(VorgangDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<VorgangDto>> NimmVollmachtVermerkZurueck(
+        [FromQuery] string referenz,
+        CancellationToken cancellationToken)
+    {
+        var vorgang = await repository.SetzeVollmachtGedrucktAsync(referenz, null, cancellationToken);
+        return vorgang is null ? NotFound() : Ok(VorgangDto.From(vorgang));
+    }
+
+    /// <summary>
     /// Schließt den Vorgang ab (§4.8): Status „versendet" und Hochzählen der
     /// laufenden Auftragsnummer (§7.1) in einer Transaktion. Idempotent —
     /// ein bereits abgeschlossener Vorgang zählt nicht erneut hoch.

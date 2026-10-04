@@ -76,6 +76,7 @@ Kapitel 4–7.
 | 4.8 | Auftragsabschluss als eigener Schritt: erledigt, Auftragsnummer weiterzählen, Registereintrag |
 | 4.9 | Folgekorrespondenz zu einem offenen Vorgang |
 | 4.10 | Erstkontakt über die Kanzlei-Website (durchgehend **[K]**) |
+| 4.11 | Vollmacht drucken: drei Vorlagenarten nach Rechtsgebiet, vorbelegte Kopfdaten, offenes Tatdatum der Bußgeldsache, Bankverbindung weder vorbelegt noch gespeichert, Drucken mit Rückfall aufs Öffnen, Vermerk des Druckdatums am Vorgang (kein Lebenszyklusschritt), Hinweis auf der Übersicht, feste Vorlagendateien mit sichtbarem Stand |
 
 ### 5 Stammdaten und Wissen
 
@@ -115,6 +116,7 @@ Ausschluss auf welches Kapitel drückt: Wer an dem Kapitel arbeitet, liest die Z
 | **Kein vollständiges Mailprogramm** — lesender Posteingang in begrenzten Seiten (§4.3), Workflow-Versand (§4.7); keine Ordnerverwaltung, Suche oder vollständiger Antwort-Workflow | §4.3, §4.7, §4.9 |
 | Keine Vollautomatisierung ohne Anwalt — Captcha, inhaltliche Freigabe, Übernahme der Antwort und Auftragsabschluss bleiben bestätigte Schritte | §4.2, §4.3, §4.5, §4.8 |
 | Andere Rechtsgebiete nur getragen, nicht ausgebaut — der durchgängige Workflow ist nur für Verkehrsunfall-Mandate ausgearbeitet | §3, §4 |
+| Keine digitale Ablage der Vollmacht — Papierarchiv der Kanzlei; kein Versand der Vollmacht an den Mandanten | §4.11 |
 | Kein Mehrbenutzer- oder Netzwerkbetrieb — Einzelplatz, ein Nutzer, lokale Daten | §2, §7 |
 | Keine Auslagerung des Datenbestands — alles bleibt auf dem Rechner der Kanzlei, ohne Internet arbeitsfähig | §2, §7.2 |
 

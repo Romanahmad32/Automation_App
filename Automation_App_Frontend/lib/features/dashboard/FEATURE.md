@@ -10,11 +10,13 @@ Rein lesend — jede Karte springt in den Tab, der den Bereich vollständig zeig
 (`features/vorgaenge/presentation/blocs/vorgang_cubit.dart`), im `BlocBuilder` per `bloc:` gesetzt.
 **Domain:** `DashboardUebersicht` (`domain/services/dashboard_uebersicht.dart`) — reine Auswertung
 des Vorgangsbestands: Dringlichkeitsrang der offenen Vorgänge, Ausschnitt der letzten
-Registerzeilen. Keine Entities, keine UseCases, kein Repository, keine Datasource.
+Registerzeilen, Zahl der offenen Vorgänge ohne gedruckte Vollmacht (§4.11). Keine Entities, keine
+UseCases, kein Repository, keine Datasource.
 **Backend:** — (kein eigener Slice; über die fremden Cubits `GET /api/Vorgaenge` sowie
 `GET /api/mailbox/status` und `GET /api/mailbox/replies?includeAcknowledged=false`)
 **Tests:** `test/features/dashboard/dashboard_uebersicht_test.dart`,
-`test/features/dashboard/dashboard_karte_test.dart`
+`test/features/dashboard/dashboard_karte_test.dart`,
+`test/features/dashboard/dashboard_vollmacht_hinweis_test.dart`
 
 **Fallstricke**
 
@@ -33,3 +35,6 @@ Registerzeilen. Keine Entities, keine UseCases, kein Repository, keine Datasourc
   sagt das nur der `MailboxStatusBanner` über der Liste — er gehört nicht wegoptimiert.
 - `DashboardUebersicht` sortiert Registerzeilen ohne laufende Nummer nach vorn, `RegisterPage`
   dagegen ans Ende. Absicht: Die Karte zeigt das Listenende, dort sollen die Ausreißer nicht stehen.
+- `DashboardVollmachtHinweis` (§4.11) steht oben im Körper der Karte „Offene Vorgänge", sichtbar nur
+  bei `anzahlOhneVollmacht > 0`; ein Klick springt in Tab 7, wo der Vermerk gedruckt bzw. von Hand
+  gesetzt wird — die Karte selbst ändert nichts.

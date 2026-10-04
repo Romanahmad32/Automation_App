@@ -29,6 +29,9 @@ public static class PdfConversionInjection
         services.AddSingleton<WordInteropPdfConversionService>();
         services.AddSingleton<IWordInteropPdfConverter>(provider =>
             provider.GetRequiredService<WordInteropPdfConversionService>());
+        // Dieselbe Instanz: Druck und PDF teilen sich den einen Word-Thread.
+        services.AddSingleton<IWordDrucker>(provider =>
+            provider.GetRequiredService<WordInteropPdfConversionService>());
         services.AddKeyedSingleton<IPdfConversionService, PdfConversionService>(
             CompositePdfConversionService.FreeSpireKey);
         services.AddSingleton<IPdfPreviewCache, PdfPreviewCache>();

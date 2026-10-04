@@ -23,6 +23,19 @@ public class MandantenController(IMandantenRepository repository) : ControllerBa
     }
 
     /// <summary>
+    /// Ein einzelner Mandant — für die Vorbelegung der Vollmacht (§4.11), die
+    /// am Vorgang nur die ID kennt und dafür nicht das ganze Register holen soll.
+    /// </summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(MandantDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MandantDto>> GetById(int id, CancellationToken cancellationToken)
+    {
+        var mandant = await repository.GetByIdAsync(id, cancellationToken);
+        return mandant is null ? NotFound() : Ok(MandantDto.From(mandant));
+    }
+
+    /// <summary>
     /// Ein Ausschnitt des Registers für die Mandantenliste. In der Kanzlei
     /// stehen dort tausende Mandanten; sie alle auf einmal zu holen ist der
     /// Abruf, den die Liste nicht braucht.
