@@ -5,8 +5,9 @@ import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebie
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_katalog_stand.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_arbeitsflaeche.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_dialog_knoepfe.dart';
-import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_formular.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_ergebnis_ansicht.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_word_ansicht.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
@@ -16,10 +17,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Der eine Dialog für die Vollmacht zum Vorgang (§4.11) — erreichbar aus
 /// „Vorgang starten" nach dem Speichern und aus jeder Kachel in „Vorgänge".
 ///
-/// Er zeigt die vorbelegten Kopfdaten zur Korrektur, druckt, fällt bei einem
-/// gescheiterten Druck auf Word zurück und vermerkt den Druck am Vorgang.
-/// Den Ablauf trägt der [VollmachtCubit]; dieser Baustein zeigt nur, wo der
-/// gerade steht, und schließt sich, wenn er fertig ist.
+/// Er zeigt die vorbelegten Kopfdaten zur Korrektur samt Seitenvorschau und
+/// Drucker, druckt, fällt bei einem gescheiterten Druck auf Word zurück und
+/// vermerkt den Druck am Vorgang. Danach bleibt er mit dem Ergebnis stehen,
+/// bis der Anwalt „Fertig" drückt (#164) — die App weiß nicht, ob wirklich
+/// ein Blatt herauskam. Den Ablauf trägt der [VollmachtCubit]; dieser
+/// Baustein zeigt nur, wo der gerade steht.
 class VollmachtDialog extends StatelessWidget {
   const VollmachtDialog({super.key});
 
@@ -57,8 +60,16 @@ class VollmachtDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StandNachziehen<VollmachtCubit, VollmachtStand>(
-      // Nichts zu füllen: Die Felder lesen den Stand im Aufbau.
-      nachziehen: (_, _) {},
+      // Die Felder lesen den Stand im Aufbau. Nachzuziehen ist nur die erste
+      // Seitenvorschau, sobald sie fällig ist — nach dem Bild, denn beim
+      // Aufgehen läuft dieser Rückruf mitten im Aufbau.
+      nachziehen: (context, stand) {
+        if (!stand.vorschauFaellig) return;
+        final cubit = context.read<VollmachtCubit>();
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => cubit.erstelleVorschau(),
+        );
+      },
       beiUebergang: _melde,
       builder: (context, stand) => AlertDialog(
         title: Row(
@@ -75,50 +86,47 @@ class VollmachtDialog extends StatelessWidget {
             ),
           ],
         ),
-        content: SizedBox(
-          width: 600,
-          child: SingleChildScrollView(child: _inhalt(stand)),
-        ),
+        content: _inhalt(context, stand),
         actions: [VollmachtDialogKnoepfe(stand: stand)],
       ),
     );
   }
 
-  Widget _inhalt(VollmachtStand stand) => switch (stand.phase) {
-    VollmachtPhase.laedt => const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24),
-      child: LinearProgressIndicator(),
-    ),
-    VollmachtPhase.inWordGeoeffnet => VollmachtWordAnsicht(stand: stand),
-    // „abgeschlossen" steht nur ein Bild lang, bevor der Dialog schließt —
-    // dann bitte als laufender Schritt, nicht als Rückfrage nach dem Vermerk.
-    VollmachtPhase.eingabe ||
-    VollmachtPhase.arbeitet ||
-    VollmachtPhase.abgeschlossen => Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        VollmachtFormular(stand: stand),
-        if (stand.phase != VollmachtPhase.eingabe)
-          const Padding(
-            padding: EdgeInsets.only(top: 16),
-            child: LinearProgressIndicator(),
-          ),
-      ],
-    ),
-  };
+  /// Vor dem Druck mit Vorschau so breit, wie das Fenster es hergibt; danach
+  /// — in Word oder im Ergebnis — reicht die schmale Fassung.
+  Widget _inhalt(BuildContext context, VollmachtStand stand) {
+    Widget schmal(Widget kind) => SizedBox(
+      width: VollmachtArbeitsflaeche.breiteUntereinander,
+      child: SingleChildScrollView(child: kind),
+    );
+
+    return switch (stand.phase) {
+      VollmachtPhase.laedt => schmal(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: LinearProgressIndicator(),
+        ),
+      ),
+      VollmachtPhase.inWordGeoeffnet => schmal(
+        VollmachtWordAnsicht(stand: stand),
+      ),
+      VollmachtPhase.abgeschlossen => schmal(
+        VollmachtErgebnisAnsicht(stand: stand),
+      ),
+      VollmachtPhase.eingabe || VollmachtPhase.arbeitet => SizedBox(
+        width: VollmachtArbeitsflaeche.nebeneinander(context)
+            ? VollmachtArbeitsflaeche.breiteNebeneinander
+            : VollmachtArbeitsflaeche.breiteUntereinander,
+        child: VollmachtArbeitsflaeche(stand: stand),
+      ),
+    };
+  }
 
   static void _melde(BuildContext context, VollmachtStand stand) {
     final rueckmeldung = Rueckmeldung.von(context);
     final fehler = stand.fehler;
     if (fehler != null) rueckmeldung.fehler(fehler);
-
-    final abschluss = stand.abschluss;
-    if (stand.phase == VollmachtPhase.abgeschlossen && abschluss != null) {
-      Navigator.of(context).pop();
-      stand.abschlussOhneMakel
-          ? rueckmeldung.erfolg(abschluss)
-          : rueckmeldung.hinweis(abschluss);
-    }
+    final hinweis = stand.hinweis;
+    if (hinweis != null) rueckmeldung.hinweis(hinweis);
   }
 }

@@ -12,4 +12,11 @@ public interface IVollmachtDienst
 
     /// <summary>Füllt die Vorlage nur aus („In Word öffnen"); die Datei bleibt liegen.</summary>
     VollmachtErgebnis FuelleAus(VollmachtAuftrag auftrag);
+
+    /// <summary>
+    /// Füllt aus und liefert die Seite als PDF. Weder die ausgefüllte Datei
+    /// noch die PDF bleiben liegen — die Vollmacht wird nicht digital
+    /// aufbewahrt (§4.11, §8).
+    /// </summary>
+    Task<VollmachtVorschau> VorschauAsync(VollmachtAuftrag auftrag);
 }

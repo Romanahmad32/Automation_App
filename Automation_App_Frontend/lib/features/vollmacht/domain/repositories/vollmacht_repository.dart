@@ -2,8 +2,10 @@ import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_ergebnis.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
 
 /// Port der Vollmacht (§4.11). Fehler kommen als [Failure] zurück, damit die
 /// Oberfläche sie zeigen **muss** — ein verschluckter Druckfehler hieße, der
@@ -24,6 +26,14 @@ abstract class VollmachtRepository {
 
   /// Füllt nur aus; die Datei bleibt zum Öffnen liegen.
   Future<Either<Failure, VollmachtErgebnis>> fuelleAus(
+    VollmachtAuftrag auftrag,
+  );
+
+  /// Der Windows-Standarddrucker und was Windows über ihn meldet.
+  Future<Either<Failure, VollmachtDrucker>> ladeDrucker();
+
+  /// Die ausgefüllte Seite als PDF; der Dienst behält nichts davon.
+  Future<Either<Failure, VollmachtVorschau>> erstelleVorschau(
     VollmachtAuftrag auftrag,
   );
 }

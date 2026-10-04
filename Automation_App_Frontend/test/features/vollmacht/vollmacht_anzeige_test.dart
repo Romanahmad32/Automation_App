@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_ergebnis.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_formular.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_stand_zeile.dart';
@@ -73,6 +77,34 @@ void main() {
   test('ein unbekannter Status des Dienstes ist nie ein Erfolg', () {
     final ergebnis = VollmachtErgebnis.fromJson({'status': 'irgendwas'});
     expect(ergebnis.status, VollmachtErgebnisStatus.fehler);
+  });
+
+  test('die Seite der Vorschau kommt als Base64 und wird zu Bytes', () {
+    // So schreibt System.Text.Json ein byte[] (VollmachtVorschauDto.Pdf).
+    final vorschau = VollmachtVorschau.fromJson({
+      'status': 'erstellt',
+      'pdf': base64Encode([37, 80, 68, 70]),
+      'warnungen': ['Tatdatum'],
+    });
+
+    expect(vorschau.status, VollmachtVorschauStatus.erstellt);
+    expect(vorschau.pdf, [37, 80, 68, 70]);
+    expect(vorschau.warnungen, ['Tatdatum']);
+    expect(
+      VollmachtVorschau.fromJson({'status': 'neu'}).status,
+      VollmachtVorschauStatus.fehler,
+    );
+  });
+
+  test('ein unbekannter Druckerzustand ist nie „bereit"', () {
+    final drucker = VollmachtDrucker.fromJson({'name': 'X', 'zustand': 'neu'});
+
+    expect(drucker.zustand, VollmachtDruckerZustand.unbekannt);
+    expect(drucker.kannDrucken, isTrue);
+    expect(
+      VollmachtDrucker.fromJson({'zustand': 'keinDrucker'}).kannDrucken,
+      isFalse,
+    );
   });
 
   testWidgets('der Dialog ohne Mandant sagt, warum die Felder leer sind', (

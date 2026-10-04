@@ -257,14 +257,20 @@ import 'package:automation_app/features/vollmacht/domain/repositories/vollmacht_
     as _i368;
 import 'package:automation_app/features/vollmacht/domain/usecases/drucke_vollmacht.dart'
     as _i635;
+import 'package:automation_app/features/vollmacht/domain/usecases/erstelle_vollmacht_vorschau.dart'
+    as _i595;
 import 'package:automation_app/features/vollmacht/domain/usecases/fuelle_vollmacht_aus.dart'
     as _i844;
+import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_drucker.dart'
+    as _i320;
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_mandant.dart'
     as _i1062;
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_vorlagen.dart'
     as _i251;
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart'
     as _i839;
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_vorbereitung.dart'
+    as _i745;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_historie_datasource.dart'
     as _i669;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_hub.dart'
@@ -838,8 +844,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i635.DruckeVollmacht>(
       () => _i635.DruckeVollmacht(gh<_i368.VollmachtRepository>()),
     );
+    gh.factory<_i595.ErstelleVollmachtVorschau>(
+      () => _i595.ErstelleVollmachtVorschau(gh<_i368.VollmachtRepository>()),
+    );
     gh.factory<_i844.FuelleVollmachtAus>(
       () => _i844.FuelleVollmachtAus(gh<_i368.VollmachtRepository>()),
+    );
+    gh.factory<_i320.LadeVollmachtDrucker>(
+      () => _i320.LadeVollmachtDrucker(gh<_i368.VollmachtRepository>()),
     );
     gh.factory<_i1062.LadeVollmachtMandant>(
       () => _i1062.LadeVollmachtMandant(gh<_i368.VollmachtRepository>()),
@@ -927,6 +939,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i224.UseCase<void, _i1071.LoescheImportPaketParams>>(),
       ),
     );
+    gh.factory<_i745.VollmachtVorbereitung>(
+      () => _i745.VollmachtVorbereitung(
+        gh<_i251.LadeVollmachtVorlagen>(),
+        gh<_i1062.LadeVollmachtMandant>(),
+        gh<_i320.LadeVollmachtDrucker>(),
+      ),
+    );
     gh.factory<_i852.VorgangStartenBloc>(
       () => _i852.VorgangStartenBloc(
         gh<
@@ -955,15 +974,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i224.UseCase<_i258.Mandant, _i258.Mandant>>(),
       ),
     );
-    gh.factory<_i839.VollmachtCubit>(
-      () => _i839.VollmachtCubit(
-        gh<_i251.LadeVollmachtVorlagen>(),
-        gh<_i1062.LadeVollmachtMandant>(),
-        gh<_i635.DruckeVollmacht>(),
-        gh<_i844.FuelleVollmachtAus>(),
-        gh<_i847.VorgangCubit>(),
-      ),
-    );
     gh.factory<_i54.MandantenImportCubit>(
       () => _i54.MandantenImportCubit(
         gh<
@@ -974,6 +984,16 @@ extension GetItInjectableX on _i174.GetIt {
         >(),
         gh<_i224.UseCase<List<_i119.Akte>, _i224.NoParams>>(),
         gh<_i224.UseCase<List<_i258.Mandant>, _i224.NoParams>>(),
+      ),
+    );
+    gh.factory<_i839.VollmachtCubit>(
+      () => _i839.VollmachtCubit(
+        gh<_i745.VollmachtVorbereitung>(),
+        gh<_i251.LadeVollmachtVorlagen>(),
+        gh<_i595.ErstelleVollmachtVorschau>(),
+        gh<_i635.DruckeVollmacht>(),
+        gh<_i844.FuelleVollmachtAus>(),
+        gh<_i847.VorgangCubit>(),
       ),
     );
     return this;

@@ -4,22 +4,28 @@ import 'package:flutter/material.dart';
 /// wahlweise Knöpfe darunter — in der Tertiärfarbe, weil nichts davon ein
 /// Fehler ist, sondern etwas, das der Anwalt wissen muss, bevor er druckt
 /// (kein Mandant zugeordnet, Tatdatum offen, Vorlage fehlt).
+///
+/// [farbe] weicht nur ab, wo die Zeile kein Hinweis ist: neutral für eine
+/// bloße Angabe (der Drucker ist bereit), Fehlerfarbe für eine Sperre (kein
+/// Drucker eingerichtet).
 class VollmachtHinweis extends StatelessWidget {
   final IconData icon;
   final String text;
   final List<Widget> aktionen;
+  final Color? farbe;
 
   const VollmachtHinweis({
     super.key,
     required this.icon,
     required this.text,
     this.aktionen = const [],
+    this.farbe,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final farbe = theme.colorScheme.tertiary;
+    final farbe = this.farbe ?? theme.colorScheme.tertiary;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

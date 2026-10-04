@@ -6,7 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Die Knöpfe des Vollmacht-Dialogs je Phase (§4.11).
 ///
 /// Beim Ausfüllen: „Drucken" ist der Normalfall und steht rechts, „In Word
-/// öffnen" der Rückfall daneben. Nach dem Öffnen in Word: die Rückfrage, ob
+/// öffnen" der Rückfall daneben; ohne eingerichteten Drucker bleibt nur der
+/// Rückfall. Im Ergebnis: nur „Fertig". Nach dem Öffnen in Word: die Rückfrage, ob
 /// der Druck vermerkt werden soll — „Ohne Vermerk schließen" ist bewusst eine
 /// gleichwertige Antwort, die App weiß ja nicht, ob Papier herauskam.
 class VollmachtDialogKnoepfe extends StatelessWidget {
@@ -20,6 +21,10 @@ class VollmachtDialogKnoepfe extends StatelessWidget {
     final schliessen = Navigator.of(context).pop;
 
     final knoepfe = switch (stand.phase) {
+      // Nachsteuern („Erneut drucken" usw.) sitzt in der Ergebnisansicht.
+      VollmachtPhase.abgeschlossen => [
+        FilledButton(onPressed: schliessen, child: const Text('Fertig')),
+      ],
       VollmachtPhase.inWordGeoeffnet => [
         TextButton(
           onPressed: schliessen,
@@ -44,7 +49,7 @@ class VollmachtDialogKnoepfe extends StatelessWidget {
         FilledButton.icon(
           icon: const Icon(Icons.print_outlined),
           label: const Text('Drucken'),
-          onPressed: stand.bereit ? cubit.drucke : null,
+          onPressed: stand.druckbereit ? cubit.drucke : null,
         ),
       ],
     };

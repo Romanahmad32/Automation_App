@@ -1,8 +1,13 @@
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_kopfdaten.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_abschluss.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 
 /// Wo der Vollmacht-Dialog gerade steht.
 enum VollmachtPhase {
@@ -19,7 +24,8 @@ enum VollmachtPhase {
   /// und fragt deshalb, ob sie den Druck vermerken soll.
   inWordGeoeffnet,
 
-  /// Fertig; der Dialog schließt sich mit [VollmachtStand.abschluss].
+  /// Gedruckt oder in Word gedruckt und vermerkt. Der Dialog zeigt, was
+  /// passiert ist ([VollmachtStand.abschluss]), bis der Anwalt „Fertig" drückt.
   abgeschlossen,
 }
 
@@ -51,6 +57,19 @@ class VollmachtStand extends Equatable {
   /// möglich, der Dienst meldet eine fehlende Vorlage selbst.
   final VollmachtVorlagenStand? vorlagen;
 
+  /// Der Standarddrucker; null, solange er nicht abgefragt ist.
+  final VollmachtDrucker? drucker;
+
+  /// Die zuletzt erzeugte Seitenvorschau und der Auftrag, aus dem sie entstand
+  /// — daran erkennt der Dialog, ob sie noch zu den Feldern passt.
+  final VollmachtVorschau? vorschau;
+  final VollmachtAuftrag? vorschauFuer;
+  final bool vorschauLaedt;
+
+  /// Zählt jede neue Vorschau — der PDF-Betrachter braucht je Inhalt einen
+  /// eigenen Namen, sonst zeigt er die alte Seite weiter.
+  final int vorschauNummer;
+
   /// Die zuletzt ausgefüllte Datei (Phase [VollmachtPhase.inWordGeoeffnet]).
   final String? pfad;
 
@@ -60,14 +79,15 @@ class VollmachtStand extends Equatable {
   /// Platzhalter, die in der Vorlage stehen geblieben sind.
   final List<String> warnungen;
 
-  /// Die Meldung des letzten Schritts, als Rückmeldung zu zeigen; zusammen mit
-  /// [meldungsNummer], damit derselbe Text beim zweiten Mal wieder erscheint.
+  /// Die Meldung des letzten Schritts, als Rückmeldung zu zeigen — [fehler]
+  /// als Fehler, [hinweis] als Hinweis; zusammen mit [meldungsNummer], damit
+  /// derselbe Text beim zweiten Mal wieder erscheint.
   final String? fehler;
+  final String? hinweis;
   final int meldungsNummer;
 
-  /// Text der Rückmeldung beim Schließen, und ob alles geklappt hat.
-  final String? abschluss;
-  final bool abschlussOhneMakel;
+  /// Was in Phase [VollmachtPhase.abgeschlossen] stehen bleibt.
+  final VollmachtAbschluss? abschluss;
 
   const VollmachtStand({
     this.phase = VollmachtPhase.laedt,
@@ -76,13 +96,18 @@ class VollmachtStand extends Equatable {
     this.kopfdaten = VollmachtKopfdaten.leer,
     this.mandantLage = VollmachtMandantLage.geladen,
     this.vorlagen,
+    this.drucker,
+    this.vorschau,
+    this.vorschauFuer,
+    this.vorschauLaedt = false,
+    this.vorschauNummer = 0,
     this.pfad,
     this.geoeffnet = false,
     this.warnungen = const [],
     this.fehler,
+    this.hinweis,
     this.meldungsNummer = 0,
     this.abschluss,
-    this.abschlussOhneMakel = true,
   });
 
   /// Ob die Vorlage zur gewählten Art sicher fehlt.
@@ -96,18 +121,38 @@ class VollmachtStand extends Equatable {
   bool get bereit =>
       phase == VollmachtPhase.eingabe && art != null && !vorlageFehlt;
 
+  /// Ob „Drucken" greifen darf — nicht ohne eingerichteten Drucker.
+  bool get druckbereit => bereit && (drucker?.kannDrucken ?? true);
+
+  /// Ob der Dialog eine erste Vorschau anstoßen soll: Art und Vorlage stehen
+  /// fest, und es gibt noch keine. Danach nur noch auf Knopfdruck.
+  bool get vorschauFaellig => bereit && vorschau == null && !vorschauLaedt;
+
+  /// Ob die Vorschau eine andere Art oder andere Felder zeigt als eingegeben.
+  bool get vorschauVeraltet {
+    final fuer = vorschauFuer;
+    return vorschau != null &&
+        fuer != null &&
+        (fuer.art != art || fuer.kopfdaten != kopfdaten);
+  }
+
   VollmachtStand copyWith({
     VollmachtPhase? phase,
     VollmachtArt? art,
     VollmachtKopfdaten? kopfdaten,
     VollmachtMandantLage? mandantLage,
     VollmachtVorlagenStand? vorlagen,
+    VollmachtDrucker? drucker,
+    VollmachtVorschau? vorschau,
+    VollmachtAuftrag? vorschauFuer,
+    bool? vorschauLaedt,
+    int? vorschauNummer,
     String? pfad,
     bool? geoeffnet,
     List<String>? warnungen,
     String? fehler,
-    String? abschluss,
-    bool? abschlussOhneMakel,
+    String? hinweis,
+    ValueGetter<VollmachtAbschluss?>? abschluss,
   }) => VollmachtStand(
     phase: phase ?? this.phase,
     vorgang: vorgang,
@@ -115,14 +160,21 @@ class VollmachtStand extends Equatable {
     kopfdaten: kopfdaten ?? this.kopfdaten,
     mandantLage: mandantLage ?? this.mandantLage,
     vorlagen: vorlagen ?? this.vorlagen,
+    drucker: drucker ?? this.drucker,
+    vorschau: vorschau ?? this.vorschau,
+    vorschauFuer: vorschauFuer ?? this.vorschauFuer,
+    vorschauLaedt: vorschauLaedt ?? this.vorschauLaedt,
+    vorschauNummer: vorschauNummer ?? this.vorschauNummer,
     pfad: pfad ?? this.pfad,
     geoeffnet: geoeffnet ?? this.geoeffnet,
     warnungen: warnungen ?? this.warnungen,
     // Eine Meldung gilt nur für den Übergang, der sie bringt.
     fehler: fehler,
-    meldungsNummer: fehler == null ? meldungsNummer : meldungsNummer + 1,
-    abschluss: abschluss ?? this.abschluss,
-    abschlussOhneMakel: abschlussOhneMakel ?? this.abschlussOhneMakel,
+    hinweis: hinweis,
+    meldungsNummer: fehler == null && hinweis == null
+        ? meldungsNummer
+        : meldungsNummer + 1,
+    abschluss: abschluss != null ? abschluss() : this.abschluss,
   );
 
   @override
@@ -133,12 +185,17 @@ class VollmachtStand extends Equatable {
     kopfdaten,
     mandantLage,
     vorlagen,
+    drucker,
+    vorschau,
+    vorschauFuer,
+    vorschauLaedt,
+    vorschauNummer,
     pfad,
     geoeffnet,
     warnungen,
     fehler,
+    hinweis,
     meldungsNummer,
     abschluss,
-    abschlussOhneMakel,
   ];
 }

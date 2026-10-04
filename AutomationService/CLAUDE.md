@@ -103,8 +103,10 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   Binding (`WordInteropPdfConversionService`, eigener STA-Thread + Warmup), FreeSpire.Doc ist der
   Rückfall über eine Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter
   `Generated/PdfCache` (`PdfPreviewCache`). Über dieselbe STA-Thread-Warteschlange laufen seit
-  §4.11 auch Druckaufträge (`IWordDrucker`, `Document.PrintOut`) — sie treffen so eine schon
-  gestartete Word-Instanz statt eine zweite danebenzustarten.
+  §4.11 auch Druckaufträge (`IWordDrucker`, `Document.PrintOut`, ausgeführt von `WordDokumentDruck`) —
+  sie treffen so eine schon gestartete Word-Instanz statt eine zweite danebenzustarten. Ein Auftrag,
+  dessen Aufrufer schon aufgegeben hat, fällt aus (`WordAuftrag`). `IDruckerAuskunft` nennt den
+  Windows-Standarddrucker und seinen Zustand (`winspool.drv`, nur lesend — bewusst keine Auswahl).
 - **Vorgaenge** — Lebenszyklus des Vorgangs/Auftrags (Liste, Einzelabruf, Upsert, Löschen,
   Referenzänderung, angefangener Ausfüllstand über `PUT|DELETE api/Vorgaenge/entwurf`).
   `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und Auftragsnummer in **einer**
@@ -129,7 +131,10 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   ist (dieselbe Regel wie `VorlagenSeedService`, #33), und überschreibt nie — ein Muster ohne
   Kanzleikopf unter dem festen Namen im Ordner der Kanzlei ergäbe sonst eine Vollmacht ohne
   Bevollmächtigten. Nach erfolgreichem Druck löscht der Dienst nur die Vollmachtdatei im
-  Arbeitsordner, nie ein daneben liegendes Anspruchsschreiben.
+  Arbeitsordner, nie ein daneben liegendes Anspruchsschreiben. Die Seitenvorschau (`POST …/vorschau`,
+  #164) wandelt über `ConvertDocxToPdfFromBytesAsync` — der Pfad-Weg legte die ausgefüllte
+  Vollmacht im `PdfPreviewCache` ab — und löscht die Arbeitsdatei sofort; `GET …/drucker` liest
+  `IDruckerAuskunft`.
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST
   api/Settings/auftragsnummer/erhoehe` und die Standardpositionen der Schadensaufstellung (§4.4,
   `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle = Vorgabe, leeres Speichern setzt

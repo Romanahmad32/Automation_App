@@ -345,6 +345,14 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   ohne gedruckte Vollmacht. Die drei Vorlagen liegen als feste Dateien im Unterordner `Vollmacht/`
   des Vorlagenordners, geseedet aus neutralen Mustern; die Arbeitsdatei wird nach dem Druck
   gelöscht, in der Akte abgelegt wird nichts.
+- **Vollmacht: Vorschau, Drucker, Ergebnis (§4.11, 04.10.2026, #164)** — der Dialog zeigte Felder,
+  aber nicht die Seite, nannte keinen Drucker und schloss sich nach dem Druck sofort, obwohl die
+  App nur weiß, dass Word den Auftrag angenommen hat. Jetzt steht die ausgefüllte Seite neben den
+  Feldern (bei schmalem Fenster darunter; neu nur auf „Aktualisieren", veraltet wird angezeigt),
+  eine Zeile nennt den Windows-Standarddrucker samt gemeldetem Zustand (ohne Drucker bleibt nur
+  „In Word öffnen"), und nach dem Druck bleibt das Ergebnis stehen — wann, an welchen Drucker,
+  ob vermerkt — mit „Erneut drucken", „In Word öffnen" und „Vermerk zurücknehmen". Auch die
+  Vorschau hinterlässt keine Datei: Sie geht am PDF-Cache vorbei.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

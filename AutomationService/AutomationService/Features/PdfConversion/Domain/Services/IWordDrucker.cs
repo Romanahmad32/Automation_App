@@ -19,5 +19,9 @@ public interface IWordDrucker
     /// oder der Druck scheitert — der Aufrufer fällt dann auf „in Word öffnen"
     /// zurück.
     /// </summary>
-    Task DruckeAsync(string docxPfad, CancellationToken cancellationToken = default);
+    /// <returns>
+    /// Der Drucker, an den Word übergeben hat (<see cref="WordDruckerName"/>);
+    /// <c>null</c>, wenn Word ihn nicht nennen konnte.
+    /// </returns>
+    Task<string?> DruckeAsync(string docxPfad, CancellationToken cancellationToken = default);
 }
