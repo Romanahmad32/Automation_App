@@ -687,6 +687,18 @@ eben eingegeben hat; das widerspricht dem Leitprinzip „keine Doppelerfassung" 
   das Datum; „In Word öffnen" fragt danach nach, ob vermerkt werden soll — die App weiß dann nicht,
   ob wirklich Papier herauskam. Der Vermerk lässt sich jederzeit setzen und zurücknehmen und ist
   kein eigener Status im Lebenszyklus des Vorgangs (siehe 3): Ein Nachdruck ist jederzeit möglich.
+- **[S] Seitenvorschau vor dem Druck:** Neben den Feldern steht die ausgefüllte Seite so, wie sie
+  gedruckt würde. Sie entsteht beim Öffnen und auf Wunsch neu, nicht bei jeder Eingabe; passt sie
+  nicht mehr zu den Feldern, sagt die App das — gedruckt werden immer die aktuellen Felder. Auch
+  die Vorschau hinterlässt keine Datei (siehe 8).
+- **[S] Drucker sichtbar:** Vor dem Druck nennt die App den Windows-Standarddrucker und warnt, wenn
+  Windows ihn als offline oder gestört meldet — ohne zu sperren, denn diese Meldung stimmt nicht
+  immer. Ist gar kein Drucker eingerichtet, bleibt nur „In Word öffnen". Eine Druckerauswahl gibt
+  es bewusst nicht: Ein in Word gesetzter Drucker würde zum Standarddrucker aller Programme.
+- **[S] Ergebnis bleibt stehen:** Nach dem Druck zeigt die App, wann und an welchen Drucker
+  übergeben wurde und ob der Vermerk sitzt, und lässt an derselben Stelle nachsteuern — erneut
+  drucken, in Word öffnen, den Vermerk zurücknehmen —, bis der Anwalt den Dialog schließt. Die App
+  weiß nur, dass Word den Auftrag angenommen hat, nicht, ob ein Blatt herauskam.
 - **[S]** Die Übersicht zeigt einen Hinweis auf offene Vorgänge ohne gedruckte Vollmacht.
 - **[M] Vorlagen als feste Dateien mit sichtbarem Stand:** Die drei Vorlagen liegen unter festen
   Dateinamen in einem eigenen Unterordner des Vorlagenordners; kein Pflegeweg wie bei den

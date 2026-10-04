@@ -29,8 +29,10 @@ public enum VollmachtErgebnisArt
 /// <param name="Pfad">Die ausgefüllte Datei, sofern sie (noch) da ist; sonst null.</param>
 /// <param name="Meldung">Klartext für den Anwalt bei allem außer <see cref="VollmachtErgebnisArt.Gedruckt"/>.</param>
 /// <param name="Warnungen">Platzhalter, die in der Vorlage stehen geblieben sind (§4.4).</param>
+/// <param name="Drucker">Bei <see cref="VollmachtErgebnisArt.Gedruckt"/>: an welchen Drucker Word übergeben hat.</param>
 public sealed record VollmachtErgebnis(
     VollmachtErgebnisArt Art,
     string? Pfad,
     string? Meldung,
-    IReadOnlyList<string> Warnungen);
+    IReadOnlyList<string> Warnungen,
+    string? Drucker = null);
