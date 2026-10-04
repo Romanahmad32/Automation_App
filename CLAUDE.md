@@ -79,13 +79,13 @@ Ein Fachthema, zwei Orte — die Zuordnung Feature ↔ Slice:
 | Tab | Frontend `lib/features/` | Backend `Features/` |
 |---|---|---|
 | 0 Übersicht | `dashboard` (nur lesend, springt in den zuständigen Tab) | — |
-| 1 Vorgang starten | `vorgang_starten`, `zentralruf_request` | `Vorgaenge`, `ZentralrufAutomation` |
+| 1 Vorgang starten | `vorgang_starten`, `zentralruf_request`, `vollmacht` | `Vorgaenge`, `ZentralrufAutomation`, `Vollmacht` |
 | 2 Postfach | `mailbox`, `zentralruf_reply`, `versicherer` | `MailboxMonitor`, `ZentralrufAutomation`, `Versicherer` |
 | 3 Word Automation | `word_automation`, `email_versand` | `WordAutomation`, `PdfConversion`, `EmailVersand` |
 | 4 Vorlagen Verwalten | `form_template_setup` | `FormTemplates` |
 | 5 Mandanten | `mandanten` | `Mandanten` |
 | 6 Register | `vorgaenge` (Registeransicht), `register_import` | `Vorgaenge`, `RegisterHistorie` |
-| 7 Vorgänge | `vorgaenge` | `Vorgaenge` |
+| 7 Vorgänge | `vorgaenge`, `vollmacht` | `Vorgaenge`, `Vollmacht` |
 | 8 Einstellungen | `settings`, `backup` | `Settings`, `Backup` |
 | — (nur Debug) | `dev_simulation` | `DevSimulation` |
 

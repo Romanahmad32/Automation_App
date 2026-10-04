@@ -50,4 +50,15 @@ abstract class VorgangRepository {
   /// kein Vorgang zu [von] existiert. Wirft [ReferenzVergebenException],
   /// wenn [nach] bereits einem anderen Vorgang gehört.
   Future<Vorgang?> aendereReferenz(String von, String nach);
+
+  /// Setzt oder nimmt den Vermerk „Vollmacht gedruckt" zurück (§4.11).
+  /// Eigener Weg statt [upsertVorgang]: Der Upsert überschreibt das Feld
+  /// bewusst nicht, sonst risse ein zeitgleich bearbeiteter Vorgang den
+  /// Vermerk beim nächsten Speichern wieder heraus. Den Zeitpunkt setzt der
+  /// Dienst; liefert den geänderten Stand zurück, null, wenn kein Vorgang zur
+  /// Referenz existiert.
+  Future<Vorgang?> setzeVollmachtVermerk(
+    String referenz, {
+    required bool gedruckt,
+  });
 }

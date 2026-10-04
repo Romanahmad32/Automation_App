@@ -646,6 +646,41 @@ werden — fachlich der Einstieg **vor** 4.1.
 - **[K] Datensparsam:** Nach der Entscheidung des Anwalts wird eine Anfrage außerhalb der App nicht
   weiter vorgehalten.
 
+### 4.11 Vollmacht drucken
+
+Zu jedem Auftrag braucht die Kanzlei eine vom Mandanten unterschriebene Vollmacht. Sie wird
+ausgedruckt und unterschrieben, nicht digital abgelegt — die Kanzlei archiviert sie bewusst nur
+auf Papier. Bislang füllte der Anwalt das Word-Formular von Hand mit Daten, die er der App gerade
+eben eingegeben hat; das widerspricht dem Leitprinzip „keine Doppelerfassung" (siehe 1.3).
+
+- **[M] Drei Vorlagenarten nach Rechtsgebiet:** Unfallsachen, Bußgeldsachen und Strafsache — im
+  Vollmachtstext identisch, unterschiedlich nur im Kopf („in Sachen"/„wegen"). Die Art wird aus
+  dem Rechtsgebiet des Vorgangs vorgeschlagen (siehe 4.1, 7.1); für andere Rechtsgebiete gibt es
+  keine Vorbelegung, der Anwalt wählt selbst. Der Vorschlag ist wie das Rechtsgebiet änderbar.
+- **[M] Kopfdaten vorbelegt, nicht vorgeschrieben:** Vorname, Nachname, Straße, PLZ, Ort, Telefon
+  und E-Mail kommen aus dem Mandantenregister (siehe 5.1), „in Sachen" und „wegen" aus der
+  gewählten Art — alles frei korrigierbar, nichts wird stillschweigend übernommen. Ohne
+  verknüpften Mandanten bleiben die Felder leer, und die App sagt, warum.
+- **[M] Das Tatdatum der Bußgeldsache bleibt offen:** Anders als das Unfalldatum (am Vorgang
+  bekannt) kennt die App das Tatdatum einer Ordnungswidrigkeit nicht — die Stelle im vorbelegten
+  Text bleibt für den Anwalt frei.
+- **[M] Bankverbindung weder vorbelegt noch gespeichert:** Diese Zeilen bleiben für die Hand des
+  Mandanten frei — Datensparsamkeit, die Kanzlei hat ohnehin das unterschriebene Papier.
+- **[M] Drucken als Normalfall, Öffnen als Rückfall:** Die App füllt die Vorlage und schickt sie an
+  den Windows-Standarddrucker. Ist der Druck nicht möglich oder schlägt er fehl, meldet die App das
+  und öffnet die ausgefüllte Datei zum Selbst-Drucken in Word. „In Word öffnen" geht denselben Weg
+  ohne Druckversuch — für den Fall, dass der Anwalt selbst nachsehen oder abweichend drucken will.
+- **[M] Druckdatum am Vorgang vermerkt, kein Lebenszyklusschritt:** Ein erfolgreicher Druck setzt
+  das Datum; „In Word öffnen" fragt danach nach, ob vermerkt werden soll — die App weiß dann nicht,
+  ob wirklich Papier herauskam. Der Vermerk lässt sich jederzeit setzen und zurücknehmen und ist
+  kein eigener Status im Lebenszyklus des Vorgangs (siehe 3): Ein Nachdruck ist jederzeit möglich.
+- **[S]** Die Übersicht zeigt einen Hinweis auf offene Vorgänge ohne gedruckte Vollmacht.
+- **[M] Vorlagen als feste Dateien mit sichtbarem Stand:** Die drei Vorlagen liegen unter festen
+  Dateinamen in einem eigenen Unterordner des Vorlagenordners; kein Pflegeweg wie bei den
+  Anspruchsschreiben (siehe 5.3), weil es an den Vollmacht-Feldern nichts zu beschreiben gibt. Wo
+  Vorlagenordner eingestellt und Vorlagenstand einsehbar sind (siehe 7.1), ist erkennbar, ob eine
+  Datei vorhanden ist und wann sie zuletzt geändert wurde; fehlt eine, sagt es auch der Dialog.
+
 ## 5. Stammdaten und Wissen
 
 ### 5.1 Mandantenregister
@@ -963,6 +998,10 @@ Konfigurierbar sein müssen mindestens:
 - **Andere Rechtsgebiete zunächst nur getragen, nicht ausgebaut:** Über die gemeinsame Vorgangs-,
   Mandanten- und Registerverwaltung hinaus ist der durchgängig automatisierte Workflow (Zentralruf,
   RVG, Anspruchsschreiben) nur für Verkehrsunfall-Mandate ausgearbeitet.
+- **Keine digitale Ablage der Vollmacht:** Sie wird gedruckt und unterschrieben, ihre Arbeitsdatei
+  danach gelöscht (siehe 4.11) — die Kanzlei archiviert sie bewusst nur auf Papier.
+- **Kein Versand der Vollmacht an den Mandanten:** Weder als Anhang einer Mail noch auf anderem
+  Weg (siehe 4.11, 4.7).
 - **Kein Mehrbenutzer- oder Netzwerkbetrieb:** Einzelplatz, ein Nutzer, lokale Daten.
 - **Keine Auslagerung des Datenbestands:** Mandanten, Vorgänge, Akten und Register bleiben auf dem
   Rechner der Kanzlei. Sie werden nicht auf einen Server ausgelagert und nicht zwischen Geräten

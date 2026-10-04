@@ -245,6 +245,22 @@ import 'package:automation_app/features/versicherer/domain/repositories/versiche
     as _i9;
 import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart'
     as _i782;
+import 'package:automation_app/features/vollmacht/data/datasources/vollmacht_datasource.dart'
+    as _i901;
+import 'package:automation_app/features/vollmacht/data/repositories/vollmacht_repository_impl.dart'
+    as _i513;
+import 'package:automation_app/features/vollmacht/domain/repositories/vollmacht_repository.dart'
+    as _i368;
+import 'package:automation_app/features/vollmacht/domain/usecases/drucke_vollmacht.dart'
+    as _i635;
+import 'package:automation_app/features/vollmacht/domain/usecases/fuelle_vollmacht_aus.dart'
+    as _i844;
+import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_mandant.dart'
+    as _i1062;
+import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_vorlagen.dart'
+    as _i250;
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart'
+    as _i839;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_historie_datasource.dart'
     as _i668;
 import 'package:automation_app/features/vorgaenge/data/datasources/register_hub.dart'
@@ -450,6 +466,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i310.SachgebietCubit>(
       () => _i310.SachgebietCubit(gh<_i1069.SachgebietRepository>()),
     );
+    gh.factory<_i901.VollmachtDatasource>(
+      () => _i901.ApiVollmachtDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i686.RegisterImportDatasource>(
       () => _i686.ApiRegisterImportDatasource(gh<_i361.Dio>()),
     );
@@ -614,6 +633,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i430.CalculateRvgFees(
         repository: gh<_i770.WordAutomationRepository>(),
       ),
+    );
+    gh.factory<_i368.VollmachtRepository>(
+      () => _i513.VollmachtRepositoryImpl(gh<_i901.VollmachtDatasource>()),
     );
     gh.factory<_i299.ErhoeheAuftragsnummer>(
       () => _i299.ErhoeheAuftragsnummer(gh<_i849.KanzleiSettingsRepository>()),
@@ -793,6 +815,18 @@ extension GetItInjectableX on _i174.GetIt {
         >(),
       ),
     );
+    gh.factory<_i635.DruckeVollmacht>(
+      () => _i635.DruckeVollmacht(gh<_i368.VollmachtRepository>()),
+    );
+    gh.factory<_i844.FuelleVollmachtAus>(
+      () => _i844.FuelleVollmachtAus(gh<_i368.VollmachtRepository>()),
+    );
+    gh.factory<_i1062.LadeVollmachtMandant>(
+      () => _i1062.LadeVollmachtMandant(gh<_i368.VollmachtRepository>()),
+    );
+    gh.factory<_i250.LadeVollmachtVorlagen>(
+      () => _i250.LadeVollmachtVorlagen(gh<_i368.VollmachtRepository>()),
+    );
     gh.factory<_i223.UseCase<List<String>, _i223.NoParams>>(
       () => _i392.GetAktenOrdnernamen(gh<_i763.MandantenRepository>()),
     );
@@ -906,6 +940,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i782.VersichererCubit>(),
         gh<_i554.AnredebausteineCubit>(),
         gh<_i223.UseCase<_i258.Mandant, _i258.Mandant>>(),
+      ),
+    );
+    gh.factory<_i839.VollmachtCubit>(
+      () => _i839.VollmachtCubit(
+        gh<_i250.LadeVollmachtVorlagen>(),
+        gh<_i1062.LadeVollmachtMandant>(),
+        gh<_i635.DruckeVollmacht>(),
+        gh<_i844.FuelleVollmachtAus>(),
+        gh<_i847.VorgangCubit>(),
       ),
     );
     gh.factory<_i54.MandantenImportCubit>(
