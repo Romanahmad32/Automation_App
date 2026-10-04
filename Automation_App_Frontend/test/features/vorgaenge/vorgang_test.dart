@@ -117,6 +117,24 @@ void main() {
       expect(kopie.vollmachtGedrucktAm, DateTime(2026, 7, 3, 9, 15));
     });
 
+    test('ein Zeitpunkt mit Versatz wird Ortszeit, nicht UTC', () {
+      // So antwortet der Dienst gleich nach dem Vermerk bzw. dem Abschluss.
+      // Als UTC stünde kurz nach Mitternacht der Vortag in der Standzeile.
+      const mitVersatz = '2026-09-13T00:30:00+02:00';
+      final vorgang = vorgangAusJson({
+        'referenz': '12/26 C03_HG-E 1427',
+        'angefragtAm': DateTime(2026, 6, 1).toIso8601String(),
+        'vollmachtGedrucktAm': mitVersatz,
+        'abgeschlossenAm': mitVersatz,
+      });
+
+      final ortszeit = DateTime.parse(mitVersatz).toLocal();
+      expect(vorgang.vollmachtGedrucktAm!.isUtc, isFalse);
+      expect(vorgang.vollmachtGedrucktAm, ortszeit);
+      expect(vorgang.abgeschlossenAm!.isUtc, isFalse);
+      expect(vorgang.abgeschlossenAm, ortszeit);
+    });
+
     test('mitAntwort behält einen gesetzten Vermerk', () {
       final vorgang = Vorgang.ausAnfrage(
         referenz: '12/26 C03_HG-E 1427',

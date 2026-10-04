@@ -128,6 +128,23 @@ void main() {
     },
   );
 
+  test('ist der Dienst nicht erreichbar, bleibt die Eingabe und nichts ist vermerkt', () async {
+    vorgaenge.bestand[referenz] = vorgang();
+    dienst.druckFehler = ServerFailure(message: 'Dienst antwortet nicht.');
+    final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
+    await aufbau.cubit.starte(vorgang(), const []);
+
+    await aufbau.cubit.drucke();
+
+    // Ohne Antwort gibt es keine ausgefüllte Datei, die sich öffnen ließe —
+    // der Anwalt kann es erneut versuchen, seine Eingaben stehen noch.
+    expect(geoeffnet, isEmpty);
+    expect(vorgaenge.vermerke, isEmpty);
+    expect(aufbau.cubit.state.phase, VollmachtPhase.eingabe);
+    expect(aufbau.cubit.state.fehler, 'Dienst antwortet nicht.');
+    expect(aufbau.cubit.state.kopfdaten.nachname, 'Probe');
+  });
+
   test(
     '„In Word öffnen" vermerkt erst auf ausdrückliche Bestätigung',
     () async {

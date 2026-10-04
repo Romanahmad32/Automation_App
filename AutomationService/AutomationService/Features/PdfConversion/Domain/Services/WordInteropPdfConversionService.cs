@@ -35,12 +35,7 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
     private const int WdDoNotSaveChanges = 0;     // WdSaveOptions.wdDoNotSaveChanges
     private const int WdAlertsNone = 0;           // WdAlertLevel.wdAlertsNone
 
-    private sealed record ConversionJob(
-        string? DocxPath,
-        TaskCompletionSource<byte[]> Completion,
-        bool Drucken = false);
-
-    private readonly BlockingCollection<ConversionJob> _jobs = [];
+    private readonly BlockingCollection<WordAuftrag> _jobs = [];
     private readonly Thread _workerThread;
     private readonly TimeSpan _conversionTimeout;
     private readonly ILogger<WordInteropPdfConversionService> _logger;
@@ -72,14 +67,9 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         if (_wordUnavailable)
             throw new PdfConversionUnavailableException("Microsoft Word ist auf diesem System nicht verfügbar.");
 
-        var job = new ConversionJob(
-            Path.GetFullPath(docxFilePath),
-            new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously));
+        var job = new WordAuftrag(Path.GetFullPath(docxFilePath));
         _jobs.Add(job, cancellationToken);
-
-        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutSource.CancelAfter(_conversionTimeout);
-        return await job.Completion.Task.WaitAsync(timeoutSource.Token);
+        return await WarteAufAsync(job, cancellationToken);
     }
 
     public async Task DruckeAsync(string docxPfad, CancellationToken cancellationToken = default)
@@ -89,34 +79,56 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         if (_wordUnavailable)
             throw new PdfConversionUnavailableException("Microsoft Word ist auf diesem System nicht verfügbar.");
 
-        var job = new ConversionJob(
-            Path.GetFullPath(docxPfad),
-            new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously),
-            Drucken: true);
+        var job = new WordAuftrag(Path.GetFullPath(docxPfad), drucken: true);
         _jobs.Add(job, cancellationToken);
-
-        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutSource.CancelAfter(_conversionTimeout);
-        await job.Completion.Task.WaitAsync(timeoutSource.Token);
+        await WarteAufAsync(job, cancellationToken);
     }
 
     public Task WarmupAsync()
     {
-        var job = new ConversionJob(null, new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously));
+        var job = new WordAuftrag(null);
         _jobs.Add(job);
-        return job.Completion.Task;
+        return job.Ergebnis.Task;
+    }
+
+    /// <summary>
+    /// Wartet höchstens <c>ConversionTimeoutSeconds</c>, die Zeit in der
+    /// Schlange eingerechnet. Hat Word den Auftrag bis dahin nicht angefasst,
+    /// fällt er aus (<see cref="WordAuftrag"/>) — ein Druck, den der Aufrufer
+    /// schon als gescheitert meldet, kommt dann auch nicht mehr heraus. Läuft
+    /// er schon, lässt er sich von hier nicht mehr anhalten; bei
+    /// <c>PrintOut(Background: false)</c> heißt das, Word hängt im Druck selbst.
+    /// </summary>
+    private async Task<byte[]> WarteAufAsync(WordAuftrag job, CancellationToken cancellationToken)
+    {
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(_conversionTimeout);
+        try
+        {
+            return await job.Ergebnis.Task.WaitAsync(timeoutSource.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            job.GibAuf();
+            throw;
+        }
     }
 
     private void WorkerLoop()
     {
         foreach (var job in _jobs.GetConsumingEnumerable())
         {
+            if (!job.Beginne())
+            {
+                continue;
+            }
+
             try
             {
-                if (job.DocxPath is null)
+                if (job.DocxPfad is null)
                 {
                     EnsureWordApplication();
-                    job.Completion.TrySetResult([]);
+                    job.Ergebnis.TrySetResult([]);
                     continue;
                 }
 
@@ -133,23 +145,23 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
                     pdfBytes = Ausfuehren(job);
                 }
 
-                job.Completion.TrySetResult(pdfBytes);
+                job.Ergebnis.TrySetResult(pdfBytes);
             }
             catch (Exception exception)
             {
-                job.Completion.TrySetException(Translate(exception));
+                job.Ergebnis.TrySetException(Translate(exception));
             }
         }
 
         TearDownWordApplication();
     }
 
-    private byte[] Ausfuehren(ConversionJob job)
+    private byte[] Ausfuehren(WordAuftrag job)
     {
         if (!job.Drucken)
-            return ConvertOnWorkerThread(job.DocxPath!);
+            return ConvertOnWorkerThread(job.DocxPfad!);
 
-        PrintOnWorkerThread(job.DocxPath!);
+        PrintOnWorkerThread(job.DocxPfad!);
         return [];
     }
 

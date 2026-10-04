@@ -79,12 +79,21 @@ public sealed class VollmachtDienst(
                 null,
                 ergebnis.Warnings);
         }
-        catch (Exception exception) when (exception is ZieldateiGesperrtException or IOException)
+        catch (Exception exception) when (exception is ZieldateiGesperrtException or IOException
+            or FileFormatException or InvalidDataException)
         {
+            // Die Datei tauscht der Anwalt im Explorer aus; eine kaputte oder nur
+            // umbenannte Datei unter dem festen Namen (FileFormatException aus
+            // System.IO.Packaging) ist also zu erwarten und kein Serverfehler.
             logger.LogWarning(exception, "Vollmacht konnte nicht ausgefüllt werden: {Vorlage}", vorlage);
-            var meldung = exception is ZieldateiGesperrtException
-                ? exception.Message
-                : "Die Vorlage konnte nicht gelesen werden — ist sie gerade in Word geöffnet?";
+            var name = Path.GetFileName(vorlage);
+            var meldung = exception switch
+            {
+                ZieldateiGesperrtException => exception.Message,
+                FileFormatException or InvalidDataException =>
+                    $"Die Vorlage „{name}“ ist kein lesbares Word-Dokument — bitte im Ordner {vorlagen.Pfad} ersetzen.",
+                _ => $"Die Vorlage „{name}“ konnte nicht gelesen werden — ist sie gerade in Word geöffnet?",
+            };
             return new VollmachtErgebnis(VollmachtErgebnisArt.Fehler, null, meldung, []);
         }
     }

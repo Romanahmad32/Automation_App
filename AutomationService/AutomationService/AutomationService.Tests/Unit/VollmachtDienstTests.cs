@@ -133,6 +133,26 @@ public sealed class VollmachtDienstTests : IDisposable
     }
 
     /// <summary>
+    /// Die Datei tauscht der Anwalt im Explorer aus (§4.11) — eine kaputte oder
+    /// nur umbenannte Datei unter dem festen Namen ist also zu erwarten. Sie
+    /// darf nicht als allgemeiner Serverfehler enden, sondern muss sagen, welche
+    /// Datei es ist.
+    /// </summary>
+    [Fact]
+    public async Task Eine_unlesbare_Vorlage_wird_mit_Namen_gemeldet()
+    {
+        var pfad = Ordner().PfadFuer(VollmachtArt.Strafsache);
+        Directory.CreateDirectory(Path.GetDirectoryName(pfad)!);
+        await File.WriteAllTextAsync(pfad, "kein Word-Dokument");
+
+        var ergebnis = await Dienst().DruckeAsync(Auftrag(VollmachtArt.Strafsache));
+
+        ergebnis.Art.Should().Be(VollmachtErgebnisArt.Fehler);
+        ergebnis.Meldung.Should().Contain("Vollmacht Strafsache.docx");
+        _drucker.Gedruckt.Should().BeEmpty();
+    }
+
+    /// <summary>
     /// Ein Platzhalter, den die App nicht kennt — hier das Tatdatum, das es
     /// nirgends gibt —, bleibt stehen und kommt als Warnung zurück (§4.4).
     /// </summary>

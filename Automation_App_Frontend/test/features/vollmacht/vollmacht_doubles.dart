@@ -25,6 +25,10 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
   final Map<int, Mandant> mandanten = {};
   Failure? mandantFehler;
 
+  /// Der Dienst selbst ist nicht erreichbar — nicht zu verwechseln mit einem
+  /// Druck, den er meldet, aber Word nicht annahm ([druckErgebnis]).
+  Failure? druckFehler;
+
   VollmachtErgebnis druckErgebnis = const VollmachtErgebnis(
     status: VollmachtErgebnisStatus.gedruckt,
   );
@@ -64,7 +68,8 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
     VollmachtAuftrag auftrag,
   ) async {
     gedruckt.add(auftrag);
-    return Right(druckErgebnis);
+    final fehler = druckFehler;
+    return fehler != null ? Left(fehler) : Right(druckErgebnis);
   }
 
   @override
