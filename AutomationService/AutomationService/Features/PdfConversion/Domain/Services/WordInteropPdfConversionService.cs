@@ -174,11 +174,18 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         {
             // Scheitert das Öffnen an einer weggebrochenen Instanz, darf die
             // Queue neu aufbauen und wiederholen — gedruckt ist noch nichts.
+            //
+            // Visible: true, anders als beim PDF-Export: Ein unsichtbar
+            // geöffnetes Dokument hat kein aktives Dokumentfenster, und ohne
+            // das verweigert Word PrintOut mit 0x800A11FD („nicht verfügbar,
+            // weil kein Dokumentfenster aktiv ist"). ExportAsFixedFormat
+            // braucht das Fenster nicht. Auf dem Bildschirm erscheint trotzdem
+            // nichts — die Anwendung selbst bleibt unsichtbar (EnsureWordApplication).
             document = word.Documents.Open(
                 docxPath,
                 ReadOnly: true,
                 AddToRecentFiles: false,
-                Visible: false);
+                Visible: true);
             try
             {
                 document!.PrintOut(Background: false);
