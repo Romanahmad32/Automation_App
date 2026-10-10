@@ -10,11 +10,17 @@
 # Zentralruf-Automation ausgeloest (Browser, echte Anfrage an die Versicherer).
 # Das darf sich nicht wiederholen, auch nicht bei einem Agenten, der sich irrt.
 #
-#   deny  Zentralruf-, Senden-, Versenden-, Drucken-Knoepfe (nach aussen wirkend)
+#   deny  Zentralruf-Formular/-Anfrage, Senden/Versenden, Drucken (nach aussen wirkend)
 #   ask   Outlook-Entwurf, Postfach verbinden/testen/anmelden, Sicherung
-#         einspielen, Import; Tippen ueber coordinates/type (umgeht jede
-#         Pruefung); press_key mit Enter/Leertaste; call_custom_extension
-#   allow alles andere
+#         einspielen, Import, Simulation; Tippen ueber coordinates/type (umgeht
+#         jede Pruefung); press_key mit Enter/Leertaste; call_custom_extension
+#   --    alles andere: keine Entscheidung, es gilt die normale Rechtepruefung.
+#         Der Hook schraenkt nur ein und gewaehrt nie selbst etwas.
+#
+# Marionette vergleicht `text` exakt mit dem sichtbaren Text (widget_matcher.dart:
+# `extractedText == text`); ein Teilstueck wie "Formular" trifft den
+# Zentralruf-Knopf also nicht. Darum reichen hier enge Muster, und Eintraege wie
+# "Zentralruf-Antwort ..." im Posteingang bleiben bedienbar.
 #
 # Kann die Eingabe nicht gelesen werden, wird ASK ausgegeben -- ein Wachter, der
 # bei eigener Stoerung durchwinkt, schuetzt nichts.
@@ -47,12 +53,15 @@ function Antworte([string]$entscheidung, [string]$grund) {
 # "E-Mail verfassen und senden" oeffnet nur den Dialog; gesendet wird erst im
 # Bestaetigungsdialog ("Senden"), und der ist gesperrt.
 $sperrMuster = @(
-    @{ Muster = 'zentralruf'; Grund = 'startet die echte Zentralruf-Automation (Browser, Anfrage an die Versicherer)'; Ausnahme = $null }
-    @{ Muster = '(?<!ab)senden|sendet|versend|versandt'; Grund = 'sendet eine echte E-Mail'; Ausnahme = 'verfassen' }
-    @{ Muster = 'druck|print'; Grund = 'druckt auf einem echten Drucker'; Ausnahme = $null }
+    @{ Muster = 'zentralruf.*(formular|ausf|anfrag|abfrag|absend|erneut)|formular ausf'; Grund = 'startet die echte Zentralruf-Automation (Browser, Anfrage an die Versicherer)'; Ausnahme = $null }
+    # "Gesendet" ist der Ordner im Posteingang, kein Sendeknopf.
+    @{ Muster = '(?<!ab)senden|sendet|versend|versandt'; Grund = 'sendet eine echte E-Mail'; Ausnahme = 'verfassen|gesendet' }
+    # "Als gedruckt vermerken" setzt nur einen Vermerk, es druckt nichts.
+    @{ Muster = 'druck|print'; Grund = 'druckt auf einem echten Drucker'; Ausnahme = 'gedruckt' }
 )
 
 $frageMuster = @(
+    @{ Muster = 'simulier'; Grund = 'schreibt eine simulierte Zentralruf-Antwort in den Bestand' }
     @{ Muster = 'entwurf|outlook'; Grund = 'oeffnet einen Entwurf in Outlook' }
     @{ Muster = 'verbind|verbunden|testen|anmelden|abmelden'; Grund = 'verbindet das Postfach oder testet die Verbindung' }
     @{ Muster = 'wiederherst|einspiel|import'; Grund = 'spielt eine Sicherung bzw. Daten ein und ueberschreibt den Bestand' }
@@ -120,7 +129,9 @@ try {
         Antworte 'ask' 'Marionette-Sperre: call_custom_extension ruft App-eigenen Code auf, dessen Wirkung der Hook nicht kennt. Bitte bewusst freigeben.'
     }
 
-    Antworte 'allow' 'Marionette-Sperre: kein gefaehrlicher Bedienschritt erkannt.'
+    # Nichts erkannt: keine Entscheidung ausgeben. Ein `allow` hier wuerde die
+    # Rechtepruefung fuer jedes Marionette-Werkzeug aushebeln.
+    exit 0
 }
 catch {
     Antworte 'ask' 'Marionette-Sperre: Die Hook-Eingabe war nicht lesbar. Aus Vorsicht nachfragen statt durchwinken.'
