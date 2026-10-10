@@ -1,3 +1,4 @@
+import 'package:automation_app/core/network/textual_log_interceptor.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
@@ -78,10 +79,17 @@ class ApiVollmachtDatasource implements VollmachtDatasource {
     return VollmachtDrucker.fromJson(response.data as Map<String, dynamic>);
   }
 
+  /// Die Antwort kommt nicht ins Protokoll: Die Seite trägt Mandantendaten,
+  /// und rund 140.000 Zeichen Base64 je Vorschau fluteten das Debug-Protokoll.
   @override
   Future<VollmachtVorschau> erstelleVorschau(VollmachtAuftrag auftrag) async =>
       VollmachtVorschau.fromJson(
-        await _post('/api/Vollmacht/vorschau', auftrag, _vorschauTimeout),
+        await _post(
+          '/api/Vollmacht/vorschau',
+          auftrag,
+          _vorschauTimeout,
+          ohneAntwortProtokoll: 'Seite der Vollmacht',
+        ),
       );
 
   Future<VollmachtErgebnis> _sende(
@@ -93,8 +101,9 @@ class ApiVollmachtDatasource implements VollmachtDatasource {
   Future<Map<String, dynamic>> _post(
     String pfad,
     VollmachtAuftrag auftrag,
-    Duration timeout,
-  ) async {
+    Duration timeout, {
+    String? ohneAntwortProtokoll,
+  }) async {
     final response = await _dio.post(
       pfad,
       data: auftrag.toJson(),
@@ -102,6 +111,9 @@ class ApiVollmachtDatasource implements VollmachtDatasource {
         contentType: Headers.jsonContentType,
         sendTimeout: timeout,
         receiveTimeout: timeout,
+        extra: {
+          TextualLogInterceptor.keinAntwortProtokoll: ?ohneAntwortProtokoll,
+        },
       ),
     );
     return response.data as Map<String, dynamic>;

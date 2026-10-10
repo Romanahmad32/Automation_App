@@ -5,7 +5,15 @@ import 'package:flutter/foundation.dart';
 /// textuell ist (JSON/Text). Binär-Antworten wie die PDF-Konvertierung würden
 /// sonst als riesige Byte-Liste ([..., 37, 37, 69, 79, 70] = "%%EOF") ins
 /// Terminal geschrieben.
+///
+/// Eine Anfrage kann ihre Antwort ganz ausnehmen: [keinAntwortProtokoll] in
+/// `Options.extra`, mit einer Bezeichnung dessen, was ausgelassen wird — für
+/// Mandantendaten (Posteingang, Vollmacht-Vorschau), und für Antworten, die
+/// so groß sind, dass sie das Protokoll fluten.
 class TextualLogInterceptor extends Interceptor {
+  /// Schlüssel in `Options.extra`; der Wert sagt, was nicht protokolliert wird.
+  static const keinAntwortProtokoll = 'keinAntwortProtokoll';
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     debugPrint('*** Request ***');
@@ -22,8 +30,9 @@ class TextualLogInterceptor extends Interceptor {
     debugPrint('uri: ${response.requestOptions.uri}');
     debugPrint('statusCode: ${response.statusCode}');
     response.headers.forEach((k, v) => debugPrint('$k: ${v.join(', ')}'));
-    if (response.requestOptions.extra['keinAntwortProtokoll'] == true) {
-      debugPrint('body: <Postfachinhalt, nicht protokolliert>');
+    final ausgenommen = response.requestOptions.extra[keinAntwortProtokoll];
+    if (ausgenommen is String) {
+      debugPrint('body: <$ausgenommen, nicht protokolliert>');
     } else if (_isTextual(response.headers)) {
       debugPrint('body: ${response.data}');
     } else {
