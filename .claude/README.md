@@ -33,10 +33,12 @@ Wirkung, nicht dem Klang des Befehls.
   Fehlklicks eines Agenten bei E2E-Tests per Marionette (`Automation_App_Frontend/test_driver/`):
   Einmal hat ein Fehlklick die echte Zentralruf-Automation ausgelöst. Der Hook **sperrt** Tipps
   (`tap`, `double_tap`, `long_press`, `secondary_tap`), deren `key`, `identifier`, `text` oder
-  `ancestor_keys` auf das Zentralruf-Formular, Senden, Versenden oder Drucken lauten, und **fragt
-  nach** bei Outlook-Entwurf, Postfach verbinden/testen, Sicherung einspielen, Import, Simulation,
-  Tippen über `coordinates` oder über `type` (außer bei Eingabefeldern), `press_key` mit
-  Enter/Leertaste und `call_custom_extension`. Lesen und Scrollen prüft er nicht. Alles andere lässt er
+  `ancestor_keys` auf das Zentralruf-Formular, Senden, Versenden oder Drucken lauten, dazu die
+  Umgehungswege: Tippen über `coordinates` oder über `type` (außer bei Eingabefeldern) und
+  `press_key` mit Enter/Leertaste. Er **fragt nach** bei Outlook-Entwurf, Postfach
+  verbinden/testen, Sicherung einspielen, Import, Simulation und `call_custom_extension`. Die
+  Umgehungswege fragten bis Oktober 2026 nur nach — ein Subagent hat sie trotz Verbot genommen und
+  die Rückfragen liefen durch. Lesen und Scrollen prüft er nicht. Alles andere lässt er
   unentschieden — dann gilt die normale Rechteprüfung; der Hook schränkt nur ein und gewährt nie
   selbst etwas. Er läuft nur bei Marionette-Werkzeugen und kostet sonst nichts; ist seine Eingabe
   unlesbar, fragt er nach.
