@@ -6,14 +6,19 @@ import 'package:equatable/equatable.dart';
 /// als zuletzt gesichert wurde.
 ///
 /// Streng getrennt von `Vorgang.feldWerte`: Dort stehen **bestätigte** Werte —
-/// solche, aus denen ein Dokument entstanden ist. Ein Entwurf ist nur ein
-/// Angebot. Er wird deshalb beim Wiedereinstieg angezeigt und nicht still
-/// eingesetzt; der Anwalt sieht, woher die Werte kommen, bevor sie in seinem
-/// Schreiben landen.
+/// solche, aus denen ein Dokument entstanden ist. Hier steht, was der Anwalt
+/// zuletzt getippt hatte, als er wegging.
 ///
-/// [gespeichertAm] trägt die Leiste beim Wiedereinstieg („Angefangener Stand
-/// von 14:32") — ohne Zeitpunkt weiß niemand, ob das Angebot von eben stammt
-/// oder von vorletzter Woche.
+/// [feldWerte] enthält nur die Felder, die von der **Vorbelegung** abweichen
+/// (`EntwurfAbweichung`, #133) — der ganze Formularstand fröre sonst die
+/// Vorbelegung ein und verdeckte eine später eintreffende Zentralruf-Antwort.
+/// Beim Wiedereinstieg kommen diese Werte still zurück: Das Formular zeigt
+/// Vorbelegung und Entwurf gemischt, der Entwurf gewinnt an seinen Feldern, und
+/// der Weg zurück ist „Eingaben auf Vorbelegung zurücksetzen".
+///
+/// [gespeichertAm] sagt, wie alt der Stand ist — ohne Zeitpunkt ließe sich ein
+/// Entwurf von eben nicht von einem von vorletzter Woche unterscheiden, wenn
+/// jemand ihn einmal anzeigen oder aufräumen will.
 class VorgangEntwurf extends Equatable {
   final DateTime gespeichertAm;
   final Map<String, String> feldWerte;
@@ -24,14 +29,6 @@ class VorgangEntwurf extends Equatable {
     this.feldWerte = const {},
     this.schadensaufstellung,
   });
-
-  /// Ob hier nichts steht, was der Mühe eines Angebots wert wäre: kein
-  /// ausgefülltes Feld und keine Position. Ein leerer Entwurf wird gar nicht
-  /// erst gespeichert — sonst begrüßt die Leiste den Anwalt mit einem Angebot,
-  /// das ihm nichts zurückgibt.
-  bool get istLeer =>
-      feldWerte.values.every((wert) => wert.trim().isEmpty) &&
-      (schadensaufstellung?.items.isEmpty ?? true);
 
   factory VorgangEntwurf.fromJson(Map<String, dynamic> json) {
     final werte = json['feldWerte'];
