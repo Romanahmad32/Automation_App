@@ -29,7 +29,16 @@ Wirkung, nicht dem Klang des Befehls.
   Dart-Formatierung zwar auch (`dart format --set-exit-if-changed`), aber erst nach dem Commit;
   ohne diesen Hook sammelt sich bis dahin Rauschen in den Diffs und verdeckt die Änderung.
 
-Er schweigt bei eigener Störung — die ausführliche Begründung steht im Kopf der Datei. Ein
+- `marionette-sperre.ps1` (Ereignis `PreToolUse`, Matcher `mcp__marionette__.*`) schützt vor
+  Fehlklicks eines Agenten bei E2E-Tests per Marionette (`Automation_App_Frontend/test_driver/`):
+  Einmal hat ein Fehlklick die echte Zentralruf-Automation ausgelöst. Der Hook **sperrt** Knöpfe,
+  deren `key`, `identifier`, `text` oder `ancestor_keys` auf Zentralruf, Senden, Versenden oder
+  Drucken lauten, und **fragt nach** bei Outlook-Entwurf, Postfach verbinden/testen, Sicherung
+  einspielen, Import, Tippen über `coordinates`/`type`, `press_key` mit Enter/Leertaste und
+  `call_custom_extension`. Alles andere läuft durch. Er läuft nur bei Marionette-Werkzeugen und
+  kostet sonst nichts; ist seine Eingabe unlesbar, fragt er nach.
+
+Die übrigen Hooks schweigen bei eigener Störung — die ausführliche Begründung steht im Kopf der Datei. Ein
 Wächter, der bei eigenem Fehler die Arbeit anhält, wird abgeschaltet.
 
 **Der Geheimnis-Wächter ist bewusst kein Agenten-Hook**, sondern `.githooks/pre-commit`: Nur ein
