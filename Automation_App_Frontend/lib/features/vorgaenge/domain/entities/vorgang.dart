@@ -100,6 +100,13 @@ class Vorgang extends Equatable {
 
   final DateTime? abgeschlossenAm;
 
+  /// Wann die Vollmacht zuletzt gedruckt oder von Hand als gedruckt vermerkt
+  /// wurde (§4.11). Kein Schritt des Lebenszyklus — ein Merkmal daneben, das
+  /// parallel zum [status] steht. Geschrieben wird sie nur über den eigenen
+  /// Weg ([VorgangRepository.setzeVollmachtVermerk]), nie über den Upsert:
+  /// Der überschreibt sie bewusst nicht.
+  final DateTime? vollmachtGedrucktAm;
+
   const Vorgang({
     required this.referenz,
     required this.angefragtAm,
@@ -125,6 +132,7 @@ class Vorgang extends Equatable {
     this.dokumentPfad,
     this.aktenOrdner,
     this.abgeschlossenAm,
+    this.vollmachtGedrucktAm,
   });
 
   /// Legt einen Vorgang aus einer gestarteten Zentralruf-Anfrage an: parst die
@@ -223,14 +231,16 @@ class Vorgang extends Equatable {
     return datum.isEmpty ? null : 'Sachverhalt v. $datum';
   }
 
-  /// Ändert einzelne Felder. Alle Parameter außer [entwurf] sind nach dem
-  /// Muster „null heißt: unverändert" gebaut — sie können deshalb nichts
-  /// löschen, was in dieser Richtung (Daten wachsen an einem Vorgang) auch
-  /// niemand braucht.
+  /// Ändert einzelne Felder. Alle Parameter außer [entwurf] und
+  /// [vollmachtGedrucktAm] sind nach dem Muster „null heißt: unverändert"
+  /// gebaut — sie können deshalb nichts löschen, was in dieser Richtung
+  /// (Daten wachsen an einem Vorgang) auch niemand braucht.
   ///
-  /// [entwurf] ist die Ausnahme und deshalb ein Rückgabe-Aufruf: Ein Entwurf
-  /// muss sich **löschen** lassen — „Verwerfen" ist die halbe Funktion, und mit
-  /// `??` bliebe er stehen.
+  /// [entwurf] und [vollmachtGedrucktAm] sind die Ausnahme und deshalb je ein
+  /// Rückgabe-Aufruf: Ein Entwurf muss sich **löschen** lassen — „Verwerfen"
+  /// ist die halbe Funktion, und mit `??` bliebe er stehen. Der Vermerk muss
+  /// sich ebenso zurücknehmen lassen; geschrieben wird er ohnehin nur über
+  /// [VorgangRepository.setzeVollmachtVermerk], nicht über dieses `copyWith`.
   Vorgang copyWith({
     VorgangStatus? status,
     String? rechtsgebiet,
@@ -250,6 +260,7 @@ class Vorgang extends Equatable {
     String? dokumentPfad,
     String? aktenOrdner,
     DateTime? abgeschlossenAm,
+    DateTime? Function()? vollmachtGedrucktAm,
   }) {
     return Vorgang(
       referenz: referenz,
@@ -278,6 +289,9 @@ class Vorgang extends Equatable {
       dokumentPfad: dokumentPfad ?? this.dokumentPfad,
       aktenOrdner: aktenOrdner ?? this.aktenOrdner,
       abgeschlossenAm: abgeschlossenAm ?? this.abgeschlossenAm,
+      vollmachtGedrucktAm: vollmachtGedrucktAm != null
+          ? vollmachtGedrucktAm()
+          : this.vollmachtGedrucktAm,
     );
   }
 
@@ -320,6 +334,7 @@ class Vorgang extends Equatable {
       dokumentPfad: dokumentPfad,
       aktenOrdner: aktenOrdner,
       abgeschlossenAm: abgeschlossenAm,
+      vollmachtGedrucktAm: vollmachtGedrucktAm,
     );
   }
 
@@ -349,5 +364,6 @@ class Vorgang extends Equatable {
     dokumentPfad,
     aktenOrdner,
     abgeschlossenAm,
+    vollmachtGedrucktAm,
   ];
 }

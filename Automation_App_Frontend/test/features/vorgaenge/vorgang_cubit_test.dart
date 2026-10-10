@@ -22,6 +22,7 @@ class _FakeVorgaengeDatasource implements VorgangRepository {
   bool abschliessenSchlaegtFehl = false;
   bool aendereReferenzSchlaegtFehl = false;
   bool deleteSchlaegtFehl = false;
+  bool vollmachtSchlaegtFehl = false;
 
   /// Mit welchem [registerzeileBehalten] zuletzt gelöscht wurde (§6.3) — null,
   /// solange noch nicht gelöscht wurde.
@@ -101,6 +102,23 @@ class _FakeVorgaengeDatasource implements VorgangRepository {
       laufendeAuftragsnummer += 1;
       await upsertVorgang(abgeschlossen);
       return abgeschlossen;
+    }
+    return null;
+  }
+
+  @override
+  Future<Vorgang?> setzeVollmachtVermerk(
+    String referenz, {
+    required bool gedruckt,
+  }) async {
+    if (vollmachtSchlaegtFehl) throw Exception('Backend nicht erreichbar');
+    for (final vorhanden in vorgaenge) {
+      if (!Vorgang.gleicheReferenz(vorhanden.referenz, referenz)) continue;
+      final geaendert = vorhanden.copyWith(
+        vollmachtGedrucktAm: () => gedruckt ? DateTime.now() : null,
+      );
+      await upsertVorgang(geaendert);
+      return geaendert;
     }
     return null;
   }
@@ -582,5 +600,94 @@ void main() {
         expect(datasource.letztesRegisterzeileBehalten, isFalse);
       },
     );
+  });
+
+  group('vermerkeVollmacht', () {
+    test('setzt den Vermerk und übernimmt den Backend-Stand', () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+
+      final erfolgreich = await cubit.vermerkeVollmacht(
+        '84/26 C03_GG-XY 123',
+        gedruckt: true,
+      );
+
+      expect(erfolgreich, isTrue);
+      expect(
+        cubit.findeZuReferenz('84/26 C03_GG-XY 123')!.vollmachtGedrucktAm,
+        isNotNull,
+      );
+    });
+
+    test('nimmt den Vermerk wieder zurück', () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      await cubit.vermerkeVollmacht('84/26 C03_GG-XY 123', gedruckt: true);
+
+      final erfolgreich = await cubit.vermerkeVollmacht(
+        '84/26 C03_GG-XY 123',
+        gedruckt: false,
+      );
+
+      expect(erfolgreich, isTrue);
+      expect(
+        cubit.findeZuReferenz('84/26 C03_GG-XY 123')!.vollmachtGedrucktAm,
+        isNull,
+      );
+    });
+
+    test('liefert false bei unbekannter Referenz im Zustand', () async {
+      final erfolgreich = await cubit.vermerkeVollmacht(
+        'unbekannt',
+        gedruckt: true,
+      );
+
+      expect(erfolgreich, isFalse);
+    });
+
+    test(
+      'liefert false, wenn das Backend die Referenz nicht kennt (404)',
+      () async {
+        await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+        // Aus Sicht des Zustands vorhanden, im Backend aber nicht mehr —
+        // die Fake-Datenquelle bildet das über eine leere Trefferliste nach.
+        datasource.vorgaenge = const [];
+
+        final erfolgreich = await cubit.vermerkeVollmacht(
+          '84/26 C03_GG-XY 123',
+          gedruckt: true,
+        );
+
+        expect(erfolgreich, isFalse);
+      },
+    );
+
+    test('liefert false bei Backend-Ausnahme und lässt den Zustand '
+        'unverändert', () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      datasource.vollmachtSchlaegtFehl = true;
+
+      final erfolgreich = await cubit.vermerkeVollmacht(
+        '84/26 C03_GG-XY 123',
+        gedruckt: true,
+      );
+
+      expect(erfolgreich, isFalse);
+      expect(
+        cubit.findeZuReferenz('84/26 C03_GG-XY 123')!.vollmachtGedrucktAm,
+        isNull,
+      );
+    });
+
+    test('eine ältere Kopie ohne Vermerk nimmt ihn beim Speichern nicht '
+        'zurück', () async {
+      await cubit.registriereAnfrage('84/26 C03_GG-XY 123');
+      final alteKopie = cubit.findeZuReferenz('84/26 C03_GG-XY 123')!;
+      await cubit.vermerkeVollmacht('84/26 C03_GG-XY 123', gedruckt: true);
+
+      await cubit.aktualisiere(alteKopie.copyWith(gegner: 'HUK-COBURG'));
+
+      final gespeichert = cubit.findeZuReferenz('84/26 C03_GG-XY 123')!;
+      expect(gespeichert.gegner, 'HUK-COBURG');
+      expect(gespeichert.vollmachtGedrucktAm, isNotNull);
+    });
   });
 }

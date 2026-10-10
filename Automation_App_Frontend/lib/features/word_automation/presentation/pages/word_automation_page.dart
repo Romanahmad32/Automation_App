@@ -15,6 +15,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/pdf_p
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
+import 'package:automation_app/features/word_automation/presentation/utils/entwurf_raeumung_nach_bestaetigung.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/wiederaufnahme.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_fill_out.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_review.dart';
@@ -176,6 +177,20 @@ class WordAutomationPage extends StatelessWidget implements AutoRouteWrapper {
                     );
                   }
                   getIt<VorgangCubit>().aktualisiere(aktualisiert);
+                  // Der Upsert schreibt den Entwurf seit #133 nicht mehr mit
+                  // (VorgangRepository.CopyInto) — ein bestätigter Stand muss
+                  // ihn deshalb ausdrücklich über seinen eigenen Weg abräumen,
+                  // sonst böte die Leiste beim nächsten Einstieg den gerade
+                  // verdrängten Entwurf wieder an. `sollEntwurfGeraeumtWerden`
+                  // fragt dabei auch, ob am Vorgang überhaupt einer lag —
+                  // sonst liefe das DELETE ins Leere (Review-Nachbesserung
+                  // #154 zu #133, Befund 4).
+                  if (sollEntwurfGeraeumtWerden(formData, vorgang)) {
+                    getIt<VorgangCubit>().sichereEntwurf(
+                      aktualisiert.referenz,
+                      null,
+                    );
+                  }
                   // Auswahl im Wizard auf den neuen Stand heben, damit ein
                   // weiteres Schreiben im selben Durchlauf die gerade
                   // bestätigten Werte vorbelegt bekommt.
