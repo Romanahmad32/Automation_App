@@ -109,6 +109,20 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         return vorgang;
     }
 
+    public async Task<VorgangEntity?> SetzeVollmachtGedrucktAsync(
+        string referenz,
+        DateTime? gedrucktAm,
+        CancellationToken cancellationToken = default)
+    {
+        var bereinigt = referenz.Trim();
+        var vorgang = await db.Vorgaenge.FirstOrDefaultAsync(v => v.Referenz == bereinigt, cancellationToken);
+        if (vorgang is null) return null;
+
+        vorgang.VollmachtGedrucktAm = gedrucktAm;
+        await db.SaveChangesAsync(cancellationToken);
+        return vorgang;
+    }
+
     public async Task<ReferenzAenderung> RenameReferenzAsync(
         string von,
         string nach,
@@ -173,7 +187,11 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
     [GeneratedRegex(@"^\s*(\d+)\s*/\s*(\d+)\s+(\S+)_(.+)$")]
     private static partial Regex ReferenzSchemaRegex();
 
-    /// <summary>Übernimmt alle fachlichen Felder (ohne Id/Referenz) in die getrackte Zeile.</summary>
+    /// <summary>
+    /// Übernimmt alle fachlichen Felder (ohne Id/Referenz) in die getrackte Zeile —
+    /// bis auf <see cref="VorgangEntity.VollmachtGedrucktAm"/>: Den Vermerk
+    /// schreibt allein <see cref="SetzeVollmachtGedrucktAsync"/> (§4.11).
+    /// </summary>
     static void CopyInto(VorgangEntity target, VorgangEntity source)
     {
         target.AngefragtAm = source.AngefragtAm;

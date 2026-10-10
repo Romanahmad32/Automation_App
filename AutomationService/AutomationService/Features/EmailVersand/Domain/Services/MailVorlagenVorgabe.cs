@@ -25,9 +25,10 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// ergäbe sie doppelt.</item>
 /// </list>
 ///
-/// Auch der Satz über das Vollmachtsformular fehlt: Die App hängt heute das
-/// Anspruchsschreiben an, ein Vollmachtsformular kennt sie nicht. Ein Text,
-/// der eine Anlage ankündigt, die nicht mitgeht, wäre schlechter als keiner.
+/// Auch der Satz über das Vollmachtsformular fehlt weiterhin: Die App druckt die Vollmacht seit
+/// #151 (§4.11), hängt sie aber bewusst nicht an eine Mail an — das wäre Versand, und den schließt
+/// §8 für die Vollmacht ausdrücklich aus. Ein Text, der eine Anlage ankündigt, die nicht mitgeht,
+/// wäre schlechter als keiner.
 /// </summary>
 public static class MailVorlagenVorgabe
 {

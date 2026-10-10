@@ -313,6 +313,18 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Nachfrage, der Rückweg ist der Zurücksetzen-Knopf. **Bewusst nicht gebaut:** die im Issue als
   Spielraum genannte Vorauswahl des Vorgangs mit dem jüngsten angefangenen Stand beim ersten Öffnen
   — vorausgewählt bleibt der Vorgang mit der jüngsten Antwort.
+- **Vollmacht drucken (§4.11, 13.09.2026, #151)** — der Anwalt füllte das Word-Vollmachtsformular
+  bislang von Hand mit Daten, die er der App gerade eben eingegeben hatte. Ein Dialog
+  (Frontend `vollmacht`, Backend-Slice `Vollmacht`) belegt Vorlagenart (nach Rechtsgebiet),
+  Kopfdaten (aus dem Mandanten) und „in Sachen"/„wegen" (je Art) vor, frei korrigierbar; die
+  Bankverbindung bleibt für die Hand des Mandanten frei. Gedruckt wird über denselben
+  Word-COM-Thread wie die PDF-Vorschau (`IWordDrucker`); scheitert der Druck, öffnet die App die
+  ausgefüllte Datei zum Selbst-Drucken. Einstiege: „Vollmacht drucken" nach dem Anlegen eines
+  Vorgangs und eine Aktion samt Standzeile an der Vorgangskachel, die das Druckdatum vermerkt
+  (setz- und zurücknehmbar, kein eigener Lebenszyklusschritt); die Übersicht zählt offene Vorgänge
+  ohne gedruckte Vollmacht. Die drei Vorlagen liegen als feste Dateien im Unterordner `Vollmacht/`
+  des Vorlagenordners, geseedet aus neutralen Mustern; die Arbeitsdatei wird nach dem Druck
+  gelöscht, in der Akte abgelegt wird nichts.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

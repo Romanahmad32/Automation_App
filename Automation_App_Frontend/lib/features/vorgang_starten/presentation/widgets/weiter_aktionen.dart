@@ -2,19 +2,26 @@ import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile
 import 'package:flutter/material.dart';
 
 /// Panel, das nach dem Speichern eines Vorgangs erscheint (§3): bietet an,
-/// mit den gespeicherten Daten direkt weiterzuarbeiten — entweder eine Vorlage
-/// auszufüllen oder zum Postfach zu wechseln. Auswahl meldet das Widget über die
-/// Callbacks; die Tab-Navigation übernimmt die View.
+/// mit den gespeicherten Daten direkt weiterzuarbeiten — eine Vorlage
+/// auszufüllen, zum Postfach zu wechseln oder die Vollmacht zu drucken (§4.11).
+/// Auswahl meldet das Widget über die Callbacks; die Tab-Navigation übernimmt
+/// die View.
+///
+/// Die Vollmacht gehört hierher, weil der Mandant in diesem Moment meist noch
+/// im Büro sitzt — und für Vorgänge außerhalb des Verkehrsrechts ist sie die
+/// einzige Folgeaktion, dort läuft kein Zentralruf.
 class WeiterAktionen extends StatelessWidget {
   final String referenz;
   final VoidCallback onVorlageAusfuellen;
   final VoidCallback onZumPostfach;
+  final VoidCallback onVollmachtDrucken;
 
   const WeiterAktionen({
     super.key,
     required this.referenz,
     required this.onVorlageAusfuellen,
     required this.onZumPostfach,
+    required this.onVollmachtDrucken,
   });
 
   @override
@@ -59,6 +66,11 @@ class WeiterAktionen extends StatelessWidget {
                   icon: const Icon(Icons.mark_email_read_outlined),
                   label: const Text('Zum Postfach'),
                   onPressed: onZumPostfach,
+                ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.draw_outlined),
+                  label: const Text('Vollmacht drucken'),
+                  onPressed: onVollmachtDrucken,
                 ),
               ],
             ),

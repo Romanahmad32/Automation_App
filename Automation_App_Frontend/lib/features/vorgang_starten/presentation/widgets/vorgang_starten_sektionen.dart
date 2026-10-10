@@ -1,4 +1,5 @@
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_dialog.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_bloc.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/auftrag_section.dart';
@@ -107,6 +108,11 @@ class VorgangStartenSektionen extends StatelessWidget {
                         onVorlageAusfuellen: () =>
                             onVorlageAusfuellen(state.referenz),
                         onZumPostfach: onZumPostfach,
+                        onVollmachtDrucken: () =>
+                            VollmachtDialog.zeigeZuReferenz(
+                              context,
+                              state.referenz,
+                            ),
                       )
                     : const SizedBox.shrink(),
               ),

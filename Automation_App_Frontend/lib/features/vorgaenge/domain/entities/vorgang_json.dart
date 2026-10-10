@@ -51,9 +51,15 @@ Vorgang vorgangAusJson(Map<String, dynamic> json) {
     schreibenNummer: (json['schreibenNummer'] as num?)?.toInt(),
     dokumentPfad: json['dokumentPfad'] as String?,
     aktenOrdner: json['aktenOrdner'] as String?,
-    abgeschlossenAm: DateTime.tryParse(
-      json['abgeschlossenAm'] as String? ?? '',
-    ),
+    // `toLocal()` wie überall an der Grenze zum Dienst: Gleich nach dem Setzen
+    // (Abschluss, Vollmacht-Vermerk) sendet er den Zeitpunkt mit Versatz,
+    // `tryParse` macht daraus UTC — die Anzeige stünde nachts auf dem Vortag,
+    // und ein späterer Upsert schriebe `abgeschlossenAm` als UTC zurück.
+    abgeschlossenAm: DateTime.tryParse(json['abgeschlossenAm'] as String? ?? '')
+        ?.toLocal(),
+    vollmachtGedrucktAm: DateTime.tryParse(
+      json['vollmachtGedrucktAm'] as String? ?? '',
+    )?.toLocal(),
   );
 }
 
@@ -83,5 +89,6 @@ extension VorgangAlsJson on Vorgang {
     'dokumentPfad': dokumentPfad,
     'aktenOrdner': aktenOrdner,
     'abgeschlossenAm': abgeschlossenAm?.toIso8601String(),
+    'vollmachtGedrucktAm': vollmachtGedrucktAm?.toIso8601String(),
   };
 }

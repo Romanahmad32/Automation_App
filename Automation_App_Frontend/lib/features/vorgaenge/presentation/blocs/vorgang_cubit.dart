@@ -6,6 +6,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status
 import 'package:automation_app/features/vorgaenge/domain/repositories/referenz_vergeben_exception.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/fallback_referenz.dart';
+import 'package:automation_app/features/vorgaenge/domain/services/vorgang_anfrage_bau.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_meldung.dart';
@@ -61,33 +62,18 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     final bereinigt = referenz.trim();
     if (bereinigt.isEmpty) return;
 
-    final bestehend = findeZuReferenz(bereinigt);
-    // Ein erneutes Speichern darf bereits erfasste Antwort-/Dokumentdaten nicht
-    // verlieren: bestehende Vorgänge werden über copyWith aktualisiert (das die
-    // unberührten Felder durchreicht), neue über ausAnfrage angelegt.
-    final vorgang = bestehend == null
-        ? Vorgang.ausAnfrage(
-            referenz: bereinigt,
-            angefragtAm: DateTime.now(),
-            rechtsgebiet: rechtsgebiet,
-            mandantId: mandantId,
-            mandantName: mandantName,
-            unfallDatum: unfallDatum,
-            geschaedigtenKennzeichen: geschaedigtenKennzeichen,
-            unfallort: unfallort,
-            unfalluhrzeit: unfalluhrzeit,
-            polizeiVorgangsnummer: polizeiVorgangsnummer,
-          )
-        : bestehend.copyWith(
-            rechtsgebiet: rechtsgebiet,
-            mandantId: mandantId,
-            mandantName: mandantName,
-            unfallDatum: unfallDatum,
-            geschaedigtenKennzeichen: geschaedigtenKennzeichen,
-            unfallort: unfallort,
-            unfalluhrzeit: unfalluhrzeit,
-            polizeiVorgangsnummer: polizeiVorgangsnummer,
-          );
+    final vorgang = VorgangAnfrageBau.aus(
+      bestehend: findeZuReferenz(bereinigt),
+      referenz: bereinigt,
+      rechtsgebiet: rechtsgebiet,
+      mandantId: mandantId,
+      mandantName: mandantName,
+      unfallDatum: unfallDatum,
+      geschaedigtenKennzeichen: geschaedigtenKennzeichen,
+      unfallort: unfallort,
+      unfalluhrzeit: unfalluhrzeit,
+      polizeiVorgangsnummer: polizeiVorgangsnummer,
+    );
     await _upsert(vorgang);
   }
 
@@ -268,6 +254,34 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     }
   }
 
+  /// Setzt oder nimmt den Vermerk „Vollmacht gedruckt" zurück (§4.11) und
+  /// ersetzt den Vorgang im Zustand mit dem vom Backend gelieferten Stand.
+  /// Läuft über den eigenen Backend-Weg statt über [_upsert] — der Upsert
+  /// überschreibt das Feld bewusst nicht.
+  ///
+  /// Liefert `true` bei Erfolg; `false` bei unbekannter Referenz (lokal oder
+  /// im Backend) oder einer Ausnahme. Anders als [_upsert] meldet ein
+  /// Fehlschlag hier **nichts** über [_fehler]: Der Aufrufer zeigt selbst eine
+  /// Rückmeldung (z. B. nach einem ausgelösten Druck), eine zweite wäre
+  /// doppelt.
+  Future<bool> vermerkeVollmacht(
+    String referenz, {
+    required bool gedruckt,
+  }) async {
+    if (findeZuReferenz(referenz) == null) return false;
+    try {
+      final geaendert = await _datasource.setzeVollmachtVermerk(
+        referenz,
+        gedruckt: gedruckt,
+      );
+      if (geaendert == null) return false;
+      _ersetzeImState(geaendert);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Wiederholt die fehlgeschlagene Operation aus einem gemeldeten
   /// Persistenzfehler („Erneut versuchen" in der Rückmeldung).
   Future<void> wiederhole(VorgangPersistenzFehler fehler) =>
@@ -290,7 +304,12 @@ class VorgangCubit extends Cubit<List<Vorgang>> {
     return null;
   }
 
-  Future<void> _upsert(Vorgang vorgang) async {
+  Future<void> _upsert(Vorgang geaendert) async {
+    // Den Vollmacht-Vermerk ändert der Upsert nie — im Dienst nicht und hier
+    // nicht: Eine ältere Kopie des Vorgangs (etwa aus dem Word-Assistenten)
+    // zeigte sonst „noch nicht gedruckt", obwohl der Vermerk gespeichert ist.
+    final vermerk = findeZuReferenz(geaendert.referenz)?.vollmachtGedrucktAm;
+    final vorgang = geaendert.copyWith(vollmachtGedrucktAm: () => vermerk);
     _ersetzeImState(vorgang);
     try {
       // Nur den einen geänderten Vorgang schreiben, nicht die ganze Liste.

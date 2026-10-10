@@ -13,6 +13,10 @@ class DashboardUebersicht {
   /// Alle offenen Vorgänge — auch die, die nicht mehr in die Karte passen.
   final int anzahlOffen;
 
+  /// Offene Vorgänge (Status ≠ versendet) ohne gedruckte Vollmacht (§4.11) —
+  /// die Grundlage für den Hinweis auf der Startseite.
+  final int anzahlOhneVollmacht;
+
   /// Die letzten Zeilen des Registers, aufsteigend nach laufender Nummer.
   final List<Vorgang> registerZeilen;
 
@@ -22,6 +26,7 @@ class DashboardUebersicht {
   const DashboardUebersicht({
     required this.offeneVorgaenge,
     required this.anzahlOffen,
+    required this.anzahlOhneVollmacht,
     required this.registerZeilen,
     required this.registerGesamt,
   });
@@ -52,6 +57,9 @@ class DashboardUebersicht {
     return DashboardUebersicht(
       offeneVorgaenge: offen.take(maxOffene).toList(),
       anzahlOffen: offen.length,
+      anzahlOhneVollmacht: offen
+          .where((v) => v.vollmachtGedrucktAm == null)
+          .length,
       // Der Schwanz der Liste = die zuletzt vergebenen laufenden Nummern; die
       // Reihenfolge bleibt aufsteigend wie im Register selbst.
       registerZeilen: register

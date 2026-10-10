@@ -113,4 +113,26 @@ class ApiVorgaengeDatasource implements VorgangRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<Vorgang?> setzeVollmachtVermerk(
+    String referenz, {
+    required bool gedruckt,
+  }) async {
+    try {
+      final antwort = gedruckt
+          ? await _dio.put(
+              '/api/Vorgaenge/vollmacht',
+              queryParameters: {'referenz': referenz},
+            )
+          : await _dio.delete(
+              '/api/Vorgaenge/vollmacht',
+              queryParameters: {'referenz': referenz},
+            );
+      return vorgangAusJson(antwort.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
 }
