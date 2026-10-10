@@ -3,12 +3,12 @@ import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
 import 'package:automation_app/core/general_widgets/form/formular_fehler_hinweis.dart';
 import 'package:automation_app/core/general_widgets/form/german_date_field.dart';
-import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/verwendete_felder.dart';
+import 'package:automation_app/features/word_automation/domain/services/ausgangs_belegung.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ausfuell_feld.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/nicht_verwendete_felder.dart';
@@ -142,16 +142,14 @@ class FormTemplateBuilder extends StatelessWidget {
             return MapEntry(
               e.label,
               FormControl<String>(
-                // Selbst Getipptes zuerst, dann die Vorgangsdaten
-                // (Zentralruf-Antwort); sonst Datumsfelder mit heutigem Datum
-                // vorbelegen – sichtbar und änderbar, statt es beim Erzeugen
-                // unsichtbar einzusetzen.
-                value:
-                    erfassteWerte[e.label] ??
-                    initialValues[e.label] ??
-                    (e.inputType == InputType.date && verwendet
-                        ? GermanDateField.formatDate(_defaultDateFor(e))
-                        : null),
+                // Selbst Getipptes zuerst, dann die Ausgangsbelegung:
+                // Vorgangsdaten (Zentralruf-Antwort), sonst — bei einem
+                // Datumsfeld — der Vorschlag mit heutigem Datum, sichtbar und
+                // änderbar statt beim Erzeugen unsichtbar eingesetzt. Dieselbe
+                // Funktion liefert `ausfuell_formular.dart` die Grundlage für
+                // den Abweichungsvergleich (#133 Mangel 2) — sonst hielte er
+                // den Vorschlag für eine Eingabe des Anwalts.
+                value: erfassteWerte[e.label] ?? _ausgangsBelegung[e.label],
                 validators: [
                   if (_istPflicht(e)) Validators.required,
                   if (e.inputType == InputType.date && verwendet)
@@ -335,11 +333,12 @@ class FormTemplateBuilder extends StatelessWidget {
     return pflicht == null ? vorbelegt : '$pflicht · $vorbelegt';
   }
 
-  /// Vorschlag für ein Datumsfeld: die am Feld eingestellte
-  /// [DatumsVorbelegung], sonst die Namensregel als Rückfall. Was die beiden
-  /// unterscheidet und warum hier kein [Duration] gerechnet wird, steht an der
-  /// Entität.
-  static DateTime _defaultDateFor(FieldData field) =>
-      (field.vorbelegung ?? DatumsVorbelegung.ausFeldname(field.label))
-          .anwendenAuf(DateTime.now());
+  /// [initialValues] samt Datumsvorschlag — die tatsächliche Ausgangsbelegung
+  /// des Formulars ohne jede Eingabe. Eine Quelle mit `ausfuell_formular.dart`
+  /// (#133 Mangel 2, [AusgangsBelegung]).
+  Map<String, String> get _ausgangsBelegung => AusgangsBelegung.vollstaendig(
+    fields: formTemplate!.fields,
+    initialValues: initialValues,
+    aktivePlatzhalter: aktivePlatzhalter,
+  );
 }

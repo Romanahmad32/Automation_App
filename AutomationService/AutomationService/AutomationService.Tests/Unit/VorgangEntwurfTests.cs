@@ -103,6 +103,55 @@ public sealed class VorgangEntwurfTests : IDisposable
     }
 
     /// <summary>
+    /// Der eigentliche Anlass von #133: Ein Upsert (z. B. weil inzwischen eine
+    /// Zentralruf-Antwort eintraf) darf einen zuvor gesetzten Entwurf nicht
+    /// überschreiben — auch dann nicht, wenn der Aufrufer (ein Client mit
+    /// veraltetem Stand) selbst kein oder ein anderes <c>EntwurfJson</c>
+    /// mitschickt. Der Entwurf hat seinen eigenen Weg (<see cref="VorgangRepository.SetzeEntwurfAsync"/>);
+    /// der Upsert rührt ihn nicht mehr an.
+    /// </summary>
+    [Fact]
+    public async Task Upsert_LaesstGespeichertenEntwurfStehen()
+    {
+        await LegeAn();
+        await _repository.SetzeEntwurfAsync(Referenz, Entwurf);
+
+        var veralteterClientStand = await _repository.UpsertAsync(new VorgangEntity
+        {
+            Referenz = Referenz,
+            AngefragtAm = new DateTime(2026, 6, 1),
+            Status = "beantwortet",
+            Rechtsgebiet = "verkehrsrecht",
+            FeldWerteJson = """{"Versicherer":"Allianz"}""",
+            AntwortJson = """{"versichererName":"HUK-COBURG"}""",
+            EntwurfJson = null,
+        });
+
+        veralteterClientStand.EntwurfJson.Should().Be(Entwurf);
+    }
+
+    /// <summary>
+    /// Auch beim Neuanlegen entsteht der Entwurf nur über <see cref="VorgangRepository.SetzeEntwurfAsync"/>
+    /// — ein eingehender Datensatz, der (fälschlich) selbst schon ein
+    /// <c>EntwurfJson</c> mitbringt, darf keinen entstehen lassen, den niemand
+    /// je über den eigenen Weg gesetzt hat.
+    /// </summary>
+    [Fact]
+    public async Task Upsert_NeuerVorgang_UebernimmtKeinEntwurfJson()
+    {
+        var angelegt = await _repository.UpsertAsync(new VorgangEntity
+        {
+            Referenz = Referenz,
+            AngefragtAm = new DateTime(2026, 6, 1),
+            Status = "angefragt",
+            Rechtsgebiet = "verkehrsrecht",
+            EntwurfJson = Entwurf,
+        });
+
+        angelegt.EntwurfJson.Should().BeNull();
+    }
+
+    /// <summary>
     /// Die Referenz kommt aus einem Query-Parameter und trägt gern Leerzeichen
     /// vom Umbruch einer Mail — sie wird wie überall sonst bereinigt verglichen.
     /// </summary>
