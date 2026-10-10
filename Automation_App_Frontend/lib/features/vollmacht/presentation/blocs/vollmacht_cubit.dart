@@ -118,7 +118,7 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
   /// weitere der Anwalt. Bewusst nicht bei jedem Tastendruck: Eine Umwandlung
   /// belegt den Word-Thread, und der Druck wartet in derselben Schlange.
   Future<void> erstelleVorschau() async {
-    final auftrag = _auftrag();
+    final auftrag = state.auftrag;
     if (isClosed || auftrag == null) return;
     if (state.vorschauLaedt || state.vorlageFehlt) return;
 
@@ -229,21 +229,10 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
     return _vorgaenge.vermerkeVollmacht(referenz, gedruckt: gedruckt);
   }
 
-  VollmachtAuftrag? _auftrag() {
-    final vorgang = state.vorgang;
-    final art = state.art;
-    if (vorgang == null || art == null) return null;
-    return VollmachtAuftrag(
-      art: art,
-      referenz: vorgang.referenz,
-      kopfdaten: state.kopfdaten,
-    );
-  }
-
   Future<void> _fuehreAus(
     UseCase<VollmachtErgebnis, VollmachtAuftrag> schritt,
   ) async {
-    final auftrag = _auftrag();
+    final auftrag = state.auftrag;
     final ausfuehrbar =
         state.phase == VollmachtPhase.eingabe ||
         state.phase == VollmachtPhase.abgeschlossen;
