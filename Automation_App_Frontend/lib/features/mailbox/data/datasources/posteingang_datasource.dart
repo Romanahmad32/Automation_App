@@ -1,3 +1,4 @@
+import 'package:automation_app/core/network/textual_log_interceptor.dart';
 import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart';
 import 'package:automation_app/features/mailbox/domain/entities/posteingang_anhang.dart';
 import 'package:automation_app/features/mailbox/domain/repositories/posteingang_repository.dart';
@@ -71,7 +72,7 @@ class ApiPosteingangDatasource implements PosteingangRepository {
         cancelToken: token,
         options: Options(
           receiveTimeout: wartezeit,
-          extra: {'keinAntwortProtokoll': true},
+          extra: {TextualLogInterceptor.keinAntwortProtokoll: 'Postfachinhalt'},
         ),
       );
       return response.data!;
