@@ -333,6 +333,18 @@ Das Repository ist öffentlich. Geprüft wird an zwei Stellen, und nur die zweit
   **volle Historie**. Ein Zugang, der einmal committet und im nächsten Commit entfernt wurde, steht
   weiter im Repository und gilt trotzdem als verbrannt.
 
+**Kanzleidokumente sieht Gitleaks nicht** — eine `.docx` ist ein ZIP, und Word zerlegt jede Zeile
+in Läufe. Dafür gibt es `Architecture/KanzleidatenTests.cs` im Backend: Versioniert sein dürfen
+Dokumente (Office, PDF, Mail) nur als `Templates/**/Muster_*.docx`, und kein Dokument, das von HEAD
+aus je erreichbar war, darf eine IBAN, Bankverbindung, Steuernummer oder USt-IdNr. tragen. Gemeldet
+wird die Art des Fundes, nie der Wert — die CI-Protokolle sind öffentlich. Der Backend-Job holt dafür
+die volle Historie (`fetch-depth: 0`).
+
+**Nach einem Umschreiben der Historie wird kein alter Zweig zurückgemergt.** Der Briefkopf der
+Kanzlei war schon einmal entfernt und kam über einen Zweig zurück, der noch auf der alten Historie
+stand. Ein Zweig oder Klon von vor der Bereinigung wird auf dem heutigen `master` neu angelegt und
+die Arbeit per Cherry-Pick übernommen; der Test schlägt an, wenn das unterbleibt.
+
 **Der Hook braucht `gitleaks` oder Docker.** Ist beides nicht da, schweigt er und lässt durch —
 ein Wächter, der bei eigener Störung die Arbeit anhält, wird abgeschaltet. Der Preis ist, dass man
 „geprüft, sauber" nicht von „gar nicht gelaufen" unterscheidet; deshalb steht hier, was fehlt:

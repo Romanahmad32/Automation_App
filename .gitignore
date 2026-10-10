@@ -32,6 +32,8 @@ Beispiele/**
 # TemplateParametrizer sie auch schreibt.
 # Samt Unterordnern: Templates/Vollmacht/ traegt die Vollmacht-Muster (§4.11),
 # und eine echte Vollmacht der Kanzlei hiesse dort genau wie im Vorlagenordner.
+# Gegen `git add -f` und Merges hilft diese Datei nicht; das prueft
+# AutomationService.Tests/Architecture/KanzleidatenTests.cs.
 AutomationService/AutomationService/Templates/**/*.docx
 !AutomationService/AutomationService/Templates/**/Muster_*.docx
 # Die Ersetzungstabelle des TemplateParametrizer bildet die Mandantendaten des

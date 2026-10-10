@@ -165,6 +165,7 @@ Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Tes
 | Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
 | `pubspec.lock` passt zur gepinnten Flutter-Fassung | `pub get` + `git diff --exit-code` (CI, `check.ps1`) |
 | Zweigname beginnt mit `feature/` oder `bugfix/` ([`docs/RELEASE.md`](docs/RELEASE.md)) | CI-Schritt „Zweigname" in `.github/workflows/ci.yml` |
+| Dokumente nur als neutrale `Muster_*.docx`; keine Bank- oder Steuerdaten in Dokumenten der Historie | `Architecture/KanzleidatenTests.cs` |
 
 Schlägt eine davon fehl, ist die Antwort **nie**, die Regel zu lockern oder das Limit
 hochzusetzen. Begründete Ausnahmen gehören namentlich in den jeweiligen Test.
