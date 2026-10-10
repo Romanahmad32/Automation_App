@@ -17,6 +17,13 @@
 #   --    alles andere: keine Entscheidung, es gilt die normale Rechtepruefung.
 #         Der Hook schraenkt nur ein und gewaehrt nie selbst etwas.
 #
+# Geprueft werden nur Werkzeuge, die etwas antippen. Lesen und Scrollen loesen
+# nichts aus: In Etappe 1 der Abnahme 1.3.0 hat der Hook ein scroll_to auf die
+# Zeile "... laesst sich nicht drucken." verweigert -- ein Fehlalarm. Ebenso
+# fragt ein Tippen ueber type nicht nach, wenn der Typ ein Eingabefeld ist: Das
+# setzt nur den Fokus fuer enter_text. Bei Knoepfen bleibt die Rueckfrage, denn
+# `type: FilledButton` trifft im Versanddialog blind den Knopf "Senden".
+#
 # Marionette vergleicht `text` exakt mit dem sichtbaren Text (widget_matcher.dart:
 # `extractedText == text`); ein Teilstueck wie "Formular" trifft den
 # Zentralruf-Knopf also nicht. Darum reichen hier enge Muster, und Eintraege wie
@@ -77,11 +84,13 @@ try {
     $werkzeug = $werkzeug -replace '^mcp__marionette__', ''
     $felder = $eingabe.tool_input
 
-    # Texte, gegen die geprueft wird: die Zielselektoren. Bei enter_text ist
-    # `text` der einzutippende Inhalt, kein Selektor, und `key` bei press_key
-    # ist eine Taste -- beide zaehlen hier nicht.
+    $tippen = @('tap', 'double_tap', 'long_press', 'secondary_tap')
+
+    # Texte, gegen die geprueft wird: die Zielselektoren der Tipp-Werkzeuge.
+    # scroll_to, get_interactive_elements usw. loesen nichts aus und zaehlen
+    # hier nicht; ebenso wenig enter_text (dort ist `text` der Inhalt).
     $ziele = @()
-    if ($felder -and $werkzeug -notin @('enter_text', 'press_key', 'call_custom_extension')) {
+    if ($felder -and $werkzeug -in $tippen) {
         foreach ($name in 'key', 'identifier', 'text') {
             $wert = $felder.$name
             if ($null -ne $wert) { $ziele += [string]$wert }
@@ -108,12 +117,12 @@ try {
         }
     }
 
-    $tippen = @('tap', 'double_tap', 'long_press', 'secondary_tap')
     if ($werkzeug -in $tippen -and $felder) {
         if ($null -ne $felder.coordinates) {
             Antworte 'ask' 'Marionette-Sperre: Tippen ueber coordinates umgeht die Pruefung der Knopfbeschriftung. Bitte bewusst freigeben.'
         }
-        if ($null -ne $felder.type -and $null -eq $felder.key -and $null -eq $felder.identifier -and $null -eq $felder.text) {
+        $eingabefeld = [string]$felder.type -match '^(TextField|TextFormField|EditableText)$'
+        if ($null -ne $felder.type -and -not $eingabefeld -and $null -eq $felder.key -and $null -eq $felder.identifier -and $null -eq $felder.text) {
             Antworte 'ask' 'Marionette-Sperre: Tippen ueber type trifft irgendeinen Knopf dieses Typs und umgeht die Pruefung. Bitte bewusst freigeben.'
         }
     }
