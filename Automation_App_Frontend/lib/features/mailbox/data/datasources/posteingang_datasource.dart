@@ -1,10 +1,16 @@
 import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart';
+import 'package:automation_app/features/mailbox/domain/entities/posteingang_anhang.dart';
 import 'package:automation_app/features/mailbox/domain/repositories/posteingang_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
 @Injectable(as: PosteingangRepository)
 class ApiPosteingangDatasource implements PosteingangRepository {
+  /// Ein Anhang oder eine ganze `.eml` kann groß sein und läuft über dieselbe
+  /// einzelne IMAP-Verbindung wie das Blättern — die 50 s der Liste reichen
+  /// dafür nicht.
+  static const Duration downloadWartezeit = Duration(seconds: 90);
+
   final Dio _dio;
   CancelToken? _seite;
   CancelToken? _inhalt;
@@ -28,10 +34,35 @@ class ApiPosteingangDatasource implements PosteingangRepository {
     );
   }
 
+  @override
+  Future<PosteingangAnhangAblage> ladeAnhang(String id, String anhangId) async {
+    return PosteingangAnhangAblage.fromJson(
+      await _get(
+        '/api/mailbox/nachrichten/$id/anhaenge/$anhangId',
+        // Ein eigener, nirgends gemerkter Token: Über `abbrechen()` bricht das
+        // Blättern sonst den laufenden Download mit ab.
+        CancelToken(),
+        wartezeit: downloadWartezeit,
+      ),
+    );
+  }
+
+  @override
+  Future<PosteingangAnhangAblage> ladeEml(String id) async {
+    return PosteingangAnhangAblage.fromJson(
+      await _get(
+        '/api/mailbox/nachrichten/$id/eml',
+        CancelToken(),
+        wartezeit: downloadWartezeit,
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> _get(
     String path,
     CancelToken token, {
     Map<String, dynamic>? query,
+    Duration wartezeit = const Duration(seconds: 50),
   }) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
@@ -39,7 +70,7 @@ class ApiPosteingangDatasource implements PosteingangRepository {
         queryParameters: query,
         cancelToken: token,
         options: Options(
-          receiveTimeout: const Duration(seconds: 50),
+          receiveTimeout: wartezeit,
           extra: {'keinAntwortProtokoll': true},
         ),
       );

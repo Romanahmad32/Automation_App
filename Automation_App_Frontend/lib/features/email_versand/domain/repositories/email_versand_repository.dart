@@ -45,6 +45,12 @@ abstract class EmailVersandRepository {
   /// Ein Aufruf statt einer Nachfrage je Zeile.
   Future<List<VersandEintrag>> ladeLetzteVersaende();
 
+  /// Alles, was hinausging, über **alle** Vorgänge — das Jüngste zuerst
+  /// (§4.3, Gesendet-Bereich des Posteingangs). Anders als
+  /// [ladeLetzteVersaende] nicht je Vorgang eine Zeile, sondern jeder
+  /// einzelne Versand, gedeckelt bei [limit].
+  Future<List<VersandEintrag>> ladeAlleVersaende({int limit = 200});
+
   /// Welches Outlook auf diesem Rechner steht — beim Start des Dienstes einmal
   /// ermittelt. Entscheidet, ob Entwurf, Anhang-Griff und Signatur-Übernahme
   /// überhaupt etwas liefern können.
