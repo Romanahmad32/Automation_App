@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
@@ -46,6 +48,11 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
     name: 'Kanzleidrucker',
     zustand: VollmachtDruckerZustand.bereit,
   );
+
+  /// Hält die Antwort auf die Druckerabfrage zurück, bis er erfüllt ist — ein
+  /// Netzwerkdrucker, der nicht antwortet.
+  Completer<void>? druckerHaengt;
+  int druckerAbfragen = 0;
 
   /// Ab Werk ohne Seite: Ein Widget-Test mit echten PDF-Bytes brächte den
   /// PDF-Betrachter samt nativer Bibliothek in den Testlauf.
@@ -99,8 +106,11 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
   }
 
   @override
-  Future<Either<Failure, VollmachtDrucker>> ladeDrucker() async =>
-      Right(drucker);
+  Future<Either<Failure, VollmachtDrucker>> ladeDrucker() async {
+    druckerAbfragen++;
+    await druckerHaengt?.future;
+    return Right(drucker);
+  }
 
   @override
   Future<Either<Failure, VollmachtVorschau>> erstelleVorschau(

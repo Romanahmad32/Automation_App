@@ -59,6 +59,7 @@ class VollmachtStand extends Equatable {
 
   /// Der Standarddrucker; null, solange er nicht abgefragt ist.
   final VollmachtDrucker? drucker;
+  final bool druckerLaedt;
 
   /// Die zuletzt erzeugte Seitenvorschau und der Auftrag, aus dem sie entstand
   /// — daran erkennt der Dialog, ob sie noch zu den Feldern passt.
@@ -97,6 +98,7 @@ class VollmachtStand extends Equatable {
     this.mandantLage = VollmachtMandantLage.geladen,
     this.vorlagen,
     this.drucker,
+    this.druckerLaedt = false,
     this.vorschau,
     this.vorschauFuer,
     this.vorschauLaedt = false,
@@ -124,6 +126,12 @@ class VollmachtStand extends Equatable {
   /// Ob „Drucken" greifen darf — nicht ohne eingerichteten Drucker.
   bool get druckbereit => bereit && (drucker?.kannDrucken ?? true);
 
+  /// Ob der Dialog den Drucker abfragen soll: Die Eingabe steht, und er ist
+  /// weder bekannt noch angefragt. Ein gescheiterter Abruf liefert den
+  /// Zustand „unbekannt" — gefragt wird also genau einmal.
+  bool get druckerFaellig =>
+      phase == VollmachtPhase.eingabe && drucker == null && !druckerLaedt;
+
   /// Ob der Dialog eine erste Vorschau anstoßen soll: Art und Vorlage stehen
   /// fest, und es gibt noch keine. Danach nur noch auf Knopfdruck.
   bool get vorschauFaellig => bereit && vorschau == null && !vorschauLaedt;
@@ -143,6 +151,7 @@ class VollmachtStand extends Equatable {
     VollmachtMandantLage? mandantLage,
     VollmachtVorlagenStand? vorlagen,
     VollmachtDrucker? drucker,
+    bool? druckerLaedt,
     VollmachtVorschau? vorschau,
     VollmachtAuftrag? vorschauFuer,
     bool? vorschauLaedt,
@@ -161,6 +170,7 @@ class VollmachtStand extends Equatable {
     mandantLage: mandantLage ?? this.mandantLage,
     vorlagen: vorlagen ?? this.vorlagen,
     drucker: drucker ?? this.drucker,
+    druckerLaedt: druckerLaedt ?? this.druckerLaedt,
     vorschau: vorschau ?? this.vorschau,
     vorschauFuer: vorschauFuer ?? this.vorschauFuer,
     vorschauLaedt: vorschauLaedt ?? this.vorschauLaedt,
@@ -186,6 +196,7 @@ class VollmachtStand extends Equatable {
     mandantLage,
     vorlagen,
     drucker,
+    druckerLaedt,
     vorschau,
     vorschauFuer,
     vorschauLaedt,

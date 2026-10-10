@@ -37,8 +37,9 @@ Cubit, Vorschau, Drucker und Ergebnis, Standzeile, Dialog ohne Mandant und bei �
 - Drucken wartet bis 90 s (`ApiVollmachtDatasource`): Word öffnet, druckt und schließt — die
   Vorgabe von drei Sekunden meldete sonst einen Fehler, während das Papier schon kommt.
 - Die Bankverbindung wird weder vorbelegt noch gespeichert; `VollmachtKopfdaten` hat kein Feld dafür.
-- Die erste Vorschau stößt der Dialog an (`vorschauFaellig`, nach dem Bild), nicht `starte`: Jede
-  weitere Ausgabe löschte die Meldung des Öffnens (etwa „Mandant nicht ladbar"). Danach nur auf
-  „Aktualisieren" — die Umwandlung belegt den Word-Thread, auf dem auch gedruckt wird.
+- Drucker und erste Vorschau stößt der Dialog an (`druckerFaellig`, `vorschauFaellig`, nach dem
+  Bild), nicht `starte`: Das Öffnen wartet nicht auf einen Drucker, der nicht antwortet, und jede
+  weitere Ausgabe löschte die Meldung des Öffnens (etwa „Mandant nicht ladbar"). Die Vorschau danach
+  nur auf „Aktualisieren" — die Umwandlung belegt den Word-Thread, auf dem auch gedruckt wird.
 - Kein `LayoutBuilder` im Dialog: `AlertDialog` legt den Inhalt in eine `IntrinsicWidth`. Ob Felder
   und Vorschau nebeneinander passen, entscheidet die Fensterbreite (`VollmachtArbeitsflaeche`).

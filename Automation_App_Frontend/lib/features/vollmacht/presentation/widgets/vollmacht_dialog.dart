@@ -60,15 +60,19 @@ class VollmachtDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StandNachziehen<VollmachtCubit, VollmachtStand>(
-      // Die Felder lesen den Stand im Aufbau. Nachzuziehen ist nur die erste
-      // Seitenvorschau, sobald sie fällig ist — nach dem Bild, denn beim
-      // Aufgehen läuft dieser Rückruf mitten im Aufbau.
+      // Die Felder lesen den Stand im Aufbau. Nachzuziehen sind nur der
+      // Drucker und die erste Seitenvorschau, sobald sie fällig sind — nach
+      // dem Bild, denn beim Aufgehen läuft dieser Rückruf mitten im Aufbau.
+      // Was dann noch fällig ist, sagt der aktuelle Stand, nicht [stand]: Ein
+      // früherer Rückruf kann die Vorschau inzwischen bestellt haben, und
+      // „Aktualisieren" bestellte sie ein zweites Mal.
       nachziehen: (context, stand) {
-        if (!stand.vorschauFaellig) return;
+        if (!stand.druckerFaellig && !stand.vorschauFaellig) return;
         final cubit = context.read<VollmachtCubit>();
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => cubit.erstelleVorschau(),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          cubit.ladeDrucker();
+          if (cubit.state.vorschauFaellig) cubit.erstelleVorschau();
+        });
       },
       beiUebergang: _melde,
       builder: (context, stand) => AlertDialog(
