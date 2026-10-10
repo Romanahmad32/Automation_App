@@ -35,6 +35,13 @@ class EmailVersandDialog extends StatelessWidget {
   /// Weitere Dateien aus dem Fall-Ordner, zum Anklicken.
   final List<String> ausDerAkte;
 
+  /// Empfänger, die der Entwurf von Anfang an trägt — additiv seit §4.3
+  /// „Antworten" (siehe `EmailVersandButton`).
+  final List<String> empfaengerVorauswahl;
+
+  /// Überschreibt den abgeleiteten Betreff — additiv seit §4.3 „Antworten".
+  final String? betreffVorgabe;
+
   const EmailVersandDialog({
     super.key,
     this.vorgang,
@@ -42,6 +49,8 @@ class EmailVersandDialog extends StatelessWidget {
     this.antwort,
     this.anhangVorauswahl = const [],
     this.ausDerAkte = const [],
+    this.empfaengerVorauswahl = const [],
+    this.betreffVorgabe,
   });
 
   /// Öffnet den Dialog und liefert das Ergebnis, wenn gesendet wurde — sonst
@@ -53,6 +62,8 @@ class EmailVersandDialog extends StatelessWidget {
     ZentralrufReplyData? antwort,
     List<String> anhangVorauswahl = const [],
     List<String> ausDerAkte = const [],
+    List<String> empfaengerVorauswahl = const [],
+    String? betreffVorgabe,
   }) {
     return showDialog<EmailVersandErgebnis>(
       context: context,
@@ -63,6 +74,8 @@ class EmailVersandDialog extends StatelessWidget {
         antwort: antwort,
         anhangVorauswahl: anhangVorauswahl,
         ausDerAkte: ausDerAkte,
+        empfaengerVorauswahl: empfaengerVorauswahl,
+        betreffVorgabe: betreffVorgabe,
       ),
     );
   }
@@ -134,6 +147,8 @@ class EmailVersandDialog extends StatelessWidget {
           mandant: mandant,
           antwort: antwort,
           anhangPfade: anhangVorauswahl,
+          empfaengerVorauswahl: empfaengerVorauswahl,
+          betreffVorgabe: betreffVorgabe,
         ),
       child: BlocBuilder<EmailEntwurfCubit, EmailEntwurfState>(
         builder: (context, state) {

@@ -22,6 +22,12 @@ enum PrefillQuelle {
   /// der Unterschied zwischen zwei Zeilen und abgeschnittenem Text, obwohl er
   /// nichts erklärt (man steht ja in diesem Vorgang). Die Sammelzeile über dem
   /// Formular (`VorgangsdatenHinweis`) hat Platz und nennt ihn weiterhin.
+  ///
+  /// Es gibt bewusst **keine** Quelle „aus Ihrem angefangenen Stand" (#133):
+  /// Jede Quelle hier ist ein Datenbestand, dem der Anwalt vertraut oder eben
+  /// nicht. Sein eigener Tippstand ist keiner — wo er den vorbelegten Wert
+  /// überschrieben hat, nennt das Formular gar keine Herkunft mehr, statt eine
+  /// zu behaupten, die zum angezeigten Wert nicht mehr passt.
   gespeichert('aus dem letzten Schreiben');
 
   /// Kleingeschriebener Einschub für Hinweistexte („Vorbelegt aus …").
