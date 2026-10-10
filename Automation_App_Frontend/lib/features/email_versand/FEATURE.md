@@ -5,7 +5,10 @@ Versicherung. Empfänger, Betreff und Anrede aus dem Vorgang vorbelegt, Anhänge
 wird über das Postfach der Kanzlei. Dazu die Pflege der Mail-Bausteine in den Einstellungen.
 **Anforderung:** `REQUIREMENTS.md` §4.7
 **Einstieg:** `presentation/widgets/email_versand_button.dart` (`EmailVersandButton`) — der Knopf
-für alle Stellen; er öffnet `EmailVersandDialog`.
+für alle Stellen; er öffnet `EmailVersandDialog`. Zusätzlich aus dem Postfach heraus als
+„Antworten aus dem Posteingang" (`mailbox`, §4.3): additive Parameter `empfaengerVorauswahl`
+(Absenderadresse) und `betreffVorgabe` (`AW: …`) belegen Empfänger und Betreff vor, alle
+bestehenden Aufrufstellen bleiben unverändert.
 **Zustand:** `EmailEntwurfCubit` (`presentation/blocs/email_entwurf_cubit/`) — Factory, je Dialog
 ein eigener Entwurf; die Griffe liegen in `OutlookAnhaengeGriff`, `VersandGriff`, `AnredeGriff`,
 `VorgangGriff`. Die Bestände: `MailVorlagenCubit`, `AnredebausteineCubit`, `GrussformelnCubit`.
@@ -17,7 +20,8 @@ ein eigener Entwurf; die Griffe liegen in `OutlookAnhaengeGriff`, `VersandGriff`
 `MailVorlageZustand`, `MailVorlageBeispiel`; Schnittstellen `EmailVersandRepository`,
 `MailVorlagenRepository`, `GrussformelnRepository`, `AnredebausteineRepository`. Keine UseCases.
 **Backend:** `Features/EmailVersand/` · `bereitschaft` · `senden` · `entwurf`
-(+ `entwurf/vorwaermen`) · `outlook/anhaenge` · `outlook/stand` · `protokoll` (+ `/letzte`) ·
+(+ `entwurf/vorwaermen`) · `outlook/anhaenge` · `outlook/stand` · `protokoll` (+ `/letzte`, `/alle`
+— `ladeAlleVersaende`, chronologisch über alle Vorgänge, für den Bereich „Gesendet" in `mailbox`) ·
 `signaturen` (+ `/stand`, `/uebernehmen`, `/format`, `/bild`)
 · CRUD: `api/MailVorlagen`, `api/Grussformeln`, `api/Anredebausteine`
 (`signaturen` auch `/vorschau`: lesen ohne zu speichern)
