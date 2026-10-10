@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 
 /// Eine Zeile der Karte „Unbearbeitete Antworten": der noch nicht quittierte
 /// Postfach-Treffer mit Referenz, Versicherer und Eingangszeit. Die Symbolik
-/// entspricht der Liste im Postfach ([MailboxReplyList]) — Zwischennachricht
-/// und Warnungen sind schon hier erkennbar.
+/// entspricht der Posteingangsliste im Postfach (`PosteingangZeile`) —
+/// Zwischennachricht und Warnungen sind schon hier erkennbar.
 class DashboardAntwortZeile extends StatelessWidget {
   final ReceivedReply antwort;
 

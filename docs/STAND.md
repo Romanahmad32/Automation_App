@@ -28,7 +28,7 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   sind anklickbar, Anrede und Betreff aus den Vorgangsdaten vorbelegt, das Anspruchsschreiben als
   PDF vorausgewählt. Geprüft wird **vor** dem Verbindungsaufbau: Fehlt ein Anhang, geht nichts
   hinaus. Erreichbar an zwei Stellen: im Speicherschritt/Abschlussdialog der Word-Automation und
-  im Postfach (`MailboxVersandLeiste`, dort ohne Anhang und ohne Vorgang auch als leeres
+  im Postfach (`MailboxWerkzeugleiste`, dort ohne Anhang und ohne Vorgang auch als leeres
   Anschreiben). Der Abschluss (§4.8) bleibt der eigene Schritt — das Häkchen ist nach dem Versand nur
   vorbelegt und begründet. Zweiter Weg statt Direktversand: **Entwurf in Outlook öffnen** — mit
   Empfängern, Betreff, Text und Anhängen; dort gelten Signatur und Vorlage der Kanzlei, und was
@@ -286,6 +286,53 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   und sagt die Folge je Wahl. `schliesseAblageAb` hält jetzt jede Ablage am Vorgang fest, nicht
   nur die erste — der Status läuft weiterhin nur vorwärts. Eine Migration setzt `SchreibenNummer`
   auf NULL, wo der Vorgang nie gespeichert wurde.
+- **Posteingang mit Vorgangsbezug, Handgriffen und Gesendet-Bereich (§4.3, §4.7, 13.09.2026,
+  #134)** — der allgemeine Posteingang (`mailbox`) zeigt zu jeder Nachricht einen vorgeschlagenen
+  Vorgangsbezug (`VorgangsbezugErkenner`: Zeichen oder Schadennummer im Betreff, sonst
+  Absenderadresse eines noch offenen Vorgangs; mehrdeutig zählt als kein Bezug, ohne auf eine
+  schwächere Stufe auszuweichen) und bietet zu einer geöffneten Nachricht genau vier Handgriffe:
+  Anhang **öffnen**, Anhang oder die Nachricht als `.eml` **in die Akte legen** (über die
+  vorhandene Ablage samt Konfliktfrage), eine Datei **beim Versand weiterverwenden** und
+  **antworten** — `EmailVersandButton`/`EmailVersandDialog` sind dafür additiv um
+  `empfaengerVorauswahl` und `betreffVorgabe` erweitert, alle bisherigen Aufrufstellen bleiben
+  unverändert. Anhang und `.eml` legt das Backend bei Bedarf ins Zwischenlager
+  `Anhaenge/Posteingang/<Konto>/<Uid>/` (derselbe 14-Tage-Aufräumer wie bei den Anhängen einer
+  erfassten Antwort; Grenzen 30 MB je Anhang, 50 MB je Nachrichtenordner bzw. `.eml`, sonst eine
+  413-Antwort). Die HTML-Fassung einer Nachricht wird serverseitig entschärft
+  (`PosteingangHtmlFilter`: kein Skript, keine nachladenden Verweise, keine eingebetteten Bilder)
+  und im Frontend zusätzlich ohne `<img>` gerendert. Seiten werden jetzt **angehängt statt
+  ersetzt**, gedeckelt bei 500 Zeilen (10 Seiten) — darüber verweist die Fußzeile aufs
+  Mailprogramm. Eine erfasste Zentralruf-Antwort erscheint als markierte Zeile mit eigenem Detail
+  (`PosteingangZentralrufDetail`) statt in einem eigenen Bereich; daneben zeigt „Gesendet"
+  (`GesendetCubit`) das Versandprotokoll über alle Vorgänge chronologisch
+  (`GET api/EmailVersand/protokoll/alle`).
+- **Der angefangene Stand wird ohne Nachfrage wiederhergestellt (§3, 13.09.2026, #133 Teil B,
+  Nutzerentscheidung vom selben Tag)** — eine erst eingeführte Leiste „Angefangener Stand" mit
+  „Verwerfen"/„Weiterarbeiten" ist auf Wunsch des Anwalts wieder entfernt: Wählt er einen Vorgang
+  erneut (auch nach einem Ausflug zu einem anderen) oder wechselt die Vorlage hin und zurück, zeigt
+  das Formular Vorbelegung und gespeicherte Abweichung von Anfang an gemeinsam — die Abweichung
+  gewinnt an ihren Feldern, sonst gilt die Vorbelegung; keine Frage, keine Karte, die das Formular
+  verdeckt. `EntwurfAbweichung.nurAbweichende` vergleicht dafür Feld für Feld `trim()`-genau (nur die der
+  gewählten Vorlage) mit dem, was die Vorbelegung ohnehin zeigen würde. Gesichert werden **nur**
+  die abweichenden Felder plus die Schadensaufstellung, wenn sie nicht leer ist — nie das ganze
+  Formular: Ein voller Formularwert würde vorbelegte Felder einfrieren und eine spätere
+  Zentralruf-Antwort (neuer Versicherer) unsichtbar machen. Ohne Abweichung wird der Entwurf am
+  Vorgang gelöscht. Gesichert wird rund 300 ms nach dem letzten Tastendruck (`FormWertBeobachter`)
+  und sofort beim Verlassen der Seite (`EntwurfSicherungSteuerung`, vorher `EntwurfAngebotSteuerung`
+  mit festem 2-s-Takt). Ein Textknopf „Eingaben auf Vorbelegung zurücksetzen" (nur sichtbar bei
+  Abweichung) leert den Tippstand und löscht den Entwurf; eine `Rueckmeldung` „Eingaben
+  zurückgesetzt." mit der Aktion „Rückgängig" stellt ihn wieder her. **Entfallen:**
+  `EntwurfEntscheidungsKarte`, `EntwurfAngebotSchalter`, `WizardState.entwurfAngebot`/
+  `entwurfUebernommen`, `PrefillQuelle.angefangen` sowie die Entity-Felder
+  `formTemplateId`/`vorlagenName`/`mitAuflistung` an `VorgangEntwurf` — der Entwurf ist wieder nur
+  `gespeichertAm`, `feldWerte`, `schadensaufstellung` (weiterhin opakes `JsonElement`, kein
+  Vertragswechsel). Der generische Upsert (`VorgangRepository.CopyInto`) schreibt `EntwurfJson`
+  weiterhin nicht mit, auch beim Insert nicht; nach dem Speichern eines Schreibens löscht der
+  Rückfluss den Entwurf explizit statt sich auf den Upsert zu verlassen. Bewusste Abweichung vom
+  Issue-Text („Angebot mit Inhalt, Folgen, Verwerfen zurücknehmbar"): der Anwalt will keine
+  Nachfrage, der Rückweg ist der Zurücksetzen-Knopf. **Bewusst nicht gebaut:** die im Issue als
+  Spielraum genannte Vorauswahl des Vorgangs mit dem jüngsten angefangenen Stand beim ersten Öffnen
+  — vorausgewählt bleibt der Vorgang mit der jüngsten Antwort.
 - **Vollmacht drucken (§4.11, 13.09.2026, #151)** — der Anwalt füllte das Word-Vollmachtsformular
   bislang von Hand mit Daten, die er der App gerade eben eingegeben hatte. Ein Dialog
   (Frontend `vollmacht`, Backend-Slice `Vollmacht`) belegt Vorlagenart (nach Rechtsgebiet),
@@ -354,7 +401,7 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 - **Bestätigung vor dem Hochzählen (§7.1)** — die Auftragsnummer wird nach dem Abschluss immer
   automatisch erhöht. Die geforderte Einstellung „automatisch oder erst nach Bestätigung" gibt es
   weder in `KanzleiSettings` noch im Backend.
-- **Der angefangene Stand, wann er angeboten wird (#133 Teil B)** — Teil A dieses Issues
-  (Schreiben-Nummer, siehe oben) ist umgesetzt. Die Leiste „Angefangener Stand" bleibt unverändert:
-  Sie erscheint weiterhin auch dann, wenn der Stand der Vorbelegung gleicht oder derselbe Vorgang
-  erneut gewählt wird, und „Verwerfen"/„Weiterarbeiten" sagen nicht, was sie bewirken.
+- **Vorauswahl des angefangenen Stands (#133, Spielraum-Punkt)** — #133 Teil B (siehe oben unter
+  „Umgesetzt") stellt den angefangenen Stand jetzt ohne Nachfrage still wieder her. Nicht gebaut ist
+  der im Issue nur als Spielraum genannte nächste Schritt: Beim ersten Öffnen den Vorgang mit dem
+  **jüngsten** angefangenen Stand vorauszuwählen, statt wie bisher den mit der jüngsten Antwort.

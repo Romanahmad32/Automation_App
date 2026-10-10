@@ -71,8 +71,8 @@ public sealed class MailboxNachrichtenScanner(
                     || subject.Contains(options.SubjectFilter, StringComparison.OrdinalIgnoreCase))
                 {
                     using var message = await folder.GetMessageAsync(summary.UniqueId, cancellationToken);
-                    var dedupeKey = !string.IsNullOrEmpty(message.MessageId)
-                        ? message.MessageId : $"{folder.UidValidity}:{summary.UniqueId}";
+                    var dedupeKey = PosteingangKopf.MailSchluessel(
+                        message.MessageId, folder.UidValidity, summary.UniqueId.Id);
                     await ProcessMessageAsync(message, subject, dedupeKey, cancellationToken);
                 }
                 _highWater = summary.UniqueId;

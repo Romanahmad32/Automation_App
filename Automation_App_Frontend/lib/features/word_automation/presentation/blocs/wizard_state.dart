@@ -39,27 +39,33 @@ class WizardState extends Equatable {
   /// am Ende des Schadensaufstellungs-Schritts läuft.
   final Map<String, String>? formData;
 
-  /// Der laufende Tippstand desselben Formulars — im Unterschied zu [formData]
-  /// **nicht** bestätigt. Wird entprellt mitgeschrieben, damit ein Neuaufbau
-  /// des Formulars die Eingaben wieder einsetzen kann (die Vorlage wurde
-  /// nebenan bearbeitet, die Liste neu geladen).
+  /// Der angefangene Stand desselben Formulars — im Unterschied zu [formData]
+  /// **nicht** bestätigt, und im Unterschied zu ihm **nicht vollständig**: Hier
+  /// stehen nur die Felder, deren Wert von der Vorbelegung abweicht
+  /// (`EntwurfAbweichung.nurAbweichende`, #133). Alles Übrige holt sich das
+  /// Formular jedes Mal frisch aus dem Bestand — sonst fröre der Stand die
+  /// Vorbelegung ein und verdeckte eine später eintreffende Zentralruf-Antwort.
   ///
-  /// Getrennt gehalten, weil [formData] auch eine Freigabe ist: An ihm hängen
-  /// `WizardStepBar._isEnabled` und der Erzeugen-Knopf des
+  /// Er wird entprellt mitgeschrieben und sofort am Vorgang abgelegt, damit die
+  /// Eingaben einen Neuaufbau des Formulars **und** einen Ausflug zu einem
+  /// anderen Vorgang überleben. Beim Wiedereinstieg kommt er still zurück: Das
+  /// Formular zeigt Vorbelegung und diese Werte gemischt, der Wert hier gewinnt
+  /// an seinem Feld.
+  ///
+  /// Felder, die die gerade gewählte Vorlage nicht kennt, bleiben stehen — der
+  /// Stand darf zu einer anderen Vorlage gehören, und bei der Rückkehr dorthin
+  /// stehen sie wieder da.
+  ///
+  /// Getrennt von [formData] gehalten, weil das auch eine Freigabe ist: An ihm
+  /// hängen `WizardStepBar._isEnabled` und der Erzeugen-Knopf des
   /// Schadensaufstellungs-Schritts. Schriebe der Tippstand dorthin, schaltete
   /// das erste getippte Zeichen den nächsten Schritt frei.
   final Map<String, String>? formDataEntwurf;
 
-  /// Ein am gewählten Vorgang gefundener, noch **nicht angenommener** Entwurf.
-  /// Solange er hier steht, zeigt der Ausfüllschritt die Leiste „Angefangener
-  /// Stand von … — Weiterarbeiten / Verwerfen". Kein stilles Wiederherstellen:
-  /// Der Anwalt entscheidet, ob die Werte in sein Schreiben kommen.
-  final VorgangEntwurf? entwurfAngebot;
-
   /// Zähler, der einen Neuaufbau des Ausfüll-Formulars erzwingt. Nötig, wenn
-  /// sich nur die **einzusetzenden Werte** geändert haben (übernommener
-  /// Entwurf): Die FormGroup hängt sonst an Vorlage und Vorbelegung, und beide
-  /// sind dabei unverändert — das Formular zeigte also weiter die alten Werte.
+  /// sich nur die **einzusetzenden Werte** geändert haben ([formDataEntwurf]):
+  /// Die FormGroup hängt sonst an Vorlage und Vorbelegung, und beide sind dabei
+  /// unverändert — das Formular zeigte also weiter die alten Werte.
   final int aufbauMarke;
 
   /// Der Vorgang, aus dem das Schreiben erstellt wird (Phase 4). Liefert die
@@ -98,7 +104,6 @@ class WizardState extends Equatable {
     this.vorsteuerabzugsberechtigt = true,
     this.formData,
     this.formDataEntwurf,
-    this.entwurfAngebot,
     this.aufbauMarke = 0,
     this.selectedVorgang,
     this.selectedMandant,
@@ -135,7 +140,6 @@ class WizardState extends Equatable {
     bool? vorsteuerabzugsberechtigt,
     Map<String, String>? Function()? formData,
     Map<String, String>? Function()? formDataEntwurf,
-    VorgangEntwurf? Function()? entwurfAngebot,
     int? aufbauMarke,
     Vorgang? Function()? selectedVorgang,
     Mandant? Function()? selectedMandant,
@@ -158,9 +162,6 @@ class WizardState extends Equatable {
       formDataEntwurf: formDataEntwurf != null
           ? formDataEntwurf()
           : this.formDataEntwurf,
-      entwurfAngebot: entwurfAngebot != null
-          ? entwurfAngebot()
-          : this.entwurfAngebot,
       aufbauMarke: aufbauMarke ?? this.aufbauMarke,
       selectedVorgang: selectedVorgang != null
           ? selectedVorgang()
@@ -184,7 +185,6 @@ class WizardState extends Equatable {
     vorsteuerabzugsberechtigt,
     formData,
     formDataEntwurf,
-    entwurfAngebot,
     aufbauMarke,
     selectedVorgang,
     selectedMandant,

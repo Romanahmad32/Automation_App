@@ -128,6 +128,10 @@ class StummerVersanddienst implements EmailVersandRepository {
   Future<List<VersandEintrag>> ladeLetzteVersaende() async => const [];
 
   @override
+  Future<List<VersandEintrag>> ladeAlleVersaende({int limit = 200}) =>
+      throw UnimplementedError();
+
+  @override
   Future<void> verwirfAnhang(String pfad) async {}
 
   @override

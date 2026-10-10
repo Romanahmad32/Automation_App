@@ -49,4 +49,19 @@ public class VersandProtokollController(VersandProtokoll protokoll) : Controller
         var eintraege = await protokoll.LetzteJeVorgangAsync(cancellationToken);
         return Ok(eintraege.Select(VersandEintragDto.From).ToList());
     }
+
+    /// <summary>
+    /// Alles, was hinausging — über alle Vorgänge, das Jüngste zuerst. Das ist
+    /// die Antwort auf „was ist heute rausgegangen?"; <c>letzte</c> kann sie
+    /// nicht geben, weil dort je Vorgang nur ein Eintrag übrig bleibt.
+    /// </summary>
+    [HttpGet("alle")]
+    [ProducesResponseType(typeof(IReadOnlyList<VersandEintragDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<VersandEintragDto>>> GetAlle(
+        [FromQuery] int limit = 200,
+        CancellationToken cancellationToken = default)
+    {
+        var eintraege = await protokoll.AlleAsync(limit, cancellationToken);
+        return Ok(eintraege.Select(VersandEintragDto.From).ToList());
+    }
 }

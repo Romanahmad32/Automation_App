@@ -27,8 +27,9 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
   void _onDamageListingChanged(
     BuildContext context,
     DamageListing listing,
-    List<String> fehler,
-  ) {
+    List<String> fehler, {
+    bool alsEingabe = true,
+  }) {
     final wizardState = context.read<WizardCubit>().state;
     // applyVat (Umsatzsteuer ausweisen) ist die Umkehrung der
     // Vorsteuerabzugsberechtigung aus dem Ausfüll-Schritt.
@@ -46,7 +47,11 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
           ? settingsState.settings.tabellenkopfFarbeHex
           : null,
     );
-    context.read<WizardCubit>().setDamageListing(enriched, fehler: fehler);
+    context.read<WizardCubit>().setDamageListing(
+      enriched,
+      fehler: fehler,
+      alsEingabe: alsEingabe,
+    );
 
     // Auch ohne Position wird das Ereignis abgeschickt, nicht unterdrückt: Es
     // ist zugleich der Reset. Wer es hier zurückhält, lässt den zuletzt
@@ -133,6 +138,37 @@ class WizardStepSchadensaufstellung extends StatelessWidget {
                 context,
                 gespeichert,
                 positionenFehler(gespeichert.items),
+              );
+            }
+          },
+        ),
+        // Die Einstellungen werden erst beim Öffnen von Tab 3 angefordert
+        // (word_automation_page.dart) und laden asynchron. Trifft der Schritt
+        // schon eine Aufstellung an (Listener oben) oder ändert sich die
+        // Vorsteuer-Checkbox, bevor die Antwort da ist, brennt sich die
+        // Standardfarbe ein — bis zur nächsten Eingabe, denn nur die ruft
+        // _onDamageListingChanged erneut auf. Deshalb hier nachziehen, sobald
+        // die Einstellungen tatsächlich geladen sind.
+        //
+        // `alsEingabe: false`, weil der Anwalt hier nichts geändert hat — nur
+        // die Farbe zieht nach. Träfe die Antwort erst nach dem Erzeugen eines
+        // Dokuments ein (Stand bereits bestätigt), höbe `setDamageListing`
+        // ohne diese Ausnahme die Bestätigung wieder auf und legte den
+        // bestätigten Stand als „angefangen" erneut am Vorgang ab
+        // (Review-Nachbesserung #154 zu #133, Befund 5).
+        BlocListener<KanzleiSettingsBloc, KanzleiSettingsState>(
+          listenWhen: (previous, current) =>
+              previous is! KanzleiSettingsLoaded &&
+              current is KanzleiSettingsLoaded,
+          listener: (context, state) {
+            final wizardState = context.read<WizardCubit>().state;
+            final listing = wizardState.damageListing;
+            if (listing != null) {
+              _onDamageListingChanged(
+                context,
+                listing,
+                wizardState.schadenspositionFehler,
+                alsEingabe: false,
               );
             }
           },
