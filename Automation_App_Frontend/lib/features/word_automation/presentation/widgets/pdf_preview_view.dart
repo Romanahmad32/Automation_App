@@ -1,7 +1,7 @@
+import 'package:automation_app/core/general_widgets/pdf_dokument_ansicht.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pdfrx/pdfrx.dart';
 
 /// Zeigt den Zustand eines [PdfPreviewBloc] an: Hinweis, Spinner,
 /// originalgetreues PDF (pdfrx) oder Fehlermeldung.
@@ -32,16 +32,9 @@ class PdfPreviewView extends StatelessWidget {
               ],
             ),
           ),
-          PdfPreviewLoaded() => ColoredBox(
-            color: Colors.grey.shade300,
-            child: PdfViewer.data(
-              state.pdfBytes,
-              sourceName: state.sourceName,
-              params: const PdfViewerParams(
-                margin: 16,
-                backgroundColor: Colors.transparent,
-              ),
-            ),
+          PdfPreviewLoaded() => PdfDokumentAnsicht(
+            pdf: state.pdfBytes,
+            quelle: state.sourceName,
           ),
           PdfPreviewError() => Center(
             child: Column(

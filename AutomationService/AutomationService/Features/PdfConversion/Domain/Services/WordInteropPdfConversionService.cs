@@ -27,6 +27,7 @@ public interface IWordInteropPdfConverter
 /// Aufrufen am Leben (Startkosten fallen nur einmal an). Über dieselbe Queue
 /// laufen auch Druckaufträge (<see cref="IWordDrucker"/>, §4.11) — sie treffen
 /// so eine schon gestartete Instanz, statt eine zweite neben ihr aufzumachen.
+/// Den Druck selbst führt <see cref="WordDokumentDruck"/> auf diesem Thread aus.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, IWordDrucker, IAsyncDisposable
@@ -39,6 +40,7 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
     private readonly Thread _workerThread;
     private readonly TimeSpan _conversionTimeout;
     private readonly ILogger<WordInteropPdfConversionService> _logger;
+    private readonly WordDokumentDruck _druck;
 
     private dynamic? _wordApplication;
     private volatile bool _wordUnavailable;
@@ -52,6 +54,7 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         ILogger<WordInteropPdfConversionService> logger)
     {
         _logger = logger;
+        _druck = new WordDokumentDruck(logger);
         _conversionTimeout = TimeSpan.FromSeconds(options.Value.ConversionTimeoutSeconds);
         _workerThread = new Thread(WorkerLoop) { IsBackground = true, Name = "WordInteropPdf" };
         _workerThread.SetApartmentState(ApartmentState.STA);
@@ -72,7 +75,7 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         return await WarteAufAsync(job, cancellationToken);
     }
 
-    public async Task DruckeAsync(string docxPfad, CancellationToken cancellationToken = default)
+    public async Task<string?> DruckeAsync(string docxPfad, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(docxPfad))
             throw new FileNotFoundException($"Zu druckende Datei nicht gefunden: {docxPfad}");
@@ -82,6 +85,7 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         var job = new WordAuftrag(Path.GetFullPath(docxPfad), drucken: true);
         _jobs.Add(job, cancellationToken);
         await WarteAufAsync(job, cancellationToken);
+        return job.Drucker;
     }
 
     public Task WarmupAsync()
@@ -161,76 +165,8 @@ public sealed class WordInteropPdfConversionService : IWordInteropPdfConverter, 
         if (!job.Drucken)
             return ConvertOnWorkerThread(job.DocxPfad!);
 
-        PrintOnWorkerThread(job.DocxPfad!);
+        job.Drucker = _druck.Drucke(EnsureWordApplication(), job.DocxPfad!);
         return [];
-    }
-
-    /// <summary>
-    /// <c>Background: false</c> ist der Punkt: Im Hintergrunddruck kehrte
-    /// <c>PrintOut</c> sofort zurück, das anschließende <c>Close</c> nähme Word
-    /// den Auftrag unter der Hand weg, und der Aufrufer löschte eine Datei, die
-    /// noch gar nicht in der Warteschlange stand.
-    ///
-    /// Wiederholt wird nur, was <b>vor</b> dem Druck scheitert. Die Queue baut
-    /// Word nach einer <see cref="COMException"/> neu auf und führt den Auftrag
-    /// ein zweites Mal aus — für eine PDF harmlos, für einen Druck ein zweites
-    /// Blatt. Deshalb verlässt ein Fehler ab <c>PrintOut</c> diese Methode nie
-    /// als <see cref="COMException"/>: Ob Word das Blatt schon an die
-    /// Warteschlange gegeben hat, weiß dann niemand.
-    /// </summary>
-    private void PrintOnWorkerThread(string docxPath)
-    {
-        var word = EnsureWordApplication();
-        dynamic? document = null;
-        try
-        {
-            // Scheitert das Öffnen an einer weggebrochenen Instanz, darf die
-            // Queue neu aufbauen und wiederholen — gedruckt ist noch nichts.
-            //
-            // Visible: true, anders als beim PDF-Export: Ein unsichtbar
-            // geöffnetes Dokument hat kein aktives Dokumentfenster, und ohne
-            // das verweigert Word PrintOut mit 0x800A11FD („nicht verfügbar,
-            // weil kein Dokumentfenster aktiv ist"). ExportAsFixedFormat
-            // braucht das Fenster nicht. Auf dem Bildschirm erscheint trotzdem
-            // nichts — die Anwendung selbst bleibt unsichtbar (EnsureWordApplication).
-            document = word.Documents.Open(
-                docxPath,
-                ReadOnly: true,
-                AddToRecentFiles: false,
-                Visible: true);
-            try
-            {
-                document!.PrintOut(Background: false);
-            }
-            catch (COMException exception)
-            {
-                throw new InvalidOperationException("Word hat den Druckauftrag abgebrochen.", exception);
-            }
-        }
-        finally
-        {
-            if (document is not null)
-            {
-                SchliesseNachDruck(document);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Ein Fehler beim Schließen ist nicht der Fehler des Druckauftrags — und
-    /// dürfte als <see cref="COMException"/> den Wiederholungsdruck auslösen.
-    /// </summary>
-    private void SchliesseNachDruck(dynamic document)
-    {
-        try
-        {
-            document.Close(WdDoNotSaveChanges);
-            Marshal.ReleaseComObject(document);
-        }
-        catch (COMException exception)
-        {
-            _logger.LogWarning(exception, "Word-Dokument ließ sich nach dem Druck nicht schließen.");
-        }
     }
 
     private byte[] ConvertOnWorkerThread(string docxPath)

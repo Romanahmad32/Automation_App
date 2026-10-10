@@ -1,7 +1,10 @@
+import 'package:automation_app/core/network/textual_log_interceptor.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_ergebnis.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
@@ -17,6 +20,10 @@ abstract class VollmachtDatasource {
   Future<VollmachtErgebnis> drucke(VollmachtAuftrag auftrag);
 
   Future<VollmachtErgebnis> fuelleAus(VollmachtAuftrag auftrag);
+
+  Future<VollmachtDrucker> ladeDrucker();
+
+  Future<VollmachtVorschau> erstelleVorschau(VollmachtAuftrag auftrag);
 }
 
 @Injectable(as: VollmachtDatasource)
@@ -34,6 +41,10 @@ class ApiVollmachtDatasource implements VollmachtDatasource {
 
   /// Ausfüllen lädt und schreibt ein Word-Dokument — länger als ein Lesezugriff.
   static const Duration _ausfuellTimeout = Duration(seconds: 30);
+
+  /// Die Vorschau füllt aus und wandelt über Word in PDF — kalt samt Start von
+  /// Word. Wie beim Druck bricht der Dienst selbst nach 60 Sekunden ab.
+  static const Duration _vorschauTimeout = Duration(seconds: 90);
 
   @override
   Future<VollmachtVorlagenStand> ladeVorlagen() async {
@@ -62,11 +73,37 @@ class ApiVollmachtDatasource implements VollmachtDatasource {
   Future<VollmachtErgebnis> fuelleAus(VollmachtAuftrag auftrag) =>
       _sende('/api/Vollmacht/oeffnen', auftrag, _ausfuellTimeout);
 
+  @override
+  Future<VollmachtDrucker> ladeDrucker() async {
+    final response = await _dio.get('/api/Vollmacht/drucker');
+    return VollmachtDrucker.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Die Antwort kommt nicht ins Protokoll: Die Seite trägt Mandantendaten,
+  /// und rund 140.000 Zeichen Base64 je Vorschau fluteten das Debug-Protokoll.
+  @override
+  Future<VollmachtVorschau> erstelleVorschau(VollmachtAuftrag auftrag) async =>
+      VollmachtVorschau.fromJson(
+        await _post(
+          '/api/Vollmacht/vorschau',
+          auftrag,
+          _vorschauTimeout,
+          ohneAntwortProtokoll: 'Seite der Vollmacht',
+        ),
+      );
+
   Future<VollmachtErgebnis> _sende(
     String pfad,
     VollmachtAuftrag auftrag,
     Duration timeout,
-  ) async {
+  ) async => VollmachtErgebnis.fromJson(await _post(pfad, auftrag, timeout));
+
+  Future<Map<String, dynamic>> _post(
+    String pfad,
+    VollmachtAuftrag auftrag,
+    Duration timeout, {
+    String? ohneAntwortProtokoll,
+  }) async {
     final response = await _dio.post(
       pfad,
       data: auftrag.toJson(),
@@ -74,8 +111,11 @@ class ApiVollmachtDatasource implements VollmachtDatasource {
         contentType: Headers.jsonContentType,
         sendTimeout: timeout,
         receiveTimeout: timeout,
+        extra: {
+          TextualLogInterceptor.keinAntwortProtokoll: ?ohneAntwortProtokoll,
+        },
       ),
     );
-    return VollmachtErgebnis.fromJson(response.data as Map<String, dynamic>);
+    return response.data as Map<String, dynamic>;
   }
 }

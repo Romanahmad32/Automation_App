@@ -4,8 +4,10 @@ import 'package:automation_app/core/network/backend_fehlertext.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vollmacht/data/datasources/vollmacht_datasource.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_ergebnis.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
 import 'package:automation_app/features/vollmacht/domain/repositories/vollmacht_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
@@ -43,6 +45,20 @@ class VollmachtRepositoryImpl implements VollmachtRepository {
   ) => _versuche(
     () => _datasource.fuelleAus(auftrag),
     'Die Vollmacht konnte nicht ausgefüllt werden',
+  );
+
+  @override
+  Future<Either<Failure, VollmachtDrucker>> ladeDrucker() => _versuche(
+    _datasource.ladeDrucker,
+    'Der Drucker ließ sich nicht abfragen',
+  );
+
+  @override
+  Future<Either<Failure, VollmachtVorschau>> erstelleVorschau(
+    VollmachtAuftrag auftrag,
+  ) => _versuche(
+    () => _datasource.erstelleVorschau(auftrag),
+    'Die Vorschau ließ sich nicht erzeugen',
   );
 
   Future<Either<Failure, T>> _versuche<T>(

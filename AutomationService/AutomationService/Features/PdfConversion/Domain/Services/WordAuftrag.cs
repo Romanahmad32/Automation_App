@@ -26,6 +26,12 @@ public sealed class WordAuftrag(string? docxPfad, bool drucken = false)
 
     public bool Drucken { get; } = drucken;
 
+    /// <summary>
+    /// Bei einem Druck: der Drucker, an den Word übergeben hat. Setzt der
+    /// Word-Thread vor <see cref="Ergebnis"/>, gelesen wird es danach.
+    /// </summary>
+    public string? Drucker { get; set; }
+
     public TaskCompletionSource<byte[]> Ergebnis { get; } =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
 

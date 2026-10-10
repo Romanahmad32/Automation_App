@@ -1421,6 +1421,106 @@
         }
       }
     },
+    "/api/Vollmacht/drucker": {
+      "get": {
+        "tags": [
+          "Vollmacht"
+        ],
+        "summary": "Der Standarddrucker, an den \u201EDrucken\u0022 geht, und was Windows \u00FCber ihn meldet.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtDruckerDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtDruckerDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtDruckerDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vollmacht/vorschau": {
+      "post": {
+        "tags": [
+          "Vollmacht"
+        ],
+        "summary": "Die ausgef\u00FCllte Seite als PDF. Eine fehlende Vorlage oder eine Vorschau\r\nohne Word sind kein HTTP-Fehler, sondern ein Status.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtVorschauDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtVorschauDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtVorschauDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Vollmacht/drucken": {
       "post": {
         "tags": [
@@ -9838,14 +9938,41 @@
             "type": "string"
           }
         },
-        "description": "Anfrage an \u0060POST api/Vollmacht/drucken|oeffnen\u0060: die im Dialog gepr\u00FCften\r\nKopfdaten (\u00A74.11). string VollmachtAuftragDto.Art ist einer der Werte aus\r\nstring VollmachtArten.Wert(VollmachtArt art)."
+        "description": "Anfrage an \u0060POST api/Vollmacht/drucken|oeffnen|vorschau\u0060: die im Dialog gepr\u00FCften\r\nKopfdaten (\u00A74.11). string VollmachtAuftragDto.Art ist einer der Werte aus\r\nstring VollmachtArten.Wert(VollmachtArt art)."
+      },
+      "VollmachtDruckerDto": {
+        "required": [
+          "name",
+          "zustand",
+          "hinweis"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "zustand": {
+            "type": "string"
+          },
+          "hinweis": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Antwort auf \u0060GET api/Vollmacht/drucker\u0060: der Windows-Standarddrucker,\r\nan den \u201EDrucken\u0022 geht. string VollmachtDruckerDto.Zustand ist \u0060bereit\u0060,\r\n\u0060offline\u0060, \u0060gestoert\u0060, \u0060angehalten\u0060, \u0060keinDrucker\u0060 oder\r\n\u0060unbekannt\u0060; string? VollmachtDruckerDto.Hinweis sagt es in Worten, au\u00DFer bei \u0060bereit\u0060."
       },
       "VollmachtErgebnisDto": {
         "required": [
           "status",
           "pfad",
           "meldung",
-          "warnungen"
+          "warnungen",
+          "drucker"
         ],
         "type": "object",
         "properties": {
@@ -9869,9 +9996,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "drucker": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "Antwort auf \u0060POST api/Vollmacht/drucken|oeffnen\u0060. string VollmachtErgebnisDto.Status ist\r\n\u0060gedruckt\u0060, \u0060druckFehlgeschlagen\u0060, \u0060ausgefuellt\u0060,\r\n\u0060vorlageFehlt\u0060 oder \u0060fehler\u0060; string? VollmachtErgebnisDto.Pfad ist die\r\nausgef\u00FCllte Datei, sofern sie zum \u00D6ffnen bereitliegt."
+        "description": "Antwort auf \u0060POST api/Vollmacht/drucken|oeffnen\u0060. string VollmachtErgebnisDto.Status ist\r\n\u0060gedruckt\u0060, \u0060druckFehlgeschlagen\u0060, \u0060ausgefuellt\u0060,\r\n\u0060vorlageFehlt\u0060 oder \u0060fehler\u0060; string? VollmachtErgebnisDto.Pfad ist die\r\nausgef\u00FCllte Datei, sofern sie zum \u00D6ffnen bereitliegt; string? VollmachtErgebnisDto.Drucker\r\nnennt bei \u0060gedruckt\u0060 den Drucker, an den Word \u00FCbergeben hat."
       },
       "VollmachtVorlageDto": {
         "required": [
@@ -9919,6 +10052,40 @@
           }
         },
         "description": "Antwort auf \u0060GET api/Vollmacht/vorlagen\u0060: der Ordner und seine drei Vorlagen."
+      },
+      "VollmachtVorschauDto": {
+        "required": [
+          "status",
+          "meldung",
+          "warnungen",
+          "pdf"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "meldung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warnungen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pdf": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "byte"
+          }
+        },
+        "description": "Antwort auf \u0060POST api/Vollmacht/vorschau\u0060. string VollmachtVorschauDto.Status ist\r\n\u0060erstellt\u0060, \u0060vorlageFehlt\u0060 oder \u0060fehler\u0060; byte[]? VollmachtVorschauDto.Pdf\r\ntr\u00E4gt die Seite (Base64), nur bei \u0060erstellt\u0060."
       },
       "VorgangDto": {
         "required": [

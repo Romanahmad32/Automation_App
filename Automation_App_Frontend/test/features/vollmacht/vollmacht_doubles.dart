@@ -1,16 +1,23 @@
+import 'dart:async';
+
 import 'package:automation_app/core/general_classes/failures/failure.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_ergebnis.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
 import 'package:automation_app/features/vollmacht/domain/repositories/vollmacht_repository.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/drucke_vollmacht.dart';
+import 'package:automation_app/features/vollmacht/domain/usecases/erstelle_vollmacht_vorschau.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/fuelle_vollmacht_aus.dart';
+import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_vorlagen.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart';
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_vorbereitung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwurf.dart';
 import 'package:automation_app/features/vorgaenge/domain/repositories/vorgang_repository.dart';
@@ -37,8 +44,26 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
     pfad: r'C:\Arbeit\Vollmacht Strafsache.docx',
   );
 
+  VollmachtDrucker drucker = const VollmachtDrucker(
+    name: 'Kanzleidrucker',
+    zustand: VollmachtDruckerZustand.bereit,
+  );
+
+  /// Hält die Antwort auf die Druckerabfrage zurück, bis er erfüllt ist — ein
+  /// Netzwerkdrucker, der nicht antwortet.
+  Completer<void>? druckerHaengt;
+  int druckerAbfragen = 0;
+
+  /// Ab Werk ohne Seite: Ein Widget-Test mit echten PDF-Bytes brächte den
+  /// PDF-Betrachter samt nativer Bibliothek in den Testlauf.
+  VollmachtVorschau vorschau = const VollmachtVorschau(
+    status: VollmachtVorschauStatus.fehler,
+    meldung: 'Vorschau im Test abgeschaltet.',
+  );
+
   final List<VollmachtAuftrag> gedruckt = [];
   final List<VollmachtAuftrag> ausgefuellt = [];
+  final List<VollmachtAuftrag> vorschauAuftraege = [];
 
   static VollmachtVorlagenStand standMit(Set<VollmachtArt> vorhanden) =>
       VollmachtVorlagenStand(
@@ -79,12 +104,30 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
     ausgefuellt.add(auftrag);
     return Right(ausfuellErgebnis);
   }
+
+  @override
+  Future<Either<Failure, VollmachtDrucker>> ladeDrucker() async {
+    druckerAbfragen++;
+    await druckerHaengt?.future;
+    return Right(drucker);
+  }
+
+  @override
+  Future<Either<Failure, VollmachtVorschau>> erstelleVorschau(
+    VollmachtAuftrag auftrag,
+  ) async {
+    vorschauAuftraege.add(auftrag);
+    return Right(vorschau);
+  }
 }
 
 /// Vorgänge im Speicher — gerade genug für den Vermerk der Vollmacht.
 class VollmachtVorgaengeDouble implements VorgangRepository {
   final Map<String, Vorgang> bestand = {};
   final List<(String, bool)> vermerke = [];
+
+  /// Der Dienst nimmt den Vermerk nicht an.
+  bool vermerkScheitert = false;
 
   @override
   Future<List<Vorgang>> loadVorgaenge() async => bestand.values.toList();
@@ -116,7 +159,7 @@ class VollmachtVorgaengeDouble implements VorgangRepository {
     required bool gedruckt,
   }) async {
     final vorgang = bestand[referenz];
-    if (vorgang == null) return null;
+    if (vorgang == null || vermerkScheitert) return null;
     vermerke.add((referenz, gedruckt));
     return bestand[referenz] = vorgang.copyWith(
       vollmachtGedrucktAm: () => gedruckt ? DateTime(2026, 9, 13) : null,
@@ -138,8 +181,13 @@ baueVollmachtCubit(
   // Der VorgangCubit lädt im Konstruktor; einmal die Warteschlange leeren.
   await Future<void>.delayed(Duration.zero);
   final cubit = VollmachtCubit(
+    VollmachtVorbereitung(
+      LadeVollmachtVorlagen(dienst),
+      LadeVollmachtMandant(dienst),
+      LadeVollmachtDrucker(dienst),
+    ),
     LadeVollmachtVorlagen(dienst),
-    LadeVollmachtMandant(dienst),
+    ErstelleVollmachtVorschau(dienst),
     DruckeVollmacht(dienst),
     FuelleVollmachtAus(dienst),
     vorgaengeCubit,

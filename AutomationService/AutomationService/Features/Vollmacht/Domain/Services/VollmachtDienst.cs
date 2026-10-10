@@ -7,7 +7,8 @@ namespace AutomationService.Features.Vollmacht.Domain.Services;
 /// <summary>
 /// Die Vollmacht zum Vorgang (§4.11): Vorlage aus dem Unterordner
 /// <c>Vollmacht/</c> füllen — mit demselben Ausfüller wie die
-/// Anspruchsschreiben —, dann drucken oder zum Öffnen bereitlegen.
+/// Anspruchsschreiben —, dann drucken, zum Öffnen bereitlegen oder als
+/// Seitenvorschau zeigen.
 ///
 /// Die Datei entsteht im Arbeitsordner des Vorgangs, neben einem vielleicht
 /// gerade angefangenen Anspruchsschreiben. Deshalb löscht der Druck nur die
@@ -17,9 +18,13 @@ namespace AutomationService.Features.Vollmacht.Domain.Services;
 public sealed class VollmachtDienst(
     IWordAutomationService ausfueller,
     IWordDrucker drucker,
+    IPdfConversionService pdf,
     VollmachtVorlagenOrdner vorlagen,
     ILogger<VollmachtDienst> logger) : IVollmachtDienst
 {
+    /// <summary>Hängt an der Arbeitsdatei der Vorschau, siehe <see cref="Fuelle"/>.</summary>
+    public const string Vorschauzusatz = "(Vorschau)";
+
     public async Task<VollmachtErgebnis> DruckeAsync(
         VollmachtAuftrag auftrag,
         CancellationToken cancellationToken = default)
@@ -30,9 +35,10 @@ public sealed class VollmachtDienst(
             return ausgefuellt;
         }
 
+        string? druckerName;
         try
         {
-            await drucker.DruckeAsync(ausgefuellt.Pfad!, cancellationToken);
+            druckerName = await drucker.DruckeAsync(ausgefuellt.Pfad!, cancellationToken);
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -49,10 +55,59 @@ public sealed class VollmachtDienst(
         }
 
         LoescheArbeitsdatei(ausgefuellt.Pfad!);
-        return ausgefuellt with { Art = VollmachtErgebnisArt.Gedruckt, Pfad = null };
+        return ausgefuellt with { Art = VollmachtErgebnisArt.Gedruckt, Pfad = null, Drucker = druckerName };
     }
 
-    public VollmachtErgebnis FuelleAus(VollmachtAuftrag auftrag)
+    public async Task<VollmachtVorschau> VorschauAsync(VollmachtAuftrag auftrag)
+    {
+        var ausgefuellt = Fuelle(auftrag, Vorschauzusatz);
+        switch (ausgefuellt.Art)
+        {
+            case VollmachtErgebnisArt.VorlageFehlt:
+                return new VollmachtVorschau(VollmachtVorschauArt.VorlageFehlt, null, ausgefuellt.Meldung, []);
+            case not VollmachtErgebnisArt.Ausgefuellt:
+                return new VollmachtVorschau(VollmachtVorschauArt.Fehler, null, ausgefuellt.Meldung, []);
+        }
+
+        try
+        {
+            // Über die Bytes, nicht über den Pfad: Der Pfad-Weg legt jede PDF
+            // im Vorschau-Cache (Generated/PdfCache) ab — dort läge die
+            // ausgefüllte Vollmacht dann dauerhaft.
+            byte[] docx;
+            try
+            {
+                docx = await File.ReadAllBytesAsync(ausgefuellt.Pfad!);
+            }
+            finally
+            {
+                LoescheArbeitsdatei(ausgefuellt.Pfad!);
+            }
+
+            var seite = await pdf.ConvertDocxToPdfFromBytesAsync(docx);
+            return new VollmachtVorschau(VollmachtVorschauArt.Erstellt, seite, null, ausgefuellt.Warnungen);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "Vorschau der Vollmacht ließ sich nicht erzeugen.");
+            return new VollmachtVorschau(
+                VollmachtVorschauArt.Fehler,
+                null,
+                "Die Vorschau ließ sich nicht erzeugen — drucken können Sie trotzdem.",
+                ausgefuellt.Warnungen);
+        }
+    }
+
+    public VollmachtErgebnis FuelleAus(VollmachtAuftrag auftrag) => Fuelle(auftrag, namenszusatz: null);
+
+    /// <param name="auftrag">Art, Vorgang und Kopfdaten.</param>
+    /// <param name="namenszusatz">
+    /// Hängt am Dateinamen der Arbeitsdatei. Die Vorschau braucht einen eigenen
+    /// Namen: Druck und Vorschau schreiben in denselben Arbeitsordner, und die
+    /// Vorschau löscht ihre Datei sofort — bei gleichem Namen die eines Drucks,
+    /// der gerade eben ausgefüllt wurde.
+    /// </param>
+    private VollmachtErgebnis Fuelle(VollmachtAuftrag auftrag, string? namenszusatz)
     {
         var vorlage = vorlagen.PfadFuer(auftrag.Art);
         if (!File.Exists(vorlage))
@@ -70,7 +125,9 @@ public sealed class VollmachtDienst(
             {
                 TemplateFilePath = vorlage,
                 ReplacePatterns = auftrag.Platzhalter(),
-                OutputFileName = Path.GetFileNameWithoutExtension(vorlage),
+                OutputFileName = namenszusatz is null
+                    ? Path.GetFileNameWithoutExtension(vorlage)
+                    : $"{Path.GetFileNameWithoutExtension(vorlage)} {namenszusatz}",
                 VorgangSchluessel = auftrag.Referenz,
             });
             return new VollmachtErgebnis(

@@ -1,25 +1,28 @@
 import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:automation_app/core/general_classes/usecases/use_case.dart';
-import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/sachgebiete/domain/entities/sachgebiet.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_ergebnis.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_kopfdaten.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
 import 'package:automation_app/features/vollmacht/domain/services/vollmacht_art_ableitung.dart';
 import 'package:automation_app/features/vollmacht/domain/services/vollmacht_vorbelegung.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/drucke_vollmacht.dart';
+import 'package:automation_app/features/vollmacht/domain/usecases/erstelle_vollmacht_vorschau.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/fuelle_vollmacht_aus.dart';
-import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_vorlagen.dart';
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_abschluss.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand.dart';
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_vorbereitung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-/// Der Ablauf des Vollmacht-Dialogs (§4.11): vorbelegen, drucken, bei einem
-/// gescheiterten Druck in Word öffnen, den Druck am Vorgang vermerken.
+/// Der Ablauf des Vollmacht-Dialogs (§4.11): vorbelegen, Seite zeigen,
+/// drucken, bei einem gescheiterten Druck in Word öffnen, den Druck am Vorgang
+/// vermerken — und danach stehen lassen, was passiert ist (#164).
 ///
 /// Vermerkt wird **nur**, was die App weiß: nach einem Druck, den Word
 /// angenommen hat — oder nach „In Word öffnen", wenn der Anwalt es
@@ -27,15 +30,17 @@ import 'package:injectable/injectable.dart';
 /// vermerkt nichts von selbst.
 @injectable
 class VollmachtCubit extends Cubit<VollmachtStand> {
+  final VollmachtVorbereitung _vorbereitung;
   final LadeVollmachtVorlagen _ladeVorlagen;
-  final LadeVollmachtMandant _ladeMandant;
+  final ErstelleVollmachtVorschau _erstelleVorschau;
   final DruckeVollmacht _drucke;
   final FuelleVollmachtAus _fuelleAus;
   final VorgangCubit _vorgaenge;
 
   VollmachtCubit(
+    this._vorbereitung,
     this._ladeVorlagen,
-    this._ladeMandant,
+    this._erstelleVorschau,
     this._drucke,
     this._fuelleAus,
     this._vorgaenge,
@@ -52,42 +57,9 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
     );
     emit(VollmachtStand(vorgang: vorgang, art: art));
 
-    final vorlagenAbruf = _ladeVorlagen(const NoParams());
-    Mandant? mandant;
-    var lage = VollmachtMandantLage.keinerZugeordnet;
-    String? fehler;
-    final mandantId = vorgang.mandantId;
-    if (mandantId != null) {
-      final abruf = await _ladeMandant(mandantId);
-      if (abruf case Right(value: final gefunden?)) {
-        mandant = gefunden;
-        lage = VollmachtMandantLage.geladen;
-      } else {
-        lage = VollmachtMandantLage.nichtGefunden;
-        if (abruf case Left(value: final failure)) fehler = failure.message;
-      }
-    }
-    final vorlagen = await vorlagenAbruf;
+    final eingabe = await _vorbereitung.eingabe(state);
     if (isClosed) return;
-
-    emit(
-      state.copyWith(
-        phase: VollmachtPhase.eingabe,
-        kopfdaten: VollmachtVorbelegung.fuer(
-          vorgang: vorgang,
-          mandant: mandant,
-          art: art,
-        ),
-        mandantLage: lage,
-        // Ohne Stand bleibt der Druck möglich: Eine fehlende Vorlage meldet
-        // dann der Dienst selbst.
-        vorlagen: switch (vorlagen) {
-          Right(value: final stand) => stand,
-          _ => null,
-        },
-        fehler: fehler,
-      ),
-    );
+    emit(eingabe);
   }
 
   /// Wählt die Vorlagenart; „in Sachen" und „wegen" folgen, solange der
@@ -128,8 +100,50 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
     }
   }
 
+  /// Fragt den Standarddrucker ab — einmal, angestoßen vom Dialog, sobald die
+  /// Eingabe steht (`VollmachtStand.druckerFaellig`). Nicht in [starte]: Das
+  /// Öffnen soll nicht auf einen Drucker warten, der nicht antwortet, und eine
+  /// Ausgabe danach löschte die Meldung des Öffnens.
+  Future<void> ladeDrucker() async {
+    if (isClosed || !state.druckerFaellig) return;
+
+    emit(state.copyWith(druckerLaedt: true));
+    final drucker = await _vorbereitung.drucker();
+    if (isClosed) return;
+    emit(state.copyWith(druckerLaedt: false, drucker: drucker));
+  }
+
+  /// Erzeugt die Seite zu den aktuellen Feldern — die erste stößt der Dialog
+  /// an, sobald sie fällig ist (`VollmachtStand.vorschauFaellig`), jede
+  /// weitere der Anwalt. Bewusst nicht bei jedem Tastendruck: Eine Umwandlung
+  /// belegt den Word-Thread, und der Druck wartet in derselben Schlange.
+  Future<void> erstelleVorschau() async {
+    final auftrag = state.auftrag;
+    if (isClosed || auftrag == null) return;
+    if (state.vorschauLaedt || state.vorlageFehlt) return;
+
+    emit(state.copyWith(vorschauLaedt: true));
+    final antwort = await _erstelleVorschau(auftrag);
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        vorschauLaedt: false,
+        vorschauFuer: auftrag,
+        vorschauNummer: state.vorschauNummer + 1,
+        vorschau: switch (antwort) {
+          Right(value: final vorschau) => vorschau,
+          Left(value: final failure) => VollmachtVorschau(
+            status: VollmachtVorschauStatus.fehler,
+            meldung: failure.message,
+          ),
+        },
+      ),
+    );
+  }
+
   /// Füllt aus und druckt. Hat Word den Auftrag angenommen, wird der Druck
-  /// vermerkt und der Dialog schließt; sonst öffnet sich die Datei in Word.
+  /// vermerkt und der Dialog zeigt das Ergebnis; sonst öffnet sich die Datei
+  /// in Word. Auch aus dem Ergebnis heraus — „Erneut drucken".
   Future<void> drucke() => _fuehreAus(_drucke);
 
   /// Füllt nur aus und öffnet die Datei in Word.
@@ -137,40 +151,95 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
 
   /// Bestätigung aus der Rückfrage nach dem Öffnen in Word.
   Future<void> vermerkeAlsGedruckt() async {
-    final referenz = state.vorgang?.referenz;
-    if (referenz == null) return;
-    final vermerkt = await _vorgaenge.vermerkeVollmacht(
-      referenz,
-      gedruckt: true,
-    );
-    if (isClosed) return;
+    final vermerkt = await _vermerke(gedruckt: true);
+    if (isClosed || vermerkt == null) return;
     emit(
-      vermerkt
-          ? state.copyWith(
-              phase: VollmachtPhase.abgeschlossen,
-              abschluss: 'Vollmacht am Vorgang als gedruckt vermerkt.',
-            )
-          : state.copyWith(
-              fehler: 'Der Vermerk konnte nicht gespeichert werden.',
-            ),
+      state.copyWith(
+        phase: VollmachtPhase.abgeschlossen,
+        abschluss: () => VollmachtAbschluss(
+          weg: VollmachtAbschlussWeg.inWord,
+          zeitpunkt: DateTime.now(),
+          vermerkt: vermerkt,
+          warnungen: state.warnungen,
+        ),
+      ),
     );
+  }
+
+  /// Aus dem Ergebnis, „Kein Blatt gekommen?" → „Erneut drucken". Der Vermerk
+  /// des ersten Drucks stimmt dann nicht und geht vorher zurück; ein
+  /// gelungener Neudruck setzt ihn wieder, ein gescheiterter nicht.
+  Future<void> druckeErneut() => _nachKeinemBlatt(drucke);
+
+  /// Aus dem Ergebnis, „Kein Blatt gekommen?" → „In Word öffnen" — ebenso
+  /// ohne den Vermerk des ersten Drucks; die Rückfrage danach setzt ihn neu.
+  Future<void> oeffneInWordErneut() => _nachKeinemBlatt(oeffneInWord);
+
+  Future<void> _nachKeinemBlatt(Future<void> Function() schritt) async {
+    if (state.abschluss?.vermerkt ?? false) {
+      final zurueck = await _vermerke(gedruckt: false);
+      if (isClosed) return;
+      if (zurueck != true) {
+        emit(state.copyWith(fehler: _vermerkBleibt));
+        return;
+      }
+    }
+    await schritt();
+  }
+
+  /// Aus dem Ergebnis: den gescheiterten Vermerk noch einmal versuchen.
+  Future<void> vermerkeErneut() async {
+    final abschluss = state.abschluss;
+    if (abschluss == null) return;
+    final vermerkt = await _vermerke(gedruckt: true);
+    if (isClosed || vermerkt == null) return;
+    emit(
+      state.copyWith(
+        abschluss: () => abschluss.mitVermerk(vermerkt),
+        fehler: vermerkt ? null : _vermerkFehlt,
+      ),
+    );
+  }
+
+  /// Aus dem Ergebnis: Es kam kein Blatt. Der Vermerk geht zurück, die
+  /// Eingaben bleiben stehen — der Anwalt kann es neu versuchen.
+  Future<void> nimmVermerkZurueck() async {
+    final zurueck = await _vermerke(gedruckt: false);
+    if (isClosed || zurueck == null) return;
+    emit(
+      zurueck
+          ? state.copyWith(
+              phase: VollmachtPhase.eingabe,
+              abschluss: () => null,
+              hinweis:
+                  'Vermerk zurückgenommen — am Vorgang gilt die Vollmacht '
+                  'als nicht gedruckt.',
+            )
+          : state.copyWith(fehler: _vermerkBleibt),
+    );
+  }
+
+  static const _vermerkFehlt = 'Der Vermerk konnte nicht gespeichert werden.';
+  static const _vermerkBleibt = 'Der Vermerk ließ sich nicht zurücknehmen.';
+
+  /// Null, wenn der Vorgang fehlt; sonst, ob der Vermerk gespeichert ist.
+  Future<bool?> _vermerke({required bool gedruckt}) async {
+    final referenz = state.vorgang?.referenz;
+    if (referenz == null) return null;
+    return _vorgaenge.vermerkeVollmacht(referenz, gedruckt: gedruckt);
   }
 
   Future<void> _fuehreAus(
     UseCase<VollmachtErgebnis, VollmachtAuftrag> schritt,
   ) async {
-    final vorgang = state.vorgang;
-    final art = state.art;
-    if (!state.bereit || vorgang == null || art == null) return;
+    final auftrag = state.auftrag;
+    final ausfuehrbar =
+        state.phase == VollmachtPhase.eingabe ||
+        state.phase == VollmachtPhase.abgeschlossen;
+    if (!ausfuehrbar || auftrag == null || state.vorlageFehlt) return;
 
-    emit(state.copyWith(phase: VollmachtPhase.arbeitet));
-    final antwort = await schritt(
-      VollmachtAuftrag(
-        art: art,
-        referenz: vorgang.referenz,
-        kopfdaten: state.kopfdaten,
-      ),
-    );
+    emit(state.copyWith(phase: VollmachtPhase.arbeitet, abschluss: () => null));
+    final antwort = await schritt(auftrag);
     if (isClosed) return;
 
     switch (antwort) {
@@ -182,24 +251,26 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
           ),
         );
       case Right(value: final ergebnis):
-        await _nimmAn(ergebnis, vorgang.referenz);
+        await _nimmAn(ergebnis);
     }
   }
 
-  Future<void> _nimmAn(VollmachtErgebnis ergebnis, String referenz) async {
+  Future<void> _nimmAn(VollmachtErgebnis ergebnis) async {
     switch (ergebnis.status) {
       case VollmachtErgebnisStatus.gedruckt:
-        final vermerkt = await _vorgaenge.vermerkeVollmacht(
-          referenz,
-          gedruckt: true,
-        );
+        final vermerkt = await _vermerke(gedruckt: true) ?? false;
         if (isClosed) return;
         emit(
           state.copyWith(
             phase: VollmachtPhase.abgeschlossen,
             warnungen: ergebnis.warnungen,
-            abschluss: _gedrucktText(vermerkt, ergebnis.warnungen),
-            abschlussOhneMakel: vermerkt && ergebnis.warnungen.isEmpty,
+            abschluss: () => VollmachtAbschluss(
+              weg: VollmachtAbschlussWeg.gedruckt,
+              zeitpunkt: DateTime.now(),
+              drucker: ergebnis.drucker ?? state.drucker?.name,
+              vermerkt: vermerkt,
+              warnungen: ergebnis.warnungen,
+            ),
           ),
         );
       case VollmachtErgebnisStatus.druckFehlgeschlagen ||
@@ -228,17 +299,5 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
           await pruefeVorlagen();
         }
     }
-  }
-
-  static String _gedrucktText(bool vermerkt, List<String> warnungen) {
-    final teile = [
-      vermerkt
-          ? 'Vollmacht an den Drucker gegeben und am Vorgang vermerkt.'
-          : 'Vollmacht an den Drucker gegeben — der Vermerk am Vorgang '
-                'konnte nicht gespeichert werden.',
-      if (warnungen.isNotEmpty)
-        'Nicht ersetzt: ${warnungen.map((w) => '{{$w}}').join(', ')}.',
-    ];
-    return teile.join(' ');
   }
 }

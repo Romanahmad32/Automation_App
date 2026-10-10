@@ -5,7 +5,7 @@ using AutomationService.Features.Vollmacht.Domain.Services;
 namespace AutomationService.Features.Vollmacht.Presentation.Dtos;
 
 /// <summary>
-/// Anfrage an <c>POST api/Vollmacht/drucken|oeffnen</c>: die im Dialog geprüften
+/// Anfrage an <c>POST api/Vollmacht/drucken|oeffnen|vorschau</c>: die im Dialog geprüften
 /// Kopfdaten (§4.11). <see cref="Art"/> ist einer der Werte aus
 /// <see cref="VollmachtArten.Wert"/>.
 /// </summary>

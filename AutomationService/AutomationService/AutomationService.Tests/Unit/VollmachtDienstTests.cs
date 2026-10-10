@@ -27,13 +27,13 @@ public sealed class VollmachtDienstTests : IDisposable
         new(_vorlagenOrdner, NullLogger<VollmachtVorlagenOrdner>.Instance);
 
     private VollmachtDienst Dienst() =>
-        new(_umgebung.CreateService(), _drucker, Ordner(), NullLogger<VollmachtDienst>.Instance);
+        new(_umgebung.CreateService(), _drucker, new PdfAttrappe(), Ordner(), NullLogger<VollmachtDienst>.Instance);
 
     /// <summary>Die versionierten Muster — dieselben Dateien, die das Setup mitbringt.</summary>
-    private static string MusterOrdner() => Path.Combine(
+    internal static string MusterOrdner() => Path.Combine(
         RepoWurzel.Pfad(), "AutomationService", "AutomationService", "Templates", VollmachtArten.Unterordner);
 
-    private static VollmachtAuftrag Auftrag(VollmachtArt art) => new()
+    internal static VollmachtAuftrag Auftrag(VollmachtArt art) => new()
     {
         Art = art,
         Referenz = Referenz,
@@ -88,6 +88,7 @@ public sealed class VollmachtDienstTests : IDisposable
 
         ergebnis.Art.Should().Be(VollmachtErgebnisArt.Gedruckt);
         ergebnis.Pfad.Should().BeNull();
+        ergebnis.Drucker.Should().Be(DruckerAttrappe.Druckername, "der Dialog nennt, wohin das Blatt ging");
         _drucker.Gedruckt.Should().ContainSingle();
         File.Exists(_drucker.Gedruckt[0]).Should().BeFalse();
     }
@@ -184,11 +185,13 @@ public sealed class VollmachtDienstTests : IDisposable
 
     private sealed class DruckerAttrappe : IWordDrucker
     {
+        public const string Druckername = "Kanzleidrucker";
+
         public List<string> Gedruckt { get; } = [];
 
         public bool Scheitert { get; set; }
 
-        public Task DruckeAsync(string docxPfad, CancellationToken cancellationToken = default)
+        public Task<string?> DruckeAsync(string docxPfad, CancellationToken cancellationToken = default)
         {
             if (Scheitert)
             {
@@ -197,7 +200,7 @@ public sealed class VollmachtDienstTests : IDisposable
 
             File.Exists(docxPfad).Should().BeTrue("gedruckt wird die ausgefüllte Datei");
             Gedruckt.Add(docxPfad);
-            return Task.CompletedTask;
+            return Task.FromResult<string?>(Druckername);
         }
     }
 }

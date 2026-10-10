@@ -44,11 +44,16 @@ class VollmachtErgebnis extends Equatable {
   /// Platzhalter, die in der Vorlage stehen geblieben sind (§4.4).
   final List<String> warnungen;
 
+  /// Bei [VollmachtErgebnisStatus.gedruckt]: an welchen Drucker Word übergeben
+  /// hat; null, wenn Word ihn nicht nennen konnte.
+  final String? drucker;
+
   const VollmachtErgebnis({
     required this.status,
     this.pfad,
     this.meldung,
     this.warnungen = const [],
+    this.drucker,
   });
 
   factory VollmachtErgebnis.fromJson(Map<String, dynamic> json) =>
@@ -60,8 +65,9 @@ class VollmachtErgebnis extends Equatable {
           for (final warnung in json['warnungen'] as List? ?? const [])
             if (warnung is String) warnung,
         ],
+        drucker: json['drucker'] as String?,
       );
 
   @override
-  List<Object?> get props => [status, pfad, meldung, warnungen];
+  List<Object?> get props => [status, pfad, meldung, warnungen, drucker];
 }
