@@ -10,18 +10,25 @@
 # Zentralruf-Automation ausgeloest (Browser, echte Anfrage an die Versicherer).
 # Das darf sich nicht wiederholen, auch nicht bei einem Agenten, der sich irrt.
 #
-#   deny  Zentralruf-Formular/-Anfrage, Senden/Versenden, Drucken (nach aussen wirkend)
+#   deny  Zentralruf-Formular/-Anfrage, Senden/Versenden, Drucken (nach aussen wirkend);
+#         Tippen ueber coordinates/type und press_key mit Enter/Leertaste (umgeht
+#         jede Pruefung der Beschriftung)
 #   ask   Outlook-Entwurf, Postfach verbinden/testen/anmelden, Sicherung
-#         einspielen, Import, Simulation; Tippen ueber coordinates/type (umgeht
-#         jede Pruefung); press_key mit Enter/Leertaste; call_custom_extension
+#         einspielen, Import, Simulation; call_custom_extension
 #   --    alles andere: keine Entscheidung, es gilt die normale Rechtepruefung.
 #         Der Hook schraenkt nur ein und gewaehrt nie selbst etwas.
+#
+# Die Umgehungswege (coordinates, type, Enter) fragten bis Oktober 2026 nur nach.
+# In Etappe 2b der Abnahme 1.3.0 hat ein Subagent trotz Verbot im Auftrag fuenfmal
+# ueber type getippt, darunter blind einen FilledButton -- die Rueckfragen liefen
+# durch, im Bericht stand "keine Rueckfragen". Ein Agent braucht diese Wege nie,
+# und der Mensch bedient die App ohnehin selbst. Darum deny.
 #
 # Geprueft werden nur Werkzeuge, die etwas antippen. Lesen und Scrollen loesen
 # nichts aus: In Etappe 1 der Abnahme 1.3.0 hat der Hook ein scroll_to auf die
 # Zeile "... laesst sich nicht drucken." verweigert -- ein Fehlalarm. Ebenso
-# fragt ein Tippen ueber type nicht nach, wenn der Typ ein Eingabefeld ist: Das
-# setzt nur den Fokus fuer enter_text. Bei Knoepfen bleibt die Rueckfrage, denn
+# bleibt ein Tippen ueber type frei, wenn der Typ ein Eingabefeld ist: Das
+# setzt nur den Fokus fuer enter_text. Bei Knoepfen bleibt die Sperre, denn
 # `type: FilledButton` trifft im Versanddialog blind den Knopf "Senden".
 #
 # Marionette vergleicht `text` exakt mit dem sichtbaren Text (widget_matcher.dart:
@@ -61,8 +68,10 @@ function Antworte([string]$entscheidung, [string]$grund) {
 # Bestaetigungsdialog ("Senden"), und der ist gesperrt.
 $sperrMuster = @(
     @{ Muster = 'zentralruf.*(formular|ausf|anfrag|abfrag|absend|erneut)|formular ausf'; Grund = 'startet die echte Zentralruf-Automation (Browser, Anfrage an die Versicherer)'; Ausnahme = $null }
-    # "Gesendet" ist der Ordner im Posteingang, kein Sendeknopf.
-    @{ Muster = '(?<!ab)senden|sendet|versend|versandt'; Grund = 'sendet eine echte E-Mail'; Ausnahme = 'verfassen|gesendet' }
+    # "Gesendet" ist der Ordner im Posteingang, kein Sendeknopf. "(Versendet)" am
+    # Zeilenende ist der Vorgangsstatus in den Auswahllisten (vorgang_selector.dart,
+    # vorgang_zuordnung_auswahl.dart) -- in Etappe 2b ein Fehlalarm.
+    @{ Muster = '(?<!ab)senden|sendet|versend|versandt'; Grund = 'sendet eine echte E-Mail'; Ausnahme = 'verfassen|gesendet|\(versendet\)\s*$' }
     # "Als gedruckt vermerken" setzt nur einen Vermerk, es druckt nichts.
     @{ Muster = 'druck|print'; Grund = 'druckt auf einem echten Drucker'; Ausnahme = 'gedruckt' }
 )
@@ -119,18 +128,18 @@ try {
 
     if ($werkzeug -in $tippen -and $felder) {
         if ($null -ne $felder.coordinates) {
-            Antworte 'ask' 'Marionette-Sperre: Tippen ueber coordinates umgeht die Pruefung der Knopfbeschriftung. Bitte bewusst freigeben.'
+            Antworte 'deny' 'Marionette-Sperre: Tippen ueber coordinates umgeht die Pruefung der Knopfbeschriftung. Ueber text oder key tippen; geht das nicht, den Fall offen lassen.'
         }
         $eingabefeld = [string]$felder.type -match '^(TextField|TextFormField|EditableText)$'
         if ($null -ne $felder.type -and -not $eingabefeld -and $null -eq $felder.key -and $null -eq $felder.identifier -and $null -eq $felder.text) {
-            Antworte 'ask' 'Marionette-Sperre: Tippen ueber type trifft irgendeinen Knopf dieses Typs und umgeht die Pruefung. Bitte bewusst freigeben.'
+            Antworte 'deny' 'Marionette-Sperre: Tippen ueber type trifft irgendeinen Knopf dieses Typs und umgeht die Pruefung. Ueber text oder key tippen; geht das nicht, den Fall offen lassen.'
         }
     }
 
     if ($werkzeug -eq 'press_key') {
         $taste = [string]$felder.key
         if ($taste -match '(?i)^(enter|return|space|leertaste|numpadenter)$') {
-            Antworte 'ask' "Marionette-Sperre: Taste '$taste' loest den fokussierten Knopf aus, ohne dass seine Beschriftung geprueft werden kann. Bitte bewusst freigeben."
+            Antworte 'deny' "Marionette-Sperre: Taste '$taste' loest den fokussierten Knopf aus, ohne dass seine Beschriftung geprueft werden kann. Ueber text oder key tippen."
         }
     }
 
