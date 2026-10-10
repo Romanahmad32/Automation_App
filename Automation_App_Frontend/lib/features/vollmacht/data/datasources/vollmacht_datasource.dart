@@ -1,0 +1,81 @@
+import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_auftrag.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_ergebnis.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+
+/// Der HTTP-Vertrag der Vollmacht (`api/Vollmacht`, dazu `api/Mandanten/{id}`),
+/// roh: wirft bei einem Fehler die [DioException] weiter. Die Übersetzung in
+/// `Either<Failure, T>` liegt in `VollmachtRepositoryImpl`.
+abstract class VollmachtDatasource {
+  Future<VollmachtVorlagenStand> ladeVorlagen();
+
+  /// Null, wenn der Dienst den Mandanten nicht kennt (404).
+  Future<Mandant?> ladeMandant(int id);
+
+  Future<VollmachtErgebnis> drucke(VollmachtAuftrag auftrag);
+
+  Future<VollmachtErgebnis> fuelleAus(VollmachtAuftrag auftrag);
+}
+
+@Injectable(as: VollmachtDatasource)
+class ApiVollmachtDatasource implements VollmachtDatasource {
+  final Dio _dio;
+
+  ApiVollmachtDatasource(this._dio);
+
+  /// Drucken wartet, bis Word den Auftrag an die Warteschlange übergeben hat:
+  /// Dokument öffnen, drucken, schließen — beim ersten Mal samt Start von Word.
+  /// Die knappe Vorgabe von drei Sekunden meldete sonst einen Fehlschlag,
+  /// während das Papier schon aus dem Drucker kommt. Der Dienst selbst bricht
+  /// nach 60 Sekunden ab (`PdfConversion:ConversionTimeoutSeconds`).
+  static const Duration _druckTimeout = Duration(seconds: 90);
+
+  /// Ausfüllen lädt und schreibt ein Word-Dokument — länger als ein Lesezugriff.
+  static const Duration _ausfuellTimeout = Duration(seconds: 30);
+
+  @override
+  Future<VollmachtVorlagenStand> ladeVorlagen() async {
+    final response = await _dio.get('/api/Vollmacht/vorlagen');
+    return VollmachtVorlagenStand.fromJson(
+      response.data as Map<String, dynamic>,
+    );
+  }
+
+  @override
+  Future<Mandant?> ladeMandant(int id) async {
+    try {
+      final response = await _dio.get('/api/Mandanten/$id');
+      return Mandant.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  @override
+  Future<VollmachtErgebnis> drucke(VollmachtAuftrag auftrag) =>
+      _sende('/api/Vollmacht/drucken', auftrag, _druckTimeout);
+
+  @override
+  Future<VollmachtErgebnis> fuelleAus(VollmachtAuftrag auftrag) =>
+      _sende('/api/Vollmacht/oeffnen', auftrag, _ausfuellTimeout);
+
+  Future<VollmachtErgebnis> _sende(
+    String pfad,
+    VollmachtAuftrag auftrag,
+    Duration timeout,
+  ) async {
+    final response = await _dio.post(
+      pfad,
+      data: auftrag.toJson(),
+      options: Options(
+        contentType: Headers.jsonContentType,
+        sendTimeout: timeout,
+        receiveTimeout: timeout,
+      ),
+    );
+    return VollmachtErgebnis.fromJson(response.data as Map<String, dynamic>);
+  }
+}

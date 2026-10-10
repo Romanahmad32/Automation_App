@@ -167,6 +167,11 @@ class VorgangTestAblage implements VorgangRepository {
   Future<Vorgang?> abschliessenVorgang(String referenz) async => null;
   @override
   Future<Vorgang?> aendereReferenz(String von, String nach) async => null;
+  @override
+  Future<Vorgang?> setzeVollmachtVermerk(
+    String referenz, {
+    required bool gedruckt,
+  }) async => null;
 }
 
 /// Wird in Layout-Tests nie aufgerufen — es geht um die Ansicht, nicht um das

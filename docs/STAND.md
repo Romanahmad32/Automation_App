@@ -306,6 +306,45 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   (`PosteingangZentralrufDetail`) statt in einem eigenen Bereich; daneben zeigt „Gesendet"
   (`GesendetCubit`) das Versandprotokoll über alle Vorgänge chronologisch
   (`GET api/EmailVersand/protokoll/alle`).
+- **Der angefangene Stand wird ohne Nachfrage wiederhergestellt (§3, 13.09.2026, #133 Teil B,
+  Nutzerentscheidung vom selben Tag)** — eine erst eingeführte Leiste „Angefangener Stand" mit
+  „Verwerfen"/„Weiterarbeiten" ist auf Wunsch des Anwalts wieder entfernt: Wählt er einen Vorgang
+  erneut (auch nach einem Ausflug zu einem anderen) oder wechselt die Vorlage hin und zurück, zeigt
+  das Formular Vorbelegung und gespeicherte Abweichung von Anfang an gemeinsam — die Abweichung
+  gewinnt an ihren Feldern, sonst gilt die Vorbelegung; keine Frage, keine Karte, die das Formular
+  verdeckt. `EntwurfAbweichung.nurAbweichende` vergleicht dafür Feld für Feld `trim()`-genau (nur die der
+  gewählten Vorlage) mit dem, was die Vorbelegung ohnehin zeigen würde. Gesichert werden **nur**
+  die abweichenden Felder plus die Schadensaufstellung, wenn sie nicht leer ist — nie das ganze
+  Formular: Ein voller Formularwert würde vorbelegte Felder einfrieren und eine spätere
+  Zentralruf-Antwort (neuer Versicherer) unsichtbar machen. Ohne Abweichung wird der Entwurf am
+  Vorgang gelöscht. Gesichert wird rund 300 ms nach dem letzten Tastendruck (`FormWertBeobachter`)
+  und sofort beim Verlassen der Seite (`EntwurfSicherungSteuerung`, vorher `EntwurfAngebotSteuerung`
+  mit festem 2-s-Takt). Ein Textknopf „Eingaben auf Vorbelegung zurücksetzen" (nur sichtbar bei
+  Abweichung) leert den Tippstand und löscht den Entwurf; eine `Rueckmeldung` „Eingaben
+  zurückgesetzt." mit der Aktion „Rückgängig" stellt ihn wieder her. **Entfallen:**
+  `EntwurfEntscheidungsKarte`, `EntwurfAngebotSchalter`, `WizardState.entwurfAngebot`/
+  `entwurfUebernommen`, `PrefillQuelle.angefangen` sowie die Entity-Felder
+  `formTemplateId`/`vorlagenName`/`mitAuflistung` an `VorgangEntwurf` — der Entwurf ist wieder nur
+  `gespeichertAm`, `feldWerte`, `schadensaufstellung` (weiterhin opakes `JsonElement`, kein
+  Vertragswechsel). Der generische Upsert (`VorgangRepository.CopyInto`) schreibt `EntwurfJson`
+  weiterhin nicht mit, auch beim Insert nicht; nach dem Speichern eines Schreibens löscht der
+  Rückfluss den Entwurf explizit statt sich auf den Upsert zu verlassen. Bewusste Abweichung vom
+  Issue-Text („Angebot mit Inhalt, Folgen, Verwerfen zurücknehmbar"): der Anwalt will keine
+  Nachfrage, der Rückweg ist der Zurücksetzen-Knopf. **Bewusst nicht gebaut:** die im Issue als
+  Spielraum genannte Vorauswahl des Vorgangs mit dem jüngsten angefangenen Stand beim ersten Öffnen
+  — vorausgewählt bleibt der Vorgang mit der jüngsten Antwort.
+- **Vollmacht drucken (§4.11, 13.09.2026, #151)** — der Anwalt füllte das Word-Vollmachtsformular
+  bislang von Hand mit Daten, die er der App gerade eben eingegeben hatte. Ein Dialog
+  (Frontend `vollmacht`, Backend-Slice `Vollmacht`) belegt Vorlagenart (nach Rechtsgebiet),
+  Kopfdaten (aus dem Mandanten) und „in Sachen"/„wegen" (je Art) vor, frei korrigierbar; die
+  Bankverbindung bleibt für die Hand des Mandanten frei. Gedruckt wird über denselben
+  Word-COM-Thread wie die PDF-Vorschau (`IWordDrucker`); scheitert der Druck, öffnet die App die
+  ausgefüllte Datei zum Selbst-Drucken. Einstiege: „Vollmacht drucken" nach dem Anlegen eines
+  Vorgangs und eine Aktion samt Standzeile an der Vorgangskachel, die das Druckdatum vermerkt
+  (setz- und zurücknehmbar, kein eigener Lebenszyklusschritt); die Übersicht zählt offene Vorgänge
+  ohne gedruckte Vollmacht. Die drei Vorlagen liegen als feste Dateien im Unterordner `Vollmacht/`
+  des Vorlagenordners, geseedet aus neutralen Mustern; die Arbeitsdatei wird nach dem Druck
+  gelöscht, in der Akte abgelegt wird nichts.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
@@ -362,7 +401,7 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 - **Bestätigung vor dem Hochzählen (§7.1)** — die Auftragsnummer wird nach dem Abschluss immer
   automatisch erhöht. Die geforderte Einstellung „automatisch oder erst nach Bestätigung" gibt es
   weder in `KanzleiSettings` noch im Backend.
-- **Der angefangene Stand, wann er angeboten wird (#133 Teil B)** — Teil A dieses Issues
-  (Schreiben-Nummer, siehe oben) ist umgesetzt. Die Leiste „Angefangener Stand" bleibt unverändert:
-  Sie erscheint weiterhin auch dann, wenn der Stand der Vorbelegung gleicht oder derselbe Vorgang
-  erneut gewählt wird, und „Verwerfen"/„Weiterarbeiten" sagen nicht, was sie bewirken.
+- **Vorauswahl des angefangenen Stands (#133, Spielraum-Punkt)** — #133 Teil B (siehe oben unter
+  „Umgesetzt") stellt den angefangenen Stand jetzt ohne Nachfrage still wieder her. Nicht gebaut ist
+  der im Issue nur als Spielraum genannte nächste Schritt: Beim ersten Öffnen den Vorgang mit dem
+  **jüngsten** angefangenen Stand vorauszuwählen, statt wie bisher den mit der jüngsten Antwort.

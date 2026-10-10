@@ -1111,6 +1111,122 @@
         }
       }
     },
+    "/api/Vorgaenge/vollmacht": {
+      "put": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "summary": "Vermerkt am Vorgang, dass seine Vollmacht gedruckt ist (\u00A74.11) \u2014 nach einem\r\nausgel\u00F6sten Druck oder von Hand, wenn sie anders zustande kam. Den\r\nZeitpunkt setzt der Dienst; ein erneuter Druck setzt ihn neu.",
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Vorgaenge"
+        ],
+        "summary": "Nimmt den Vermerk \u201EVollmacht gedruckt\u0022 zur\u00FCck (\u00A74.11).",
+        "parameters": [
+          {
+            "name": "referenz",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VorgangDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Vorgaenge/abschliessen": {
       "post": {
         "tags": [
@@ -1255,6 +1371,175 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vollmacht/vorlagen": {
+      "get": {
+        "tags": [
+          "Vollmacht"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtVorlagenDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtVorlagenDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtVorlagenDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vollmacht/drucken": {
+      "post": {
+        "tags": [
+          "Vollmacht"
+        ],
+        "summary": "F\u00FCllt und druckt. Ein gescheiterter Druck ist kein HTTP-Fehler, sondern\r\nder Status \u0060druckFehlgeschlagen\u0060 mit dem Pfad der Datei, die das\r\nFrontend dann \u00F6ffnet.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtErgebnisDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtErgebnisDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtErgebnisDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Vollmacht/oeffnen": {
+      "post": {
+        "tags": [
+          "Vollmacht"
+        ],
+        "summary": "F\u00FCllt nur aus; die Datei bleibt zum \u00D6ffnen liegen.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/VollmachtAuftragDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtErgebnisDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtErgebnisDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VollmachtErgebnisDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "text/plain": {
                 "schema": {
@@ -2249,44 +2534,21 @@
         }
       }
     },
-    "/api/Mandanten/seite": {
+    "/api/Mandanten/{id}": {
       "get": {
         "tags": [
           "Mandanten"
         ],
-        "summary": "Ein Ausschnitt des Registers f\u00FCr die Mandantenliste. In der Kanzlei\r\nstehen dort tausende Mandanten; sie alle auf einmal zu holen ist der\r\nAbruf, den die Liste nicht braucht.\r\n\r\n\u0060suche\u0060 l\u00E4uft \u00FCber den \u003Cb\u003Eganzen\u003C/b\u003E Bestand, nicht \u00FCber den\r\ngerade geholten Ausschnitt \u2014 sonst hinge es am Scrollstand, ob ein\r\nMandant gefunden wird.",
+        "summary": "Ein einzelner Mandant \u2014 f\u00FCr die Vorbelegung der Vollmacht (\u00A74.11), die\r\nam Vorgang nur die ID kennt und daf\u00FCr nicht das ganze Register holen soll.",
         "parameters": [
           {
-            "name": "suche",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ueberspringen",
-            "in": "query",
+            "name": "id",
+            "in": "path",
+            "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "anzahl",
-            "in": "query",
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32",
-              "default": 0
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -2296,64 +2558,43 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                  "$ref": "#/components/schemas/MandantDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                  "$ref": "#/components/schemas/MandantDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                  "$ref": "#/components/schemas/MandantDto"
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/Mandanten/aktenordner": {
-      "get": {
-        "tags": [
-          "Mandanten"
-        ],
-        "summary": "Die Namen aller zugeordneten Akten-Ordner. Der Zuordnungsstapel teilt\r\ndamit die gescannten Ordner in \u201Ezugeordnet\u0022 und \u201Eoffen\u0022 \u2014 eine Seite\r\ndes Registers reicht daf\u00FCr nicht, und die Mandanten daf\u00FCr vollst\u00E4ndig\r\nzu holen w\u00E4re genau der Abruf, den \u0060seite\u0060 vermeidet.",
-        "responses": {
-          "200": {
-            "description": "OK",
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
           }
         }
-      }
-    },
-    "/api/Mandanten/{id}": {
+      },
       "put": {
         "tags": [
           "Mandanten"
@@ -2489,6 +2730,110 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mandanten/seite": {
+      "get": {
+        "tags": [
+          "Mandanten"
+        ],
+        "summary": "Ein Ausschnitt des Registers f\u00FCr die Mandantenliste. In der Kanzlei\r\nstehen dort tausende Mandanten; sie alle auf einmal zu holen ist der\r\nAbruf, den die Liste nicht braucht.\r\n\r\n\u0060suche\u0060 l\u00E4uft \u00FCber den \u003Cb\u003Eganzen\u003C/b\u003E Bestand, nicht \u00FCber den\r\ngerade geholten Ausschnitt \u2014 sonst hinge es am Scrollstand, ob ein\r\nMandant gefunden wird.",
+        "parameters": [
+          {
+            "name": "suche",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ueberspringen",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "anzahl",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MandantenSeiteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Mandanten/aktenordner": {
+      "get": {
+        "tags": [
+          "Mandanten"
+        ],
+        "summary": "Die Namen aller zugeordneten Akten-Ordner. Der Zuordnungsstapel teilt\r\ndamit die gescannten Ordner in \u201Ezugeordnet\u0022 und \u201Eoffen\u0022 \u2014 eine Seite\r\ndes Registers reicht daf\u00FCr nicht, und die Mandanten daf\u00FCr vollst\u00E4ndig\r\nzu holen w\u00E4re genau der Abruf, den \u0060seite\u0060 vermeidet.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -9439,6 +9784,142 @@
         },
         "description": "Ein gelernter Versicherer, wie ihn die Oberfl\u00E4che abruft."
       },
+      "VollmachtAuftragDto": {
+        "required": [
+          "art"
+        ],
+        "type": "object",
+        "properties": {
+          "art": {
+            "type": "string"
+          },
+          "referenz": {
+            "maxLength": 260,
+            "type": "string"
+          },
+          "mandantVorname": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "mandantNachname": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "mandantStrasse": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "mandantPlz": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "mandantOrt": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "mandantTelefon": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "mandantEmail": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "unfalldatum": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "inSachen": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "wegen": {
+            "maxLength": 300,
+            "type": "string"
+          }
+        },
+        "description": "Anfrage an \u0060POST api/Vollmacht/drucken|oeffnen\u0060: die im Dialog gepr\u00FCften\r\nKopfdaten (\u00A74.11). string VollmachtAuftragDto.Art ist einer der Werte aus\r\nstring VollmachtArten.Wert(VollmachtArt art)."
+      },
+      "VollmachtErgebnisDto": {
+        "required": [
+          "status",
+          "pfad",
+          "meldung",
+          "warnungen"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "pfad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "meldung": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warnungen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Antwort auf \u0060POST api/Vollmacht/drucken|oeffnen\u0060. string VollmachtErgebnisDto.Status ist\r\n\u0060gedruckt\u0060, \u0060druckFehlgeschlagen\u0060, \u0060ausgefuellt\u0060,\r\n\u0060vorlageFehlt\u0060 oder \u0060fehler\u0060; string? VollmachtErgebnisDto.Pfad ist die\r\nausgef\u00FCllte Datei, sofern sie zum \u00D6ffnen bereitliegt."
+      },
+      "VollmachtVorlageDto": {
+        "required": [
+          "art",
+          "dateiname",
+          "vorhanden",
+          "geaendertAm"
+        ],
+        "type": "object",
+        "properties": {
+          "art": {
+            "type": "string"
+          },
+          "dateiname": {
+            "type": "string"
+          },
+          "vorhanden": {
+            "type": "boolean"
+          },
+          "geaendertAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Stand einer Vollmachtsvorlage; string VollmachtVorlageDto.Art wie im Auftrag."
+      },
+      "VollmachtVorlagenDto": {
+        "required": [
+          "ordner",
+          "vorlagen"
+        ],
+        "type": "object",
+        "properties": {
+          "ordner": {
+            "type": "string"
+          },
+          "vorlagen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VollmachtVorlageDto"
+            }
+          }
+        },
+        "description": "Antwort auf \u0060GET api/Vollmacht/vorlagen\u0060: der Ordner und seine drei Vorlagen."
+      },
       "VorgangDto": {
         "required": [
           "referenz",
@@ -9621,6 +10102,13 @@
             ]
           },
           "abgeschlossenAm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "vollmachtGedrucktAm": {
             "type": [
               "null",
               "string"
@@ -10123,6 +10611,9 @@
     },
     {
       "name": "Vorgaenge"
+    },
+    {
+      "name": "Vollmacht"
     },
     {
       "name": "Versicherer"

@@ -12,6 +12,7 @@ void main() {
     int tageAlt = 0,
     int? laufendeNummer,
     DateTime? abgeschlossenAm,
+    DateTime? vollmachtGedrucktAm,
   }) {
     return Vorgang(
       referenz: referenz,
@@ -19,6 +20,7 @@ void main() {
       status: status,
       laufendeNummer: laufendeNummer,
       abgeschlossenAm: abgeschlossenAm,
+      vollmachtGedrucktAm: vollmachtGedrucktAm,
     );
   }
 
@@ -66,6 +68,38 @@ void main() {
 
       expect(uebersicht.offeneVorgaenge, hasLength(4));
       expect(uebersicht.anzahlOffen, 9);
+    });
+  });
+
+  group('anzahlOhneVollmacht (§4.11)', () {
+    test('zählt nur offene Vorgänge ohne Vermerk', () {
+      final uebersicht = DashboardUebersicht.aus([
+        vorgang('ohne', status: VorgangStatus.angefragt),
+        vorgang(
+          'vermerkt',
+          status: VorgangStatus.beantwortet,
+          vollmachtGedrucktAm: DateTime(2026, 7, 1),
+        ),
+        vorgang(
+          'versendet-ohne-vermerk',
+          status: VorgangStatus.versendet,
+          laufendeNummer: 1,
+        ),
+      ], jetzt: jetzt);
+
+      expect(uebersicht.anzahlOhneVollmacht, 1);
+    });
+
+    test('ist 0, wenn alle offenen Vorgänge vermerkt sind', () {
+      final uebersicht = DashboardUebersicht.aus([
+        vorgang(
+          'vermerkt',
+          status: VorgangStatus.angefragt,
+          vollmachtGedrucktAm: DateTime(2026, 7, 1),
+        ),
+      ], jetzt: jetzt);
+
+      expect(uebersicht.anzahlOhneVollmacht, 0);
     });
   });
 

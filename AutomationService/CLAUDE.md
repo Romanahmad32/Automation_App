@@ -29,7 +29,8 @@ Verdrahtung über je eine `Add…Services`-Erweiterungsmethode, aufgerufen aus `
 `AddLifetimeServices`, `AddPersistenceServices`, `AddWordServices`, `AddPdfConversionServices`,
 `AddZentralrufServices`, `AddMailboxServices`, `AddSettingsServices`, `AddMandantenServices`,
 `AddVersichererServices`, `AddSachgebieteServices`, `AddRegisterHistorieServices`, `AddVorgaengeServices`,
-`AddFormTemplatesServices`, `AddBackupServices`, `AddDevSimulationServices`, `AddEmailVersandServices`.
+`AddFormTemplatesServices`, `AddBackupServices`, `AddDevSimulationServices`, `AddEmailVersandServices`,
+`AddVollmachtServices`.
 
 Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName`: `WordAutomation`,
 `PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`. Ohne Options-Klasse direkt gelesen:
@@ -101,7 +102,9 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
 - **PdfConversion** — docx→PDF für die Vorschau in der App. Standard-Engine ist Word-COM per Late
   Binding (`WordInteropPdfConversionService`, eigener STA-Thread + Warmup), FreeSpire.Doc ist der
   Rückfall über eine Composite-/Keyed-DI; Engine wählbar in `appsettings`. Dateicache unter
-  `Generated/PdfCache` (`PdfPreviewCache`).
+  `Generated/PdfCache` (`PdfPreviewCache`). Über dieselbe STA-Thread-Warteschlange laufen seit
+  §4.11 auch Druckaufträge (`IWordDrucker`, `Document.PrintOut`) — sie treffen so eine schon
+  gestartete Word-Instanz statt eine zweite danebenzustarten.
 - **Vorgaenge** — Lebenszyklus des Vorgangs/Auftrags (Liste, Einzelabruf, Upsert, Löschen,
   Referenzänderung, angefangener Ausfüllstand über `PUT|DELETE api/Vorgaenge/entwurf`).
   `VorgangAbschlussService` schließt ab: Status, Abschlusszeitpunkt und Auftragsnummer in **einer**
@@ -112,9 +115,21 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
 - **Mandanten** — Mandantenregister in der Datenbank (CRUD, `MandantNameConflictException` bei
   doppeltem Namen, `MandantOrdnerConflictException` bei einem schon vergebenen Ordner; einzelne
-  Ordner über `POST …/{id}/aktenordner/zuordnen|loesen`, jeder Schreibweg in einer Transaktion). Die
+  Ordner über `POST …/{id}/aktenordner/zuordnen|loesen`, jeder Schreibweg in einer Transaktion;
+  `GET …/{id}` für den Einzelabruf, z. B. zur Vorbelegung der Vollmacht, §4.11). Die
   Akten/Fälle im Dateisystem liegen im Frontend, nicht hier. Dazu das Paketbuch des Imports
   (`ImportPakete`, #108).
+- **Vollmacht** — füllt eine der drei festen Vollmacht-Vorlagen (§4.11) mit demselben Ausfüller wie
+  die Anspruchsschreiben (`IWordAutomationService`) und druckt sie über `IWordDrucker`
+  (`WordInteropPdfConversionService`, PdfConversion); den Vermerk „gedruckt" setzt danach das
+  Frontend über `PUT|DELETE api/Vorgaenge/vollmacht`, er gehört dem Vorgang, nicht diesem Schnitt.
+  `VollmachtVorlagenOrdner` bildet den Unterordner `Vollmacht/` des wirksamen Vorlagenordners auf
+  die drei festen Dateinamen ab; `VollmachtVorlagenSeedService` kopiert dahin die neutralen
+  `Templates/Vollmacht/Muster_Vollmacht_*.docx`, nur wenn kein eigener Vorlagenordner eingestellt
+  ist (dieselbe Regel wie `VorlagenSeedService`, #33), und überschreibt nie — ein Muster ohne
+  Kanzleikopf unter dem festen Namen im Ordner der Kanzlei ergäbe sonst eine Vollmacht ohne
+  Bevollmächtigten. Nach erfolgreichem Druck löscht der Dienst nur die Vollmachtdatei im
+  Arbeitsordner, nie ein daneben liegendes Anspruchsschreiben.
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST
   api/Settings/auftragsnummer/erhoehe` und die Standardpositionen der Schadensaufstellung (§4.4,
   `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle = Vorgabe, leeres Speichern setzt

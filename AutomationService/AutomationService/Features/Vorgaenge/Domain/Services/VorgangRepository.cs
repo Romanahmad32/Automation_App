@@ -67,6 +67,13 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
 
         if (existing is null)
         {
+            // Auch beim Neuanlegen entsteht der Entwurf nur über den eigenen
+            // Weg (SetzeEntwurfAsync, PUT/DELETE api/Vorgaenge/entwurf) — ein
+            // eingehender Datensatz, der selbst schon ein EntwurfJson trägt
+            // (ein Client, der einen alten Stand kopiert oder einen fremden
+            // mitschickt), darf keinen Entwurf entstehen lassen, den niemand
+            // je darüber gesetzt hat (#133).
+            vorgang.EntwurfJson = null;
             db.Vorgaenge.Add(vorgang);
             await db.SaveChangesAsync(cancellationToken);
             return vorgang;
@@ -98,6 +105,20 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         if (vorgang is null) return null;
 
         vorgang.EntwurfJson = string.IsNullOrWhiteSpace(entwurfJson) ? null : entwurfJson;
+        await db.SaveChangesAsync(cancellationToken);
+        return vorgang;
+    }
+
+    public async Task<VorgangEntity?> SetzeVollmachtGedrucktAsync(
+        string referenz,
+        DateTime? gedrucktAm,
+        CancellationToken cancellationToken = default)
+    {
+        var bereinigt = referenz.Trim();
+        var vorgang = await db.Vorgaenge.FirstOrDefaultAsync(v => v.Referenz == bereinigt, cancellationToken);
+        if (vorgang is null) return null;
+
+        vorgang.VollmachtGedrucktAm = gedrucktAm;
         await db.SaveChangesAsync(cancellationToken);
         return vorgang;
     }
@@ -166,7 +187,11 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
     [GeneratedRegex(@"^\s*(\d+)\s*/\s*(\d+)\s+(\S+)_(.+)$")]
     private static partial Regex ReferenzSchemaRegex();
 
-    /// <summary>Übernimmt alle fachlichen Felder (ohne Id/Referenz) in die getrackte Zeile.</summary>
+    /// <summary>
+    /// Übernimmt alle fachlichen Felder (ohne Id/Referenz) in die getrackte Zeile —
+    /// bis auf <see cref="VorgangEntity.VollmachtGedrucktAm"/>: Den Vermerk
+    /// schreibt allein <see cref="SetzeVollmachtGedrucktAsync"/> (§4.11).
+    /// </summary>
     static void CopyInto(VorgangEntity target, VorgangEntity source)
     {
         target.AngefragtAm = source.AngefragtAm;
@@ -187,7 +212,14 @@ public sealed partial class VorgangRepository(AutomationDbContext db) : IVorgang
         target.AntwortJson = source.AntwortJson;
         target.FeldWerteJson = source.FeldWerteJson;
         target.SchadensaufstellungJson = source.SchadensaufstellungJson;
-        target.EntwurfJson = source.EntwurfJson;
+        // EntwurfJson bewusst NICHT übernehmen: Der angefangene Ausfüllstand
+        // hat seinen eigenen Schreibweg (SetzeEntwurfAsync, PUT/DELETE
+        // api/Vorgaenge/entwurf), der laufend beim Tippen schreibt. Ein Upsert
+        // des ganzen Vorgangs (z. B. weil zwischenzeitlich eine
+        // Zentralruf-Antwort eintraf) trägt in `source` oft nur eine veraltete
+        // Kopie dieses Felds aus Sicht eines Clients — sie würde sonst einen
+        // frischeren, noch nicht abgeholten Entwurf löschen oder einen bereits
+        // verworfenen zurückholen (#133).
         target.SchreibenNummer = source.SchreibenNummer;
         target.DokumentPfad = source.DokumentPfad;
         target.AktenOrdner = source.AktenOrdner;
