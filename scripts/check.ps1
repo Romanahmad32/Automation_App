@@ -349,8 +349,8 @@ if (-not $NurBackend) {
     }
 
     $frontendSchritte += New-Schritt 'Frontend: Formatierung' $frontend $dartBefehl `
-        @('format', '--output=none', '--set-exit-if-changed', 'lib', 'test') `
-        -Hilfe 'dart format lib test — oder ./scripts/check.ps1 -Beheben'
+        @('format', '--output=none', '--set-exit-if-changed', 'lib', 'test', 'test_driver') `
+        -Hilfe 'dart format lib test test_driver — oder ./scripts/check.ps1 -Beheben'
 
     # --no-pub bei analyze und test: `pub get` steht schon als erster Schritt
     # oben. Ohne den Schalter holen beide es noch einmal nach.
