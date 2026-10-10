@@ -12,6 +12,9 @@ public interface IMandantenRepository
     /// <summary>Alle Mandanten, neueste zuerst.</summary>
     Task<IReadOnlyList<MandantEntity>> GetAllAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>Ein einzelner Mandant, null bei unbekannter ID.</summary>
+    Task<MandantEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Ein Ausschnitt des Registers, neueste zuerst — für die Mandantenliste,
     /// die in der Kanzlei tausende Einträge zeigt und sie nicht alle auf

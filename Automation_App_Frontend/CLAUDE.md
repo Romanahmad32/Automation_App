@@ -95,6 +95,7 @@ kürzere Sätze.
 | `mandanten` | Mandantenregister (Datenbank) + Akten/Fälle (Dateisystem) |
 | `sachgebiete` | Sachgebietskatalog (§7.1) als Quelle der Rechtsgebiets- und Abteilungs-Auswahl; kein eigener Tab |
 | `versicherer` | lesender Zugriff auf die Versicherer-Wissensbasis; benutzt aus `zentralruf_reply` |
+| `vollmacht` | Dialog: Vollmacht aus Mandant und Vorgang befüllen, drucken oder in Word öffnen (§4.11) |
 | `vorgaenge` | Lebenszyklus der Vorgänge + Sachgebiete-/Auftragsregister mit Historie (§6.2) |
 | `register_import` | Registerhistorie jahrgangsweise einlesen: Vorschau je Jahrgang, Befunde, Übernahme (§6.2) |
 | `settings` | Kanzleidaten, Aktenstammordner, Auftragsnummer/Abteilung, Mail-Signatur, Erscheinungsbild; hängt die Reiter aus `mailbox`, `backup` und `word_automation` (Standardpositionen) ein |
