@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:automation_app/core/dateien/datei_oeffner.dart';
@@ -165,6 +166,7 @@ void main() {
       final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
 
       await aufbau.cubit.starte(vorgang(), const []);
+      await aufbau.cubit.ladeDrucker();
 
       expect(aufbau.cubit.state.druckbereit, isFalse);
       expect(aufbau.cubit.state.bereit, isTrue);
@@ -179,9 +181,32 @@ void main() {
       final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
 
       await aufbau.cubit.starte(vorgang(), const []);
+      await aufbau.cubit.ladeDrucker();
 
       expect(aufbau.cubit.state.druckbereit, isTrue);
     });
+
+    test(
+      'das Öffnen wartet nicht auf einen Drucker, der nicht antwortet',
+      () async {
+        final haengt = dienst.druckerHaengt = Completer<void>();
+        final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
+
+        await aufbau.cubit.starte(vorgang(), const []);
+        expect(aufbau.cubit.state.phase, VollmachtPhase.eingabe);
+        expect(aufbau.cubit.state.druckerFaellig, isTrue);
+
+        final abfrage = aufbau.cubit.ladeDrucker();
+        await aufbau.cubit.ladeDrucker();
+        expect(aufbau.cubit.state.druckerFaellig, isFalse);
+        expect(aufbau.cubit.state.druckbereit, isTrue);
+
+        haengt.complete();
+        await abfrage;
+        expect(aufbau.cubit.state.drucker?.name, 'Kanzleidrucker');
+        expect(dienst.druckerAbfragen, 1);
+      },
+    );
   });
 
   group('Ergebnis nach dem Druck', () {
@@ -208,6 +233,7 @@ void main() {
     test('nennt Word keinen Drucker, steht der Standarddrucker da', () async {
       final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
       await aufbau.cubit.starte(vorgang(), const []);
+      await aufbau.cubit.ladeDrucker();
 
       await aufbau.cubit.drucke();
 

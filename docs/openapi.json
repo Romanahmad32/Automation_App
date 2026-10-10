@@ -9938,7 +9938,7 @@
             "type": "string"
           }
         },
-        "description": "Anfrage an \u0060POST api/Vollmacht/drucken|oeffnen\u0060: die im Dialog gepr\u00FCften\r\nKopfdaten (\u00A74.11). string VollmachtAuftragDto.Art ist einer der Werte aus\r\nstring VollmachtArten.Wert(VollmachtArt art)."
+        "description": "Anfrage an \u0060POST api/Vollmacht/drucken|oeffnen|vorschau\u0060: die im Dialog gepr\u00FCften\r\nKopfdaten (\u00A74.11). string VollmachtAuftragDto.Art ist einer der Werte aus\r\nstring VollmachtArten.Wert(VollmachtArt art)."
       },
       "VollmachtDruckerDto": {
         "required": [

@@ -100,6 +100,19 @@ class VollmachtCubit extends Cubit<VollmachtStand> {
     }
   }
 
+  /// Fragt den Standarddrucker ab — einmal, angestoßen vom Dialog, sobald die
+  /// Eingabe steht (`VollmachtStand.druckerFaellig`). Nicht in [starte]: Das
+  /// Öffnen soll nicht auf einen Drucker warten, der nicht antwortet, und eine
+  /// Ausgabe danach löschte die Meldung des Öffnens.
+  Future<void> ladeDrucker() async {
+    if (isClosed || !state.druckerFaellig) return;
+
+    emit(state.copyWith(druckerLaedt: true));
+    final drucker = await _vorbereitung.drucker();
+    if (isClosed) return;
+    emit(state.copyWith(druckerLaedt: false, drucker: drucker));
+  }
+
   /// Erzeugt die Seite zu den aktuellen Feldern — die erste stößt der Dialog
   /// an, sobald sie fällig ist (`VollmachtStand.vorschauFaellig`), jede
   /// weitere der Anwalt. Bewusst nicht bei jedem Tastendruck: Eine Umwandlung

@@ -9,9 +9,10 @@ import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_s
 import 'package:injectable/injectable.dart';
 
 /// Was der Vollmacht-Dialog beim Öffnen holt (§4.11): den Mandanten zum
-/// Vorgang, den Stand der Vorlagen und den Standarddrucker — die beiden
-/// letzten parallel zum ersten. Daraus wird der Zustand, mit dem der Dialog
-/// in die Eingabe geht.
+/// Vorgang und den Stand der Vorlagen, parallel — daraus wird der Zustand, mit
+/// dem der Dialog in die Eingabe geht. Den Standarddrucker holt [drucker]
+/// getrennt davon, erst wenn die Eingabe steht: Ein Netzwerkdrucker, der
+/// nicht antwortet, hielte das Öffnen sonst bis zum Timeout auf.
 ///
 /// Nichts davon hält den Dialog auf: Ohne Vorlagenstand meldet eine fehlende
 /// Vorlage der Dienst selbst, ein nicht abfragbarer Drucker wird nur genannt,
@@ -32,7 +33,6 @@ class VollmachtVorbereitung {
   Future<VollmachtStand> eingabe(VollmachtStand start) async {
     final vorgang = start.vorgang;
     final vorlagenAbruf = _ladeVorlagen(const NoParams());
-    final druckerAbruf = _ladeDrucker(const NoParams());
     Mandant? mandant;
     var lage = VollmachtMandantLage.keinerZugeordnet;
     String? fehler;
@@ -48,7 +48,6 @@ class VollmachtVorbereitung {
       }
     }
     final vorlagen = await vorlagenAbruf;
-    final drucker = await druckerAbruf;
 
     return start.copyWith(
       phase: VollmachtPhase.eingabe,
@@ -64,14 +63,19 @@ class VollmachtVorbereitung {
         Right(value: final stand) => stand,
         _ => null,
       },
-      drucker: switch (drucker) {
+      fehler: fehler,
+    );
+  }
+
+  /// Der Standarddrucker; ließ er sich nicht abfragen, ein Drucker im Zustand
+  /// „unbekannt" mit dem Grund — nie gar keiner, sonst fragte der Dialog
+  /// immer wieder.
+  Future<VollmachtDrucker> drucker() async =>
+      switch (await _ladeDrucker(const NoParams())) {
         Right(value: final gefunden) => gefunden,
         Left(value: final failure) => VollmachtDrucker(
           zustand: VollmachtDruckerZustand.unbekannt,
           hinweis: failure.message,
         ),
-      },
-      fehler: fehler,
-    );
-  }
+      };
 }

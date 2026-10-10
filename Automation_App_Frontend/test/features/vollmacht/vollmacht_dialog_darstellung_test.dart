@@ -37,7 +37,12 @@ void main() {
       final vorgaenge = VollmachtVorgaengeDouble()..bestand[referenz] = vorgang;
       cubit = (await baueVollmachtCubit(dienst, vorgaenge)).cubit;
       await cubit.starte(vorgang, const []);
-      if (drucken) await cubit.drucke();
+      if (drucken) {
+        // Gedruckt wird hier vor dem Dialog — den Drucker hätte er vorher
+        // abgefragt.
+        await cubit.ladeDrucker();
+        await cubit.drucke();
+      }
     });
     addTearDown(cubit.close);
     return (cubit: cubit, dienst: dienst);
@@ -113,7 +118,7 @@ void main() {
   testWidgets('ohne Drucker ist „Drucken" gesperrt und die Zeile sagt warum', (
     tester,
   ) async {
-    final (:cubit, dienst: _) = await baue(
+    final (:cubit, :dienst) = await baue(
       tester,
       drucker: const VollmachtDrucker(
         zustand: VollmachtDruckerZustand.keinDrucker,
@@ -123,6 +128,8 @@ void main() {
 
     await zeigeDialog(tester, cubit, fenster: const Size(1400, 1000));
 
+    // Den Drucker fragt der Dialog selbst ab, nachdem er aufgegangen ist.
+    expect(dienst.druckerAbfragen, 1);
     final drucken = find.widgetWithText(FilledButton, 'Drucken');
     expect(tester.widget<FilledButton>(drucken).onPressed, isNull);
     expect(find.textContaining('kein Standarddrucker'), findsOneWidget);
