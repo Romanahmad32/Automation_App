@@ -123,6 +123,19 @@ class VollmachtStand extends Equatable {
   bool get bereit =>
       phase == VollmachtPhase.eingabe && art != null && !vorlageFehlt;
 
+  /// Der Auftrag zu den aktuellen Feldern — für Vorschau, Druck und Word;
+  /// null, solange Vorgang oder Art fehlen.
+  VollmachtAuftrag? get auftrag {
+    final vorgang = this.vorgang;
+    final art = this.art;
+    if (vorgang == null || art == null) return null;
+    return VollmachtAuftrag(
+      art: art,
+      referenz: vorgang.referenz,
+      kopfdaten: kopfdaten,
+    );
+  }
+
   /// Ob „Drucken" greifen darf — nicht ohne eingerichteten Drucker.
   bool get druckbereit => bereit && (drucker?.kannDrucken ?? true);
 
