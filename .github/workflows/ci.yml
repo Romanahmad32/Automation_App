@@ -262,7 +262,7 @@ jobs:
       # diese Pruefung sammelt sich Formatierungsrauschen in den Dart-Diffs und
       # verdeckt die eigentliche Aenderung — teuer in jedem Review.
       - name: Format
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format --output=none --set-exit-if-changed lib test test_driver
 
       # Analyze laeuft vor den Tests: Fehler hier sind billiger zu finden.
       # --no-pub bei analyze und test: `flutter pub get` ist ein eigener Schritt
