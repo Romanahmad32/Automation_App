@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.da
 import 'package:flutter/material.dart';
 
 /// **Der eine** Weg, von der Mandantenkarte eine Akte oder einen Fall im
-/// Explorer zu öffnen (#132) — das Gegenstück zu `VorlagenDateiOeffnen` für
+/// Explorer zu öffnen (#132) — das Gegenstück zu `DateiOeffnenMitHinweis` für
 /// Ordner. Die Mechanik und die Test-Naht liegen in
 /// [DateiOeffner.oeffneOrdner]; hier liegt, was der Anwalt erfährt, wenn es
 /// nicht geht.
@@ -14,7 +14,7 @@ class AktenOrdnerOeffnen {
   /// Klick wortlos verpufft. Gemeldet wird [name] — der Ordnername, den der
   /// Anwalt auf der Karte sieht, nicht der Pfad dahinter.
   ///
-  /// [Rueckmeldung.von] **vor** dem `await`, wie in `VorlagenDateiOeffnen`:
+  /// [Rueckmeldung.von] **vor** dem `await`, wie in `DateiOeffnenMitHinweis`:
   /// Nach dem Öffnen kann die Karte weg sein.
   static Future<void> oeffne(
     BuildContext context, {

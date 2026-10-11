@@ -131,7 +131,10 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   ist (dieselbe Regel wie `VorlagenSeedService`, #33), und überschreibt nie — ein Muster ohne
   Kanzleikopf unter dem festen Namen im Ordner der Kanzlei ergäbe sonst eine Vollmacht ohne
   Bevollmächtigten. Nach erfolgreichem Druck löscht der Dienst nur die Vollmachtdatei im
-  Arbeitsordner, nie ein daneben liegendes Anspruchsschreiben. Die Seitenvorschau (`POST …/vorschau`,
+  Arbeitsordner, nie ein daneben liegendes Anspruchsschreiben. Dieselbe Regel gilt für `POST
+  …/aufraeumen` (#174): Das Frontend ruft ihn beim Schließen des Dialogs, wenn eine Word-Fassung
+  entstand; er nimmt nur die drei festen Namen, und eine gesperrte Datei bleibt still liegen
+  (`arbeitsordner/aufraeumen` nähme das Schreiben mit). Die Seitenvorschau (`POST …/vorschau`,
   #164) wandelt über `ConvertDocxToPdfFromBytesAsync` — der Pfad-Weg legte die ausgefüllte
   Vollmacht im `PdfPreviewCache` ab — und löscht die Arbeitsdatei sofort; `GET …/drucker` liest
   `IDruckerAuskunft`.

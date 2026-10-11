@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_ergebnis.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
@@ -100,7 +99,7 @@ class _VorgangAbschliessenDialogState extends State<VorgangAbschliessenDialog> {
   void _zeigeDokumentImOrdner() {
     final pfad = widget.vorgang.dokumentPfad;
     if (pfad == null) return;
-    Process.run('explorer', ['/select,', pfad]);
+    DateiOeffner.zeigeImOrdner(pfad);
   }
 
   @override

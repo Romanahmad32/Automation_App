@@ -26,8 +26,13 @@ public sealed class VollmachtDienstTests : IDisposable
     private VollmachtVorlagenOrdner Ordner() =>
         new(_vorlagenOrdner, NullLogger<VollmachtVorlagenOrdner>.Instance);
 
-    private VollmachtDienst Dienst() =>
-        new(_umgebung.CreateService(), _drucker, new PdfAttrappe(), Ordner(), NullLogger<VollmachtDienst>.Instance);
+    private VollmachtDienst Dienst() => new(
+        _umgebung.CreateService(),
+        _drucker,
+        new PdfAttrappe(),
+        Ordner(),
+        _umgebung.ArbeitsVerzeichnis,
+        NullLogger<VollmachtDienst>.Instance);
 
     /// <summary>Die versionierten Muster — dieselben Dateien, die das Setup mitbringt.</summary>
     internal static string MusterOrdner() => Path.Combine(

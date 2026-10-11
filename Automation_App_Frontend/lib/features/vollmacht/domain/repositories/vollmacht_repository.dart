@@ -36,4 +36,9 @@ abstract class VollmachtRepository {
   Future<Either<Failure, VollmachtVorschau>> erstelleVorschau(
     VollmachtAuftrag auftrag,
   );
+
+  /// Löscht die Vollmachtdateien im Arbeitsordner des Vorgangs mit
+  /// [referenz] — nie ein Anspruchsschreiben daneben (#174). Eine noch in Word
+  /// geöffnete Datei bleibt still bis zur Startaufräumung liegen.
+  Future<Either<Failure, void>> raeumeAuf(String referenz);
 }

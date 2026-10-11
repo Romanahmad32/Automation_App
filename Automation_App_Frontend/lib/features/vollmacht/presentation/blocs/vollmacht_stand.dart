@@ -5,6 +5,7 @@ import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_kopf
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorschau.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_abschluss.dart';
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_word_fassung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
@@ -14,15 +15,13 @@ enum VollmachtPhase {
   /// Mandant und Vorlagenstand werden geholt.
   laedt,
 
-  /// Der Anwalt prüft die Kopfdaten.
+  /// Der Anwalt prüft die Kopfdaten. Auch nach „In Word öffnen" — das ist eine
+  /// Nebenhandlung (#174); die Leiste über den Knöpfen nennt dann die Datei
+  /// ([VollmachtStand.wordFassung]) und fragt, ob sie gedruckt ist.
   eingabe,
 
   /// Ausfüllen oder Druck läuft.
   arbeitet,
-
-  /// Die Datei ist in Word geöffnet — die App weiß nicht, ob Papier herauskam,
-  /// und fragt deshalb, ob sie den Druck vermerken soll.
-  inWordGeoeffnet,
 
   /// Gedruckt oder in Word gedruckt und vermerkt. Der Dialog zeigt, was
   /// passiert ist ([VollmachtStand.abschluss]), bis der Anwalt „Fertig" drückt.
@@ -71,11 +70,14 @@ class VollmachtStand extends Equatable {
   /// eigenen Namen, sonst zeigt er die alte Seite weiter.
   final int vorschauNummer;
 
-  /// Die zuletzt ausgefüllte Datei (Phase [VollmachtPhase.inWordGeoeffnet]).
-  final String? pfad;
+  /// Die zuletzt in Word geöffnete Fassung; null, solange keine geöffnet
+  /// wurde — oder seit ein Druck sie ersetzt und gelöscht hat.
+  final VollmachtWordFassung? wordFassung;
 
-  /// Ob sich [pfad] in Word öffnen ließ.
-  final bool geoeffnet;
+  /// Ob in diesem Dialog je eine Word-Fassung entstand. Dann räumt der Dienst
+  /// beim Schließen die Arbeitsdateien ab (§8, #174) — auch wenn
+  /// [wordFassung] inzwischen wieder leer ist.
+  final bool wordFassungEntstanden;
 
   /// Platzhalter, die in der Vorlage stehen geblieben sind.
   final List<String> warnungen;
@@ -103,8 +105,8 @@ class VollmachtStand extends Equatable {
     this.vorschauFuer,
     this.vorschauLaedt = false,
     this.vorschauNummer = 0,
-    this.pfad,
-    this.geoeffnet = false,
+    this.wordFassung,
+    this.wordFassungEntstanden = false,
     this.warnungen = const [],
     this.fehler,
     this.hinweis,
@@ -146,7 +148,8 @@ class VollmachtStand extends Equatable {
       phase == VollmachtPhase.eingabe && drucker == null && !druckerLaedt;
 
   /// Ob der Dialog eine erste Vorschau anstoßen soll: Art und Vorlage stehen
-  /// fest, und es gibt noch keine. Danach nur noch auf Knopfdruck.
+  /// fest, und es gibt noch keine. Jede weitere stößt der Wechsel der Art an
+  /// (`VollmachtCubit.waehleArt`) oder der Anwalt.
   bool get vorschauFaellig => bereit && vorschau == null && !vorschauLaedt;
 
   /// Ob die Vorschau eine andere Art oder andere Felder zeigt als eingegeben.
@@ -169,8 +172,8 @@ class VollmachtStand extends Equatable {
     VollmachtAuftrag? vorschauFuer,
     bool? vorschauLaedt,
     int? vorschauNummer,
-    String? pfad,
-    bool? geoeffnet,
+    ValueGetter<VollmachtWordFassung?>? wordFassung,
+    bool? wordFassungEntstanden,
     List<String>? warnungen,
     String? fehler,
     String? hinweis,
@@ -188,8 +191,8 @@ class VollmachtStand extends Equatable {
     vorschauFuer: vorschauFuer ?? this.vorschauFuer,
     vorschauLaedt: vorschauLaedt ?? this.vorschauLaedt,
     vorschauNummer: vorschauNummer ?? this.vorschauNummer,
-    pfad: pfad ?? this.pfad,
-    geoeffnet: geoeffnet ?? this.geoeffnet,
+    wordFassung: wordFassung != null ? wordFassung() : this.wordFassung,
+    wordFassungEntstanden: wordFassungEntstanden ?? this.wordFassungEntstanden,
     warnungen: warnungen ?? this.warnungen,
     // Eine Meldung gilt nur für den Übergang, der sie bringt.
     fehler: fehler,
@@ -214,8 +217,8 @@ class VollmachtStand extends Equatable {
     vorschauFuer,
     vorschauLaedt,
     vorschauNummer,
-    pfad,
-    geoeffnet,
+    wordFassung,
+    wordFassungEntstanden,
     warnungen,
     fehler,
     hinweis,

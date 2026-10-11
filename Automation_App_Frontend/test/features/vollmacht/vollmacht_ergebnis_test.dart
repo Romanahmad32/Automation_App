@@ -128,8 +128,10 @@ void main() {
       expect(stand.vorschauLaedt, isFalse);
     });
 
+    /// Seit #174 bestellt die Wahl der Art die Vorschau selbst — sie ist dann
+    /// nicht mehr „fällig" für den Dialog, sondern schon unterwegs.
     test(
-      'ohne ableitbare Art ist sie erst fällig, wenn der Anwalt wählt',
+      'ohne ableitbare Art entsteht sie erst, wenn der Anwalt wählt',
       () async {
         final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
         await aufbau.cubit.starte(
@@ -137,10 +139,14 @@ void main() {
           const [],
         );
         expect(aufbau.cubit.state.vorschauFaellig, isFalse);
+        await aufbau.cubit.erstelleVorschau();
+        expect(dienst.vorschauAuftraege, isEmpty);
 
         aufbau.cubit.waehleArt(VollmachtArt.unfallsachen);
+        await Future<void>.delayed(Duration.zero);
 
-        expect(aufbau.cubit.state.vorschauFaellig, isTrue);
+        expect(dienst.vorschauAuftraege.single.art, VollmachtArt.unfallsachen);
+        expect(aufbau.cubit.state.vorschauFaellig, isFalse);
       },
     );
 
@@ -291,7 +297,8 @@ void main() {
 
       await aufbau.cubit.druckeErneut();
 
-      expect(aufbau.cubit.state.phase, VollmachtPhase.inWordGeoeffnet);
+      expect(aufbau.cubit.state.phase, VollmachtPhase.eingabe);
+      expect(aufbau.cubit.state.wordFassung, isNotNull);
       expect(vorgaenge.vermerke, [(referenz, true), (referenz, false)]);
       expect(
         aufbau.vorgaengeCubit.findeZuReferenz(referenz)?.vollmachtGedrucktAm,
@@ -299,19 +306,19 @@ void main() {
       );
     });
 
-    test(
-      '„In Word öffnen" nach „Kein Blatt" nimmt den Vermerk ebenso zurück',
-      () async {
-        final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
-        await aufbau.cubit.starte(vorgang(), const []);
-        await aufbau.cubit.drucke();
+    test('„In Word öffnen" nach „Kein Blatt" nimmt den Vermerk zurück und führt in die Eingabe', () async {
+      final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
+      await aufbau.cubit.starte(vorgang(), const []);
+      await aufbau.cubit.drucke();
 
-        await aufbau.cubit.oeffneInWordErneut();
+      await aufbau.cubit.oeffneInWordErneut();
 
-        expect(aufbau.cubit.state.phase, VollmachtPhase.inWordGeoeffnet);
-        expect(vorgaenge.vermerke.last, (referenz, false));
-      },
-    );
+      final stand = aufbau.cubit.state;
+      expect(stand.phase, VollmachtPhase.eingabe);
+      expect(stand.abschluss, isNull);
+      expect(stand.wordFassung, isNotNull);
+      expect(vorgaenge.vermerke.last, (referenz, false));
+    });
 
     test(
       'ein gescheiterter Vermerk lässt sich aus dem Ergebnis nachholen',

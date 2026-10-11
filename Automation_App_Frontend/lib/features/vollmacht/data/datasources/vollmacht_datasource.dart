@@ -24,6 +24,8 @@ abstract class VollmachtDatasource {
   Future<VollmachtDrucker> ladeDrucker();
 
   Future<VollmachtVorschau> erstelleVorschau(VollmachtAuftrag auftrag);
+
+  Future<void> raeumeAuf(String referenz);
 }
 
 @Injectable(as: VollmachtDatasource)
@@ -91,6 +93,15 @@ class ApiVollmachtDatasource implements VollmachtDatasource {
           ohneAntwortProtokoll: 'Seite der Vollmacht',
         ),
       );
+
+  @override
+  Future<void> raeumeAuf(String referenz) async {
+    await _dio.post(
+      '/api/Vollmacht/aufraeumen',
+      data: {'referenz': referenz},
+      options: Options(contentType: Headers.jsonContentType),
+    );
+  }
 
   Future<VollmachtErgebnis> _sende(
     String pfad,

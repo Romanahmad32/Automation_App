@@ -30,6 +30,7 @@ public sealed class VollmachtVorschauTests : IDisposable
         new KeinDrucker(),
         _pdf,
         Ordner(),
+        _umgebung.ArbeitsVerzeichnis,
         NullLogger<VollmachtDienst>.Instance);
 
     [Fact]

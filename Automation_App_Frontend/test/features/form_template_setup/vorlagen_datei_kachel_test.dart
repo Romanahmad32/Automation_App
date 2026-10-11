@@ -156,8 +156,8 @@ void main() {
     // beiden Dateien gemeint ist.
     expect(
       find.text(
-        'Die Datei wurde nicht gefunden: '
-        'VORLAGE Anspruchsschreiben HGn.docx',
+        '„VORLAGE Anspruchsschreiben HGn.docx“ lässt sich nicht öffnen — '
+        'liegt die Datei noch dort?',
       ),
       findsOneWidget,
     );

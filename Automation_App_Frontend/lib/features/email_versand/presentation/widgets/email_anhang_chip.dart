@@ -1,5 +1,4 @@
-import 'package:automation_app/core/dateien/datei_oeffner.dart';
-import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
+import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/anhang_umbenennen_dialog.dart';
 import 'package:flutter/material.dart';
@@ -60,19 +59,6 @@ class _EmailAnhangChipState extends State<EmailAnhangChip> {
     }
   }
 
-  Future<void> _oeffnen(BuildContext context) async {
-    final melder = Rueckmeldung.von(context);
-    if (await DateiOeffner.oeffne(widget.pfad)) return;
-
-    melder.hinweis(
-      '„${widget.name}" lässt sich nicht öffnen — liegt die Datei noch dort?',
-      aktion: RueckmeldungsAktion(
-        text: 'Im Ordner zeigen',
-        beiDruck: () => DateiOeffner.zeigeImOrdner(widget.pfad),
-      ),
-    );
-  }
-
   Future<void> _umbenennen(BuildContext context) async {
     final neu = await AnhangUmbenennenDialog.zeigen(context, widget.name);
     if (neu != null) widget.onUmbenennen(neu);
@@ -114,7 +100,11 @@ class _EmailAnhangChipState extends State<EmailAnhangChip> {
               'Klick öffnet die Datei',
             ].join('\n'),
             child: InkWell(
-              onTap: () => _oeffnen(context),
+              onTap: () => DateiOeffnenMitHinweis.oeffne(
+                context,
+                widget.pfad,
+                name: widget.name,
+              ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: ConstrainedBox(

@@ -16,6 +16,7 @@ import 'package:automation_app/features/vollmacht/domain/usecases/fuelle_vollmac
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_vorlagen.dart';
+import 'package:automation_app/features/vollmacht/domain/usecases/raeume_vollmacht_auf.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_vorbereitung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
@@ -61,9 +62,21 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
     meldung: 'Vorschau im Test abgeschaltet.',
   );
 
+  /// Hält jede Vorschau zurück, bis er erfüllt ist — eine Umwandlung, die
+  /// noch läuft, während der Anwalt weiterklickt. Gilt für jede Vorschau,
+  /// die beginnt, solange er gesetzt ist.
+  Completer<void>? vorschauHaengt;
+
+  /// Wie viele Vorschauen gerade gleichzeitig laufen — und höchstens liefen.
+  int vorschauenLaufend = 0;
+  int vorschauenHoechstensGleichzeitig = 0;
+
   final List<VollmachtAuftrag> gedruckt = [];
   final List<VollmachtAuftrag> ausgefuellt = [];
   final List<VollmachtAuftrag> vorschauAuftraege = [];
+
+  /// Die Referenzen, zu denen der Dialog beim Schließen aufräumen ließ.
+  final List<String> aufgeraeumt = [];
 
   static VollmachtVorlagenStand standMit(Set<VollmachtArt> vorhanden) =>
       VollmachtVorlagenStand(
@@ -117,7 +130,19 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
     VollmachtAuftrag auftrag,
   ) async {
     vorschauAuftraege.add(auftrag);
+    vorschauenLaufend++;
+    if (vorschauenLaufend > vorschauenHoechstensGleichzeitig) {
+      vorschauenHoechstensGleichzeitig = vorschauenLaufend;
+    }
+    await vorschauHaengt?.future;
+    vorschauenLaufend--;
     return Right(vorschau);
+  }
+
+  @override
+  Future<Either<Failure, void>> raeumeAuf(String referenz) async {
+    aufgeraeumt.add(referenz);
+    return Right(null);
   }
 }
 
@@ -190,6 +215,7 @@ baueVollmachtCubit(
     ErstelleVollmachtVorschau(dienst),
     DruckeVollmacht(dienst),
     FuelleVollmachtAus(dienst),
+    RaeumeVollmachtAuf(dienst),
     vorgaengeCubit,
   );
   return (cubit: cubit, vorgaengeCubit: vorgaengeCubit);

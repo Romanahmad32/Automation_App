@@ -9,11 +9,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Die ausgefüllte Seite neben den Feldern (§4.11, #164) — damit ein
 /// Tippfehler oder eine leere Zeile vor dem Papier auffällt, nicht danach.
 ///
-/// Neu erzeugt wird sie nur auf „Aktualisieren" (und einmal, sobald sie
-/// fällig ist — das stößt der Dialog an): Eine Umwandlung belegt den
-/// Word-Thread, in dessen Schlange auch der Druck wartet. Passt sie nicht
-/// mehr zu den Feldern, sagt das ein Hinweis — gedruckt werden immer die
-/// aktuellen Felder.
+/// Neu erzeugt wird sie beim Wechsel der Art (#174 — eine andere Art ist ein
+/// anderes Formular) und auf „Aktualisieren", dazu einmal, sobald sie fällig
+/// ist — das stößt der Dialog an. Nicht bei jeder Eingabe: Eine Umwandlung
+/// belegt den Word-Thread, in dessen Schlange auch der Druck wartet. Passt sie
+/// nicht mehr zu den Feldern, sagt das ein Hinweis — gedruckt werden immer
+/// die aktuellen Felder.
 ///
 /// Braucht eine begrenzte Höhe; die gibt `VollmachtArbeitsflaeche` vor. Der
 /// Knopf heißt kurz „Aktualisieren": Bei „Am größten" war „Vorschau

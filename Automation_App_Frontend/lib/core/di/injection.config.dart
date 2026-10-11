@@ -267,6 +267,8 @@ import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht
     as _i1062;
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_vorlagen.dart'
     as _i251;
+import 'package:automation_app/features/vollmacht/domain/usecases/raeume_vollmacht_auf.dart'
+    as _i37;
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart'
     as _i839;
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_vorbereitung.dart'
@@ -859,6 +861,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i251.LadeVollmachtVorlagen>(
       () => _i251.LadeVollmachtVorlagen(gh<_i368.VollmachtRepository>()),
     );
+    gh.factory<_i37.RaeumeVollmachtAuf>(
+      () => _i37.RaeumeVollmachtAuf(gh<_i368.VollmachtRepository>()),
+    );
     gh.factory<_i224.UseCase<List<String>, _i224.NoParams>>(
       () => _i392.GetAktenOrdnernamen(gh<_i763.MandantenRepository>()),
     );
@@ -993,6 +998,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i595.ErstelleVollmachtVorschau>(),
         gh<_i635.DruckeVollmacht>(),
         gh<_i844.FuelleVollmachtAus>(),
+        gh<_i37.RaeumeVollmachtAuf>(),
         gh<_i847.VorgangCubit>(),
       ),
     );

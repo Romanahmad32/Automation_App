@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 /// (kein Mandant zugeordnet, Tatdatum offen, Vorlage fehlt).
 ///
 /// [farbe] weicht nur ab, wo die Zeile kein Hinweis ist: neutral für eine
-/// bloße Angabe (der Drucker ist bereit), Fehlerfarbe für eine Sperre (kein
-/// Drucker eingerichtet).
+/// bloße Angabe (der Drucker ist bereit, die Datei ist in Word geöffnet),
+/// Fehlerfarbe für eine Sperre (kein Drucker eingerichtet).
 class VollmachtHinweis extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -43,7 +43,14 @@ class VollmachtHinweis extends StatelessWidget {
                 text,
                 style: theme.textTheme.bodySmall?.copyWith(color: farbe),
               ),
-              if (aktionen.isNotEmpty) Wrap(spacing: 8, children: aktionen),
+              // Mittig, damit ein Text zwischen den Knöpfen („Ist sie
+              // gedruckt?" in der Word-Leiste) auf ihrer Höhe steht.
+              if (aktionen.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: aktionen,
+                ),
             ],
           ),
         ),

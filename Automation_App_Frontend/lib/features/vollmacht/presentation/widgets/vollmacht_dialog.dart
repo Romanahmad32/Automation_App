@@ -8,7 +8,7 @@ import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_s
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_arbeitsflaeche.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_dialog_knoepfe.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_ergebnis_ansicht.dart';
-import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_word_ansicht.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_word_leiste.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +21,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Drucker, druckt, fällt bei einem gescheiterten Druck auf Word zurück und
 /// vermerkt den Druck am Vorgang. Danach bleibt er mit dem Ergebnis stehen,
 /// bis der Anwalt „Fertig" drückt (#164) — die App weiß nicht, ob wirklich
-/// ein Blatt herauskam. Den Ablauf trägt der [VollmachtCubit]; dieser
-/// Baustein zeigt nur, wo der gerade steht.
+/// ein Blatt herauskam. „In Word öffnen" verlässt die Eingabe nicht, sondern
+/// legt die Word-Leiste unter die Arbeitsfläche (#174). Den Ablauf trägt der
+/// [VollmachtCubit]; dieser Baustein zeigt nur, wo der gerade steht.
 class VollmachtDialog extends StatelessWidget {
   const VollmachtDialog({super.key});
 
@@ -96,8 +97,9 @@ class VollmachtDialog extends StatelessWidget {
     );
   }
 
-  /// Vor dem Druck mit Vorschau so breit, wie das Fenster es hergibt; danach
-  /// — in Word oder im Ergebnis — reicht die schmale Fassung.
+  /// Vor dem Druck mit Vorschau so breit, wie das Fenster es hergibt — und mit
+  /// der Word-Leiste darunter, sobald eine Word-Fassung geöffnet ist (#174);
+  /// im Ergebnis reicht die schmale Fassung.
   Widget _inhalt(BuildContext context, VollmachtStand stand) {
     Widget schmal(Widget kind) => SizedBox(
       width: VollmachtArbeitsflaeche.breiteUntereinander,
@@ -111,9 +113,6 @@ class VollmachtDialog extends StatelessWidget {
           child: LinearProgressIndicator(),
         ),
       ),
-      VollmachtPhase.inWordGeoeffnet => schmal(
-        VollmachtWordAnsicht(stand: stand),
-      ),
       VollmachtPhase.abgeschlossen => schmal(
         VollmachtErgebnisAnsicht(stand: stand),
       ),
@@ -121,7 +120,19 @@ class VollmachtDialog extends StatelessWidget {
         width: VollmachtArbeitsflaeche.nebeneinander(context)
             ? VollmachtArbeitsflaeche.breiteNebeneinander
             : VollmachtArbeitsflaeche.breiteUntereinander,
-        child: VollmachtArbeitsflaeche(stand: stand),
+        // Die Arbeitsfläche gibt nach, die Leiste nicht: Bei einem niedrigen
+        // Fenster scrollen die Felder, statt dass die Leiste überläuft.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: VollmachtArbeitsflaeche(stand: stand)),
+            if (stand.wordFassung != null) ...[
+              const Divider(height: 24),
+              VollmachtWordLeiste(stand: stand),
+            ],
+          ],
+        ),
       ),
     };
   }

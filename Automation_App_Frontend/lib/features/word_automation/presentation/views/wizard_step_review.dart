@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
@@ -109,16 +108,13 @@ class WizardStepReview extends StatelessWidget {
                     label: const Text('Zurück zum Ändern'),
                   ),
                   CustomRectangularButton(
-                    // Über den Windows-Shell-Befehl "start" statt
-                    // url_launcher: launchUrl öffnete die Datei erst beim
-                    // zweiten Klick.
+                    // Über DateiOeffnenMitHinweis (rundll32), nicht über
+                    // `cmd /c start` (ein `&` im Ordnernamen zerlegte den
+                    // Aufruf) und nicht über url_launcher (launchUrl öffnete
+                    // die Datei erst beim zweiten Klick).
                     onPressed: outputPath != null
-                        ? () => Process.run('cmd', [
-                            '/c',
-                            'start',
-                            '',
-                            outputPath,
-                          ], runInShell: false)
+                        ? () =>
+                              DateiOeffnenMitHinweis.oeffne(context, outputPath)
                         : null,
                     icon: const Icon(Icons.edit_document),
                     label: const Text('In Word öffnen'),
