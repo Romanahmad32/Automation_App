@@ -32,7 +32,24 @@ void main() {
     );
 
     expect(treffer.map((v) => v.mandant.id), [1]);
-    expect(treffer.single.begruendung, contains('HGE 1427'));
+  });
+
+  // Abnahme 1.3.0, Fall C4: Zu „hge1427" hieß es „Das Kennzeichen HGE1427
+  // ist bei diesem Mandanten hinterlegt" — hinterlegt ist „HG-E 1427".
+  test('die Begründung nennt das hinterlegte Kennzeichen, nicht die '
+      'Eingabe', () {
+    for (final eingabe in ['hge 1427', 'hge1427', 'HG-E 1427']) {
+      final treffer = MandantErkennung.finde(
+        mandanten: alle,
+        kennzeichen: eingabe,
+      );
+
+      expect(
+        treffer.single.begruendung,
+        'Das Kennzeichen HG-E 1427 ist bei diesem Mandanten hinterlegt.',
+        reason: 'Eingabe „$eingabe"',
+      );
+    }
   });
 
   test('erkennt ähnliche Nachnamen (Tippbeginn und ein Tippfehler)', () {
