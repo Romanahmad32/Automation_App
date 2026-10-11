@@ -2,6 +2,7 @@ import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand.dart';
+import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand_felder.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_art_auswahl.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_hinweis.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_kopf_felder.dart';
@@ -52,19 +53,15 @@ class VollmachtFormular extends StatelessWidget {
           ),
         if (_mandantText(stand.mandantLage) case final text?)
           VollmachtHinweis(icon: Icons.person_off_outlined, text: text),
+        // Das Tatdatum hat seit #171 ein eigenes Feld; was leer bleibt, sagt
+        // der Hinweis unter dem Feld und die Zeile über den Knöpfen.
         VollmachtKopfFelder(
           kopfdaten: stand.kopfdaten,
-          art: art,
+          sichtbar: stand.sichtbareFelder,
+          frei: stand.freiBleibendeFelder.toSet(),
           gesperrt: gesperrt,
           onGeaendert: cubit.aendereKopfdaten,
         ),
-        if (art == VollmachtArt.bussgeldsachen)
-          const VollmachtHinweis(
-            icon: Icons.event_busy_outlined,
-            text:
-                'Das Tatdatum kennt die App nicht — bitte hinter „am“ '
-                'ergänzen oder auf dem Papier eintragen.',
-          ),
         if (art == VollmachtArt.unfallsachen)
           const VollmachtHinweis(
             icon: Icons.account_balance_outlined,

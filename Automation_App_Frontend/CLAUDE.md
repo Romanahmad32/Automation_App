@@ -176,7 +176,9 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 ## Vorhandene Bausteine (`lib/core/general_widgets/`)
 
-- `form/` — `GeneralTextField`, `GermanDateField`, `AuswahlTextField` (Textfeld, dessen Symbol den
+- `form/` — `GeneralTextField`, `GermanDateField`, `GermanDateTextField` (dasselbe Datumsfeld auf
+  einem `TextEditingController` statt reactive_forms; ein Formatfehler ist nur ein Hinweis, er
+  sperrt nichts), `AuswahlTextField` (Textfeld, dessen Symbol den
   `AuswahlDialog` über bekannte Werte öffnet — je Wert ein `AuswahlKandidat` mit Herkunftszeile;
   ohne Kandidaten kein Symbol), `KennzeichenField` (**jedes** Kfz-Kennzeichen-Feld der App: schreibt
   den Wert **nicht** um, auch nicht in `HG-E 1427`, und **sperrt nichts** — ein Versicherungs-,

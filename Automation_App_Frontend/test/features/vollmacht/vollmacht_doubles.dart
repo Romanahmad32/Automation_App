@@ -78,18 +78,57 @@ class VollmachtRepositoryDouble implements VollmachtRepository {
   /// Die Referenzen, zu denen der Dialog beim Schließen aufräumen ließ.
   final List<String> aufgeraeumt = [];
 
-  static VollmachtVorlagenStand standMit(Set<VollmachtArt> vorhanden) =>
-      VollmachtVorlagenStand(
-        ordner: r'C:\Vorlagen\Vollmacht',
-        vorlagen: [
-          for (final art in VollmachtArt.values)
-            VollmachtVorlage(
-              art: art,
-              dateiname: 'Vollmacht ${art.titel}.docx',
-              vorhanden: vorhanden.contains(art),
-            ),
-        ],
-      );
+  /// Die Platzhalter der Kanzleivorlagen, wie sie heute im Ordner liegen
+  /// (#171): nur die Unfallvollmacht trägt Telefon und E-Mail im Fußblock.
+  static const Map<VollmachtArt, List<String>> heutigePlatzhalter = {
+    VollmachtArt.unfallsachen: [
+      'InSachen',
+      'MandantEmail',
+      'MandantNachname',
+      'MandantOrt',
+      'MandantPlz',
+      'MandantStrasse',
+      'MandantTelefon',
+      'MandantVorname',
+      'Wegen',
+    ],
+    VollmachtArt.bussgeldsachen: [
+      'InSachen',
+      'MandantNachname',
+      'MandantOrt',
+      'MandantPlz',
+      'MandantStrasse',
+      'MandantVorname',
+      'Wegen',
+    ],
+    VollmachtArt.strafsache: [
+      'InSachen',
+      'MandantNachname',
+      'MandantOrt',
+      'MandantPlz',
+      'MandantStrasse',
+      'MandantVorname',
+      'Wegen',
+    ],
+  };
+
+  /// Ohne [platzhalter] meldet der Stand keine — wie ein Dienst vor #171;
+  /// der Dialog zeigt dann alle Felder.
+  static VollmachtVorlagenStand standMit(
+    Set<VollmachtArt> vorhanden, {
+    Map<VollmachtArt, List<String>>? platzhalter,
+  }) => VollmachtVorlagenStand(
+    ordner: r'C:\Vorlagen\Vollmacht',
+    vorlagen: [
+      for (final art in VollmachtArt.values)
+        VollmachtVorlage(
+          art: art,
+          dateiname: 'Vollmacht ${art.titel}.docx',
+          vorhanden: vorhanden.contains(art),
+          platzhalter: platzhalter?[art],
+        ),
+    ],
+  );
 
   @override
   Future<Either<Failure, VollmachtVorlagenStand>> ladeVorlagen() async =>

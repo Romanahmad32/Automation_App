@@ -137,7 +137,11 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   (`arbeitsordner/aufraeumen` nähme das Schreiben mit). Die Seitenvorschau (`POST …/vorschau`,
   #164) wandelt über `ConvertDocxToPdfFromBytesAsync` — der Pfad-Weg legte die ausgefüllte
   Vollmacht im `PdfPreviewCache` ab — und löscht die Arbeitsdatei sofort; `GET …/drucker` liest
-  `IDruckerAuskunft`.
+  `IDruckerAuskunft`. Ein leeres Feld druckt als `VollmachtSchreiblinie` (#171), eingesetzt in
+  `VollmachtAuftrag.Platzhalter()` — nicht im gemeinsamen Ausfüller, der setzt leer weiter als
+  nichts ein; `InSachen`/`Wegen` bleiben leer. `GET …/vorlagen` nennt je Vorlage ihre
+  `platzhalter` (`ExtractPlaceholders`, je Aufruf neu gelesen; `null` = nicht lesbar), nach denen
+  der Dialog seine Felder wählt.
 - **Settings** — Kanzleistammdaten als Einzelsatz (`KanzleiSettingsEntity`), dazu `POST
   api/Settings/auftragsnummer/erhoehe` und die Standardpositionen der Schadensaufstellung (§4.4,
   `GET`/`PUT api/Settings/schadenspositionen`; leere Tabelle = Vorgabe, leeres Speichern setzt

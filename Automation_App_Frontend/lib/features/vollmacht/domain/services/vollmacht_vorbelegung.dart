@@ -1,6 +1,7 @@
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_kopfdaten.dart';
+import 'package:automation_app/features/vollmacht/domain/services/vollmacht_schreiblinie.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 
 /// Belegt den Kopf einer Vollmacht aus dem vor, was die App schon weiß
@@ -10,11 +11,14 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 /// | Art | „in Sachen" | „wegen" |
 /// |---|---|---|
 /// | Unfallsachen | leer | Schadensersatz nach Verkehrsunfall vom *Unfalldatum* |
-/// | Bußgeldsachen | Bußgeldsache *Name* | Vorwurf der OWi. am *(Tatdatum offen)* |
+/// | Bußgeldsachen | Bußgeldsache *Name* | Vorwurf der OWi. am *Tatdatum* |
 /// | Strafsache | leer | Strafverfahren gegen *Name* |
 ///
-/// Das Tatdatum der Bußgeldsache kennt die App nicht; die Stelle bleibt im
-/// vorbelegten Text offen, statt ein Datum zu erfinden.
+/// Fehlt ein Datum oder der Name, steht an seiner Stelle eine Schreiblinie
+/// ([VollmachtSchreiblinie], #171) — so hängt keine Zeile auf „vom" oder „am"
+/// aus, und der Mandant kann auf dem Papier ergänzen. Das Tatdatum kennt die
+/// App nicht; der Anwalt trägt es im eigenen Feld ein, statt dass ein Datum
+/// erfunden wird.
 abstract final class VollmachtVorbelegung {
   /// Der vorbelegte Kopf. Ohne [mandant] bleiben die Mandantenfelder leer —
   /// geraten wird aus dem Namens-Schnappschuss am Vorgang nichts, der trägt
@@ -43,7 +47,7 @@ abstract final class VollmachtVorbelegung {
   /// Vorbelegung von „in Sachen" für [art] aus [kopf].
   static String inSachen(VollmachtArt? art, VollmachtKopfdaten kopf) =>
       switch (art) {
-        VollmachtArt.bussgeldsachen => 'Bußgeldsache ${kopf.name}'.trim(),
+        VollmachtArt.bussgeldsachen => 'Bußgeldsache ${_name(kopf)}',
         _ => '',
       };
 
@@ -51,17 +55,25 @@ abstract final class VollmachtVorbelegung {
   static String wegen(VollmachtArt? art, VollmachtKopfdaten kopf) =>
       switch (art) {
         VollmachtArt.unfallsachen =>
-          'Schadensersatz nach Verkehrsunfall vom ${kopf.unfalldatum.trim()}'
-              .trim(),
-        VollmachtArt.bussgeldsachen => 'Vorwurf der OWi. am ',
-        VollmachtArt.strafsache => 'Strafverfahren gegen ${kopf.name}'.trim(),
+          'Schadensersatz nach Verkehrsunfall vom ${_datum(kopf.unfalldatum)}',
+        VollmachtArt.bussgeldsachen =>
+          'Vorwurf der OWi. am ${_datum(kopf.tatdatum)}',
+        VollmachtArt.strafsache => 'Strafverfahren gegen ${_name(kopf)}',
         null => '',
       };
+
+  static String _name(VollmachtKopfdaten kopf) =>
+      VollmachtSchreiblinie.oder(kopf.name, VollmachtSchreiblinie.name);
+
+  static String _datum(String datum) =>
+      VollmachtSchreiblinie.oder(datum, VollmachtSchreiblinie.datum);
 
   /// Zieht „in Sachen" und „wegen" nach, wenn sich Art oder Kopfdaten ändern —
   /// aber **nur, solange der Anwalt sie nicht selbst geändert hat** (§1.3:
   /// nichts still überschreiben). Unberührt heißt: Der Text ist noch genau
-  /// die Vorbelegung zum vorigen Stand ([altArt], [alt]).
+  /// die Vorbelegung zum vorigen Stand ([altArt], [alt]) — samt Linie. Wer
+  /// das Datum statt ins eigene Feld direkt über die Linie tippt, hat „wegen"
+  /// damit geändert; das bleibt dann stehen.
   static VollmachtKopfdaten nachziehen({
     required VollmachtArt? altArt,
     required VollmachtKopfdaten alt,

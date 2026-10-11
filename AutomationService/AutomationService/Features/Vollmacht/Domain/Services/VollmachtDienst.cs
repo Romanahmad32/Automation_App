@@ -8,7 +8,8 @@ namespace AutomationService.Features.Vollmacht.Domain.Services;
 /// Die Vollmacht zum Vorgang (§4.11): Vorlage aus dem Unterordner
 /// <c>Vollmacht/</c> füllen — mit demselben Ausfüller wie die
 /// Anspruchsschreiben —, dann drucken, zum Öffnen bereitlegen oder als
-/// Seitenvorschau zeigen.
+/// Seitenvorschau zeigen. Dazu nennt er je Vorlage ihre Platzhalter, nach
+/// denen der Dialog seine Felder auswählt (#171).
 ///
 /// Die Datei entsteht im Arbeitsordner des Vorgangs, neben einem vielleicht
 /// gerade angefangenen Anspruchsschreiben. Deshalb löschen Druck und
@@ -102,6 +103,9 @@ public sealed class VollmachtDienst(
 
     public VollmachtErgebnis FuelleAus(VollmachtAuftrag auftrag) => Fuelle(auftrag, namenszusatz: null);
 
+    public IReadOnlyList<VollmachtVorlage> Vorlagen() =>
+        [.. vorlagen.Stand().Select(vorlage => vorlage with { Platzhalter = PlatzhalterVon(vorlage) })];
+
     public void RaeumeAuf(string referenz)
     {
         // Ohne brauchbare Referenz zeigte der Ordnername auf „Ohne Vorgang" — den
@@ -180,6 +184,34 @@ public sealed class VollmachtDienst(
                 _ => $"Die Vorlage „{name}“ konnte nicht gelesen werden — ist sie gerade in Word geöffnet?",
             };
             return new VollmachtErgebnis(VollmachtErgebnisArt.Fehler, null, meldung, []);
+        }
+    }
+
+    /// <summary>
+    /// Die Platzhalter einer Vorlage; null, wenn sie sich nicht lesen lässt.
+    /// Gefangen wird jeder Fehler, nicht nur die beim Ausfüllen
+    /// (<see cref="Fuelle"/>) erwarteten: Die Datei tauscht der Anwalt im
+    /// Explorer aus, und ein gültiges ZIP mit kaputtem XML wirft aus DocX
+    /// etwas anderes (<c>XmlException</c>). Bis #171 las dieser Stand keinen
+    /// Inhalt und konnte nicht scheitern — eine kaputte Vorlage darf den Dialog
+    /// jetzt nicht am Öffnen hindern. Gemeldet wird sie beim Drucken; bis dahin
+    /// zeigt der Dialog eben alle Felder.
+    /// </summary>
+    private IReadOnlyList<string>? PlatzhalterVon(VollmachtVorlage vorlage)
+    {
+        if (!vorlage.Vorhanden)
+        {
+            return null;
+        }
+
+        try
+        {
+            return ausfueller.ExtractPlaceholders(vorlage.Pfad);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "Platzhalter der Vollmacht-Vorlage nicht lesbar: {Vorlage}", vorlage.Pfad);
+            return null;
         }
     }
 

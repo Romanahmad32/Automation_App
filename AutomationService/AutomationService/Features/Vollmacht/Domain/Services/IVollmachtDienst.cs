@@ -4,6 +4,17 @@ namespace AutomationService.Features.Vollmacht.Domain.Services;
 public interface IVollmachtDienst
 {
     /// <summary>
+    /// Der Stand der drei Vorlagen (<see cref="VollmachtVorlagenOrdner.Stand"/>)
+    /// samt ihren Platzhaltern, damit der Dialog nur die Felder zeigt, die auf
+    /// der gewählten Vorlage stehen (#171). Jeder Aufruf liest die Dateien neu —
+    /// der Anwalt tauscht sie im Explorer, ohne dass die App es erfährt. Eine
+    /// Datei, die fehlt, gesperrt oder kaputt ist, hat
+    /// <see cref="VollmachtVorlage.Platzhalter"/> null; ein Fehler wird daraus
+    /// nicht.
+    /// </summary>
+    IReadOnlyList<VollmachtVorlage> Vorlagen();
+
+    /// <summary>
     /// Füllt die Vorlage und schickt sie an den Standarddrucker. Nach dem Druck
     /// ist die Arbeitsdatei gelöscht — abgelegt wird nichts. Scheitert der
     /// Druck, bleibt sie liegen und das Ergebnis nennt ihren Pfad.

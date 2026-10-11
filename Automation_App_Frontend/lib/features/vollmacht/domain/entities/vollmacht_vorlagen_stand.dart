@@ -9,11 +9,19 @@ class VollmachtVorlage extends Equatable {
   final bool vorhanden;
   final DateTime? geaendertAm;
 
+  /// Die Platzhalter, die in der Datei stehen — Namen ohne Klammern
+  /// (`MandantVorname`), zu vergleichen ohne Groß-/Kleinschreibung (#171).
+  /// Danach richtet sich, welche Felder der Dialog zeigt
+  /// (`VollmachtFeldauswahl`). **Null heißt unbekannt** (Datei fehlt oder
+  /// unlesbar, Dienst älter) — dann zeigt er alle; leer heißt: keine.
+  final List<String>? platzhalter;
+
   const VollmachtVorlage({
     required this.art,
     required this.dateiname,
     required this.vorhanden,
     this.geaendertAm,
+    this.platzhalter,
   });
 
   factory VollmachtVorlage.fromJson(Map<String, dynamic> json) =>
@@ -22,10 +30,23 @@ class VollmachtVorlage extends Equatable {
         dateiname: json['dateiname'] as String? ?? '',
         vorhanden: json['vorhanden'] as bool? ?? false,
         geaendertAm: DateTime.tryParse(json['geaendertAm'] as String? ?? ''),
+        platzhalter: switch (json['platzhalter']) {
+          final List<dynamic> namen => [
+            for (final name in namen)
+              if (name is String) name,
+          ],
+          _ => null,
+        },
       );
 
   @override
-  List<Object?> get props => [art, dateiname, vorhanden, geaendertAm];
+  List<Object?> get props => [
+    art,
+    dateiname,
+    vorhanden,
+    geaendertAm,
+    platzhalter,
+  ];
 }
 
 /// Antwort auf `GET /api/Vollmacht/vorlagen`: der Unterordner `Vollmacht` des
