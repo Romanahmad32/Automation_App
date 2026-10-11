@@ -16,6 +16,11 @@ class VollmachtKopfdaten extends Equatable {
   final String telefon;
   final String email;
   final String unfalldatum;
+
+  /// Das Tatdatum der Bußgeldsache (#171). Die App kennt es nicht, der Anwalt
+  /// trägt es ein. Es geht **nicht** in den Auftrag an den Dienst: Aufs
+  /// Papier kommt es nur über „wegen", in das die Vorbelegung es einsetzt.
+  final String tatdatum;
   final String inSachen;
   final String wegen;
 
@@ -28,6 +33,7 @@ class VollmachtKopfdaten extends Equatable {
     this.telefon = '',
     this.email = '',
     this.unfalldatum = '',
+    this.tatdatum = '',
     this.inSachen = '',
     this.wegen = '',
   });
@@ -46,6 +52,7 @@ class VollmachtKopfdaten extends Equatable {
     String? telefon,
     String? email,
     String? unfalldatum,
+    String? tatdatum,
     String? inSachen,
     String? wegen,
   }) => VollmachtKopfdaten(
@@ -57,6 +64,7 @@ class VollmachtKopfdaten extends Equatable {
     telefon: telefon ?? this.telefon,
     email: email ?? this.email,
     unfalldatum: unfalldatum ?? this.unfalldatum,
+    tatdatum: tatdatum ?? this.tatdatum,
     inSachen: inSachen ?? this.inSachen,
     wegen: wegen ?? this.wegen,
   );
@@ -71,6 +79,7 @@ class VollmachtKopfdaten extends Equatable {
     telefon,
     email,
     unfalldatum,
+    tatdatum,
     inSachen,
     wegen,
   ];

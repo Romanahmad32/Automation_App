@@ -1,4 +1,5 @@
-import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
+import 'package:automation_app/core/general_widgets/form/german_date_text_field.dart';
+import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_feld.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_kopfdaten.dart';
 import 'package:flutter/material.dart';
 
@@ -9,17 +10,26 @@ import 'package:flutter/material.dart';
 /// folgt oder die Art gewechselt wurde —, zieht [didUpdateWidget] genau die
 /// Felder nach, deren Text abweicht. Das Feld, in dem gerade getippt wird,
 /// weicht nie ab und behält damit seinen Cursor.
+///
+/// Gezeigt werden nur die Felder in [sichtbar] (nach der Vorlage, #171). Unter
+/// jedem in [frei] steht [freiHinweis] — in der Hinweisfarbe und als
+/// `helperText`, nicht als `errorText`: Ein leeres Feld hält nichts auf.
 class VollmachtKopfFelder extends StatefulWidget {
+  /// Der Hinweis unter einem Feld, das auf dem Papier als Linie gedruckt wird.
+  static const freiHinweis = 'bleibt auf dem Papier zum Ausfüllen frei';
+
   final VollmachtKopfdaten kopfdaten;
-  final VollmachtArt? art;
+  final Set<VollmachtFeld> sichtbar;
+  final Set<VollmachtFeld> frei;
   final bool gesperrt;
   final ValueChanged<VollmachtKopfdaten> onGeaendert;
 
   const VollmachtKopfFelder({
     super.key,
     required this.kopfdaten,
-    required this.art,
+    required this.sichtbar,
     required this.onGeaendert,
+    this.frei = const {},
     this.gesperrt = false,
   });
 
@@ -28,30 +38,36 @@ class VollmachtKopfFelder extends StatefulWidget {
 }
 
 class VollmachtKopfFelderState extends State<VollmachtKopfFelder> {
-  late final Map<String, TextEditingController> _felder = {
-    for (final eintrag in _werte(widget.kopfdaten).entries)
-      eintrag.key: TextEditingController(text: eintrag.value),
-  };
+  /// Die Zeilen des Formulars; was in einer Zeile nebeneinandersteht, teilt
+  /// sich die Breite. Ein ausgeblendetes Feld räumt seinen Platz, eine leere
+  /// Zeile fällt weg.
+  static const _zeilen = [
+    [VollmachtFeld.vorname, VollmachtFeld.nachname],
+    [VollmachtFeld.strasse],
+    [VollmachtFeld.plz, VollmachtFeld.ort],
+    [VollmachtFeld.telefon, VollmachtFeld.email],
+    [VollmachtFeld.unfalldatum],
+    [VollmachtFeld.tatdatum],
+    [VollmachtFeld.inSachen],
+    [VollmachtFeld.wegen],
+  ];
 
-  static Map<String, String> _werte(VollmachtKopfdaten k) => {
-    'vorname': k.vorname,
-    'nachname': k.nachname,
-    'strasse': k.strasse,
-    'plz': k.plz,
-    'ort': k.ort,
-    'telefon': k.telefon,
-    'email': k.email,
-    'unfalldatum': k.unfalldatum,
-    'inSachen': k.inSachen,
-    'wegen': k.wegen,
+  /// Das schmale PLZ-Feld bricht den Hinweis auf drei bis vier Zeilen um;
+  /// eine Vorgabe von einer Zeile schnitte ihn nach „bleibt…" ab.
+  static const _hinweisZeilen = 4;
+
+  late final Map<VollmachtFeld, TextEditingController> _felder = {
+    for (final feld in VollmachtFeld.values)
+      feld: TextEditingController(text: feld.wert(widget.kopfdaten)),
   };
 
   @override
   void didUpdateWidget(VollmachtKopfFelder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    for (final eintrag in _werte(widget.kopfdaten).entries) {
-      final controller = _felder[eintrag.key]!;
-      if (controller.text != eintrag.value) controller.text = eintrag.value;
+    for (final feld in VollmachtFeld.values) {
+      final wert = feld.wert(widget.kopfdaten);
+      final controller = _felder[feld]!;
+      if (controller.text != wert) controller.text = wert;
     }
   }
 
@@ -63,60 +79,84 @@ class VollmachtKopfFelderState extends State<VollmachtKopfFelder> {
     super.dispose();
   }
 
+  String _text(VollmachtFeld feld) => _felder[feld]!.text;
+
   void _melde() => widget.onGeaendert(
     VollmachtKopfdaten(
-      vorname: _felder['vorname']!.text,
-      nachname: _felder['nachname']!.text,
-      strasse: _felder['strasse']!.text,
-      plz: _felder['plz']!.text,
-      ort: _felder['ort']!.text,
-      telefon: _felder['telefon']!.text,
-      email: _felder['email']!.text,
-      unfalldatum: _felder['unfalldatum']!.text,
-      inSachen: _felder['inSachen']!.text,
-      wegen: _felder['wegen']!.text,
+      vorname: _text(VollmachtFeld.vorname),
+      nachname: _text(VollmachtFeld.nachname),
+      strasse: _text(VollmachtFeld.strasse),
+      plz: _text(VollmachtFeld.plz),
+      ort: _text(VollmachtFeld.ort),
+      telefon: _text(VollmachtFeld.telefon),
+      email: _text(VollmachtFeld.email),
+      unfalldatum: _text(VollmachtFeld.unfalldatum),
+      tatdatum: _text(VollmachtFeld.tatdatum),
+      inSachen: _text(VollmachtFeld.inSachen),
+      wegen: _text(VollmachtFeld.wegen),
     ),
   );
 
   @override
   Widget build(BuildContext context) {
-    final unfall = widget.art == VollmachtArt.unfallsachen;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 12,
       children: [
-        _zeile([_feld('vorname', 'Vorname'), _feld('nachname', 'Nachname')]),
-        _feld('strasse', 'Straße und Hausnummer'),
-        _zeile([_feld('plz', 'PLZ'), _feld('ort', 'Ort', flex: 3)]),
-        _zeile([_feld('telefon', 'Telefon'), _feld('email', 'E-Mail')]),
-        if (unfall) _feld('unfalldatum', 'Unfalldatum'),
-        _feld('inSachen', 'in Sachen'),
-        _feld('wegen', 'wegen'),
+        for (final zeile in _zeilen)
+          if (zeile.where(widget.sichtbar.contains).toList() case final felder
+              when felder.isNotEmpty)
+            _zeile(felder),
       ],
     );
   }
 
-  Widget _zeile(List<Widget> felder) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    spacing: 12,
-    children: felder,
-  );
+  Widget _zeile(List<VollmachtFeld> felder) {
+    if (felder.length == 1) return _feld(felder.single);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12,
+      children: [
+        for (final feld in felder)
+          Expanded(flex: feld == VollmachtFeld.ort ? 3 : 1, child: _feld(feld)),
+      ],
+    );
+  }
 
-  Widget _feld(String schluessel, String label, {int flex = 1}) {
-    final feld = TextField(
-      key: ValueKey('vollmacht-$schluessel'),
-      controller: _felder[schluessel],
+  Widget _feld(VollmachtFeld feld) {
+    final frei = widget.frei.contains(feld);
+    final hinweis = frei ? VollmachtKopfFelder.freiHinweis : null;
+    final hinweisStil = frei
+        ? TextStyle(color: Theme.of(context).colorScheme.tertiary)
+        : null;
+    final key = ValueKey('vollmacht-${feld.name}');
+
+    if (feld == VollmachtFeld.unfalldatum || feld == VollmachtFeld.tatdatum) {
+      return GermanDateTextField(
+        fieldKey: key,
+        controller: _felder[feld]!,
+        labelText: feld.beschriftung,
+        enabled: !widget.gesperrt,
+        isDense: true,
+        onChanged: (_) => _melde(),
+        helperText: hinweis,
+        helperStyle: hinweisStil,
+        helperMaxLines: _hinweisZeilen,
+      );
+    }
+    return TextField(
+      key: key,
+      controller: _felder[feld],
       enabled: !widget.gesperrt,
       onChanged: (_) => _melde(),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: feld.beschriftung,
+        helperText: hinweis,
+        helperStyle: hinweisStil,
+        helperMaxLines: _hinweisZeilen,
         border: const OutlineInputBorder(),
         isDense: true,
       ),
     );
-    return switch (schluessel) {
-      'strasse' || 'unfalldatum' || 'inSachen' || 'wegen' => feld,
-      _ => Expanded(flex: flex, child: feld),
-    };
   }
 }

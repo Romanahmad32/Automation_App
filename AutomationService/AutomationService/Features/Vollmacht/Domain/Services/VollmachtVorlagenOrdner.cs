@@ -1,12 +1,24 @@
 namespace AutomationService.Features.Vollmacht.Domain.Services;
 
 /// <summary>Stand einer der drei Vollmachtsvorlagen auf der Platte.</summary>
+/// <param name="Art">Welche der drei Vorlagen.</param>
+/// <param name="Dateiname">Der feste Name (<see cref="VollmachtArten.Dateiname"/>).</param>
+/// <param name="Pfad">Wo die Datei liegt oder liegen müsste.</param>
+/// <param name="Vorhanden">Ob sie dort liegt.</param>
+/// <param name="GeaendertAm">Letzte Änderung, nur wenn vorhanden.</param>
+/// <param name="Platzhalter">
+/// Die Platzhalter der Datei, ohne Klammern und je Name einmal (#171). Null
+/// heißt „unbekannt" — nicht gelesen, fehlt, gesperrt oder kaputt —, eine leere
+/// Liste „keine Platzhalter". <see cref="VollmachtVorlagenOrdner.Stand"/> liest
+/// sie nicht, das tut <see cref="IVollmachtDienst.Vorlagen"/>.
+/// </param>
 public sealed record VollmachtVorlage(
     VollmachtArt Art,
     string Dateiname,
     string Pfad,
     bool Vorhanden,
-    DateTime? GeaendertAm);
+    DateTime? GeaendertAm,
+    IReadOnlyList<string>? Platzhalter = null);
 
 /// <summary>
 /// Der Unterordner <c>Vollmacht/</c> im eingestellten Vorlagenordner (§4.11).

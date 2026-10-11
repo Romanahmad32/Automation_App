@@ -110,10 +110,13 @@ class VollmachtVorschauFlaeche extends StatelessWidget {
         meldung ?? 'Die Vorschau ließ sich nicht erzeugen.',
       ),
     };
+    // Scrollend: Bei einem niedrigen Fenster mit Word-Leiste und der Zeile
+    // über den Knöpfen (#171) bleiben der Fläche keine 200 Pixel — eine
+    // längere Meldung liefe bei „Am größten" sonst unten heraus.
     return ColoredBox(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,

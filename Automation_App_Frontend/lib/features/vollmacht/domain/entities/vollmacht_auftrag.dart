@@ -5,6 +5,9 @@ import 'package:equatable/equatable.dart';
 /// Ein Auftrag an `POST /api/Vollmacht/drucken|oeffnen` (§4.11): welche
 /// Vorlage, zu welchem Vorgang, mit welchen geprüften Kopfdaten. Die
 /// Feldnamen in [toJson] sind die des `VollmachtAuftragDto`.
+///
+/// Leere Werte gehen leer hinaus — die Schreiblinie dafür setzt der Dienst
+/// (#171). Das Tatdatum fehlt mit Absicht: Es steht schon in „wegen".
 class VollmachtAuftrag extends Equatable {
   final VollmachtArt art;
 
@@ -34,6 +37,10 @@ class VollmachtAuftrag extends Equatable {
     'wegen': kopfdaten.wegen.trim(),
   };
 
+  /// Gleich ist, was gleich beim Dienst ankommt. Das Tatdatum zählt so nur
+  /// über „wegen": Ist der Text von Hand geschrieben, ändert ein anderes
+  /// Tatdatum am Papier nichts — „In Word öffnen" öffnet dann dieselbe Datei
+  /// wieder, statt sie neu auszufüllen (die Word womöglich noch offen hält).
   @override
-  List<Object?> get props => [art, referenz, kopfdaten];
+  List<Object?> get props => [...toJson().values];
 }

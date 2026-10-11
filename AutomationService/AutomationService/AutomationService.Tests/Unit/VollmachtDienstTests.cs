@@ -84,6 +84,30 @@ public sealed class VollmachtDienstTests : IDisposable
         straf.Text.Should().NotContain("0170 1234567");
     }
 
+    /// <summary>
+    /// Der Fall aus #171 auf dem Papier: Ohne Mandant druckte die App
+    /// „Hiermit erteile ich, , ,". Jetzt steht an jeder leeren Stelle eine
+    /// Linie zum Ausfüllen — nur „in Sachen" und „wegen" bleiben leer, sie
+    /// sind Freitext.
+    /// </summary>
+    [Fact]
+    public void Ohne_Mandant_druckt_das_Muster_Schreiblinien_statt_Luecken()
+    {
+        Ordner().Ergaenze(MusterOrdner());
+        static string Linie(int laenge) => new('_', laenge);
+
+        var ergebnis = Dienst().FuelleAus(new VollmachtAuftrag { Art = VollmachtArt.Unfallsachen, Referenz = Referenz });
+
+        ergebnis.Warnungen.Should().BeEmpty();
+        using var dokument = DocX.Load(ergebnis.Pfad);
+        dokument.Text.Should().Contain($"Hiermit erteile ich,  {Linie(32)}, {Linie(26)}, {Linie(9)} {Linie(18)}")
+            .And.Contain($"Tel.-Nr. des Mandanten: {Linie(24)}")
+            .And.Contain($"E-Mail Mandant: {Linie(28)}")
+            .And.NotContain(", ,")
+            .And.NotContain("{{");
+        dokument.Paragraphs.Select(absatz => absatz.Text).Should().Contain("in Sachen: ").And.Contain("wegen: ");
+    }
+
     [Fact]
     public async Task Nach_dem_Druck_ist_die_Arbeitsdatei_weg()
     {

@@ -19,12 +19,17 @@ public class VollmachtController(
     VollmachtVorlagenOrdner vorlagen,
     IDruckerAuskunft druckerAuskunft) : ControllerBase
 {
+    /// <summary>
+    /// Der Ordner und der Stand seiner drei Vorlagen samt ihren Platzhaltern
+    /// (#171). Eine unlesbare Vorlage ist kein HTTP-Fehler: Ihre Platzhalter
+    /// sind dann <c>null</c>.
+    /// </summary>
     [HttpGet("vorlagen")]
     [ProducesResponseType(typeof(VollmachtVorlagenDto), StatusCodes.Status200OK)]
     public ActionResult<VollmachtVorlagenDto> Vorlagen() =>
         Ok(new VollmachtVorlagenDto(
             vorlagen.Pfad,
-            vorlagen.Stand().Select(VollmachtVorlageDto.From).ToList()));
+            dienst.Vorlagen().Select(VollmachtVorlageDto.From).ToList()));
 
     /// <summary>Der Standarddrucker, an den „Drucken" geht, und was Windows über ihn meldet.</summary>
     [HttpGet("drucker")]

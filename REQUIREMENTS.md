@@ -667,16 +667,34 @@ auf Papier. Bislang füllte der Anwalt das Word-Formular von Hand mit Daten, die
 eben eingegeben hat; das widerspricht dem Leitprinzip „keine Doppelerfassung" (siehe 1.3).
 
 - **[M] Drei Vorlagenarten nach Rechtsgebiet:** Unfallsachen, Bußgeldsachen und Strafsache — im
-  Vollmachtstext identisch, unterschiedlich nur im Kopf („in Sachen"/„wegen"). Die Art wird aus
+  Vollmachtstext identisch, unterschiedlich im Kopf („in Sachen"/„wegen"); die Unfallvollmacht hat
+  zusätzlich einen Fußblock für Telefon, E-Mail und Bankverbindung des Mandanten. Die Art wird aus
   dem Rechtsgebiet des Vorgangs vorgeschlagen (siehe 4.1, 7.1); für andere Rechtsgebiete gibt es
   keine Vorbelegung, der Anwalt wählt selbst. Der Vorschlag ist wie das Rechtsgebiet änderbar.
 - **[M] Kopfdaten vorbelegt, nicht vorgeschrieben:** Vorname, Nachname, Straße, PLZ, Ort, Telefon
   und E-Mail kommen aus dem Mandantenregister (siehe 5.1), „in Sachen" und „wegen" aus der
   gewählten Art — alles frei korrigierbar, nichts wird stillschweigend übernommen. Ohne
   verknüpften Mandanten bleiben die Felder leer, und die App sagt, warum.
-- **[M] Das Tatdatum der Bußgeldsache bleibt offen:** Anders als das Unfalldatum (am Vorgang
-  bekannt) kennt die App das Tatdatum einer Ordnungswidrigkeit nicht — die Stelle im vorbelegten
-  Text bleibt für den Anwalt frei.
+- **[M] Nur Felder, die auf der Vorlage stehen:** Der Dialog zeigt nur die Felder, deren
+  Platzhalter in der gewählten Vorlage vorkommt — mit den heutigen Vorlagen erscheinen Telefon und
+  E-Mail also nur bei Unfallsachen. Vor- und Nachname zählen auch für einen Platzhalter des ganzen
+  Namens, Straße, PLZ und Ort für einen der ganzen Anschrift. Ist der Stand der Vorlage unbekannt
+  (fehlt, gesperrt, nicht lesbar), zeigt der Dialog alle Felder. *Ergänzt am 12.10.2026 (#171).*
+- **[M] Leer heißt Schreiblinie:** Ein leeres Feld druckt nicht als Lücke, sondern als Linie, auf
+  der der Mandant von Hand ergänzt — mit eigener Länge je Feld; fehlt der ganze Name, ist es eine
+  einzige lange Linie. Fehlt in der Vorbelegung von „in Sachen" oder „wegen" ein Datum oder der
+  Name, steht auch dort eine Linie („…vom ____", „am ____"), sodass Vorschau und Papier dasselbe
+  zeigen. Ein leeres „in Sachen" oder „wegen" selbst bleibt leer: Bei Unfall- und Strafsachen ist
+  „in Sachen" absichtlich frei. Unter jedem leeren Feld, das gedruckt wird, steht „bleibt auf dem
+  Papier zum Ausfüllen frei", und über „Drucken" fasst eine Zeile alle zusammen — ein Hinweis,
+  keine Sperre: vorbelegt, nicht vorgeschrieben. Das gilt nur für die Vollmacht; die
+  Anspruchsschreiben bleiben, wie sie sind. *Ergänzt am 12.10.2026 (#171).*
+- **[M] Das Tatdatum der Bußgeldsache hat ein eigenes Feld:** Anders als das Unfalldatum (am
+  Vorgang bekannt) kennt die App das Tatdatum einer Ordnungswidrigkeit nicht; der Anwalt trägt es
+  bei Bußgeldsachen in ein eigenes Feld „Tatdatum" ein. „wegen" zieht daraus nach wie bei
+  Unfallsachen aus dem Unfalldatum — solange der Anwalt den Text nicht selbst geändert hat. Bleibt
+  es leer, steht an seiner Stelle die Schreiblinie. *Geändert am 12.10.2026 (#171): Bis dahin
+  blieb die Stelle im vorbelegten Text für den Anwalt frei.*
 - **[M] Bankverbindung weder vorbelegt noch gespeichert:** Diese Zeilen bleiben für die Hand des
   Mandanten frei — Datensparsamkeit, die Kanzlei hat ohnehin das unterschriebene Papier.
 - **[M] Drucken als Normalfall, Öffnen als Rückfall:** Die App füllt die Vorlage und schickt sie an
