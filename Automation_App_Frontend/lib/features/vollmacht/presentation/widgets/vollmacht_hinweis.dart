@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 /// Eine stille Hinweiszeile im Vollmacht-Dialog: Symbol, umbrechender Text,
 /// wahlweise Knöpfe darunter — in der Tertiärfarbe, weil nichts davon ein
 /// Fehler ist, sondern etwas, das der Anwalt wissen muss, bevor er druckt
-/// (kein Mandant zugeordnet, Tatdatum offen, Vorlage fehlt).
+/// (kein Mandant zugeordnet, Felder bleiben auf dem Papier frei, Vorlage
+/// fehlt).
 ///
 /// [farbe] weicht nur ab, wo die Zeile kein Hinweis ist: neutral für eine
 /// bloße Angabe (der Drucker ist bereit, die Datei ist in Word geöffnet),

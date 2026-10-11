@@ -76,7 +76,7 @@ Kapitel 4–7.
 | 4.8 | Auftragsabschluss als eigener Schritt: erledigt, Auftragsnummer weiterzählen, Registereintrag |
 | 4.9 | Folgekorrespondenz zu einem offenen Vorgang |
 | 4.10 | Erstkontakt über die Kanzlei-Website (durchgehend **[K]**) |
-| 4.11 | Vollmacht drucken: drei Vorlagenarten nach Rechtsgebiet, vorbelegte Kopfdaten, offenes Tatdatum der Bußgeldsache, Bankverbindung weder vorbelegt noch gespeichert, Drucken mit Rückfall aufs Öffnen, Vermerk des Druckdatums am Vorgang (kein Lebenszyklusschritt), Hinweis auf der Übersicht, feste Vorlagendateien mit sichtbarem Stand |
+| 4.11 | Vollmacht drucken: drei Vorlagenarten nach Rechtsgebiet, vorbelegte Kopfdaten, Felder nach Platzhaltern der Vorlage, Tatdatum-Feld der Bußgeldsache, leere Felder als Schreiblinie mit Hinweis im Dialog, Bankverbindung weder vorbelegt noch gespeichert, Drucken mit Rückfall aufs Öffnen, Vermerk des Druckdatums am Vorgang (kein Lebenszyklusschritt), Hinweis auf der Übersicht, feste Vorlagendateien mit sichtbarem Stand |
 
 ### 5 Stammdaten und Wissen
 

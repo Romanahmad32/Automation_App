@@ -367,6 +367,21 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   rief; die Ablage- und Abschlussmeldungen zeigen über `DateiOeffner.zeigeImOrdner`.
   **Entfallen:** `VollmachtPhase.inWordGeoeffnet`, `VollmachtWordAnsicht`, `VorlagenDateiOeffnen`
   und `PosteingangDateiOeffnen`.
+- **Vollmacht: leere Felder als Schreiblinie, Felder nach Vorlage (§4.11, 12.10.2026, #171)** — ein
+  leerer Wert ersetzte seinen Platzhalter durch nichts, und die Kommas der Vorlage blieben allein
+  stehen („Hiermit erteile ich, , ,"); der Dialog sagte nichts dazu, und Telefon und E-Mail standen
+  bei allen drei Arten im Formular, gedruckt wurden sie nur auf der Unfallvollmacht. Jetzt druckt
+  ein leeres Feld als Linie zum Ausfüllen von Hand (`VollmachtSchreiblinie`, Längen je Feld, ein
+  ganz leerer Name als eine lange Linie), eingesetzt in `VollmachtAuftrag.Platzhalter()` — der
+  gemeinsame Ausfüller bleibt, die Anspruchsschreiben auch; „in Sachen" und „wegen" bleiben leer,
+  wenn sie leer sind. Fehlt in deren Vorbelegung ein Datum oder der Name, setzt das Frontend
+  dieselbe Linie ein (`VollmachtVorbelegung`, gleiche Längen), so zeigen Vorschau und Papier
+  dasselbe. Unter jedem leeren gedruckten Feld steht „bleibt auf dem Papier zum Ausfüllen frei",
+  über „Drucken" eine Zeile, die alle zusammenfasst — ein Hinweis, keine Sperre.
+  `GET api/Vollmacht/vorlagen` liefert je Vorlage ihre `platzhalter` (`null` = unbekannt, etwa bei
+  fehlender, gesperrter oder kaputter Datei); der Dialog zeigt nur die Felder der gewählten
+  Vorlage, Telefon und E-Mail also nur bei Unfallsachen, bei unbekanntem Stand alle. Bußgeldsachen
+  haben ein eigenes Feld „Tatdatum", aus dem „wegen" nachzieht wie aus dem Unfalldatum.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

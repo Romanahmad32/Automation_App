@@ -8,6 +8,7 @@ import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_s
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_arbeitsflaeche.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_dialog_knoepfe.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_ergebnis_ansicht.dart';
+import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_frei_zeile.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_word_leiste.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
@@ -99,7 +100,8 @@ class VollmachtDialog extends StatelessWidget {
 
   /// Vor dem Druck mit Vorschau so breit, wie das Fenster es hergibt — und mit
   /// der Word-Leiste darunter, sobald eine Word-Fassung geöffnet ist (#174);
-  /// im Ergebnis reicht die schmale Fassung.
+  /// ganz unten, direkt über den Knöpfen, die Zeile mit den Feldern, die auf
+  /// dem Papier frei bleiben (#171). Im Ergebnis reicht die schmale Fassung.
   Widget _inhalt(BuildContext context, VollmachtStand stand) {
     Widget schmal(Widget kind) => SizedBox(
       width: VollmachtArbeitsflaeche.breiteUntereinander,
@@ -120,8 +122,9 @@ class VollmachtDialog extends StatelessWidget {
         width: VollmachtArbeitsflaeche.nebeneinander(context)
             ? VollmachtArbeitsflaeche.breiteNebeneinander
             : VollmachtArbeitsflaeche.breiteUntereinander,
-        // Die Arbeitsfläche gibt nach, die Leiste nicht: Bei einem niedrigen
-        // Fenster scrollen die Felder, statt dass die Leiste überläuft.
+        // Die Arbeitsfläche gibt nach, Leiste und Zeile nicht: Bei einem
+        // niedrigen Fenster scrollen die Felder, statt dass unten etwas
+        // überläuft.
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -131,6 +134,7 @@ class VollmachtDialog extends StatelessWidget {
               const Divider(height: 24),
               VollmachtWordLeiste(stand: stand),
             ],
+            VollmachtFreiZeile(stand: stand),
           ],
         ),
       ),

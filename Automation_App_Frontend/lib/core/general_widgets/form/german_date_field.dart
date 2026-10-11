@@ -84,23 +84,44 @@ class GermanDateField extends StatelessWidget {
     final form = ReactiveForm.of(context, listen: false) as FormGroup;
     final control = form.control(formControlName) as FormControl<String>;
 
+    final picked = await waehleImKalender(
+      context,
+      wert: control.value,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+    if (picked != null) {
+      control.value = formatDate(picked);
+    }
+  }
+
+  /// Öffnet den Kalender und liefert den gewählten Tag; null, wenn der
+  /// Anwalt abbricht. Aufgeschlagen wird bei [wert], sofern das ein Datum
+  /// ist, sonst bei heute. Grenzen: [firstDate]/[lastDate], Standard ±10
+  /// Jahre um heute.
+  ///
+  /// Geteilt mit `GermanDateTextField` — derselbe Kalender, ob das Feld an
+  /// einem `FormControl` hängt oder an einem `TextEditingController`.
+  static Future<DateTime?> waehleImKalender(
+    BuildContext context, {
+    String? wert,
+    DateTime? firstDate,
+    DateTime? lastDate,
+  }) {
     final now = DateTime.now();
     final first = firstDate ?? DateTime(now.year - 10);
     final last = lastDate ?? DateTime(now.year + 10);
     // initialDate muss innerhalb der Grenzen liegen, sonst wirft der Dialog.
-    var initial = parseDate(control.value) ?? now;
+    var initial = parseDate(wert) ?? now;
     if (initial.isBefore(first)) initial = first;
     if (initial.isAfter(last)) initial = last;
 
-    final picked = await showDatePicker(
+    return showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: first,
       lastDate: last,
     );
-    if (picked != null) {
-      control.value = formatDate(picked);
-    }
   }
 
   static String formatDate(DateTime date) => deutschesDatum(date);
@@ -131,22 +152,38 @@ class GermanDateField extends StatelessWidget {
     DateTime? lastDate,
   }) {
     return Validators.delegate((control) {
-      final value = (control.value as String?)?.trim() ?? '';
-      if (value.isEmpty) {
-        return null;
-      }
-      final date = parseDate(value);
-      if (date == null) {
-        return {formatError: true};
-      }
-      if (firstDate != null && date.isBefore(_dateOnly(firstDate))) {
-        return {rangeError: true};
-      }
-      if (lastDate != null && date.isAfter(_dateOnly(lastDate))) {
-        return {rangeError: true};
-      }
-      return null;
+      final fehler = pruefe(
+        control.value as String?,
+        firstDate: firstDate,
+        lastDate: lastDate,
+      );
+      return fehler == null ? null : {fehler: true};
     });
+  }
+
+  /// Die Prüfung hinter [validator], ohne Control: [formatError],
+  /// [rangeError] oder null. Leer ist gültig. Geteilt mit
+  /// `GermanDateTextField`, damit beide Felder dasselbe beanstanden.
+  static String? pruefe(
+    String? value, {
+    DateTime? firstDate,
+    DateTime? lastDate,
+  }) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return null;
+    }
+    final date = parseDate(text);
+    if (date == null) {
+      return formatError;
+    }
+    if (firstDate != null && date.isBefore(_dateOnly(firstDate))) {
+      return rangeError;
+    }
+    if (lastDate != null && date.isAfter(_dateOnly(lastDate))) {
+      return rangeError;
+    }
+    return null;
   }
 
   static DateTime _dateOnly(DateTime date) =>

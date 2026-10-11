@@ -197,9 +197,11 @@ void main() {
       aufbau.cubit.waehleArt(VollmachtArt.unfallsachen);
 
       expect(aufbau.cubit.state.bereit, isTrue);
+      // Der Vorgang kennt kein Unfalldatum — seit #171 steht dafür eine
+      // Schreiblinie, statt dass die Zeile auf „vom" endet.
       expect(
         aufbau.cubit.state.kopfdaten.wegen,
-        'Schadensersatz nach Verkehrsunfall vom',
+        'Schadensersatz nach Verkehrsunfall vom ${'_' * 12}',
       );
     },
   );

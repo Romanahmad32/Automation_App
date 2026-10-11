@@ -1397,6 +1397,7 @@
         "tags": [
           "Vollmacht"
         ],
+        "summary": "Der Ordner und der Stand seiner drei Vorlagen samt ihren Platzhaltern\r\n(#171). Eine unlesbare Vorlage ist kein HTTP-Fehler: Ihre Platzhalter\r\nsind dann \u0060null\u0060.",
         "responses": {
           "200": {
             "description": "OK",
@@ -10078,7 +10079,8 @@
           "art",
           "dateiname",
           "vorhanden",
-          "geaendertAm"
+          "geaendertAm",
+          "platzhalter"
         ],
         "type": "object",
         "properties": {
@@ -10097,9 +10099,18 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "platzhalter": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "description": "Stand einer Vollmachtsvorlage; string VollmachtVorlageDto.Art wie im Auftrag."
+        "description": "Stand einer Vollmachtsvorlage; string VollmachtVorlageDto.Art wie im Auftrag.\r\nIReadOnlyList\u0026lt;string\u0026gt;? VollmachtVorlageDto.Platzhalter sind die Namen ohne Klammern, wie sie in der Datei\r\nstehen, je Name einmal (#171); der Dialog zeigt danach nur die Felder dieser\r\nVorlage. \u0060null\u0060 hei\u00DFt \u201Eunbekannt\u0022 (Datei fehlt, gesperrt oder kaputt) \u2014\r\ndann zeigt er alle \u2014, eine leere Liste \u201Ekeine Platzhalter\u0022."
       },
       "VollmachtVorlagenDto": {
         "required": [
