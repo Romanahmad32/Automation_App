@@ -1,8 +1,8 @@
+import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagenname_vorschlag.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_status_zeile.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_datei_oeffnen.dart';
 import 'package:flutter/material.dart';
 
 /// Eine der beiden Wahlflächen der Auswahlseite („Womit fängt diese Vorlage
@@ -25,7 +25,7 @@ import 'package:flutter/material.dart';
 /// Kartenrahmen. Hier zählt die Gleichwertigkeit der beiden Flächen
 /// (gleich groß, gleich gestaltet, nebeneinander) und der eine nächste
 /// Schritt. Was beide teilen, ist die Mechanik — `PlatzhalterStatusZeile` und
-/// [VorlagenDateiOeffnen], nicht die Gestalt.
+/// [DateiOeffnenMitHinweis], nicht die Gestalt.
 class VorlagenDateiKachel extends StatelessWidget {
   /// Welche der beiden Word-Dateien. Er wird auch zum [ValueKey] der Fläche:
   /// Beide tragen dieselben Aufschriften und sind im Test sonst nicht
@@ -169,7 +169,7 @@ class VorlagenDateiKachel extends StatelessWidget {
       CustomRectangularButton(
         icon: const Icon(Icons.edit_document),
         label: const Text('In Word öffnen'),
-        onPressed: () => VorlagenDateiOeffnen.inWord(context, pfad),
+        onPressed: () => DateiOeffnenMitHinweis.oeffne(context, pfad),
       ),
       CustomRectangularButton(
         icon: const Icon(Icons.file_open),

@@ -1,10 +1,10 @@
+import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_dialog.dart';
 import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart';
 import 'package:automation_app/features/mailbox/domain/entities/posteingang_anhang.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/posteingang_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/utils/antwort_betreff.dart';
-import 'package:automation_app/features/mailbox/presentation/utils/datei_oeffnen.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_akten_ablage_dialog.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:flutter/material.dart';
@@ -86,7 +86,7 @@ class PosteingangHandgriffe {
       () => cubit.anhangLaden(eintragId, anhang),
     );
     if (pfad == null || !context.mounted) return;
-    await PosteingangDateiOeffnen.oeffne(context, pfad, name: anhang.dateiname);
+    await DateiOeffnenMitHinweis.oeffne(context, pfad, name: anhang.dateiname);
   }
 
   Future<void> anhangInDieAkte(

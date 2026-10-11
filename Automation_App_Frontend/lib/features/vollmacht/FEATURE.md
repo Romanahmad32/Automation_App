@@ -6,22 +6,23 @@ und lässt das Ergebnis zum Nachsteuern stehen (#164). Nichts wird abgelegt oder
 Kanzlei archiviert die unterschriebene Vollmacht auf Papier.
 **Anforderung:** `REQUIREMENTS.md` §4.11, §8
 **Einstieg:** `presentation/widgets/vollmacht_dialog.dart` (`VollmachtDialog.zeige`/`zeigeZuReferenz`)
-**Zustand:** `VollmachtCubit` (`@injectable`, je Dialog neu) mit `VollmachtStand`, `VollmachtPhase`
-und `VollmachtAbschluss` (das Ergebnis nach dem Druck); den Vermerk schreibt er über den
-app-weiten `VorgangCubit.vermerkeVollmacht`
+**Zustand:** `VollmachtCubit` (`@injectable`, je Dialog neu) mit `VollmachtStand`, `VollmachtPhase`,
+`VollmachtWordFassung` (in Word geöffnet) und `VollmachtAbschluss` (das Ergebnis nach dem Druck);
+den Vermerk schreibt er über den app-weiten `VorgangCubit.vermerkeVollmacht`
 **Domain:** Entities `VollmachtArt`, `VollmachtKopfdaten`, `VollmachtAuftrag`, `VollmachtErgebnis`,
 `VollmachtVorlagenStand`, `VollmachtDrucker`, `VollmachtVorschau`; Dienste `VollmachtArtAbleitung`
 (Rechtsgebiet → Vorlage über den Katalog, sonst Abteilung), `VollmachtVorbelegung` (Kopf je Art,
 `nachziehen`); UseCases `LadeVollmachtVorlagen`, `LadeVollmachtMandant`, `LadeVollmachtDrucker`,
-`ErstelleVollmachtVorschau`, `DruckeVollmacht`, `FuelleVollmachtAus`;
+`ErstelleVollmachtVorschau`, `DruckeVollmacht`, `FuelleVollmachtAus`, `RaeumeVollmachtAuf`;
 Port `VollmachtRepository` → `VollmachtRepositoryImpl` → `ApiVollmachtDatasource`
 **Backend:** `Features/Vollmacht/` · `GET /api/Vollmacht/vorlagen|drucker`,
-`POST /api/Vollmacht/drucken|oeffnen|vorschau`, dazu `GET /api/Mandanten/{id}` und
+`POST /api/Vollmacht/drucken|oeffnen|vorschau|aufraeumen`, dazu `GET /api/Mandanten/{id}` und
 `PUT|DELETE /api/Vorgaenge/vollmacht`
 **Tests:** `test/features/vollmacht/` (Ableitung aller Katalogzeilen, Vorbelegung, Ablauf im
-Cubit, Vorschau, Drucker und Ergebnis, Standzeile, Dialog ohne Mandant und bei „Am größten")
+Cubit, Vorschau je Art, Word-Leiste und Aufräumen, Drucker und Ergebnis, Standzeile, Dialog ohne
+Mandant und bei „Am größten")
 
-**Fallstricke**
+**Fallstricke** — Vorschau, „In Word öffnen" und Aufräumen ausführlich in `FALLSTRICKE.md`.
 
 - Eingestiegen wird von außen: Knopf in `WeiterAktionen` (vorgang_starten), Aktion und
   `VollmachtStandZeile` in `VorgangVerwaltungTile` (vorgaenge), `VollmachtVorlagenSektion` in der
@@ -39,7 +40,7 @@ Cubit, Vorschau, Drucker und Ergebnis, Standzeile, Dialog ohne Mandant und bei �
 - Die Bankverbindung wird weder vorbelegt noch gespeichert; `VollmachtKopfdaten` hat kein Feld dafür.
 - Drucker und erste Vorschau stößt der Dialog an (`druckerFaellig`, `vorschauFaellig`, nach dem
   Bild), nicht `starte`: Das Öffnen wartet nicht auf einen Drucker, der nicht antwortet, und jede
-  weitere Ausgabe löschte die Meldung des Öffnens (etwa „Mandant nicht ladbar"). Die Vorschau danach
-  nur auf „Aktualisieren" — die Umwandlung belegt den Word-Thread, auf dem auch gedruckt wird.
+  weitere Ausgabe löschte die Meldung des Öffnens (etwa „Mandant nicht ladbar"). Danach folgt die
+  Vorschau der Art, nicht jeder Eingabe.
 - Kein `LayoutBuilder` im Dialog: `AlertDialog` legt den Inhalt in eine `IntrinsicWidth`. Ob Felder
   und Vorschau nebeneinander passen, entscheidet die Fensterbreite (`VollmachtArbeitsflaeche`).

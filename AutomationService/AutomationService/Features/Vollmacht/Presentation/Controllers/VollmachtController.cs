@@ -7,7 +7,8 @@ namespace AutomationService.Features.Vollmacht.Presentation.Controllers;
 
 /// <summary>
 /// Die Vollmacht zum Vorgang (§4.11): Stand der drei Vorlagen, Standarddrucker,
-/// Seitenvorschau, Drucken und „In Word öffnen". Den Vermerk „gedruckt" setzt
+/// Seitenvorschau, Drucken, „In Word öffnen" und das Aufräumen der
+/// Arbeitsdateien beim Schließen des Dialogs. Den Vermerk „gedruckt" setzt
 /// das Frontend danach über <c>PUT api/Vorgaenge/vollmacht</c> — er gehört dem
 /// Vorgang, nicht diesem Schnitt.
 /// </summary>
@@ -80,6 +81,23 @@ public class VollmachtController(
         }
 
         return Ok(VollmachtErgebnisDto.From(dienst.FuelleAus(auftrag)));
+    }
+
+    /// <summary>
+    /// Löscht die Vollmachtdateien im Arbeitsordner des Vorgangs. Das Frontend
+    /// ruft das beim Schließen des Dialogs, wenn darin eine Word-Fassung
+    /// entstanden ist (#174) — die Vollmacht wird nicht digital aufbewahrt
+    /// (§8). Nicht <c>POST api/WordAutomation/arbeitsordner/aufraeumen</c>: Der
+    /// nähme ein angefangenes Anspruchsschreiben daneben mit. Eine noch in Word
+    /// geöffnete Datei bleibt still liegen, deshalb immer 204.
+    /// </summary>
+    [HttpPost("aufraeumen")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public IActionResult Aufraeumen([FromBody] VollmachtAufraeumenDto dto)
+    {
+        dienst.RaeumeAuf(dto.Referenz);
+        return NoContent();
     }
 
     private ObjectResult UnbekannteArt(string art) => Problem(

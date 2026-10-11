@@ -107,26 +107,28 @@ void main() {
     );
   });
 
-  test(
-    'ein gescheiterter Druck öffnet die Datei und vermerkt nichts',
-    () async {
-      vorgaenge.bestand[referenz] = vorgang();
-      dienst.druckErgebnis = const VollmachtErgebnis(
-        status: VollmachtErgebnisStatus.druckFehlgeschlagen,
-        pfad: r'C:\Arbeit\Vollmacht Strafsache.docx',
-        meldung: 'Word nicht erreichbar.',
-      );
-      final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
-      await aufbau.cubit.starte(vorgang(), const []);
+  /// Seit #174 derselbe Weg wie „In Word öffnen": Der Dialog bleibt in der
+  /// Eingabe, die Leiste nennt die geöffnete Datei.
+  test('ein gescheiterter Druck öffnet die Datei, bleibt in der Eingabe und vermerkt nichts', () async {
+    vorgaenge.bestand[referenz] = vorgang();
+    dienst.druckErgebnis = const VollmachtErgebnis(
+      status: VollmachtErgebnisStatus.druckFehlgeschlagen,
+      pfad: r'C:\Arbeit\Vollmacht Strafsache.docx',
+      meldung: 'Word nicht erreichbar.',
+    );
+    final aufbau = await baueVollmachtCubit(dienst, vorgaenge);
+    await aufbau.cubit.starte(vorgang(), const []);
 
-      await aufbau.cubit.drucke();
+    await aufbau.cubit.drucke();
 
-      expect(geoeffnet, [r'C:\Arbeit\Vollmacht Strafsache.docx']);
-      expect(vorgaenge.vermerke, isEmpty);
-      expect(aufbau.cubit.state.phase, VollmachtPhase.inWordGeoeffnet);
-      expect(aufbau.cubit.state.fehler, 'Word nicht erreichbar.');
-    },
-  );
+    final stand = aufbau.cubit.state;
+    expect(geoeffnet, [r'C:\Arbeit\Vollmacht Strafsache.docx']);
+    expect(vorgaenge.vermerke, isEmpty);
+    expect(stand.phase, VollmachtPhase.eingabe);
+    expect(stand.wordFassung?.pfad, r'C:\Arbeit\Vollmacht Strafsache.docx');
+    expect(stand.wordFassung?.geoeffnet, isTrue);
+    expect(stand.fehler, 'Word nicht erreichbar.');
+  });
 
   test('ist der Dienst nicht erreichbar, bleibt die Eingabe und nichts ist vermerkt', () async {
     vorgaenge.bestand[referenz] = vorgang();
@@ -155,7 +157,8 @@ void main() {
       await aufbau.cubit.oeffneInWord();
       expect(dienst.gedruckt, isEmpty);
       expect(vorgaenge.vermerke, isEmpty);
-      expect(aufbau.cubit.state.phase, VollmachtPhase.inWordGeoeffnet);
+      expect(aufbau.cubit.state.phase, VollmachtPhase.eingabe);
+      expect(aufbau.cubit.state.wordFassung, isNotNull);
 
       await aufbau.cubit.vermerkeAlsGedruckt();
       expect(vorgaenge.vermerke, [(referenz, true)]);

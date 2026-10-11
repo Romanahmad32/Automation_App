@@ -7,9 +7,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// Beim Ausfüllen: „Drucken" ist der Normalfall und steht rechts, „In Word
 /// öffnen" der Rückfall daneben; ohne eingerichteten Drucker bleibt nur der
-/// Rückfall. Im Ergebnis: nur „Fertig". Nach dem Öffnen in Word: die Rückfrage, ob
-/// der Druck vermerkt werden soll — „Ohne Vermerk schließen" ist bewusst eine
-/// gleichwertige Antwort, die App weiß ja nicht, ob Papier herauskam.
+/// Rückfall. Im Ergebnis: nur „Fertig".
+///
+/// Ist eine Word-Fassung geöffnet, heißt „Abbrechen" „Schließen" (#174): Es
+/// gibt dann etwas, das nicht abgebrochen, sondern ohne Vermerk
+/// zurückgelassen wird — die Frage danach steht in der Word-Leiste darüber.
+/// Derselbe „In Word öffnen" öffnet die Datei noch einmal.
 class VollmachtDialogKnoepfe extends StatelessWidget {
   final VollmachtStand stand;
 
@@ -25,21 +28,10 @@ class VollmachtDialogKnoepfe extends StatelessWidget {
       VollmachtPhase.abgeschlossen => [
         FilledButton(onPressed: schliessen, child: const Text('Fertig')),
       ],
-      VollmachtPhase.inWordGeoeffnet => [
-        TextButton(
-          onPressed: schliessen,
-          child: const Text('Ohne Vermerk schließen'),
-        ),
-        FilledButton.icon(
-          icon: const Icon(Icons.task_alt),
-          label: const Text('Als gedruckt vermerken'),
-          onPressed: cubit.vermerkeAlsGedruckt,
-        ),
-      ],
       _ => [
         TextButton(
           onPressed: stand.phase == VollmachtPhase.eingabe ? schliessen : null,
-          child: const Text('Abbrechen'),
+          child: Text(stand.wordFassung == null ? 'Abbrechen' : 'Schließen'),
         ),
         OutlinedButton.icon(
           icon: const Icon(Icons.open_in_new),

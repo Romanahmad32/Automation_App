@@ -683,14 +683,18 @@ eben eingegeben hat; das widerspricht dem Leitprinzip „keine Doppelerfassung" 
   den Windows-Standarddrucker. Ist der Druck nicht möglich oder schlägt er fehl, meldet die App das
   und öffnet die ausgefüllte Datei zum Selbst-Drucken in Word. „In Word öffnen" geht denselben Weg
   ohne Druckversuch — für den Fall, dass der Anwalt selbst nachsehen oder abweichend drucken will.
+  Das Öffnen verlässt den Dialog nicht: Art, Felder und Vorschau bleiben bedienbar, und die
+  geöffnete Datei lässt sich erneut öffnen. Beim Schließen des Dialogs löscht die App diese
+  Arbeitsdatei wieder (siehe 8); ein Anspruchsschreiben daneben bleibt unberührt.
+  *Ergänzt am 11.10.2026 (#174).*
 - **[M] Druckdatum am Vorgang vermerkt, kein Lebenszyklusschritt:** Ein erfolgreicher Druck setzt
   das Datum; „In Word öffnen" fragt danach nach, ob vermerkt werden soll — die App weiß dann nicht,
   ob wirklich Papier herauskam. Der Vermerk lässt sich jederzeit setzen und zurücknehmen und ist
   kein eigener Status im Lebenszyklus des Vorgangs (siehe 3): Ein Nachdruck ist jederzeit möglich.
 - **[S] Seitenvorschau vor dem Druck:** Neben den Feldern steht die ausgefüllte Seite so, wie sie
-  gedruckt würde. Sie entsteht beim Öffnen und auf Wunsch neu, nicht bei jeder Eingabe; passt sie
-  nicht mehr zu den Feldern, sagt die App das — gedruckt werden immer die aktuellen Felder. Auch
-  die Vorschau hinterlässt keine Datei (siehe 8).
+  gedruckt würde. Sie entsteht beim Öffnen, beim Wechsel der Art und auf Wunsch neu, nicht bei
+  jeder Eingabe; passt sie nicht mehr zu den Feldern, sagt die App das — gedruckt werden immer die
+  aktuellen Felder. Auch die Vorschau hinterlässt keine Datei (siehe 8).
 - **[S] Drucker sichtbar:** Vor dem Druck nennt die App den Windows-Standarddrucker und warnt, wenn
   Windows ihn als offline oder gestört meldet — ohne zu sperren, denn diese Meldung stimmt nicht
   immer. Ist gar kein Drucker eingerichtet, bleibt nur „In Word öffnen". Eine Druckerauswahl gibt

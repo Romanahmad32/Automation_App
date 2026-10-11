@@ -20,8 +20,9 @@ typedef DateiZeigenFunktion = Future<void> Function(String pfad);
 /// **Direkt über `rundll32` statt `cmd /c start`**: Der Pfad geht dann nicht
 /// durch die Shell, und ein `&` im Ordnernamen (Kanzleien heißen gern „Müller
 /// & Partner") zerlegt den Aufruf nicht. Und nicht über `url_launcher`:
-/// `launchUrl` öffnete die Datei erst beim zweiten Klick (siehe
-/// `wizard_step_review.dart`, das denselben Weg noch von Hand geht).
+/// `launchUrl` öffnete die Datei erst beim zweiten Klick. Wer aus einem Widget
+/// öffnet und dem Anwalt ein Scheitern sagen will, nimmt
+/// `DateiOeffnenMitHinweis`.
 ///
 /// [oeffne], [zeigeImOrdner] und [oeffneOrdner] sind absichtlich
 /// **veränderliche** Felder und keine festen Verweise — dieselbe Naht wie bei `VorlagenDateiwahl.waehle`:

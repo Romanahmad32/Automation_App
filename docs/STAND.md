@@ -353,6 +353,20 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   „In Word öffnen"), und nach dem Druck bleibt das Ergebnis stehen — wann, an welchen Drucker,
   ob vermerkt — mit „Erneut drucken", „In Word öffnen" und „Vermerk zurücknehmen". Auch die
   Vorschau hinterlässt keine Datei: Sie geht am PDF-Cache vorbei.
+- **Vollmacht: Vorschau folgt der Art, „In Word öffnen" ohne Sackgasse (§4.11, 11.10.2026, #174)**
+  — ein Wechsel der Art ließ die alte Seite stehen, und nach „In Word öffnen" waren Art, Felder und
+  Vorschau weg. Jetzt stößt der Wechsel der Art die Vorschau selbst an (läuft eine, folgt genau eine
+  weitere für den dann aktuellen Stand; Feldeingaben weiter nur auf „Aktualisieren"). „In Word
+  öffnen" bleibt in der Eingabe: Eine Leiste über den Knöpfen nennt Datei und Uhrzeit, fragt nach
+  dem Vermerk und zeigt die Datei im Explorer; derselbe Knopf öffnet sie unverändert erneut, sonst
+  füllt er neu aus. Der Rückfall nach gescheitertem Druck geht denselben Weg. Beim Schließen löscht
+  `POST api/Vollmacht/aufraeumen` die Vollmachtdateien im Arbeitsordner, ein Anspruchsschreiben
+  daneben bleibt. Dazu ein Weg zum Öffnen: `DateiOeffnenMitHinweis` (`core/dateien`) öffnet eine
+  Datei und meldet sonst „… lässt sich nicht öffnen“ mit „Im Ordner zeigen“ — für Vorlageneditor,
+  Posteingang, Mail-Anhang und den Prüfschritt des Word-Assistenten, der bis dahin `cmd /c start`
+  rief; die Ablage- und Abschlussmeldungen zeigen über `DateiOeffner.zeigeImOrdner`.
+  **Entfallen:** `VollmachtPhase.inWordGeoeffnet`, `VollmachtWordAnsicht`, `VorlagenDateiOeffnen`
+  und `PosteingangDateiOeffnen`.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 

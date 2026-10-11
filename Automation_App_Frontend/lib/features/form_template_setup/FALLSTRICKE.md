@@ -70,13 +70,14 @@ passierte.
   `Process.start('rundll32', ['url.dll,FileProtocolHandler', pfad])` und **nicht** `cmd /c start`:
   Der Pfad geht dann nicht durch die Shell, und ein `&` im Ordnernamen zerlegt den Aufruf nicht. Und
   **nicht** `url_launcher`: `wizard_step_review.dart` hält fest, dass `launchUrl` die Datei erst beim
-  zweiten Klick öffnete. Die Klasse lag bis Stufe 5 als `AnhangOeffner` in
-  `email_versand/presentation/utils/`; sie steht jetzt in `core/`, weil die Mechanik nichts mit
+  zweiten Klick öffnete (inzwischen geht auch der Prüfschritt über `DateiOeffner`). Die Klasse lag
+  bis Stufe 5 als `AnhangOeffner` in `email_versand/presentation/utils/`; sie steht jetzt in `core/`, weil die Mechanik nichts mit
   Mailversand zu tun hat und der Vorlageneditor sich sonst quer über eine fremde `presentation`-Schicht
   bedient hätte. `oeffne` und `zeigeImOrdner` sind **veränderliche Felder** — dieselbe Naht wie
   `VorlagenDateiwahl.waehle`: Ein Widget-Test darf keinen Prozess starten, und `zuruecksetzen()` gehört
-  in ein `addTearDown`. Schlägt das Öffnen fehl, meldet `VorlagenDateiOeffnen.inWord` „Die Datei wurde
-  nicht gefunden: <Dateiname>" samt Aktion „Im Ordner zeigen" — der **Dateiname**, nicht der Pfad,
+  in ein `addTearDown`. Schlägt das Öffnen fehl, meldet `DateiOeffnenMitHinweis.oeffne` (`lib/core/dateien/`, der eine Weg
+  für Vorlageneditor, Posteingang, Mail-Anhang und Prüfschritt) „<Dateiname>" lässt sich nicht öffnen —
+  liegt die Datei noch dort?" samt Aktion „Im Ordner zeigen" — der **Dateiname**, nicht der Pfad,
   denn daran erkennt der Anwalt, welche der beiden Dateien gemeint ist.
 - **Zuordnen heißt umbenennen, nicht die `.docx` anfassen** (#36): `PlatzhalterZuordnung` schlägt
   zu einem Namen ohne Gegenstück Kandidaten der anderen Seite vor — gleich nach

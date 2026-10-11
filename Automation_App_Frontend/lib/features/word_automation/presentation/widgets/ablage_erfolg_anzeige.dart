@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:flutter/material.dart';
 
 /// Erfolgsanzeige nach erfolgter Akten-Ablage: zeigt die abgelegten Dateien
@@ -48,7 +47,7 @@ class AblageErfolgAnzeige extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: zielpfade.isEmpty
                   ? null
-                  : () => _imExplorerZeigen(zielpfade.first),
+                  : () => DateiOeffner.zeigeImOrdner(zielpfade.first),
               icon: const Icon(Icons.open_in_new),
               label: const Text('Im Explorer zeigen'),
             ),
@@ -61,10 +60,5 @@ class AblageErfolgAnzeige extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  void _imExplorerZeigen(String pfad) {
-    // Markiert die Datei im Windows-Explorer.
-    Process.run('explorer', ['/select,', pfad]);
   }
 }

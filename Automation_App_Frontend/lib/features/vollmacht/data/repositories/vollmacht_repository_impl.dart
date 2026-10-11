@@ -61,6 +61,12 @@ class VollmachtRepositoryImpl implements VollmachtRepository {
     'Die Vorschau ließ sich nicht erzeugen',
   );
 
+  @override
+  Future<Either<Failure, void>> raeumeAuf(String referenz) => _versuche(
+    () => _datasource.raeumeAuf(referenz),
+    'Die Arbeitsdatei der Vollmacht ließ sich nicht löschen',
+  );
+
   Future<Either<Failure, T>> _versuche<T>(
     Future<T> Function() abruf,
     String was,

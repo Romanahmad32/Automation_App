@@ -6,7 +6,7 @@ import 'package:automation_app/features/mailbox/domain/entities/posteingang_anha
 /// tut.
 ///
 /// Reiner Datenhalter ohne eigenes Verhalten. Welche Handlung sich hinter
-/// jedem Feld verbirgt — öffnen (`PosteingangDateiOeffnen`), in die Akte
+/// jedem Feld verbirgt — öffnen (`DateiOeffnenMitHinweis`), in die Akte
 /// legen (`PosteingangAktenAblageDialog`), beim Versand mitgeben
 /// (`EmailVersandDialog`) —, entscheidet die Stelle, die diese Klasse
 /// zusammenbaut (`posteingang_detail.dart`); die Anhangliste kennt weder

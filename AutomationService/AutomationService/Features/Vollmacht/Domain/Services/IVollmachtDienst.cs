@@ -10,8 +10,19 @@ public interface IVollmachtDienst
     /// </summary>
     Task<VollmachtErgebnis> DruckeAsync(VollmachtAuftrag auftrag, CancellationToken cancellationToken = default);
 
-    /// <summary>Füllt die Vorlage nur aus („In Word öffnen"); die Datei bleibt liegen.</summary>
+    /// <summary>
+    /// Füllt die Vorlage nur aus („In Word öffnen"); die Datei bleibt liegen,
+    /// bis der Dialog schließt (<see cref="RaeumeAuf"/>).
+    /// </summary>
     VollmachtErgebnis FuelleAus(VollmachtAuftrag auftrag);
+
+    /// <summary>
+    /// Löscht die Vollmachtdateien im Arbeitsordner des Vorgangs — die drei
+    /// festen Namen, nie ein Anspruchsschreiben daneben; ein danach leerer
+    /// Ordner geht mit (§4.11, §8, #174). Hält Word eine Datei noch offen,
+    /// bleibt sie still bis zur Startaufräumung liegen.
+    /// </summary>
+    void RaeumeAuf(string referenz);
 
     /// <summary>
     /// Füllt aus und liefert die Seite als PDF. Weder die ausgefüllte Datei

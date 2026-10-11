@@ -1,3 +1,4 @@
+import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/presentation/theme.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
@@ -12,8 +13,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'vollmacht_doubles.dart';
 
 /// Was der Anwalt im Vollmacht-Dialog sieht (§4.11, #164): Vorschau neben
-/// oder unter den Feldern, die Druckerzeile und das Ergebnis nach dem Druck —
-/// auch bei „Am größten" ohne Überlauf.
+/// oder unter den Feldern, die Druckerzeile, die Word-Leiste nach „In Word
+/// öffnen" (#174) und das Ergebnis nach dem Druck — auch bei „Am größten"
+/// ohne Überlauf.
 void main() {
   const referenz = '12/26 C05_GG-XY 1';
   final vorgang = Vorgang(
@@ -29,9 +31,15 @@ void main() {
     WidgetTester tester, {
     VollmachtDrucker? drucker,
     bool drucken = false,
+    bool? inWordOeffnen,
   }) async {
     late VollmachtCubit cubit;
     final dienst = VollmachtRepositoryDouble();
+    if (inWordOeffnen != null) {
+      // Ein Widget-Test startet kein Word; true heißt: Word ließ sich anstoßen.
+      DateiOeffner.oeffne = (_) async => inWordOeffnen;
+      addTearDown(DateiOeffner.zuruecksetzen);
+    }
     await tester.runAsync(() async {
       if (drucker != null) dienst.drucker = drucker;
       final vorgaenge = VollmachtVorgaengeDouble()..bestand[referenz] = vorgang;
@@ -42,6 +50,10 @@ void main() {
         // abgefragt.
         await cubit.ladeDrucker();
         await cubit.drucke();
+      }
+      if (inWordOeffnen != null) {
+        await cubit.ladeDrucker();
+        await cubit.oeffneInWord();
       }
     });
     addTearDown(cubit.close);
@@ -172,5 +184,75 @@ void main() {
     expect(find.text('Erneut drucken'), findsOneWidget);
     expect(find.text('Vermerk zurücknehmen'), findsOneWidget);
     expect(find.text('Fertig'), findsOneWidget);
+  });
+
+  group('nach „In Word öffnen" (#174)', () {
+    testWidgets('bleibt die Eingabe, darunter die Leiste und „Schließen"', (
+      tester,
+    ) async {
+      final (:cubit, dienst: _) = await baue(tester, inWordOeffnen: true);
+
+      await zeigeDialog(tester, cubit, fenster: const Size(1400, 1000));
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('In Word geöffnet ('), findsOneWidget);
+      expect(find.textContaining('Vollmacht Strafsache.docx'), findsOneWidget);
+      expect(find.text('Als gedruckt vermerken'), findsOneWidget);
+      expect(find.text('Im Explorer zeigen'), findsOneWidget);
+      expect(find.text('Schließen'), findsOneWidget);
+      expect(find.text('Abbrechen'), findsNothing);
+      // Art, Felder und Vorschau bleiben bedienbar.
+      expect(find.text('Aktualisieren'), findsOneWidget);
+      expect(find.text('Straße und Hausnummer'), findsOneWidget);
+      final word = find.widgetWithText(OutlinedButton, 'In Word öffnen');
+      expect(tester.widget<OutlinedButton>(word).onPressed, isNotNull);
+    });
+
+    for (final (name, fenster) in [
+      ('schmales Fenster', const Size(800, 900)),
+      ('niedriges Fenster', const Size(1200, 700)),
+    ]) {
+      testWidgets('$name bei „Am größten": die Leiste läuft nicht über', (
+        tester,
+      ) async {
+        final (:cubit, dienst: _) = await baue(tester, inWordOeffnen: true);
+
+        await zeigeDialog(tester, cubit, fenster: fenster);
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('Als gedruckt vermerken'), findsOneWidget);
+        expect(find.text('Schließen'), findsOneWidget);
+      });
+    }
+
+    testWidgets('ließ sich Word nicht anstoßen, sagt es die Leiste', (
+      tester,
+    ) async {
+      final (:cubit, dienst: _) = await baue(tester, inWordOeffnen: false);
+
+      await zeigeDialog(tester, cubit, fenster: const Size(1400, 1000));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('ließ sich aber nicht in Word öffnen'),
+        findsOneWidget,
+      );
+      expect(find.text('Im Explorer zeigen'), findsOneWidget);
+    });
+
+    testWidgets('„Als gedruckt vermerken" aus der Leiste zeigt das Ergebnis', (
+      tester,
+    ) async {
+      final (:cubit, dienst: _) = await baue(tester, inWordOeffnen: true);
+      await zeigeDialog(tester, cubit, fenster: const Size(1400, 1000));
+
+      await tester.tap(find.text('Als gedruckt vermerken'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('In Word gedruckt, um'), findsOneWidget);
+      expect(find.text('Fertig'), findsOneWidget);
+    });
   });
 }

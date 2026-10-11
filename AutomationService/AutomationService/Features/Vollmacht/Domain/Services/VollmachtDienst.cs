@@ -11,15 +11,17 @@ namespace AutomationService.Features.Vollmacht.Domain.Services;
 /// Seitenvorschau zeigen.
 ///
 /// Die Datei entsteht im Arbeitsordner des Vorgangs, neben einem vielleicht
-/// gerade angefangenen Anspruchsschreiben. Deshalb löscht der Druck nur die
-/// eine Vollmachtdatei und nie den Ordner (<c>ArbeitsVerzeichnis.Aufraeumen</c>
-/// nähme das Schreiben mit); nur ein danach leerer Ordner geht mit.
+/// gerade angefangenen Anspruchsschreiben. Deshalb löschen Druck und
+/// <see cref="RaeumeAuf"/> nur Vollmachtdateien und nie den Ordner
+/// (<c>ArbeitsVerzeichnis.Aufraeumen</c> nähme das Schreiben mit); nur ein
+/// danach leerer Ordner geht mit.
 /// </summary>
 public sealed class VollmachtDienst(
     IWordAutomationService ausfueller,
     IWordDrucker drucker,
     IPdfConversionService pdf,
     VollmachtVorlagenOrdner vorlagen,
+    ArbeitsVerzeichnis arbeitsVerzeichnis,
     ILogger<VollmachtDienst> logger) : IVollmachtDienst
 {
     /// <summary>Hängt an der Arbeitsdatei der Vorschau, siehe <see cref="Fuelle"/>.</summary>
@@ -100,6 +102,32 @@ public sealed class VollmachtDienst(
 
     public VollmachtErgebnis FuelleAus(VollmachtAuftrag auftrag) => Fuelle(auftrag, namenszusatz: null);
 
+    public void RaeumeAuf(string referenz)
+    {
+        // Ohne brauchbare Referenz zeigte der Ordnername auf „Ohne Vorgang" — den
+        // teilen sich alle frei erfassten Schreiben, eine Vollmacht entsteht dort
+        // nie. Geprüft am Ordnernamen, nicht an der Referenz: Auch „..“ oder „.“
+        // landen dort.
+        var ordnername = ArbeitsVerzeichnis.Ordnername(referenz);
+        if (ordnername == ArbeitsVerzeichnis.OhneVorgang)
+        {
+            return;
+        }
+
+        // Nicht über OrdnerFuer: Das legte den Ordner an, den es hier nur zu
+        // leeren gilt.
+        var ordner = Path.Combine(arbeitsVerzeichnis.Wurzel, ordnername);
+        foreach (var art in VollmachtArten.Alle)
+        {
+            // Derselbe Name, unter dem Fuelle die Datei ablegt: der der Vorlage.
+            var datei = Path.Combine(ordner, VollmachtArten.Dateiname(art));
+            if (File.Exists(datei))
+            {
+                LoescheArbeitsdatei(datei);
+            }
+        }
+    }
+
     /// <param name="auftrag">Art, Vorgang und Kopfdaten.</param>
     /// <param name="namenszusatz">
     /// Hängt am Dateinamen der Arbeitsdatei. Die Vorschau braucht einen eigenen
@@ -168,9 +196,10 @@ public sealed class VollmachtDienst(
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            // Word hält die Datei nach dem Druck gelegentlich noch einen Moment.
-            // Liegen bleibt sie dann bis zur Startaufräumung (14 Tage) — kein
-            // Grund, dem Anwalt einen gelungenen Druck als Fehler zu melden.
+            // Word hält die Datei nach dem Druck gelegentlich noch einen Moment,
+            // und eine in Word geöffnete Fassung erst recht. Liegen bleibt sie
+            // dann bis zur Startaufräumung (14 Tage) — kein Grund, dem Anwalt
+            // einen gelungenen Druck oder das Schließen als Fehler zu melden.
             logger.LogInformation(exception, "Arbeitsdatei der Vollmacht bleibt vorerst liegen: {Datei}", pfad);
         }
     }

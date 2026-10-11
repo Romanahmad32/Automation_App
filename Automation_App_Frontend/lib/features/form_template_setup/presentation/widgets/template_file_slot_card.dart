@@ -1,7 +1,7 @@
+import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_status_zeile.dart';
-import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_datei_oeffnen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -106,7 +106,7 @@ class TemplateFileSlotCard extends StatelessWidget {
           CustomRectangularButton(
             icon: const Icon(Icons.edit_document),
             label: const Text('In Word öffnen'),
-            onPressed: () => VorlagenDateiOeffnen.inWord(context, pfad),
+            onPressed: () => DateiOeffnenMitHinweis.oeffne(context, pfad),
           ),
         CustomRectangularButton(
           icon: const Icon(Icons.file_open),
