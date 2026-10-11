@@ -64,18 +64,24 @@ class MandantErkennung {
         // Der Grobschlüssel zuerst, weil er billig ist und der Banner bei
         // jedem Tastendruck das ganze Register fragt: Wo er abweicht, kann
         // `gleichesKennzeichen` nicht „gleich" sagen. Entscheiden tut nur das.
-        final passt = mandant.kennzeichen.any(
-          (k) =>
-              kennzeichenGrobschluessel(k) == schluessel &&
-              gleichesKennzeichen(k, kennzeichen),
-        );
-        if (passt && gesehen.add(mandant.id)) {
+        final hinterlegt = mandant.kennzeichen
+            .where(
+              (k) =>
+                  kennzeichenGrobschluessel(k) == schluessel &&
+                  gleichesKennzeichen(k, kennzeichen),
+            )
+            .firstOrNull;
+        if (hinterlegt != null && gesehen.add(mandant.id)) {
           ergebnis.add(
             MandantVorschlag(
               mandant: mandant,
+              // Das hinterlegte Kennzeichen, nicht die Eingabe: „hge1427"
+              // großgeschrieben behauptete, „HGE1427" sei hinterlegt — und
+              // verschwieg die Aufteilung, an der der Anwalt den Wagen
+              // erkennt (§4.2).
               begruendung:
-                  'Das Kennzeichen ${kennzeichen.trim().toUpperCase()} ist '
-                  'bei diesem Mandanten hinterlegt.',
+                  'Das Kennzeichen ${hinterlegt.trim()} ist bei diesem '
+                  'Mandanten hinterlegt.',
             ),
           );
         }
