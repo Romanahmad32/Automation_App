@@ -10,7 +10,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_entwur
 import 'package:automation_app/features/word_automation/presentation/blocs/aktive_platzhalter_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ausfuell_formular.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/eingaben_zuruecksetzen_button.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

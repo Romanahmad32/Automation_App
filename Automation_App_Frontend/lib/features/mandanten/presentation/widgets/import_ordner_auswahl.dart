@@ -1,5 +1,5 @@
 import 'package:automation_app/core/general_widgets/form/texte_listen_editor.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Akten-Ordner einer Importzeile: das Vorhandene als löschbare Chips, ein
 /// Suchfeld darunter, das **nur aus dem gescannten Bestand** wählen lässt.

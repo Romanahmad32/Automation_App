@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/form/auswahl_kandidat.dart';
 import 'package:automation_app/core/general_widgets/form/auswahl_text_field.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Eingabefeld für ein Kfz-Kennzeichen — **der** Baustein dafür, überall wo

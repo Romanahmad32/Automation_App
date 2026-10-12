@@ -7,7 +7,7 @@ import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/views/mandanten_overview.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_zustands_bereich.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 @RoutePage()

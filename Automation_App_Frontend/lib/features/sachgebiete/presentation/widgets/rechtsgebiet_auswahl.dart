@@ -5,7 +5,7 @@ import 'package:automation_app/features/sachgebiete/domain/services/rechtsgebiet
 import 'package:automation_app/features/sachgebiete/presentation/widgets/abteilung_auswahl.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/sachgebiet_katalog_builder.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das Rechtsgebiet eines Vorgangs — **abgeleitet aus der Abteilung** (§7.1),
 /// nicht ein zweites Mal ausgewählt.

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Nur-Text-Fassung einer Nachricht (Issue #134) — auswählbar, damit ein
 /// Textteil in eine Antwort oder ein Aktenvermerk übernommen werden kann.

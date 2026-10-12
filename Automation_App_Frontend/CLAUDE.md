@@ -51,6 +51,11 @@ sich steht.
 Bibliotheken: Zustand über **flutter_bloc**, DI über **get_it + injectable** (Annotationen +
 generierte Konfiguration), Navigation über **auto_route** (Routen in
 `lib/core/router/app_router.dart`), Formulare über **reactive_forms**, HTTP über **dio**.
+Material kommt aus dem Paket **material_ui**, nie aus dem Material-Import des Flutter-SDK —
+der Lint `migrate_design_widgets` sichert das. Formularfelder
+laufen über `ReactiveTextEingabe` bzw. `ReactiveFormField` plus ein material_ui-Widget, nie über
+die Material-Widgets von reactive_forms (Fassung 18.2.2, nicht umgestellt; sie können zurück,
+sobald reactive_forms umstellt).
 
 Querschnittliches unter `lib/core/`: `router`, `di`, `network`, `theme`, `backend` (Dienststart,
 `BackendEndpoint`), `aktualisierung` (Versionsprüfung), `general_classes`
@@ -168,6 +173,8 @@ der Anwalt direkt nach dem Öffnen der App.
 | HTTP-Vertrag gegen `docs/openapi.json` (Wurzel-`CLAUDE.md`) | `test/architecture/http_vertrag_test.dart` |
 | Steckbrief je Feature, Feature-Tabelle, Wortbudget der `CLAUDE.md`, lebende Verweise | `test/architecture/dokumentation_test.dart` |
 | Anforderungsverweise (`§4.8`, nie `Req. …`) gegen den Index, Index gegen `REQUIREMENTS.md` | `test/architecture/anforderungen_test.dart` |
+| Material nur aus `material_ui` | Lint `migrate_design_widgets`, `test/architecture/clean_architecture_test.dart` |
+| Keine Material-Widgets von reactive_forms | `test/architecture/reactive_forms_material_test.dart` |
 | Formatierung | `dart format --set-exit-if-changed` (CI) |
 
 Generierte Dateien sind überall ausgenommen (`test/architecture/dart_source_files.dart`).
@@ -176,9 +183,10 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
 
 ## Vorhandene Bausteine (`lib/core/general_widgets/`)
 
-- `form/` — `GeneralTextField`, `GermanDateField`, `GermanDateTextField` (dasselbe Datumsfeld auf
-  einem `TextEditingController` statt reactive_forms; ein Formatfehler ist nur ein Hinweis, er
-  sperrt nichts), `AuswahlTextField` (Textfeld, dessen Symbol den
+- `form/` — `GeneralTextField`, `ReactiveTextEingabe` (reaktives Textfeld auf material_ui),
+  `GermanDateField`, `GermanDateTextField` (dasselbe Datumsfeld auf einem `TextEditingController`
+  statt reactive_forms; ein Formatfehler ist nur ein Hinweis, er sperrt nichts), `AuswahlTextField`
+  (Textfeld, dessen Symbol den
   `AuswahlDialog` über bekannte Werte öffnet — je Wert ein `AuswahlKandidat` mit Herkunftszeile;
   ohne Kandidaten kein Symbol), `KennzeichenField` (**jedes** Kfz-Kennzeichen-Feld der App: schreibt
   den Wert **nicht** um, auch nicht in `HG-E 1427`, und **sperrt nichts** — ein Versicherungs-,
@@ -191,6 +199,7 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
   (rechtsbündig, mit Ring beim Schreiben; `kompakt: true` für eine Kopfzeile) und
   `HinzufuegenButton` (linksbündig, **unter** der Liste — eine Handlung sieht anders aus
   als der Bestand, an dem sie arbeitet)
+- `HtmlLinkStil` (Linkfarbe für HTML-Darstellungen aus dem Theme)
 - `layout/` — `KartenSpalten` (legt Formularkarten je nach Platz in ein oder zwei Spalten
   und deckelt die Breite; die Grenzen stehen dort als Konstanten) und `TraegeIndexedStack`
   (wechselt ohne Bewegung, baut ein Kind erst beim ersten Zeigen)

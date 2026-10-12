@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/document_bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Zeigt die geladene Word-Datei bzw. bietet an, eine zu wählen, wenn der

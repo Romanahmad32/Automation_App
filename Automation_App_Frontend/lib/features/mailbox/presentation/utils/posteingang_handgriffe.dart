@@ -7,7 +7,7 @@ import 'package:automation_app/features/mailbox/presentation/blocs/posteingang_c
 import 'package:automation_app/features/mailbox/presentation/utils/antwort_betreff.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_akten_ablage_dialog.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Was an einer geöffneten Nachricht tatsächlich geschieht (§4.3) — die
 /// Verdrahtung zwischen [PosteingangCubit] (holt Anhang bzw. `.eml` ins

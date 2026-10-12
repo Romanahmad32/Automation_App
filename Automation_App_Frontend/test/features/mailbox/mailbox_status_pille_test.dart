@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_status_pille.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _verbunden = MailboxStatus(

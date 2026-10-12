@@ -2,7 +2,7 @@ import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_vorschlag_banner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// „Ähnlicher Name im Register" — der Hinweis im Bearbeiten-Dialog, dass diese
 /// Zeile womöglich einen Mandanten anlegt, den es schon gibt.

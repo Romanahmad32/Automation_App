@@ -1,5 +1,5 @@
 import 'package:automation_app/core/dateien/datei_oeffner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Erfolgsanzeige nach erfolgter Akten-Ablage: zeigt die abgelegten Dateien
 /// (je nach gewähltem Format die Word-Fassung, das PDF oder beide) und erlaubt,

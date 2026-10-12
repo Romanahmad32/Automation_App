@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Was an der Stelle der Chipreihe steht, wenn **keine Anrede angelegt** ist
 /// (§4.7, §7.1, ergänzt am 02.09.2026).

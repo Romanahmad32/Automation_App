@@ -5,7 +5,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.d
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_dialog_field.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Führt die Referenzänderung aus (konfliktgeprüft im Backend, siehe
 /// `VorgangCubit.aendereReferenz`). Liefert bei Erfolg den umbenannten

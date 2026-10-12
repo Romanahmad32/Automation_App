@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Felder der Vorlage, die das Schreiben aus der gerade gewählten
 /// Word-Datei nicht einsetzt — eingeklappt statt oben mitgezeigt (#82).

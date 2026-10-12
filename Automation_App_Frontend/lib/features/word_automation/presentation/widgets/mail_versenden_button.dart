@@ -3,7 +3,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/email
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/mail_anhaenge.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Sendeknopf des Word-Assistenten (§4.7). Er unterscheidet sich vom
 /// allgemeinen [EmailVersandButton] nur darin, dass er die Anhänge kennt: das

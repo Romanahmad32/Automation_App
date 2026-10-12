@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/anrede_neutral_grund.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Satz, der sagt, **warum** die Anrede neutral ist (§4.7, ergänzt am
 /// 02.09.2026) — unter der Chipreihe, wo die Zeile zu sehen ist.

@@ -4,7 +4,7 @@ import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/dashboard/presentation/views/dashboard_view.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox_cubit/mailbox_inbox_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Startseite der App: der Überblick, den der Anwalt beim Öffnen zuerst sieht —

@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/entity_search_bar.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_table.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class FormTemplateOverview extends StatelessWidget {

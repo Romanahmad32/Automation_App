@@ -3,7 +3,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_jahres_zeile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_sachverhalt_zelle.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_status_zelle.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das Sachgebiete-Register als Tabelle im verbindlichen Spaltenschema
 /// (Lfd. Nr. | Zeichen | Sache · Sachbestand | Rechtsgebiet) — gemeinsam

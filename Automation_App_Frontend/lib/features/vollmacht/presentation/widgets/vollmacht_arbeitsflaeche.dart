@@ -4,7 +4,7 @@ import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_s
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_drucker_zeile.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_formular.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_vorschau_flaeche.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Arbeitsteil des Vollmacht-Dialogs vor dem Druck (§4.11, #164): die
 /// Felder samt Druckerzeile und daneben die Seitenvorschau — oder, wenn das

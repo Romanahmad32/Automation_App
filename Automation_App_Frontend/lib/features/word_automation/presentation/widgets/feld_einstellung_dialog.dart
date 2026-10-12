@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable
 import 'package:automation_app/features/form_template_setup/domain/entities/feld_datenquelle.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Feldeinstellung eines Vorlagenfelds — Name, Typ, Pflichtangabe,
 /// Datenquelle — als Dialog **über** dem Ausfüllformular.

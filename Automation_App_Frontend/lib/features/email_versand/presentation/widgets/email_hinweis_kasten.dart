@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Farbig hinterlegte Hinweiszeile mit Symbol — der Kasten über dem
 /// Mail-Formular, in dem Absender, Warnung oder Fehler steht.

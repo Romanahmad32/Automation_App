@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_hineinholen.dart';
 import 'package:automation_app/features/word_automation/domain/entities/vorlagen_uebersicht.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Bietet nach der Dateiauswahl an, eine außerhalb des Vorlagenordners
 /// liegende Word-Datei hineinzukopieren (#33): außerhalb bleibt sie zwar

@@ -4,7 +4,7 @@ import 'package:automation_app/features/email_versand/domain/entities/versand_ei
 import 'package:automation_app/features/mailbox/presentation/widgets/gesendet_liste.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/gesendet_zeile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Liste des Bereichs „Gesendet" (§4.3): Tagesgruppen wie im Posteingang,

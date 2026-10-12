@@ -1,5 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Rückfrage vor dem Löschen eines Vorgangs (§6.3): Ob die gespiegelte
 /// Registerzeile (§6.2) dabei bleibt oder mitgeht.

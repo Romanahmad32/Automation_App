@@ -1,5 +1,5 @@
 import "package:automation_app/core/theme/domain/schriftstufe.dart";
-import "package:flutter/material.dart";
+import "package:material_ui/material_ui.dart";
 
 import "auswahl_themes.dart";
 import "extended_color.dart";

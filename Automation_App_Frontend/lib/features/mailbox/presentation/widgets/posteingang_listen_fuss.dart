@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Fußzeile der Posteingangsliste: „Ältere laden (50 von n)", solange es
 /// mehr gibt; ist alles geladen, ein Text — beim Deckel (500 Zeilen,

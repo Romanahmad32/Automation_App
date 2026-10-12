@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:automation_app/features/settings/presentation/widgets/register_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/sicherungs_ablage_felder.dart';
 import 'package:automation_app/features/settings/presentation/widgets/vorlagen_ordner_feld.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Sonderpfade bleiben eingeklappt. Aktive Abweichungen sind im Titelbereich

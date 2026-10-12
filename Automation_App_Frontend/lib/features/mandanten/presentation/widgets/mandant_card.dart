@@ -6,7 +6,7 @@ import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandant_akten_liste.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandant_info_chip.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Aufklappbare Karte eines Mandanten: Stammdaten, Kennzahlen (Akten/Fälle),

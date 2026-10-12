@@ -2,7 +2,7 @@ import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_feld
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand_felder.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zeile direkt über den Knöpfen (#171): welche Felder auf dem Papier
 /// als Schreiblinie frei bleiben, in der Reihenfolge des Formulars und mit

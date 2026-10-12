@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Farbige, gerundete Fläche mit Rand — und zwar als `Material`, nicht als
 /// `Container`.

@@ -4,7 +4,7 @@ import 'package:automation_app/features/email_versand/domain/entities/versand_ei
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_eintrag_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Alles, was zu einem Vorgang hinausgegangen ist (§4.7) — der jüngste
 /// Versand zuerst.

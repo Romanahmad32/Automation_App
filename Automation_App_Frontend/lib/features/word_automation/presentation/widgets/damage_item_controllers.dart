@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die beiden Text-Controller einer Zeile der Schadensaufstellung
 /// (Bezeichnung und Betrag), zusammengefasst, damit sie gemeinsam angelegt

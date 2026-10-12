@@ -2,7 +2,7 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_ansicht.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_zusammenfassung_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Mail, wie sie beim Empfänger ankommt (§4.7): Kopfzeilen, Anhänge unter
 /// den Namen, unter denen sie hinausgehen, und der vollständige Text samt

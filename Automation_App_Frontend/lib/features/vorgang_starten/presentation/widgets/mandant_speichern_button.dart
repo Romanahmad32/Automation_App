@@ -3,7 +3,7 @@ import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorga
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_uebersicht_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Button am Ende der Mandanten-Karte: erst aktiv, wenn ein bestehender Mandant

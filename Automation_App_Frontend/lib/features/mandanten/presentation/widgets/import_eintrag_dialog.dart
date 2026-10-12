@@ -5,7 +5,7 @@ import 'package:automation_app/features/mandanten/domain/entities/mandanten_impo
 import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_aehnlichkeits_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_formular.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Was der Anwalt mit einer Importzeile entschieden hat. `null` als Ergebnis

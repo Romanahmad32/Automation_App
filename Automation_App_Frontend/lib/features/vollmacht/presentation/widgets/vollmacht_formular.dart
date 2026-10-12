@@ -6,7 +6,7 @@ import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_s
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_art_auswahl.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_hinweis.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_kopf_felder.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Eingabeteil des Vollmacht-Dialogs (§4.11): Vorlagenart, die Hinweise,

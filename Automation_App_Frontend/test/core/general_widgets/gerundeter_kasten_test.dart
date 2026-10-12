@@ -1,5 +1,5 @@
 import 'package:automation_app/core/general_widgets/gerundeter_kasten.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Kasten ersetzt einen `Container` mit `BoxDecoration`, und zwar wegen

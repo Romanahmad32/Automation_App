@@ -5,7 +5,7 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_o
 import 'package:automation_app/features/mandanten/presentation/widgets/akte_block.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/akte_zuordnen_dialog.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/nicht_gefundener_ordner_block.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Akten in der aufgeklappten `MandantCard`: gefundene, nicht mehr

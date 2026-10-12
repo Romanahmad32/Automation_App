@@ -1,5 +1,5 @@
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Auswahl der Auflistungs-Version und des Vorsteuer-Status für die aktuelle
 /// Vorlage.

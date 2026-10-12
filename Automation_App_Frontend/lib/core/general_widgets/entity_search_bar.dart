@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Wiederverwendbares Suchfeld mit eigenem Controller (verhindert
 /// Cursor-Sprünge beim erneuten Aufbau) und Löschknopf. Die Filterlogik bleibt

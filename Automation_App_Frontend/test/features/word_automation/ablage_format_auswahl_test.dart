@@ -1,7 +1,7 @@
 import 'package:automation_app/core/theme/presentation/kanzlei_theme.dart';
 import 'package:automation_app/features/word_automation/domain/entities/ablage_format.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ablage_format_auswahl.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Auswahl „Was abgelegt wird" im Speicherschritt (§6.1) — die Stelle, an

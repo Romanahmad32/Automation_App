@@ -4,7 +4,7 @@ import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_c
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_ergebnis_zeile.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Was nach dem Druck im Vollmacht-Dialog stehen bleibt (§4.11, #164).

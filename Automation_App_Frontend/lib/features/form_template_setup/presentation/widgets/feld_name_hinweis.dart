@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/feld_datenquelle_erkennung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Sagt unter einem Vorlagenfeld, warum sein Name **nicht** an eine Datenquelle

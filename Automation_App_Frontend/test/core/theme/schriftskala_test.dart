@@ -2,7 +2,7 @@ import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/presentation/kanzlei_theme.dart';
 import 'package:automation_app/core/theme/presentation/schriftskala.dart';
 import 'package:automation_app/core/theme/presentation/theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Prüft, dass die zentrale Schrift-Anhebung aus Issue #57 in **jeder**

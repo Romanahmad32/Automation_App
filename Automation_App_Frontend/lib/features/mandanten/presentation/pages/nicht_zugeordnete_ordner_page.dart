@@ -8,7 +8,7 @@ import 'package:automation_app/features/mandanten/presentation/widgets/import_oe
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_zustands_bereich.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/paket_holen_button.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/paket_sichere_treffer_button.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Eigene Seite für den Zuordnungsstapel. Bewusst nicht mehr als Abschnitt über

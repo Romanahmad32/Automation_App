@@ -4,7 +4,7 @@ import 'package:automation_app/features/dashboard/presentation/widgets/dashboard
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_leer_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_tabelle.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Karte „Sachgebiete-Register": die zuletzt entstandenen Registerzeilen im
 /// selben Spaltenschema wie die Registerseite (Lfd. Nr. | Zeichen | Sache ·

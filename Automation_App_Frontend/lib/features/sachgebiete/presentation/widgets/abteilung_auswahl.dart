@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable
 import 'package:automation_app/features/sachgebiete/domain/entities/sachgebiet.dart';
 import 'package:automation_app/features/sachgebiete/domain/services/abteilung_kuerzel.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/sachgebiet_katalog_builder.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Die Abteilung als Auswahl statt Freitext (§7.1): ein Pflicht-Dropdown

@@ -1,5 +1,5 @@
 import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_zuordnung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Was im [ZuordnungsDialog] gewählt wurde.
 sealed class ZuordnungsWahl {

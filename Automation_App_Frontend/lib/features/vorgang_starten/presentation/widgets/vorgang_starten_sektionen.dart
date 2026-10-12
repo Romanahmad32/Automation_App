@@ -9,7 +9,7 @@ import 'package:automation_app/features/vorgang_starten/presentation/widgets/ref
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/unfall_section.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/unfallhergang_section.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/weiter_aktionen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Scrollbarer Inhalt des „Vorgang starten"-Formulars: die Abschnitte (Auftrag,

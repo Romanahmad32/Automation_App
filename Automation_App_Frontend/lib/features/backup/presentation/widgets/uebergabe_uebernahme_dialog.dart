@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/backup/domain/entities/uebergabe_angebot.dart';
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 import 'package:automation_app/features/backup/presentation/utils/sicherungs_zeitpunkt.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Rückfrage vor einer Übernahme im laufenden Betrieb (§7.2).
 ///

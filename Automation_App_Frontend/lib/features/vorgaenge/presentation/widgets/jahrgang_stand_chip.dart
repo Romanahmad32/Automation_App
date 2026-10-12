@@ -1,6 +1,6 @@
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_stand.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Ein Jahrgang in der Chip-Zeile über dem Register: `2018 ✓`,
 /// `2021 ✗ fehlt`, `2022 ⚠ 2 Lücken`.

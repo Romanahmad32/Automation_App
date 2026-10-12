@@ -1,6 +1,6 @@
 import 'package:automation_app/core/theme/presentation/kanzlei_theme.dart';
 import 'package:automation_app/core/theme/presentation/theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Prüft die zentrale Auswahlregel für **jede** Theme-Familie und **beide**

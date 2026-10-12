@@ -5,7 +5,7 @@ import 'package:automation_app/features/word_automation/domain/entities/generate
 import 'package:automation_app/features/word_automation/domain/usecases/fill_out_template.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/wizard_step_bar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

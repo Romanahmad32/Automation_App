@@ -1,5 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/services/antwort_konflikte.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Dialog vor der Übernahme einer Zentralruf-Antwort, wenn sie bereits
 /// erfassten Vorgangsdaten widerspricht: zeigt je Abweichung beide Werte und

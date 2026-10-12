@@ -4,7 +4,7 @@ import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// „Nächster Schritt"-Button eines Vorgangs: springt statusabhängig dorthin,
 /// wo der Vorgang weiterbearbeitet wird — Angefragt → Postfach (Antwort

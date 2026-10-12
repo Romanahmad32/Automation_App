@@ -3,7 +3,7 @@ import 'package:automation_app/features/email_versand/domain/entities/signatur_s
 import 'package:automation_app/features/email_versand/presentation/widgets/outlook_hinweis_zeile.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_aus_outlook_button.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_entfernen_button.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die zwei Handgriffe an der Signatur (§4.7): aus Outlook holen und ganz
 /// entfernen.

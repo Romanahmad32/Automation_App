@@ -1,6 +1,6 @@
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_stand.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// „Stand dieser Vorlage" — was der Vorlage noch fehlt, an **einer** Stelle
 /// (#104, §5.3).

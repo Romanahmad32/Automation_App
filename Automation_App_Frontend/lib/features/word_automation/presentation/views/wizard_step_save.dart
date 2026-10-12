@@ -2,7 +2,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/edite
 import 'package:automation_app/features/word_automation/presentation/widgets/akten_ablage_section.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/dokument_manuell_speichern.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgang_abschliessen_section.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Schritt 4: Das bestätigte Dokument in die Akte des Mandanten ablegen (§6.1).

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Kopfzeile der Mandanten-Sektion mit Titel und Trefferzähler (gefiltert vs.
 /// gesamt, je nach aktiver Suche).

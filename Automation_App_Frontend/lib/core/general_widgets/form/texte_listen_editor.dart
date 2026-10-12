@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Editor für eine Liste kurzer Texte: das Vorhandene als löschbare Chips, ein
 /// Eingabefeld zum Hinzufügen darunter.

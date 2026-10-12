@@ -11,7 +11,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_man
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_werkzeugleiste.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_liste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Posteingang (§4.3, Variante B zu Issue #134): Werkzeugleiste, links die

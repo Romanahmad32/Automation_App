@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/gerundeter_kasten.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Erklärt, was die drei Knöpfe im Kopf dieser Seite miteinander zu tun haben.
 ///

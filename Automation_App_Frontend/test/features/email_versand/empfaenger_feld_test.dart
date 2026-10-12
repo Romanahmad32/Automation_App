@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/presentation/widgets/email_empfaenger_feld.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Eine uebernommene Adresse laesst sich zum Berichtigen wieder ins Feld holen

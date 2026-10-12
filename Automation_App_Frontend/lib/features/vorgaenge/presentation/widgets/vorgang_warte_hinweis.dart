@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_wartezeit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hebt Vorgänge hervor, die ungewöhnlich lange auf die Zentralruf-Antwort
 /// warten: sichtbar nur im Status „Angefragt" ab [warteHinweisAbTagen] Tagen

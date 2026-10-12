@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Was die Datei bewirkt, in Zahlen — und der Knopf, der es wahr macht.

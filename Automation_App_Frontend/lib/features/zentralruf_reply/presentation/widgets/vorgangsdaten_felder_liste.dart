@@ -1,7 +1,7 @@
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/versicherer_ergaenzung.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_feld.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die editierbaren Textfelder des Vorgangsdaten-Formulars (aus
 /// `VorgangsdatenForm` ausgelagert). Markiert je Feld die Datenlage:

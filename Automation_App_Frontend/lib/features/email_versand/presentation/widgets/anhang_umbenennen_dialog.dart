@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Benennt einen Anhang für die Mail um (§4.7). Die Datei in der Akte behält
 /// ihren Namen — geändert wird nur, was beim Empfänger ankommt.

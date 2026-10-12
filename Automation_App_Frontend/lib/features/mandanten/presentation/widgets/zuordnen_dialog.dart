@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/entity_search_bar.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_suche_cubit/mandanten_suche_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/zuordnen_ergebnis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Dialog: gefundenen Ordner einem bestehenden Mandanten zuordnen oder einen

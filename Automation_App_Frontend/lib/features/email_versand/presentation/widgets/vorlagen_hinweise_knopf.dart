@@ -1,7 +1,7 @@
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/vorlagen_pruefung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/vorlagen_hinweise.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der „?"-Knopf oben im Vorlageneditor: Er hält die Mängel- und
 /// Beugungsauskunft (`VorlagenHinweise`) in einem Aufklappfenster bereit

@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_status_darstellung.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Kompakte Fassung von `MailboxStatusBanner` für die Kopfzeile
 /// (`SeitenAppBar.aktionen`, Issue #134): Icon + [StatusPille] statt eines

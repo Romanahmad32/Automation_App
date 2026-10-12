@@ -2,7 +2,7 @@ import 'package:automation_app/core/aktualisierung/aktualisierung_builder.dart';
 import 'package:automation_app/core/general_widgets/drawer/sidebar_theme_toggle.dart';
 import 'package:automation_app/core/general_widgets/drawer/sidebar_update_hinweis.dart';
 import 'package:automation_app/core/general_widgets/version_badge.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Fuß der Seitenleiste: Update-Hinweis, Helligkeitsschalter und die laufende
 /// Version.

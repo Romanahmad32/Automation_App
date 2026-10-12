@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_ansicht.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Zeigt in den Einstellungen, wie die Signatur unter der Mail steht (§4.7):
 /// der Text aus dem Feld darüber und darunter die Bilder der übernommenen

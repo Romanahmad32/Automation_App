@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_anbieter_voreinstellung.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_ssl_switch.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Servereinstellungen für den Weg „IMAP mit Passwort". Beim Outlook-Weg

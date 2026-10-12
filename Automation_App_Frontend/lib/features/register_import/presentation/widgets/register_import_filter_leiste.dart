@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/register_import/presentation/blocs/register_import_cubit/register_import_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Kopfzeile über den Jahrgängen: der Ausschnitt und „Alle übernehmen".

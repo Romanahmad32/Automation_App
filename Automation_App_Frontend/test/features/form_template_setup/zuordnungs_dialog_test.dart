@@ -1,5 +1,5 @@
 import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Zuordnung von Feldname und Platzhalter (#36): Wer keinen Partner hat,

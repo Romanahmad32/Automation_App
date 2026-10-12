@@ -1,6 +1,6 @@
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_hineinholen_angebot.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Wählt eine Word-Datei und liefert den Pfad, unter dem sie verknüpft werden
 /// soll — `null`, wenn nichts gewählt wurde.

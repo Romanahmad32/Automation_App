@@ -2,7 +2,7 @@ import 'package:automation_app/features/email_versand/domain/entities/mail_vorla
 import 'package:automation_app/features/email_versand/domain/entities/platzhalter_befund.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/email_entwurf_cubit/email_entwurf_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/vorlagentext_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// **Vorlage und Ergebnis nebeneinander** (§4.7, geändert am 02.09.2026).

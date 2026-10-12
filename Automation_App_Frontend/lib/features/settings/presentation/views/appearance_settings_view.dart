@@ -3,7 +3,7 @@ import 'package:automation_app/features/settings/presentation/widgets/einstellun
 import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/domain/theme_preferences.dart';
 import 'package:automation_app/core/theme/presentation/bloc/theme_bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Einstellungen zur Darstellung: Auswahl der Theme-Familie (Kanzlei-Design /

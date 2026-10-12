@@ -8,7 +8,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/email
 import 'package:automation_app/features/email_versand/presentation/widgets/email_empfaenger_abschnitt.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_inhalt_abschnitt.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Das Formular des Versanddialogs — **drei benannte Abschnitte** statt

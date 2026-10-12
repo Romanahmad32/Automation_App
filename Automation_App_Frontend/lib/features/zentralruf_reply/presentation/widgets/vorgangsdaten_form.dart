@@ -12,7 +12,7 @@ import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vo
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_feld.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_felder_liste.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/zwischennachricht_hinweis_card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Editierbares Formular mit den ausgewerteten Vorgangsdaten: der Anwalt kann
 /// fehlende oder falsch erkannte Angaben direkt korrigieren, bevor sie in den

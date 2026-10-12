@@ -6,7 +6,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_hervorhebung_signal.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgaenge_liste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_verwaltung_tile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Sprung aus dem Register in die Vorgangsverwaltung (§6.2).

@@ -4,7 +4,7 @@ import 'package:automation_app/features/dashboard/presentation/widgets/dashboard
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_leer_hinweis.dart';
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_vollmacht_hinweis.dart';
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_vorgang_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Karte „Offene Vorgänge": die dringendsten noch nicht abgeschlossenen
 /// Vorgänge in der Reihenfolge, in der der Anwalt sie anfassen sollte

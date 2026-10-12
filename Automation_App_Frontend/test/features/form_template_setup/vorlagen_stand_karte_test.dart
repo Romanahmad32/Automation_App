@@ -1,6 +1,6 @@
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_stand.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_stand_karte.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// „Stand dieser Vorlage" (#104, Stufe 2): die eine Stelle, an der steht, was

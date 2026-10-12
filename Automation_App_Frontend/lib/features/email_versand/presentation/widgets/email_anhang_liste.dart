@@ -4,7 +4,7 @@ import 'package:automation_app/features/email_versand/presentation/utils/anhang_
 import 'package:automation_app/features/email_versand/presentation/widgets/email_anhang_chip.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/outlook_hinweis_zeile.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Anhänge der Mail (§4.7): Das Anspruchsschreiben ist vorausgewählt,
 /// weitere Dateien aus dem Fall-Ordner lassen sich anklicken (Fotos, Gutachten,

@@ -1,7 +1,7 @@
 import 'package:automation_app/features/settings/domain/services/synchronisierter_ordner.dart';
 import 'package:automation_app/features/settings/presentation/widgets/ordner_auswahl_feld.dart';
 import 'package:automation_app/features/settings/presentation/widgets/synchronisierter_ordner_vorschlag.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Ordner, in den die App beim Beenden selbsttätig eine Sicherung legt
 /// (§7.2) — und aus dem der zweite Arbeitsplatz den Stand beim Öffnen anbietet.

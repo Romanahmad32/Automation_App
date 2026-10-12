@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_b
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagenname_vorschlag.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_status_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine der beiden Wahlflächen der Auswahlseite („Womit fängt diese Vorlage
 /// an?", `VorlagenLeerzustand`, #104): Titel, Erklärung — und **ihr Zustand**.

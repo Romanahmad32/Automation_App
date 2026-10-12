@@ -6,7 +6,7 @@ import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.d
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 import 'package:automation_app/features/backup/presentation/utils/sicherungs_zeitpunkt.dart';
 import 'package:automation_app/features/backup/presentation/widgets/uebergabe_uebernahme_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Zeigt im Reiter „Datensicherung", wie es um die automatische Sicherung steht
 /// (§7.2) — und bietet die Übernahme auch außerhalb des Starts an.

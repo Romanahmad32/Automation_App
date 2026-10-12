@@ -7,7 +7,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/platz
 import 'package:automation_app/features/email_versand/presentation/widgets/vorlagen_hinweise_knopf.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_vorlage_dialog.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_vorlage_vorschau.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Vorlageneditor (§4.7, Issue #107): Er zeigt, **was aus der Vorlage

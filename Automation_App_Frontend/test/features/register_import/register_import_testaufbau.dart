@@ -9,7 +9,7 @@ import 'package:automation_app/features/register_import/domain/usecases/importie
 import 'package:automation_app/features/register_import/domain/usecases/lies_register_import_datei.dart';
 import 'package:automation_app/features/register_import/presentation/blocs/register_import_cubit/register_import_cubit.dart';
 import 'package:automation_app/features/register_import/presentation/views/register_import_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Attrappen und Bausteine für die Tests rund um den [RegisterImportCubit].

@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Paket-Historie als Tabelle: Nr. · geholt am · eingelesen · Ordner ·
 /// Zeilen. Nachgebaut nach dem Muster von `RegisterTabelle`

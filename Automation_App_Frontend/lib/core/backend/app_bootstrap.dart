@@ -6,7 +6,7 @@ import 'package:automation_app/core/backend/backend_start_fehler_screen.dart';
 import 'package:automation_app/core/backend/backend_start_screen.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/backup/presentation/widgets/arbeitsplatz_uebergabe_gate.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Startvorgang der Anwendung: erst den lokalen Dienst, dann die Dependency
 /// Injection, dann die Arbeitsplatz-Übergabe, dann die Oberfläche.

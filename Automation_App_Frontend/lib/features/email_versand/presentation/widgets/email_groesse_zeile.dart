@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Wie schwer die Nachricht ist und wie viel das Postfach durchlässt (§4.7).
 ///

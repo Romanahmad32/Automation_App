@@ -8,7 +8,7 @@ import 'package:automation_app/features/settings/domain/entities/kanzlei_setting
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:automation_app/features/settings/presentation/widgets/ordner_sektion.dart';
 import 'package:automation_app/features/settings/presentation/widgets/register_spiegel_felder.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Eigentliches Eingabeformular der Kanzlei-/Anfragerdaten. Findet die

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Knopf, der einem Bestand einen Eintrag hinzufügt — linksbündig unter
 /// dem, was schon da ist.

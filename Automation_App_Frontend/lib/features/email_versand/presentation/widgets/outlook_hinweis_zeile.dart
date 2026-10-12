@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/outlook_stand.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Steht dort, wo sonst ein Outlook-Knopf stünde, und sagt, warum es ihn hier
 /// nicht gibt (§4.7).

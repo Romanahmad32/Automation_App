@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/beugung.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Was die Beugungen einer Vorlage ergeben — im Editor, während geschrieben
 /// wird (§4.7, ergänzt am 02.09.2026).

@@ -14,7 +14,7 @@ import 'package:automation_app/features/settings/domain/entities/kanzlei_setting
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_signatur_sektion.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_vorgemerkt_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';

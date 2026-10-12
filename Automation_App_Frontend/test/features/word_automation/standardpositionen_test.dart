@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_listing_form.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Womit eine Schadensaufstellung anfängt (§4.4).

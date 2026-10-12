@@ -6,7 +6,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die im Simulations-Menü wählbaren Aktionen — jeder Schritt des
 /// Vorgangs-Lebenszyklus lässt sich damit einzeln auslösen.

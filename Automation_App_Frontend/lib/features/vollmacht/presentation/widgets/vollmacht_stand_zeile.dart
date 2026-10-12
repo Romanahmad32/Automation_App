@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zeile in der Vorgangskachel, die sagt, ob die Vollmacht gedruckt ist
 /// (§4.11) — im Stil des Hinweises auf fehlende Daten darunter.

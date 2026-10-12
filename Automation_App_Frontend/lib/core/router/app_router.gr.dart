@@ -50,7 +50,7 @@ import 'package:automation_app/features/vorgang_starten/presentation/pages/vorga
     as _i16;
 import 'package:automation_app/features/word_automation/presentation/pages/word_automation_page.dart'
     as _i17;
-import 'package:flutter/material.dart' as _i19;
+import 'package:material_ui/material_ui.dart' as _i19;
 
 /// generated route for
 /// [_i1.AppShellPage]

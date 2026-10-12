@@ -12,7 +12,7 @@ import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_word_leiste.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der eine Dialog für die Vollmacht zum Vorgang (§4.11) — erreichbar aus

@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_button.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Werkzeugleiste über der Posteingangsliste (§4.3): die beiden
 /// Handlungen, die nichts mit einer ausgewählten Nachricht zu tun haben —

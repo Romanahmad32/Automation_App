@@ -4,7 +4,7 @@ import 'package:automation_app/features/word_automation/presentation/widgets/abl
 import 'package:automation_app/features/word_automation/presentation/widgets/akte_auswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/mandant_auswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/unterordner_auswahl.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eingabeformular der Akten-Ablage: Mandant, Akte und Unterordner (Fall)
 /// wählen/anlegen und das Dokument ablegen. Hält selbst keinen Zustand; die

@@ -7,7 +7,7 @@ import 'package:automation_app/features/settings/presentation/blocs/kanzlei_sett
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
 import 'package:automation_app/features/vollmacht/domain/usecases/lade_vollmacht_vorlagen.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_vorlage_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// „Vollmacht-Vorlagen" in den Einstellungen (§4.11): je Art der feste

@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/anredebaustein.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Anlegen und Ändern eines Anredeanfangs (§4.7, §7.1).
 ///

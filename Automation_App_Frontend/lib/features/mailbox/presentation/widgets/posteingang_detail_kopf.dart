@@ -1,6 +1,6 @@
 import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_datetime_format.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Kopf der Detailansicht (Issue #134): Betreff als Überschrift, darunter
 /// „Von"/„An"/„Cc"/„Datum" in einer Beschriftungs- und einer Wertspalte.

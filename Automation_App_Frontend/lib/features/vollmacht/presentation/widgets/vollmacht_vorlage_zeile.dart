@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vorlagen_stand.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile Klartext zu einer Vollmachtsvorlage: Art, Dateiname und ob die
 /// App sie findet — nach dem Muster der `OrdnerZustandZeile`.

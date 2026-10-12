@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart'
 import 'package:automation_app/features/vorgaenge/domain/entities/rechtsgebiet.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_bearbeiten_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../sachgebiete/sachgebiet_test_katalog.dart';

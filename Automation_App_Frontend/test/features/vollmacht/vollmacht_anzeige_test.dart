@@ -10,7 +10,7 @@ import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_stand_zeile.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_vorlage_zeile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

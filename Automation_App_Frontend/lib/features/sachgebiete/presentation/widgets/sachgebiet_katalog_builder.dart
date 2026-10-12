@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/sachgebiete/domain/entities/sachgebiet.dart';
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_cubit.dart';
 import 'package:automation_app/features/sachgebiete/presentation/blocs/sachgebiet_katalog_stand.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Baut ein Auswahl-Widget aus dem geladenen Sachgebietskatalog — und setzt

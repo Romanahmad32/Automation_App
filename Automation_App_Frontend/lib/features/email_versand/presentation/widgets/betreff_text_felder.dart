@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/presentation/utils/platzhalter_einfuege_ziel.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Betreff und Nachrichtentext als **ein** Baustein — der Versanddialog und der
 /// Vorlageneditor tragen dieselben zwei Felder (§4.7).

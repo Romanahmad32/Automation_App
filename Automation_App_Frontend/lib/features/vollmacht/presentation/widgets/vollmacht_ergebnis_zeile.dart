@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile der Ergebnisansicht des Vollmacht-Dialogs: ein Häkchen oder ein
 /// Kreuz und was passiert ist, wahlweise mit einem Knopf zum Nachsteuern.

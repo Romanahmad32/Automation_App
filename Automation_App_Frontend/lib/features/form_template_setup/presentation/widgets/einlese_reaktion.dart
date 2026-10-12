@@ -5,7 +5,7 @@ import 'package:automation_app/features/form_template_setup/domain/services/vorl
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/abgleich_dialog.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Rückfrage nach einem Dateiwechsel — [zeigeAbgleichDialog] in
 /// Funktionsform, damit [EinleseReaktion] ohne echten Dialog prüfbar bleibt.

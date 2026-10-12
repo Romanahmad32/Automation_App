@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:automation_app/core/general_widgets/form/reactive_text_eingabe.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -31,7 +32,7 @@ class GeneralTextField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ReactiveTextField<T>(
+    return ReactiveTextEingabe<T>(
       formControlName: formControlName,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hinweis auf der Registerseite, solange sie überhaupt keine Zeile hat —
 /// weder einen Vorgang der App noch eine übernommene Zeile aus dem

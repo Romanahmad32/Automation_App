@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Reicht den `BuildContext` der Testseite nach außen, damit ein Test

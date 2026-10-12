@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Umschalter „Formatiert | Text" über dem Mailtext (Issue #134) — ein
 /// `SegmentedButton`, weil es zwei Ansichten **derselben** Nachricht sind,

@@ -7,7 +7,7 @@ import 'package:automation_app/features/mandanten/presentation/widgets/mandanten
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_sektion_kopf.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/nicht_zugeordnete_sektion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Mandantenliste. Der Zuordnungsstapel steht nur noch als Zähler darüber —

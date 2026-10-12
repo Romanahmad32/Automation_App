@@ -13,7 +13,7 @@ import 'package:automation_app/features/settings/presentation/views/ueber_settin
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_aktionszeile.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/views/standardpositionen_settings_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Einstellungsseite: ein Seitenkopf, darunter sechs Abschnitte, von denen

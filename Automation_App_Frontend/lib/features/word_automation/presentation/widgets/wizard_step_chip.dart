@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Ein Schritt in der Schrittleiste des Wizards: nummerierter Kreis plus
 /// Titel. Erreichbare Schritte sind anklickbar, noch nicht freigeschaltete

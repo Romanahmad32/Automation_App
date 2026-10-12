@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Karte „Referenz": zeigt die (automatisch erzeugte oder manuell bearbeitete)
 /// Referenz-Vorschau. Bei manueller Bearbeitung erlaubt [onReset], wieder auf

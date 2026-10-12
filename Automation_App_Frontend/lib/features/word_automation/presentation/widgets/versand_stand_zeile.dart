@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_eintrag_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Sagt im Abschlussdialog, was die App zu diesem Vorgang schon versendet hat
 /// (§4.7). Der Satz begründet das vorbelegte Häkchen: Ein Kreuz, das ohne

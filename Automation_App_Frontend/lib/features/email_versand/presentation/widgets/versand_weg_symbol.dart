@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das Zeichen vor einem Versandeintrag (§4.8).
 ///

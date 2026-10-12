@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:automation_app/core/general_widgets/rueckmeldung/laufende_rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_inhalt.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_stapel.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hält je [OverlayState] den Stapel der sichtbaren Rückmeldungen: einen
 /// `OverlayEntry`, die laufenden Meldungen mit ihren Timern, das Verdrängen der

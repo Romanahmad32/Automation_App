@@ -2,7 +2,7 @@ import 'package:automation_app/features/email_versand/domain/entities/email_entw
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/mail_vorlage_beispiel.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die mitlaufende Vorschau im Vorlageneditor: die Vorlage, **mit
 /// Beispieldaten gefüllt** (§4.7, ergänzt am 06.09.2026).

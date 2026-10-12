@@ -5,7 +5,7 @@ import 'package:automation_app/features/email_versand/domain/entities/grussforme
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_state.dart';
 import 'package:automation_app/features/settings/presentation/widgets/grussformel_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Verwaltung der Zusatzgrüße (§4.7, §7.1) — ein Reiter des gemeinsamen

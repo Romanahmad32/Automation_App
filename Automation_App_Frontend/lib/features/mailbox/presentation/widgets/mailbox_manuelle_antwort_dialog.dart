@@ -3,7 +3,7 @@ import 'package:automation_app/features/zentralruf_reply/domain/entities/zentral
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/manual_reply_input.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_form.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der manuelle Weg (§4.3): eine Zentralruf-Antwortmail einfügen oder als

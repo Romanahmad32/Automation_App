@@ -1,5 +1,5 @@
 import 'package:automation_app/features/settings/presentation/widgets/ordner_auswahl_feld.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Auswahl des Akten-Stammordners (§6.1, §7.1). Der eigene Name bleibt: Die
 /// Sache heißt in der Kanzlei so, und `OrdnerAuswahlFeld` trägt nur die

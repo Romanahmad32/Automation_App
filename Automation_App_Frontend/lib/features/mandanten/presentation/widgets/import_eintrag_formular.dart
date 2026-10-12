@@ -3,7 +3,7 @@ import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/anrede_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_ordner_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/kennzeichen_editor.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Die Felder einer Importzeile — dieselben Stammdaten wie im Mandantenformular

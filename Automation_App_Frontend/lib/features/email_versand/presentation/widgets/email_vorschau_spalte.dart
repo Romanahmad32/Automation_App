@@ -1,7 +1,7 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_entwurf.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Vorschau als ständige Seitenspalte des Versanddialogs (§4.7) — sie
 /// schreibt beim Tippen mit.

@@ -3,7 +3,7 @@ import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart
 import 'package:automation_app/features/mailbox/domain/entities/vorgangsbezug.dart';
 import 'package:automation_app/features/mailbox/presentation/utils/posteingang_absender.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_zeilen_chips.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile der Posteingangsliste: Absender (fett bei ungelesen, mit einem
 /// Punkt links), Betreff, Chips — rechts nur die Uhrzeit, das Datum steht im

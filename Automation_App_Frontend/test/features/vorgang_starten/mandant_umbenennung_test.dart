@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_uebersicht_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Karte lässt sich einen Mandanten aus dem Register geben, man tippt einen

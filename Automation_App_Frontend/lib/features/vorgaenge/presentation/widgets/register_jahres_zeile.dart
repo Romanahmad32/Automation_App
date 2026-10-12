@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die fett gesetzte Jahresüberschrift, die in der Registertabelle vor jedem
 /// Jahrgang steht — genau wie im Registerbuch der Kanzlei und in der

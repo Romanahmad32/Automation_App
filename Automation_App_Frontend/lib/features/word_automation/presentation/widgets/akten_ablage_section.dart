@@ -18,7 +18,7 @@ import 'package:automation_app/features/word_automation/presentation/widgets/abl
 import 'package:automation_app/features/word_automation/presentation/widgets/akten_ablage_formular.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/kein_stammordner_hinweis.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/neuer_mandant_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Primärer Weg im Speicherschritt: das bestätigte Dokument in die Akte des

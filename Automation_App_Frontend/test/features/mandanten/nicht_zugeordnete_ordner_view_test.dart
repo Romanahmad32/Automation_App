@@ -3,7 +3,7 @@ import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_o
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
 import 'package:automation_app/features/mandanten/presentation/views/nicht_zugeordnete_ordner_view.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/nicht_zugeordneter_ordner_kachel.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

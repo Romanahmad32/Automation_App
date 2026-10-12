@@ -5,7 +5,7 @@ import 'package:automation_app/core/general_classes/usecases/use_case.dart';
 import 'package:automation_app/features/settings/domain/entities/ordner_zustand.dart';
 import 'package:automation_app/features/settings/presentation/blocs/kanzlei_settings_bloc/kanzlei_settings_bloc.dart';
 import 'package:automation_app/features/settings/presentation/widgets/ordner_zustand_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Fuß der Ordner-Sektion: je Ordner eine Zeile, was der Dienst

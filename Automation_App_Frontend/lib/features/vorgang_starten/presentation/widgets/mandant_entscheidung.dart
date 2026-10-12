@@ -3,7 +3,7 @@ import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/blocs/vorgang_starten_daten.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_uebersicht_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Was beim Speichern des Vorgangs mit dem Mandanten geschehen soll — das
 /// Ergebnis der Übersichts-Rückfrage (§1.3), fertig für `SpeichereVorgangEvent`.

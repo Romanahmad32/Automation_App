@@ -3,7 +3,7 @@ import 'package:automation_app/features/word_automation/domain/repositories/stan
 import 'package:automation_app/features/word_automation/presentation/blocs/standardpositionen_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_editor.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_entwurf.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mandanten/domain/entities/akte.dart';
 import 'package:automation_app/features/mandanten/domain/entities/fall.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/akten_ordner_oeffnen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Stellt eine Akte (Ordner) eines Mandanten mit ihren Fällen dar; pro Fall die
 /// Anzahl Dokumente in Klammern.

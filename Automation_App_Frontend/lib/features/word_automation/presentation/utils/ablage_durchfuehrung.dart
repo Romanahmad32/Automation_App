@@ -6,7 +6,7 @@ import 'package:automation_app/features/mandanten/presentation/blocs/ablage_cubi
 import 'package:automation_app/features/word_automation/domain/entities/ablage_format.dart';
 import 'package:automation_app/features/word_automation/domain/usecases/erzeuge_pdf_fassung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ablage_konflikt_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Stößt die Ablage in der Akte an (§6.1): stellt zum gewählten [format] die

@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Zeigt das **Zeichen** eines Vorgangs — „216/26 C03", nicht die volle
 /// Referenz „216/26 C03_EU-FE 1111".

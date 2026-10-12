@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Ein beschriftetes Textfeld im Bearbeiten-Dialog — eigenständig, damit kein
 /// privates Hilfs-Widget nötig ist und es wiederverwendbar bleibt.

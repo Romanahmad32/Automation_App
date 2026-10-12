@@ -1,4 +1,4 @@
-import "package:flutter/material.dart";
+import "package:material_ui/material_ui.dart";
 
 /// Zusatzfarben außerhalb des `ColorScheme` (aktuell ungenutzt; ausgelagert aus
 /// `theme.dart`, damit der Theme-Builder dort kurz bleibt).

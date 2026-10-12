@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/platzhalter_befund.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile der Gegenüberstellung: links die Vorlage, wie sie hinterlegt ist,
 /// rechts das Ergebnis (§4.7).

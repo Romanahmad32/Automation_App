@@ -1,5 +1,5 @@
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_chips.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// App-eigene Platzhalter (#35 Teil 1) haben keinen klickbaren Chip: Ein Klick

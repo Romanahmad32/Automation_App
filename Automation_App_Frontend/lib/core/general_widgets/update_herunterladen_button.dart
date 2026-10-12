@@ -1,6 +1,6 @@
 import 'package:automation_app/core/aktualisierung/neue_version.dart';
 import 'package:automation_app/core/aktualisierung/release_seite_oeffnen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Öffnet die Release-Seite, von der die Setup-Datei geladen wird.
 ///

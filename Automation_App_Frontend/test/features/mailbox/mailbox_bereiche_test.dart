@@ -5,7 +5,7 @@ import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_inbox
 import 'package:automation_app/features/mailbox/presentation/blocs/posteingang_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/views/mailbox_bereiche.dart';
 import 'package:automation_app/features/mailbox/presentation/views/posteingang_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zelle der Schadensaufstellungs-Vorschau im Dokument-Look: kompaktes
 /// Padding, optional rechtsbündig (für Beträge) und mit eigenem Textstil.

@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/settings/presentation/widgets/anredebausteine_sektion.dart';
 import 'package:automation_app/features/settings/presentation/widgets/grussformeln_sektion.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_vorlagen_sektion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die drei Bestände, aus denen eine Mail entsteht — **ein** Werkzeugkasten
 /// unter gemeinsamen Reitern: Textvorlagen, Anreden, Zusatzgrüße (§4.7, §7.1,

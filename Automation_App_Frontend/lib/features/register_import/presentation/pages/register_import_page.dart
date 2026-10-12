@@ -3,7 +3,7 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/seiten_app_bar.dart';
 import 'package:automation_app/features/register_import/presentation/blocs/register_import_cubit/register_import_cubit.dart';
 import 'package:automation_app/features/register_import/presentation/views/register_import_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Eigene Seite für die Übernahme der Registerhistorie (§6.2). Sie wird aus

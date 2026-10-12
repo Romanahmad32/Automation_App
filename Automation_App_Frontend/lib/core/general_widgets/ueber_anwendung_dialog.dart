@@ -1,7 +1,7 @@
 import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart';
 import 'package:automation_app/core/general_widgets/anwendungs_info.dart';
 import 'package:automation_app/core/general_widgets/update_herunterladen_button.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// „Über diese Anwendung" — der Dialog hinter dem Versionsschild und dem
 /// Update-Hinweis in der Seitenleiste.

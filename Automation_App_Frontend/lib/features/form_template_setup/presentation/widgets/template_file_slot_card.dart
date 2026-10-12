@@ -2,7 +2,7 @@ import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/platzhalter_status_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Karte für eine der beiden Word-Dateien (ohne/mit Auflistung): Dateiauswahl,

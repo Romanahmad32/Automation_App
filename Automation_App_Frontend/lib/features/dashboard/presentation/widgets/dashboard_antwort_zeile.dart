@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_datetime_format.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/zwischennachricht_badge.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile der Karte „Unbearbeitete Antworten": der noch nicht quittierte
 /// Postfach-Treffer mit Referenz, Versicherer und Eingangszeit. Die Symbolik

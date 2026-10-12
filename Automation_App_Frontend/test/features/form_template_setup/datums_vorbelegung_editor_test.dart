@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/datums_vorbelegung_editor.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/ganzzahl_feld_klein.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Einsteller der Datums-Vorbelegung (§5.3). Geprüft wird, was der Anwalt

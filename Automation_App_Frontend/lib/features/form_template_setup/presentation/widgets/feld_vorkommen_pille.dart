@@ -1,6 +1,6 @@
 import 'package:automation_app/features/form_template_setup/domain/services/feld_vorkommen.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/auflistung_badge.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das Symbol je Fall aus [FeldVorkommen] — reine Präsentation, das
 /// Domain-Enum bleibt frei von Flutter und kennt keine `IconData`.

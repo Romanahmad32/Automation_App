@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine stille Hinweiszeile im Vollmacht-Dialog: Symbol, umbrechender Text,
 /// wahlweise Knöpfe darunter — in der Tertiärfarbe, weil nichts davon ein

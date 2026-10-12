@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_aenderung.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_umbenennung_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Zeigt vor dem Speichern eine kurze Übersicht, was am Mandanten angelegt
 /// ([istNeu] = true) oder geändert würde, und lässt den Nutzer bestätigen oder

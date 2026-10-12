@@ -1,6 +1,6 @@
 import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/domain/theme_preferences.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Darstellungs-Einstellungen liegen als JSON im Anwendungsordner und

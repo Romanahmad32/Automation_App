@@ -4,7 +4,7 @@ import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_n
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_status_chip.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_warte_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/zeichen_text.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile der Karte „Offene Vorgänge": Zeichen, Parteien und Status, dazu
 /// die bestehenden Hinweise auf lange Wartezeit bzw. fehlende Daten und der

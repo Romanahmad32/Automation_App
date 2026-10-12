@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_aktion.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_art.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Alles, was eine einzelne Rückmeldung ausmacht: Text, Art, optionale Aktion
 /// und eine überschriebene Anzeigedauer.

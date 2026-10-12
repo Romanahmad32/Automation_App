@@ -4,7 +4,7 @@ import 'package:automation_app/features/word_automation/presentation/blocs/edite
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/pdf_preview_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Schritt 3: Das ausgefüllte Dokument als originalgetreues PDF prüfen.

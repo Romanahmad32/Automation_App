@@ -1,7 +1,7 @@
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_datetime_format.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Statuszeile: verbunden / inaktiv / Fehler, plus letzter Empfang.
 class MailboxStatusBanner extends StatelessWidget {

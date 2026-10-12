@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_versand_bereitschaft.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_hinweis_kasten.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Sagt oben im Dialog, warum **nicht** gesendet werden kann (§4.7). Steht
 /// bewusst über dem Formular: Wer erst nach dem Tippen erfährt, dass die

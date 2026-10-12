@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hinweis-Box auf dem Mandanten-Detailformular, die anzeigt, welcher Ordner
 /// dem neu angelegten Mandanten zugeordnet wird (aus der manuellen Zuordnung

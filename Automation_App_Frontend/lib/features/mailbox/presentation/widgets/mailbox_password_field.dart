@@ -1,5 +1,5 @@
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Passwortfeld für den IMAP-Zugang: obscured; ist bereits eines gespeichert,
 /// darf es leer bleiben (dann wird das gespeicherte beibehalten).

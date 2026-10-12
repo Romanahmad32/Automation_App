@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.da
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_persistenz_fehler_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Macht fehlgeschlagene Vorgangs-Persistenz app-weit sichtbar (§7.2): zeigt

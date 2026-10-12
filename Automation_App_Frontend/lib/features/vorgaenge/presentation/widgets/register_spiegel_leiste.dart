@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Zustand des Register-Spiegels unter der Tabelle (§6.2): wann zuletzt
 /// geschrieben wurde und wohin.

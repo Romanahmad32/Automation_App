@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// [IndexedStack], der ein Kind erst baut, wenn es zum ersten Mal gezeigt
 /// wird — und es danach am Leben lässt.

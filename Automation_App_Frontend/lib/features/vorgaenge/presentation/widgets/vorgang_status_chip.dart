@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Kleiner farbiger Chip, der den [VorgangStatus] anzeigt. Die Farbe spiegelt
 /// den Fortschritt im Lebenszyklus wider (angefragt → versendet).

@@ -10,7 +10,7 @@ import 'package:automation_app/features/backup/presentation/utils/sicherungs_zei
 import 'package:automation_app/features/backup/presentation/widgets/synchronisations_details.dart';
 import 'package:automation_app/features/backup/presentation/widgets/synchronisations_bereich.dart';
 import 'package:automation_app/features/backup/presentation/widgets/synchronisations_stand_anzeige.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Prüft in der Shell weiter; die Bedienung erscheint in den Einstellungen.
 class SynchronisationsLeiste extends StatefulWidget {

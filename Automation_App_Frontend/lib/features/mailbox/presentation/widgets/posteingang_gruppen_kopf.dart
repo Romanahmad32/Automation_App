@@ -1,5 +1,5 @@
 import 'package:automation_app/features/mailbox/presentation/utils/posteingang_tagesgruppen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Gliederungszeile vor jeder Tagesgruppe der Posteingangsliste — getönte
 /// Fläche und Versalien, wie die Jahreszeile im Register

@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akten_auswahl_eintrag.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile in „Akte zuordnen": der Ordner, und darunter, warum er an dieser
 /// Stelle steht. Ein fremd zugeordneter Ordner ist ausgegraut und nicht

@@ -1,5 +1,5 @@
 import 'package:automation_app/features/settings/domain/services/synchronisierter_ordner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Bietet den erkannten synchronisierten Ordner mit einem Klick an. Erscheint

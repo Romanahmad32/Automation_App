@@ -22,7 +22,7 @@ import 'package:automation_app/features/form_template_setup/presentation/widgets
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_stand_bereich.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_aktionen.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_verlassen_wache.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 

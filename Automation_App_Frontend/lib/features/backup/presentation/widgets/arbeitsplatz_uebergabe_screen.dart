@@ -1,7 +1,7 @@
 import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
 import 'package:automation_app/features/backup/presentation/widgets/sicherungs_fehler_karte.dart';
 import 'package:automation_app/features/backup/presentation/widgets/uebergabe_angebot_karte.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Bildschirm, der beim Start vor der Oberfläche steht, wenn es etwas zu
 /// entscheiden oder zu melden gibt (§7.2).

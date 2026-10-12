@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/dateigroesse_format.dart';
 import 'package:automation_app/features/mailbox/domain/entities/posteingang_anhang.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_anhang_aktionen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile im Anhangsverzeichnis der Detailansicht (Issue #134): Symbol
 /// nach Medientyp, Dateiname, menschliche Größe und drei Handgriffe als

@@ -1,5 +1,5 @@
 import 'package:automation_app/features/form_template_setup/presentation/widgets/felder_spalten.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Tabellenkopf über den Feldzeilen des Vorlageneditors.
 ///

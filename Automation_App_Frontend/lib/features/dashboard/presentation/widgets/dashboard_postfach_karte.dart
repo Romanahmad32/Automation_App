@@ -8,7 +8,7 @@ import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.d
 import 'package:automation_app/features/mailbox/domain/entities/received_reply.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_auswahl_signal.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_status_banner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Karte „Unbearbeitete Antworten": die vom Postfach-Monitor erfassten, noch
 /// nicht quittierten Zentralruf-Antworten. Oben der Verbindungsstatus der

@@ -9,7 +9,7 @@ import 'package:automation_app/features/mailbox/presentation/pages/mailbox_inbox
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_status_pille.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_zeile.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/blocs/zentralruf_reply_bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

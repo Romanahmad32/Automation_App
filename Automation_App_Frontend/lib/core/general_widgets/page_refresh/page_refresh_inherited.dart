@@ -1,5 +1,5 @@
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Trägt den [PageRefreshController] durch den Teilbaum, den
 /// `PageRefreshScope` aufspannt.

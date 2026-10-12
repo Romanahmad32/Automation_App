@@ -5,7 +5,7 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 import 'package:automation_app/features/backup/presentation/widgets/arbeitsplatz_uebergabe_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Steht zwischen „Dienst bereit" und der Anwendung und fragt genau einmal
 /// nach, wenn am anderen Arbeitsplatz ein neuerer Stand liegt (§7.2).

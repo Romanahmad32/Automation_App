@@ -1,7 +1,7 @@
 import 'package:automation_app/features/form_template_setup/domain/entities/form_template.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_row.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_table_layout.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Flex-basierte Tabelle mit sortierbaren Spaltenkoepfen. Bewusst kein
 /// [DataTable]: dessen Spalten lassen sich nicht flexibel auf die volle Breite

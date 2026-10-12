@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/pdf_dokument_ansicht.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/pdf_preview_bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Zeigt den Zustand eines [PdfPreviewBloc] an: Hinweis, Spinner,

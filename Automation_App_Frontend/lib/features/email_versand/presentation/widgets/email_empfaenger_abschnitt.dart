@@ -3,7 +3,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/email_e
 import 'package:automation_app/features/email_versand/presentation/widgets/email_empfaenger_feld.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_abschnitt.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/vorgang_auswahl.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der erste Abschnitt des Versandformulars: **Wer bekommt die Mail** (§4.7).

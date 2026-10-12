@@ -1,5 +1,5 @@
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die sieben Felder, die an einer historischen Registerzeile geändert werden
 /// dürfen (§6.2) — dieselben, die auch der Dienst später über

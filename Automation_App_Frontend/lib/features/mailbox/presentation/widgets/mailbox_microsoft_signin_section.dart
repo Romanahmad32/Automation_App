@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/mailbox_config_bloc/mailbox_config_bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Outlook-Weg: statt App-Passwort eine einmalige Microsoft-Anmeldung im

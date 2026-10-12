@@ -1,5 +1,5 @@
 import 'package:automation_app/features/mailbox/presentation/blocs/posteingang_filter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Filterreihe über der Posteingangsliste — vier `ChoiceChip`s, genau
 /// einer gilt (`auswahl_themes.dart`, Issue #134). Das Häkchen der Auswahl

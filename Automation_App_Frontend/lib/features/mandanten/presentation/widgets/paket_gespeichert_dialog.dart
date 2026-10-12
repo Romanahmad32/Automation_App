@@ -1,6 +1,6 @@
 import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:automation_app/features/mandanten/domain/entities/arbeitspaket.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 /// Zeigt nach „Arbeitspaket holen", was der Anwalt jetzt in der Hand hat.

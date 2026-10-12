@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/register_spiegel_ergebnis.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_spiegel_leiste.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// §6.2 „Word sofort, PDF nachgezogen": Solange eine PDF-Fassung noch

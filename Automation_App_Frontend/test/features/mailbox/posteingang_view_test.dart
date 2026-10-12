@@ -11,7 +11,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/posteingang
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_zentralruf_detail.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

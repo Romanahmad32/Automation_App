@@ -1,5 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Herkunftskasten im Bearbeiten-Dialog einer historischen Zeile: die
 /// Freitextzelle, wie sie im Registerbuch steht, die Selbsteinschätzung der

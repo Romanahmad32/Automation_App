@@ -2,7 +2,7 @@ import 'package:automation_app/features/mandanten/domain/entities/import_bericht
 import 'package:automation_app/features/mandanten/domain/entities/mandanten_import_datei.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_aehnlichkeits_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_ordner_auswahl.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'import_testaufbau.dart';
