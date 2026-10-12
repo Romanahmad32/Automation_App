@@ -117,6 +117,23 @@ updates:
       - dependency-name: "meta"
       - dependency-name: "matcher"
       - dependency-name: "test_api"
+      # google_fonts 9 liefert TextTheme aus package:material_ui, die App
+      # importiert package:flutter/material.dart — zwei verschiedene Typen,
+      # #180 war deshalb rot (kanzlei_theme.dart, util.dart). Ein SDK-Sprung
+      # hilft nicht. Aufheben mit der Umstellung auf material_ui (#185).
+      - dependency-name: "google_fonts"
+        update-types: ["version-update:semver-major"]
+      # file_picker 13: saveFile verlangt die Bytes und schreibt sie unter
+      # Windows sofort nach dem Dialog, den Dateifilter reicht es nicht
+      # weiter. Bei Sicherung, Arbeitspaket und manuellem Speichern schreibt
+      # aber die App danach selbst — einen Weg, nur den Zielpfad zu erfragen,
+      # gibt es nicht mehr (upstream vicajilau/flutter_file_picker#2196, "on
+      # hold"). Leere Bytes als Platzhalter kuerzten eine vorhandene Datei auf
+      # 0 Byte, bevor die echte geschrieben ist (#182). Fuer Windows bringt 12
+      # und 13 nichts Fachliches. Aufheben, wenn upstream einen Speicherort-
+      # Dialog ohne Schreiben anbietet.
+      - dependency-name: "file_picker"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "Flutter"
 
