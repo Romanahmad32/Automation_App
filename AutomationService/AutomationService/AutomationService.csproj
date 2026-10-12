@@ -38,13 +38,13 @@
         <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
         <PackageReference Include="Microsoft.Playwright" Version="1.63.0" />
         <PackageReference Include="MimeKit" Version="4.18.1" />
-        <PackageReference Include="Scalar.AspNetCore" Version="2.17.13" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.17.14" />
         <!-- Explizit gepinnt, um die von Microsoft.Data.Sqlite transitiv gezogene
              SQLitePCLRaw 2.1.11 zu übersteuern (Sicherheitslücke GHSA-2m69-gcr7-jv3q
              in der gebündelten e_sqlite3-Native). Nicht entfernen, bis EF Core eine
              gepatchte Version transitiv mitbringt. Mit echter Migration verifiziert. -->
         <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
         <!-- Windows-DPAPI fuer das auf Platte abgelegte Postfach-Passwort
              (PasswortSchutz). Kam bisher nur transitiv ueber MSAL herein —
              explizit, weil der Code den Typ direkt benutzt. -->
