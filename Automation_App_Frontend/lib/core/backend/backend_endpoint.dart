@@ -8,7 +8,21 @@
 /// Konfiguration auf Port 5000.
 abstract final class BackendEndpoint {
   static const String host = 'localhost';
-  static const int port = 5143;
+
+  /// Vorgabe 5143; der E2E-Testmodus läuft auf einem eigenen Port
+  /// (`--dart-define=AUTOMATION_BACKEND_PORT=5243`), damit er nie an den Dienst
+  /// der installierten Anwendung gerät.
+  static const int port = int.fromEnvironment(
+    'AUTOMATION_BACKEND_PORT',
+    defaultValue: 5143,
+  );
+
+  /// Gesetzt per `--dart-define=AUTOMATION_TESTMODUS=true`: die Anwendung
+  /// arbeitet dann nur mit einem Dienst, der selbst „Testmodus“ meldet
+  /// (siehe `BackendLauncher`).
+  static const bool testmodusErwartet = bool.fromEnvironment(
+    'AUTOMATION_TESTMODUS',
+  );
 
   static const String basisUrl = 'http://$host:$port';
   static const String healthUrl = '$basisUrl/health';

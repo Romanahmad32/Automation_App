@@ -10,7 +10,7 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// Ohne Signatur: Die steht im Mailprogramm, und was dort eingerichtet ist,
 /// kann die App von außen nicht wissen. Der Anwalt ergänzt sie vor dem Senden.
 /// </summary>
-public sealed class EntwurfDatei(ILogger<EntwurfDatei> logger)
+public sealed class EntwurfDatei(ILogger<EntwurfDatei> logger) : IEntwurfDatei
 {
     public bool Oeffne(MimeMessage nachricht)
     {

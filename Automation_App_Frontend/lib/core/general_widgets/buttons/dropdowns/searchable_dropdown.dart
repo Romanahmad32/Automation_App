@@ -6,7 +6,16 @@ class SearchableDropdownEntry<T> {
   final T value;
   final String label;
 
-  const SearchableDropdownEntry({required this.value, required this.label});
+  /// Optionaler Key des Eintrags im geöffneten Menü. Er sitzt am Text des
+  /// Eintrags (`DropdownMenuEntry` selbst hat keinen Key) und macht Einträge
+  /// ansprechbar, deren Text auch an anderer Stelle der Oberfläche steht.
+  final Key? schluessel;
+
+  const SearchableDropdownEntry({
+    required this.value,
+    required this.label,
+    this.schluessel,
+  });
 }
 
 /// Durchsuchbares Auswahlfeld im Look der übrigen Formularfelder
@@ -27,8 +36,12 @@ class SearchableDropdown<T> extends StatefulWidget {
   final Widget? leadingIcon;
   final InputBorder border;
 
+  /// Key des Auswahlfelds selbst (nicht des umschließenden Widgets).
+  final Key? feldSchluessel;
+
   const SearchableDropdown({
     super.key,
+    this.feldSchluessel,
     required this.value,
     required this.entries,
     required this.onChanged,
@@ -101,6 +114,7 @@ class _SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
   @override
   Widget build(BuildContext context) {
     return DropdownMenu<T>(
+      key: widget.feldSchluessel,
       controller: _controller,
       focusNode: _focusNode,
       initialSelection: widget.value,
@@ -119,7 +133,13 @@ class _SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
       ),
       dropdownMenuEntries: [
         for (final entry in widget.entries)
-          DropdownMenuEntry<T>(value: entry.value, label: entry.label),
+          DropdownMenuEntry<T>(
+            value: entry.value,
+            label: entry.label,
+            labelWidget: entry.schluessel == null
+                ? null
+                : Text(entry.label, key: entry.schluessel),
+          ),
       ],
       onSelected: (value) {
         widget.onChanged(value);

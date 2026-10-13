@@ -385,6 +385,12 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   fehlender, gesperrter oder kaputter Datei); der Dialog zeigt nur die Felder der gewählten
   Vorlage, Telefon und E-Mail also nur bei Unfallsachen, bei unbekanntem Stand alle. Bußgeldsachen
   haben ein eigenes Feld „Tatdatum", aus dem „wegen" nachzieht wie aus dem Unfalldatum.
+- **Gefahrloser E2E-Testmodus (#168)** — nur lokal, nie in CI oder Paket. Umgebung `E2E` (Port 5243) mit
+  umgelenktem `Datenordner`; `Simulation:Testmodus` ersetzt Zentralruf, Versand, Gesendet-Ablage, Entwurf,
+  Druck und Druckerauskunft durch Attrappen mit Spuren unter `Testmodus/` (`protokoll.jsonl`, `.eml`,
+  `.docx`). `/health` meldet `testmodus`, `BackendLauncher` übernimmt im Testmodus nur solche Dienste,
+  Formularfelder, Listen und Tippflächen tragen Schlüssel bzw. Semantik für Marionette. Skripte:
+  `e2e-start.ps1`, `e2e-testdaten.ps1`; Einzelheiten in `docs/RELEASE.md`. Die Marionette-Sperre bleibt hart.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
@@ -445,3 +451,5 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   „Umgesetzt") stellt den angefangenen Stand jetzt ohne Nachfrage still wieder her. Nicht gebaut ist
   der im Issue nur als Spielraum genannte nächste Schritt: Beim ersten Öffnen den Vorgang mit dem
   **jüngsten** angefangenen Stand vorauszuwählen, statt wie bisher den mit der jüngsten Antwort.
+- **integration_test-Suite für die E2E-Abnahme (#184)** — baut auf dem Testmodus (#168) auf: 3 bis 5
+  Durchläufe, weder in `check.ps1` noch in der CI, vor dem Release per Skript gestartet.

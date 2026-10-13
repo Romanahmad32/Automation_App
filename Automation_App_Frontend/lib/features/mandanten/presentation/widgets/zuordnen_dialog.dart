@@ -13,6 +13,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// werden die ersten Treffer; steht die Zahl darüber höher, ist Weitersuchen
 /// der Weg und nicht Scrollen.
 class ZuordnenDialog extends StatefulWidget {
+  /// Key des Suchfelds „Mandant suchen …“.
+  static const Key sucheSchluessel = ValueKey('zuordnen-suche');
+
   final String ordnername;
 
   const ZuordnenDialog({super.key, required this.ordnername});
@@ -55,6 +58,7 @@ class _ZuordnenDialogState extends State<ZuordnenDialog> {
             ),
             const SizedBox(height: 8),
             EntitySearchBar(
+              feldSchluessel: ZuordnenDialog.sucheSchluessel,
               initialQuery: '',
               hintText: 'Mandant suchen …',
               entprellung: MandantenSucheCubit.verzoegerung,

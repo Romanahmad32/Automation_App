@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:automation_app/core/backend/backend_endpoint.dart';
+import 'package:automation_app/core/backend/backend_gesundheit.dart';
 import 'package:automation_app/core/backend/backend_health_probe.dart';
 import 'package:automation_app/core/backend/backend_launcher.dart';
 import 'package:automation_app/core/backend/backend_start_ergebnis.dart';
@@ -8,15 +9,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Antwortet fest, ohne den Dienst wirklich zu befragen.
 class FesteBackendHealthProbe extends BackendHealthProbe {
-  const FesteBackendHealthProbe({required this.bereit, this.version = '1.2.3'});
+  const FesteBackendHealthProbe({
+    required this.bereit,
+    this.version = '1.2.3',
+    this.testmodus = false,
+  });
 
   final bool bereit;
   final String version;
+  final bool testmodus;
 
   @override
-  Future<String?> versionWennBereit({
+  Future<BackendGesundheit?> gesundheitWennBereit({
     Duration zeitlimit = const Duration(seconds: 2),
-  }) async => bereit ? version : null;
+  }) async =>
+      bereit ? BackendGesundheit(version: version, testmodus: testmodus) : null;
 }
 
 void main() {

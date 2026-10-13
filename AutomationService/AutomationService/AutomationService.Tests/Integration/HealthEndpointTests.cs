@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using AutomationService.Core.Lifetime;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -51,5 +52,20 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         antwort.Should().NotBeNull();
         antwort!.Status.Should().Be("bereit");
         antwort.Version.Should().NotBeNullOrWhiteSpace();
+    }
+
+    /// <summary>
+    /// Das Feld <c>testmodus</c> (#168) ist immer da und ohne Testmodus
+    /// <c>false</c>. Geprüft am rohen JSON, nicht am Record: Das Frontend liest
+    /// <c>json['testmodus']</c> — ein umbenanntes Feld fiele dem Record-Vergleich
+    /// nicht auf, der App aber schon (sie lehnte jeden Testdienst ab).
+    /// </summary>
+    [Fact]
+    public async Task Health_meldet_ohne_Testmodus_testmodus_false()
+    {
+        var response = await _factory.CreateClient().GetAsync(new Uri("/health", UriKind.Relative));
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        json.RootElement.GetProperty("testmodus").ValueKind.Should().Be(JsonValueKind.False);
     }
 }

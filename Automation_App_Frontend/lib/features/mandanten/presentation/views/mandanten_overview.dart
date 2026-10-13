@@ -20,6 +20,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// geht in den Dienst und nicht über das gerade Geladene, sonst hinge es am
 /// Scrollstand, ob ein Mandant gefunden wird.
 class MandantenOverview extends StatelessWidget {
+  /// Key des Suchfelds der Mandantenübersicht.
+  static const Key sucheSchluessel = ValueKey('mandanten-suche');
+
   final MandantenOverviewLoaded state;
 
   /// Wie nah am Ende der Liste die nächste Seite geholt wird.
@@ -40,6 +43,7 @@ class MandantenOverview extends StatelessWidget {
       spacing: 12,
       children: [
         EntitySearchBar(
+          feldSchluessel: sucheSchluessel,
           initialQuery: state.query,
           hintText: 'Mandanten nach Name, Ort oder Ordner durchsuchen …',
           // Die Suche geht an den Dienst — jeder Tastendruck wäre ein Abruf.
@@ -89,7 +93,11 @@ class MandantenOverview extends StatelessWidget {
                 gesamt: state.gefundeneMandanten,
                 laedt: state.mehrLadend,
               )
-            : MandantCard(mandant: state.mandanten[i], state: state),
+            : MandantCard(
+                key: MandantCard.schluessel(state.mandanten[i].id),
+                mandant: state.mandanten[i],
+                state: state,
+              ),
       ),
     );
   }

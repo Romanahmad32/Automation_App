@@ -47,24 +47,27 @@ class _VorgangVersandZeileState extends State<VorgangVersandZeile> {
 
         return Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: InkWell(
-            onTap: () =>
-                VersandProtokollDialog.zeigen(context, widget.referenz),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                VersandWegSymbol(weg: eintrag.weg, groesse: 14),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    VersandDarstellung.kurz(eintrag),
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () =>
+                  VersandProtokollDialog.zeigen(context, widget.referenz),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  VersandWegSymbol(weg: eintrag.weg, groesse: 14),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      VersandDarstellung.kurz(eintrag),
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

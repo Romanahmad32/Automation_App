@@ -24,7 +24,7 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// dem STA-Thread, der sie geholt hat. Sonst bliebe outlook.exe stehen, nachdem
 /// der Anwalt sein Fenster geschlossen hat.
 /// </summary>
-public sealed class OutlookVerbindung : IDisposable
+public sealed class OutlookVerbindung : IOutlookVerbindung, IDisposable
 {
     /// <summary>
     /// Ein kalt startendes Outlook braucht spürbar länger als ein laufendes.

@@ -72,8 +72,10 @@ class _FormTemplateTableState extends State<FormTemplateTable> {
             itemCount: sorted.length,
             separatorBuilder: (_, _) =>
                 Divider(height: 1, color: theme.colorScheme.outlineVariant),
-            itemBuilder: (context, index) =>
-                FormTemplateRow(template: sorted[index]),
+            itemBuilder: (context, index) => FormTemplateRow(
+              key: FormTemplateRow.schluessel(sorted[index].id),
+              template: sorted[index],
+            ),
           ),
         ),
       ],
@@ -112,33 +114,36 @@ class _FormTemplateTableState extends State<FormTemplateTable> {
     final active = _sortColumnIndex == columnIndex;
     return Expanded(
       flex: flex,
-      child: InkWell(
-        onTap: () => _onSort(columnIndex),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  label,
-                  style: style,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: () => _onSort(columnIndex),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    style: style,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                active
-                    ? (_sortAscending
-                          ? Icons.arrow_upward
-                          : Icons.arrow_downward)
-                    : Icons.unfold_more,
-                size: 16,
-                color: active
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.outlineVariant,
-              ),
-            ],
+                const SizedBox(width: 4),
+                Icon(
+                  active
+                      ? (_sortAscending
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward)
+                      : Icons.unfold_more,
+                  size: 16,
+                  color: active
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ],
+            ),
           ),
         ),
       ),

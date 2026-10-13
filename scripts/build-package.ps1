@@ -127,6 +127,15 @@ foreach ($datei in $pflicht) {
     if (-not (Test-Path $pfad)) { throw "Im Paket fehlt: $datei" }
 }
 
+# Die Umgebung E2E (Testmodus, Issue #168) ist ein reines Entwicklerwerkzeug: Sie
+# lenkt Port und Datenordner um und ersetzt Zentralruf, Versand und Druck durch
+# Attrappen. Im Paket des Anwalts hat sie nichts verloren -- das csproj nimmt sie
+# per CopyToPublishDirectory="Never" heraus, und hier bricht das Paket, falls
+# jemand das wieder aufweicht.
+if (Test-Path (Join-Path $ziel 'backend/appsettings.E2E.json')) {
+    throw "Im Paket liegt backend/appsettings.E2E.json -- die E2E-Umgebung gehoert nicht ins Paket (csproj: CopyToPublishDirectory=Never)."
+}
+
 $vorlagen = @(Get-ChildItem (Join-Path $ziel 'backend/Templates') -Filter *.docx -ErrorAction SilentlyContinue)
 if ($vorlagen.Count -eq 0) {
     throw "Im Paket liegen keine Word-Vorlagen (backend/Templates/*.docx)."

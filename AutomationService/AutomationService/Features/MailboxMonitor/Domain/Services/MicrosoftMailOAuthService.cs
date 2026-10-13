@@ -1,3 +1,4 @@
+using AutomationService.Core.Persistence;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensions.Msal;
 
@@ -36,9 +37,18 @@ public sealed class MicrosoftMailOAuthService(
         "https://outlook.office365.com/SMTP.Send",
     ];
 
+    /// <summary>Dateiname des verschlüsselten MSAL-Caches.</summary>
+    public const string CacheDateiname = "msal_token_cache.bin";
+
     private readonly SemaphoreSlim _gate = new(1, 1);
     private IPublicClientApplication? _app;
     private string? _appClientId;
+
+    /// <summary>
+    /// Der Ordner des MSAL-Caches: der Datenordner der App. Eigene Methode,
+    /// damit ein Test festhalten kann, dass er nie am Datenordner vorbeiführt.
+    /// </summary>
+    public static string CacheOrdner() => AppDataPaths.EnsureAppDataDirectory();
 
     /// <summary>True, wenn die Azure-Client-ID hinterlegt ist und die Anmeldung damit möglich ist.</summary>
     public bool IsAvailable => !string.IsNullOrWhiteSpace(configStore.Current.MicrosoftClientId);
@@ -148,10 +158,10 @@ public sealed class MicrosoftMailOAuthService(
                 .WithRedirectUri("http://localhost")
                 .Build();
 
-            var cacheDirectory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "AutomationService");
-            var storage = new StorageCreationPropertiesBuilder("msal_token_cache.bin", cacheDirectory).Build();
+            // Über AppDataPaths und nicht selbst aus %APPDATA%: Ein umgelenkter
+            // Dienst (E2E-Testmodus, #168) soll das Microsoft-Token der Kanzlei
+            // weder lesen noch überschreiben.
+            var storage = new StorageCreationPropertiesBuilder(CacheDateiname, CacheOrdner()).Build();
             var cacheHelper = await MsalCacheHelper.CreateAsync(storage);
             cacheHelper.RegisterCache(app.UserTokenCache);
 

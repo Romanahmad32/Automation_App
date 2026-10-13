@@ -23,6 +23,12 @@ using Scalar.AspNetCore;
 const string CorsPolicyName = "WordAutomationCors";
 var builder = WebApplication.CreateBuilder(args);
 
+// Der Datenordner (#168) muss stehen, bevor irgendetwas registriert wird:
+// AddPersistenceServices baut den Verbindungsstring sofort, AddBackupServices
+// liest den Ordner ebenfalls bei der Registrierung. Eine Zeile spaeter, und die
+// Datenbank laege im echten %APPDATA%, waehrend der Rest umgelenkt waere.
+AppDataPaths.Datenordner = AppDataPaths.DatenordnerAus(builder.Configuration, builder.Environment);
+
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
@@ -77,7 +83,10 @@ builder.Services.AddVorgaengeServices();
 builder.Services.AddFormTemplatesServices();
 builder.Services.AddVollmachtServices();
 builder.Services.AddBackupServices(builder.Configuration);
-builder.Services.AddDevSimulationServices(builder.Configuration);
+// Bleibt der letzte Add...-Aufruf: Im Testmodus ersetzt er die Naehte nach
+// aussen (Zentralruf, SMTP, Outlook, Druck), und ersetzen kann er nur, was
+// schon registriert ist.
+builder.Services.AddDevSimulationServices(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

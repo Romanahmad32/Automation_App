@@ -14,6 +14,9 @@ import 'package:material_ui/material_ui.dart';
 /// Ordner liegen seit dem Scan im Zustand der Übersicht vor — die Suche
 /// filtert im Speicher und fragt keinen Dienst.
 class AkteZuordnenDialog extends StatefulWidget {
+  /// Key des Suchfelds „Ordner suchen …“.
+  static const Key sucheSchluessel = ValueKey('akte-zuordnen-suche');
+
   /// Wie der Mandant im Dialogkopf heißt.
   final String mandantName;
 
@@ -61,6 +64,7 @@ class _AkteZuordnenDialogState extends State<AkteZuordnenDialog> {
             Text('Mandant: „${widget.mandantName}"'),
             const SizedBox(height: 12),
             EntitySearchBar(
+              feldSchluessel: AkteZuordnenDialog.sucheSchluessel,
               initialQuery: '',
               hintText: 'Ordner suchen …',
               onChanged: _suchen,

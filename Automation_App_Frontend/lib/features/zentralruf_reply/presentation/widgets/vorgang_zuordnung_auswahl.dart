@@ -15,6 +15,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Gesteuert über [value] (normalisierte Referenz eines Vorgangs oder
 /// [neuerVorgangWert]); die Auswahl meldet das Elternformular über [onChanged].
 class VorgangZuordnungAuswahl extends StatelessWidget {
+  /// Key des Auswahlfelds „Zuordnen zu Vorgang".
+  static const Key feldSchluessel = ValueKey('zuordnung-vorgang');
+
+  /// Key des Eintrags zur normalisierten [referenz] im geöffneten Menü.
+  static Key eintragSchluessel(String referenz) =>
+      ValueKey('zuordnung-vorgang-$referenz');
+
   /// Sentinel-Wert der Option „Neuen Vorgang anlegen".
   static const String neuerVorgangWert = '__neuer_vorgang__';
 
@@ -56,6 +63,7 @@ class VorgangZuordnungAuswahl extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SearchableDropdown<String>(
+              feldSchluessel: feldSchluessel,
               value: value,
               labelText: 'Zuordnen zu Vorgang',
               hintText: 'Vorgang suchen oder auswählen',
@@ -72,6 +80,9 @@ class VorgangZuordnungAuswahl extends StatelessWidget {
                   SearchableDropdownEntry<String>(
                     value: Vorgang.normalizeReferenz(vorgang.referenz),
                     label: _label(vorgang),
+                    schluessel: eintragSchluessel(
+                      Vorgang.normalizeReferenz(vorgang.referenz),
+                    ),
                   ),
               ],
               onChanged: (gewaehlt) => onChanged(gewaehlt ?? neuerVorgangWert),

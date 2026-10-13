@@ -12,6 +12,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Vorschläge in beiden Zeilen — Mandant und Versicherung —, und wer ihn
 /// wechselt, bekommt andere Empfänger. Die Frage „an wen" fängt bei ihm an.
 class EmailEmpfaengerAbschnitt extends StatelessWidget {
+  /// Keys der Eingabefelder „An" und „Kopie (CC)".
+  static const Key anSchluessel = ValueKey('versand-an');
+  static const Key kopieSchluessel = ValueKey('versand-kopie');
+
   final EmailEntwurfState state;
   final bool aktiv;
 
@@ -34,6 +38,7 @@ class EmailEmpfaengerAbschnitt extends StatelessWidget {
       children: [
         const VorgangAuswahl(),
         EmailEmpfaengerFeld(
+          eingabeSchluessel: anSchluessel,
           titel: 'An',
           adressen: state.entwurf.an,
           vorschlaege: state.vorschlaege,
@@ -46,6 +51,7 @@ class EmailEmpfaengerAbschnitt extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         EmailEmpfaengerFeld(
+          eingabeSchluessel: kopieSchluessel,
           titel: 'Kopie (CC)',
           adressen: state.entwurf.kopie,
           vorschlaege: state.vorschlaege,

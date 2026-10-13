@@ -12,6 +12,10 @@ import 'package:material_ui/material_ui.dart';
 /// Platzhalterhilfe trifft, sagt die Beschriftung selbst
 /// ([PlatzhalterEinfuegeZiel.marke]) — die Auskunft, die vorher nirgends stand.
 class BetreffTextFelder extends StatelessWidget {
+  /// Keys der beiden Felder, damit sie auch leer ansprechbar sind.
+  static const Key betreffSchluessel = ValueKey('versand-betreff');
+  static const Key textSchluessel = ValueKey('versand-text');
+
   final PlatzhalterEinfuegeZiel ziel;
 
   /// Was am Betreff fehlt; null heisst: nichts. Steht als `errorText` am Feld.
@@ -51,6 +55,7 @@ class BetreffTextFelder extends StatelessWidget {
         spacing: 16,
         children: [
           TextField(
+            key: betreffSchluessel,
             controller: ziel.betreff,
             focusNode: ziel.betreffFokus,
             enabled: aktiv,
@@ -67,6 +72,7 @@ class BetreffTextFelder extends StatelessWidget {
             onChanged: ziel.onBetreffGeaendert,
           ),
           TextField(
+            key: textSchluessel,
             controller: ziel.text,
             focusNode: ziel.textFokus,
             enabled: aktiv,

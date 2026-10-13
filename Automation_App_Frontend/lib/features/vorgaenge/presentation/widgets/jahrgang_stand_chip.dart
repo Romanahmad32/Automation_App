@@ -39,39 +39,42 @@ class JahrgangStandChip extends StatelessWidget {
       message: _tooltip(),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: ton.background,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: ausgewaehlt ? akzent : ton.border,
-                width: ausgewaehlt ? 2 : 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 6,
-              children: [
-                Text(
-                  '$jahrgang',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: ton.foreground,
-                    fontWeight: FontWeight.w600,
-                  ),
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ton.background,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: ausgewaehlt ? akzent : ton.border,
+                  width: ausgewaehlt ? 2 : 1,
                 ),
-                Icon(_symbol(), size: 16, color: ton.foreground),
-                if (beschriftung.isNotEmpty)
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 6,
+                children: [
                   Text(
-                    beschriftung,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    '$jahrgang',
+                    style: theme.textTheme.titleSmall?.copyWith(
                       color: ton.foreground,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-              ],
+                  Icon(_symbol(), size: 16, color: ton.foreground),
+                  if (beschriftung.isNotEmpty)
+                    Text(
+                      beschriftung,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: ton.foreground,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

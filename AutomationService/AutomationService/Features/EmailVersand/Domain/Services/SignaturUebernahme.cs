@@ -1,6 +1,8 @@
 using AutomationService.Core.Persistence;
+using AutomationService.Features.DevSimulation.Domain.Services;
 using AutomationService.Features.Settings.Domain.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace AutomationService.Features.EmailVersand.Domain.Services;
 
@@ -20,6 +22,7 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 public sealed class SignaturUebernahme(
     AutomationDbContext db,
     SignaturAblage ablage,
+    IOptions<SimulationOptions> simulation,
     ILogger<SignaturUebernahme> logger)
 {
     /// <summary>
@@ -61,8 +64,17 @@ public sealed class SignaturUebernahme(
     /// Text und formatierte Fassung aus Outlook — die eine Stelle, die den
     /// Namen auflöst, damit Lesen und Übernehmen nicht auseinanderlaufen.
     /// </summary>
-    private static (string? Text, OutlookSignaturFormat? Format) LiesAusOutlook(string name)
+    private (string? Text, OutlookSignaturFormat? Format) LiesAusOutlook(string name)
     {
+        // Im Testmodus (#168) hat Outlook dieses Rechners nichts zu liefern:
+        // Der Signaturordner ist der echte Bestand der Kanzlei.
+        if (simulation.Value.Testmodus)
+        {
+            throw new EmailVersandException(
+                EmailVersandFehler.Anhang,
+                $"Im Testmodus gibt es keine Outlook-Signatur namens \"{name}\".");
+        }
+
         var text = OutlookSignaturen.LiesTextVon(name);
         var format = OutlookSignaturen.LiesFormat(name);
 

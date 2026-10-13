@@ -1,3 +1,4 @@
+import 'package:automation_app/core/general_widgets/form/feld_schluessel.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -46,6 +47,8 @@ class ReactiveTextEingabe<T> extends ReactiveFocusableFormField<T, String> {
              Theme.of(state.context).inputDecorationTheme,
            );
            return TextField(
+             // Jedes benannte Feld ist ansprechbar, auch wenn es leer ist.
+             key: FeldSchluessel.fuer(formControlName),
              controller: state.textController,
              focusNode: state.focusNode,
              decoration: wirksam.copyWith(errorText: state.errorText),

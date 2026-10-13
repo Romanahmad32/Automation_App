@@ -1,6 +1,8 @@
+using AutomationService.Features.DevSimulation.Domain.Services;
 using AutomationService.Features.EmailVersand.Domain.Services;
 using AutomationService.Features.EmailVersand.Presentation.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace AutomationService.Features.EmailVersand.Presentation.Controllers;
 
@@ -14,12 +16,13 @@ namespace AutomationService.Features.EmailVersand.Presentation.Controllers;
 public class EmailVersandController(
     IEmailVersender versender,
     IEntwurfOeffner oeffner,
-    OutlookVerbindung outlook,
+    IOutlookVerbindung outlook,
     AnhangAblage ablage,
     SignaturUebernahme signaturUebernahme,
     SignaturAblage signaturAblage,
     OutlookErkennung outlookErkennung,
-    KanzleiSignatur signatur) : ControllerBase
+    KanzleiSignatur signatur,
+    IOptions<SimulationOptions> simulation) : ControllerBase
 {
     /// <summary>
     /// Meldet, ob gesendet werden kann und von welcher Adresse aus. Die
@@ -43,7 +46,10 @@ public class EmailVersandController(
     [HttpGet("signaturen")]
     [ProducesResponseType(typeof(IReadOnlyList<OutlookSignaturDto>), StatusCodes.Status200OK)]
     public ActionResult<IReadOnlyList<OutlookSignaturDto>> GetSignaturen() =>
-        Ok(OutlookSignaturen.Lies().Select(OutlookSignaturDto.From).ToList());
+        // Im Testmodus (#168) bleibt Outlooks Signaturordner ungelesen.
+        Ok(simulation.Value.Testmodus
+            ? []
+            : OutlookSignaturen.Lies().Select(OutlookSignaturDto.From).ToList());
 
     /// <summary>
     /// Die Signatur, wie sie gerade in den Einstellungen liegt (§4.7) — mit
@@ -110,7 +116,7 @@ public class EmailVersandController(
 
         if (!string.IsNullOrWhiteSpace(ausOutlook))
         {
-            var inhalt = OutlookSignaturen.LiesBild(ausOutlook, name);
+            var inhalt = simulation.Value.Testmodus ? null : OutlookSignaturen.LiesBild(ausOutlook, name);
             // Die Inhaltsart aus demselben blanken Namen, unter dem das Bild
             // gefunden wurde — aus dem rohen ergäbe „bild.png " keine Endung
             // und ginge als unbestimmter Bytestrom hinaus.

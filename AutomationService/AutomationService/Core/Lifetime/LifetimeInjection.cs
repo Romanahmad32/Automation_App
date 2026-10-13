@@ -1,4 +1,6 @@
 using System.Globalization;
+using AutomationService.Features.DevSimulation.Domain.Services;
+using Microsoft.Extensions.Options;
 
 namespace AutomationService.Core.Lifetime;
 
@@ -47,11 +49,14 @@ public static class LifetimeInjection
     {
         var readiness = app.Services.GetRequiredService<ApplicationReadiness>();
         var version = Programmfassung.Aktuell;
+        // Wirksam, nicht nur konfiguriert: AddDevSimulationServices haelt den
+        // Wert auf dem fest, was es bei der Registrierung entschieden hat.
+        var testmodus = app.Services.GetRequiredService<IOptions<SimulationOptions>>().Value.Testmodus;
 
         app.MapGet("/health", () => readiness.IstBereit
-            ? Results.Ok(new HealthAntwort("bereit", version))
+            ? Results.Ok(new HealthAntwort("bereit", version, testmodus))
             : Results.Json(
-                new HealthAntwort("startet", version),
+                new HealthAntwort("startet", version, testmodus),
                 statusCode: StatusCodes.Status503ServiceUnavailable));
 
         // Feuert erst, wenn alle Hosted Services ihr StartAsync beendet haben —

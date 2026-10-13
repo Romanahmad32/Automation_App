@@ -14,6 +14,10 @@ import '../../../../features/form_template_setup/presentation/blocs/form_templat
 /// andernorts bearbeitet oder gelöscht, meldet [onChanged] die
 /// aktualisierte Instanz bzw. `null`.
 class TemplateSelector extends StatefulWidget {
+  /// Key des Auswahlfelds, damit die Vorlagenwahl im Assistenten ansprechbar
+  /// ist (Widget-Tests, Bedienung per Marionette).
+  static const Key feldSchluessel = ValueKey('vorlage-auswahl');
+
   final FormTemplate? value;
   final ValueChanged<FormTemplate?> onChanged;
   final String labelText;
@@ -141,6 +145,7 @@ class _TemplateSelectorState extends State<TemplateSelector> {
         final selected = _findById(templates, widget.value?.id);
 
         return DropdownMenu<int>(
+          key: TemplateSelector.feldSchluessel,
           controller: _controller,
           focusNode: _focusNode,
           initialSelection: selected?.id,

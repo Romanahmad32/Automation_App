@@ -5,6 +5,11 @@ import 'package:material_ui/material_ui.dart';
 /// Rechtsgebiet keine Art ableiten ließ — dann sagt die Zeile darunter, dass
 /// der Anwalt wählen muss.
 class VollmachtArtAuswahl extends StatelessWidget {
+  /// Key des Umschalters zur [art] (`vollmacht-art-unfallsachen` usw.). Er
+  /// sitzt am Text des Segments, denn `ButtonSegment` hat keinen eigenen Key.
+  static Key schluessel(VollmachtArt art) =>
+      ValueKey('vollmacht-art-${art.name}');
+
   final VollmachtArt? art;
   final String rechtsgebiet;
   final ValueChanged<VollmachtArt>? onGewaehlt;
@@ -27,7 +32,10 @@ class VollmachtArtAuswahl extends StatelessWidget {
         SegmentedButton<VollmachtArt>(
           segments: [
             for (final eintrag in VollmachtArt.values)
-              ButtonSegment(value: eintrag, label: Text(eintrag.titel)),
+              ButtonSegment(
+                value: eintrag,
+                label: Text(eintrag.titel, key: schluessel(eintrag)),
+              ),
           ],
           selected: {?gewaehlt},
           emptySelectionAllowed: true,

@@ -34,20 +34,23 @@ class PosteingangZeile extends StatelessWidget {
       color: ausgewaehlt
           ? theme.colorScheme.primaryContainer
           : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _mitte(theme, ungelesen)),
-              const SizedBox(width: 12),
-              Text(
-                eintrag.datum == null ? '' : deutscheUhrzeit(eintrag.datum!),
-                style: theme.textTheme.labelSmall,
-              ),
-            ],
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _mitte(theme, ungelesen)),
+                const SizedBox(width: 12),
+                Text(
+                  eintrag.datum == null ? '' : deutscheUhrzeit(eintrag.datum!),
+                  style: theme.textTheme.labelSmall,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -13,4 +13,11 @@ namespace AutomationService.Core.Lifetime;
 /// Version der Assembly. Wird spaeter fuer die Update-Pruefung gebraucht und
 /// beantwortet beim Support die erste Frage ("welcher Stand laeuft da?").
 /// </param>
-public sealed record HealthAntwort(string Status, string Version);
+/// <param name="Testmodus">
+/// True, wenn der Dienst im E2E-Testmodus laeuft (#168): umgelenkter
+/// Datenordner, und Zentralruf, Versand, Entwurf und Druck sind durch
+/// Attrappen ersetzt. Immer vorhanden (JSON <c>testmodus</c>). Eine App, die
+/// einen Testmodus erwartet, uebernimmt keinen Dienst, der hier <c>false</c>
+/// meldet — sonst bediente ein Testlauf die echten Daten der Kanzlei.
+/// </param>
+public sealed record HealthAntwort(string Status, string Version, bool Testmodus);

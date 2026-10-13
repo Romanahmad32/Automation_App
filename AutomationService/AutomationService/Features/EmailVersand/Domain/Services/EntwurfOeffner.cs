@@ -14,8 +14,8 @@ namespace AutomationService.Features.EmailVersand.Domain.Services;
 /// </summary>
 public sealed class EntwurfOeffner(
     MailboxConfigStore configStore,
-    OutlookVerbindung outlook,
-    EntwurfDatei datei,
+    IOutlookVerbindung outlook,
+    IEntwurfDatei datei,
     VersandProtokoll protokoll,
     IOptions<EmailVersandOptions> optionen) : IEntwurfOeffner
 {

@@ -80,24 +80,30 @@ class AkteBlock extends StatelessWidget {
 
   /// Die ganze Zeile ist die Tippfläche: Ein eigener Knopf je Fall stünde bei
   /// einer Akte mit zehn Fällen als Spalte gleicher Symbole neben dem Text.
-  Widget _fallZeile(BuildContext context, ThemeData theme, Fall fall) =>
-      Tooltip(
-        message: 'Fall im Explorer öffnen',
-        child: InkWell(
-          borderRadius: BorderRadius.circular(6),
-          onTap: () => AktenOrdnerOeffnen.oeffne(
-            context,
-            pfad: fall.pfad,
-            name: fall.name,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 2, 4, 2),
-            child: Text(
-              '• ${fall.name}'
-              '${fall.dokumente.isEmpty ? '' : '  (${fall.dokumente.length})'}',
-              style: theme.textTheme.bodySmall,
-            ),
+  Widget _fallZeile(
+    BuildContext context,
+    ThemeData theme,
+    Fall fall,
+  ) => Tooltip(
+    message: 'Fall im Explorer öffnen',
+    child: Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(6),
+        onTap: () => AktenOrdnerOeffnen.oeffne(
+          context,
+          pfad: fall.pfad,
+          name: fall.name,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 2, 4, 2),
+          child: Text(
+            '• ${fall.name}'
+            '${fall.dokumente.isEmpty ? '' : '  (${fall.dokumente.length})'}',
+            style: theme.textTheme.bodySmall,
           ),
         ),
-      );
+      ),
+    ),
+  );
 }

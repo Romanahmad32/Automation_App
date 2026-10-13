@@ -80,4 +80,16 @@
       <Content Include="Templates\**\*.docx" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
+    <ItemGroup>
+      <!--
+        Die Umgebung des E2E-Testmodus (#168) ist ein Werkzeug fuer den eigenen
+        Rechner. Ins Build-Ausgabeverzeichnis muss sie (scripts/e2e-start.ps1
+        startet den Dienst von dort), ins Paket nie: Das Web-SDK nimmt sonst
+        jede appsettings*.json mit, und die installierte App truege eine
+        Testumgebung mit sich, die beim Anwalt niemand braucht.
+        build-package.ps1 prueft die Abwesenheit zusaetzlich.
+      -->
+      <Content Update="appsettings.E2E.json" CopyToPublishDirectory="Never" />
+    </ItemGroup>
+
 </Project>

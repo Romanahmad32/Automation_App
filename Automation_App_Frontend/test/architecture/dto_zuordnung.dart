@@ -58,7 +58,9 @@ const Map<String, List<String>> abweichendeDtos = {
 /// mit dem Grund, damit die naechste Aenderung ihn nachpruefen kann statt ihn
 /// zu glauben.
 const Map<String, String> ohneDto = {
-  'lib/core/backend/backend_health_probe.dart':
+  // Seit #168 parst backend_gesundheit.dart die Antwort (Version, Testmodus);
+  // die Probe selbst greift nicht mehr auf json zu.
+  'lib/core/backend/backend_gesundheit.dart':
       'liest GET /health — die Bereitschaftsabfrage vor dem DI-Aufbau, '
       'bewusst kein Teil des OpenAPI-Vertrags',
   'lib/core/theme/domain/theme_preferences.dart':

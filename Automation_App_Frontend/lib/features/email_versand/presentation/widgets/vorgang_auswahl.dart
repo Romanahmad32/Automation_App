@@ -34,6 +34,13 @@ class VorgangAuswahl extends StatelessWidget {
 
 /// Das Auswahlfeld selbst, unter dem bereitgestellten [VorgangCubit].
 class VorgangAuswahlFeld extends StatelessWidget {
+  /// Key des Auswahlfelds im Versand-Reiter.
+  static const Key feldSchluessel = ValueKey('versand-vorgang');
+
+  /// Key des Eintrags zur [referenz]; leer ist „Kein Vorgang".
+  static Key eintragSchluessel(String referenz) =>
+      ValueKey('versand-vorgang-${referenz.isEmpty ? 'keiner' : referenz}');
+
   const VorgangAuswahlFeld({super.key});
 
   /// Wie ein Vorgang in der Liste steht: das **Zeichen** zuerst, denn danach
@@ -71,14 +78,16 @@ class VorgangAuswahlFeld extends StatelessWidget {
             // Feld nichts an: Der Bestand kann noch laden, und aus dem
             // Word-Assistenten kommt der Vorgang mitgegeben.
             final eintraege = <SearchableDropdownEntry<String>>[
-              const SearchableDropdownEntry(
+              SearchableDropdownEntry(
                 value: '',
                 label: 'Kein Vorgang (leeres Anschreiben)',
+                schluessel: eintragSchluessel(''),
               ),
               for (final vorgang in _bestandMit(bestand, gewaehlt))
                 SearchableDropdownEntry(
                   value: vorgang.referenz,
                   label: beschriftungFuer(vorgang),
+                  schluessel: eintragSchluessel(vorgang.referenz),
                 ),
             ];
 
@@ -92,6 +101,7 @@ class VorgangAuswahlFeld extends StatelessWidget {
                 child: IgnorePointer(
                   ignoring: entwurf.beschaeftigt,
                   child: SearchableDropdown<String>(
+                    feldSchluessel: feldSchluessel,
                     // Über die Referenz statt über den Vorgang selbst: Sie ist
                     // der fachliche Schlüssel, und ein nebenher
                     // aktualisierter Registereintrag wäre als Objekt nicht

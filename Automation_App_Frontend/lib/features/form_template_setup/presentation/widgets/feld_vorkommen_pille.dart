@@ -62,13 +62,16 @@ class FeldVorkommenPille extends StatelessWidget {
                 'zuzuordnen.',
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: maximalbreite),
-        child: InkWell(
-          onTap: zuordnen,
-          borderRadius: BorderRadius.circular(8),
-          child: AuflistungBadge(
-            label: vorkommen.anzeige,
-            accent: farbe,
-            icon: vorkommen.icon,
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: zuordnen,
+            borderRadius: BorderRadius.circular(8),
+            child: AuflistungBadge(
+              label: vorkommen.anzeige,
+              accent: farbe,
+              icon: vorkommen.icon,
+            ),
           ),
         ),
       ),

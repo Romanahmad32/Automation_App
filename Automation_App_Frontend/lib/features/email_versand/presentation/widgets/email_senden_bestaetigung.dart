@@ -9,6 +9,10 @@ import 'package:material_ui/material_ui.dart';
 /// verschickte Mail zurück. Deshalb steht hier noch einmal die vollständige
 /// Mail: wer sie bekommt, was daran hängt und was drinsteht.
 class EmailSendenBestaetigung extends StatelessWidget {
+  /// Key des Knopfs „Senden" — verschickt wirklich, die Marionette-Sperre
+  /// greift auf diesen Namen.
+  static const Key sendenSchluessel = ValueKey('versand-senden');
+
   final EmailEntwurf entwurf;
   final String absender;
 
@@ -90,6 +94,7 @@ class EmailSendenBestaetigung extends StatelessWidget {
           child: const Text('Zurück'),
         ),
         FilledButton.icon(
+          key: sendenSchluessel,
           onPressed: () => Navigator.pop(context, true),
           icon: const Icon(Icons.send),
           label: const Text('Senden'),
