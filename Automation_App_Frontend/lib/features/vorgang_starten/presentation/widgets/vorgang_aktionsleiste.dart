@@ -17,6 +17,12 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// nirgends eine Beanstandung — das Feld war nie „touched", und ein gesperrter
 /// Knopf nimmt keinen Fokus.
 class VorgangAktionsleiste extends StatelessWidget {
+  /// Key des Knopfs „Zentralruf-Formular ausfüllen" — wirkt nach außen
+  /// (öffnet den Browser), die Marionette-Sperre greift auf diesen Namen.
+  static const Key zentralrufSchluessel = ValueKey(
+    'zentralruf-formular-ausfuellen',
+  );
+
   final bool zeigeZentralruf;
   final VoidCallback onSpeichern;
   final VoidCallback onZentralruf;
@@ -79,6 +85,7 @@ class VorgangAktionsleiste extends StatelessWidget {
                           children: [
                             if (zeigeZentralruf)
                               OutlinedButton.icon(
+                                key: zentralrufSchluessel,
                                 icon: const Icon(Icons.open_in_browser),
                                 label: const Text(
                                   'Zentralruf-Formular ausfüllen',

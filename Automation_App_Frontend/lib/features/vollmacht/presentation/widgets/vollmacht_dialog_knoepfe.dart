@@ -14,6 +14,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// zurückgelassen wird — die Frage danach steht in der Word-Leiste darüber.
 /// Derselbe „In Word öffnen" öffnet die Datei noch einmal.
 class VollmachtDialogKnoepfe extends StatelessWidget {
+  /// Key des Knopfs „Drucken" — druckt wirklich, die Marionette-Sperre greift
+  /// auf diesen Namen.
+  static const Key druckenSchluessel = ValueKey('vollmacht-drucken');
+
   final VollmachtStand stand;
 
   const VollmachtDialogKnoepfe({super.key, required this.stand});
@@ -39,6 +43,7 @@ class VollmachtDialogKnoepfe extends StatelessWidget {
           onPressed: stand.bereit ? cubit.oeffneInWord : null,
         ),
         FilledButton.icon(
+          key: druckenSchluessel,
           icon: const Icon(Icons.print_outlined),
           label: const Text('Drucken'),
           onPressed: stand.druckbereit ? cubit.drucke : null,

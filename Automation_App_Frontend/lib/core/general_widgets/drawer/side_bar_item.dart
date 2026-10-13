@@ -43,44 +43,50 @@ class SidebarItem extends StatelessWidget {
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 48,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: collapsedWidth - 18,
-                  child: IconTheme(
-                    data: IconThemeData(color: fgColor),
-                    child: Center(child: isSelected ? selectedIcon : icon),
+        // Kein `label`: der Text der Beschriftung steht auch eingeklappt im Baum
+        // (nur auf Breite 0 geschrumpft) und gibt dem Knopf seinen Namen.
+        child: Semantics(
+          button: true,
+          selected: isSelected,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 48,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: collapsedWidth - 18,
+                    child: IconTheme(
+                      data: IconThemeData(color: fgColor),
+                      child: Center(child: isSelected ? selectedIcon : icon),
+                    ),
                   ),
-                ),
-                // Flexible statt eines unbeschränkten Row-Kindes: Ohne das
-                // misst Align die Beschriftung in ihrer natürlichen Breite
-                // und reicht sie ungekürzt an die Row weiter — das Ellipsis
-                // am Text greift dann nie, weil ihm nie ein Maximum vorgegeben
-                // wird. Erst Flexible zwingt die verbleibende Row-Breite als
-                // echtes Maximum durch (locker, damit die Einklapp-Animation
-                // weiter bis auf 0 schrumpfen kann).
-                Flexible(
-                  child: ClipRect(
-                    child: AnimatedAlign(
-                      duration: animationDuration,
-                      curve: Curves.easeInOut,
-                      alignment: Alignment.centerLeft,
-                      widthFactor: isExtended ? 1 : 0,
-                      child: Text(
-                        label,
-                        style: textTheme.labelLarge?.copyWith(color: fgColor),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                  // Flexible statt eines unbeschränkten Row-Kindes: Ohne das
+                  // misst Align die Beschriftung in ihrer natürlichen Breite
+                  // und reicht sie ungekürzt an die Row weiter — das Ellipsis
+                  // am Text greift dann nie, weil ihm nie ein Maximum vorgegeben
+                  // wird. Erst Flexible zwingt die verbleibende Row-Breite als
+                  // echtes Maximum durch (locker, damit die Einklapp-Animation
+                  // weiter bis auf 0 schrumpfen kann).
+                  Flexible(
+                    child: ClipRect(
+                      child: AnimatedAlign(
+                        duration: animationDuration,
+                        curve: Curves.easeInOut,
+                        alignment: Alignment.centerLeft,
+                        widthFactor: isExtended ? 1 : 0,
+                        child: Text(
+                          label,
+                          style: textTheme.labelLarge?.copyWith(color: fgColor),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

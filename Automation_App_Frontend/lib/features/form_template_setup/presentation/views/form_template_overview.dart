@@ -5,6 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class FormTemplateOverview extends StatelessWidget {
+  /// Key des Suchfelds der Vorlagenübersicht.
+  static const Key sucheSchluessel = ValueKey('vorlagen-suche');
+
   final FormTemplateOverviewLoaded state;
 
   const FormTemplateOverview({super.key, required this.state});
@@ -22,6 +25,7 @@ class FormTemplateOverview extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         EntitySearchBar(
+          feldSchluessel: sucheSchluessel,
           initialQuery: state.query,
           hintText: 'Vorlagen nach Name oder Feld durchsuchen …',
           onChanged: (value) => context.read<FormTemplateOverviewBloc>().add(

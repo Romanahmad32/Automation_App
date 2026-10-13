@@ -10,6 +10,10 @@ class EntitySearchBar extends StatefulWidget {
   final String hintText;
   final ValueChanged<String> onChanged;
 
+  /// Key des Textfelds selbst (nicht des umschließenden Widgets), damit das
+  /// Suchfeld auch leer ansprechbar ist.
+  final Key? feldSchluessel;
+
   /// Wartezeit, bevor eine Eingabe gemeldet wird. Vorgabe ist keine — wer im
   /// Speicher filtert, will jeden Tastendruck sofort sehen.
   ///
@@ -27,6 +31,7 @@ class EntitySearchBar extends StatefulWidget {
     required this.hintText,
     required this.onChanged,
     this.entprellung = Duration.zero,
+    this.feldSchluessel,
   });
 
   @override
@@ -70,6 +75,7 @@ class _EntitySearchBarState extends State<EntitySearchBar> {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      key: widget.feldSchluessel,
       controller: _controller,
       onChanged: _melden,
       textInputAction: TextInputAction.search,

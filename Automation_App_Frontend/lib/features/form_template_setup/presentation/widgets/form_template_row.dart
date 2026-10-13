@@ -14,6 +14,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// [AuflistungBadge]), der Stand ([VorlagenStandKennzeichen]), Feldzahl und die
 /// Aktionen (bearbeiten/duplizieren/löschen).
 class FormTemplateRow extends StatelessWidget {
+  /// Key der Zeile zur Vorlage mit [id] — Anker für die gleichlautenden Knöpfe
+  /// jeder Zeile (bearbeiten, duplizieren, löschen).
+  static Key schluessel(int id) => ValueKey('vorlage-$id');
+
   final FormTemplate template;
 
   const FormTemplateRow({super.key, required this.template});
@@ -25,114 +29,121 @@ class FormTemplateRow extends StatelessWidget {
     final fieldCount = template.fields.length;
     final requiredCount = template.fields.where((f) => f.required).length;
 
-    return InkWell(
-      onTap: () => _navigateToDetails(context),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        child: Row(
-          children: [
-            // Vorlage
-            Expanded(
-              flex: flexName,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.description_outlined,
-                    size: 20,
-                    color: scheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      template.templateName,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: () => _navigateToDetails(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: Row(
+            children: [
+              // Vorlage
+              Expanded(
+                flex: flexName,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.description_outlined,
+                      size: 20,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        template.templateName,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            // Dateien
-            Expanded(
-              flex: flexFiles,
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  if (template.hasOhneAuflistung)
-                    AuflistungBadge(
-                      label: 'ohne Auflistung',
-                      accent: scheme.tertiary,
-                    ),
-                  if (template.hasMitAuflistung)
-                    AuflistungBadge(
-                      label: 'mit Auflistung',
-                      accent: scheme.primary,
-                    ),
-                  if (!template.hasOhneAuflistung && !template.hasMitAuflistung)
-                    AuflistungBadge(label: 'keine Datei', accent: scheme.error),
-                ],
+              // Dateien
+              Expanded(
+                flex: flexFiles,
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    if (template.hasOhneAuflistung)
+                      AuflistungBadge(
+                        label: 'ohne Auflistung',
+                        accent: scheme.tertiary,
+                      ),
+                    if (template.hasMitAuflistung)
+                      AuflistungBadge(
+                        label: 'mit Auflistung',
+                        accent: scheme.primary,
+                      ),
+                    if (!template.hasOhneAuflistung &&
+                        !template.hasMitAuflistung)
+                      AuflistungBadge(
+                        label: 'keine Datei',
+                        accent: scheme.error,
+                      ),
+                  ],
+                ),
               ),
-            ),
-            // Stand — was der Editor beim letzten Speichern festgehalten hat.
-            // Im `Wrap` wie die Dateibadges: Der bindet seine Kinder an die
-            // Spaltenbreite, statt sie bei angehobener Schrift (Issue #57)
-            // darüber hinauslaufen zu lassen.
-            Expanded(
-              flex: flexStand,
-              child: Wrap(
-                children: [VorlagenStandKennzeichen(stand: template.stand)],
+              // Stand — was der Editor beim letzten Speichern festgehalten hat.
+              // Im `Wrap` wie die Dateibadges: Der bindet seine Kinder an die
+              // Spaltenbreite, statt sie bei angehobener Schrift (Issue #57)
+              // darüber hinauslaufen zu lassen.
+              Expanded(
+                flex: flexStand,
+                child: Wrap(
+                  children: [VorlagenStandKennzeichen(stand: template.stand)],
+                ),
               ),
-            ),
-            // Felder
-            Expanded(
-              flex: flexFields,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$fieldCount ${fieldCount == 1 ? 'Feld' : 'Felder'}',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  if (requiredCount > 0)
+              // Felder
+              Expanded(
+                flex: flexFields,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'davon $requiredCount Pflicht',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.outline,
-                      ),
+                      '$fieldCount ${fieldCount == 1 ? 'Feld' : 'Felder'}',
+                      style: theme.textTheme.bodyMedium,
                     ),
-                ],
+                    if (requiredCount > 0)
+                      Text(
+                        'davon $requiredCount Pflicht',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.outline,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            // Aktionen
-            SizedBox(
-              width: actionsWidth,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: () => _navigateToDetails(context),
-                    icon: const Icon(Icons.edit_outlined),
-                    tooltip: 'Vorlage bearbeiten',
-                  ),
-                  IconButton(
-                    onPressed: () => _dupliziere(context),
-                    icon: const Icon(Icons.content_copy),
-                    tooltip: 'Duplizieren',
-                  ),
-                  IconButton(
-                    onPressed: () => _showDeleteDialog(context, template.id),
-                    icon: const Icon(Icons.delete_outline),
-                    color: scheme.error,
-                    tooltip: 'Vorlage löschen',
-                  ),
-                ],
+              // Aktionen
+              SizedBox(
+                width: actionsWidth,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () => _navigateToDetails(context),
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Vorlage bearbeiten',
+                    ),
+                    IconButton(
+                      onPressed: () => _dupliziere(context),
+                      icon: const Icon(Icons.content_copy),
+                      tooltip: 'Duplizieren',
+                    ),
+                    IconButton(
+                      onPressed: () => _showDeleteDialog(context, template.id),
+                      icon: const Icon(Icons.delete_outline),
+                      color: scheme.error,
+                      tooltip: 'Vorlage löschen',
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

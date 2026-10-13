@@ -30,7 +30,8 @@ zurück.
 Host und Port stehen an genau zwei Stellen: `BackendEndpoint` im Frontend und
 `"Urls"` in `appsettings.json`. **Nicht** in `launchSettings.json` — die gilt nur
 für `dotnet run`, eine veröffentlichte Exe würde sonst stillschweigend auf Port
-5000 lauschen.
+5000 lauschen. Nur die Umgebung `E2E` (`appsettings.E2E.json`) nimmt Port 5243 — dazu im Frontend das
+Dart-Define `AUTOMATION_BACKEND_PORT`, siehe „E2E-Testmodus".
 
 ## Was wo liegt
 
@@ -39,6 +40,7 @@ für `dotnet run`, eine veröffentlichte Exe würde sonst stillschweigend auf Po
 | `%LOCALAPPDATA%\Programs\Automation App` | Programm, `backend\`, mitgelieferte Vorlagen | wird ersetzt | wird entfernt |
 | `%APPDATA%\AutomationService` | `automation.db`, `Vorlagen\`, `mailbox_config.json`, MSAL-Token-Cache, `Sicherungen\` | **unberührt** | **unberührt** |
 | gewählter **App-Daten-Ordner** (Einstellungen; kein Standardpfad, meist ein OneDrive-Ordner) | `Vorlagen\`, `Register\`, `Sicherungen\` — je nur, wenn nicht einzeln abweichend eingestellt | **unberührt** | **unberührt** |
+| `%TEMP%\automation-e2e\<zeit>` (nur E2E-Testmodus, lokal) | eigener Datenordner, Dienst-Build, Protokolle | — | von Hand |
 
 Diese Trennung ist der Kern: alles, was dem Anwalt gehört, liegt außerhalb des
 Installationsverzeichnisses. Deshalb installiert das Setup **je Benutzer**
@@ -208,6 +210,45 @@ Dieselben Skripte laufen im `paket`-Job der CI bei jedem PR. Was dort grün ist,
 ist das, was ausgeliefert wird — und dieser Job prüft eine Fehlerklasse, die
 `dotnet test` und `flutter test` prinzipiell nicht sehen: ob aus dem Quellcode
 ein *startfähiges Produkt* wird.
+
+### E2E-Testmodus (nur lokal)
+
+Für die E2E-Abnahme per Marionette und die integration_test-Suite (Issue #184) gibt es einen Dienst, der
+nichts nach außen wirken lässt und nie echte Daten berührt. Er läuft **nie in der CI** und nie im Paket:
+
+```powershell
+./scripts/e2e-start.ps1               # baut und startet Dienst (Port 5243) und App, legt Testdaten an
+./scripts/e2e-start.ps1 -OhneApp      # nur der Dienst
+./scripts/e2e-start.ps1 -Beenden      # beendet Dienst und App des letzten Laufs
+```
+
+- **Wurzel:** `%TEMP%\automation-e2e\<zeit>\` mit `dienst\` (Build-Ausgabe, eigener ContentRoot samt
+  `Generated\`), `daten\` (der Datenordner), `akten\`, `register\`, `dienst.log`, `vmservice.txt` (für
+  Marionette `connect`) und die Zustandsdatei e2e.json (PIDs und Pfade für `-Beenden`; entsteht erst beim Start).
+- **Dienst:** Umgebung `E2E` (`appsettings.E2E.json`: Port 5243, `Simulation:Testmodus` an, PDF-Warmup,
+  Sicherung, Altbestandsimport und Postfach-Überwachung aus) und `--Datenordner`. Der Start bricht ab,
+  wenn `Datenordner` oder der Testmodus in Production gesetzt ist. Das Skript prüft vor dem ersten
+  Schreiben, dass `/health` `testmodus=true` meldet und `daten\automation.db` existiert.
+- **Attrappen und Spuren:** Zentralruf, SMTP-Versand, Gesendet-Ablage, Outlook, Entwurf und Druck sind
+  ersetzt; was sie tun, steht unter `daten\Testmodus\` (`protokoll.jsonl`, `Versand\`, `Entwuerfe\`,
+  `Druck\`). Der Drucker heißt „Testmodus (kein Druck)". Beim Entwurf zeigt die App den Hinweis „Outlook
+  war nicht erreichbar …" — erwartet, der Entwurf liegt als `.eml` im Ordner.
+- **Ausgangsbestand** (`scripts/e2e-testdaten.ps1`): fiktive Kanzlei, zwei Mandanten, eine Formularvorlage,
+  ein ausgeschalteter Postfach-Zugang auf `imap.testmodus.invalid`. **Nie einen echten Zugang eintragen:**
+  Der Reiter „Postfach" liest unabhängig von `Enabled` per IMAP; der `.invalid`-Host scheitert harmlos.
+- **Nicht ersetzt oder abgelehnt:** „In Word öffnen" und die PDF-Vorschau (Word per COM) laufen echt —
+  lokal, ohne Außenwirkung; ebenso `Process.run` im Frontend. Die Microsoft-Anmeldung fürs Postfach wird
+  mit 409 abgelehnt („Im Testmodus ist die Anmeldung bei Microsoft abgeschaltet."), die Übernahme der
+  Outlook-Signaturen liefert nichts. Die Update-Prüfung der App fragt GitHub nicht an. Wer den Dienst von Hand mit `dotnet run --environment E2E` startet, teilt sich `Generated\`
+  mit dem Entwicklungsdienst; das Skript baut deshalb in einen eigenen Ordner.
+- **Port 5143 ist gesperrt:** Er gehört der installierten App; beide Skripte lehnen ihn als `-Port` ab.
+- **Frontend:** Die App bekommt `AUTOMATION_BACKEND_PORT=5243` und `AUTOMATION_TESTMODUS=true` per
+  `--dart-define` und übernimmt nur einen Dienst, der `testmodus` meldet. Startet sie den Dienst selbst,
+  dann im Testmodus nur bei gesetzter Umgebungsvariable `Datenordner` mit absolutem Pfad (sonst Fehler,
+  ohne Prozessstart) und mit `--Simulation:Testmodus=true` und `--Datenordner`. Einzelheiten und die Schlüssel
+  der Oberfläche: `Automation_App_Frontend/test_driver/README.md`.
+- **Nicht im Paket:** `appsettings.E2E.json` bleibt per `CopyToPublishDirectory="Never"` im csproj aus
+  `dotnet publish`; `build-package.ps1` bricht ab, falls sie doch unter `backend\` liegt.
 
 ## Ausliefern
 

@@ -19,6 +19,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Karte ihren Inhalt (`Clip.antiAlias`) **und** die Kachel bekommt dieselbe
 /// Form — auf- und zugeklappt sind dafür zwei Parameter.
 class MandantCard extends StatelessWidget {
+  /// Key der Karte zum Mandanten mit [id] — Anker, um die gleichlautenden
+  /// Knöpfe einer Karte (bearbeiten, löschen) anzusprechen.
+  static Key schluessel(int id) => ValueKey('mandant-$id');
+
   final Mandant mandant;
   final MandantenOverviewLoaded state;
 

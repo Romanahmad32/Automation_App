@@ -34,41 +34,44 @@ class SidebarUpdateHinweis extends StatelessWidget {
 
     return Tooltip(
       message: 'Version ${neu.nummer} ist verfügbar',
-      child: InkWell(
-        onTap: () => UeberAnwendungDialog.zeigen(context, stand),
-        child: SizedBox(
-          height: 48,
-          child: Row(
-            children: [
-              SizedBox(
-                width: collapsedWidth - 1,
-                child: Center(child: Icon(Icons.system_update, color: farbe)),
-              ),
-              // Flexible statt eines unbeschränkten Row-Kindes, siehe
-              // dieselbe Begründung in `side_bar_item.dart`: Ohne das
-              // misst Align den Hinweis in seiner natürlichen Breite, und bei
-              // größerer Schrift reißt das die Row über den rechten Rand.
-              Flexible(
-                child: ClipRect(
-                  child: AnimatedAlign(
-                    duration: animationDuration,
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.centerLeft,
-                    widthFactor: isExtended ? 1 : 0,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Text(
-                        'Update verfügbar',
-                        style: Theme.of(context).textTheme.labelLarge
-                            ?.copyWith(color: farbe),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: () => UeberAnwendungDialog.zeigen(context, stand),
+          child: SizedBox(
+            height: 48,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: collapsedWidth - 1,
+                  child: Center(child: Icon(Icons.system_update, color: farbe)),
+                ),
+                // Flexible statt eines unbeschränkten Row-Kindes, siehe
+                // dieselbe Begründung in `side_bar_item.dart`: Ohne das
+                // misst Align den Hinweis in seiner natürlichen Breite, und bei
+                // größerer Schrift reißt das die Row über den rechten Rand.
+                Flexible(
+                  child: ClipRect(
+                    child: AnimatedAlign(
+                      duration: animationDuration,
+                      curve: Curves.easeInOut,
+                      alignment: Alignment.centerLeft,
+                      widthFactor: isExtended ? 1 : 0,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Text(
+                          'Update verfügbar',
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(color: farbe),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

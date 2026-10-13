@@ -40,25 +40,31 @@ class TabellenkopfFarbeField extends StatelessWidget {
                 for (final (hex, label) in _vorschlaege)
                   Tooltip(
                     message: label,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(4),
-                      onTap: () => control.value = hex,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: _parse(hex),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: current == hex
-                                ? theme.colorScheme.primary
-                                : theme.dividerColor,
-                            width: current == hex ? 3 : 1,
+                    // Den Namen trägt allein der Tooltip in den Semantics-Baum
+                    // (und `find.byTooltip` findet das Feld darüber); ein
+                    // zusätzliches `label` hieße die Farbe zweimal.
+                    child: Semantics(
+                      button: true,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(4),
+                        onTap: () => control.value = hex,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: _parse(hex),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: current == hex
+                                  ? theme.colorScheme.primary
+                                  : theme.dividerColor,
+                              width: current == hex ? 3 : 1,
+                            ),
                           ),
+                          child: current == hex
+                              ? const Icon(Icons.check, size: 18)
+                              : null,
                         ),
-                        child: current == hex
-                            ? const Icon(Icons.check, size: 18)
-                            : null,
                       ),
                     ),
                   ),

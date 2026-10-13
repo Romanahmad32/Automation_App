@@ -28,24 +28,28 @@ class DashboardVollmachtHinweis extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: GerundeterKasten(
         farbe: tone.background,
-        child: InkWell(
-          onTap: () =>
-              AutoTabsRouter.of(context).setActiveIndex(AppTabIndex.vorgaenge),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Icon(Icons.draw_outlined, size: 18, color: tone.foreground),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    text,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: tone.foreground,
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: () =>
+                AutoTabsRouter.of(context)
+                    .setActiveIndex(AppTabIndex.vorgaenge),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.draw_outlined, size: 18, color: tone.foreground),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: tone.foreground,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

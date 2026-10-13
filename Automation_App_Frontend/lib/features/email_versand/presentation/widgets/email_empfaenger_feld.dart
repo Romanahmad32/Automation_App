@@ -37,8 +37,12 @@ class EmailEmpfaengerFeld extends StatefulWidget {
 
   final bool aktiv;
 
+  /// Key des Eingabefelds (nicht der Zeile), z. B. `versand-an`.
+  final Key? eingabeSchluessel;
+
   const EmailEmpfaengerFeld({
     super.key,
+    this.eingabeSchluessel,
     required this.titel,
     required this.adressen,
     required this.onHinzufuegen,
@@ -152,6 +156,7 @@ class _EmailEmpfaengerFeldState extends State<EmailEmpfaengerFeld> {
           ),
         if (widget.adressen.isNotEmpty) const SizedBox(height: 6),
         TextField(
+          key: widget.eingabeSchluessel,
           controller: _eingabe,
           focusNode: _fokus,
           enabled: widget.aktiv,

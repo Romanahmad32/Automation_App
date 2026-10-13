@@ -26,9 +26,32 @@ import 'package:flutter/foundation.dart';
 /// ein *geordnetes* Herunterfahren, bei dem die PDF-Konvertierung ihre
 /// Word-Instanz freigibt.
 class BackendLauncher {
-  BackendLauncher({this.probe = const BackendHealthProbe()});
+  BackendLauncher({
+    this.probe = const BackendHealthProbe(),
+    this.testmodusErwartet = BackendEndpoint.testmodusErwartet,
+    Map<String, String>? umgebung,
+    this.prozessStarter = Process.start,
+  }) : umgebung = umgebung ?? Platform.environment;
+
+  /// Die Umgebungsvariablen, aus denen `Datenordner` und der Dienstpfad
+  /// gelesen werden — ein Parameter, damit Tests sie vorgeben können.
+  final Map<String, String> umgebung;
+
+  /// Startet den Kindprozess; im Test durch eine Attrappe ersetzbar.
+  final Future<Process> Function(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+  })
+  prozessStarter;
 
   final BackendHealthProbe probe;
+
+  /// Im E2E-Testmodus (`AUTOMATION_TESTMODUS`) wird nur ein Dienst benutzt,
+  /// der selbst „Testmodus“ meldet — ob übernommen oder selbst gestartet.
+  /// Ein Parameter statt der Konstante, weil sich eine Übersetzungskonstante
+  /// im Test nicht umschalten lässt.
+  final bool testmodusErwartet;
 
   /// Großzügig: der erste Start migriert die Datenbank und wärmt Word vor.
   static const Duration startFrist = Duration(seconds: 90);
@@ -47,28 +70,38 @@ class BackendLauncher {
   final List<String> _letzteAusgaben = [];
 
   Future<BackendStartErgebnis> starten() async {
-    final laufende = await probe.versionWennBereit();
+    final laufende = await probe.gesundheitWennBereit();
     if (laufende != null) {
-      return BackendStartErgebnis.bereitsGestartet(AppVersion(laufende));
+      if (testmodusErwartet && !laufende.testmodus) {
+        return BackendStartErgebnis.fehlgeschlagen(keinTestmodusMeldung());
+      }
+      return BackendStartErgebnis.bereitsGestartet(
+        AppVersion(laufende.version),
+      );
     }
 
-    final exe = backendExe();
+    // Im Testmodus nur mit gesetztem, absolutem Datenordner starten: ohne ihn
+    // käme der Dienst auf den echten Daten hoch, und das `kill()` nach
+    // `/health` wäre zu spät — Datenbank und Sicherung wären schon angefasst.
+    if (testmodusErwartet && datenordnerFuerTestmodus() == null) {
+      return BackendStartErgebnis.fehlgeschlagen(keinDatenordnerMeldung());
+    }
+
+    final exe = backendExe(umgebung: umgebung);
     if (exe == null) {
       return BackendStartErgebnis.fehlgeschlagen(
         'Der lokale Dienst wurde nicht gefunden.\n\n'
-        'Erwartet unter:\n${erwarteterPfad()}\n\n'
+        'Erwartet unter:\n${erwarteterPfad(umgebung: umgebung)}\n\n'
         'Beim Entwickeln wird der Dienst nicht mitgeliefert — dort bitte in '
         'AutomationService/AutomationService "dotnet run" starten.',
       );
     }
 
-    final prozess = await Process.start(exe.path, [
-      // Ausdrücklich, obwohl es auch in appsettings.json steht: die
-      // Kommandozeile schlägt eine etwaige ASPNETCORE_URLS-Variable der
-      // Maschine, appsettings dagegen nicht.
-      '--urls', BackendEndpoint.basisUrl,
-      '--parent-pid', '$pid',
-    ], workingDirectory: exe.parent.path);
+    final prozess = await prozessStarter(
+      exe.path,
+      startArgumente(),
+      workingDirectory: exe.parent.path,
+    );
 
     _lauscheAufAusgabe(prozess.stdout);
     _lauscheAufAusgabe(prozess.stderr);
@@ -78,9 +111,15 @@ class BackendLauncher {
 
     final frist = DateTime.now().add(startFrist);
     while (DateTime.now().isBefore(frist)) {
-      final version = await probe.versionWennBereit();
-      if (version != null) {
-        return BackendStartErgebnis.selbstGestartet(AppVersion(version));
+      final gesundheit = await probe.gesundheitWennBereit();
+      if (gesundheit != null) {
+        if (testmodusErwartet && !gesundheit.testmodus) {
+          prozess.kill();
+          return BackendStartErgebnis.fehlgeschlagen(keinTestmodusMeldung());
+        }
+        return BackendStartErgebnis.selbstGestartet(
+          AppVersion(gesundheit.version),
+        );
       }
       final code = beendetMit;
       if (code != null) {
@@ -100,14 +139,57 @@ class BackendLauncher {
     );
   }
 
+  /// Kommandozeile für den selbst gestarteten Dienst.
+  List<String> startArgumente() => [
+    // Ausdrücklich, obwohl es auch in appsettings.json steht: die
+    // Kommandozeile schlägt eine etwaige ASPNETCORE_URLS-Variable der
+    // Maschine, appsettings dagegen nicht.
+    '--urls', BackendEndpoint.basisUrl,
+    '--parent-pid', '$pid',
+    // Der Testmodus braucht die Umgebung E2E. Testmodus und Datenordner stehen
+    // zusätzlich auf der Kommandozeile: Der Dienst bricht bei einer
+    // Fehlkonfiguration dann selbst ab, bevor er etwas anlegt.
+    if (testmodusErwartet) ...[
+      '--environment',
+      'E2E',
+      '--Simulation:Testmodus=true',
+      '--Datenordner',
+      datenordnerFuerTestmodus() ?? '',
+    ],
+  ];
+
+  /// Der Datenordner aus der Umgebungsvariable `Datenordner`, oder `null`,
+  /// wenn sie fehlt, leer oder kein absoluter Pfad ist.
+  String? datenordnerFuerTestmodus() {
+    final wert = umgebung['Datenordner'];
+    if (wert == null || wert.trim().isEmpty) return null;
+    return Directory(wert).isAbsolute ? wert : null;
+  }
+
+  /// Meldung, wenn im Testmodus kein brauchbarer Datenordner vorgegeben ist.
+  static String keinDatenordnerMeldung() =>
+      'Die Anwendung läuft im Testmodus, aber die Umgebungsvariable '
+      'Datenordner fehlt oder ist kein absoluter Pfad. Der Dienst wird nicht '
+      'gestartet, damit keine echten Daten berührt werden.\n\n'
+      'Anwendung und Dienst bitte mit scripts/e2e-start.ps1 starten.';
+
+  /// Meldung an den Anwender, wenn im Testmodus ein Dienst ohne Testmodus
+  /// antwortet — er würde mit echten Daten arbeiten und echt versenden.
+  static String keinTestmodusMeldung() =>
+      'Die Anwendung läuft im Testmodus, der Dienst unter '
+      '${BackendEndpoint.adresse} meldet aber keinen Testmodus. Er wird nicht '
+      'verwendet, damit keine echten Daten berührt werden.\n\n'
+      'Den Testdienst bitte mit scripts/e2e-start.ps1 starten.';
+
   /// Der ausgelieferte Dienst, oder `null`, wenn keiner danebenliegt.
-  static File? backendExe() {
-    final datei = File(erwarteterPfad());
+  static File? backendExe({Map<String, String>? umgebung}) {
+    final datei = File(erwarteterPfad(umgebung: umgebung));
     return datei.existsSync() ? datei : null;
   }
 
-  static String erwarteterPfad() {
-    final ueberschrieben = Platform.environment[pfadUmgebungsvariable];
+  static String erwarteterPfad({Map<String, String>? umgebung}) {
+    final ueberschrieben =
+        (umgebung ?? Platform.environment)[pfadUmgebungsvariable];
     if (ueberschrieben != null && ueberschrieben.isNotEmpty) {
       return ueberschrieben;
     }

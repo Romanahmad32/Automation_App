@@ -15,6 +15,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// vorausgewählt (typischer Weg: Antwort übernommen → Tab Word). Über
 /// „(kein Vorgang)" lässt sich die Auswahl wieder aufheben.
 class VorgangSelector extends StatefulWidget {
+  /// Key des Auswahlfelds im Word-Assistenten.
+  static const Key feldSchluessel = ValueKey('vorgang-auswahl');
+
+  /// Key des Eintrags zur [referenz] im geöffneten Menü; `null` ist der
+  /// Eintrag „(kein Vorgang)". Die Texte stehen zugleich in den Kacheln der
+  /// Vorgangsliste, der Key macht den Eintrag eindeutig.
+  static Key eintragSchluessel(String? referenz) =>
+      ValueKey('vorgang-auswahl-${referenz ?? 'keiner'}');
+
   const VorgangSelector({super.key});
 
   @override
@@ -133,6 +142,7 @@ class _VorgangSelectorState extends State<VorgangSelector> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: SearchableDropdown<String?>(
+              feldSchluessel: VorgangSelector.feldSchluessel,
               value: selektierteReferenz,
               labelText: 'Vorgang',
               hintText: 'Vorgang suchen oder auswählen',
@@ -140,14 +150,18 @@ class _VorgangSelectorState extends State<VorgangSelector> {
               helperMaxLines: 2,
               border: InputBorder.none,
               entries: [
-                const SearchableDropdownEntry<String?>(
+                SearchableDropdownEntry<String?>(
                   value: null,
                   label: '(kein Vorgang)',
+                  schluessel: VorgangSelector.eintragSchluessel(null),
                 ),
                 for (final vorgang in vorgaenge)
                   SearchableDropdownEntry<String?>(
                     value: Vorgang.normalizeReferenz(vorgang.referenz),
                     label: _label(vorgang),
+                    schluessel: VorgangSelector.eintragSchluessel(
+                      Vorgang.normalizeReferenz(vorgang.referenz),
+                    ),
                   ),
               ],
               onChanged: (referenz) {

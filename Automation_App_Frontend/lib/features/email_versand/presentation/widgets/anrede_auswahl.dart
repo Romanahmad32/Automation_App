@@ -211,31 +211,37 @@ class AnredeNeutralSchalter extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return InkWell(
-      onTap: aktiv ? () => onUmschalten(!neutral) : null,
-      borderRadius: BorderRadius.circular(6),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: Checkbox(
-                value: neutral,
-                onChanged: aktiv ? (wert) => onUmschalten(wert ?? false) : null,
-                visualDensity: VisualDensity.compact,
+    // Ein Knoten aus Checkbox-Zustand, Tipp-Aktion und Beschriftung — kein
+    // Knopf um eine Checkbox, das wären zwei Rollen in einem.
+    return MergeSemantics(
+      child: InkWell(
+        onTap: aktiv ? () => onUmschalten(!neutral) : null,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: neutral,
+                  onChanged: aktiv
+                      ? (wert) => onUmschalten(wert ?? false)
+                      : null,
+                  visualDensity: VisualDensity.compact,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Neutral anreden („Damen und Herren")',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(width: 8),
+              Text(
+                'Neutral anreden („Damen und Herren")',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

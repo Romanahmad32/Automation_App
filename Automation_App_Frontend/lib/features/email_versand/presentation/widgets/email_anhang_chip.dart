@@ -99,25 +99,28 @@ class _EmailAnhangChipState extends State<EmailAnhangChip> {
               if (_groesse.isNotEmpty) _groesse,
               'Klick öffnet die Datei',
             ].join('\n'),
-            child: InkWell(
-              onTap: () => DateiOeffnenMitHinweis.oeffne(
-                context,
-                widget.pfad,
-                name: widget.name,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: EmailAnhangChip.maxNameBreite,
-                  ),
-                  child: Text(
-                    widget.name,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: false,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      decoration: TextDecoration.underline,
-                      decorationStyle: TextDecorationStyle.dotted,
+            child: Semantics(
+              button: true,
+              child: InkWell(
+                onTap: () => DateiOeffnenMitHinweis.oeffne(
+                  context,
+                  widget.pfad,
+                  name: widget.name,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: EmailAnhangChip.maxNameBreite,
+                    ),
+                    child: Text(
+                      widget.name,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        decoration: TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.dotted,
+                      ),
                     ),
                   ),
                 ),

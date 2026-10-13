@@ -37,43 +37,46 @@ class ImportUnbekannteOrdnerBand extends StatelessWidget {
     return Material(
       color: tone.background,
       borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => _umschalten(context),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Icon(Icons.folder_off_outlined, color: tone.foreground),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      zeilenText,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: tone.foreground,
-                        fontWeight: FontWeight.w600,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _umschalten(context),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.folder_off_outlined, color: tone.foreground),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        zeilenText,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: tone.foreground,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Text(
-                      _erklaerung,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: tone.foreground,
+                      Text(
+                        _erklaerung,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: tone.foreground,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                _aktiv ? 'Alle zeigen' : 'Zeilen zeigen',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: tone.foreground,
+                const SizedBox(width: 12),
+                Text(
+                  _aktiv ? 'Alle zeigen' : 'Zeilen zeigen',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: tone.foreground,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

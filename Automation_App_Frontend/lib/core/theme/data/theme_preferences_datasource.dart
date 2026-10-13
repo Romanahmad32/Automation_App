@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:automation_app/core/backend/backend_endpoint.dart';
 import 'package:automation_app/core/general_classes/exceptions/custom_exceptions.dart';
 import 'package:automation_app/core/theme/domain/theme_preferences.dart';
 import 'package:path_provider_windows/path_provider_windows.dart';
@@ -20,9 +21,25 @@ class LocalThemePreferencesDatasource implements ThemePreferencesDatasource {
 
   LocalThemePreferencesDatasource._({required this._file});
 
+  /// Im E2E-Testmodus ([testmodus]) liegt die Datei in einem Ordner unter dem
+  /// Temp-Verzeichnis statt im Anwendungsordner: ein Testlauf darf Schriftstufe
+  /// und Erscheinungsbild der installierten Anwendung nicht verstellen.
+  /// [testmodus] ist ein Parameter statt der Konstante, damit sich der Zweig
+  /// testen lässt.
   static Future<LocalThemePreferencesDatasource> create(
-    PathProviderWindows pathProviderWindows,
-  ) async {
+    PathProviderWindows pathProviderWindows, {
+    bool testmodus = BackendEndpoint.testmodusErwartet,
+    Directory? testmodusOrdner,
+  }) async {
+    if (testmodus) {
+      final ordner =
+          testmodusOrdner ??
+          Directory('${Directory.systemTemp.path}/automation_app_e2e');
+      await ordner.create(recursive: true);
+      return LocalThemePreferencesDatasource._(
+        file: File('${ordner.path}/theme_preferences.json'),
+      );
+    }
     final String? supportPath = await pathProviderWindows
         .getApplicationSupportPath();
     if (supportPath == null) {

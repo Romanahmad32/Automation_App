@@ -40,6 +40,13 @@ public sealed class LegacyJsonImportService(
         }
 
         var sourceDirectory = ResolveSourceDirectory();
+        if (sourceDirectory is null)
+        {
+            logger.LogInformation(
+                "Datenordner umgelenkt und kein LegacyImport:SourceDirectory — Import übersprungen.");
+            return;
+        }
+
         if (!Directory.Exists(sourceDirectory))
         {
             logger.LogInformation(
@@ -68,11 +75,18 @@ public sealed class LegacyJsonImportService(
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    /// <summary>Quellordner der Alt-JSONs: konfigurierbar, sonst der Flutter-Standardpfad.</summary>
-    string ResolveSourceDirectory()
+    /// <summary>
+    /// Quellordner der Alt-JSONs: konfigurierbar, sonst der Flutter-Standardpfad.
+    ///
+    /// Null bei umgelenktem Datenordner ohne eigene Angabe (#168): Der Import
+    /// benennt die Quelldateien um, greift also schreibend in den Bestand —
+    /// ein Testmodus- oder Testlauf hat im echten Flutter-Ordner nichts zu suchen.
+    /// </summary>
+    string? ResolveSourceDirectory()
     {
         var configured = configuration["LegacyImport:SourceDirectory"];
         if (!string.IsNullOrWhiteSpace(configured)) return configured;
+        if (AppDataPaths.IstUmgelenkt) return null;
 
         // path_provider (Windows) legt unter <Roaming>\<Company>\<Product> ab;
         // die Flutter-App nutzt die Default-Kennung com.example\automation_app.

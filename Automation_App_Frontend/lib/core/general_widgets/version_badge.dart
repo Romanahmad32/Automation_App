@@ -26,16 +26,19 @@ class VersionBadge extends StatelessWidget {
 
     return Tooltip(
       message: 'Über diese Anwendung',
-      child: InkWell(
-        onTap: () => UeberAnwendungDialog.zeigen(context, stand),
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            'Version ${version.anzeige}',
-            style: Theme.of(context).textTheme.labelMedium
-                ?.copyWith(color: colorScheme.onSurfaceVariant),
-            overflow: TextOverflow.ellipsis,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: () => UeberAnwendungDialog.zeigen(context, stand),
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text(
+              'Version ${version.anzeige}',
+              style: Theme.of(context).textTheme.labelMedium
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ),

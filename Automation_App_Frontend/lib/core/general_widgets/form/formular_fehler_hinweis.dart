@@ -144,14 +144,17 @@ class FormularFehlerHinweis extends StatelessWidget {
       runSpacing: 4,
       children: [
         for (final eintrag in eintraege.entries)
-          InkWell(
-            onTap: () => formGroup.control(eintrag.key).focus(),
-            child: Text(
-              eintrag.value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.error,
-                decoration: TextDecoration.underline,
-                decorationColor: theme.colorScheme.error,
+          Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => formGroup.control(eintrag.key).focus(),
+              child: Text(
+                eintrag.value,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error,
+                  decoration: TextDecoration.underline,
+                  decorationColor: theme.colorScheme.error,
+                ),
               ),
             ),
           ),

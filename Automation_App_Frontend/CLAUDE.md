@@ -33,6 +33,14 @@ hat keinen gebündelten Dienst neben sich und zeigt sonst den Startfehler-Bildsc
 Oberfläche — dessen „Erneut versuchen"-Knopf spart den Flutter-Neustart. `flutter test` aus dem
 Paket-Stammverzeichnis aufrufen, sonst brechen die Architektur-Tests mit einem Hinweis ab.
 
+**E2E-Testmodus (nur lokal):** `scripts/e2e-start.ps1` startet einen abgeschotteten Dienst (Port 5243, eigener
+Datenordner, Attrappen für Zentralruf, Versand, Entwurf und Druck) und die App mit
+`test_driver/main_marionette.dart`. Zwei Dart-Defines gehören dazu: `AUTOMATION_BACKEND_PORT` (Vorgabe
+5143, `BackendEndpoint.port`) und `AUTOMATION_TESTMODUS=true` (`BackendEndpoint.testmodusErwartet`).
+Ist Letzteres gesetzt, übernimmt `BackendLauncher` nur einen Dienst, dessen `/health` `testmodus` meldet,
+und startet sonst keinen — die App hängt sich also nie an die echte Datenbank. Einzelheiten:
+`test_driver/README.md`; die integration_test-Suite dazu ist Issue #184.
+
 ## Aufbau: Clean Architecture je Feature
 
 Jedes Feature unter `lib/features/<feature>/` gliedert sich in `data/` (Datasources,

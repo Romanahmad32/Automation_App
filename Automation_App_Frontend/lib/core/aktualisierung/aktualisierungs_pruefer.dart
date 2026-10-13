@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart';
 import 'package:automation_app/core/aktualisierung/neue_version.dart';
 import 'package:automation_app/core/aktualisierung/versions_vergleich.dart';
+import 'package:automation_app/core/backend/backend_endpoint.dart';
 
 /// Fragt bei GitHub nach, ob es eine neuere Fassung gibt.
 ///
@@ -16,7 +17,14 @@ import 'package:automation_app/core/aktualisierung/versions_vergleich.dart';
 /// Ausfall von GitHub passiert schlicht nichts. Kein Fehlerdialog, kein
 /// Protokolleintrag vor dem Anwender, keine Verzögerung des Starts.
 class AktualisierungsPruefer {
-  const AktualisierungsPruefer();
+  const AktualisierungsPruefer({
+    this.testmodusErwartet = BackendEndpoint.testmodusErwartet,
+  });
+
+  /// Im E2E-Testmodus geht keine Anfrage nach außen — auch nicht an GitHub —
+  /// und es erscheint kein Update-Hinweis. Ein Parameter statt der Konstante,
+  /// weil sich eine Übersetzungskonstante im Test nicht umschalten lässt.
+  final bool testmodusErwartet;
 
   /// Das Repository ist öffentlich, deshalb genügt eine anonyme Anfrage. Wird
   /// es einmal privat, liefert die API 404 und der Hinweis bleibt einfach aus.
@@ -31,6 +39,9 @@ class AktualisierungsPruefer {
     String laufendeVersion, {
     Duration zeitlimit = const Duration(seconds: 5),
   }) async {
+    if (testmodusErwartet) {
+      return const AktualisierungsErgebnis.nichtErreichbar();
+    }
     final client = HttpClient()..connectionTimeout = zeitlimit;
     try {
       final anfrage = await client

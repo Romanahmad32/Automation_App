@@ -42,6 +42,11 @@ Wirkung, nicht dem Klang des Befehls.
   unentschieden — dann gilt die normale Rechteprüfung; der Hook schränkt nur ein und gewährt nie
   selbst etwas. Er läuft nur bei Marionette-Werkzeugen und kostet sonst nichts; ist seine Eingabe
   unlesbar, fragt er nach.
+  Die Sperre bleibt auch im E2E-Testmodus (`scripts/e2e-start.ps1`, `docs/RELEASE.md`) **hart**: Der Hook
+  kann nicht wissen, mit welcher App Marionette verbunden ist, und die Attrappen sind kein Freibrief. Zentralruf,
+  Senden und Drucken prüft die integration_test-Suite (#184), nicht der Agent. Die Schlüssel der Oberfläche
+  (`feld-…`, `versand-betreff`, `vorgang-auswahl-…`) sind so benannt, dass die Sperre sie nicht trifft; nur
+  `versand-senden`, `vollmacht-drucken` und `zentralruf-formular-ausfuellen` schlagen absichtlich an.
 
 Die übrigen Hooks schweigen bei eigener Störung — die ausführliche Begründung steht im Kopf der Datei. Ein
 Wächter, der bei eigenem Fehler die Arbeit anhält, wird abgeschaltet.

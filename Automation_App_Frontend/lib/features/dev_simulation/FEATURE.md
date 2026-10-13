@@ -18,6 +18,11 @@ nur der Port `SimulationRepository`
   `SimulationMenu.build` geben ohne `kDebugMode` ein `SizedBox.shrink()` zurück. Die Aufrufstellen in
   `vorgaenge` (`vorgaenge_verwalten_page.dart`, `vorgang_verwaltung_tile.dart`) binden sie
   **unbedingt** ein — die Prüfung dort nicht duplizieren und beim Verschieben nicht verlieren.
+- Der **Testmodus** (`SimulationOptions.Testmodus`, Umgebung `E2E`, `scripts/e2e-start.ps1`) ist Backend-
+  Sache: Er ersetzt Zentralruf, Versand, Gesendet-Ablage, Entwurf, Druck und Druckerauskunft durch
+  Attrappen, die unter `Testmodus/` im Datenordner Spuren hinterlassen (`protokoll.jsonl`, `.eml`, `.docx`).
+  Dieses Feature bekommt dafür kein Widget und kein Kennzeichen. Beim Entwurf zeigt die Oberfläche den
+  Hinweis „Outlook war nicht erreichbar …" — im Testmodus erwartet, kein Fehler.
 - Der Backend-Gegenpart ist zusätzlich per Konfiguration verriegelt: `SimulationOptions.Enabled` ist
   standardmäßig `false` und nur in `appsettings.Development.json` gesetzt; sonst antwortet der
   Controller mit `NotFound()`. Im Release ist der Endpunkt also 404 — genau darauf zielt der

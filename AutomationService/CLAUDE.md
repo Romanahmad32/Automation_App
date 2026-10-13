@@ -34,8 +34,9 @@ Verdrahtung über je eine `Add…Services`-Erweiterungsmethode, aufgerufen aus `
 
 Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName`: `WordAutomation`,
 `PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`. Ohne Options-Klasse direkt gelesen:
-`Urls`, `Cors:AllowedOrigins` (`Program.cs`), `LegacyImport:*` (`LegacyJsonImportService`) und
-`Backup:AutomatischeSicherung` (`BackupInjection`, Not-Aus — Integrationstests setzen ihn `false`).
+`Urls`, `Cors:AllowedOrigins`, `Datenordner` (`Program.cs`, s. „Persistenz"), `LegacyImport:*`
+(`LegacyJsonImportService`) und `Backup:AutomatischeSicherung` (`BackupInjection`, Not-Aus —
+Integrationstests setzen ihn `false`). `Simulation:Testmodus` gehört zu `SimulationOptions`.
 
 ### Die Slices
 
@@ -85,6 +86,18 @@ Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName
   pusht über `MailboxHub` — für die App nicht von einem IMAP-Treffer unterscheidbar. Hinter
   `Simulation:Enabled` (nur in `appsettings.Development.json` true), sonst 404. Einzige zugelassene
   Ausnahme der Slice-Isolation (darf `MailboxMonitor.Presentation` verwenden).
+  **Testmodus** (`Simulation:Testmodus`, Umgebung `E2E`, `appsettings.E2E.json`, Port 5243): ersetzt in
+  `AddDevSimulationServices` Zentralruf, SMTP-Übergabe, Gesendet-Ablage, Outlook (`IOutlookVerbindung`),
+  Entwurfsdatei (`IEntwurfDatei`), Word-Drucker und Druckerauskunft durch Attrappen unter
+  `Features/DevSimulation/Domain/Services/`. Sie lassen ihre Spuren im Datenordner unter `Testmodus\`:
+  `protokoll.jsonl` (je Aktion eine Zeile mit `zeit`, `aktion`, `referenz`, `datei`), `Versand\`,
+  `Entwuerfe\` (`.eml`) und `Druck\` (die `.docx`). Der Entwurf geht über den Dateiweg, `EntwurfOeffner`
+  und Versandprotokoll bleiben echt. Der Start bricht ab, wenn der Testmodus in Production oder ohne
+  umgelenkten Datenordner gesetzt ist; `GET /health` meldet `testmodus`. Ohne Attrappe, aber abgelehnt:
+  `POST api/Mailbox/microsoft/signin` antwortet 409 („Im Testmodus ist die Anmeldung bei Microsoft
+  abgeschaltet.") ohne Browser, die Outlook-Signaturen (`OutlookSignaturen`) kommen leer. Der dritte
+  Parameter von `AddDevSimulationServices`, `datenordnerUmgelenkt`, ist nur für Tests: Er ersetzt
+  `AppDataPaths.IstUmgelenkt`, das im Testlauf immer wahr ist.
 - **Versicherer** — Wissensbasis über Versicherer (`VersichererWissen`, Tabelle `Versicherer`), aus
   jeder übernommenen Zentralruf-Antwort gefüllt und aktualisiert. Schließt `missingFields`-Lücken
   späterer Antworten; nach außen nur lesend.
@@ -179,6 +192,15 @@ Context), das Schema-Mapping liegt aber je beim Slice (`IEntityTypeConfiguration
 `ApplyConfigurationsFromAssembly`). Migrationen unter `Core/Persistence/Migrations` laufen beim
 Start (`DatabaseMigrationService`, danach `LegacyJsonImportService`; Hosted Services starten in
 Registrierungsreihenfolge).
+
+**Datenordner umlenken:** `--Datenordner <absoluter Pfad>` (oder Umgebungsvariable `Datenordner`) legt
+`AppDataPaths` — Datenbank, Vorlagen, Anhänge, MSAL-Cache — dorthin statt nach `%APPDATA%`. Vorrang:
+`WurzelFuerTests` vor `Datenordner` vor `%APPDATA%`. In Production ist der Schlüssel gesperrt
+(Startabbruch), und `Program.cs` setzt ihn direkt nach `CreateBuilder`, vor jeder Registrierung, die
+einen Pfad liest (`Architecture/ProgramReihenfolgeTests` erzwingt das und dass `AddDevSimulationServices`
+zuletzt kommt). `AppDataPaths.IstUmgelenkt` ist wahr bei `WurzelFuerTests` oder `Datenordner`.
+Der alte Flutter-Ordner wird bei umgelenktem Datenordner nicht mehr importiert.
+Gebraucht wird das vom E2E-Testmodus (`scripts/e2e-start.ps1`, `docs/RELEASE.md`).
 
 ## Tests
 

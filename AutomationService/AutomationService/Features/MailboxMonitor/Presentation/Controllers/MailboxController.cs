@@ -1,6 +1,8 @@
+using AutomationService.Features.DevSimulation.Domain.Services;
 using AutomationService.Features.MailboxMonitor.Domain.Services;
 using AutomationService.Features.MailboxMonitor.Presentation.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
 
 namespace AutomationService.Features.MailboxMonitor.Presentation.Controllers;
@@ -16,7 +18,8 @@ public class MailboxController(
     IReceivedReplyStore store,
     MailboxConnectionState state,
     MailboxConfigStore configStore,
-    MicrosoftMailOAuthService microsoftOAuth) : ControllerBase
+    MicrosoftMailOAuthService microsoftOAuth,
+    IOptions<SimulationOptions> simulation) : ControllerBase
 {
     /// <summary>Liefert den hinterlegten Postfach-Zugang (ohne das App-Passwort).</summary>
     [HttpGet("config")]
@@ -49,8 +52,19 @@ public class MailboxController(
     [HttpPost("microsoft/signin")]
     [ProducesResponseType(typeof(MailboxConfigDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<MailboxConfigDto>> MicrosoftSignIn(CancellationToken cancellationToken)
     {
+        // Im Testmodus (#168) öffnet der Dienst keinen Browser und legt kein
+        // Token im Cache ab: Die Anmeldung ginge an ein echtes Konto.
+        if (simulation.Value.Testmodus)
+        {
+            return Problem(
+                title: "Microsoft-Anmeldung nicht möglich",
+                detail: "Im Testmodus ist die Anmeldung bei Microsoft abgeschaltet.",
+                statusCode: StatusCodes.Status409Conflict);
+        }
+
         string account;
         try
         {
