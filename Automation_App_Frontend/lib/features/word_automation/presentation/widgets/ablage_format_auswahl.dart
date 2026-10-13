@@ -1,5 +1,5 @@
 import 'package:automation_app/features/word_automation/domain/entities/ablage_format.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Auswahl, welche Fassungen des Schreibens geschrieben werden: die
 /// Word-Datei, das daraus erzeugte PDF oder beide. Verwendet im Speicherschritt

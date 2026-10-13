@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Leerzustand einer Startseiten-Karte: erklärt, wodurch hier etwas erscheint,
 /// statt nur eine leere Fläche zu zeigen.

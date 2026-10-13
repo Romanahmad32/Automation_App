@@ -14,7 +14,7 @@ import 'package:automation_app/features/vorgaenge/presentation/widgets/register_
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_leer_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_spiegel_leiste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_tabelle.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Inhalt der Registerseite (§6.2): Stand der übernommenen Historie,

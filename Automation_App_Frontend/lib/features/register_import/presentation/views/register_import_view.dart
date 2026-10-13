@@ -5,7 +5,7 @@ import 'package:automation_app/features/register_import/presentation/widgets/jah
 import 'package:automation_app/features/register_import/presentation/widgets/register_import_datei_auswahl.dart';
 import 'package:automation_app/features/register_import/presentation/widgets/register_import_filter_leiste.dart';
 import 'package:automation_app/features/register_import/presentation/widgets/register_import_zeilen_liste.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die drei Bilder der Registerübernahme in einer Ansicht: Datei wählen,

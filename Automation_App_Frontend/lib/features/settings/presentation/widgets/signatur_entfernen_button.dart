@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Entfernt die Signatur **ganz** — Text, formatierte Fassung und Bilder
 /// (§4.7, ergänzt am 02.09.2026).

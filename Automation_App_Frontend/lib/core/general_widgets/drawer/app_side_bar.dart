@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/drawer/sidebar_footer.dart';
 import 'package:automation_app/core/general_widgets/drawer/side_bar_item.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({

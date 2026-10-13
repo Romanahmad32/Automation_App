@@ -7,7 +7,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cub
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgaenge_liste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_bearbeiten_dialog.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_loeschen_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Verwaltung aller Vorgänge (jeder Status): auflisten, bearbeiten und löschen.

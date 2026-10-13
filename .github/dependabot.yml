@@ -117,12 +117,6 @@ updates:
       - dependency-name: "meta"
       - dependency-name: "matcher"
       - dependency-name: "test_api"
-      # google_fonts 9 liefert TextTheme aus package:material_ui, die App
-      # importiert package:flutter/material.dart — zwei verschiedene Typen,
-      # #180 war deshalb rot (kanzlei_theme.dart, util.dart). Ein SDK-Sprung
-      # hilft nicht. Aufheben mit der Umstellung auf material_ui (#185).
-      - dependency-name: "google_fonts"
-        update-types: ["version-update:semver-major"]
       # file_picker 13: saveFile verlangt die Bytes und schreibt sie unter
       # Windows sofort nach dem Dialog, den Dateifilter reicht es nicht
       # weiter. Bei Sicherung, Arbeitspaket und manuellem Speichern schreibt

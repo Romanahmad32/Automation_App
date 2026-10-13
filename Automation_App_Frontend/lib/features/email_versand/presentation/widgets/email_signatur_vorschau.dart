@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_ansicht.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Zeigt unter dem Nachrichtenfeld, was der Direktversand noch anfügt (§4.7).
 ///

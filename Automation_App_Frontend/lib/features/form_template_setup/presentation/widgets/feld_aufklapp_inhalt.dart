@@ -3,7 +3,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/fiel
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/datums_vorbelegung_editor.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_name_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Was unter einer aufgeklappten Feldzeile steht: die Datums-Vorbelegung

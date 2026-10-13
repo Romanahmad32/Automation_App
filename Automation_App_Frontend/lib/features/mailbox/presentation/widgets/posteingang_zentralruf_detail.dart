@@ -5,7 +5,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_vor
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/vorgangsdaten_form.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Detail einer Posteingangs-Zeile, die zu einer bereits erfassten
 /// Zentralruf-Antwort gehört (Variante B, Issue #134): Statt des Mailtexts

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Einheitlicher Seitenkopf aller Hauptseiten: das Symbol der Seite in einer
 /// farbigen Kachel, links daran der Titel und darunter ein kurzer Untertitel,

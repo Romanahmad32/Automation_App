@@ -4,7 +4,7 @@ import 'package:automation_app/features/settings/presentation/widgets/app_daten_
 import 'package:automation_app/features/settings/presentation/widgets/ordner_zustand_liste.dart';
 import 'package:automation_app/features/settings/presentation/widgets/stammordner_field.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_vorlagen_sektion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// **Alle** Ordner der App an einer Stelle (#103) — vorher standen sie zu
 /// viert über zwei Spalten verteilt, jeder in einer eigenen Karte, und wer die

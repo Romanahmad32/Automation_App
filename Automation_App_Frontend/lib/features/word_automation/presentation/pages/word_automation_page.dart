@@ -22,7 +22,7 @@ import 'package:automation_app/features/word_automation/presentation/views/wizar
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_save.dart';
 import 'package:automation_app/features/word_automation/presentation/views/wizard_step_schadensaufstellung.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/wizard_step_bar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';

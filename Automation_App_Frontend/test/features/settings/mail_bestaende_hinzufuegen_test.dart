@@ -7,7 +7,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/anredeb
 import 'package:automation_app/features/email_versand/presentation/blocs/grussformeln_cubit/grussformeln_cubit.dart';
 import 'package:automation_app/features/settings/presentation/widgets/anredebausteine_sektion.dart';
 import 'package:automation_app/features/settings/presentation/widgets/grussformeln_sektion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

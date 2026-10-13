@@ -7,7 +7,7 @@ import 'package:automation_app/features/word_automation/presentation/utils/schad
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_entwurf.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/standardpositionen_vorschau.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Editor der Standardpositionen in den Einstellungen (§4.4): Bezeichnung und
 /// optional ein vorbelegter Betrag je Zeile, darunter die Vorschau, wie die

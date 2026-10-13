@@ -4,7 +4,7 @@ import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart
 import 'package:automation_app/core/aktualisierung/aktualisierungs_pruefer.dart';
 import 'package:automation_app/core/backend/app_version.dart';
 import 'package:automation_app/core/di/injection.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Führt die Update-Prüfung einmal aus und stellt das Ergebnis zum Bauen bereit.
 ///

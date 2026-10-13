@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Verbindet die laufende Statusprüfung in der Shell mit der Einstellungsansicht.
 class SynchronisationsBereich extends InheritedWidget {

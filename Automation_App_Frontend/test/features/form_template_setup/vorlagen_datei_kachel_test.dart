@@ -2,7 +2,7 @@ import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:automation_app/core/general_widgets/buttons/custom_rectangular_button.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_datei_kachel.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Eine Wahlfläche der Auswahlseite (#104 Stufe 5): Sie trägt nicht mehr nur

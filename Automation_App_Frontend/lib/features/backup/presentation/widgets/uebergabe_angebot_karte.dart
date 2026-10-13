@@ -1,6 +1,6 @@
 import 'package:automation_app/features/backup/domain/entities/uebergabe_angebot.dart';
 import 'package:automation_app/features/backup/presentation/utils/sicherungs_zeitpunkt.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Frage, um die es in §7.2 geht: „Zuletzt heute 14:12 auf BUERO-PC
 /// gearbeitet. Diesen Stand übernehmen?"

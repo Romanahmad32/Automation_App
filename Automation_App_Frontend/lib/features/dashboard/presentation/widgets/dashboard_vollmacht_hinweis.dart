@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/gerundeter_kasten.dart';
 import 'package:automation_app/core/router/app_tab_index.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Einzeilige, anklickbare Hinweiszeile oben in der Karte „Offene Vorgänge":
 /// wie viele offene Vorgänge noch keine gedruckte Vollmacht haben (§4.11).

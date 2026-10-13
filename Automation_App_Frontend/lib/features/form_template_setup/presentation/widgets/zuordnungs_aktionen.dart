@@ -4,7 +4,7 @@ import 'package:automation_app/features/form_template_setup/domain/services/plat
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/zuordnungs_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die beiden Wege in den [ZuordnungsDialog] (#36) — aus der Detailseite
 /// herausgezogen, weil sie dort das Zeilenbudget sprengten und weil sie

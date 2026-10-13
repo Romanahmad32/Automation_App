@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/vorlagen_entwurf.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hält den Vorlageneditor fest, solange ungespeicherte Änderungen darin
 /// stehen: Wer die Seite verlässt, wird gefragt, ob er sie verwerfen will

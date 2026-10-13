@@ -1,7 +1,7 @@
 import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart';
 import 'package:automation_app/core/backend/app_version.dart';
 import 'package:automation_app/core/di/injection.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Welche Version läuft, und ob es eine neuere gibt.
 ///

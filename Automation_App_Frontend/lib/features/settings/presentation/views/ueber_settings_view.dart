@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/anwendungs_info.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/update_herunterladen_button.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Einstellungen-Reiter „Über": welche Version läuft und ob eine neuere
 /// bereitsteht.

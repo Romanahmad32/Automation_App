@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Legt Formularkarten **nebeneinander**, sobald der Platz dafür reicht, und
 /// stapelt sie darunter untereinander.

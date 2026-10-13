@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Sagt, dass eine gelesene Signatur noch **aussteht** (§4.7, ergänzt am
 /// 02.09.2026).

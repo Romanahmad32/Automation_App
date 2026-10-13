@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/euro_format.dart';
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/preview_table_cell.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Kleine Vorschau in den Einstellungen: So sieht die Schadensaufstellung mit
 /// den konfigurierten Standardpositionen aus, wenn eine neue begonnen wird —

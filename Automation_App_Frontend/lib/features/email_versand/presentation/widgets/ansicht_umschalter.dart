@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die zwei Ansichten, zwischen denen der Versanddialog und der
 /// Vorlageneditor umschalten: **schreiben** oder **prüfen** (§4.7).

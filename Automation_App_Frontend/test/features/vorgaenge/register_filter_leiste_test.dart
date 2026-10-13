@@ -3,7 +3,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_reihenfolge.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_filter_leiste.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'register_testaufbau.dart';

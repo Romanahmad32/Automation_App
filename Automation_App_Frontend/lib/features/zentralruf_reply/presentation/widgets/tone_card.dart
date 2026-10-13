@@ -1,5 +1,5 @@
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Farbig hinterlegte Hinweiskarte (Info/Warnung/Fehler) im weichen Ton der App.
 /// Wiederverwendet in der Antwort-Auswertung: Vorgangsdaten-Formular und

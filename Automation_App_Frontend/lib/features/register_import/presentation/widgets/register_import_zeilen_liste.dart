@@ -1,7 +1,7 @@
 import 'package:automation_app/features/register_import/domain/entities/register_zeilen_befund.dart';
 import 'package:automation_app/features/register_import/presentation/blocs/register_import_cubit/register_import_cubit.dart';
 import 'package:automation_app/features/register_import/presentation/widgets/register_import_zeile_kachel.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zeilen eines Jahrgangs unter seiner Befundkarte.
 ///

@@ -1,6 +1,6 @@
 import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
 import 'package:automation_app/features/backup/presentation/utils/sicherungs_zeitpunkt.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SynchronisationsDetails extends StatelessWidget {
   final UebergabeStand? stand;

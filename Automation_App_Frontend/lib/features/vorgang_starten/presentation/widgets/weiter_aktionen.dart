@@ -1,5 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Panel, das nach dem Speichern eines Vorgangs erscheint (§3): bietet an,
 /// mit den gespeicherten Daten direkt weiterzuarbeiten — eine Vorlage

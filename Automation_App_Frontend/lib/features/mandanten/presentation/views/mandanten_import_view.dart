@@ -7,7 +7,7 @@ import 'package:automation_app/features/mandanten/presentation/widgets/import_un
 import 'package:automation_app/features/mandanten/presentation/widgets/import_zusammenfassung.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_fehler.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die drei Bilder des Imports in einer Ansicht: Datei wählen, Vorschau prüfen,

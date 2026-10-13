@@ -9,7 +9,7 @@ import 'package:automation_app/features/word_automation/domain/services/datenque
 import 'package:automation_app/features/word_automation/presentation/widgets/form_template_builder.dart';
 import 'package:automation_app/core/general_widgets/form/form_wert_beobachter.dart';
 import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zeile über dem Speichern-Knopf der Mandanten-Karte, solange die
 /// Mandantendaten nur im Formular stehen und nicht im Register.

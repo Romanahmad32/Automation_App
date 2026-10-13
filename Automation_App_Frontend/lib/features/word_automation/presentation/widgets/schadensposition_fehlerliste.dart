@@ -1,5 +1,5 @@
 import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Beanstandungen der Schadensaufstellung über dem Knopf „Dokument
 /// erstellen" — je Zeile ein fertiger Satz.

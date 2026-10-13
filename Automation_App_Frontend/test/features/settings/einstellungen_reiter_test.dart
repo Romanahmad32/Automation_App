@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/layout/traege_indexed_stack.
 import 'package:automation_app/core/theme/presentation/theme.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_aktionszeile.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Kopfzeile der Einstellungen trägt zwei Dinge, die vorher woanders

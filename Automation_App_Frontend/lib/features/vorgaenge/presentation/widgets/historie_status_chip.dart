@@ -1,5 +1,5 @@
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Status einer übernommenen Registerzeile: **immer** „Historie".
 ///

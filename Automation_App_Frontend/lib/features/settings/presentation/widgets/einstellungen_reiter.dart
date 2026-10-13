@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/layout/karten_spalten.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_aktionszeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Rumpf **eines** Einstellungs-Reiters: oben die
 /// [EinstellungenAktionszeile], darunter der scrollende Inhalt in ein oder

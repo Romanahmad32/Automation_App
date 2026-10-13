@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Sagt, ob unter der Mail die formatierte Signatur steht oder nur der Text —
 /// und was ihre Bilder wiegen (§4.7).

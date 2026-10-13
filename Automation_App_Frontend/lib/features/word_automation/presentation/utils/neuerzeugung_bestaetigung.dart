@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:automation_app/core/general_widgets/bestaetigungs_dialog.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Ob neu erzeugt werden darf, ohne dass dabei stillschweigend Handarbeit
 /// verlorengeht.

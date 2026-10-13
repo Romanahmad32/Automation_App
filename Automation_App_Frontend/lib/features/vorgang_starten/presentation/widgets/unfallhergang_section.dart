@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_validators.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Abschnitt „Unfallhergang": Unfallort, -uhrzeit und polizeiliche
 /// Vorgangsnummer für die spätere Akten- und Schreibenerstellung. Wird bei

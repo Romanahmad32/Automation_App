@@ -9,7 +9,7 @@ import 'package:automation_app/features/mandanten/presentation/widgets/ordner_fi
 import 'package:automation_app/features/mandanten/presentation/widgets/ordner_massenaktion.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/stand_karte.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/zuordnung_ablauf_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Zuordnungsstapel: alle im Stammordner gefundenen Ordner ohne Mandanten,

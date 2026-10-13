@@ -3,7 +3,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:automation_app/core/general_widgets/drawer/app_side_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_persistenz_fehler_listener.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 @RoutePage()
 class AppShellPage extends StatefulWidget {

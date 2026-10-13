@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ablage_constants.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Auswahl des Unterordners (Fall) innerhalb der Akte: Dropdown über vorhandene
 /// Fälle (plus „Neuen Unterordner anlegen …") und/oder Felder für Stichwort,

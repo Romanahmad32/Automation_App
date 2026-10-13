@@ -2,7 +2,7 @@ import 'package:automation_app/features/email_versand/domain/entities/versand_ei
 import 'package:automation_app/features/mailbox/presentation/utils/posteingang_tagesgruppen.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/gesendet_zeile.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_gruppen_kopf.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Liste des Bereichs „Gesendet" (§4.3): dieselben Tagesgruppen wie im
 /// Posteingang (`PosteingangGruppenKopf`, `PosteingangTagesgruppe.tagVon`),

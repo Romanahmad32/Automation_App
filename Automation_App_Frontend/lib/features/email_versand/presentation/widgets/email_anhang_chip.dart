@@ -1,7 +1,7 @@
 import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/anhang_darstellung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/anhang_umbenennen_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Ein angehängtes Dokument im Versanddialog (§4.7): Klick auf den Namen öffnet
 /// es, das Stiftsymbol benennt es um, das Kreuz entfernt es.

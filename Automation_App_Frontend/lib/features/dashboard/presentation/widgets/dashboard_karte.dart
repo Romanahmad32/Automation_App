@@ -1,5 +1,5 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Gemeinsamer Rahmen der drei Startseiten-Bereiche: Überschrift mit Icon,
 /// optionaler Umfangshinweis („5 von 12") und der Absprung in den Tab, der den

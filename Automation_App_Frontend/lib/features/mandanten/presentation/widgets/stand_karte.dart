@@ -4,7 +4,7 @@ import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mandanten/domain/entities/import_paket.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/paket_historie_tabelle.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/stand_verhaeltnisband.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Stand-Karte über der Filterleiste des Zuordnungsstapels (Issue #108):
 /// Kopf, Zählerband, Verhältnisband und darunter — einklappbar — die

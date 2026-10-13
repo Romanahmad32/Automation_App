@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_a
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_art.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_inhalt.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_steuerung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 export 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_aktion.dart';
 export 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_art.dart';

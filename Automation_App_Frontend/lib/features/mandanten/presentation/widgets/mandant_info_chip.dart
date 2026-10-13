@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Kleiner Info-Chip (Icon + Label) für Kennzahlen einer Mandantenkarte,
 /// z. B. Anzahl Akten oder Fälle.

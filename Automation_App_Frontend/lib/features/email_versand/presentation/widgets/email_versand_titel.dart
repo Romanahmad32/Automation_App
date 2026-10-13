@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Titelzeile des Versanddialogs: links, worum es geht, rechts die Adresse,
 /// von der aus gesendet wird (§4.7).

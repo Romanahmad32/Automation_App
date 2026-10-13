@@ -1,6 +1,7 @@
+import 'package:automation_app/core/general_widgets/form/reactive_text_eingabe.dart';
 import 'package:automation_app/core/general_widgets/form/auswahl_dialog.dart';
 import 'package:automation_app/core/general_widgets/form/auswahl_kandidat.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Texteingabefeld mit Auswahlhilfe: primär getippt, das Symbol rechts öffnet
@@ -61,7 +62,7 @@ class AuswahlTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ReactiveTextField<String>(
+    return ReactiveTextEingabe<String>(
       formControlName: formControlName,
       keyboardType: TextInputType.text,
       validationMessages: validationMessages,

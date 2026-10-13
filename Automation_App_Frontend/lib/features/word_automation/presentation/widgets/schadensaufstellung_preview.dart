@@ -3,7 +3,7 @@ import 'package:automation_app/features/word_automation/domain/entities/damage_l
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/preview_table_cell.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/rvg_details.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Live-Vorschau der Schadensaufstellung im Dokument-Look: Positionen,

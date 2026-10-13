@@ -4,7 +4,7 @@ import 'package:automation_app/features/vorgaenge/domain/services/antwort_konfli
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/antwort_konflikt_dialog.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Übernimmt eine ausgewertete Zentralruf-Antwort in den Zielvorgang (§4.3).
 /// Liefert false, wenn der Anwalt im Konfliktdialog abgebrochen hat — dann ist

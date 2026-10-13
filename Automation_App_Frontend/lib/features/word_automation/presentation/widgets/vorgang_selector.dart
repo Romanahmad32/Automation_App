@@ -5,7 +5,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cub
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_navigation_signal.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/wiederaufnahme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Auswahl des Vorgangs, aus dem das Schreiben erstellt wird (Phase 4). Liest

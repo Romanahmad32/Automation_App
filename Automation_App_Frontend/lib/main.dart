@@ -9,9 +9,8 @@ import 'package:automation_app/core/theme/presentation/bloc/theme_bloc.dart';
 import 'package:automation_app/core/theme/presentation/kanzlei_theme.dart';
 import 'package:automation_app/core/theme/presentation/theme.dart';
 import 'package:automation_app/core/theme/presentation/util.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -126,11 +125,7 @@ class _MyAppState extends State<MyApp> {
             // Deutsche Texte für Material-Dialoge (z. B. den Datums-Picker).
             locale: const Locale('de'),
             supportedLocales: const [Locale('de')],
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
           );
         },
       ),

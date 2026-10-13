@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die drei Arten flüchtiger Rückmeldung und ihr **unterschiedliches
 /// Verhalten** — Standarddauer, Symbol und Akzentfarbe hängen an der Art, nicht

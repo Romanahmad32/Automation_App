@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Zentrierter, gedämpfter Hinweistext in der Mandantenübersicht (z. B. „keine
 /// Treffer" oder „noch keine Mandanten").

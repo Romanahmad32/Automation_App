@@ -3,7 +3,7 @@ import 'package:automation_app/core/theme/presentation/theme.dart';
 import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_aktionsleiste.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

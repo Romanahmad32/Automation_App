@@ -2,7 +2,7 @@ import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:automation_app/core/theme/presentation/theme.dart';
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/mailbox_status_banner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Statuszeile zeigt links den laufenden Text (bereits in `Expanded`) und

@@ -3,7 +3,7 @@ import 'package:automation_app/features/register_import/domain/entities/register
 import 'package:automation_app/features/register_import/domain/entities/register_zeilen_befund.dart';
 import 'package:automation_app/features/register_import/presentation/blocs/register_import_cubit/register_import_cubit.dart';
 import 'package:automation_app/features/register_import/presentation/widgets/register_import_zeile_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Eine Registerzeile, so wie der Dienst sie beurteilt hat — und der Weg, sie

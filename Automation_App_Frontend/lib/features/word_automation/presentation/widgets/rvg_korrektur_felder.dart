@@ -1,5 +1,5 @@
 import 'package:automation_app/features/word_automation/presentation/utils/rvg_felder_pruefung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die drei Eingaben unter der Positionsliste: Gebührensatz und die beiden
 /// Felder, mit denen sich die RVG-Berechnung von Hand korrigieren lässt.

@@ -3,7 +3,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile
 import 'package:automation_app/features/vorgaenge/domain/services/register_filter.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/register_reihenfolge.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/register_auswahl_feld.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Filterleiste über dem Register (§6.2): Reihenfolge, Jahrgangsspanne,
 /// Stand, Rechtsgebiet.

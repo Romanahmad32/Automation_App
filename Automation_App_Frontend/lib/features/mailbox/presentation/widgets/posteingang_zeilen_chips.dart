@@ -1,6 +1,6 @@
 import 'package:automation_app/features/mailbox/domain/entities/vorgangsbezug.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Chip-Reihe unter Betreff und Absender einer Posteingangszeile: der
 /// Vorgangsbezug, die Zentralruf-Markierung und die Büroklammer mit

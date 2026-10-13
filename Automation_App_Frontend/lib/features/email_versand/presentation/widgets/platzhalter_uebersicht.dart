@@ -6,7 +6,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/platz
 import 'package:automation_app/features/email_versand/presentation/widgets/platzhalter_zeile.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/vorlagentext_dialog.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Was die Platzhalter der gewählten Vorlage ergeben haben (§4.7) — und was

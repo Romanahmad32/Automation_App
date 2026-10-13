@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Einzeiliger Fehlerhinweis in der Fehlerfarbe des Themes: Symbol links,
 /// umbrechender Text rechts.

@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/tone_card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Auswahl, welchem Vorgang die ausgewertete Zentralruf-Antwort zugeordnet wird

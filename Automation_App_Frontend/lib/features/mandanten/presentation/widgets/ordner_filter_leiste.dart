@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/entity_search_bar.dart';
 import 'package:automation_app/features/mandanten/presentation/utils/zuordnung_filter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die drei Filter über dem Zuordnungsstapel: Ordnername, Topf und
 /// Änderungszeitpunkt. Der Topf-Umschalter nennt jede Zahl, damit der Anwalt

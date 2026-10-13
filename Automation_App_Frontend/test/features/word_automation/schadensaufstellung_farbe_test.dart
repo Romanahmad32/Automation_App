@@ -7,7 +7,7 @@ import 'package:automation_app/features/settings/presentation/blocs/kanzlei_sett
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'schadensaufstellung_schritt.dart';

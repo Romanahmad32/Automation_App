@@ -1,5 +1,5 @@
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_config.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Wahl des Anmeldewegs für die Postfach-Überwachung: gewöhnliche

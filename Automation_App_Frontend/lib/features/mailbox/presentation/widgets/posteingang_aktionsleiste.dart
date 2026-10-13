@@ -1,6 +1,6 @@
 import 'package:automation_app/features/mailbox/domain/entities/posteingang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die drei Handgriffe an einer geöffneten Posteingangsnachricht (§4.3) — und
 /// **nur** diese drei: kein Zitieren, kein Weiterleiten (REQUIREMENTS §8).

@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_widgets/form/general_text_field.dart
 import 'package:automation_app/features/sachgebiete/presentation/widgets/abteilung_auswahl.dart';
 import 'package:automation_app/features/sachgebiete/presentation/widgets/rechtsgebiet_auswahl.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/auftragsnummer_belegt_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Karte „Auftrag" oben im Formular: laufende Auftragsnummer, Jahr und

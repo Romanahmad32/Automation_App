@@ -1,6 +1,6 @@
 import 'package:automation_app/features/form_template_setup/domain/services/gespeicherter_stand.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/auflistung_badge.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das Kennzeichen „unvollständig" in der Vorlagenübersicht (#104 Stufe 4).
 ///

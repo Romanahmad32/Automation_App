@@ -13,7 +13,7 @@ import 'package:automation_app/features/word_automation/presentation/widgets/pdf
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgang_selector.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/wizard_options_card.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/word_file_row.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../form_template_setup/domain/entities/form_template.dart';

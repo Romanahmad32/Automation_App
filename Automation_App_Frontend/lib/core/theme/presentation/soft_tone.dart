@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hintergrund-/Vordergrundfarbe fuer dezente, getoente Flaechen wie Badges und
 /// Info-Cards, die in **Light- und Dark-Mode** lesbar bleiben.

@@ -15,7 +15,7 @@ import 'package:automation_app/features/settings/presentation/widgets/signatur_f
 import 'package:automation_app/features/settings/presentation/widgets/signatur_knopfzeile.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_render_vorschau.dart';
 import 'package:automation_app/features/settings/presentation/widgets/signatur_vorgemerkt_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Signatur unter dem Mailtext beim Direktversand (§4.7) — im Reiter

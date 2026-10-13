@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/entity_search_bar.dart';
 import 'package:automation_app/features/mandanten/domain/entities/akten_auswahl_eintrag.dart';
 import 'package:automation_app/features/mandanten/domain/services/akten_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/akten_auswahl_kachel.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das Gegenstück zum `ZuordnenDialog` (#132): Dort steht man beim Ordner und
 /// sucht den Mandanten, hier steht man beim Mandanten und sucht den Ordner.

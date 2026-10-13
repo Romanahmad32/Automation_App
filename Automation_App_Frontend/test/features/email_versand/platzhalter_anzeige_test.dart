@@ -14,7 +14,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/vorga
 import 'package:automation_app/features/email_versand/presentation/widgets/vorlagentext_zeile.dart';
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Was der Anwalt über einen übersprungenen Platzhalter zu sehen bekommt

@@ -7,7 +7,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/posteingang
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_gruppen_kopf.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_listen_fuss.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Posteingangsliste: Filterleiste, nach Tagen gruppierte Zeilen, Fußzeile

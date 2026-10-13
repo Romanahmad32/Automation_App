@@ -1,7 +1,7 @@
 import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_bilder.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die Kacheln, mit denen je Mail entschieden wird, welche Signaturbilder

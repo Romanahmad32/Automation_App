@@ -2,7 +2,7 @@ import 'package:automation_app/features/email_versand/domain/services/mail_platz
 import 'package:automation_app/features/email_versand/presentation/utils/platzhalter_einfuege_ziel.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/platzhalter_eintrag.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_katalog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Platzhalter zum Anklicken, nach Gruppen geordnet — im Editor einer
 /// Mail-Textvorlage und im Versanddialog (§4.7).

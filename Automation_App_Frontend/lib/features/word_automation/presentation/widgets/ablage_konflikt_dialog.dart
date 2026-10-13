@@ -1,5 +1,5 @@
 import 'package:automation_app/features/mandanten/domain/entities/ablage_strategie.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Rückfrage, wenn im Fall-Ordner bereits gleichnamige Dateien liegen (§6.1).
 ///

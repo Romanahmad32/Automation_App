@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/euro_format.dart';
 import 'package:automation_app/features/word_automation/domain/entities/damage_listing.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/rvg_calculation_bloc.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Vollständige Aufschlüsselung der RVG-Berechnung unterhalb der Tabelle:
 /// jeder Rechenschritt mit seiner gesetzlichen Grundlage, damit die Berechnung

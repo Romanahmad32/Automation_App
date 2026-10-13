@@ -7,7 +7,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/betre
 import 'package:automation_app/features/email_versand/presentation/widgets/platzhalter_auswahl.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/vorlagen_hinweise_knopf.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_vorlage_vorschau.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Anlegen und Ändern einer Mail-Textvorlage (§4.7). Liefert beim Speichern
 /// die bearbeitete Vorlage zurück; `null` heisst abgebrochen.

@@ -8,7 +8,7 @@ import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_s
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_versand_zeile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_warte_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/zeichen_text.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile in der Vorgänge-Verwaltung: Zeichen, Parteien und Status, der
 /// statusabhängige „Nächster Schritt"-Sprung ([VorgangNaechsterSchritt]) samt

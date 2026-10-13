@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Dünnes Verhältnisband unter dem Zählerband der Stand-Karte: zeigt auf
 /// einen Blick, wie [gesamt] sich auf zugeordnet, ohne Bezug und offen

@@ -1,6 +1,6 @@
 import 'package:automation_app/core/dateien/datei_oeffner.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// **Der eine** Weg, aus der Oberfläche eine Datei zu öffnen und dem Anwalt zu
 /// sagen, wenn das nicht ging: der Mail-Anhang vor dem Absenden, die Word-Vorlage

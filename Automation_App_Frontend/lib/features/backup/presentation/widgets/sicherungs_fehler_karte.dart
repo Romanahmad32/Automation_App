@@ -1,6 +1,6 @@
 import 'package:automation_app/features/backup/domain/entities/letzte_sicherung.dart';
 import 'package:automation_app/features/backup/presentation/utils/sicherungs_zeitpunkt.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Meldet, dass die letzte automatische Sicherung misslungen ist (§7.2).
 ///

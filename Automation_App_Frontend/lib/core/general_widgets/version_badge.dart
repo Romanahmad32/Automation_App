@@ -2,7 +2,7 @@ import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart
 import 'package:automation_app/core/backend/app_version.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/ueber_anwendung_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Zeigt die laufende Version — ausgeschrieben, nicht als `v1.0.0`.
 ///

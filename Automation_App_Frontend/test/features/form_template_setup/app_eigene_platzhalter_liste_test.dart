@@ -1,6 +1,6 @@
 import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/app_eigene_platzhalter_liste.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die RVG-Werte waren längst da — nur wusste es niemand: `{{RvgBrutto}}`

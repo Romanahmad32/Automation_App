@@ -6,7 +6,7 @@ import 'package:automation_app/features/word_automation/presentation/utils/schad
 import 'package:automation_app/features/word_automation/presentation/widgets/damage_item_controllers.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/rvg_korrektur_felder.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/schadensposition_hinzufuegen_menue.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eingabe der Schadensaufstellung im Schadensaufstellungs-Schritt des Wizards:
 /// Schadenspositionen und Gebührensatz. Die Umsatzsteuer-Option (applyVat)

@@ -2,7 +2,7 @@ import 'package:automation_app/core/general_widgets/form/general_text_field.dart
 import 'package:automation_app/features/form_template_setup/domain/services/feld_vorkommen.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_vorkommen_beobachter.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_vorkommen_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Die breiteste Zelle der Feldzeile: der Feldname, und daneben — sobald das

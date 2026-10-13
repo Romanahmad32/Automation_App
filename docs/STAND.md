@@ -6,6 +6,9 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 
 ## Umgesetzt
 
+- **Frontend auf `material_ui` (13.10.2026, #185)** — Material kommt aus dem Paket statt aus dem SDK
+  (Lint `migrate_design_widgets`); Formularfelder über `ReactiveTextEingabe`, HTML-Links über
+  `HtmlLinkStil`; google_fonts 9 ist damit wieder erlaubt.
 - **Zentralruf** — Vorbefüllung des Onlineformulars (§4.2) und Auswertung der Antwortmail
   (§4.3), dazu die ereignisbasierte Postfachüberwachung per IMAP IDLE.
 - **Word-Automation** — Vorlage füllen, RVG-Berechnung, PDF-Vorschau und Prüfung in der App.

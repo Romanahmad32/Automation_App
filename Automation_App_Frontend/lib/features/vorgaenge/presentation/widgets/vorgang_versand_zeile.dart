@@ -4,7 +4,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/letzte_
 import 'package:automation_app/features/email_versand/presentation/utils/versand_darstellung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_protokoll_dialog.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_weg_symbol.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Sagt in der Vorgangsliste, ob und wann zu diesem Vorgang etwas hinausging

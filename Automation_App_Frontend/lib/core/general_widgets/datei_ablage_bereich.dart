@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Nimmt Dateien entgegen, die aus dem Explorer hereingezogen werden, und legt
 /// über den [child] einen Schleier, solange etwas darüber schwebt.

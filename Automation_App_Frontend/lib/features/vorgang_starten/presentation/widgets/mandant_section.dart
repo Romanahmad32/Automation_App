@@ -10,7 +10,7 @@ import 'package:automation_app/features/vorgang_starten/presentation/widgets/man
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_ungespeichert_hinweis.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/mandant_vorschlag_banner.dart';
 import 'package:automation_app/features/vorgang_starten/presentation/widgets/vorgang_form_reader.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Abschnitt „Mandant": Stammdaten des Mandanten (im Verkehrsunfall zugleich der

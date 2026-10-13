@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_stand.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/jahrgang_stand_chip.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zeile „Historie" über der Filterleiste des Registers (§6.2): Woher das
 /// übernommene Registerbuch reicht, welche Jahrgänge fehlen und wo Lücken

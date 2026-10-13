@@ -4,7 +4,7 @@ import 'package:automation_app/features/mandanten/domain/services/sichere_treffe
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/domain/services/ordnername_vorschlag.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// „Sichere Treffer übernehmen" (Issue #108, E3) — zweiter Knopf neben

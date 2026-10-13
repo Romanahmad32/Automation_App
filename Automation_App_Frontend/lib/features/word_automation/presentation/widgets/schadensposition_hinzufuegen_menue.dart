@@ -1,5 +1,5 @@
 import 'package:automation_app/features/word_automation/domain/entities/standard_schadenspositionen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das „+" unter der Schadensaufstellung: leere Zeile oder eine der
 /// Standardpositionen (§4.4).

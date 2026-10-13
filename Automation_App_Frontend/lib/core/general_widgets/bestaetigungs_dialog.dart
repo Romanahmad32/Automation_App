@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Fragt mit einem `AlertDialog` [abbruch]/[bestaetigung] nach und liefert
 /// `true`, wenn zugestimmt wurde — sonst `false` (auch beim Wegtippen neben

@@ -1,5 +1,5 @@
 import 'package:automation_app/features/mandanten/presentation/widgets/kennzeichen_editor.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Am Mandanten hängen 0..n Kennzeichen, und sie werden später verglichen —

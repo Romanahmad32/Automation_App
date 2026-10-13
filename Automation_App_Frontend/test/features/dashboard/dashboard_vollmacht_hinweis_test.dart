@@ -3,7 +3,7 @@ import 'package:automation_app/features/dashboard/presentation/widgets/dashboard
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_vollmacht_hinweis.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Reine Anzeigeprüfung — ohne Tipp: [DashboardVollmachtHinweis] springt über

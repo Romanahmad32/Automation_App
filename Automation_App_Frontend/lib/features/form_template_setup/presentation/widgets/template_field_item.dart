@@ -7,7 +7,7 @@ import 'package:automation_app/features/form_template_setup/domain/services/feld
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_aufklapp_inhalt.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/feld_bezeichnung_zelle.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/felder_spalten.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Feldzeile im Vorlageneditor: Ziehgriff, Bezeichnung, Typ,
 /// Datenquelle, Pflicht, Aufklapp-Chevron, Löschen — in den Spalten aus

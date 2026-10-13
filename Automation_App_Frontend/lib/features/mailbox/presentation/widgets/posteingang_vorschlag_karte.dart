@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/gerundeter_kasten.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mailbox/domain/entities/vorgangsbezug.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Vorschlagskarte über der Aktionsleiste (Issue #134): „Vermutlich zu
 /// Vorgang …" bzw. „Vorgang …", je nach [Vorgangsbezug.sicherheit].

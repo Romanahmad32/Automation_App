@@ -1,5 +1,5 @@
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_art.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die drei Vorlagenarten als Umschalter (§4.11). Leer, solange sich aus dem
 /// Rechtsgebiet keine Art ableiten ließ — dann sagt die Zeile darunter, dass

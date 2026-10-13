@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_inhalt.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die sichtbare Karte **einer** Rückmeldung: Symbol, Text und Schließen-Knopf
 /// in einer Zeile, darunter bei Bedarf der Aktionsknopf.

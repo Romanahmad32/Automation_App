@@ -6,7 +6,7 @@ import 'package:automation_app/features/email_versand/presentation/blocs/mail_vo
 import 'package:automation_app/features/email_versand/presentation/blocs/mail_vorlagen_cubit/mail_vorlagen_state.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_vorlage_dialog.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_vorlage_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Verwaltung der Mail-Textvorlagen (§4.7, §5.3) — ein Reiter des

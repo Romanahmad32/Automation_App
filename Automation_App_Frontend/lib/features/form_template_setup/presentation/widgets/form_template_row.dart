@@ -7,7 +7,7 @@ import 'package:automation_app/features/form_template_setup/presentation/blocs/v
 import 'package:automation_app/features/form_template_setup/presentation/widgets/auflistung_badge.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_table_layout.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_stand_kennzeichen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Eine Zeile der Vorlagen-Tabelle: Name, hinterlegte Word-Dateien (als

@@ -2,7 +2,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang_status.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/historie_status_chip.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_status_chip.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Spalte „Status" der Registertabelle.
 ///

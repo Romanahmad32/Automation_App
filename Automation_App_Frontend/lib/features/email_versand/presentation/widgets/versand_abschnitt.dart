@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Einer der drei benannten Abschnitte des Versandformulars — „Empfänger",
 /// „Inhalt", „Anhänge" (§4.7).

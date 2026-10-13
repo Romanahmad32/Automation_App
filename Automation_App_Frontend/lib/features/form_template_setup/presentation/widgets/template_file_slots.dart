@@ -1,7 +1,7 @@
 import 'package:automation_app/features/form_template_setup/presentation/blocs/template_placeholders_bloc/template_placeholders_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/template_file_slot_card.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/vorlagen_bearbeitung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die beiden Datei-Karten (ohne/mit Auflistung) der Vorlagen-Detailseite.
 ///

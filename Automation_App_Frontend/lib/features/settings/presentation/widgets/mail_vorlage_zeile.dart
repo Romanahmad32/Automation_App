@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/mail_vorlage.dart';
 import 'package:automation_app/features/email_versand/domain/services/mail_vorlage_zustand.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Vorlage in der Verwaltung: Name mit **Zustandsabzeichen**, darunter der
 /// Betreff, rechts Ändern und Entfernen (§4.7).

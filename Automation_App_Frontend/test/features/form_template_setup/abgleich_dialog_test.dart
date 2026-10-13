@@ -1,5 +1,5 @@
 import 'package:automation_app/features/form_template_setup/presentation/widgets/abgleich_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Abgleich nach einem Dateiwechsel (#104, Stufe 3b): Welche Felder gehen

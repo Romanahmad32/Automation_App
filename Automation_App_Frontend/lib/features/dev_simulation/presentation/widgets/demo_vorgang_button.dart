@@ -4,7 +4,7 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.da
 import 'package:automation_app/features/vorgaenge/domain/entities/referenz_teile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Demo-Kennzeichen, aus denen der Demo-Vorgang reihum wählt (Konvention
 /// „Unterscheidungszeichen-Erkennungsbuchstaben Nummer").

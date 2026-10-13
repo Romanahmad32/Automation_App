@@ -1,6 +1,6 @@
 import 'package:automation_app/features/email_versand/domain/entities/email_empfaenger_vorschlag.dart';
 import 'package:automation_app/features/email_versand/domain/entities/empfaenger_art.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Empfängerzeile („An" oder „Kopie"): die bereits gewählten Adressen als
 /// entfernbare Chips, ein Feld zum Eintippen und die Adressen, die die App zum

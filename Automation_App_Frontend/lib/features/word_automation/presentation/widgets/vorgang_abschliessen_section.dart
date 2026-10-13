@@ -10,7 +10,7 @@ import 'package:automation_app/features/word_automation/domain/usecases/arbeitso
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/mail_versenden_button.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorgang_abschliessen_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Versand und Abschluss des Vorgangs (§4.7, §4.8) — die beiden letzten

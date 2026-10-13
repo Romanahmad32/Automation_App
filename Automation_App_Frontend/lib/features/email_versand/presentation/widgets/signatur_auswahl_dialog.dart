@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/outlook_signatur.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Lässt wählen, welche der in Outlook eingerichteten Signaturen übernommen
 /// wird (§4.7). Eine Kanzlei hat oft mehrere — „Kurz" für den Alltag,

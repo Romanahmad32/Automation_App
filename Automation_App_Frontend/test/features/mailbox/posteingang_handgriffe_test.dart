@@ -2,7 +2,7 @@ import 'package:automation_app/features/mailbox/domain/entities/posteingang_anha
 import 'package:automation_app/features/mailbox/domain/repositories/posteingang_repository.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/posteingang_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/utils/posteingang_handgriffe.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'posteingang_cubit_test.dart';

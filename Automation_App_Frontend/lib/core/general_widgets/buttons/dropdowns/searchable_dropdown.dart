@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Ein Eintrag des [SearchableDropdown]: der Wert plus das angezeigte Label,
 /// nach dem auch live gefiltert wird.

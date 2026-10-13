@@ -6,7 +6,7 @@ import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart'
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 /// Ein Eingabefeld des Ausfüllschritts — die Fabrik, die aus einem

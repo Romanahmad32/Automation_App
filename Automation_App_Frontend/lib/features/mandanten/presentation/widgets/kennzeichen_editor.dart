@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/kennzeichen_normalisierung.dart';
 import 'package:automation_app/core/general_widgets/form/kennzeichen_field.dart';
 import 'package:automation_app/core/general_widgets/form/texte_listen_editor.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Editor für die optionalen Kfz-Kennzeichen eines Mandanten (0..n). Die
 /// Bauform — löschbare Chips über einem Eingabefeld — kommt aus

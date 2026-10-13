@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Abdunkelndes Overlay mit Spinner, solange das Backend das Dokument erzeugt.
 /// Wird im Fill-Out- und im Schadensaufstellungs-Schritt über den Inhalt gelegt.

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Karte mit Abschnittsüberschrift (Icon + Titel + optionale Erläuterung) für
 /// eine thematische Gruppe von Formularfeldern. Wird sowohl von den

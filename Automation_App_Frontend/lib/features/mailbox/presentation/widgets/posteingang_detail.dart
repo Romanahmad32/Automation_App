@@ -10,7 +10,7 @@ import 'package:automation_app/features/mailbox/presentation/widgets/posteingang
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_html_ansicht.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_text_ansicht.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_vorschlag_karte.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Hülle der Detailansicht (Issue #134): Kopf → Vorschlagskarte (nur wenn
 /// [bezug] gesetzt ist) → Aktionsleiste → Ansicht-Umschalter → Text/HTML →

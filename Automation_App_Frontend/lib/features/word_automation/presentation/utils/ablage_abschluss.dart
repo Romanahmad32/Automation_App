@@ -9,7 +9,7 @@ import 'package:automation_app/features/word_automation/domain/usecases/arbeitso
 import 'package:automation_app/features/word_automation/presentation/blocs/edited_document_bloc.dart';
 import 'package:automation_app/features/word_automation/presentation/blocs/wizard_cubit.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/speicher_vermerk.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Was nach der geglückten Ablage in der Akte zu tun ist (§4.6). [zielpfade]

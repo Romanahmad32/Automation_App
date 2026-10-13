@@ -8,7 +8,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/anred
 import 'package:automation_app/features/email_versand/presentation/widgets/anrede_bestand_leer.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/anrede_neutral_grund_zeile.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Wahl der Anrede je Mail (§4.7, §7.1) — Chips über dem Betreff, wie beim

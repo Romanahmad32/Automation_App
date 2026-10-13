@@ -2,7 +2,7 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/mailbox/presentation/blocs/gesendet_cubit.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/gesendet_liste.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der zweite Bereich des Postfachs: „Was ist heute rausgegangen?" (§4.3).

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Spalte der Feldertabelle: ihre Aufschrift in der Kopfzeile und der
 /// Platz, den sie in jeder Zeile bekommt.

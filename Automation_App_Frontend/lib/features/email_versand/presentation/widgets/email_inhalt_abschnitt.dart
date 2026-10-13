@@ -9,7 +9,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/handa
 import 'package:automation_app/features/email_versand/presentation/widgets/mail_vorlagen_auswahl.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/platzhalter_uebersicht.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_abschnitt.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der zweite Abschnitt des Versandformulars: **was in der Mail steht** (§4.7).
 ///

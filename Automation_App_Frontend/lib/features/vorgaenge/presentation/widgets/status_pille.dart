@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die kleine, getönte Pille, mit der eine Registerzeile ihren Zustand zeigt —
 /// Vorgangsstatus, „Historie", ein Befund.

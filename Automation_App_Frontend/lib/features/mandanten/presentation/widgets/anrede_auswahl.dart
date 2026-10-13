@@ -1,5 +1,5 @@
 import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Auswahl der Anrede/des Geschlechts eines Mandanten (Herr / Frau / keine
 /// Angabe). Bestimmt die spätere Ansprache in Vorlagen und E-Mails. Liefert die

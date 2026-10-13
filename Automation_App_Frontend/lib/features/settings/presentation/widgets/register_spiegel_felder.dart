@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/form/general_text_field.dart';
 import 'package:automation_app/features/settings/domain/entities/kanzlei_settings.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// **Was** in der Register-Datei steht und **wann** sie entsteht (§6.2):
@@ -13,6 +13,12 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// treffen will, hinter einer zu verstecken, die fast niemand braucht.
 class RegisterSpiegelFelder extends StatelessWidget {
   const RegisterSpiegelFelder({super.key});
+
+  /// Die Werte, die das Dropdown als Eintrag kennt.
+  static const bekannteFilter = [
+    KanzleiSettings.registerFilterAlle,
+    KanzleiSettings.registerFilterAbgeschlossen,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -40,36 +46,56 @@ class RegisterSpiegelFelder extends StatelessWidget {
           style: stillerText,
         ),
         const SizedBox(height: 16),
-        ReactiveSwitchListTile(
+        // reactive_forms baut Schalter und Auswahl noch auf dem alten Material
+        // (siehe ReactiveTextEingabe); deshalb ReactiveFocusableFormField mit
+        // den Widgets aus material_ui. Der FocusNode lässt `control.focus()`
+        // (Sprung aus dem Fehlerhinweis) wirken.
+        ReactiveFocusableFormField<bool, bool>(
           formControlName: 'registerNachAbschlussSchreiben',
-          title: const Text('Nach jedem Abschluss neu schreiben'),
-          subtitle: const Text(
-            'Sonst nur auf Knopfdruck im Register. Ein Fehlschlag dabei kann '
-            'einen abgeschlossenen Vorgang nie rückgängig machen.',
+          builder: (field) => SwitchListTile(
+            focusNode: field.focusNode,
+            value: field.value ?? false,
+            title: const Text('Nach jedem Abschluss neu schreiben'),
+            subtitle: const Text(
+              'Sonst nur auf Knopfdruck im Register. Ein Fehlschlag dabei kann '
+              'einen abgeschlossenen Vorgang nie rückgängig machen.',
+            ),
+            contentPadding: EdgeInsets.zero,
+            onChanged: field.control.enabled ? field.didChange : null,
           ),
-          contentPadding: EdgeInsets.zero,
         ),
         const SizedBox(height: 8),
-        ReactiveDropdownField<String>(
+        ReactiveFocusableFormField<String, String>(
           formControlName: 'registerExportFilter',
-          // Ohne das bestimmt der längste Eintrag die Mindestbreite des Feldes,
-          // und das Formular läuft auf schmalen Fenstern seitlich heraus.
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Inhalt der Datei',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.filter_alt_outlined),
+          builder: (field) => DropdownButtonFormField<String>(
+            focusNode: field.focusNode,
+            // Ein Wert, der unter den Einträgen fehlt, ergäbe eine Assertion;
+            // das frühere ReactiveDropdownField zeigte dann keine Auswahl.
+            initialValue: bekannteFilter.contains(field.value)
+                ? field.value
+                : null,
+            // Ohne das bestimmt der längste Eintrag die Mindestbreite des
+            // Feldes, und das Formular läuft auf schmalen Fenstern seitlich
+            // heraus.
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: 'Inhalt der Datei',
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.filter_alt_outlined),
+              errorText: field.errorText,
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: KanzleiSettings.registerFilterAlle,
+                child: Text('Alle Vorgänge'),
+              ),
+              DropdownMenuItem(
+                value: KanzleiSettings.registerFilterAbgeschlossen,
+                child: Text('Nur abgeschlossene Vorgänge'),
+              ),
+            ],
+            onChanged: field.control.enabled ? field.didChange : null,
           ),
-          items: const [
-            DropdownMenuItem(
-              value: KanzleiSettings.registerFilterAlle,
-              child: Text('Alle Vorgänge'),
-            ),
-            DropdownMenuItem(
-              value: KanzleiSettings.registerFilterAbgeschlossen,
-              child: Text('Nur abgeschlossene Vorgänge'),
-            ),
-          ],
         ),
         const SizedBox(height: 8),
         Text(

@@ -2,7 +2,7 @@ import 'package:automation_app/features/email_versand/domain/entities/mail_vorla
 import 'package:automation_app/features/email_versand/domain/entities/vorlagen_mangel.dart';
 import 'package:automation_app/features/email_versand/domain/services/vorlagen_pruefung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/beugung_vorschau.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Was der Editor über die eben getippte Vorlage sagt (§4.7, ergänzt am
 /// 02.09.2026): Platzhalter, die nichts liefern werden, und was die Beugungen

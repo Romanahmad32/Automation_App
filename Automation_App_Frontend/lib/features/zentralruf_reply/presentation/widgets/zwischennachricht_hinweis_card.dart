@@ -1,5 +1,5 @@
 import 'package:automation_app/features/zentralruf_reply/presentation/widgets/tone_card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hinweiskarte im Übernahme-Formular für Zwischennachrichten des Zentralrufs:
 /// erklärt, dass die endgültige Antwort in einer weiteren Mail folgt und die

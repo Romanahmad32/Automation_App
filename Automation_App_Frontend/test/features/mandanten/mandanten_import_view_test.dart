@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mandanten/domain/entities/import_bericht.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_datei_auswahl.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/import_eintrag_kachel.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'import_testaufbau.dart';

@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die drei Felder des Ablagedialogs: Mandant, Akte, Fall-Ordner.
 ///

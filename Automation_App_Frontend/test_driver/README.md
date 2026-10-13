@@ -24,10 +24,12 @@ Marionette sucht Elemente bevorzugt über `key`, dann `identifier` (Semantics), 
 
 `text` vergleicht **exakt** und liest von Haus aus nur `Text`/`RichText`/Eingabefelder. Damit
 auch die eingeklappte Seitenleiste und die Symbolknöpfe erreichbar sind, liefert
-`beschriftungFuerMarionette` in `main_marionette.dart` für ein `SidebarItem` sein `label` und
+`beschriftungFuerMarionette` in `marionette_konfiguration.dart` für ein `SidebarItem` sein `label` und
 für einen `IconButton` seinen `tooltip`: `tap` mit `text: "Mandanten"` wechselt den Reiter,
 `text: "Löschen"` trifft den Mülleimer. Gleichnamige Knöpfe einer Liste trennt
 `ancestor_keys`, etwa `["7/26 C03_123 ABC"]` — die Vorgangskachel trägt `ValueKey(referenz)`.
+
+Die Konfiguration steht in `marionette_konfiguration.dart`: marionette_flutter kennt nur die Material-Typen des SDK, deshalb meldet `istBedienelement` die `material_ui`-Typen als interaktiv und `beschriftungFuerMarionette` reicht Label und Tooltip nach.
 
 `stop_app` beendet nur `flutter run`; das App-Fenster bleibt offen und muss danach geschlossen
 werden (der Dienst beendet sich dann selbst).

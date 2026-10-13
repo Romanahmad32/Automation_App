@@ -4,7 +4,7 @@ import 'package:automation_app/features/backup/domain/entities/uebergabe_angebot
 import 'package:automation_app/features/backup/domain/entities/uebergabe_stand.dart';
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart';
 import 'package:automation_app/features/backup/presentation/widgets/arbeitsplatz_uebergabe_gate.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'backup_doubles.dart';

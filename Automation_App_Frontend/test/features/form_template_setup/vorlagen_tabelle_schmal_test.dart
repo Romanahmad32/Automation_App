@@ -9,7 +9,7 @@ import 'package:automation_app/features/form_template_setup/domain/services/gesp
 import 'package:automation_app/features/form_template_setup/domain/usecases/delete_form_template.dart';
 import 'package:automation_app/features/form_template_setup/presentation/blocs/form_template_overview_bloc/form_template_overview_bloc.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/form_template_table.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

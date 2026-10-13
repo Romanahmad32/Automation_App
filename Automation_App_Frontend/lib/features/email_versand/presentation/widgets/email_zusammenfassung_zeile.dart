@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile der Versand-Zusammenfassung: links die Beschriftung („An",
 /// „Betreff", „Anhänge"), rechts die Werte untereinander.

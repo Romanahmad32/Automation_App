@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/email_versand/domain/entities/versand_eintrag.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/status_pille.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile des Bereichs „Gesendet" (§4.3) — spiegelbildlich zur
 /// `PosteingangZeile`: oben der Empfänger, darunter der Betreff, darunter die

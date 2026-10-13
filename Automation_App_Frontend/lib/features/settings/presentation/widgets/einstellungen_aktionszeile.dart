@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zeile unter dem Seitenkopf der Einstellungen: links die Abschnitte zur
 /// Auswahl, rechts die eine Aktion des offenen Abschnitts (der

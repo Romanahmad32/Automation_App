@@ -29,7 +29,9 @@ void main() {
   final importsData = importInSchicht('data');
   final importsPresentation = importInSchicht('presentation');
   final importsFlutterUi = RegExp(
-    "import\\s+'package:flutter/(material|widgets|cupertino)\\.dart'",
+    // Seit #185 liegt die Oberfläche in material_ui/cupertino_ui; die alten
+    // flutter-Importe bleiben mit erfasst. Beide Anführungszeichen zählen.
+    r'''import\s+["']package:(flutter/(material|widgets|cupertino)\.dart|(material_ui|cupertino_ui)/)''',
   );
   final importsDio = RegExp("import\\s+'package:dio/dio\\.dart'");
 
@@ -75,7 +77,8 @@ void main() {
     test('domain ist frei von Flutter-UI-Abhängigkeiten', () {
       erwarteKeineTreffer(
         'Die domain-Schicht muss framework-unabhängig bleiben '
-        '(kein Import von flutter material/widgets/cupertino).',
+        '(kein Import von flutter material/widgets/cupertino, '
+        'material_ui oder cupertino_ui).',
         dateienInSchicht('domain'),
         importsFlutterUi,
       );

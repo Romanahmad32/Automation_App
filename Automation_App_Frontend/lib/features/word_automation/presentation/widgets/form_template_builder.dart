@@ -12,7 +12,7 @@ import 'package:automation_app/features/word_automation/domain/services/ausgangs
 import 'package:automation_app/features/word_automation/domain/services/datenquelle_vorschlaege.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/ausfuell_feld.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/nicht_verwendete_felder.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 class FormTemplateBuilder extends StatelessWidget {

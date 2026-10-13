@@ -7,7 +7,7 @@ import 'package:automation_app/features/mandanten/domain/usecases/lies_import_da
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_import_cubit/mandanten_import_cubit.dart';
 import 'package:automation_app/features/mandanten/presentation/views/mandanten_import_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'mandanten_testaufbau.dart';

@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/settings/domain/entities/ordner_zustand.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zeile Klartext zu **einem** Ordner: welcher gilt und warum.
 ///

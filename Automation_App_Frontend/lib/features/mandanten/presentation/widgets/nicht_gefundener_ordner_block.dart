@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Eine Zuordnung, deren Ordner der Scan nicht mehr findet — umbenannt oder
 /// verschoben (#132). Steht an der Mandantenkarte unter den gefundenen Akten.

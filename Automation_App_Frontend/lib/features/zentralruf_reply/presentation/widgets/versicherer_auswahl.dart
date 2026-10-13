@@ -2,7 +2,7 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/buttons/dropdowns/searchable_dropdown.dart';
 import 'package:automation_app/features/versicherer/domain/entities/versicherer.dart';
 import 'package:automation_app/features/versicherer/presentation/blocs/versicherer_cubit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Auswahl eines Versicherers aus der Wissensbasis (aus früheren

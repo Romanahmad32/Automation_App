@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Abschluss einer langen Liste: entweder „es kommt noch etwas" oder
 /// „das war alles". Benutzt von der Mandantenliste und vom Zuordnungsstapel —

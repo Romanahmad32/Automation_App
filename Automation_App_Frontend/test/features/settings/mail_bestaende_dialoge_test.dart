@@ -4,7 +4,7 @@ import 'package:automation_app/features/email_versand/domain/entities/mail_vorla
 import 'package:automation_app/features/settings/presentation/widgets/anredebaustein_dialog.dart';
 import 'package:automation_app/features/settings/presentation/widgets/grussformel_dialog.dart';
 import 'package:automation_app/features/settings/presentation/widgets/mail_vorlage_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Die drei Dialoge der Mail-Bestände (§4.7, §7.1).

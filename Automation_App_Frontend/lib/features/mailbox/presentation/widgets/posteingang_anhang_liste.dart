@@ -1,7 +1,7 @@
 import 'package:automation_app/features/mailbox/domain/entities/posteingang_anhang.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_anhang_aktionen.dart';
 import 'package:automation_app/features/mailbox/presentation/widgets/posteingang_anhang_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Das Anhangsverzeichnis der Detailansicht (Issue #134): Überschrift
 /// „Anhänge" und darunter je Anhang eine [PosteingangAnhangZeile].

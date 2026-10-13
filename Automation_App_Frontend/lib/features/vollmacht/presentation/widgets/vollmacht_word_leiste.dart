@@ -3,7 +3,7 @@ import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Leiste zwischen Arbeitsfläche und Knöpfen, sobald der Dialog eine

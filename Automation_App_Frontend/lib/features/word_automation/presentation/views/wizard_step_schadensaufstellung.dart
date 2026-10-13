@@ -14,7 +14,7 @@ import 'package:automation_app/features/word_automation/presentation/widgets/gen
 import 'package:automation_app/features/word_automation/presentation/widgets/schadensaufstellung_preview.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/schadensposition_fehlerliste.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/vorsteuer_checkbox_karte.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Schritt "Schadensaufstellung" (nur bei Vorlagen mit Auflistung):

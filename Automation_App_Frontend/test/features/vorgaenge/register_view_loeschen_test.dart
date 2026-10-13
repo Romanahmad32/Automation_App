@@ -2,7 +2,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/register_cu
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_spiegel_cubit.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/register_state.dart';
 import 'package:automation_app/features/vorgaenge/presentation/views/register_view.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 

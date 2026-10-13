@@ -1,6 +1,6 @@
 import 'package:automation_app/core/dateien/datei_oeffnen_mit_hinweis.dart';
 import 'package:automation_app/core/dateien/datei_oeffner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der eine Weg „Datei öffnen, sonst Hinweis mit ‚Im Ordner zeigen‘“. Die Naht

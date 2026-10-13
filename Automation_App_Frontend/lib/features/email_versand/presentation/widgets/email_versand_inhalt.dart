@@ -9,7 +9,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/ansic
 import 'package:automation_app/features/email_versand/presentation/widgets/email_versand_formular.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_vorschau_spalte.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_bereitschaft_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der Rumpf des Versanddialogs: Umschalter, Formular, daneben — wenn das

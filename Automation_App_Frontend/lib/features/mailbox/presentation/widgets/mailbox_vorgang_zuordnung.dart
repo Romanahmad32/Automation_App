@@ -4,7 +4,7 @@ import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_cub
 import 'package:automation_app/features/vorgaenge/domain/services/wahrscheinlicher_vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_status_chip.dart';
 import 'package:automation_app/features/zentralruf_reply/domain/entities/zentralruf_reply_data.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Kompakter Read-only-Hinweis im Kopf der Postfach-Detailansicht: zeigt auf

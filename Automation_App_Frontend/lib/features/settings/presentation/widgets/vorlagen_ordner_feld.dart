@@ -1,5 +1,5 @@
 import 'package:automation_app/features/settings/presentation/widgets/ordner_auswahl_feld.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Auswahl des Vorlagenordners (#33): der Ordner, in dem die Word-Vorlagen des
 /// Anwalts liegen. Leer heißt seit #103: der Unterordner `Vorlagen` unter dem

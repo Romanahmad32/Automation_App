@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Leerzustand der Mandantenübersicht, wenn weder Mandanten noch Akten
 /// vorhanden sind.

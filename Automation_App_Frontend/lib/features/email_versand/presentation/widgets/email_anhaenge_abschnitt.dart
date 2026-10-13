@@ -4,7 +4,7 @@ import 'package:automation_app/features/email_versand/presentation/widgets/email
 import 'package:automation_app/features/email_versand/presentation/widgets/email_groesse_zeile.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_bilder.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/versand_abschnitt.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Der dritte Abschnitt des Versandformulars: **was mitgeht** (§4.7).

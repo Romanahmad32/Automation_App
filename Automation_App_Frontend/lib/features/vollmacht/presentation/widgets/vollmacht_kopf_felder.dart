@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/form/german_date_text_field.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_feld.dart';
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_kopfdaten.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Kopfzeilen der Vollmacht als Eingabefelder (§4.11).
 ///

@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/domain/services/vorgang_vollstaendigkeit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Dezenter Hinweis in der Vorgangszeile, welche Daten für das
 /// Anspruchsschreiben noch fehlen ([VorgangVollstaendigkeit]) — so pflegt der

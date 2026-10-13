@@ -1,5 +1,5 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/register_zeile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Inhalt der Registerspalte „Sache · Sachbestand".
 ///

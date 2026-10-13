@@ -1,6 +1,6 @@
 import 'package:automation_app/features/word_automation/presentation/utils/betrag_eingabe.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/rvg_felder_pruefung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'schadensaufstellung_schritt.dart';

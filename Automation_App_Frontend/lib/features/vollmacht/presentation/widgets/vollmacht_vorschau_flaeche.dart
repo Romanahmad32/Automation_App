@@ -3,7 +3,7 @@ import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_vors
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_cubit.dart';
 import 'package:automation_app/features/vollmacht/presentation/blocs/vollmacht_stand.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die ausgefüllte Seite neben den Feldern (§4.11, #164) — damit ein

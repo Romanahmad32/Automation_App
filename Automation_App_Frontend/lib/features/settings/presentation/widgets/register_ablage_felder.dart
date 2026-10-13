@@ -1,7 +1,7 @@
 import 'package:automation_app/features/settings/domain/services/synchronisierter_ordner.dart';
 import 'package:automation_app/features/settings/presentation/widgets/ordner_auswahl_feld.dart';
 import 'package:automation_app/features/settings/presentation/widgets/synchronisierter_ordner_vorschlag.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// **Wohin** der Register-Spiegel geschrieben wird (§6.2) — eine der drei
 /// abweichenden Ordnerwahlen im Aufklapper. Leer heißt seit #103 nicht mehr

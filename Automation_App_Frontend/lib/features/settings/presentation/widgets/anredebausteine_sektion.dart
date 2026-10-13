@@ -5,7 +5,7 @@ import 'package:automation_app/features/email_versand/domain/entities/anredebaus
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_cubit.dart';
 import 'package:automation_app/features/email_versand/presentation/blocs/anredebausteine_cubit/anredebausteine_state.dart';
 import 'package:automation_app/features/settings/presentation/widgets/anredebaustein_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Die Verwaltung der Anredeanfänge (§4.7, §7.1) — ein Reiter des gemeinsamen

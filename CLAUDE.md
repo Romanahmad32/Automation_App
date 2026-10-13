@@ -161,6 +161,7 @@ Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Tes
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs`, `test/architecture/http_vertrag_test.dart` |
 | Doku: Steckbrief je Feature, Wortbudgets, lebende Verweise | `test/architecture/dokumentation_test.dart`, `Architecture/DokumentationTests.cs` |
 | Anforderungsverweise (`§4.8`) gegen `docs/ANFORDERUNGEN_INDEX.md`, und dessen Gliederung gegen `REQUIREMENTS.md` | `test/architecture/anforderungen_test.dart`, `Architecture/DokumentationTests.cs` |
+| Material nur aus `material_ui`, keine Material-Widgets von reactive_forms | Lint `migrate_design_widgets`, `test/architecture/reactive_forms_material_test.dart` |
 | Formatierung | `dart format --set-exit-if-changed`, `dotnet format --verify-no-changes` (CI) |
 | Generierter Stand aktuell | build_runner + `git diff --exit-code` (CI) |
 | `pubspec.lock` passt zur gepinnten Flutter-Fassung | `pub get` + `git diff --exit-code` (CI, `check.ps1`) |

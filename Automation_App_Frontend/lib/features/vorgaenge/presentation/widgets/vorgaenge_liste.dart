@@ -4,7 +4,7 @@ import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/features/vorgaenge/domain/entities/vorgang.dart';
 import 'package:automation_app/features/vorgaenge/presentation/blocs/vorgang_hervorhebung_signal.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_verwaltung_tile.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Liste der Vorgangskacheln in „Vorgänge verwalten" — und die Stelle, die
 /// den Sprung aus dem Register beantwortet (§6.2).

@@ -1,5 +1,5 @@
 import 'package:automation_app/features/mailbox/domain/entities/mailbox_status.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zustände, auf die [MailboxStatusPille] den Verbindungsstatus des
 /// Postfachs verdichtet — dieselbe Fallunterscheidung wie im breiten

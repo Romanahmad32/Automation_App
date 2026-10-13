@@ -2,7 +2,7 @@ import 'package:automation_app/features/form_template_setup/domain/entities/feld
 import 'package:automation_app/features/form_template_setup/domain/entities/field_data.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/input_type.dart';
 import 'package:automation_app/features/word_automation/presentation/widgets/feld_einstellung_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Dialog aus Teil 3 von #37. Er entscheidet nichts, er liefert ab — aber

@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_classes/datum_format.dart';
 import 'package:automation_app/features/form_template_setup/domain/entities/datums_vorbelegung.dart';
 import 'package:automation_app/features/form_template_setup/presentation/widgets/ganzzahl_feld_klein.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Stellt die Vorbelegung eines Datumsfelds ein (§5.3): vier Zahlenfelder für
 /// Jahre, Monate, Wochen und Tage, daneben das Datum, das heute dabei

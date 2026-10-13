@@ -4,7 +4,7 @@ import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.da
 import 'package:automation_app/features/email_versand/domain/entities/signatur_stand.dart';
 import 'package:automation_app/features/email_versand/domain/repositories/email_versand_repository.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/signatur_auswahl_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Liest die in Outlook eingerichtete Signatur (§4.7) — statt sie abtippen zu
 /// lassen.

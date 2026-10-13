@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Hinweis, dass kein Stammordner für das Aktensystem festgelegt ist und die
 /// automatische Ablage daher nicht möglich ist (manuelles Speichern bleibt).

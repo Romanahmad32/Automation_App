@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_controller.dart';
 import 'package:automation_app/core/general_widgets/page_refresh/page_refresh_inherited.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // Der Controller lag frueher in dieser Datei. Er wird weiter von hier
 // mitgegeben, damit die Seiten, die nur page_refresh_scope.dart importieren,

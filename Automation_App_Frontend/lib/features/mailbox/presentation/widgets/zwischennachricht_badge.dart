@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Kleines gelbes Badge für Zwischennachrichten des Zentralrufs: die Mail
 /// enthält noch keine Auskunft, die endgültige Antwort folgt in einer

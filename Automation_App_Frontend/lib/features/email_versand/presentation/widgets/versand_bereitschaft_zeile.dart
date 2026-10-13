@@ -1,5 +1,5 @@
 import 'package:automation_app/features/email_versand/domain/entities/versand_pruefung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die schmale Statuszeile über den Schaltflächen: Was zum Senden noch fehlt —
 /// **vor** dem Klick (§4.7, ergänzt am 06.09.2026).

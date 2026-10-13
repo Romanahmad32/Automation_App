@@ -1,6 +1,6 @@
 import 'package:automation_app/core/theme/domain/schriftstufe.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die beiden Theme-Familien der App. Jede Familie hat einen Hell- und einen
 /// Dunkelmodus.

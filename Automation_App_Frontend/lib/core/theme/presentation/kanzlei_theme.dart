@@ -1,5 +1,5 @@
 import 'package:automation_app/core/theme/presentation/theme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Theme-Familie "Variante A" (Kanzlei-Design): warmes Bordeaux-Markenbild auf

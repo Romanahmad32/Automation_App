@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vollmacht/domain/entities/vollmacht_drucker.dart';
 import 'package:automation_app/features/vollmacht/presentation/widgets/vollmacht_hinweis.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die Zeile über den Knöpfen des Vollmacht-Dialogs (§4.11, #164): wohin
 /// „Drucken" geht, und was Windows über den Drucker meldet.

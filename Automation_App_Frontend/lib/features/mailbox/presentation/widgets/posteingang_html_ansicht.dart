@@ -1,6 +1,7 @@
 import 'package:automation_app/core/general_widgets/gerundeter_kasten.dart';
+import 'package:automation_app/core/general_widgets/html_link_stil.dart';
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
 /// Die formatierte Fassung einer Nachricht (Issue #134).
@@ -67,6 +68,7 @@ class PosteingangHtmlAnsicht extends StatelessWidget {
         ],
         HtmlWidget(
           html,
+          customStylesBuilder: HtmlLinkStil.fuer(theme.colorScheme),
           customWidgetBuilder: (element) => element.localName == 'img'
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),

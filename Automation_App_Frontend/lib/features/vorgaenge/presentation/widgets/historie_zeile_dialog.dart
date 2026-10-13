@@ -2,7 +2,7 @@ import 'package:automation_app/features/vorgaenge/domain/entities/register_histo
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_zeile.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/historie_herkunft_kasten.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/historie_zeile_formular.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Was der Anwalt an einer historischen Zeile geändert hat. `null` als Ergebnis
 /// des Dialogs heißt „abgebrochen" — ein Ergebnis heißt „so soll die Zeile

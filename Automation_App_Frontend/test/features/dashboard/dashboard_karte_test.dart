@@ -1,5 +1,5 @@
 import 'package:automation_app/features/dashboard/presentation/widgets/dashboard_karte.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Der Absprung („Alle Vorgänge", „Zum Postfach", …) gehört an die rechte

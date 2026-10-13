@@ -1,7 +1,8 @@
+import 'package:automation_app/core/general_widgets/html_link_stil.dart';
 import 'package:automation_app/features/email_versand/domain/entities/signatur_bild.dart';
 import 'package:automation_app/features/email_versand/presentation/utils/signatur_html_aufbereitung.dart';
 import 'package:automation_app/features/email_versand/presentation/widgets/email_signatur_bilder_vorschau.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
 /// Die Signatur, wie sie unter der Mail steht (§4.7) — die **formatierte**
@@ -84,6 +85,7 @@ class SignaturAnsicht extends StatelessWidget {
       // erbte sie die des Mailtextes darüber und sähe größer aus als beim
       // Empfänger.
       textStyle: const TextStyle(fontSize: 11, height: 1.2),
+      customStylesBuilder: HtmlLinkStil.fuer(theme.colorScheme),
       // Ein Bild, das der Dienst nicht ausliefert, darf die Vorschau nicht mit
       // einem Ausrufezeichen füllen: Es geht trotzdem hinaus.
       onErrorBuilder: (_, _, _) => const SizedBox.shrink(),

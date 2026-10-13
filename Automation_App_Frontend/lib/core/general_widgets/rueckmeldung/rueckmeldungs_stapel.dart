@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/rueckmeldung/laufende_rueckmeldung.dart';
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldungs_karte.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Der Stapel aller gerade sichtbaren Rückmeldungen — **oben rechts** im
 /// Fenster, neueste zuoberst, ältere rücken nach unten.

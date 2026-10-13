@@ -1,7 +1,7 @@
 import 'package:automation_app/core/theme/presentation/soft_tone.dart';
 import 'package:automation_app/features/mandanten/domain/entities/mandant.dart';
 import 'package:automation_app/features/mandanten/domain/services/mandant_erkennung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 /// Wiedererkennungs-Hinweis im Mandanten-Abschnitt: Passen die frei getippten

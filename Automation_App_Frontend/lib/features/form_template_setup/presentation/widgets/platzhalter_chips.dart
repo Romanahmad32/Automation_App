@@ -1,6 +1,6 @@
 import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
 import 'package:automation_app/features/form_template_setup/domain/services/platzhalter_uebernahme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die erkannten {{Platzhalter}} einer Word-Datei als Chips. Drei Zustände je
 /// Chip:

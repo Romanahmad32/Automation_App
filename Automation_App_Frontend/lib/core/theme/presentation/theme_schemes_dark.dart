@@ -1,4 +1,4 @@
-import "package:flutter/material.dart";
+import "package:material_ui/material_ui.dart";
 
 /// Die dunklen Farbschemata des Standard-Designs (blaues Material-Theme),
 /// aufgeteilt aus `theme.dart`, damit der Theme-Builder dort kurz bleibt.

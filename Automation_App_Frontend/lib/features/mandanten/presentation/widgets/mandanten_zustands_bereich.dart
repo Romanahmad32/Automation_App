@@ -1,7 +1,7 @@
 import 'package:automation_app/core/general_widgets/fehler_hinweis.dart';
 import 'package:automation_app/features/mandanten/presentation/blocs/mandanten_overview_bloc/mandanten_overview_bloc.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/mandanten_fehler.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Nimmt Laden, Fehler und Neuladen des [MandantenOverviewBloc] ab; [builder]

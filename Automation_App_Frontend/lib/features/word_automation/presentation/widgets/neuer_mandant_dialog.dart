@@ -3,7 +3,7 @@ import 'package:automation_app/features/mandanten/domain/entities/anrede.dart';
 import 'package:automation_app/features/mandanten/domain/entities/create_mandant_request.dart';
 import 'package:automation_app/features/mandanten/presentation/widgets/anrede_auswahl.dart';
 import 'package:automation_app/features/word_automation/presentation/utils/formular_extraktion.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Dialog zum Anlegen eines neuen Mandanten direkt aus dem Speicherschritt,
 /// vorbelegt mit den (best-effort) aus dem Formular gelesenen Daten.

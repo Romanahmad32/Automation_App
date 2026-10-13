@@ -1,5 +1,5 @@
 import 'package:automation_app/features/form_template_setup/domain/services/app_eigene_platzhalter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Nachschlagewerk in der Vorlagenverwaltung: welche {{Platzhalter}} die App
 /// beim Erzeugen selbst füllt, was sie einsetzen und wie das aussieht (#31).

@@ -1,6 +1,6 @@
 import 'package:automation_app/features/vorgaenge/domain/entities/register_historie_aenderung.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_dialog_field.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Die sieben Eingabefelder einer historischen Registerzeile, gebündelt.
 ///

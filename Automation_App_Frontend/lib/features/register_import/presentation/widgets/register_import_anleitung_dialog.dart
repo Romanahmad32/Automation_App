@@ -1,6 +1,6 @@
 import 'package:automation_app/core/general_widgets/rueckmeldung/rueckmeldung.dart';
 import 'package:automation_app/features/register_import/presentation/utils/register_import_anleitung.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 /// Der Auftrag an den Erzeuger der Registerdatei, fertig zum Kopieren — mit
