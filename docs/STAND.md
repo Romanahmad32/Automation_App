@@ -391,6 +391,12 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   `.docx`). `/health` meldet `testmodus`, `BackendLauncher` übernimmt im Testmodus nur solche Dienste,
   Formularfelder, Listen und Tippflächen tragen Schlüssel bzw. Semantik für Marionette. Skripte:
   `e2e-start.ps1`, `e2e-testdaten.ps1`; Einzelheiten in `docs/RELEASE.md`. Die Marionette-Sperre bleibt hart.
+- **E2E-Suite mit integration_test (#184)** — nur lokal, vor dem Release-Tag per `scripts/e2e-suite.ps1`, nicht
+  in `check.ps1` und nicht in der CI. Drei Durchläufe unter `Automation_App_Frontend/integration_test/`: Hauptweg
+  bis zum Versand (genau eine `.eml` an Versicherung und Mandant, PDF angehängt), Vollmacht drucken (Druck-Kopie
+  und Vermerk), Mandant anlegen und einem Vorgang zuordnen. Jeder prüft zuerst `/health` auf `testmodus` und
+  danach am Ergebnis: `protokoll.jsonl`, die Dateien der Attrappen, der Bestand über REST. Der Dienst endet
+  geordnet über einen Anker-Prozess als `--parent-pid`, damit seine Word-Instanz nicht verwaist.
 
 ### Intelligente Datenwiederverwendung (Punkte 1–7 des Verbesserungsplans)
 
@@ -451,5 +457,3 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   „Umgesetzt") stellt den angefangenen Stand jetzt ohne Nachfrage still wieder her. Nicht gebaut ist
   der im Issue nur als Spielraum genannte nächste Schritt: Beim ersten Öffnen den Vorgang mit dem
   **jüngsten** angefangenen Stand vorauszuwählen, statt wie bisher den mit der jüngsten Antwort.
-- **integration_test-Suite für die E2E-Abnahme (#184)** — baut auf dem Testmodus (#168) auf: 3 bis 5
-  Durchläufe, weder in `check.ps1` noch in der CI, vor dem Release per Skript gestartet.

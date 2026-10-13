@@ -19,6 +19,15 @@ import 'package:reactive_forms/reactive_forms.dart';
 /// neuen Mandanten an. Auswahl/Schalter meldet das Widget über Callbacks; die
 /// Textfelder laufen über Reactive-Forms-Controls.
 class MandantSection extends StatelessWidget {
+  /// Key des Auswahlfelds „Aus Mandanten übernehmen".
+  static const Key auswahlSchluessel = ValueKey('mandant-auswahl');
+
+  /// Key des Eintrags zum Mandanten [id] im geöffneten Menü; `null` ist
+  /// „(neuer Mandant)". Die Namen stehen auch in den Feldern darunter, der Key
+  /// macht den Eintrag eindeutig.
+  static Key eintragSchluessel(int? id) =>
+      ValueKey('mandant-auswahl-${id ?? 'neu'}');
+
   final List<Mandant> mandanten;
   final int? selectedMandantId;
   final ValueChanged<Mandant> onMandantGewaehlt;
@@ -96,6 +105,7 @@ class MandantSection extends StatelessWidget {
           children: [
             if (mandanten.isNotEmpty)
               SearchableDropdown<int>(
+                feldSchluessel: auswahlSchluessel,
                 value: selectedMandantId,
                 labelText: 'Aus Mandanten übernehmen',
                 hintText: 'Mandant suchen oder „(neuer Mandant)"',
@@ -108,14 +118,16 @@ class MandantSection extends StatelessWidget {
                     'dieser Eintrag geändert — auch sein Name.',
                 helperMaxLines: 3,
                 entries: [
-                  const SearchableDropdownEntry<int>(
+                  SearchableDropdownEntry<int>(
                     value: -1,
                     label: '(neuer Mandant)',
+                    schluessel: eintragSchluessel(null),
                   ),
                   for (final mandant in mandanten)
                     SearchableDropdownEntry(
                       value: mandant.id,
                       label: mandant.anzeigename,
+                      schluessel: eintragSchluessel(mandant.id),
                     ),
                 ],
                 onChanged: (id) {

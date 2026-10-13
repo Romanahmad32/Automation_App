@@ -28,8 +28,20 @@
     Adresse (fuer Marionette `connect`) steht in `<Wurzel>\vmservice.txt` und
     wird ausgegeben.
 
-    Der Zustand steht in `<Wurzel>\e2e.json`; `-Beenden` liest ihn.
+    Der Zustand steht in `<Wurzel>\e2e.json`; `-Beenden` liest ihn. Er haelt zu
+    Anker, Dienst und App auch die Startzeit (beim Dienst den exe-Pfad): Eine
+    PID gilt nur dann als "unsere", wenn PID, Name und Startzeit passen. Eine
+    veraltete oder ältere e2e.json (nach Neustart, ohne Startzeiten) beendet
+    daher nichts, sondern warnt nur.
     Dieses Skript laeuft nur lokal, nie in der CI.
+
+    Beendet wird der Dienst geordnet, nicht abgeschossen: Er bekommt als
+    `--parent-pid` einen schlafenden Anker-Prozess. `-Beenden` beendet den
+    Anker, der `ParentProcessWatchdog` faehrt den Dienst herunter, und nur
+    dabei gibt die PDF-Konvertierung ihre Word-Instanz frei (Vorschau und
+    PDF-Ablage laufen im Testmodus echt). Ein `taskkill /F` liesse WINWORD.EXE
+    verwaist zurueck; er bleibt nur der Rueckfall, wenn der Dienst nicht
+    binnen `-StoppSekunden` endet.
 
 .PARAMETER Port
     Port des Testmodus-Dienstes (Vorgabe 5243, nicht 5143).
@@ -46,6 +58,12 @@
 .PARAMETER Beenden
     Beendet Dienst und App des letzten Laufs (oder des mit -Wurzel angegebenen)
     laut e2e.json. Der Ordner bleibt zum Nachsehen liegen.
+
+.PARAMETER WaechterPid
+    PID eines Prozesses, an dessen Leben der Anker haengt: Statt 24 Stunden zu
+    schlafen, fuehrt der Anker `Wait-Process -Id <WaechterPid>` aus. Stirbt der
+    Aufrufer hart (Terminal zu), endet der Anker mit ihm, und der Dienst faehrt
+    geordnet herunter. e2e-suite.ps1 uebergibt die eigene PID.
 
 .PARAMETER TimeoutSeconds
     Wartezeit auf Dienst und auf die App (der erste Windows-Build dauert).
@@ -74,7 +92,13 @@ param(
     # Eigene Frist fuer die App: Der erste Windows-Build eines Worktrees dauert
     # unter Last laenger als 300 s (gemessen 13.10.2026: abgebrochen nach 300 s,
     # warm danach 127 s).
-    [int]$AppTimeoutSeconds = 900
+    [int]$AppTimeoutSeconds = 900,
+    # Wie lange -Beenden auf das geordnete Herunterfahren wartet. Der Dienst
+    # selbst gibt sich bis zu 60 s (HostOptions.ShutdownTimeout in Program.cs).
+    [int]$StoppSekunden = 75,
+    # Prozess, an dessen Leben der Anker haengt (e2e-suite.ps1 uebergibt $PID).
+    # Ohne Angabe schlaeft der Anker 24 Stunden.
+    [int]$WaechterPid = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -106,6 +130,69 @@ function Beende-Baum([int]$ProzessId) {
     finally { $ErrorActionPreference = $vorher }
 }
 
+function Startzeit-Von([int]$ProzessId) {
+    # Startzeit als Text, sekundengenau und kulturunabhaengig; $null, wenn es
+    # den Prozess nicht gibt oder seine Startzeit nicht lesbar ist.
+    try {
+        $prozess = Get-Process -Id $ProzessId -ErrorAction Stop
+        return $prozess.StartTime.ToString('yyyy-MM-ddTHH:mm:ss', [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+    catch { return $null }
+}
+
+function Eigenschaft($Objekt, [string]$Name) {
+    # Fehlt der Eintrag (aeltere e2e.json), gibt es $null statt eines Fehlers.
+    $feld = $Objekt.PSObject.Properties[$Name]
+    if ($null -eq $feld) { return $null }
+    return $feld.Value
+}
+
+function Gibt-Es([int]$ProzessId) {
+    return $ProzessId -gt 0 -and $null -ne (Get-Process -Id $ProzessId -ErrorAction SilentlyContinue)
+}
+
+function Laeuft([int]$ProzessId, [string]$Name, [string]$Startzeit, [string]$Pfad) {
+    # Eine PID aus e2e.json kann laengst an einen fremden Prozess vergeben sein
+    # (Neustart, Tage spaeter) -- der darf nicht getroffen werden. "Unser" ist
+    # ein Prozess nur, wenn PID, Name UND Startzeit stimmen, beim Dienst
+    # zusaetzlich der Pfad der exe (der installierte echte Dienst heisst auch
+    # AutomationService). Fehlt die Startzeit, gilt er als nicht unser.
+    if ($ProzessId -le 0 -or [string]::IsNullOrEmpty($Startzeit)) { return $false }
+    $prozess = Get-Process -Id $ProzessId -ErrorAction SilentlyContinue
+    if ($null -eq $prozess -or $prozess.ProcessName -ne $Name) { return $false }
+    if ((Startzeit-Von $ProzessId) -ne $Startzeit) { return $false }
+    if ($Pfad) {
+        try { $gefunden = $prozess.Path } catch { return $false }
+        if ([string]::IsNullOrEmpty($gefunden)) { return $false }
+        return [string]::Equals([System.IO.Path]::GetFullPath($gefunden), [System.IO.Path]::GetFullPath($Pfad), [System.StringComparison]::OrdinalIgnoreCase)
+    }
+    return $true
+}
+
+function Beende-Dienst([int]$DienstPid, [string]$DienstStart, [string]$DienstPfad, [int]$AnkerPid, [string]$AnkerStart) {
+    # Geordnet ueber den Anker (siehe Kopf); hart nur als Rueckfall. Der Anker
+    # hat keine Kinder -- er wird ohne Baum beendet.
+    if (Laeuft $AnkerPid 'powershell' $AnkerStart) {
+        Stop-Process -Id $AnkerPid -Force -ErrorAction SilentlyContinue
+    }
+    elseif (Gibt-Es $AnkerPid) {
+        Write-Warning "Prozess $AnkerPid ist nicht der Anker dieses Laufs (Startzeit fehlt oder weicht ab) -- nicht beendet."
+    }
+    # Auch ohne Anker warten: Er kann schon weg sein (Suite abgebrochen), der
+    # Dienst faehrt dann bereits herunter und soll dabei in Ruhe gelassen werden.
+    $frist = (Get-Date).AddSeconds($StoppSekunden)
+    while ((Get-Date) -lt $frist -and (Laeuft $DienstPid 'AutomationService' $DienstStart $DienstPfad)) {
+        Start-Sleep -Milliseconds 500
+    }
+    if (Laeuft $DienstPid 'AutomationService' $DienstStart $DienstPfad) {
+        Write-Warning "Der Dienst $DienstPid endet nicht von selbst -- wird hart beendet (eine Word-Instanz kann verwaist bleiben)."
+        Beende-Baum $DienstPid
+    }
+    elseif (Gibt-Es $DienstPid) {
+        Write-Warning "Prozess $DienstPid ist nicht der Dienst dieses Laufs (Startzeit/Pfad fehlen oder weichen ab, z. B. veraltete e2e.json) -- nicht beendet."
+    }
+}
+
 function Port-Belegt([int]$Nummer) {
     $client = New-Object System.Net.Sockets.TcpClient
     try {
@@ -130,8 +217,16 @@ if ($Beenden) {
     $zustandPfad = Join-Path $Wurzel 'e2e.json'
     if (-not (Test-Path $zustandPfad)) { throw "Keine e2e.json in $Wurzel." }
     $zustand = Get-Content $zustandPfad -Raw | ConvertFrom-Json
-    Beende-Baum ([int]$zustand.appPid)
-    Beende-Baum ([int]$zustand.dienstPid)
+    # Nur beenden, was nachweislich unser ist (PID + Name + Startzeit); ein
+    # Eintrag ohne Startzeit (aeltere e2e.json) gilt als nicht unser.
+    $appPid = [int](Eigenschaft $zustand 'appPid')
+    $appName = [string](Eigenschaft $zustand 'appName')
+    if (Laeuft $appPid $appName ([string](Eigenschaft $zustand 'appStart')) '') { Beende-Baum $appPid }
+    elseif (Gibt-Es $appPid) {
+        Write-Warning "Prozess $appPid ist nicht die App dieses Laufs (Startzeit fehlt oder weicht ab) -- nicht beendet."
+    }
+    Beende-Dienst ([int](Eigenschaft $zustand 'dienstPid')) ([string](Eigenschaft $zustand 'dienstStart')) `
+        ([string](Eigenschaft $zustand 'dienstPfad')) ([int](Eigenschaft $zustand 'ankerPid')) ([string](Eigenschaft $zustand 'ankerStart'))
     Write-Host "== E2E-Lauf beendet: $Wurzel (Ordner bleibt liegen) ==" -ForegroundColor Green
     return
 }
@@ -163,21 +258,33 @@ $exe = Join-Path $dienstOrdner 'AutomationService.exe'
 if (-not (Test-Path $exe)) { throw "Dienst nicht gefunden: $exe" }
 
 $dienstProzess = $null
+$anker = $null
 $app = $null
 $erfolg = $false
 $zustandPfad = Join-Path $Wurzel 'e2e.json'
 try {
     Write-Host '-- Dienst starten (Umgebung E2E)' -ForegroundColor Cyan
+    # Der Anker schlaeft nur; endet er, faehrt der Dienst geordnet herunter
+    # (siehe Kopf). Ein Tag reicht fuer jede Abnahme. Mit -WaechterPid wartet
+    # er stattdessen auf dessen Ende: Stirbt die Suite hart, endet er mit ihr.
+    $ankerBefehl = if ($WaechterPid -gt 0) { "Wait-Process -Id $WaechterPid" } else { 'Start-Sleep -Seconds 86400' }
+    $anker = Start-Process powershell.exe -PassThru -WindowStyle Hidden `
+        -ArgumentList "-NoProfile -NonInteractive -Command $ankerBefehl"
     # Pfade in Anfuehrungszeichen: Start-Process reicht ArgumentList sonst
     # ungeschuetzt weiter, und ein Benutzername mit Leerzeichen bricht den Start.
-    $argumente = "--environment E2E --urls $url --Datenordner `"$datenOrdner`""
+    $argumente = "--environment E2E --urls $url --parent-pid $($anker.Id) --Datenordner `"$datenOrdner`""
     $dienstProzess = Start-Process $exe -ArgumentList $argumente -PassThru -WindowStyle Hidden `
         -WorkingDirectory $dienstOrdner `
         -RedirectStandardOutput (Join-Path $Wurzel 'dienst.log') `
         -RedirectStandardError (Join-Path $Wurzel 'dienst.err.log')
 
     $zustand = [ordered]@{
-        port = $Port; dienstPid = $dienstProzess.Id; appPid = 0; wurzel = $Wurzel
+        port = $Port; wurzel = $Wurzel
+        # Startzeiten (und Pfad der exe) belegen bei -Beenden, dass die PID noch
+        # unser Prozess ist und nicht neu an einen fremden vergeben wurde.
+        dienstPid = $dienstProzess.Id; dienstStart = (Startzeit-Von $dienstProzess.Id); dienstPfad = $exe
+        ankerPid = $anker.Id; ankerStart = (Startzeit-Von $anker.Id)
+        appPid = 0; appName = $null; appStart = $null
         datenordner = $datenOrdner; testmodusOrdner = (Join-Path $datenOrdner 'Testmodus'); vmService = $null
     }
     Schreibe-Zustand $zustand $zustandPfad
@@ -225,6 +332,9 @@ try {
         $app = Start-Process $flutter -ArgumentList $flutterArgumente -PassThru `
             -WorkingDirectory (Join-Path $repo 'Automation_App_Frontend')
         $zustand.appPid = $app.Id
+        $zustand.appStart = Startzeit-Von $app.Id
+        $appProzess = Get-Process -Id $app.Id -ErrorAction SilentlyContinue
+        if ($null -ne $appProzess) { $zustand.appName = $appProzess.ProcessName }
         Schreibe-Zustand $zustand $zustandPfad
 
         Write-Host "   (der erste Build eines Worktrees dauert einige Minuten; Frist $AppTimeoutSeconds s)"
@@ -251,6 +361,13 @@ try {
 finally {
     if (-not $erfolg) {
         if ($null -ne $app) { Beende-Baum $app.Id }
-        if ($null -ne $dienstProzess -and -not $dienstProzess.HasExited) { Beende-Baum $dienstProzess.Id }
+        $ankerPid = if ($null -ne $anker) { $anker.Id } else { 0 }
+        $ankerStart = if ($null -ne $anker) { Startzeit-Von $anker.Id } else { $null }
+        if ($null -ne $dienstProzess -and -not $dienstProzess.HasExited) {
+            Beende-Dienst $dienstProzess.Id (Startzeit-Von $dienstProzess.Id) $exe $ankerPid $ankerStart
+        }
+        elseif ($ankerPid -gt 0 -and (Laeuft $ankerPid 'powershell' $ankerStart '')) {
+            Stop-Process -Id $ankerPid -Force -ErrorAction SilentlyContinue
+        }
     }
 }

@@ -15,6 +15,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// lassen. Das Ergebnis liefert der [ZentralrufReplyBloc] (aus dem Kontext) als
 /// Zustand, den die umgebende Ansicht im editierbaren Formular darstellt.
 class ManualReplyInput extends StatefulWidget {
+  /// Key des Eingabefelds für den Mailtext — leer ist es über keinen Text
+  /// greifbar (Widget-Tests, E2E-Suite, Marionette).
+  static const Key textSchluessel = ValueKey('antwort-manuell-text');
+
   const ManualReplyInput({super.key});
 
   @override
@@ -139,6 +143,7 @@ class _ManualReplyInputState extends State<ManualReplyInput> {
               const SizedBox(height: 8),
             ],
             TextField(
+              key: ManualReplyInput.textSchluessel,
               controller: _emailTextController,
               minLines: 8,
               maxLines: null,

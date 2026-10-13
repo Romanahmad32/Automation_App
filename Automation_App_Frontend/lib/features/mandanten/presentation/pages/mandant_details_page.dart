@@ -47,6 +47,17 @@ class MandantDetailsPage extends StatefulWidget implements AutoRouteWrapper {
 class _MandantDetailsPageState extends State<MandantDetailsPage> {
   late final bool _istBearbeitung = widget.mandant != null;
 
+  // Eigener Controller: Auf dem Desktop hängt der PrimaryScrollController nicht
+  // an der SingleChildScrollView, eine Scrollbar ohne Controller würfe beim
+  // Scrollen eine Assertion.
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   late List<String> _kennzeichen = List.of(
     widget.mandant?.kennzeichen ?? const [],
   );
@@ -144,7 +155,9 @@ class _MandantDetailsPageState extends State<MandantDetailsPage> {
           untertitel: 'Stammdaten des Mandanten',
         ),
         body: Scrollbar(
+          controller: _scrollController,
           child: SingleChildScrollView(
+            controller: _scrollController,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),

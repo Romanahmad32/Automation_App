@@ -156,6 +156,7 @@ Diese Regeln sind **ausführbar** — wer eine verletzt, bekommt einen roten Tes
 | Keine privaten Typen/Top-Level-Funktionen | `test/architecture/private_typen_test.dart` |
 | Benennung von Datasources/Repositories | `test/architecture/benennung_test.dart` |
 | Flüchtige Meldungen nur über `Rueckmeldung`, kein direkter `ScaffoldMessenger` | `test/architecture/rueckmeldung_test.dart` |
+| Jede `Scrollbar` in `lib/` mit eigenem `controller:` (sonst Desktop-Assertion) | `test/architecture/scrollbar_controller_test.dart` |
 | Schichten (Clean Architecture / senkrechte Schnitte) | `test/architecture/clean_architecture_test.dart`, `Architecture/SliceIsolationTests.cs` |
 | Namespace = Ordnerpfad | `Architecture/NamespaceKonventionTests.cs` |
 | HTTP-Vertrag Frontend ↔ Backend | `Integration/OpenApiVertragTests.cs`, `test/architecture/http_vertrag_test.dart` |
