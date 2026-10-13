@@ -79,6 +79,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # E2E-Suite vor dem Release (#184), nur lokal: `scripts/e2e-suite.ps1`.
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

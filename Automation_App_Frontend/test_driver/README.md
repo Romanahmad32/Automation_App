@@ -12,7 +12,8 @@ den Dienst in der Umgebung `E2E` (Port 5243, eigener Datenordner unter `%TEMP%\a
 Attrappen für Zentralruf, Versand, Entwurf und Druck), legt einen Ausgangsbestand an und startet die App mit
 diesem Einstieg. Die `ws://`-Adresse für Marionette `connect` steht danach in der Ausgabe und in
 `<Wurzel>\vmservice.txt`. `./scripts/e2e-start.ps1 -Beenden` räumt auf. Alles Weitere in `docs/RELEASE.md`
-(Abschnitt „E2E-Testmodus"). Die integration_test-Suite, die dieselbe Umgebung nutzt, ist Issue #184.
+(Abschnitt „E2E-Testmodus"). Dieselbe Umgebung nutzt die E2E-Suite unter `integration_test/` (#184), gestartet
+über `scripts/e2e-suite.ps1`; sie hat einen eigenen Einstieg je Durchlauf und braucht diesen hier nicht.
 
 **Von Hand (echter Bestand — nur, wenn du weißt, was du tust):**
 
@@ -65,6 +66,8 @@ weiter `ValueKey(referenz)`.
 | Vorgangsauswahl Word / Eintrag | `vorgang-auswahl` / `vorgang-auswahl-<referenz>` (`…-keiner`) |
 | Vorgangsauswahl Versand / Eintrag | `versand-vorgang` / `versand-vorgang-<referenz>` |
 | Vorgangszuordnung Antwort / Eintrag | `zuordnung-vorgang` / `zuordnung-vorgang-<referenz>` |
+| Mandant übernehmen (Vorgang starten) / Eintrag | `mandant-auswahl` / `mandant-auswahl-<id>` (`…-neu`) |
+| Antwort manuell einfügen: Mailtext | `antwort-manuell-text` |
 | Mandantenkarte, Formularvorlagen-Zeile | `mandant-<id>`, `vorlage-<id>` |
 | Vollmacht-Art | `vollmacht-art-unfallsachen`, `…-bussgeldsachen`, `…-strafsache` |
 | Versand Betreff / Text | `versand-betreff` / `versand-text` |

@@ -134,6 +134,12 @@ alles andere zieht die CI aus dem Tag. Nichts erzwingt ihn, und genau deshalb
 steht er hier: Bleibt er stehen, wirbt die neue Version mit dem Inhalt der
 alten. Der Rest der Datei gilt versionsunabhängig und bleibt, wie er ist.
 
+**Vor dem Tag: die E2E-Suite laufen lassen** — `scripts/e2e-suite.ps1` auf dem Stand, der getaggt wird
+(rund fünf Minuten, nur lokal; Einzelheiten unter „E2E-Testmodus"). Sie prüft drei Hauptwege
+gegen den Testmodus-Dienst, auch Zentralruf, Versand und Druck, die sonst niemand gefahrlos antippen
+kann. Ist sie rot, wird nicht getaggt. Die Sichtprüfung, das Captcha und den echten Druck ersetzt sie
+nicht.
+
 Der Weg dorthin: Backend-Tests → Frontend-Tests → `scripts/build-package.ps1` →
 `scripts/smoke-test.ps1` → Inno Setup → Artefakt → Release.
 
@@ -220,6 +226,8 @@ nichts nach außen wirken lässt und nie echte Daten berührt. Er läuft **nie i
 ./scripts/e2e-start.ps1               # baut und startet Dienst (Port 5243) und App, legt Testdaten an
 ./scripts/e2e-start.ps1 -OhneApp      # nur der Dienst
 ./scripts/e2e-start.ps1 -Beenden      # beendet Dienst und App des letzten Laufs
+./scripts/e2e-suite.ps1               # die E2E-Suite: frischer Dienst, alle Durchläufe, Dienst beenden (-FristMinuten 15 je Datei)
+./scripts/e2e-suite.ps1 -Durchlauf vollmacht_drucken   # nur ein Durchlauf
 ```
 
 - **Wurzel:** `%TEMP%\automation-e2e\<zeit>\` mit `dienst\` (Build-Ausgabe, eigener ContentRoot samt
@@ -249,6 +257,40 @@ nichts nach außen wirken lässt und nie echte Daten berührt. Er läuft **nie i
   der Oberfläche: `Automation_App_Frontend/test_driver/README.md`.
 - **Nicht im Paket:** `appsettings.E2E.json` bleibt per `CopyToPublishDirectory="Never"` im csproj aus
   `dotnet publish`; `build-package.ps1` bricht ab, falls sie doch unter `backend\` liegt.
+- **Beenden geordnet:** Der Dienst bekommt einen schlafenden Anker-Prozess als `--parent-pid`. `-Beenden`
+  beendet den Anker, und der Dienst fährt selbst herunter; nur so gibt er seine Word-Instanz frei (Vorschau
+  und PDF laufen echt). Hart beendet wird er nur, wenn er nach 75 s noch läuft.
+- **Nur eigene Prozesse beenden:** e2e.json hält zu Anker, Dienst (samt exe-Pfad) und App die Startzeit.
+  `-Beenden` rührt eine PID nur an, wenn PID, Name und Startzeit passen; eine veraltete oder ältere
+  e2e.json ohne Startzeiten beendet nichts und warnt nur.
+- **Anker an die Suite gebunden:** `-WaechterPid <pid>` lässt den Anker auf diesen Prozess warten statt
+  24 h zu schlafen; `e2e-suite.ps1` übergibt die eigene PID. Stirbt die Sitzung hart, fährt der Dienst mit herunter.
+
+**E2E-Suite (#184).** `integration_test` aus dem Flutter-SDK. Das Skript führt jede `*_test.dart` unter
+`Automation_App_Frontend/integration_test/` aus (heute drei), jede in einem eigenen App-Prozess:
+
+| Durchlauf | Geprüft am Ergebnis |
+|---|---|
+| `hauptweg_versand_test.dart` | Vorgang starten, Zentralruf-Attrappe, Antwort aus `api/Simulation/zentralruf-antwort` von Hand einfügen und übernehmen, Schreiben erzeugen, als Word und PDF ablegen, senden: genau eine Versand-`.eml` an Versicherung und Mandant mit dem PDF |
+| `vollmacht_drucken_test.dart` | Vollmacht aus „Vorgänge" drucken: genau eine Druck-Kopie (`.docx`) und der Vermerk am Vorgang |
+| `mandant_zuordnen_test.dart` | Mandant im Register anlegen und beim Vorgang starten übernehmen: der Vorgang trägt seine Id |
+
+- **Schranke zuerst:** Jeder Durchlauf prüft vor dem ersten Antippen, dass `AUTOMATION_TESTMODUS` gesetzt,
+  der Port nicht 5143 und `/health` `testmodus: true` ist; geschrieben wird über REST erst danach.
+  Auch die Bedienung (`Bedienung.starteApp`, `tippe`, `gebeEin`) verweigert ohne bestandene Schranke —
+  sonst übernähme die App ohne Defines den echten Dienst auf 5143.
+- **Wiederholbar statt aufgeräumt:** Jeder Lauf nimmt eigene Namen und Kennzeichen und prüft im Protokoll
+  nur die Zeilen, die er selbst dazugeschrieben hat.
+- **Ein `flutter test` je Datei:** Mit mehreren Dateien in einem Aufruf startet Flutter 3.47 die App ab der
+  zweiten nicht mehr. Jeder Durchlauf baut deshalb einmal (rund 45 s).
+- **Postfach nur von Hand:** Der Testmodus hat kein IMAP-Postfach, eine simulierte Antwort erscheint also
+  nicht im Posteingang. Der Hauptweg fügt ihren Text über „Antwort manuell einfügen" ein — dasselbe
+  Formular, dieselbe Übernahme.
+- **Logische Fläche 1600 × 1200:** Die Suite legt die App unabhängig von Fenstergröße und Skalierung des
+  Rechners aus; das Bild wird ins Fenster eingepasst.
+- **Frist je Datei:** `-FristMinuten` (Vorgabe 15) begrenzt jeden `flutter test`-Aufruf. Läuft sie ab, wird
+  der Prozessbaum genau dieses Aufrufs beendet und der Durchlauf als ROT gemeldet.
+- **Ausgabe:** Fortschritt auf der Konsole, alles in `suite.log` der Wurzel; der Ordner bleibt liegen.
 
 ## Ausliefern
 

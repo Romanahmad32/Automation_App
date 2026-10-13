@@ -329,7 +329,7 @@ if (-not $NurBackend) {
     # den Bruch. So faellt stattdessen hier der Schritt darunter auf, was
     # genau richtig ist: dann ist die Codegenerierung nicht dart-format-rein.
     if ($Beheben) {
-        $frontendSchritte += New-Schritt 'Frontend: Formatierung beheben' $frontend $dartBefehl @('format', 'lib', 'test')
+        $frontendSchritte += New-Schritt 'Frontend: Formatierung beheben' $frontend $dartBefehl @('format', 'lib', 'test', 'test_driver', 'integration_test')
     }
 
     # Die generierten Dateien sind versioniert. Weichen sie nach dem Lauf ab,
@@ -349,8 +349,8 @@ if (-not $NurBackend) {
     }
 
     $frontendSchritte += New-Schritt 'Frontend: Formatierung' $frontend $dartBefehl `
-        @('format', '--output=none', '--set-exit-if-changed', 'lib', 'test', 'test_driver') `
-        -Hilfe 'dart format lib test test_driver — oder ./scripts/check.ps1 -Beheben'
+        @('format', '--output=none', '--set-exit-if-changed', 'lib', 'test', 'test_driver', 'integration_test') `
+        -Hilfe 'dart format lib test test_driver integration_test — oder ./scripts/check.ps1 -Beheben'
 
     # --no-pub bei analyze und test: `pub get` steht schon als erster Schritt
     # oben. Ohne den Schalter holen beide es noch einmal nach.

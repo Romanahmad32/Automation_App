@@ -39,7 +39,9 @@ Datenordner, Attrappen für Zentralruf, Versand, Entwurf und Druck) und die App 
 5143, `BackendEndpoint.port`) und `AUTOMATION_TESTMODUS=true` (`BackendEndpoint.testmodusErwartet`).
 Ist Letzteres gesetzt, übernimmt `BackendLauncher` nur einen Dienst, dessen `/health` `testmodus` meldet,
 und startet sonst keinen — die App hängt sich also nie an die echte Datenbank. Einzelheiten:
-`test_driver/README.md`; die integration_test-Suite dazu ist Issue #184.
+`test_driver/README.md`. Die E2E-Suite unter `integration_test/` (drei Durchläufe, #184) startet nur
+`scripts/e2e-suite.ps1`, vor dem Release und nie in `scripts/check.ps1`. Sie hat ihren eigenen Einstieg wie
+Marionette auch; `lib/main.dart` bleibt ohne Binding.
 
 ## Aufbau: Clean Architecture je Feature
 
