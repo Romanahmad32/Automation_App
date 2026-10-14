@@ -109,7 +109,17 @@ public sealed class AktualisierungsDownloadPruefungTests : IDisposable
         await dienst.PruefeAsync(CancellationToken.None);
         dienst.StarteDownload();
 
-        var stand = await AktualisierungsUmgebung.WarteAuf(dienst, AktualisierungsZustand.Fehler);
+        // Die Uhr wird erst vorgestellt, wenn der Leerlauf-Wecker des Downloads schon steht — das
+        // lässt sich von außen nicht sehen. Also stellt jede Abfrage sie um den Leerlauf weiter:
+        // Vorgestellt vor dem Wecker ist wirkungslos, danach löst die nächste Abfrage ihn aus.
+        var stand = await AktualisierungsUmgebung.WarteBis(
+            dienst,
+            aktuell =>
+            {
+                umgebung.Uhr.Vorstellen(TimeSpan.FromSeconds(1));
+                return aktuell.Zustand == AktualisierungsZustand.Fehler;
+            },
+            "Zustand Fehler am Leerlauf");
 
         stand.Meldung.Should().Be(AktualisierungsMeldungen.Stockt);
         stand.FehlerArt.Should().Be(AktualisierungsFehlerArt.Verbindung);

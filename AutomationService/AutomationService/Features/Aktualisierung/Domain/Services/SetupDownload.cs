@@ -21,6 +21,7 @@ public static class SetupDownload
     /// <param name="leerlauf">So lange darf ein einzelner Lesevorgang dauern.</param>
     /// <param name="fortschritt">Bisher geschriebene Bytes, nach jedem Block.</param>
     /// <param name="abbruch">Der Abbruch durch den Anwender oder das Herunterfahren.</param>
+    /// <param name="zeit">Die Uhr, nach der der Leerlauf zählt — ein Test stellt sie vor, statt zu warten.</param>
     /// <exception cref="TimeoutException">Kein Byte mehr innerhalb von <paramref name="leerlauf"/> — meist eine abgerissene Verbindung.</exception>
     /// <exception cref="InvalidDataException">Es kam mehr an als angekündigt.</exception>
     public static async Task LadeAsync(
@@ -29,25 +30,31 @@ public static class SetupDownload
         string teildatei,
         TimeSpan leerlauf,
         Action<long> fortschritt,
-        CancellationToken abbruch)
+        CancellationToken abbruch,
+        TimeProvider? zeit = null)
     {
         ArgumentNullException.ThrowIfNull(quelle);
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(fortschritt);
 
-        using var frist = CancellationTokenSource.CreateLinkedTokenSource(abbruch);
+        // Zwei Quellen: Nur die Leerlauf-Quelle hängt an der Uhr; der Abbruch von
+        // außen bleibt ein gewöhnliches Token, damit er unten unterscheidbar ist.
+        using var leerlaufUhr = new CancellationTokenSource(Timeout.InfiniteTimeSpan, zeit ?? TimeProvider.System);
+        using var frist = CancellationTokenSource.CreateLinkedTokenSource(abbruch, leerlaufUhr.Token);
         try
         {
-            frist.CancelAfter(leerlauf);
+            leerlaufUhr.CancelAfter(leerlauf);
             await using var eingang = await quelle.OeffneAsync(setup.Adresse, frist.Token);
-            await using var ausgang = new FileStream(
-                teildatei, FileMode.Create, FileAccess.Write, FileShare.None, Puffergroesse, useAsync: true);
+            await using var ausgang = await KurzeSperre.WiederholeAsync(
+                () => new FileStream(
+                    teildatei, FileMode.Create, FileAccess.Write, FileShare.None, Puffergroesse, useAsync: true),
+                frist.Token);
 
             var puffer = new byte[Puffergroesse];
             long geschrieben = 0;
             while (true)
             {
-                frist.CancelAfter(leerlauf);
+                leerlaufUhr.CancelAfter(leerlauf);
                 var gelesen = await eingang.ReadAsync(puffer, frist.Token);
                 if (gelesen == 0)
                 {

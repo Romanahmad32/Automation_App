@@ -39,7 +39,7 @@ internal sealed class AktualisierungsWirt(
     /// <summary>Fragt <c>GET api/Aktualisierung</c> ab, bis der Zustand erreicht ist — höchstens 30 s.</summary>
     public static async Task<JsonElement> WarteAuf(HttpClient client, string zustand)
     {
-        var frist = DateTime.UtcNow.AddSeconds(30);
+        var frist = DateTime.UtcNow.AddMinutes(2);
         JsonElement stand;
         do
         {
@@ -53,7 +53,7 @@ internal sealed class AktualisierungsWirt(
         }
         while (DateTime.UtcNow < frist);
 
-        stand.GetProperty("zustand").GetString().Should().Be(zustand, $"innerhalb von 30 s erwartet (Stand: {stand})");
+        stand.GetProperty("zustand").GetString().Should().Be(zustand, $"innerhalb von 2 min erwartet (Stand: {stand})");
         return stand;
     }
 

@@ -15,8 +15,8 @@ namespace AutomationService.Tests.Integration;
 /// Das Update im E2E-Testmodus (#196) über HTTP, so wie die Suite es fährt:
 /// <c>POST api/Simulation/aktualisierung</c> stellt den Fall ein und setzt den
 /// Stand zurück, dann prüfen, laden, installieren. Quelle und Start sind die
-/// Attrappen aus <c>Program.cs</c> — nicht ersetzt, damit sich zeigt, dass der
-/// Testmodus sie wirklich verdrahtet. Nichts geht nach außen, nichts wird
+/// Attrappen aus <c>Program.cs</c>; die Quelle ist nur ohne Pause je Block
+/// neu gebaut, damit die Last den Download nicht aufhält. Nichts geht nach außen, nichts wird
 /// gestartet; die einzige Spur ist eine Zeile in <c>protokoll.jsonl</c>.
 ///
 /// Wie die Suite gegen einen einzigen Dienst: ein Wirt für die ganze Klasse.
@@ -100,7 +100,13 @@ public sealed class AktualisierungTestmodusEndpunktTests(AktualisierungTestmodus
     {
         public Wirt()
         {
-            Fabrik = new AktualisierungsWirt(Aktualisierung.Ordner, testmodusOrdner: Testmodus.Ordner);
+            // Dieselbe Attrappe wie im Testmodus, nur ohne die 150 ms je Block: Keiner dieser Tests
+            // beobachtet „laedt" oder bricht ab; die Pause machte sie nur von der Last abhängig.
+            // Dass der Testmodus die Attrappe verdrahtet, prüft TestmodusInjectionTests.
+            Fabrik = new AktualisierungsWirt(
+                Aktualisierung.Ordner,
+                quelle: new TestmodusAktualisierungsQuelle(TimeSpan.Zero),
+                testmodusOrdner: Testmodus.Ordner);
         }
 
         internal AktualisierungsUmgebung Aktualisierung { get; } = new();

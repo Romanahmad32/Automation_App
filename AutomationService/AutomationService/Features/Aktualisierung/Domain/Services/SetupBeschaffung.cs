@@ -23,7 +23,8 @@ public static class SetupBeschaffung
         TimeSpan leerlauf,
         Action<long> fortschritt,
         ILogger logger,
-        CancellationToken abbruch)
+        CancellationToken abbruch,
+        TimeProvider? zeit = null)
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(ordner);
@@ -35,12 +36,18 @@ public static class SetupBeschaffung
         try
         {
             Directory.CreateDirectory(ordner.Pfad);
-            await SetupDownload.LadeAsync(quelle, setup, teil, leerlauf, fortschritt, abbruch);
+            await SetupDownload.LadeAsync(quelle, setup, teil, leerlauf, fortschritt, abbruch, zeit);
 
             var pruefung = SetupPruefung.Pruefe(teil, setup);
             if (pruefung == SetupPruefErgebnis.InOrdnung)
             {
-                File.Move(teil, ziel, overwrite: true);
+                await KurzeSperre.WiederholeAsync(
+                    () =>
+                    {
+                        File.Move(teil, ziel, overwrite: true);
+                        return true;
+                    },
+                    abbruch);
                 return null;
             }
 

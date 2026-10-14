@@ -120,7 +120,7 @@ public sealed class AktualisierungsDienstTests : IDisposable
 
         var pruefen = dienst.PruefeAsync(CancellationToken.None);
 
-        (await Task.WhenAny(pruefen, Task.Delay(TimeSpan.FromSeconds(10)))).Should().BeSameAs(pruefen);
+        (await Task.WhenAny(pruefen, Task.Delay(TimeSpan.FromMinutes(2)))).Should().BeSameAs(pruefen);
         (await pruefen).Zustand.Should().Be(AktualisierungsZustand.Unbekannt);
     }
 

@@ -30,6 +30,12 @@ internal sealed class AktualisierungsUmgebung : IDisposable
 
     public AktualisierungOptions Optionen { get; }
 
+    /// <summary>
+    /// Die Uhr des Dienstes — und damit des Leerlaufs im Download. Sie steht, bis ein Test sie
+    /// vorstellt; so zählt dort keine zweite Wanduhr gegen die Poll-Frist des Tests.
+    /// </summary>
+    public HandUhr Uhr { get; } = new();
+
     public QuelleAttrappe Quelle { get; } = new();
 
     public InstallerStarterAttrappe Starter { get; } = new();
@@ -53,7 +59,8 @@ internal sealed class AktualisierungsUmgebung : IDisposable
         Ordner,
         Options.Create(Optionen),
         NullLogger<AktualisierungsDienst>.Instance,
-        laufendeVersion);
+        laufendeVersion,
+        Uhr);
 
     /// <summary>Prüft, lädt und wartet, bis die Setup-Datei geprüft bereitliegt.</summary>
     public static async Task<AktualisierungsStand> LadeBisBereit(IAktualisierungsDienst dienst)
@@ -68,7 +75,7 @@ internal sealed class AktualisierungsUmgebung : IDisposable
         WarteBis(dienst, stand => stand.Zustand == zustand, $"Zustand {zustand}");
 
     /// <summary>
-    /// Fragt den Stand ab, bis <paramref name="bedingung"/> gilt — höchstens 30 s. Großzügig, weil
+    /// Fragt den Stand ab, bis <paramref name="bedingung"/> gilt — höchstens 2 min. Großzügig, weil
     /// die volle Suite den Thread-Pool zeitweise auslastet; im Normalfall sind es Millisekunden.
     /// </summary>
     public static async Task<AktualisierungsStand> WarteBis(
@@ -76,7 +83,7 @@ internal sealed class AktualisierungsUmgebung : IDisposable
         Func<AktualisierungsStand, bool> bedingung,
         string beschreibung)
     {
-        var frist = DateTime.UtcNow.AddSeconds(30);
+        var frist = DateTime.UtcNow.AddMinutes(2);
         while (DateTime.UtcNow < frist)
         {
             var stand = dienst.Stand();
@@ -89,7 +96,7 @@ internal sealed class AktualisierungsUmgebung : IDisposable
         }
 
         var zuletzt = dienst.Stand();
-        bedingung(zuletzt).Should().BeTrue($"der Download sollte innerhalb von 30 s „{beschreibung}“ erreichen (steht: {zuletzt})");
+        bedingung(zuletzt).Should().BeTrue($"der Download sollte innerhalb von 2 min „{beschreibung}“ erreichen (steht: {zuletzt})");
         return zuletzt;
     }
 

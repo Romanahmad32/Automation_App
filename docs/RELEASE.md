@@ -225,7 +225,7 @@ ein *startfähiges Produkt* wird. Danach übersetzt er mit ISCC auch
 
 `installer/setup.iss` dient zwei Wegen: dem Doppelklick (Assistent) und dem stillen Lauf, den der
 Dienst nach „Jetzt aktualisieren" startet (#196). Der Dienst lädt das Setup nach
-`%LOCALAPPDATA%\AutomationService\Aktualisierung\`, prüft Größe und SHA256 gegen die GitHub-API und
+`%LOCALAPPDATA%\AutomationService\Aktualisierung\` (kurze Dateisperren, etwa durch einen Virenscanner, überbrückt `KurzeSperre` mit bis zu fünf Versuchen), prüft Größe und SHA256 gegen die GitHub-API und
 startet es losgelöst mit
 
 ```

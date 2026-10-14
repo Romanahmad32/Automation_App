@@ -268,7 +268,7 @@ public sealed class AktualisierungsDienst : IAktualisierungsDienst, IDisposable
         try
         {
             fehler = await SetupBeschaffung.LadeUndPruefeAsync(
-                _quelle, setup, _ordner, _optionen.DownloadLeerlauf, MeldeFortschritt, _logger, abbruch);
+                _quelle, setup, _ordner, _optionen.DownloadLeerlauf, MeldeFortschritt, _logger, abbruch, _zeit);
         }
         catch (OperationCanceledException) when (abbruch.IsCancellationRequested)
         {
