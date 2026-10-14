@@ -34,14 +34,15 @@ Oberfläche — dessen „Erneut versuchen"-Knopf spart den Flutter-Neustart. `f
 Paket-Stammverzeichnis aufrufen, sonst brechen die Architektur-Tests mit einem Hinweis ab.
 
 **E2E-Testmodus (nur lokal):** `scripts/e2e-start.ps1` startet einen abgeschotteten Dienst (Port 5243, eigener
-Datenordner, Attrappen für Zentralruf, Versand, Entwurf und Druck) und die App mit
+Datenordner, Attrappen für Zentralruf, Versand, Entwurf, Druck, Update-Quelle und Installer) und die App mit
 `test_driver/main_marionette.dart`. Zwei Dart-Defines gehören dazu: `AUTOMATION_BACKEND_PORT` (Vorgabe
 5143, `BackendEndpoint.port`) und `AUTOMATION_TESTMODUS=true` (`BackendEndpoint.testmodusErwartet`).
 Ist Letzteres gesetzt, übernimmt `BackendLauncher` nur einen Dienst, dessen `/health` `testmodus` meldet,
 und startet sonst keinen — die App hängt sich also nie an die echte Datenbank. Einzelheiten:
-`test_driver/README.md`. Die E2E-Suite unter `integration_test/` (drei Durchläufe, #184) startet nur
+`test_driver/README.md`. Die E2E-Suite unter `integration_test/` (vier Durchläufe, #184) startet nur
 `scripts/e2e-suite.ps1`, vor dem Release und nie in `scripts/check.ps1`. Sie hat ihren eigenen Einstieg wie
-Marionette auch; `lib/main.dart` bleibt ohne Binding.
+Marionette auch; `lib/main.dart` bleibt ohne Binding. Die Update-Prüfung fragt den Dienst, nicht GitHub (#196);
+im Testmodus meldet er eine Attrappe `9.9.9`, und „Jetzt neu starten“ schließt nur den Dialog, nicht die App.
 
 ## Aufbau: Clean Architecture je Feature
 
@@ -68,7 +69,8 @@ die Material-Widgets von reactive_forms (Fassung 18.2.2, nicht umgestellt; sie k
 sobald reactive_forms umstellt).
 
 Querschnittliches unter `lib/core/`: `router`, `di`, `network`, `theme`, `backend` (Dienststart,
-`BackendEndpoint`), `aktualisierung` (Versionsprüfung), `general_classes`
+`BackendEndpoint`), `aktualisierung` (Update aus der App: Cubit, Dialog, Hinweis — prüfen, laden und
+installieren tut der Dienst), `general_classes`
 (Failures/Exceptions/UseCase-Basis), `general_widgets`.
 
 **Keine lokale Persistenz im Frontend**: jeder Bestand läuft über HTTP gegen das Backend und landet
@@ -226,6 +228,7 @@ hochzusetzen — begründete Ausnahmen gehören namentlich in den jeweiligen Tes
   `Container` mit `BoxDecoration`, sobald etwas Antippbares darin sitzt: `ListTile` und `InkWell`
   zeichnen ihren Tipp-Kringel auf das nächste `Material` und brauchen den Kasten als Fläche, an
   deren Ecken er ihn auch abschneidet), `SeitenAppBar`, `EntitySearchBar`, `FehlerHinweis`,
-  `AnwendungsInfo`,
-  `UeberAnwendungDialog`, `UpdateHerunterladenButton`, `VersionBadge`, `DateiAblageBereich`
+  `HinweisZeile` (ruhige Zeile aus Symbol und Satz, nicht rot), `SchrittAnzeige` (①②③, bricht bei
+  Platzmangel um), `AnwendungsInfo`,
+  `UeberAnwendungDialog`, `AktualisierenButton`, `VersionBadge`, `DateiAblageBereich`
   (nimmt aus dem Explorer gezogene Dateien entgegen, `desktop_drop`)

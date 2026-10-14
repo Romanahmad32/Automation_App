@@ -53,7 +53,7 @@ public sealed class TestmodusEndpunktTests(TestmodusEndpunktTests.TestmodusFabri
     }
 
     /// <summary>
-    /// Die sieben Nähte im Container des echten <c>Program.cs</c> — nicht in
+    /// Die neun Nähte im Container des echten <c>Program.cs</c> — nicht in
     /// einer nachgebauten Registrierung wie in den Unit-Tests. Hier zeigt sich,
     /// ob eine Zeile in <c>Program.cs</c> nach dem Testmodus noch einen echten
     /// Dienst nachgeschoben hat.

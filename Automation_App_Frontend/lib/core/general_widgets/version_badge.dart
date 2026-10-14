@@ -1,4 +1,3 @@
-import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart';
 import 'package:automation_app/core/backend/app_version.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:automation_app/core/general_widgets/ueber_anwendung_dialog.dart';
@@ -11,10 +10,7 @@ import 'package:material_ui/material_ui.dart';
 /// nichts, was nach Entwicklerkürzel aussieht; der Commit steht im Dialog
 /// dahinter, wo er niemanden verwirrt.
 class VersionBadge extends StatelessWidget {
-  const VersionBadge({this.stand, super.key});
-
-  /// Ergebnis der Update-Prüfung; wird an den Dialog durchgereicht.
-  final AktualisierungsErgebnis? stand;
+  const VersionBadge({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +25,7 @@ class VersionBadge extends StatelessWidget {
       child: Semantics(
         button: true,
         child: InkWell(
-          onTap: () => UeberAnwendungDialog.zeigen(context, stand),
+          onTap: () => UeberAnwendungDialog.zeigen(context),
           borderRadius: BorderRadius.circular(6),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

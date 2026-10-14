@@ -1,4 +1,4 @@
-import 'package:automation_app/core/aktualisierung/aktualisierung_builder.dart';
+import 'package:automation_app/core/aktualisierung/presentation/widgets/aktualisierung_builder.dart';
 import 'package:automation_app/core/general_widgets/drawer/sidebar_theme_toggle.dart';
 import 'package:automation_app/core/general_widgets/drawer/sidebar_update_hinweis.dart';
 import 'package:automation_app/core/general_widgets/version_badge.dart';
@@ -25,11 +25,11 @@ class SidebarFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AktualisierungBuilder(
-      builder: (context, stand) => Column(
+      builder: (context, ansicht) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SidebarUpdateHinweis(
-            stand: stand,
+            ansicht: ansicht,
             isExtended: isExtended,
             collapsedWidth: collapsedWidth,
             animationDuration: animationDuration,
@@ -57,7 +57,7 @@ class SidebarFooter extends StatelessWidget {
                       widthFactor: isExtended ? 1 : 0,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 12),
-                        child: VersionBadge(stand: stand),
+                        child: const VersionBadge(),
                       ),
                     ),
                   ),

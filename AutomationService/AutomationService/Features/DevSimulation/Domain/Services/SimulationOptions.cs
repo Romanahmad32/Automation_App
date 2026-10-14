@@ -14,7 +14,8 @@ public sealed class SimulationOptions
 
     /// <summary>
     /// E2E-Testmodus (#168, <c>Simulation:Testmodus</c>): Zentralruf-Anfrage,
-    /// SMTP-Versand, Gesendet-Ablage, Outlook, Entwurfsdatei und Druck laufen
+    /// SMTP-Versand, Gesendet-Ablage, Outlook, Entwurfsdatei, Druck, Update-Quelle
+    /// und Installer-Start (#196) laufen
     /// gegen Attrappen, die nichts nach außen geben und ihre Spuren unter
     /// <c>&lt;Datenordner&gt;\Testmodus\</c> hinterlassen (<see cref="TestmodusOrdner"/>).
     ///

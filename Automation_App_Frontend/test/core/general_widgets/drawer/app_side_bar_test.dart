@@ -1,5 +1,6 @@
-import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart';
-import 'package:automation_app/core/aktualisierung/neue_version.dart';
+import 'package:automation_app/core/aktualisierung/domain/entities/aktualisierungs_stand.dart';
+import 'package:automation_app/core/aktualisierung/domain/entities/aktualisierungs_zustand.dart';
+import 'package:automation_app/core/aktualisierung/presentation/cubit/aktualisierungs_ansicht.dart';
 import 'package:automation_app/core/general_widgets/drawer/app_side_bar.dart';
 import 'package:automation_app/core/general_widgets/drawer/sidebar_update_hinweis.dart';
 import 'package:automation_app/core/theme/domain/schriftstufe.dart';
@@ -89,10 +90,11 @@ void main() {
             body: SizedBox(
               width: expandedWidth,
               child: const SidebarUpdateHinweis(
-                stand: AktualisierungsErgebnis.verfuegbar(
-                  NeueVersion(
-                    nummer: '1.2.0',
-                    seite: 'https://example.invalid',
+                ansicht: AktualisierungsAnsicht(
+                  stand: AktualisierungsStand(
+                    laufendeVersion: '1.1.0',
+                    neueVersion: '1.2.0',
+                    zustand: AktualisierungsZustand.verfuegbar,
                   ),
                 ),
                 isExtended: true,

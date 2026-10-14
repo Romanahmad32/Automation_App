@@ -6065,6 +6065,79 @@
         }
       }
     },
+    "/api/Simulation/aktualisierung": {
+      "post": {
+        "tags": [
+          "SimulationAktualisierung"
+        ],
+        "summary": "Stellt den Fall der Attrappe ein und setzt den Update-Stand zur\u00FCck, als\r\nw\u00E4re der Dienst eben gestartet: laufenden Download abbrechen,\r\nheruntergeladene Setup-Dateien l\u00F6schen. Ohne das Zur\u00FCcksetzen bliebe ein\r\nDurchlauf nach einem anderen auf \u0060bereit\u0060 stehen, denn die Suite\r\nf\u00E4hrt alle Durchl\u00E4ufe gegen denselben Dienst.\r\n\r\n404 ohne \u0060Simulation:Enabled\u0060 (wie jeder Simulations-Endpunkt), 409\r\nohne Testmodus: Dann ist die Quelle die echte, und es g\u00E4be nichts\r\numzuschalten.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationAktualisierungDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationAktualisierungDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationAktualisierungDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Simulation/zentralruf-antwort": {
       "post": {
         "tags": [
@@ -6394,6 +6467,209 @@
           }
         }
       }
+    },
+    "/api/Aktualisierung": {
+      "get": {
+        "tags": [
+          "Aktualisierung"
+        ],
+        "summary": "Der zwischengespeicherte Stand; billig, wird w\u00E4hrend des Downloads abgefragt.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Aktualisierung/pruefen": {
+      "post": {
+        "tags": [
+          "Aktualisierung"
+        ],
+        "summary": "Fragt die Update-Quelle. Ein Fehler dabei ist kein HTTP-Fehler, sondern\r\nder Zustand \u0060unbekannt\u0060 mit Meldung.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Aktualisierung/herunterladen": {
+      "post": {
+        "tags": [
+          "Aktualisierung"
+        ],
+        "summary": "Startet den Download im Hintergrund; idempotent bei \u0060laedt\u0060 und \u0060bereit\u0060.",
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Aktualisierung/abbrechen": {
+      "post": {
+        "tags": [
+          "Aktualisierung"
+        ],
+        "summary": "Bricht den Download ab; die Teildatei ist danach gel\u00F6scht.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Aktualisierung/installieren": {
+      "post": {
+        "tags": [
+          "Aktualisierung"
+        ],
+        "summary": "Pr\u00FCft die Setup-Datei erneut, startet den Installer losgel\u00F6st und sieht\r\ndrei Sekunden hin, ob er l\u00E4uft. Danach beendet das Frontend die App, und\r\nder Dienst f\u00E4hrt nach wenigen Sekunden selbst geordnet herunter; das Setup\r\nwartet, bis er fort ist. Beendet sich das Setup sofort wieder, ist das ein\r\n409 mit Zustand fehler, und der Dienst bleibt an. Au\u00DFerhalb der\r\ninstallierten App lehnt er mit 409 ab und startet nichts.",
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AktualisierungsStandDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Aktualisierung/ergebnis-quittieren": {
+      "post": {
+        "tags": [
+          "Aktualisierung"
+        ],
+        "summary": "Das Frontend hat das Ergebnis der letzten Aktualisierung gezeigt.",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6409,6 +6685,89 @@
           }
         },
         "description": "Ein einzelner Akten-Ordner, der einem Mandanten gegeben oder genommen wird.\r\nIm Rumpf und nicht im Pfad: Ordnernamen tragen Leerzeichen, Umlaute und\r\n\u201E\u0026amp;\u0022, und ein Pfadsegment m\u00FCsste jedes davon maskieren."
+      },
+      "AktualisierungsStandDto": {
+        "required": [
+          "laufendeVersion",
+          "neueVersion",
+          "zustand",
+          "geladenBytes",
+          "gesamtBytes",
+          "meldung",
+          "fehlerArt",
+          "downloadUrl",
+          "letzteAktualisierung"
+        ],
+        "type": "object",
+        "properties": {
+          "laufendeVersion": {
+            "type": "string",
+            "description": "Wie \u0060GET /health\u0060 sie meldet."
+          },
+          "neueVersion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Dreistellig ohne \u0060v\u0060, sobald eine neuere bekannt ist."
+          },
+          "zustand": {
+            "type": "string",
+            "description": "Siehe oben."
+          },
+          "geladenBytes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Fortschritt des Downloads; bei \u0060bereit\u0060 gleich long? AktualisierungsStandDto.GesamtBytes.",
+            "format": "int64"
+          },
+          "gesamtBytes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Gr\u00F6\u00DFe der Setup-Datei laut GitHub, sobald eine ladbare bekannt ist.",
+            "format": "int64"
+          },
+          "meldung": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Deutsch, f\u00FCr den Anwender \u2014 bei \u0060fehler\u0060 immer, bei \u0060unbekannt\u0060 nach einer gescheiterten Pr\u00FCfung."
+          },
+          "fehlerArt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Nur bei \u0060fehler\u0060 gesetzt: \u0060verbindung\u0060 (abgerissen oder steckengeblieben),\r\n\u0060pruefung\u0060 (Gr\u00F6\u00DFe oder Pr\u00FCfsumme falsch, Datei gel\u00F6scht) oder \u0060sonstig\u0060\r\n(dann sagt \u0060meldung\u0060, was los ist). Danach w\u00E4hlt das Frontend den Satz\r\nim Dialog \u2014 nicht nach dem Wortlaut der Meldung."
+          },
+          "downloadUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Direkt auf die Setup-Datei, f\u00FCr \u201ELieber selbst herunterladen\u0022 \u2014 nur eine \u0060https://github.com/\u2026\u0060-Adresse, sonst \u0060null\u0060."
+          },
+          "letzteAktualisierung": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Das Ergebnis der letzten Aktualisierung, bis es quittiert ist.",
+                "$ref": "#/components/schemas/LetzteAktualisierungDto"
+              }
+            ]
+          }
+        },
+        "description": "Antwort aller Endpunkte unter \u0060api/Aktualisierung\u0060 (#196).\r\nstring AktualisierungsStandDto.Zustand ist \u0060unbekannt\u0060, \u0060aktuell\u0060,\r\n\u0060verfuegbar\u0060, \u0060laedt\u0060, \u0060bereit\u0060 oder \u0060fehler\u0060."
       },
       "AnredeBausteinDto": {
         "required": [
@@ -7611,6 +7970,24 @@
           }
         },
         "description": "\u00DCbertragungsformat der Kanzlei-Einstellungen. Die PascalCase-Properties werden\r\nvon ASP.NET Core als camelCase serialisiert und passen damit 1:1 zum JSON der\r\nFlutter-Entit\u00E4t \u0060KanzleiSettings\u0060 (personentyp, strasseHausnummer, \u2026).\r\n\r\nHier liegt seit #103 die Umrechnungsgrenze der f\u00FCnf Ordnerpfade \u2014 dieselbe\r\nArbeitsteilung wie bei den Word-Pfaden (#33, \u0060FormTemplatesController\u0060):\r\nhinaus gehen sie \u003Cem\u003Eaufgel\u00F6st\u003C/em\u003E, hinein kommende werden relativ zum\r\nsynchronisierten Wurzelordner gespeichert, wenn sie darunter liegen. Das\r\nFrontend rechnet nie um; es zeigt an, was es bekommt, und schickt es zur\u00FCck."
+      },
+      "LetzteAktualisierungDto": {
+        "required": [
+          "zielVersion",
+          "erfolgreich"
+        ],
+        "type": "object",
+        "properties": {
+          "zielVersion": {
+            "type": "string",
+            "description": "Worauf aktualisiert werden sollte."
+          },
+          "erfolgreich": {
+            "type": "boolean",
+            "description": "Ob die laufende Version mindestens string LetzteAktualisierungDto.ZielVersion ist."
+          }
+        },
+        "description": "Ergebnis der letzten Aktualisierung, aus der Merkdatei beim Start des Dienstes."
       },
       "LetzteSicherungDto": {
         "required": [
@@ -9414,6 +9791,17 @@
         },
         "description": "Welche der in Outlook eingerichteten Signaturen \u00FCbernommen werden soll\r\n(REQUIREMENTS.md \u00A74.7). Nur der Name \u2014 den Inhalt liest der Dienst selbst\r\naus dem Signaturordner, samt Bildern."
       },
+      "SimulationAktualisierungDto": {
+        "type": "object",
+        "properties": {
+          "pruefsummeFalsch": {
+            "type": "boolean",
+            "description": "\u0060true\u0060: Die geladene Datei weicht in einem Byte ab; die Pr\u00FCfung\r\nverwirft sie, der Installer startet nicht. \u0060false\u0060: der gute Fall.",
+            "default": false
+          }
+        },
+        "description": "Eingabe von \u0060POST api/Simulation/aktualisierung\u0060 (#196): welcher Fall\r\nbeim n\u00E4chsten Download der Update-Attrappe gilt."
+      },
       "SimulationAntwortRequestDto": {
         "required": [
           "referenz"
@@ -10935,10 +11323,16 @@
       "name": "VersandProtokoll"
     },
     {
+      "name": "SimulationAktualisierung"
+    },
+    {
       "name": "Simulation"
     },
     {
       "name": "Backup"
+    },
+    {
+      "name": "Aktualisierung"
     }
   ]
 }

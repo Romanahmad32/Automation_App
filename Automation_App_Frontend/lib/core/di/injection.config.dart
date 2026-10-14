@@ -11,6 +11,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:typed_data' as _i100;
 
+import 'package:automation_app/core/aktualisierung/data/datasources/aktualisierung_datasource.dart'
+    as _i541;
+import 'package:automation_app/core/aktualisierung/data/repositories/aktualisierung_repository_impl.dart'
+    as _i198;
+import 'package:automation_app/core/aktualisierung/domain/repositories/aktualisierung_repository.dart'
+    as _i147;
+import 'package:automation_app/core/aktualisierung/presentation/cubit/aktualisierung_cubit.dart'
+    as _i260;
 import 'package:automation_app/core/di/data/datasources/datasource_module.dart'
     as _i333;
 import 'package:automation_app/core/general_classes/usecases/use_case.dart'
@@ -28,7 +36,7 @@ import 'package:automation_app/features/backup/data/repositories/backup_reposito
 import 'package:automation_app/features/backup/domain/repositories/backup_repository.dart'
     as _i285;
 import 'package:automation_app/features/backup/presentation/cubit/backup_cubit.dart'
-    as _i198;
+    as _i199;
 import 'package:automation_app/features/dev_simulation/data/datasources/simulation_datasource.dart'
     as _i383;
 import 'package:automation_app/features/dev_simulation/domain/repositories/simulation_repository.dart'
@@ -433,6 +441,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i979.RegisterNummernDatasource>(
       () => _i979.ApiRegisterNummernDatasource(gh<_i361.Dio>()),
     );
+    gh.factory<_i541.AktualisierungDatasource>(
+      () => _i541.ApiAktualisierungDatasource(gh<_i361.Dio>()),
+    );
     gh.factory<_i552.ImportDateiDatasource>(
       () => _i552.FilesystemImportDateiDatasource(),
     );
@@ -530,6 +541,11 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i434.RegisterHub(),
       dispose: (i) => i.dispose(),
     );
+    gh.factory<_i147.AktualisierungRepository>(
+      () => _i198.AktualisierungRepositoryImpl(
+        gh<_i541.AktualisierungDatasource>(),
+      ),
+    );
     gh.lazySingleton<_i367.PosteingangCubit>(
       () => _i367.PosteingangCubit(
         gh<_i204.PosteingangRepository>(),
@@ -611,6 +627,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i865.MailboxConfigBloc>(
       () => _i865.MailboxConfigBloc(gh<_i469.MailboxRepository>()),
+    );
+    gh.lazySingleton<_i260.AktualisierungCubit>(
+      () => _i260.AktualisierungCubit(gh<_i147.AktualisierungRepository>()),
     );
     gh.factory<_i242.RegisterSpiegelCubit>(
       () => _i242.RegisterSpiegelCubit(
@@ -717,8 +736,8 @@ extension GetItInjectableX on _i174.GetIt {
         repository: gh<_i304.ZentralrufReplyRepository>(),
       ),
     );
-    gh.factory<_i198.BackupCubit>(
-      () => _i198.BackupCubit(gh<_i285.BackupRepository>()),
+    gh.factory<_i199.BackupCubit>(
+      () => _i199.BackupCubit(gh<_i285.BackupRepository>()),
     );
     gh.factory<_i224.UseCase<_i258.Mandant, _i295.CreateMandantRequest>>(
       () => _i2.CreateMandant(gh<_i763.MandantenRepository>()),

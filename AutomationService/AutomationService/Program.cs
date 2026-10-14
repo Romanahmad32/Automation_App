@@ -1,6 +1,7 @@
 using AutomationService.Core.ErrorHandling;
 using AutomationService.Core.Lifetime;
 using AutomationService.Core.Persistence;
+using AutomationService.Features.Aktualisierung.Presentation.DependencyInjection;
 using AutomationService.Features.Backup.Presentation.DependencyInjection;
 using AutomationService.Features.DevSimulation.Presentation.DependencyInjection;
 using AutomationService.Features.EmailVersand.Presentation.DependencyInjection;
@@ -83,9 +84,10 @@ builder.Services.AddVorgaengeServices();
 builder.Services.AddFormTemplatesServices();
 builder.Services.AddVollmachtServices();
 builder.Services.AddBackupServices(builder.Configuration);
+builder.Services.AddAktualisierungServices(builder.Configuration);
 // Bleibt der letzte Add...-Aufruf: Im Testmodus ersetzt er die Naehte nach
-// aussen (Zentralruf, SMTP, Outlook, Druck), und ersetzen kann er nur, was
-// schon registriert ist.
+// aussen (Zentralruf, SMTP, Outlook, Druck, Update-Quelle, Installer), und
+// ersetzen kann er nur, was schon registriert ist.
 builder.Services.AddDevSimulationServices(builder.Configuration, builder.Environment);
 
 var app = builder.Build();

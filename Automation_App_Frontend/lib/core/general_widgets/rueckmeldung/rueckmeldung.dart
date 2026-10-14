@@ -41,9 +41,12 @@ class Rueckmeldung {
 
   final RueckmeldungsSteuerung _steuerung;
 
-  /// „Gespeichert", „Versendet" — verschwindet nach drei Sekunden von selbst.
-  void erfolg(String text, {RueckmeldungsAktion? aktion}) =>
-      _zeige(RueckmeldungsArt.erfolg, text, aktion: aktion);
+  /// „Gespeichert", „Versendet" — verschwindet nach drei Sekunden von selbst,
+  /// mit [dauer] später: etwa „Die App wurde auf Version … aktualisiert“ nach
+  /// einem Neustart, wenn der Anwalt nach einer Minute Warten vielleicht
+  /// gerade nicht hinschaut.
+  void erfolg(String text, {RueckmeldungsAktion? aktion, Duration? dauer}) =>
+      _zeige(RueckmeldungsArt.erfolg, text, aktion: aktion, dauer: dauer);
 
   /// Etwas ist anders gelaufen als erwartet, aber nichts ist schiefgegangen —
   /// fünf Sekunden, mit [dauer] auch länger.
@@ -73,7 +76,8 @@ class Rueckmeldung {
     BuildContext context,
     String text, {
     RueckmeldungsAktion? aktion,
-  }) => Rueckmeldung.von(context).erfolg(text, aktion: aktion);
+    Duration? dauer,
+  }) => Rueckmeldung.von(context).erfolg(text, aktion: aktion, dauer: dauer);
 
   /// Kurzform von [hinweis].
   static void zeigeHinweis(

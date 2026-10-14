@@ -55,6 +55,33 @@ void main() {
     expect(find.text('Tabellenfarbe gespeichert.'), findsNothing);
   });
 
+  testWidgets('Erfolg mit eigener Dauer bleibt so lange stehen', (
+    tester,
+  ) async {
+    late BuildContext kontext;
+    await tester.pumpWidget(probe((context) => kontext = context));
+
+    Rueckmeldung.zeigeErfolg(
+      kontext,
+      'Die App wurde auf Version 1.4.0 aktualisiert.',
+      dauer: const Duration(seconds: 10),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 4));
+
+    expect(
+      find.text('Die App wurde auf Version 1.4.0 aktualisiert.'),
+      findsOneWidget,
+    );
+
+    await tester.pump(const Duration(seconds: 7));
+
+    expect(
+      find.text('Die App wurde auf Version 1.4.0 aktualisiert.'),
+      findsNothing,
+    );
+  });
+
   testWidgets('Fehler bleibt stehen, bis er geschlossen wird', (tester) async {
     late BuildContext kontext;
     await tester.pumpWidget(probe((context) => kontext = context));
@@ -147,6 +174,25 @@ void main() {
       findsOneWidget,
       reason: 'Das Schliessen der Meldung darf den Dialog nicht mitnehmen.',
     );
+  });
+
+  testWidgets('der Knopf der Aktion trägt ihren Key', (tester) async {
+    late BuildContext kontext;
+    await tester.pumpWidget(probe((context) => kontext = context));
+
+    Rueckmeldung.zeigeFehler(
+      kontext,
+      'Zentralruf nicht erreichbar.',
+      aktion: RueckmeldungsAktion(
+        text: 'Erneut versuchen',
+        beiDruck: () {},
+        schluessel: const ValueKey('aktion-knopf'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const ValueKey('aktion-knopf')), findsOneWidget);
   });
 
   testWidgets('die Aktion wird ausgeführt und schließt die Meldung', (

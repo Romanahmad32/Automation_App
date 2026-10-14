@@ -6,6 +6,15 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 
 ## Umgesetzt
 
+- **Update aus der App (14.10.2026, #196, §7.3)** — Der Dienst (`Features/Aktualisierung/`) prüft
+  `releases/latest` (`Aktualisierung:Quelle`), lädt das Setup nach `%LOCALAPPDATA%\AutomationService\Aktualisierung\`
+  (erst `.part`, Größe und SHA256-`digest` der GitHub-API geprüft) und startet es nach Bestätigung
+  losgelöst und still; vorher schreibt er eine Merkdatei mit der Zielversion, der nächste Start meldet
+  Erfolg oder Misserfolg. Das Frontend zeigt Hinweis und Dialog „App aktualisieren" und schließt sich
+  regulär; der Installer wartet auf den Dienst-Mutex und startet die App mit `/NEUSTART=1` neu. Im
+  Testmodus liefert eine Attrappe 9.9.9 und startet nichts. Kein Authenticode. **Nicht abgenommen:**
+  der Weg aus der App auf einem Testrechner (siehe `docs/RELEASE.md`, „Offen"); 1.2.0 → 1.3.0 läuft
+  noch über die Release-Seite.
 - **Frontend auf `material_ui` (13.10.2026, #185)** — Material kommt aus dem Paket statt aus dem SDK
   (Lint `migrate_design_widgets`); Formularfelder über `ReactiveTextEingabe`, HTML-Links über
   `HtmlLinkStil`; google_fonts 9 ist damit wieder erlaubt.
@@ -392,9 +401,10 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Formularfelder, Listen und Tippflächen tragen Schlüssel bzw. Semantik für Marionette. Skripte:
   `e2e-start.ps1`, `e2e-testdaten.ps1`; Einzelheiten in `docs/RELEASE.md`. Die Marionette-Sperre bleibt hart.
 - **E2E-Suite mit integration_test (#184)** — nur lokal, vor dem Release-Tag per `scripts/e2e-suite.ps1`, nicht
-  in `check.ps1` und nicht in der CI. Drei Durchläufe unter `Automation_App_Frontend/integration_test/`: Hauptweg
+  in `check.ps1` und nicht in der CI. Vier Durchläufe unter `Automation_App_Frontend/integration_test/`: Hauptweg
   bis zum Versand (genau eine `.eml` an Versicherung und Mandant, PDF angehängt), Vollmacht drucken (Druck-Kopie
-  und Vermerk), Mandant anlegen und einem Vorgang zuordnen. Jeder prüft zuerst `/health` auf `testmodus` und
+  und Vermerk), Mandant anlegen und einem Vorgang zuordnen, Update aus der App (falsche Prüfsumme hält an, die richtige
+  legt den Installer-Aufruf ab). Jeder prüft zuerst `/health` auf `testmodus` und
   danach am Ergebnis: `protokoll.jsonl`, die Dateien der Attrappen, der Bestand über REST. Der Dienst endet
   geordnet über einen Anker-Prozess als `--parent-pid`, damit seine Word-Instanz nicht verwaist.
 

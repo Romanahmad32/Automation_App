@@ -9,7 +9,7 @@ Release-Build gelangt.
 
 **Abgeschottet (Testmodus, Issue #168):** `./scripts/e2e-start.ps1` aus dem Repo-Stamm. Es baut und startet
 den Dienst in der Umgebung `E2E` (Port 5243, eigener Datenordner unter `%TEMP%\automation-e2e\<zeit>\daten`,
-Attrappen für Zentralruf, Versand, Entwurf und Druck), legt einen Ausgangsbestand an und startet die App mit
+Attrappen für Zentralruf, Versand, Entwurf, Druck, Update-Quelle und Installer), legt einen Ausgangsbestand an und startet die App mit
 diesem Einstieg. Die `ws://`-Adresse für Marionette `connect` steht danach in der Ausgabe und in
 `<Wurzel>\vmservice.txt`. `./scripts/e2e-start.ps1 -Beenden` räumt auf. Alles Weitere in `docs/RELEASE.md`
 (Abschnitt „E2E-Testmodus"). Dieselbe Umgebung nutzt die E2E-Suite unter `integration_test/` (#184), gestartet
@@ -36,9 +36,15 @@ schon ein Dienst, wird er übernommen.
 
 Was der Testmodus-Dienst hinterlässt, liegt unter `<Datenordner>\Testmodus\`: `protokoll.jsonl` (je Aktion eine
 Zeile mit `zeit`, `aktion`, `referenz`, `datei`; `aktion` ist `zentralruf-anfrage`, `versand`, `gesendet-ablage`,
-`entwurf` oder `druck`), `Versand\`, `Entwuerfe\` und `Druck\`. Prüfungen stützen sich auf `protokoll.jsonl` →
-`datei`, nicht auf das Namensmuster. Beim Entwurf zeigt die App „Outlook war nicht erreichbar …" — im Testmodus
-erwartet. „In Word öffnen" und die PDF-Vorschau laufen echt (Word), ohne Außenwirkung.
+`entwurf`, `druck` oder `aktualisierung-installer`), `Versand\`, `Entwuerfe\`, `Druck\` und `Aktualisierung\`.
+Prüfungen stützen sich auf `protokoll.jsonl` → `datei`, nicht auf das Namensmuster. Beim Entwurf zeigt die App
+„Outlook war nicht erreichbar …" — im Testmodus erwartet. „In Word öffnen" und die PDF-Vorschau laufen echt (Word),
+ohne Außenwirkung.
+
+Das Update aus der App (#196) läuft gegen eine Attrappe: Der Dienst meldet `9.9.9`, lädt eine kleine Datei und
+startet keinen Installer, sondern legt den Aufruf ab; „Jetzt neu starten“ schließt dann nur den Dialog, nicht die
+App. `POST api/Simulation/aktualisierung` mit `{"pruefsummeFalsch": true}` schaltet den Fall „Prüfsumme falsch“
+und setzt den Update-Stand des Dienstes zurück.
 
 ## Selektoren
 
@@ -72,7 +78,14 @@ weiter `ValueKey(referenz)`.
 | Vollmacht-Art | `vollmacht-art-unfallsachen`, `…-bussgeldsachen`, `…-strafsache` |
 | Versand Betreff / Text | `versand-betreff` / `versand-text` |
 | Versand Empfänger-Eingabe | `versand-an` / `versand-kopie` |
-| gesperrt (Hook schlägt an) | `zentralruf-formular-ausfuellen`, `versand-senden`, `vollmacht-drucken` |
+| Update-Hinweis in der Seitenleiste (verfügbar, lädt, bereit) | `aktualisierung-hinweis` |
+| „Aktualisieren …“ in „Über diese Anwendung“ und im Reiter „Über“ | `aktualisierung-oeffnen` |
+| Dialog „App aktualisieren“: Jetzt aktualisieren / Erneut versuchen | `aktualisierung-jetzt-aktualisieren` / `aktualisierung-erneut-versuchen` |
+| Dialog „App aktualisieren“: Später / Schließen / Laden abbrechen | `aktualisierung-spaeter` / `aktualisierung-schliessen` / `aktualisierung-laden-abbrechen` |
+| Dialog „App aktualisieren“: Lieber selbst herunterladen (Browser; nur bei einer `https://github.com/…`-Adresse, im Testmodus also nie) | `aktualisierung-selbst-herunterladen` |
+| „Jetzt neu starten“ — startet außerhalb des Testmodus den Installer und schließt die App | `aktualisierung-neu-starten` |
+| gesperrt (Hook schlägt an) | `zentralruf-formular-ausfuellen`, `versand-senden`, `vollmacht-drucken`, `aktualisierung-neu-starten` |
+| Rückfrage (Hook fragt nach) | `aktualisierung-jetzt-aktualisieren`, `aktualisierung-erneut-versuchen` |
 
 Eigene Tippflächen (`InkWell`) tragen `Semantics(button: true)` und sind damit auch über `text` bzw. `identifier`
 auffindbar. Gleichnamige Knöpfe einer Liste trennt `ancestor_keys` mit dem Schlüssel des Listeneintrags, etwa
@@ -85,6 +98,7 @@ werden (der Dienst beendet sich dann selbst).
 ## Sperre gegen Fehlklicks
 
 Der Hook `.claude/hooks/marionette-sperre.ps1` sperrt Zentralruf-, Senden-, Versenden- und
-Drucken-Knöpfe hart und lässt bei Entwurf, Postfach-Verbindung, Sicherung einspielen, Import,
-Koordinaten-Tipps und Enter/Leertaste nachfragen. Einzelheiten in `.claude/README.md`. Sie bleibt auch im Testmodus hart: Zentralruf, Senden und Drucken
+Drucken-Knöpfe, „Jetzt neu starten“ im Update-Dialog sowie Koordinaten-Tipps und Enter/Leertaste hart
+und lässt bei Entwurf, Postfach-Verbindung, Sicherung einspielen, Import und „Jetzt aktualisieren“ bzw.
+„Erneut versuchen“ im Update-Dialog nachfragen. Einzelheiten in `.claude/README.md`. Sie bleibt auch im Testmodus hart: Zentralruf, Senden und Drucken
 prüft die integration_test-Suite (#184), nicht der Agent.

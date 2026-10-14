@@ -1,5 +1,6 @@
 import 'package:automation_app/features/backup/presentation/widgets/synchronisations_leiste.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:automation_app/core/aktualisierung/presentation/widgets/aktualisierungs_begleiter.dart';
 import 'package:automation_app/core/general_widgets/drawer/app_side_bar.dart';
 import 'package:automation_app/core/router/app_router.gr.dart';
 import 'package:automation_app/features/vorgaenge/presentation/widgets/vorgang_persistenz_fehler_listener.dart';
@@ -44,24 +45,28 @@ class _AppShellPageState extends State<AppShellPage> {
       builder: (context, child) {
         final tabsRouter = AutoTabsRouter.of(context);
 
-        return Scaffold(
-          body: Row(
-            children: [
-              AppSidebar(
-                isExtended: _isExtended,
-                collapsedWidth: _collapsedWidth,
-                expandedWidth: _expandedWidth,
-                animationDuration: _animationDuration,
-                activeIndex: tabsRouter.activeIndex,
-                onDestinationSelected: tabsRouter.setActiveIndex,
-                onToggle: () => setState(() => _isExtended = !_isExtended),
-              ),
-              Expanded(
-                child: SynchronisationsLeiste(
-                  child: VorgangPersistenzFehlerListener(child: child),
+        // Der Begleiter prüft einmal je Sitzung auf Updates und meldet nach
+        // einem Neustart, ob die Aktualisierung geklappt hat (#196).
+        return AktualisierungsBegleiter(
+          child: Scaffold(
+            body: Row(
+              children: [
+                AppSidebar(
+                  isExtended: _isExtended,
+                  collapsedWidth: _collapsedWidth,
+                  expandedWidth: _expandedWidth,
+                  animationDuration: _animationDuration,
+                  activeIndex: tabsRouter.activeIndex,
+                  onDestinationSelected: tabsRouter.setActiveIndex,
+                  onToggle: () => setState(() => _isExtended = !_isExtended),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: SynchronisationsLeiste(
+                    child: VorgangPersistenzFehlerListener(child: child),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
