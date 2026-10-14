@@ -22,8 +22,9 @@ import 'package:flutter/services.dart' show ServicesBinding;
 /// ruft `PostQuitMessage`, die Schleife endet wie beim Schließen, und die
 /// Engine räumt vorher ordentlich auf (anders als `dart:io` `exit`, das den
 /// Prozess sofort beendet). `required` statt `cancelable`, weil nichts das
-/// Ende mehr aufhalten darf: Der Installer läuft schon, und der Anwalt wurde
-/// vorher gebeten, offene Eingaben zu speichern.
+/// Ende mehr aufhalten darf: Der Installer läuft schon, der Anwalt hat
+/// „Jetzt neu starten“ bewusst bestätigt, und das Schließen läuft wie über
+/// das X.
 abstract final class AnwendungBeenden {
   static Future<void> regulaer() async {
     final antwort = await ServicesBinding.instance.exitApplication(

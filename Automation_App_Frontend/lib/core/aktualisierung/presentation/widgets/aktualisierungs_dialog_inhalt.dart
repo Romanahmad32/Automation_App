@@ -116,12 +116,6 @@ class AktualisierungsDialogInhalt extends StatelessWidget {
         '(ca. 1 Minute).',
         style: theme.textTheme.bodyMedium,
       ),
-      HinweisZeile(
-        symbol: Icons.save_outlined,
-        text: 'Bitte speichern Sie offene Eingaben vorher.',
-        farbe: theme.colorScheme.tertiary,
-        textfarbe: theme.colorScheme.onSurface,
-      ),
       _datenBleiben(context),
     ];
   }

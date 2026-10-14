@@ -144,7 +144,7 @@ void main() {
     );
     expect(
       find.text('Bitte speichern Sie offene Eingaben vorher.'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.text(AktualisierungsDialogInhalt.datenBleiben), findsOneWidget);
     expect(find.text('Später'), findsOneWidget);
