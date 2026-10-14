@@ -88,6 +88,16 @@ abstract final class DienstZugang {
     });
   }
 
+  /// Stellt die Update-Attrappe des Testmodus ein (#196) und setzt den
+  /// Update-Stand des Dienstes zurück, als wäre er eben gestartet:
+  /// [pruefsummeFalsch] verfälscht beim nächsten Download ein Byte, die
+  /// Prüfung verwirft die Datei, der Installer startet nicht.
+  static Future<void> stelleAktualisierungEin({
+    required bool pruefsummeFalsch,
+  }) => schreibe('POST', '/api/Simulation/aktualisierung', {
+    'pruefsummeFalsch': pruefsummeFalsch,
+  });
+
   /// Der eine Mandant mit diesem [nachname], oder ein Testfehler.
   static Future<Map<String, dynamic>> mandantMitNachname(
     String nachname,

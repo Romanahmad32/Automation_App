@@ -288,7 +288,8 @@ jobs:
       - name: Test
         run: flutter test --no-pub --concurrency=8
 
-  # Baut das auslieferbare Paket und startet den veroeffentlichten Dienst.
+  # Baut das auslieferbare Paket, startet den veroeffentlichten Dienst und
+  # uebersetzt daraus den Installer.
   #
   # Warum zusaetzlich zu den Jobs oben: die pruefen den Quellcode. Ob daraus ein
   # startfaehiges Produkt wird, ist eine andere Frage — ein fehlender Eintrag in
@@ -372,3 +373,31 @@ jobs:
       - name: Rauchtest
         shell: pwsh
         run: ./scripts/smoke-test.ps1 -PackageDirectory dist/Automation_App -ExpectedVersion 0.0.0
+
+      # Uebersetzungsprobe fuer installer/setup.iss. Das Skript traegt seit #196
+      # Code ([Code]: InitializeSetup wartet auf den Dienst und haelt den
+      # Setup-Mutex), und Inno-Pascal uebersetzt nur ISCC -- lokal ist es meist
+      # nicht installiert, und InstallerVertragTests liest das Skript nur als
+      # Text. Ohne diese Schritte fiele ein Syntaxfehler erst beim Release auf,
+      # wenn der Tag schon gesetzt ist. Dieselben zwei Schritte wie in
+      # release.yml, mit der Platzhalter-Version dieses Jobs; die Setup-Datei
+      # bleibt im Runner liegen, ein Artefakt braucht es hier nicht.
+      - name: Inno Setup bereitstellen
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            Write-Host "Inno Setup nicht im Runner-Image, wird nachinstalliert."
+            choco install innosetup --no-progress -y
+          }
+          if (-not (Test-Path $iscc)) { throw "Inno Setup steht nicht zur Verfuegung: $iscc" }
+          "ISCC=$iscc" >> $env:GITHUB_ENV
+
+      - name: Installer uebersetzen
+        shell: pwsh
+        run: |
+          & $env:ISCC /DMyAppVersion=0.0.0 `
+                      /DSourceDir=..\dist\Automation_App `
+                      /DOutputDir=..\dist `
+                      installer\setup.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup ist fehlgeschlagen." }

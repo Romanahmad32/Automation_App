@@ -100,7 +100,7 @@ Kapitel 4–7.
 |---|---|
 | 7.1 | Einstellungen: Kanzleidaten, Abteilung und laufende Auftragsnummer (hinterlegen/vorbefüllen/hochzählen — als Korrektur von Hand, Vorschlag kommt aus 6.3), Sachgebietskatalog (Kürzel, Rechtsgebiet folgt der Abteilung, Überschneidungen, Normalisierung, Pflege), Aktenstammordner, Versand samt Mail-Textvorlagen, Anreden und Zusatzgrüßen, Postfach-Zugang, Darstellung, Sicherung |
 | 7.2 | Datensicherung und Datenintegrität: Schutz vor Datenverlust, Sichern/Wiederherstellen, robuste Wiederherstellung, Sicherung während der Arbeit, Aufbewahrung nach Alter, dauerhafte Kennungen, Änderungsstand |
-| 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[K]**, siehe 8) |
+| 7.3 | Auslieferung und Aktualisierung: Setup, Datenerhalt beim Update, Update aus der App heraus (**[S]**: Hinweis, Bestätigung, selbst laden, kurzer Neustart) |
 
 ### 8 Nicht-Ziele / Abgrenzung
 
@@ -129,7 +129,6 @@ im Volltext findet:
 | § | zurückgestellt |
 |---|---|
 | 4.10 | Erstkontakt über die Kanzlei-Website — **durchgehend [K]**, jeder Punkt darin |
-| 7.3 | Aktualisierung aus der App heraus (Hinweis auf neue Version, Selbstaktualisierung); der Weg über ein neues Setup genügt |
 
 Sonst trägt kein Paragraph zurückgestellte Punkte. Kommt einer dazu, gehört er in diese Tabelle —
 sie ist im frischen Klon die **einzige** Auskunft darüber, und ein Ausschluss, der nur im
@@ -138,5 +137,5 @@ nicht versionierten Volltext steht, hält niemanden auf.
 ### 9 Offene Punkte
 
 Bewusst noch nicht entschieden — u. a. eine offizielle Zentralruf-Schnittstelle als Alternative zur
-Browser-Automatisierung, die Bezugsquelle für Updates und der Weg des Website-Kanals. Wer auf eine
+Browser-Automatisierung und der Weg des Website-Kanals. Wer auf eine
 dieser Fragen stößt, entscheidet sie nicht selbst.

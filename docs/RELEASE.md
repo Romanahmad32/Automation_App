@@ -132,7 +132,9 @@ Das ist alles. `.github/workflows/release.yml` läuft rund zehn Minuten und hän
 neu schreiben.** Er ist das Einzige an einem Release, das von Hand entsteht —
 alles andere zieht die CI aus dem Tag. Nichts erzwingt ihn, und genau deshalb
 steht er hier: Bleibt er stehen, wirbt die neue Version mit dem Inhalt der
-alten. Der Rest der Datei gilt versionsunabhängig und bleibt, wie er ist.
+alten. Der Rest der Datei gilt versionsunabhängig und bleibt, wie er ist. Oben steht der
+Direktlink-Block („So installieren Sie das Update") mit der Setup-Datei; `{VERSION}` darin ersetzt die
+CI — das ist der Rückfallweg, wenn das Update aus der App nicht greift (siehe „So läuft ein Update").
 
 **Vor dem Tag: die E2E-Suite laufen lassen** — `scripts/e2e-suite.ps1` auf dem Stand, der getaggt wird
 (rund fünf Minuten, nur lokal; Einzelheiten unter „E2E-Testmodus"). Sie prüft drei Hauptwege
@@ -215,7 +217,70 @@ löschen.
 Dieselben Skripte laufen im `paket`-Job der CI bei jedem PR. Was dort grün ist,
 ist das, was ausgeliefert wird — und dieser Job prüft eine Fehlerklasse, die
 `dotnet test` und `flutter test` prinzipiell nicht sehen: ob aus dem Quellcode
-ein *startfähiges Produkt* wird.
+ein *startfähiges Produkt* wird. Danach übersetzt er mit ISCC auch
+`installer/setup.iss` (Schritte „Inno Setup bereitstellen" und „Installer übersetzen", wie in
+`release.yml`), damit ein Fehler im Inno-Skript schon im PR rot wird und nicht erst am Tag.
+
+### Installer und Update aus der App
+
+`installer/setup.iss` dient zwei Wegen: dem Doppelklick (Assistent) und dem stillen Lauf, den der
+Dienst nach „Jetzt aktualisieren" startet (#196). Der Dienst lädt das Setup nach
+`%LOCALAPPDATA%\AutomationService\Aktualisierung\`, prüft Größe und SHA256 gegen die GitHub-API und
+startet es losgelöst mit
+
+```
+/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /NEUSTART=1 /LOG="…\installer-<version>.log"
+```
+
+(`Features/Aktualisierung/Domain/Services/InstallerAufruf.cs`). **Nie `/FORCECLOSEAPPLICATIONS`** — das
+beendete eine Anwendung auch, wenn sie sich weigert, etwa ein Word, das noch nach dem ungespeicherten
+Schriftsatz fragt. Auch ohne „force" schließt der Restart Manager jede Anwendung, die eine *zu ersetzende*
+Datei hält und mitspielt; Word hält keine: Ersetzt wird nur, was im Paket liegt, und die Arbeitskopien unter
+`backend\Generated` entstehen erst zur Laufzeit. Vier Stellen gehören dazu; `InstallerVertragTests` liest
+`setup.iss` und `Automation_App_Frontend/windows/runner/main.cpp` und hält alle Seiten zusammen:
+
+- **Mutex des Dienstes.** Der installierte Dienst (nur Production, nie E2E oder Development) hält vom Start bis
+  zum Prozessende `AutomationServiceLaeuft` (`DienstLaeuftMarke`). `InitializeSetup` wartet per
+  `CheckForMutexes`, bis er weg ist — höchstens 90 s im Takt von 250 ms, danach 1,5 s Nachlauf, denn beim
+  Herunterfahren schreibt der Dienst bis zu 60 s die Sicherung und gibt seine Word-Instanz frei.
+  `InitializeSetup` läuft vor jedem Fenster und vor der Suche nach gesperrten Dateien; in
+  `PrepareToInstall`, wo es zuerst stand, fror die Warteschleife das offene Setup-Fenster ein („Keine
+  Rückmeldung"). **Still** läuft nach 90 s alles weiter, und der Restart Manager (`CloseApplications=yes`)
+  übernimmt wie vor #196 — ein Abbruch ließe den Anwalt ohne App und ohne Update. **Interaktiv** (Doppelklick
+  auf die Setup-Datei bei offener App) bittet eine Meldung mit „Wiederholen"/„Abbrechen", die App zu schließen;
+  „Wiederholen" wartet bis zu 90 s ohne Fenster und prüft neu, „Abbrechen" beendet das Setup, ohne etwas zu
+  verändern.
+- **Mutex des Setups.** `InitializeSetup` legt als Erstes `AutomationAppSetupLaeuft` an (`SetupLaeuftMutex`,
+  per `CreateMutex`, gehalten bis zum Ende des Setups). Bewusst **nicht** über `SetupMutex=`: Inno prüft und
+  legt den erst *nach* dem Skript-`InitializeSetup` an (issrc, `Setup.MainFunc.pas`), also nach dem Warten —
+  und gerade dann muss er bestehen. Ein zweites Setup, das ihn vorfindet, endet still sofort (interaktiv mit
+  „Wiederholen"/„Abbrechen"), statt dieselben Dateien gegen das erste zu ersetzen.
+- **Doppelklick auf die App während des Updates.** Der Windows-Runner (`windows/runner/main.cpp`) prüft vor dem
+  Flutter-Start per `OpenMutexW`, ob `AutomationAppSetupLaeuft` besteht. Wenn ja und die Befehlszeile trägt
+  kein `--nach-update`, zeigt er „Die Automation App wird gerade aktualisiert. Sie startet danach von selbst –
+  bitte warten Sie einen Moment." und endet — sonst übernähme die App einen sterbenden Dienst oder startete
+  einen neuen, der `AutomationServiceLaeuft` wieder hielte. `lib/main.dart` nimmt keine Argumente entgegen.
+- **Neustart.** Der erste `[Run]`-Eintrag hat `skipifsilent`; ein zweiter mit `skipifnotsilent` und
+  `Check: NeustartGewuenscht` startet die App nach dem stillen Lauf wieder — nur mit `/NEUSTART=1`, ein
+  stilles Setup per Skript startet nichts. Er läuft ohne `postinstall`, also mit den Rechten des Setups;
+  das ist der Anwender selbst, weil je Benutzer installiert wird (`PrivilegesRequired=lowest`). **Beide**
+  Einträge übergeben `--nach-update`: Das Setup lebt beim Start der App noch und hält seinen Mutex.
+
+Die Merkdatei (letzte-aktualisierung.json) daneben schreibt der Dienst vor dem Start; der nächste Start meldet
+daraus, ob das Update auf die Zielversion geklappt hat. Das Inno-Protokoll bleibt dort liegen.
+
+Zwei Sicherungen im Dienst (`InstallerStart`, `InstallerStarter`): **Anlauffrist** — nach dem Start sieht der
+Dienst 3 s hin (`InstallerStart.Anlauffrist`). Beendet sich das Setup in der Zeit (ein zweites hält den
+Setup-Mutex, ein Virenscanner bricht es ab), antwortet `POST installieren` mit 409, der Zustand wird `fehler`
+(`fehlerArt` `sonstig`), die Merkdatei kommt weg, und der Dienst fährt **nicht** herunter; die App zeigt 2d und
+bleibt offen. Läuft es noch, kommt 202, und 5 s später fährt der Dienst herunter
+(`GeordnetesHerunterfahren.Verzoegerung`). **Nur die installierte App startet das echte Setup** — der echte
+`InstallerStarter` ist nur in Production aktiv. Ein Dienst aus der Entwicklungsumgebung lehnt `installieren`
+mit 409 ab („Installieren geht nur aus der installierten App. …"), ohne Merkdatei und ohne den Zustand zu
+ändern; sonst überschriebe „Jetzt neu starten" die auf dem Entwicklerrechner installierte App. Der
+E2E-Testmodus hat ohnehin seine Attrappe, die als laufend gilt. Und `downloadUrl` („Lieber selbst
+herunterladen") setzt der Dienst nur bei einer `https://github.com/…`-Adresse; das Frontend prüft dasselbe
+noch einmal und öffnet sie ohne Shell (`rundll32 url.dll,FileProtocolHandler`, `BrowserOeffner`).
 
 ### E2E-Testmodus (nur lokal)
 
@@ -247,7 +312,8 @@ nichts nach außen wirken lässt und nie echte Daten berührt. Er läuft **nie i
 - **Nicht ersetzt oder abgelehnt:** „In Word öffnen" und die PDF-Vorschau (Word per COM) laufen echt —
   lokal, ohne Außenwirkung; ebenso `Process.run` im Frontend. Die Microsoft-Anmeldung fürs Postfach wird
   mit 409 abgelehnt („Im Testmodus ist die Anmeldung bei Microsoft abgeschaltet."), die Übernahme der
-  Outlook-Signaturen liefert nichts. Die Update-Prüfung der App fragt GitHub nicht an. Wer den Dienst von Hand mit `dotnet run --environment E2E` startet, teilt sich `Generated\`
+  Outlook-Signaturen liefert nichts. Die Update-Prüfung läuft über den Dienst (siehe „So läuft ein Update"); im Testmodus nutzt er eine Attrappe, die
+  9.9.9 meldet, nichts anfragt und nichts startet (Protokollzeile `aktualisierung-installer`). Wer den Dienst von Hand mit `dotnet run --environment E2E` startet, teilt sich `Generated\`
   mit dem Entwicklungsdienst; das Skript baut deshalb in einen eigenen Ordner.
 - **Port 5143 ist gesperrt:** Er gehört der installierten App; beide Skripte lehnen ihn als `-Port` ab.
 - **Frontend:** Die App bekommt `AUTOMATION_BACKEND_PORT=5243` und `AUTOMATION_TESTMODUS=true` per
@@ -311,18 +377,45 @@ Entwickleraufgabe (`docs/OUTLOOK_SETUP.md`).
 
 ## So läuft ein Update
 
-Für ihn ist es derselbe Vorgang wie die Erstinstallation — es gibt keinen
-Update-Modus, keinen Deinstallieren-Schritt davor:
+Für den Anwalt ist es derselbe Installer wie bei der Erstinstallation — es gibt keinen
+Update-Modus und keinen Deinstallieren-Schritt davor. Neu ist, dass die App den Weg selbst geht
+(#196, §7.3). Zusammen mit „Installer und Update aus der App" oben:
 
 1. Du setzt einen neuen Tag, die CI baut, das Release erscheint.
-2. Die Anwendung bemerkt es beim nächsten Start und zeigt „Update verfügbar".
-3. Er klickt darauf, lädt die Setup-Datei und führt sie aus.
-4. Fertig. Danach steht unten in der Seitenleiste die neue Nummer.
+2. Der Dienst (`Features/Aktualisierung/`) fragt `releases/latest` ab; die Quelle steht in
+   `Aktualisierung:Quelle` und ist per Konfiguration austauschbar. Ist der Tag zahlenweise höher,
+   zeigt das Frontend den Hinweis in der Seitenleiste (`lib/core/aktualisierung/`).
+3. Der Dialog „App aktualisieren" fragt nach Bestätigung. Dann lädt der Dienst die Setup-Datei
+   (erst als `.part`), prüft Größe und SHA256-`digest` aus der GitHub-API und benennt sie erst dann um.
+4. Vor dem Start schreibt der Dienst die Merkdatei mit der Zielversion, dann startet er das Setup
+   losgelöst und still und sieht 3 s hin, ob es läuft (Anlauffrist). Endet es in der Zeit, ist das
+   ein 409: Merkdatei weg, Zustand `fehler`, Dialog 2d, App und Dienst bleiben an. Läuft es noch
+   (202), zeigt das Frontend 2e und schließt sich nach 2 s regulär (`AnwendungBeenden.regulaer()`);
+   der Dienst fährt geordnet herunter (Watchdog, zusätzlich stößt er 5 s nach der Anlauffrist selbst
+   das Herunterfahren an). Nur die installierte App (Production) startet ein echtes Setup; aus der
+   Entwicklungsumgebung lehnt der Dienst mit 409 ab.
+5. Das Setup legt in `InitializeSetup` als Erstes seinen Mutex `AutomationAppSetupLaeuft` an — ab da
+   startet ein Doppelklick auf die App nicht, sondern sagt „wird gerade aktualisiert" — und wartet
+   bis zu 90 s auf den Dienst-Mutex (plus 1,5 s Nachlauf). Dann ersetzt es die Dateien und startet die
+   App mit `--nach-update` neu (still nur mit `/NEUSTART=1`). Der nächste Start meldet anhand der
+   Merkdatei Erfolg oder Misserfolg. Bleibt der Neustart aus, sagt 2e schon vorher, was zu tun ist:
+   nach zwei Minuten die App wie gewohnt über das Symbol öffnen.
+
+**Warum der Dienst lädt, nicht das Frontend:** Er nutzt den System-Proxy der Kanzlei, kann den
+Hash prüfen, ohne dass die Datei durch die Oberfläche läuft, und die Datei liegt dort, wo auch das
+Protokoll bleibt. **Warum kein Authenticode nötig ist:** Die vom Dienst geladene Datei trägt kein
+Mark-of-the-Web, SmartScreen meldet sich also nicht; die Signatur bleibt unter „Offen" ein
+Wunsch, keine Voraussetzung.
+
+**Rückfallweg:** Der Direktlink oben in den Release-Notes und „Lieber selbst herunterladen" im
+Dialog (öffnet die Setup-Datei direkt) bleiben gleichwertig — fällt der Weg aus, etwa bei
+gesperrtem Netz, wird von Hand installiert. **Der Sprung 1.2.0 → 1.3.0 läuft noch über die
+Release-Seite**, denn 1.2.0 kennt das Update aus der App nicht; erst ab 1.3.0 gilt der Weg oben.
 
 Dass das trägt, liegt an drei Entscheidungen weiter oben: die `AppId` bleibt über
 alle Versionen gleich, also **ersetzt** der Installer die vorhandene Fassung,
-statt eine zweite danebenzustellen. Läuft die Anwendung noch, erkennt Inno Setup
-das und bittet, sie zu schließen. Und seine Daten liegen ohnehin nicht im
+statt eine zweite danebenzustellen. Läuft die Anwendung noch, wartet der Installer
+(`InitializeSetup`) und schließt sauber (nie `/FORCECLOSEAPPLICATIONS`). Und seine Daten liegen ohnehin nicht im
 Programmordner, sondern unter `%APPDATA%\AutomationService` — Datenbank,
 Vorlagen, Postfach-Zugang und Token-Cache überstehen das Update unberührt, weil
 sie gar nicht erst angefasst werden.
@@ -339,33 +432,23 @@ beschädigen.
 
 ### Der Update-Hinweis
 
-`AktualisierungsPruefer` (`lib/core/aktualisierung/`) fragt einmal je Sitzung
-`api.github.com/repos/…/releases/latest` und vergleicht `tag_name` mit der
-laufenden Version. Ist er höher, erscheint der Hinweis in der Seitenleiste und
-im Reiter „Über"; der Knopf öffnet die Release-Seite im Browser.
+Verglichen wird **zahlenweise, nicht als Zeichenkette** — sonst gälte `1.10.0` als älter als
+`1.9.0`. **Unlesbares gilt nie als Update**, und **jeder Fehler der Prüfung bleibt stumm**: ohne
+Netz oder bei einem GitHub-Ausfall passiert nichts, der Reiter „Über" sagt dann ausdrücklich, dass
+*nicht geprüft werden konnte*, statt „Sie sind aktuell" zu behaupten. Installiert wird nie ohne
+Bestätigung. Das setzt voraus, dass das Repository **öffentlich** bleibt; wird es privat,
+antwortet die API mit 404 und der Hinweis entfällt ersatzlos.
 
-Vier Entscheidungen dahinter:
+### Verworfene Alternativen
 
-- **Verglichen wird zahlenweise, nicht als Zeichenkette.** Sonst gälte `1.10.0`
-  als älter als `1.9.0`, und die zehnte Auslieferung würde nie gemeldet.
-- **Unlesbares gilt nie als Update.** Ein Tag, der nicht dem Schema entspricht,
-  schickt den Anwalt sonst zu einem Download, den er längst hat.
-- **Jeder Fehler bleibt stumm.** Ohne Netz, hinter einer Kanzlei-Firewall oder
-  bei einem Ausfall von GitHub passiert schlicht nichts — kein Dialog, keine
-  Verzögerung des Starts. Im Reiter „Über" steht dann allerdings ausdrücklich,
-  dass *nicht geprüft werden konnte*, und nicht etwa „Sie sind aktuell": eine
-  Prüfung, die nie stattgefunden hat, darf sich nicht als Entwarnung ausgeben.
-- **Heruntergeladen und installiert wird nicht automatisch.** Nur der Installer
-  schließt eine laufende Instanz sauber und lässt `%APPDATA%` unberührt.
-
-Das setzt voraus, dass das Repository **öffentlich** bleibt. Wird es privat,
-antwortet die API mit 404 und der Hinweis entfällt ersatzlos — die Anwendung
-funktioniert weiter, du musst dann wieder selbst Bescheid geben.
-
-> Die große Lösung wäre [Velopack](https://velopack.io) mit echtem Auto-Update,
-> das im Hintergrund lädt und beim nächsten Start einspielt. Das ersetzt Inno
-> Setup und ist eine eigene Umstellung; sie lohnt erst, wenn mehrere Rechner zu
-> versorgen sind.
+- **Velopack:** ersetzt Inno Setup und verlangt eine eigene Umstellung der ganzen Auslieferung —
+  für einen Rechner nicht verhältnismäßig.
+- **MSIX:** verlangt ein kostenpflichtiges Signaturzertifikat; der Paketordner ist schreibgeschützt
+  (`backend\Generated`), und was unter AppData neu entsteht, wird umgelenkt und bei der
+  Deinstallation gelöscht — das widerspricht „die Daten überleben die Deinstallation“.
+- **WinSparkle** (`auto_updater`): zeigt eine fremde Oberfläche statt der App-eigenen und löst das
+  eigentliche Problem nicht — das Warten auf den Dienst, der beim Beenden noch sichert und Word
+  freigibt; dazu käme ein eigener Appcast mit EdDSA-Schlüssel.
 
 ## Zweignamen
 
@@ -568,6 +651,8 @@ Treffer spart nur den erneuten Download, ein Fehltreffer baut wie bisher neu.
   Ohne Signatur hängt die SmartScreen-Reputation am Datei-Hash, jede Version
   fängt also wieder bei null an; mit Signatur hinge sie am Herausgeber und
   wüchse über Versionen hinweg.
-- **Update über eine bestehende Installation** ist noch nie gelaufen. Erst das
-  zeigt, ob `AppId`-Zuordnung, Instanzerkennung und Datenerhalt in der Praxis
-  greifen.
+- **Update aus der App auf einem Testrechner.** Die stille Installation über eine bestehende
+  Fassung lief in der E2E-Abnahme für 1.3.0 (über 1.2.0, Fälle A1–A4 ok). Offen ist die Abnahme des
+  Wegs aus der App: Inno-Lauf mit `/SILENT`, Warten auf den Mutex in `InitializeSetup`, Neustart mit
+  `--nach-update`, die Meldung aus der Merkdatei, dazu ein Doppelklick auf die App während des
+  Updates und ein zweites Setup (Anlauffrist).

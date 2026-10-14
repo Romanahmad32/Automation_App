@@ -10,7 +10,8 @@ import 'e2e_umgebung.dart';
 class ProtokollZeile {
   final String zeit;
 
-  /// `zentralruf-anfrage`, `versand`, `gesendet-ablage`, `entwurf`, `druck`.
+  /// `zentralruf-anfrage`, `versand`, `gesendet-ablage`, `entwurf`, `druck`,
+  /// `aktualisierung-installer` (#196).
   final String aktion;
 
   /// Nur die Zentralruf-Anfrage kennt ihren Vorgang; sonst `null`.

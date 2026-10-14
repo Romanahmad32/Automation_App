@@ -1,7 +1,7 @@
-import 'package:automation_app/core/aktualisierung/aktualisierung_builder.dart';
+import 'package:automation_app/core/aktualisierung/presentation/widgets/aktualisierung_builder.dart';
+import 'package:automation_app/core/general_widgets/aktualisieren_button.dart';
 import 'package:automation_app/core/general_widgets/anwendungs_info.dart';
 import 'package:automation_app/core/general_widgets/form/form_section.dart';
-import 'package:automation_app/core/general_widgets/update_herunterladen_button.dart';
 import 'package:automation_app/features/settings/presentation/widgets/einstellungen_reiter.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -17,8 +17,7 @@ class UeberSettingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AktualisierungBuilder(
-      builder: (context, stand) {
-        final neu = stand?.neueVersion;
+      builder: (context, ansicht) {
         return EinstellungenReiter(
           links: [
             FormSection(
@@ -28,11 +27,11 @@ class UeberSettingsView extends StatelessWidget {
                   'Welche Fassung der Anwendung auf diesem Rechner läuft. '
                   'Nennen Sie diese Nummer bei Rückfragen.',
               children: [
-                AnwendungsInfo(stand: stand),
-                if (neu != null)
-                  Align(
+                AnwendungsInfo(ansicht: ansicht),
+                if (ansicht?.updateInSicht ?? false)
+                  const Align(
                     alignment: Alignment.centerLeft,
-                    child: UpdateHerunterladenButton(neueVersion: neu),
+                    child: AktualisierenButton(),
                   ),
               ],
             ),

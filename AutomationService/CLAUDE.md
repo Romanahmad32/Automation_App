@@ -30,10 +30,11 @@ Verdrahtung über je eine `Add…Services`-Erweiterungsmethode, aufgerufen aus `
 `AddZentralrufServices`, `AddMailboxServices`, `AddSettingsServices`, `AddMandantenServices`,
 `AddVersichererServices`, `AddSachgebieteServices`, `AddRegisterHistorieServices`, `AddVorgaengeServices`,
 `AddFormTemplatesServices`, `AddBackupServices`, `AddDevSimulationServices`, `AddEmailVersandServices`,
-`AddVollmachtServices`.
+`AddVollmachtServices`, `AddAktualisierungServices`.
 
 Options binden aus `appsettings.json` über eine Options-Klasse mit `SectionName`: `WordAutomation`,
-`PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`. Ohne Options-Klasse direkt gelesen:
+`PdfConversion`, `Zentralruf`, `Mailbox`, `EmailVersand`, `Simulation`, `Aktualisierung`. Ohne Options-Klasse
+direkt gelesen:
 `Urls`, `Cors:AllowedOrigins`, `Datenordner` (`Program.cs`, s. „Persistenz"), `LegacyImport:*`
 (`LegacyJsonImportService`) und `Backup:AutomatischeSicherung` (`BackupInjection`, Not-Aus —
 Integrationstests setzen ihn `false`). `Simulation:Testmodus` gehört zu `SimulationOptions`.
@@ -88,10 +89,12 @@ Integrationstests setzen ihn `false`). `Simulation:Testmodus` gehört zu `Simula
   Ausnahme der Slice-Isolation (darf `MailboxMonitor.Presentation` verwenden).
   **Testmodus** (`Simulation:Testmodus`, Umgebung `E2E`, `appsettings.E2E.json`, Port 5243): ersetzt in
   `AddDevSimulationServices` Zentralruf, SMTP-Übergabe, Gesendet-Ablage, Outlook (`IOutlookVerbindung`),
-  Entwurfsdatei (`IEntwurfDatei`), Word-Drucker und Druckerauskunft durch Attrappen unter
-  `Features/DevSimulation/Domain/Services/`. Sie lassen ihre Spuren im Datenordner unter `Testmodus\`:
-  `protokoll.jsonl` (je Aktion eine Zeile mit `zeit`, `aktion`, `referenz`, `datei`), `Versand\`,
-  `Entwuerfe\` (`.eml`) und `Druck\` (die `.docx`). Der Entwurf geht über den Dateiweg, `EntwurfOeffner`
+  Entwurfsdatei (`IEntwurfDatei`), Word-Drucker, Druckerauskunft, Update-Quelle (9.9.9 im Speicher),
+  Installer-Start und das Herunterfahren danach durch Attrappen unter `Features/DevSimulation/Domain/Services/`. Sie lassen ihre
+  Spuren im Datenordner unter `Testmodus\`: `protokoll.jsonl` (je Aktion eine Zeile mit `zeit`, `aktion`,
+  `referenz`, `datei`), `Versand\`, `Entwuerfe\` (`.eml`), `Druck\` (die `.docx`) und `Aktualisierung\`
+  (der Installer-Aufruf als `.json`; `POST api/Simulation/aktualisierung` stellt die Prüfsumme falsch
+  und setzt den Stand zurück). Der Entwurf geht über den Dateiweg, `EntwurfOeffner`
   und Versandprotokoll bleiben echt. Der Start bricht ab, wenn der Testmodus in Production oder ohne
   umgelenkten Datenordner gesetzt ist; `GET /health` meldet `testmodus`. Ohne Attrappe, aber abgelehnt:
   `POST api/Mailbox/microsoft/signin` antwortet 409 („Im Testmodus ist die Anmeldung bei Microsoft
@@ -171,6 +174,13 @@ Integrationstests setzen ihn `false`). `Simulation:Testmodus` gehört zu `Simula
   `ArbeitsplatzUebergabe`, `api/Backup/uebergabe`), seit #112 auch `SicherungsZeitgeber` (30 Min,
   nur bei Änderung) und `Aufbewahrungsregel` (Alter statt Anzahl); Kette:
   [`docs/DATENFLUESSE.md`](../docs/DATENFLUESSE.md).
+- **Aktualisierung** — Update aus der App (#196, `api/Aktualisierung`, Singleton `AktualisierungsDienst`): fragt
+  GitHubs `releases/latest` über `IHttpClientFactory` (System-Proxy), lädt das Setup unter `%LOCALAPPDATA%` (erst
+  `.part`, nach Größe/SHA256 umbenannt), prüft vor dem Start erneut, schreibt die Merkdatei, startet den Installer
+  still (`InstallerAufruf`; Gegenstück `installer/setup.iss`; Mutex `DienstLaeuftMarke` und echter
+  `InstallerStarter` nur in Production, sonst 409). Endet das Setup binnen 3 s (`InstallerStart.Anlauffrist`):
+  409, `fehler`, Dienst bleibt an; sonst fährt er 5 s danach selbst geordnet herunter (`GeordnetesHerunterfahren`).
+  Im Zustand `fehler` nennt `fehlerArt` die Ursache (`AktualisierungsFehler`); das Frontend deutet nie den Wortlaut.
 
 ## Core/ — querschnittlich, kein Slice
 

@@ -27,6 +27,7 @@ public sealed class TestmodusProtokoll(TestmodusOrdner ordner)
     public const string GesendetAblage = "gesendet-ablage";
     public const string Entwurf = "entwurf";
     public const string Druck = "druck";
+    public const string AktualisierungInstaller = "aktualisierung-installer";
 
     /// <summary>
     /// Ohne HTML-Maskierung: Sonst stünde im Zeitstempel <c>+02:00</c> statt
@@ -72,7 +73,7 @@ public sealed class TestmodusProtokoll(TestmodusOrdner ordner)
 
 /// <summary>Eine Zeile von <c>protokoll.jsonl</c>.</summary>
 /// <param name="Zeit">Lokaler Zeitpunkt im Roundtrip-Format (<c>o</c>), mit Versatz.</param>
-/// <param name="Aktion"><c>zentralruf-anfrage</c>, <c>versand</c>, <c>gesendet-ablage</c>, <c>entwurf</c> oder <c>druck</c>.</param>
+/// <param name="Aktion"><c>zentralruf-anfrage</c>, <c>versand</c>, <c>gesendet-ablage</c>, <c>entwurf</c>, <c>druck</c> oder <c>aktualisierung-installer</c>.</param>
 /// <param name="Referenz">Der Vorgang, wo die Naht ihn kennt; sonst <c>null</c>.</param>
 /// <param name="Datei">Die hinterlassene Datei relativ zum Ordner <c>Testmodus</c>, mit <c>/</c>; sonst <c>null</c>.</param>
 public sealed record TestmodusProtokollZeile(string Zeit, string Aktion, string? Referenz, string? Datei);

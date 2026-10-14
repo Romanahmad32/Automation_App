@@ -11,10 +11,14 @@
 # Das darf sich nicht wiederholen, auch nicht bei einem Agenten, der sich irrt.
 #
 #   deny  Zentralruf-Formular/-Anfrage, Senden/Versenden, Drucken (nach aussen wirkend);
+#         "Jetzt neu starten" im Update-Dialog (startet ausserhalb des Testmodus das
+#         echte Installationsprogramm und schliesst die App);
 #         Tippen ueber coordinates/type und press_key mit Enter/Leertaste (umgeht
 #         jede Pruefung der Beschriftung)
 #   ask   Outlook-Entwurf, Postfach verbinden/testen/anmelden, Sicherung
-#         einspielen, Import, Simulation; call_custom_extension
+#         einspielen, Import, Simulation; "Jetzt aktualisieren" und "Erneut
+#         versuchen" im Update-Dialog (laden rund 85 MB von GitHub);
+#         call_custom_extension
 #   --    alles andere: keine Entscheidung, es gilt die normale Rechtepruefung.
 #         Der Hook schraenkt nur ein und gewaehrt nie selbst etwas.
 #
@@ -74,6 +78,11 @@ $sperrMuster = @(
     @{ Muster = '(?<!ab)senden|sendet|versend|versandt'; Grund = 'sendet eine echte E-Mail'; Ausnahme = 'verfassen|gesendet|\(versendet\)\s*$' }
     # "Als gedruckt vermerken" setzt nur einen Vermerk, es druckt nichts.
     @{ Muster = 'druck|print'; Grund = 'druckt auf einem echten Drucker'; Ausnahme = 'gedruckt' }
+    # Update (#196): Wie Drucken und Senden bedient das der Mensch. Bewusst kein
+    # breites "neu.?starten": Die Kachel im Fuss der Seitenleiste traegt die
+    # Unterzeile "Neu starten" (Tooltip "Update bereit - neu starten") und oeffnet
+    # nur den Dialog. Darum nur der Knopf mit "Jetzt" davor und sein Schluessel.
+    @{ Muster = 'jetzt\s*neu\s*starten|aktualisierung-neu-starten'; Grund = 'startet ausserhalb des Testmodus das echte Installationsprogramm und schliesst die App'; Ausnahme = $null }
 )
 
 $frageMuster = @(
@@ -81,6 +90,9 @@ $frageMuster = @(
     @{ Muster = 'entwurf|outlook'; Grund = 'oeffnet einen Entwurf in Outlook' }
     @{ Muster = 'verbind|verbunden|testen|anmelden|abmelden'; Grund = 'verbindet das Postfach oder testet die Verbindung' }
     @{ Muster = 'wiederherst|einspiel|import'; Grund = 'spielt eine Sicherung bzw. Daten ein und ueberschreibt den Bestand' }
+    # Update (#196). Der Text "Erneut versuchen" steht auch an harmlosen Knoepfen
+    # (Posteingang, Startfehler) -- darum hier nur der Schluessel des Update-Dialogs.
+    @{ Muster = 'jetzt\s*aktualisieren|aktualisierung-jetzt-aktualisieren|aktualisierung-erneut-versuchen'; Grund = 'laedt ausserhalb des Testmodus rund 85 MB von GitHub herunter' }
 )
 
 try {

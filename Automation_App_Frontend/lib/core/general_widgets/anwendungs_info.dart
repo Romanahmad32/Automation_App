@@ -1,4 +1,5 @@
-import 'package:automation_app/core/aktualisierung/aktualisierungs_ergebnis.dart';
+import 'package:automation_app/core/aktualisierung/presentation/cubit/aktualisierungs_ansicht.dart';
+import 'package:automation_app/core/aktualisierung/presentation/widgets/aktualisierungs_stand_zeile.dart';
 import 'package:automation_app/core/backend/app_version.dart';
 import 'package:automation_app/core/di/injection.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,9 +16,10 @@ import 'package:material_ui/material_ui.dart';
 /// findet sie also nur, wer sie aufklappt — in den Einstellungen sucht ein
 /// Windows-Anwender von sich aus.
 class AnwendungsInfo extends StatelessWidget {
-  const AnwendungsInfo({required this.stand, super.key});
+  const AnwendungsInfo({required this.ansicht, super.key});
 
-  final AktualisierungsErgebnis? stand;
+  /// Stand der Aktualisierung; `null` ohne Dienst (Widget-Tests).
+  final AktualisierungsAnsicht? ansicht;
 
   @override
   Widget build(BuildContext context) {
@@ -37,67 +39,8 @@ class AnwendungsInfo extends StatelessWidget {
           style: textTheme.headlineSmall,
         ),
         const SizedBox(height: 20),
-        _stand(context),
+        AktualisierungsStandZeile(ansicht: ansicht),
         ..._baustand(context, version),
-      ],
-    );
-  }
-
-  Widget _stand(BuildContext context) {
-    final aktuell = stand;
-    if (aktuell == null) {
-      return _zeile(
-        context,
-        Icons.hourglass_empty,
-        'Es wird nachgesehen, ob eine neuere Version vorliegt …',
-      );
-    }
-    if (!aktuell.geprueft) {
-      return _zeile(
-        context,
-        Icons.cloud_off,
-        'Es konnte nicht nachgesehen werden, ob eine neuere Version vorliegt. '
-        'Meist fehlt dafür nur die Internetverbindung.',
-      );
-    }
-    final neu = aktuell.neueVersion;
-    if (neu == null) {
-      return _zeile(
-        context,
-        Icons.check_circle,
-        'Sie verwenden die neueste Version.',
-        farbe: Theme.of(context).colorScheme.primary,
-      );
-    }
-    return _zeile(
-      context,
-      Icons.new_releases,
-      'Version ${neu.nummer} ist verfügbar.\n\n'
-      'Laden Sie die Setup-Datei herunter und führen Sie sie aus. Ihre '
-      'Vorgänge, Mandanten, Vorlagen und Einstellungen bleiben dabei erhalten.',
-      farbe: Theme.of(context).colorScheme.primary,
-    );
-  }
-
-  Widget _zeile(
-    BuildContext context,
-    IconData symbol,
-    String text, {
-    Color? farbe,
-  }) {
-    final farbton = farbe ?? Theme.of(context).colorScheme.onSurfaceVariant;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(symbol, size: 20, color: farbton),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: farbton),
-          ),
-        ),
       ],
     );
   }

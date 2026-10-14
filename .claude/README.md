@@ -33,10 +33,12 @@ Wirkung, nicht dem Klang des Befehls.
   Fehlklicks eines Agenten bei E2E-Tests per Marionette (`Automation_App_Frontend/test_driver/`):
   Einmal hat ein Fehlklick die echte Zentralruf-Automation ausgelöst. Der Hook **sperrt** Tipps
   (`tap`, `double_tap`, `long_press`, `secondary_tap`), deren `key`, `identifier`, `text` oder
-  `ancestor_keys` auf das Zentralruf-Formular, Senden, Versenden oder Drucken lauten, dazu die
+  `ancestor_keys` auf das Zentralruf-Formular, Senden, Versenden, Drucken oder „Jetzt neu starten“ im
+  Update-Dialog lauten (startet außerhalb des Testmodus das echte Installationsprogramm, #196), dazu die
   Umgehungswege: Tippen über `coordinates` oder über `type` (außer bei Eingabefeldern) und
   `press_key` mit Enter/Leertaste. Er **fragt nach** bei Outlook-Entwurf, Postfach
-  verbinden/testen, Sicherung einspielen, Import, Simulation und `call_custom_extension`. Die
+  verbinden/testen, Sicherung einspielen, Import, Simulation, „Jetzt aktualisieren“ und „Erneut
+  versuchen“ im Update-Dialog (laden rund 85 MB von GitHub) und `call_custom_extension`. Die
   Umgehungswege fragten bis Oktober 2026 nur nach — ein Subagent hat sie trotz Verbot genommen und
   die Rückfragen liefen durch. Lesen und Scrollen prüft er nicht. Alles andere lässt er
   unentschieden — dann gilt die normale Rechteprüfung; der Hook schränkt nur ein und gewährt nie
@@ -46,7 +48,11 @@ Wirkung, nicht dem Klang des Befehls.
   kann nicht wissen, mit welcher App Marionette verbunden ist, und die Attrappen sind kein Freibrief. Zentralruf,
   Senden und Drucken prüft die integration_test-Suite (#184), nicht der Agent. Die Schlüssel der Oberfläche
   (`feld-…`, `versand-betreff`, `vorgang-auswahl-…`) sind so benannt, dass die Sperre sie nicht trifft; nur
-  `versand-senden`, `vollmacht-drucken` und `zentralruf-formular-ausfuellen` schlagen absichtlich an.
+  `versand-senden`, `vollmacht-drucken`, `zentralruf-formular-ausfuellen` und `aktualisierung-neu-starten`
+  schlagen absichtlich an, `aktualisierung-jetzt-aktualisieren` und `aktualisierung-erneut-versuchen` fragen
+  nach. Den Update-Knopf trifft nur „Jetzt neu starten“, nicht ein breites „neu starten“: Die Kachel im Fuß
+  der Seitenleiste trägt die Unterzeile „Neu starten“ und öffnet nur den Dialog. Ebenso nur der Schlüssel von
+  „Erneut versuchen“ — derselbe Text steht an harmlosen Knöpfen.
 
 Die übrigen Hooks schweigen bei eigener Störung — die ausführliche Begründung steht im Kopf der Datei. Ein
 Wächter, der bei eigenem Fehler die Arbeit anhält, wird abgeschaltet.

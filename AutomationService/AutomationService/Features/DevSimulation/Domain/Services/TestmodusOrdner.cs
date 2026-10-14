@@ -6,7 +6,7 @@ namespace AutomationService.Features.DevSimulation.Domain.Services;
 /// Der Ordner, in dem die Attrappen des E2E-Testmodus (#168) ihre Spuren
 /// hinterlassen: <c>&lt;Datenordner&gt;\Testmodus\</c> mit
 /// <see cref="TestmodusProtokoll.Dateiname"/>, <see cref="Versand"/>,
-/// <see cref="Entwuerfe"/> und <see cref="Druck"/>.
+/// <see cref="Entwuerfe"/>, <see cref="Druck"/> und <see cref="Aktualisierung"/>.
 ///
 /// Die Wurzel kommt von außen und nicht aus <c>AppDataPaths</c>: Tests geben
 /// jeder Klasse ihren eigenen Ordner und laufen so parallel, ohne sich Dateien
@@ -17,6 +17,7 @@ public sealed class TestmodusOrdner
     public const string Versand = "Versand";
     public const string Entwuerfe = "Entwuerfe";
     public const string Druck = "Druck";
+    public const string Aktualisierung = "Aktualisierung";
 
     private readonly TimeProvider _zeit;
 

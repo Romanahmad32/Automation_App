@@ -6,6 +6,15 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 
 ## Umgesetzt
 
+- **Update aus der App (14.10.2026, #196, §7.3)** — Der Dienst (`Features/Aktualisierung/`) prüft
+  `releases/latest` (`Aktualisierung:Quelle`), lädt das Setup nach `%LOCALAPPDATA%\AutomationService\Aktualisierung\`
+  (erst `.part`, Größe und SHA256-`digest` der GitHub-API geprüft) und startet es nach Bestätigung
+  losgelöst und still; vorher schreibt er eine Merkdatei mit der Zielversion, der nächste Start meldet
+  Erfolg oder Misserfolg. Das Frontend zeigt Hinweis und Dialog „App aktualisieren" und schließt sich
+  regulär; der Installer wartet auf den Dienst-Mutex und startet die App mit `/NEUSTART=1` neu. Im
+  Testmodus liefert eine Attrappe 9.9.9 und startet nichts. Kein Authenticode. **Nicht abgenommen:**
+  der Weg aus der App auf einem Testrechner (siehe `docs/RELEASE.md`, „Offen"); 1.2.0 → 1.3.0 läuft
+  noch über die Release-Seite.
 - **Frontend auf `material_ui` (13.10.2026, #185)** — Material kommt aus dem Paket statt aus dem SDK
   (Lint `migrate_design_widgets`); Formularfelder über `ReactiveTextEingabe`, HTML-Links über
   `HtmlLinkStil`; google_fonts 9 ist damit wieder erlaubt.

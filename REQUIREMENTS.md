@@ -1025,9 +1025,11 @@ Konfigurierbar sein müssen mindestens:
 - **[S] Einfache Aktualisierung:** Der Nutzer muss eine neue Version ohne Entwicklerhilfe einspielen
   können. **[M]** Dabei bleiben alle Daten und Einstellungen erhalten — eine Aktualisierung darf
   niemals den Datenbestand zurücksetzen.
-- **[K] Aktualisierung aus der App heraus:** Die App weist auf eine verfügbare neue Version hin und
-  aktualisiert sich nach Bestätigung selbst. Wünschenswert, aber nachrangig — der Weg über ein neues
-  Setup genügt zunächst (Bezugsquelle für Updates siehe 9).
+- **[S] Aktualisierung aus der App heraus:** Die App weist auf eine verfügbare neue Version hin. Nach
+  Bestätigung lädt sie das Setup selbst, prüft es und installiert es; dabei schließt sie sich kurz
+  und startet danach neu. Alle Daten und Einstellungen bleiben erhalten (siehe oben). Wer das
+  Setup lieber selbst laden will, kann es direkt aus der App öffnen; der Weg über ein neues Setup
+  von Hand bleibt gleichwertig (Bezugsquelle für Updates siehe 9).
 
 ## 8. Nicht-Ziele / Abgrenzung
 
@@ -1064,7 +1066,7 @@ Konfigurierbar sein müssen mindestens:
 | Thema | Stand |
 |---|---|
 | Offizielle Zentralruf-API für Anwälte als Alternative zur Browser-Automatisierung | Zu prüfen |
-| Bezugsquelle und Weg für Programm-Updates | Offen — Voraussetzung für die Aktualisierung aus der App heraus (siehe 7.3) |
+| Bezugsquelle und Weg für Programm-Updates | Festgelegt (siehe 7.3): öffentliche GitHub-Releases des Repos, Setup-Datei `Automation_App_Setup_<version>.exe`; geprüft werden Größe und SHA256-`digest` aus der GitHub-API |
 | Ob und wie weitere Anhänge aus der Akte vorausgewählt werden (z. B. immer alle Fotos) | Offen (siehe 4.7) |
 | Weg des Website-Kanals: strukturierte E-Mail an die Kanzlei (nutzt die vorhandene Postfach-Überwachung) oder Abholung von einem Formular-Dienst | Offen (siehe 4.10) |
 | Welche Felder das Website-Formular abfragt und welche davon Pflicht sind | Offen (siehe 4.10) |

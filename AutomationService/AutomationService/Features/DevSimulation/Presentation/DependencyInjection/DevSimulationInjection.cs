@@ -1,4 +1,5 @@
 using AutomationService.Core.Persistence;
+using AutomationService.Features.Aktualisierung.Domain.Services;
 using AutomationService.Features.DevSimulation.Domain.Services;
 using AutomationService.Features.EmailVersand.Domain.Services;
 using AutomationService.Features.PdfConversion.Domain.Services;
@@ -109,5 +110,12 @@ public static class DevSimulationInjection
         services.AddSingleton<IWordDrucker, TestmodusWordDrucker>();
         services.RemoveAll<IDruckerAuskunft>();
         services.AddSingleton<IDruckerAuskunft, TestmodusDruckerAuskunft>();
+        services.RemoveAll<IAktualisierungsQuelle>();
+        services.AddSingleton<IAktualisierungsQuelle, TestmodusAktualisierungsQuelle>();
+        services.RemoveAll<IInstallerStarter>();
+        services.AddSingleton<IInstallerStarter, TestmodusInstallerStarter>();
+        // Kein Setup, das den Dienst ersetzen wollte — und die Suite braucht ihn weiter.
+        services.RemoveAll<IHerunterfahrenNachInstallerStart>();
+        services.AddSingleton<IHerunterfahrenNachInstallerStart, TestmodusHerunterfahren>();
     }
 }
