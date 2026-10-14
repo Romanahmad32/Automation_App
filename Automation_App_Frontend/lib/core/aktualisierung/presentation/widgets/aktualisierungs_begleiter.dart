@@ -97,6 +97,7 @@ class _AktualisierungsBegleiterState extends State<AktualisierungsBegleiter> {
         aktion: RueckmeldungsAktion(
           text: 'Erneut versuchen',
           beiDruck: _erneutVersuchen,
+          schluessel: AktualisierungsDialog.erneutVersuchenSchluessel,
         ),
       );
     }

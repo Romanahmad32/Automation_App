@@ -99,6 +99,7 @@ class _RueckmeldungsKarteState extends State<RueckmeldungsKarte>
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
+                      key: aktion.schluessel,
                       onPressed: () {
                         // Erst schließen, dann handeln: Die Handlung darf
                         // selbst eine neue Meldung zeigen, ohne die eigene zu

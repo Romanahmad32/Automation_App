@@ -40,6 +40,7 @@ Dart-Define `AUTOMATION_BACKEND_PORT`, siehe „E2E-Testmodus".
 | `%LOCALAPPDATA%\Programs\Automation App` | Programm, `backend\`, mitgelieferte Vorlagen | wird ersetzt | wird entfernt |
 | `%APPDATA%\AutomationService` | `automation.db`, `Vorlagen\`, `mailbox_config.json`, MSAL-Token-Cache, `Sicherungen\` | **unberührt** | **unberührt** |
 | gewählter **App-Daten-Ordner** (Einstellungen; kein Standardpfad, meist ein OneDrive-Ordner) | `Vorlagen\`, `Register\`, `Sicherungen\` — je nur, wenn nicht einzeln abweichend eingestellt | **unberührt** | **unberührt** |
+| `%LOCALAPPDATA%\AutomationService\Aktualisierung\` | heruntergeladene Setup-Datei, Merkdatei, Setup-Log | **unberührt** | **unberührt** |
 | `%TEMP%\automation-e2e\<zeit>` (nur E2E-Testmodus, lokal) | eigener Datenordner, Dienst-Build, Protokolle | — | von Hand |
 
 Diese Trennung ist der Kern: alles, was dem Anwalt gehört, liegt außerhalb des
@@ -137,7 +138,7 @@ Direktlink-Block („So installieren Sie das Update") mit der Setup-Datei; `{VER
 CI — das ist der Rückfallweg, wenn das Update aus der App nicht greift (siehe „So läuft ein Update").
 
 **Vor dem Tag: die E2E-Suite laufen lassen** — `scripts/e2e-suite.ps1` auf dem Stand, der getaggt wird
-(rund fünf Minuten, nur lokal; Einzelheiten unter „E2E-Testmodus"). Sie prüft drei Hauptwege
+(rund fünf Minuten, nur lokal; Einzelheiten unter „E2E-Testmodus"). Sie prüft vier Durchläufe
 gegen den Testmodus-Dienst, auch Zentralruf, Versand und Druck, die sonst niemand gefahrlos antippen
 kann. Ist sie rot, wird nicht getaggt. Die Sichtprüfung, das Captcha und den echten Druck ersetzt sie
 nicht.
@@ -218,7 +219,7 @@ Dieselben Skripte laufen im `paket`-Job der CI bei jedem PR. Was dort grün ist,
 ist das, was ausgeliefert wird — und dieser Job prüft eine Fehlerklasse, die
 `dotnet test` und `flutter test` prinzipiell nicht sehen: ob aus dem Quellcode
 ein *startfähiges Produkt* wird. Danach übersetzt er mit ISCC auch
-`installer/setup.iss` (Schritte „Inno Setup bereitstellen" und „Installer übersetzen", wie in
+`installer/setup.iss` (Schritte „Inno Setup bereitstellen" und „Installer bauen", wie in
 `release.yml`), damit ein Fehler im Inno-Skript schon im PR rot wird und nicht erst am Tag.
 
 ### Installer und Update aus der App
@@ -302,8 +303,8 @@ nichts nach außen wirken lässt und nie echte Daten berührt. Er läuft **nie i
   Sicherung, Altbestandsimport und Postfach-Überwachung aus) und `--Datenordner`. Der Start bricht ab,
   wenn `Datenordner` oder der Testmodus in Production gesetzt ist. Das Skript prüft vor dem ersten
   Schreiben, dass `/health` `testmodus=true` meldet und `daten\automation.db` existiert.
-- **Attrappen und Spuren:** Zentralruf, SMTP-Versand, Gesendet-Ablage, Outlook, Entwurf und Druck sind
-  ersetzt; was sie tun, steht unter `daten\Testmodus\` (`protokoll.jsonl`, `Versand\`, `Entwuerfe\`,
+- **Attrappen und Spuren:** Zentralruf, SMTP-Versand, Gesendet-Ablage, Outlook, Entwurf, Druck, Update-Quelle und
+  Installer sind ersetzt; was sie tun, steht unter `daten\Testmodus\` (`protokoll.jsonl`, `Versand\`, `Entwuerfe\`,
   `Druck\`). Der Drucker heißt „Testmodus (kein Druck)". Beim Entwurf zeigt die App den Hinweis „Outlook
   war nicht erreichbar …" — erwartet, der Entwurf liegt als `.eml` im Ordner.
 - **Ausgangsbestand** (`scripts/e2e-testdaten.ps1`): fiktive Kanzlei, zwei Mandanten, eine Formularvorlage,
@@ -333,13 +334,14 @@ nichts nach außen wirken lässt und nie echte Daten berührt. Er läuft **nie i
   24 h zu schlafen; `e2e-suite.ps1` übergibt die eigene PID. Stirbt die Sitzung hart, fährt der Dienst mit herunter.
 
 **E2E-Suite (#184).** `integration_test` aus dem Flutter-SDK. Das Skript führt jede `*_test.dart` unter
-`Automation_App_Frontend/integration_test/` aus (heute drei), jede in einem eigenen App-Prozess:
+`Automation_App_Frontend/integration_test/` aus (heute vier), jede in einem eigenen App-Prozess:
 
 | Durchlauf | Geprüft am Ergebnis |
 |---|---|
 | `hauptweg_versand_test.dart` | Vorgang starten, Zentralruf-Attrappe, Antwort aus `api/Simulation/zentralruf-antwort` von Hand einfügen und übernehmen, Schreiben erzeugen, als Word und PDF ablegen, senden: genau eine Versand-`.eml` an Versicherung und Mandant mit dem PDF |
 | `vollmacht_drucken_test.dart` | Vollmacht aus „Vorgänge" drucken: genau eine Druck-Kopie (`.docx`) und der Vermerk am Vorgang |
 | `mandant_zuordnen_test.dart` | Mandant im Register anlegen und beim Vorgang starten übernehmen: der Vorgang trägt seine Id |
+| `aktualisierung_test.dart` | Update aus der App gegen die Update-Attrappe (`9.9.9`): eine falsche Prüfsumme hält an, die richtige legt den Installer-Aufruf ab (Protokollzeile `aktualisierung-installer`) |
 
 - **Schranke zuerst:** Jeder Durchlauf prüft vor dem ersten Antippen, dass `AUTOMATION_TESTMODUS` gesetzt,
   der Port nicht 5143 und `/health` `testmodus: true` ist; geschrieben wird über REST erst danach.

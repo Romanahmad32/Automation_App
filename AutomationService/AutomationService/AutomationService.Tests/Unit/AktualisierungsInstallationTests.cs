@@ -65,6 +65,34 @@ public sealed class AktualisierungsInstallationTests : IDisposable
     }
 
     /// <summary>
+    /// Zwischen der zweiten Prüfung und dem Start darf die Setup-Datei niemand
+    /// austauschen: <c>InstallerStart</c> hält sie bis dahin gegen Schreiben
+    /// gesperrt. Ein Schreibversuch im Augenblick des Starts muss scheitern.
+    /// </summary>
+    [Fact]
+    public async Task Die_Setup_Datei_ist_beim_Start_des_Installers_gegen_Schreiben_gesperrt()
+    {
+        Exception? versuch = null;
+        _umgebung.Starter.BeimStart = aufruf =>
+        {
+            try
+            {
+                using var _ = new FileStream(aufruf.SetupPfad, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+            }
+            catch (Exception ausnahme)
+            {
+                versuch = ausnahme;
+            }
+        };
+        using var dienst = _umgebung.Dienst();
+        await AktualisierungsUmgebung.LadeBisBereit(dienst);
+
+        dienst.Installiere();
+
+        versuch.Should().BeOfType<IOException>("sonst ließe sich die geprüfte Datei bis zum Start austauschen");
+    }
+
+    /// <summary>
     /// Der Dienst macht dem Setup Platz — auch einer, den die App beim Start
     /// nur übernommen hat und der deshalb keinen Wächter auf sie hat. Angestoßen
     /// wird erst, wenn der Installer läuft; heruntergefahren erst danach

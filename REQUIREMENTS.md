@@ -1066,7 +1066,6 @@ Konfigurierbar sein müssen mindestens:
 | Thema | Stand |
 |---|---|
 | Offizielle Zentralruf-API für Anwälte als Alternative zur Browser-Automatisierung | Zu prüfen |
-| Bezugsquelle und Weg für Programm-Updates | Festgelegt (siehe 7.3): öffentliche GitHub-Releases des Repos, Setup-Datei `Automation_App_Setup_<version>.exe`; geprüft werden Größe und SHA256-`digest` aus der GitHub-API |
 | Ob und wie weitere Anhänge aus der Akte vorausgewählt werden (z. B. immer alle Fotos) | Offen (siehe 4.7) |
 | Weg des Website-Kanals: strukturierte E-Mail an die Kanzlei (nutzt die vorhandene Postfach-Überwachung) oder Abholung von einem Formular-Dienst | Offen (siehe 4.10) |
 | Welche Felder das Website-Formular abfragt und welche davon Pflicht sind | Offen (siehe 4.10) |

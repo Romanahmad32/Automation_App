@@ -9,11 +9,19 @@ import 'package:material_ui/material_ui.dart';
 /// verschwindet, bevor man ihn trifft, schlimmer ist als gar keiner.
 @immutable
 class RueckmeldungsAktion {
-  const RueckmeldungsAktion({required this.text, required this.beiDruck});
+  const RueckmeldungsAktion({
+    required this.text,
+    required this.beiDruck,
+    this.schluessel,
+  });
 
   /// Aufschrift des Knopfes — ein Verb, das die Handlung nennt.
   final String text;
 
   /// Wird beim Druck aufgerufen; die Meldung schließt sich dabei selbst.
   final VoidCallback beiDruck;
+
+  /// Key des Knopfes — damit Tests und die Testmodus-Steuerung (Marionette)
+  /// ihn finden, ohne sich auf den Text zu verlassen.
+  final Key? schluessel;
 }

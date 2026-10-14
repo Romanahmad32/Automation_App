@@ -36,9 +36,13 @@ public sealed class GeordnetesHerunterfahren(
 
     private readonly TimeProvider _zeit = zeit ?? TimeProvider.System;
 
-    public void StoesseAn() => _ = FahreVerzoegertHerunterAsync();
+    public void StoesseAn() => _ = StoesseAnAsync();
 
-    private async Task FahreVerzoegertHerunterAsync()
+    /// <summary>
+    /// Der Anstoß als abwartbarer Task — <see cref="StoesseAn"/> lässt ihn laufen,
+    /// ein Test wartet ihn ab, bevor er prüft.
+    /// </summary>
+    public async Task StoesseAnAsync()
     {
         try
         {

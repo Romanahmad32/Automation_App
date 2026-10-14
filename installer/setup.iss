@@ -142,7 +142,7 @@ begin
 
     if MsgBox('Die Automation App wird gerade schon installiert oder aktualisiert.' + #13#10#13#10 +
       'Bitte warten Sie, bis das fertig ist, und klicken Sie dann auf ' + #$201A + 'Wiederholen' + #$2018 + '.',
-      mbInformation, MB_RETRYCANCEL) = IDCANCEL then
+      mbInformation, MB_RETRYCANCEL or MB_SETFOREGROUND) = IDCANCEL then
     begin
       Log('Es laeuft schon ein Setup; dieses wurde abgebrochen.');
       Result := False;
@@ -221,7 +221,7 @@ begin
     if MsgBox('Die Automation App ist noch ge' + #$00F6 + 'ffnet. Bitte schlie' + #$00DF + 'en Sie die App ' +
       'und klicken Sie dann auf ' + #$201A + 'Wiederholen' + #$2018 + '.' + #13#10#13#10 +
       'Nach dem Schlie' + #$00DF + 'en sichert die App noch kurz Ihre Daten ' + #$2013 +
-      ' das kann bis zu einer Minute dauern.', mbInformation, MB_RETRYCANCEL) = IDCANCEL then
+      ' das kann bis zu einer Minute dauern.', mbInformation, MB_RETRYCANCEL or MB_SETFOREGROUND) = IDCANCEL then
     begin
       Log('Die App ist noch geoeffnet; das Setup wurde abgebrochen.');
       Result := False;

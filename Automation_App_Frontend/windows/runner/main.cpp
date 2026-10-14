@@ -54,8 +54,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   if (!nach_update && SetupLaeuft()) {
     ::MessageBoxW(nullptr,
                   L"Die Automation App wird gerade aktualisiert.\n\n"
-                  L"Sie startet danach von selbst \u2013 bitte warten Sie "
-                  L"einen Moment.",
+                  L"Bitte warten Sie einen Moment \u2013 danach startet sie "
+                  L"von selbst. Ist ein Installationsfenster ge\u00f6ffnet, "
+                  L"f\u00fchren Sie es bitte zuerst zu Ende.",
                   L"Automation App", MB_OK | MB_ICONINFORMATION);
     return EXIT_SUCCESS;
   }

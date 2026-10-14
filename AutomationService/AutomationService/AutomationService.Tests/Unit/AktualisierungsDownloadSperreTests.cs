@@ -56,4 +56,24 @@ public sealed class AktualisierungsDownloadSperreTests : IDisposable
         stand.FehlerArt.Should().Be(AktualisierungsFehlerArt.Sonstig);
         File.Exists(_umgebung.Teildatei).Should().BeFalse();
     }
+
+    /// <summary>
+    /// Hält etwas die Teildatei dauerhaft offen, ist das kein Netzproblem: Die
+    /// Meldung sagt „nicht gespeichert“, nicht „unterbrochen“.
+    /// </summary>
+    [Fact]
+    public async Task Eine_dauerhaft_gesperrte_Teildatei_wird_nicht_als_Netzproblem_gemeldet()
+    {
+        Directory.CreateDirectory(_umgebung.Ordner.Pfad);
+        await using var sperre = new FileStream(
+            _umgebung.Teildatei, FileMode.Create, FileAccess.Write, FileShare.None);
+        using var dienst = _umgebung.Dienst();
+        await dienst.PruefeAsync(CancellationToken.None);
+
+        dienst.StarteDownload();
+
+        var stand = await AktualisierungsUmgebung.WarteAuf(dienst, AktualisierungsZustand.Fehler);
+        stand.Meldung.Should().Be(AktualisierungsMeldungen.NichtGespeichert);
+        stand.FehlerArt.Should().Be(AktualisierungsFehlerArt.Sonstig);
+    }
 }

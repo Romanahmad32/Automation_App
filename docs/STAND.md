@@ -401,9 +401,10 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
   Formularfelder, Listen und Tippflächen tragen Schlüssel bzw. Semantik für Marionette. Skripte:
   `e2e-start.ps1`, `e2e-testdaten.ps1`; Einzelheiten in `docs/RELEASE.md`. Die Marionette-Sperre bleibt hart.
 - **E2E-Suite mit integration_test (#184)** — nur lokal, vor dem Release-Tag per `scripts/e2e-suite.ps1`, nicht
-  in `check.ps1` und nicht in der CI. Drei Durchläufe unter `Automation_App_Frontend/integration_test/`: Hauptweg
+  in `check.ps1` und nicht in der CI. Vier Durchläufe unter `Automation_App_Frontend/integration_test/`: Hauptweg
   bis zum Versand (genau eine `.eml` an Versicherung und Mandant, PDF angehängt), Vollmacht drucken (Druck-Kopie
-  und Vermerk), Mandant anlegen und einem Vorgang zuordnen. Jeder prüft zuerst `/health` auf `testmodus` und
+  und Vermerk), Mandant anlegen und einem Vorgang zuordnen, Update aus der App (falsche Prüfsumme hält an, die richtige
+  legt den Installer-Aufruf ab). Jeder prüft zuerst `/health` auf `testmodus` und
   danach am Ergebnis: `protokoll.jsonl`, die Dateien der Attrappen, der Bestand über REST. Der Dienst endet
   geordnet über einen Anker-Prozess als `--parent-pid`, damit seine Word-Instanz nicht verwaist.
 

@@ -76,9 +76,11 @@ public static class SetupBeschaffung
         // Mehr Bytes als angekündigt: verworfen wie eine falsche Prüfsumme.
         InvalidDataException => AktualisierungsFehler.Zu(SetupPruefErgebnis.PruefsummeFalsch),
         UnauthorizedAccessException => new(AktualisierungsFehlerArt.Sonstig, AktualisierungsMeldungen.NichtGespeichert),
-        // ERROR_HANDLE_DISK_FULL und ERROR_DISK_FULL; jeder andere E/A-Fehler
-        // kommt hier vom Netz (HttpIOException ist eine IOException).
-        IOException io when (io.HResult & 0xFFFF) is 0x27 or 0x70 =>
+        // ERROR_SHARING_VIOLATION und ERROR_LOCK_VIOLATION (die Teildatei hält
+        // dauerhaft ein Virenscanner), ERROR_HANDLE_DISK_FULL und
+        // ERROR_DISK_FULL; jeder andere E/A-Fehler kommt hier vom Netz
+        // (HttpIOException ist eine IOException).
+        IOException io when (io.HResult & 0xFFFF) is 0x20 or 0x21 or 0x27 or 0x70 =>
             new(AktualisierungsFehlerArt.Sonstig, AktualisierungsMeldungen.NichtGespeichert),
         _ => new(AktualisierungsFehlerArt.Verbindung, AktualisierungsMeldungen.Unterbrochen),
     };

@@ -11,7 +11,7 @@ public static class InstallerStart
 {
     /// <summary>
     /// So lange sieht der Dienst nach dem Start hin, ob sich das Setup gleich
-    /// wieder beendet — etwa weil schon ein zweites läuft (<c>SetupMutex</c>,
+    /// wieder beendet — etwa weil schon ein zweites läuft (<c>SetupLaeuftMutex</c> in <c>setup.iss</c>,
     /// im stillen Lauf ohne Rückfrage) oder ein Virenscanner es abbricht. Ein
     /// Setup, das arbeitet, endet nie so schnell: Es wartet in
     /// <c>InitializeSetup</c> auf das Ende des Dienstes, und der fährt erst

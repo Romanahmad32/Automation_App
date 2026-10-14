@@ -176,6 +176,25 @@ void main() {
     );
   });
 
+  testWidgets('der Knopf der Aktion trägt ihren Key', (tester) async {
+    late BuildContext kontext;
+    await tester.pumpWidget(probe((context) => kontext = context));
+
+    Rueckmeldung.zeigeFehler(
+      kontext,
+      'Zentralruf nicht erreichbar.',
+      aktion: RueckmeldungsAktion(
+        text: 'Erneut versuchen',
+        beiDruck: () {},
+        schluessel: const ValueKey('aktion-knopf'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const ValueKey('aktion-knopf')), findsOneWidget);
+  });
+
   testWidgets('die Aktion wird ausgeführt und schließt die Meldung', (
     tester,
   ) async {

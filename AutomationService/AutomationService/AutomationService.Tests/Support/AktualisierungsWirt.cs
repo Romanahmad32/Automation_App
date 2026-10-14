@@ -36,7 +36,7 @@ internal sealed class AktualisierungsWirt(
 
     public static Uri Schritt(string name) => new($"/api/Aktualisierung/{name}", UriKind.Relative);
 
-    /// <summary>Fragt <c>GET api/Aktualisierung</c> ab, bis der Zustand erreicht ist — höchstens 30 s.</summary>
+    /// <summary>Fragt <c>GET api/Aktualisierung</c> ab, bis der Zustand erreicht ist — höchstens 2 min.</summary>
     public static async Task<JsonElement> WarteAuf(HttpClient client, string zustand)
     {
         var frist = DateTime.UtcNow.AddMinutes(2);

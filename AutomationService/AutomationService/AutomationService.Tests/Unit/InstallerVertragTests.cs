@@ -83,6 +83,42 @@ public sealed class InstallerVertragTests
         warten.Should().BeGreaterThan(anlegen, "vor dem Warten auf den Dienst — gerade dann startet ein Doppelklick die App");
     }
 
+    /// <summary>
+    /// Zuerst die Frage nach einem anderen Setup, dann der eigene Mutex, dann
+    /// das Warten auf den Dienst. Vertauscht, fände das Setup seinen eigenen
+    /// Mutex und bräche ab, oder ein zweites liefe unbemerkt mit.
+    /// </summary>
+    [Fact]
+    public void InitializeSetup_fragt_erst_nach_einem_anderen_Setup_legt_dann_den_Mutex_an_und_wartet_zuletzt()
+    {
+        var zeilen = Wirksam;
+        var start = zeilen.IndexOf("function InitializeSetup(): Boolean;");
+        start.Should().BeGreaterThan(-1);
+        var rumpf = zeilen.Skip(start + 1).ToList();
+
+        var fragen = rumpf.FindIndex(zeile => zeile.Contains("KeinAnderesSetup", StringComparison.Ordinal));
+        var anlegen = rumpf.FindIndex(zeile => zeile.Contains("CreateMutex(SetupLaeuftMutex)", StringComparison.Ordinal));
+        var warten = rumpf.FindIndex(zeile => zeile.Contains("WarteAufDienstende", StringComparison.Ordinal));
+
+        fragen.Should().BeGreaterThan(-1, "InitializeSetup ruft KeinAnderesSetup auf");
+        anlegen.Should().BeGreaterThan(fragen, "der eigene Mutex käme sonst vor der Frage und würde selbst gefunden");
+        warten.Should().BeGreaterThan(anlegen, "das Warten kommt erst, wenn das Update als laufend gilt");
+    }
+
+    /// <summary>
+    /// Die App zeigt den Hinweis nur, wenn sie nicht vom Setup selbst gestartet
+    /// wurde und ein Setup läuft. Fiele <c>!nach_update</c> weg, startete sie
+    /// nach dem Update nie wieder; fiele <c>SetupLaeuft()</c> weg, nie mehr.
+    /// </summary>
+    [Fact]
+    public void Die_App_bricht_nur_ab_wenn_sie_nicht_nach_dem_Update_startet_und_ein_Setup_laeuft()
+    {
+        var runner = string.Join(' ', RunnerWirksam);
+
+        Regex.IsMatch(runner, @"if\s*\(\s*!\s*nach_update\s*&&\s*SetupLaeuft\s*\(\s*\)\s*\)")
+            .Should().BeTrue("die Bedingung muss genau so lauten: !nach_update && SetupLaeuft()");
+    }
+
     [Fact]
     public void Die_App_fragt_beim_Start_denselben_Setup_Mutex_ab()
     {

@@ -77,23 +77,25 @@ public sealed class GeordnetesHerunterfahrenTests : IDisposable
     /// herunter, bevor die Verzögerung abläuft. Dann bleibt es beim einen Stop.
     /// </summary>
     [Fact]
-    public void Faehrt_der_Dienst_schon_herunter_bleibt_es_beim_ersten_Stop()
+    public async Task Faehrt_der_Dienst_schon_herunter_bleibt_es_beim_ersten_Stop()
     {
-        Herunterfahren().StoesseAn();
+        var anstoss = Herunterfahren().StoesseAnAsync();
         _lebensdauer.StopApplication();
 
         _uhr.Vorstellen(TimeSpan.FromMinutes(1));
+        await anstoss.WaitAsync(TimeSpan.FromSeconds(10));
 
         _lebensdauer.Stopps.Should().Be(1);
     }
 
     [Fact]
-    public void Ein_Anstoss_waehrend_des_Herunterfahrens_tut_nichts()
+    public async Task Ein_Anstoss_waehrend_des_Herunterfahrens_tut_nichts()
     {
         _lebensdauer.StopApplication();
 
-        Herunterfahren().StoesseAn();
+        var anstoss = Herunterfahren().StoesseAnAsync();
         _uhr.Vorstellen(TimeSpan.FromMinutes(1));
+        await anstoss.WaitAsync(TimeSpan.FromSeconds(10));
 
         _lebensdauer.Stopps.Should().Be(1);
     }

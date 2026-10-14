@@ -25,7 +25,7 @@ Keine Sorge: Das Update ist unkompliziert, und Ihre Daten bleiben vollständig e
    brauchen Sie dafür nicht.
 
 **Dies ist das letzte Mal, dass Sie diese Schritte brauchen.** Ab Version
-{VERSION} weist die App Sie selbst auf neue Versionen hin: Ein Klick auf „Jetzt
+1.3.0 weist die App Sie selbst auf neue Versionen hin: Ein Klick auf „Jetzt
 aktualisieren" genügt, und nach einem kurzen Neustart ist sie auf dem neuesten
 Stand.
 

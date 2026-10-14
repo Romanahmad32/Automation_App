@@ -9,7 +9,7 @@ Release-Build gelangt.
 
 **Abgeschottet (Testmodus, Issue #168):** `./scripts/e2e-start.ps1` aus dem Repo-Stamm. Es baut und startet
 den Dienst in der Umgebung `E2E` (Port 5243, eigener Datenordner unter `%TEMP%\automation-e2e\<zeit>\daten`,
-Attrappen für Zentralruf, Versand, Entwurf und Druck), legt einen Ausgangsbestand an und startet die App mit
+Attrappen für Zentralruf, Versand, Entwurf, Druck, Update-Quelle und Installer), legt einen Ausgangsbestand an und startet die App mit
 diesem Einstieg. Die `ws://`-Adresse für Marionette `connect` steht danach in der Ausgabe und in
 `<Wurzel>\vmservice.txt`. `./scripts/e2e-start.ps1 -Beenden` räumt auf. Alles Weitere in `docs/RELEASE.md`
 (Abschnitt „E2E-Testmodus"). Dieselbe Umgebung nutzt die E2E-Suite unter `integration_test/` (#184), gestartet

@@ -1,6 +1,7 @@
 import 'package:automation_app/core/aktualisierung/domain/entities/aktualisierungs_zustand.dart';
 import 'package:automation_app/core/aktualisierung/domain/entities/letzte_aktualisierung.dart';
 import 'package:automation_app/core/aktualisierung/presentation/widgets/aktualisierungs_begleiter.dart';
+import 'package:automation_app/core/aktualisierung/presentation/widgets/aktualisierungs_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -84,7 +85,9 @@ void main() {
 
     repository.downloads.add(ok(standMit(AktualisierungsZustand.laedt)));
     final vorher = repository.aufrufe.length;
-    await tester.tap(find.text('Erneut versuchen'));
+    await tester.tap(
+      find.byKey(AktualisierungsDialog.erneutVersuchenSchluessel),
+    );
     await zeigeBild(tester);
 
     expect(find.text(text), findsNothing);
