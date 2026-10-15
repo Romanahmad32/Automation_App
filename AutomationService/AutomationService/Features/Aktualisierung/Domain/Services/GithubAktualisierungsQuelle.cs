@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using AutomationService.Core.Lifetime;
 using Microsoft.Extensions.Options;
@@ -41,11 +42,39 @@ public sealed class GithubAktualisierungsQuelle(
 
         using var antwort = await clientFabrik.CreateClient(ClientName)
             .SendAsync(anfrage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (Ratenlimit(antwort) is { } ausgelastet)
+        {
+            throw ausgelastet;
+        }
+
         antwort.EnsureSuccessStatusCode();
 
         return await antwort.Content.ReadFromJsonAsync<ReleaseBeschreibung>(cancellationToken)
             ?? throw new JsonException("Die Release-Auskunft war leer.");
     }
+
+    /// <summary>
+    /// GitHubs Ratenlimit (#199), wie GitHub es kenntlich macht: 429, oder 403 mit
+    /// <c>X-RateLimit-Remaining: 0</c> (das stündliche Kontingent) bzw. <c>Retry-After</c>
+    /// (das kurzfristige). Ein 403 ohne diese Köpfe kann auch ein Kanzlei-Proxy sein,
+    /// der GitHub sperrt — „ausgelastet“ wäre dann falsch; er bleibt eine gescheiterte Anfrage.
+    /// </summary>
+    private static QuelleAusgelastetException? Ratenlimit(HttpResponseMessage antwort)
+    {
+        var rest = Kopf(antwort, "X-RateLimit-Remaining");
+        var erreicht = antwort.StatusCode == HttpStatusCode.TooManyRequests
+            || (antwort.StatusCode == HttpStatusCode.Forbidden && (rest == "0" || antwort.Headers.RetryAfter is not null));
+
+        return erreicht
+            ? new QuelleAusgelastetException(
+                $"GitHub weist die Prüfung wegen seines Ratenlimits ab (HTTP {(int)antwort.StatusCode}, "
+                + $"X-RateLimit-Reset: {Kopf(antwort, "X-RateLimit-Reset") ?? "–"}, Retry-After: {antwort.Headers.RetryAfter?.ToString() ?? "–"}).",
+                antwort.StatusCode)
+            : null;
+    }
+
+    private static string? Kopf(HttpResponseMessage antwort, string name) =>
+        antwort.Headers.TryGetValues(name, out var werte) ? werte.FirstOrDefault() : null;
 
     public async Task<Stream> OeffneAsync(Uri adresse, CancellationToken cancellationToken)
     {

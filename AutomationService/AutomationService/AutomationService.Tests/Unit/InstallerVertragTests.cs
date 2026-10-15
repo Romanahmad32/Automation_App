@@ -22,31 +22,12 @@ namespace AutomationService.Tests.Unit;
 /// </summary>
 public sealed class InstallerVertragTests
 {
-    private static readonly string[] Skript = File.ReadAllLines(
-        Path.Combine(RepoWurzel.Pfad(), "installer", "setup.iss"));
-
-    private static readonly string[] Runner = File.ReadAllLines(
-        Path.Combine(RepoWurzel.Pfad(), "Automation_App_Frontend", "windows", "runner", "main.cpp"));
-
     /// <summary>Die Zeilen ohne Kommentare — was dort steht, wirkt.</summary>
-    private static List<string> Wirksam => OhneKommentare(Skript, ';');
+    private static List<string> Wirksam => InstallerSkript.OhneKommentare(InstallerSkript.Setup, ';');
 
-    private static List<string> RunnerWirksam => OhneKommentare(Runner, '#');
+    private static List<string> RunnerWirksam => InstallerSkript.OhneKommentare(InstallerSkript.Runner, '#');
 
-    private static List<string> OhneKommentare(string[] zeilen, char auchKommentar) => zeilen
-        .Select(zeile => zeile.Trim())
-        .Where(zeile => zeile.Length > 0
-            && !zeile.StartsWith(auchKommentar)
-            && !zeile.StartsWith("//", StringComparison.Ordinal))
-        .ToList();
-
-    /// <summary>Der Name in <c>&lt;konstante&gt; = '…';</c> (Inno) bzw. <c>&lt;konstante&gt;[] = L"…";</c> (C++).</summary>
-    private static string NameIn(IEnumerable<string> zeilen, string muster)
-    {
-        var treffer = zeilen.Select(zeile => Regex.Match(zeile, muster)).Where(t => t.Success).ToList();
-        treffer.Should().ContainSingle($"genau eine Zeile passt auf {muster}");
-        return treffer[0].Groups[1].Value;
-    }
+    private static string NameIn(IEnumerable<string> zeilen, string muster) => InstallerSkript.NameIn(zeilen, muster);
 
     /// <summary>
     /// Gewartet wird in <c>InitializeSetup</c>, vor jedem Fenster und vor dem

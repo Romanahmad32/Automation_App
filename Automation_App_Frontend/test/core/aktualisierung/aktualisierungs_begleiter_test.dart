@@ -76,7 +76,8 @@ void main() {
 
     const text =
         'Die Aktualisierung auf Version 1.4.0 hat nicht geklappt. Ihre Daten '
-        'sind unverändert.';
+        'sind sicher. Klicken Sie auf „Erneut versuchen“, damit die '
+        'Aktualisierung abgeschlossen wird.';
     expect(find.text(text), findsOneWidget);
     expect(repository.quittungen, 1);
 

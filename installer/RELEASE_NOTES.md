@@ -6,28 +6,28 @@ Keine Sorge: Das Update ist unkompliziert, und Ihre Daten bleiben vollständig e
 
 **In drei Schritten:**
 
-1. **Schließen Sie die Automation-App und warten Sie danach einen Moment.**
+1. **Schließen Sie die Automation-App und warten Sie danach etwa eine Minute.**
    Beim Schließen legt die App noch eine Sicherung an. Ihre Vorgänge,
-   Mandanten und Einstellungen bleiben erhalten; sie werden durch das Update
-   nicht verändert.
+   Mandanten und Einstellungen bleiben erhalten.
 2. **Klicken Sie oben auf den großen Link** (⬇️). Ihr Browser lädt die Datei
    herunter. Meldet Microsoft Edge, die Datei werde „nicht häufig
    heruntergeladen", klicken Sie bei der Datei auf die drei Punkte „…" und
-   wählen „Beibehalten" – falls danach noch einmal nachgefragt wird, auf
-   „Trotzdem beibehalten". Bei anderen Browsern wählen Sie sinngemäß „Behalten".
+   wählen „Beibehalten". Im folgenden Fenster klicken Sie auf „Mehr anzeigen"
+   und dann auf „Trotzdem beibehalten". Bei anderen Browsern wählen Sie sinngemäß „Behalten".
 3. **Öffnen Sie die heruntergeladene Datei** (im Browser bei den Downloads, oder
    im Ordner „Downloads"). Zeigt Windows „Der Computer wurde durch Windows
    geschützt", klicken Sie auf „Weitere Informationen" und dann auf „Trotzdem
    ausführen". Diese Meldung kommt, weil die App nicht bei Microsoft registriert
    (signiert) ist – bei diesem Programm ist das unbedenklich. Klicken Sie im
-   Installationsfenster auf „Weiter" bzw. „Installieren" und am Ende auf
-   „Fertigstellen". Die App startet danach von selbst. Administratorrechte
+   Installationsfenster auf „Weiter" bzw. „Installieren". Lassen Sie am Ende
+   das Häkchen bei „Automation App starten" gesetzt und klicken Sie auf
+   „Fertigstellen" – die App startet dann von selbst. Administratorrechte
    brauchen Sie dafür nicht.
 
 **Dies ist das letzte Mal, dass Sie diese Schritte brauchen.** Ab Version
-1.3.0 weist die App Sie selbst auf neue Versionen hin: Ein Klick auf „Jetzt
-aktualisieren" genügt, und nach einem kurzen Neustart ist sie auf dem neuesten
-Stand.
+1.3.0 weist die App Sie selbst auf neue Versionen hin: Zwei Klicks genügen –
+„Jetzt aktualisieren", danach „Jetzt neu starten". Nach etwa einer Minute ist
+die App wieder da, auf dem neuesten Stand.
 
 Wenn etwas nicht klappt, wenden Sie sich an Ihren Ansprechpartner für die App.
 
@@ -35,9 +35,9 @@ Wenn etwas nicht klappt, wenden Sie sich an Ihren Ansprechpartner für die App.
 
 ## Neu in {VERSION}
 
-**Update mit einem Klick**
+**Update direkt aus der App**
 - Die App meldet selbst, wenn eine neue Version bereitsteht. „Jetzt
-  aktualisieren" lädt und installiert sie; danach startet die App kurz neu.
+  aktualisieren" lädt sie; mit „Jetzt neu starten" wird sie installiert, und die App startet danach neu.
   Der Umweg über die Download-Seite entfällt.
 
 **Vollmacht**

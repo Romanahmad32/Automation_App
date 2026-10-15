@@ -143,6 +143,10 @@ gegen den Testmodus-Dienst, auch Zentralruf, Versand und Druck, die sonst nieman
 kann. Ist sie rot, wird nicht getaggt. Die Sichtprüfung, das Captcha und den echten Druck ersetzt sie
 nicht.
 
+**Vor dem Tag v1.3.0 außerdem: den Update-Weg auf einem Test-PC abnehmen** — siehe „Abnahme des
+Update-Wegs". Der Ablauf, mit dem 1.3.0 das Setup der Folgeversion aufruft, ist ab dem Tag
+festgelegt und lässt sich bei den Anwendern nicht mehr nachbessern; er muss vorher echt gelaufen sein.
+
 Der Weg dorthin: Backend-Tests → Frontend-Tests → `scripts/build-package.ps1` →
 `scripts/smoke-test.ps1` → Inno Setup → Artefakt → Release.
 
@@ -222,6 +226,11 @@ ein *startfähiges Produkt* wird. Danach übersetzt er mit ISCC auch
 `installer/setup.iss` (Schritte „Inno Setup bereitstellen" und „Installer bauen", wie in
 `release.yml`), damit ein Fehler im Inno-Skript schon im PR rot wird und nicht erst am Tag.
 
+**Paketinhalt: die VC++-Laufzeit.** `build-package.ps1` legt `msvcp140.dll`, `vcruntime140.dll` und
+`vcruntime140_1.dll` neben `automation_app.exe` (nicht in `backend\`, der Dienst braucht sie nicht). Die
+Flutter-Windows-App importiert sie; auf einem frischen Windows ohne Visual-C++-Redistributable startete sie
+sonst nicht, und der Anwalt müsste etwas nachinstallieren. Fehlt eine DLL, bricht der Bau ab.
+
 ### Installer und Update aus der App
 
 `installer/setup.iss` dient zwei Wegen: dem Doppelklick (Assistent) und dem stillen Lauf, den der
@@ -238,7 +247,8 @@ beendete eine Anwendung auch, wenn sie sich weigert, etwa ein Word, das noch nac
 Schriftsatz fragt. Auch ohne „force" schließt der Restart Manager jede Anwendung, die eine *zu ersetzende*
 Datei hält und mitspielt; Word hält keine: Ersetzt wird nur, was im Paket liegt, und die Arbeitskopien unter
 `backend\Generated` entstehen erst zur Laufzeit. Vier Stellen gehören dazu; `InstallerVertragTests` liest
-`setup.iss` und `Automation_App_Frontend/windows/runner/main.cpp` und hält alle Seiten zusammen:
+`setup.iss` und `Automation_App_Frontend/windows/runner/main.cpp` und hält alle Seiten zusammen
+(`InstallerAbbruchVertragTests` zusätzlich `installer/AppLaeuft.iss` und den Abbruchweg):
 
 - **Mutex des Dienstes.** Der installierte Dienst (nur Production, nie E2E oder Development) hält vom Start bis
   zum Prozessende `AutomationServiceLaeuft` (`DienstLaeuftMarke`). `InitializeSetup` wartet per
@@ -246,11 +256,20 @@ Datei hält und mitspielt; Word hält keine: Ersetzt wird nur, was im Paket lieg
   Herunterfahren schreibt der Dienst bis zu 60 s die Sicherung und gibt seine Word-Instanz frei.
   `InitializeSetup` läuft vor jedem Fenster und vor der Suche nach gesperrten Dateien; in
   `PrepareToInstall`, wo es zuerst stand, fror die Warteschleife das offene Setup-Fenster ein („Keine
-  Rückmeldung"). **Still** läuft nach 90 s alles weiter, und der Restart Manager (`CloseApplications=yes`)
-  übernimmt wie vor #196 — ein Abbruch ließe den Anwalt ohne App und ohne Update. **Interaktiv** (Doppelklick
-  auf die Setup-Datei bei offener App) bittet eine Meldung mit „Wiederholen"/„Abbrechen", die App zu schließen;
-  „Wiederholen" wartet bis zu 90 s ohne Fenster und prüft neu, „Abbrechen" beendet das Setup, ohne etwas zu
-  verändern.
+  Rückmeldung"). **Zusätzlich** sucht `InitializeSetup` — und neu `InitializeUninstall` — per WMI nach
+  Programmen aus dem Installationsordner (`installer/AppLaeuft.iss`, per `#include` im `[Code]` von
+  `setup.iss`). Das deckt 1.2.0 ab, das keinen Mutex hält. Den Ordner liest es aus der Registry (HKCU `…_is1`,
+  `Inno Setup: App Path`), nicht aus `{app}`; eine Kopie der App anderswo, etwa die Entwicklungsfassung, hält
+  das Setup nicht auf. Schlägt WMI fehl, gilt das als „läuft nicht". **Interaktiv** (Doppelklick auf die
+  Setup-Datei oder Deinstallation bei offener App) wartet es auf **beide** Programme, `automation_app.exe` und
+  `AutomationService.exe`; nach 3 s kommt die Meldung „Die Automation App ist noch geöffnet oder wird gerade
+  beendet. Bitte schließen Sie die App und warten Sie etwa eine Minute, bis sie Ihre Daten gesichert hat." mit
+  „Wiederholen"/„Abbrechen"; „Wiederholen" prüft nach 3 s erneut, „Abbrechen" beendet das Setup, ohne etwas zu
+  verändern. **Still** wartet es nur auf den **Dienst** — erst auf den Mutex, dann auf `AutomationService.exe`
+  aus dem Installationsordner, begrenzt — und endet, ohne etwas zu ändern, wenn der Dienst nach der Frist noch
+  läuft: Dann stünde sein Sicherungslauf noch aus, und ersetzte Dateien stellt Inno nicht wieder
+  her. Übrig gebliebene App-Fenster (etwa ein zweites Fenster) schließt wie vor #199 der Restart Manager.
+  `DeinitializeSetup` startet nach einem Abbruch die App wieder (siehe „Neustart").
 - **Mutex des Setups.** `InitializeSetup` legt als Erstes `AutomationAppSetupLaeuft` an (`SetupLaeuftMutex`,
   per `CreateMutex`, gehalten bis zum Ende des Setups). Bewusst **nicht** über `SetupMutex=`: Inno prüft und
   legt den erst *nach* dem Skript-`InitializeSetup` an (issrc, `Setup.MainFunc.pas`), also nach dem Warten —
@@ -266,6 +285,38 @@ Datei hält und mitspielt; Word hält keine: Ersetzt wird nur, was im Paket lieg
   stilles Setup per Skript startet nichts. Er läuft ohne `postinstall`, also mit den Rechten des Setups;
   das ist der Anwender selbst, weil je Benutzer installiert wird (`PrivilegesRequired=lowest`). **Beide**
   Einträge übergeben `--nach-update`: Das Setup lebt beim Start der App noch und hält seinen Mutex.
+  **Scheitert ein stilles Update aus der App** nach `InitializeSetup` (gesperrte Datei, Restart Manager),
+  kommt `ssPostInstall` nie, und kein `[Run]`-Eintrag startet die App.
+  Dann startet `DeinitializeSetup` die bisherige App mit `--nach-update` wieder — nur bei
+  `WizardSilent and NeustartGewuenscht`, nur wenn das Setup begonnen hat, und nur wenn nicht der **Dienst**
+  noch läuft (Mutex oder `AutomationService.exe` aus dem Ordner), damit kein zweiter Dienst neben einem
+  herunterfahrenden entsteht. Ein übrig gebliebenes Fenster verhindert den Neustart nicht: Der Restart Manager
+  hat es vor dem Ersetzen geschlossen, und konnte er es nicht, hängt es an einem Dienst, der fort ist — die neu
+  gestartete App bringt ihren eigenen mit. Der Mutex des Setups muss nicht freigegeben werden: Mit
+  `--nach-update` überspringt `main.cpp` seine Prüfung. Die Merkdatei des Dienstes meldet beim nächsten Start „hat nicht geklappt" (3c,
+  `AktualisierungsBegleiter.fehlerText`): „Die Aktualisierung auf Version X hat nicht geklappt. Ihre Daten sind
+  sicher. Klicken Sie auf „Erneut versuchen", damit die Aktualisierung abgeschlossen wird." (Dialog 2d dagegen
+  sagt „Es wurde nichts verändert.", weil dort das Setup gar nicht erst begann.)
+
+**Kein Abbrechen, feste Reihenfolge.** `AllowCancelDuringInstall=no` sperrt „Abbrechen", sobald Dateien
+ersetzt werden (auch im stillen Fortschrittsfenster); davor, im interaktiven Assistenten, geht es weiter. Inno
+stellt ersetzte Dateien nicht wieder her, und ein verunsicherter Anwender soll nicht mittendrin abbrechen. Dazu
+ersetzt `[Files]` in einer festen Reihenfolge (Inno arbeitet die Einträge der Reihe nach ab; Einzelheiten und
+Dateien im Kommentar in `installer/setup.iss`): zuerst der Dienst ohne Kern, die Daten der Oberfläche und der
+Wurzelordner (`automation_app.exe`, Plugins, VC++-DLLs) — dort trifft die wahrscheinlichste Sperre, die
+`automation_app.exe`, bevor Engine und AOT-Code ersetzt sind —, dann `flutter_windows.dll`, `icudtl.dat` und
+`app.so` direkt hintereinander, dann die .NET-Laufzeit, und der Kern des Dienstes, an dem er seine Version zeigt
+(`AutomationService.dll`), als allerletzte Datei. Bricht das Setup davor ab, liegt noch der alte Dienst auf
+der Platte, meldet die alte Version, und die Merkdatei erkennt das Scheitern — „Erneut versuchen" bleibt
+möglich. **Restrisiko:** ein Abbruch genau innerhalb der letzten Dateien (neue deps.json, alte DLL) oder
+innerhalb der drei Engine-Dateien, wenn die Flutter-Fassung wechselt — dann startet die Oberfläche
+womöglich nicht, bis ein Setup durchläuft.
+
+**Regel für Folgeversionen.** Nach einem Abbruch können neue Oberfläche, neue Dienst-Bibliotheken und der alte
+Dienst-Kern zusammen laufen. Deshalb (a) die Aktualisierungs-Schnittstelle (`/api/Aktualisierung`, das
+Stand-DTO) nur abwärtskompatibel ändern und (b) bei Major-Sprüngen von .NET oder großen Paketen bewusst prüfen,
+ob die alte `AutomationService.dll` mit den neuen Paket-DLLs noch startet. Die Abnahme mit 1.2.98/1.2.99 aus
+demselben Commit kann das nicht zeigen.
 
 Die Merkdatei (letzte-aktualisierung.json) daneben schreibt der Dienst vor dem Start; der nächste Start meldet
 daraus, ob das Update auf die Zielversion geklappt hat. Das Inno-Protokoll bleibt dort liegen.
@@ -282,6 +333,87 @@ mit 409 ab („Installieren geht nur aus der installierten App. …"), ohne Merk
 E2E-Testmodus hat ohnehin seine Attrappe, die als laufend gilt. Und `downloadUrl` („Lieber selbst
 herunterladen") setzt der Dienst nur bei einer `https://github.com/…`-Adresse; das Frontend prüft dasselbe
 noch einmal und öffnet sie ohne Shell (`rundll32 url.dll,FileProtocolHandler`, `BrowserOeffner`).
+
+### Abnahme des Update-Wegs
+
+**Pflichtschritt vor dem Tag v1.3.0** (#199). Die E2E-Suite fährt den Dienst im Testmodus mit einer Attrappe;
+dass das *echte* Setup die *echte* installierte App ersetzt, zeigt nur dieser Lauf. Er gehört auf einen
+**Test-PC mit Word, nie auf einen Rechner mit echten Daten** — `vorbereiten.ps1` bricht dort ab. (S) heißt:
+ein Skript aus `scripts/update-abnahme/` tut es, (M) heißt: der Mensch.
+
+Die Quelle des Dienstes lässt sich ohne Codeänderung über die Umgebungsvariable `Aktualisierung__Quelle`
+umlenken (`AktualisierungOptions`); sie erbt sich App → Dienst → Setup → neu gestartete App. Der Ersatzserver
+liefert dann eine GitHub-förmige `releases/latest`-Antwort samt Setup-Datei.
+
+**Vorbereitung**
+
+0. (S) **Vor der Installation von 1.2.0:** `vorbereiten.ps1 -Einrichten`. Es bricht ab, wenn schon eine App oder
+   eine Datenbank unter `%APPDATA%\AutomationService` da ist (Rechner mit echten Daten), und legt sonst eine
+   Markerdatei an (`%LOCALAPPDATA%\AutomationService-Abnahme\testrechner.txt`). Ohne Marker verweigert
+   `vorbereiten.ps1` später das Umlenken, sobald die Abnahme-Datenbank existiert.
+1. (M) `release.yml` zweimal manuell starten (`gh workflow run release.yml -f version=1.2.98`, dann `1.2.99`),
+   auf **genau dem Commit, der danach v1.3.0 wird**. Der Probelauf veröffentlicht nichts (der Release-Schritt
+   hat `if: startsWith(github.ref, 'refs/tags/v')`); Download mit `gh run download <run-id>`.
+2. (M) Das echte `Automation_App_Setup_1.2.0.exe` (aus dem Release v1.2.0) dazulegen. Ordner auf den Test-PC kopieren.
+
+**Weg A — 1.2.0 → 1.2.98, interaktiv** (prüft das Warten des neuen Setups auf die alte App)
+
+3. (M) 1.2.0 installieren, App starten, in den Einstellungen eine Sicherungsablage setzen, einen Vorgang anlegen.
+4. (M) App schließen und **sofort** das 1.2.98-Setup starten (die alte App sichert noch beim Beenden). Erwartet:
+   Nach etwa 3 s die Meldung „Die Automation App ist noch geöffnet oder wird gerade beendet. …". Nach etwa einer
+   Minute (die App hat gesichert, `pruefen.ps1` zeigt keinen Prozess mehr) „Wiederholen" → das Setup läuft durch,
+   Häkchen „Automation App starten" gesetzt lassen.
+5. (S) `pruefen.ps1`: Version 1.2.98, App startet; Sicherung vor Migration, falls das Schema sich ändert; Vorgang noch da.
+5a. (M) Deinstallation bei offener App (zur Probe, danach 1.2.98 neu installieren): derselbe Hinweis, „Abbrechen"
+    verändert nichts.
+
+**Weg B — 1.2.98 → 1.2.99 aus der App**
+
+6. (S) `ersatzserver.ps1 -Setup <…1.2.99.exe>` in einem eigenen Fenster; (S) `vorbereiten.ps1`; (M) App neu starten.
+   **Prüfpunkt, dass die Umlenkung greift:** Der Dienst loggt beim Start „Aktualisierungen kommen aus einer
+   umgelenkten Quelle: …" — aber nur auf die Konsole; die installierte App hat keine Protokolldatei, der Satz
+   ist also nicht nachlesbar. Beweis ist stattdessen die Konsole des Ersatzservers: Sie zeigt nach dem Start der
+   App eine Zeile `GET /repos/…/releases/latest`. Fehlt sie, sieht die App noch GitHub (App war schon offen?).
+7. (M) „Jetzt aktualisieren", dann „Jetzt neu starten". Die App schließt sich und ist nach rund einer Minute wieder da.
+8. (S) `pruefen.ps1`: Version 1.2.99, Installer-Protokoll `installer-1.2.99.log` vorhanden; (M) Erfolgsmeldung beim
+   Start; nach dem Quittieren fehlt die Merkdatei (letzte-aktualisierung.json).
+
+**Fehlerfälle** (jeweils mit einer neu installierten Vorversion; nach jedem Schritt `pruefen.ps1`)
+
+9. (M) Gesperrte Datei früh: `attrib +R` auf `{Installationsordner}\automation_app.exe`
+   (`%LOCALAPPDATA%\Programs\Automation App`), dann Update starten. Der Abbruch kommt nach der Backend- und der
+   `data\`-Phase (ohne Engine und AOT-Code); der alte Dienst bleibt, Engine und AOT-Code sind noch alt. Erwartet:
+   Die bisherige Oberfläche startet **von selbst wieder** (`DeinitializeSetup`), beim Start erscheint 3c: „Die Aktualisierung auf Version … hat nicht geklappt. Ihre Daten sind
+   sicher. Klicken Sie auf „Erneut versuchen" …". Es läuft kein zweiter Dienst. `attrib -R`, „Erneut
+   versuchen" → das Update läuft durch, `pruefen.ps1` zeigt 1.2.99, die App ist vollständig.
+9b. (M) Gesperrte Datei ganz spät: dasselbe mit `{Installationsordner}\backend\AutomationService.dll`, der
+    letzten Datei. Erwartung wie in 9: 3c und erfolgreiche Wiederholung. Die Reihenfolge der Dateien in
+    `[Files]` (`installer/setup.iss`) sorgt dafür, dass auch hier noch der alte Dienst auf der Platte liegt und
+    das Scheitern erkannt wird.
+10. (M) „Abbrechen" ist während der Installation ausgegraut bzw. ohne Wirkung (`AllowCancelDuringInstall=no`;
+    vorher, im interaktiven Assistenten, geht es noch); Doppelklick aufs
+    App-Symbol während der Installation (Meldung „wird gerade aktualisiert", kein zweiter Dienst); ein zweites
+    Setup parallel: **still** (aus der App) endet es sofort; **per Doppelklick** erscheint „Die Automation App
+    wird gerade schon installiert oder aktualisiert …" mit „Wiederholen"/„Abbrechen".
+11. (S) Server-Fälle, je mit neu gestartetem Ersatzserver (`-Fall …`):
+    - `ohneDigest`: eine klare Meldung; einen Knopf „Lieber selbst herunterladen" gibt es für localhost nicht
+      (`FuerDenBrowser` liefert dort `null`) — das ist richtig so.
+    - `falscherDigest`, `abbruch`: je eine klare Meldung im Dialog. In allen drei Fällen bleibt die App offen,
+      nichts ist installiert, es gibt keine Merkdatei.
+    - `429` und `403limit` (403 mit `X-RateLimit-Remaining: 0`): der Ratenlimit-Text („Der Update-Server ist im
+      Moment ausgelastet …"), die App prüft beim nächsten Start wieder.
+    - `403` ohne Köpfe (wie ein sperrender Proxy): weiter „vermutlich besteht keine Verbindung ins Internet".
+12. (M) Word mit offenem, ungespeichertem Dokument: Das Update ersetzt die App; Word bleibt offen, das Dokument unverändert.
+12a. (M) Zweites App-Fenster: App zweimal starten, dann „Jetzt aktualisieren". Erwartet: Das Update läuft durch,
+    beide Fenster gehen zu (der Restart Manager schließt das übrige), die App startet einmal neu.
+
+**Aufräumen**
+
+13. (S) `vorbereiten.ps1 -Zuruecksetzen`, Ersatzserver mit Strg+C beenden, App neu starten.
+
+Ergebnis (Datum, Fälle, Auffälligkeiten) in `docs/STAND.md` festhalten; erst dann getaggt. Der Test dient der
+Absicherung der Aufruf-Kette (Argumente, Mutexe, Neustart), nicht der der Datei: Das Testsetup ist unsigniert
+und trägt dieselbe `AppId` wie die echte Fassung.
 
 ### E2E-Testmodus (nur lokal)
 
@@ -398,7 +530,10 @@ Update-Modus und keinen Deinstallieren-Schritt davor. Neu ist, dass die App den 
    Entwicklungsumgebung lehnt der Dienst mit 409 ab.
 5. Das Setup legt in `InitializeSetup` als Erstes seinen Mutex `AutomationAppSetupLaeuft` an — ab da
    startet ein Doppelklick auf die App nicht, sondern sagt „wird gerade aktualisiert" — und wartet
-   bis zu 90 s auf den Dienst-Mutex (plus 1,5 s Nachlauf). Dann ersetzt es die Dateien und startet die
+   bis zu 90 s auf den Dienst-Mutex (plus 1,5 s Nachlauf) und danach auf `AutomationService.exe` aus dem
+   Installationsordner; läuft der Dienst dann noch, endet es, ohne etwas zu ändern (die bisherige App startet
+   nur wieder, wenn nicht der Dienst noch läuft, `DeinitializeSetup`). Sonst ersetzt es die Dateien (ein
+   übrig gebliebenes App-Fenster schließt der Restart Manager) und startet die
    App mit `--nach-update` neu (still nur mit `/NEUSTART=1`). Der nächste Start meldet anhand der
    Merkdatei Erfolg oder Misserfolg. Bleibt der Neustart aus, sagt 2e schon vorher, was zu tun ist:
    nach zwei Minuten die App wie gewohnt über das Symbol öffnen.
@@ -655,6 +790,7 @@ Treffer spart nur den erneuten Download, ein Fehltreffer baut wie bisher neu.
   wüchse über Versionen hinweg.
 - **Update aus der App auf einem Testrechner.** Die stille Installation über eine bestehende
   Fassung lief in der E2E-Abnahme für 1.3.0 (über 1.2.0, Fälle A1–A4 ok). Offen ist die Abnahme des
-  Wegs aus der App: Inno-Lauf mit `/SILENT`, Warten auf den Mutex in `InitializeSetup`, Neustart mit
+  Wegs aus der App (Weg B: Inno-Lauf mit `/SILENT`, Warten auf den Mutex in `InitializeSetup`, Neustart mit
   `--nach-update`, die Meldung aus der Merkdatei, dazu ein Doppelklick auf die App während des
-  Updates und ein zweites Setup (Anlauffrist).
+  Updates und ein zweites Setup). Der Ablauf steht unter „Abnahme des Update-Wegs", die Hilfsskripte in
+  `scripts/update-abnahme/`; sie ist Pflicht vor dem Tag v1.3.0 und noch nicht gelaufen.

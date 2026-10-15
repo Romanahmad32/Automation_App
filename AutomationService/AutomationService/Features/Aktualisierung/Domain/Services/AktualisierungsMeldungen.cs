@@ -11,6 +11,20 @@ public static class AktualisierungsMeldungen
         "Ob es eine neue Version gibt, ließ sich gerade nicht prüfen — vermutlich besteht keine "
         + "Verbindung ins Internet. Die App funktioniert unverändert weiter.";
 
+    /// <summary>
+    /// GitHubs Ratenlimit (<see cref="QuelleAusgelastetException"/>, #199): Die Leitung steht,
+    /// nur nimmt GitHub gerade keine Anfrage an. Wieder geprüft wird beim nächsten Start der
+    /// App — das tut sie von selbst, früher nicht; mehr verspricht der Satz deshalb nicht.
+    /// </summary>
+    public const string Ausgelastet =
+        "Ob es eine neue Version gibt, ließ sich gerade nicht prüfen — der Update-Server ist im "
+        + "Moment ausgelastet. Die App sieht beim nächsten Start wieder nach und funktioniert "
+        + "unverändert weiter.";
+
+    /// <summary>Die Meldung zu einer Prüfung, die nicht ging — nie der Text der Ausnahme.</summary>
+    public static string NachGescheiterterPruefung(Exception ausnahme) =>
+        ausnahme is QuelleAusgelastetException ? Ausgelastet : NichtGeprueft;
+
     public const string KeineNeueVersion =
         "Es ist keine neue Version bekannt, die heruntergeladen werden könnte. Bitte zuerst nach "
         + "Aktualisierungen suchen.";
@@ -33,8 +47,12 @@ public static class AktualisierungsMeldungen
         + "herunterladen“ laden und von Hand ausführen.";
 
     /// <summary>
-    /// Das Setup endete binnen der Anlauffrist (<see cref="InstallerStart.Anlauffrist"/>).
-    /// „Es wurde nichts verändert“ steht im Dialog (2d) schon darunter.
+    /// Das Setup endete binnen der Anlauffrist (<see cref="InstallerStart.Anlauffrist"/>), also
+    /// bevor es etwas ersetzt hat. Der Satz erscheint im Dialog 2d (<c>fehlerArt</c> <c>sonstig</c>)
+    /// über „Es wurde nichts verändert.“ — das stimmt hier. Nicht zu verwechseln mit 3c: Scheitert
+    /// ein Update erst später, meldet das der nächste Start aus der Merkdatei, als Rückmeldung
+    /// <c>AktualisierungsBegleiter.fehlerText</c> im Frontend; dort kann schon etwas ersetzt sein,
+    /// und dieser Dienst liefert dafür keinen Satz.
     /// </summary>
     public const string SofortBeendet =
         "Das Installationsprogramm hat sich sofort wieder beendet — vielleicht läuft gerade schon "
