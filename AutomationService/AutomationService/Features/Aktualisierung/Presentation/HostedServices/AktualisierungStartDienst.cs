@@ -1,4 +1,5 @@
 using AutomationService.Features.Aktualisierung.Domain.Services;
+using Microsoft.Extensions.Options;
 
 namespace AutomationService.Features.Aktualisierung.Presentation.HostedServices;
 
@@ -15,6 +16,7 @@ namespace AutomationService.Features.Aktualisierung.Presentation.HostedServices;
 public sealed class AktualisierungStartDienst(
     IAktualisierungsDienst dienst,
     IHostEnvironment umgebung,
+    IOptions<AktualisierungOptions> optionen,
     ILogger<AktualisierungStartDienst> logger) : IHostedLifecycleService
 {
     public Task StartingAsync(CancellationToken cancellationToken)
@@ -29,6 +31,20 @@ public sealed class AktualisierungStartDienst(
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        // Umgelenkt wird nur für die Abnahme mit Testversionen (Aktualisierung__Quelle,
+        // #199). Eine Zeile auf der Konsole des Dienstes — zu lesen, wenn er in einem
+        // Terminal läuft (dotnet run, AutomationService.exe von Hand). Die installierte
+        // App schreibt kein Protokoll in eine Datei; dort landet die Zeile nur unter den
+        // letzten Ausgaben, die BackendLauncher bei einem Startfehler zeigt.
+        var quelle = optionen.Value.Quelle;
+        if (!string.Equals(quelle, AktualisierungOptions.VorgabeQuelle, StringComparison.Ordinal))
+        {
+            logger.LogInformation(
+                "Aktualisierungen kommen aus einer umgelenkten Quelle: {Quelle} (Vorgabe: {Vorgabe}).",
+                quelle,
+                AktualisierungOptions.VorgabeQuelle);
+        }
+
         try
         {
             dienst.Initialisiere();

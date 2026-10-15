@@ -45,11 +45,18 @@ class AktualisierungsStandZeile extends StatelessWidget {
       );
     }
     // Der Dienst antwortete nicht, oder seine Prüfung ging nicht (dann steht
-    // eine Meldung im Stand). Sonst ist die Antwort noch unterwegs.
-    final gescheitert =
-        (aktuell?.dienstStumm ?? false) || stand?.meldung != null;
+    // eine Meldung im Stand). Sonst ist die Antwort noch unterwegs. Die
+    // Meldung des Dienstes nennt die Ursache (keine Verbindung, Server
+    // ausgelastet, #199) — der feste Satz gilt nur, wenn keine da ist.
+    // Schweigt der Dienst, ist eine ältere Meldung überholt.
+    final stumm = aktuell?.dienstStumm ?? false;
+    final meldung = stumm ? null : stand?.meldung;
+    final gescheitert = stumm || meldung != null;
     return gescheitert
-        ? const HinweisZeile(symbol: Icons.cloud_off, text: nichtNachgesehen)
+        ? HinweisZeile(
+            symbol: Icons.cloud_off,
+            text: meldung ?? nichtNachgesehen,
+          )
         : const HinweisZeile(
             symbol: Icons.hourglass_empty,
             text: wirdNachgesehen,

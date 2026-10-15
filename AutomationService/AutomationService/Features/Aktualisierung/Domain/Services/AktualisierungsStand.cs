@@ -3,7 +3,7 @@ namespace AutomationService.Features.Aktualisierung.Domain.Services;
 /// <summary>Wo die Aktualisierung gerade steht (#196).</summary>
 public enum AktualisierungsZustand
 {
-    /// <summary>Noch nicht geprüft, oder die Prüfung ging nicht (kein Netz, Firewall, GitHub weg).</summary>
+    /// <summary>Noch nicht geprüft, oder die Prüfung ging nicht (kein Netz, Firewall, GitHub weg oder an seinem Ratenlimit).</summary>
     Unbekannt,
 
     /// <summary>Geprüft, nichts Neueres.</summary>

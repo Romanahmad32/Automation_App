@@ -6,6 +6,25 @@ Paragraphenangaben verweisen auf [`REQUIREMENTS.md`](../REQUIREMENTS.md) im Wurz
 
 ## Umgesetzt
 
+- **Installation vor 1.3.0 absichern (15.10.2026, #199)** — Abgesichert wird, was das erste Update aus der
+  App festlegt. Installer: `InitializeSetup` und `InitializeUninstall` warten auch auf Programme aus dem
+  Installationsordner, die keinen Mutex halten (1.2.0; `installer/AppLaeuft.iss`), interaktiv mit Hinweis und
+  „Wiederholen"; still wartet es nur auf den Dienst und endet ohne Änderung, wenn der ihn nicht freigibt
+  (übrige App-Fenster schließt der Restart Manager). `DeinitializeSetup` startet nach einem gescheiterten
+  stillen Update die bisherige App wieder, sofern der Dienst nicht mehr läuft. „Abbrechen" ist während der
+  Installation gesperrt (`AllowCancelDuringInstall=no`), und `[Files]` ersetzt in fester Reihenfolge, den Kern
+  des Dienstes (`AutomationService.dll`) zuletzt: Ein Abbruch hinterlässt so den alten Dienst, das Scheitern
+  wird erkannt. Restrisiko: Abbruch innerhalb der letzten Dateien oder zwischen `app.so` und
+  `flutter_windows.dll` bei wechselnder Flutter-Fassung. Dienst:
+  GitHubs Ratenlimit (429, 403 mit `X-RateLimit-Remaining: 0`/`Retry-After`) hat eine eigene Meldung, ein
+  schlichtes 403 bleibt „keine Verbindung"; eine umgelenkte `Aktualisierung:Quelle` steht beim Start im
+  Protokoll. Die Rückmeldung nach gescheitertem Update (3c) lautet „Die Aktualisierung auf Version X hat nicht
+  geklappt. Ihre Daten sind sicher. …", Dialog 2d behält „Es wurde nichts verändert.". Paket: VC++-Laufzeit neben der exe. Release-Notes:
+  Schrittfolge, Edge-Meldung, Häkchen „Automation App starten", zwei Klicks im Update-Dialog. Für die
+  Abnahme gibt es `scripts/update-abnahme/` (Ersatzserver mit den Fällen `ohneDigest`, `falscherDigest`,
+  `abbruch`, `403`, `403limit`, `429`; Vorbereitung; Zustandsanzeige) und in `docs/RELEASE.md` den Abschnitt
+  „Abnahme des Update-Wegs". **Nicht abgenommen:** der Lauf auf dem Test-PC mit den Testbauten 1.2.98/1.2.99
+  steht aus und ist Pflicht vor dem Tag v1.3.0.
 - **Update aus der App (14.10.2026, #196, §7.3)** — Der Dienst (`Features/Aktualisierung/`) prüft
   `releases/latest` (`Aktualisierung:Quelle`), lädt das Setup nach `%LOCALAPPDATA%\AutomationService\Aktualisierung\`
   (erst `.part`, Größe und SHA256-`digest` der GitHub-API geprüft) und startet es nach Bestätigung

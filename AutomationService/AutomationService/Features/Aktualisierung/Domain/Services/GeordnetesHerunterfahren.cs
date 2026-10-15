@@ -10,8 +10,10 @@ namespace AutomationService.Features.Aktualisierung.Domain.Services;
 /// Nötig, weil nicht jeder Dienst einen Wächter hat: Hat das Frontend beim
 /// Start einen schon laufenden Dienst übernommen (<c>BackendLauncher</c>,
 /// <c>bereitsGestartet</c>), bekam der kein <c>--parent-pid</c> und liefe nach
-/// „Jetzt neu starten" weiter. Das Setup wartete dann 90 s vergeblich und
-/// überließe den Rest dem Restart Manager. Hat er einen Wächter, schadet der
+/// „Jetzt neu starten" weiter. Das stille Setup wartete dann vergeblich auf ihn
+/// (Mutex, dann Prozess, je höchstens 90 s) und endete, ohne etwas zu ersetzen
+/// (#199) — und startete die App auch nicht neu, weil der Dienst ja noch läuft
+/// (<c>DeinitializeSetup</c> in <c>setup.iss</c>). Hat er einen Wächter, schadet der
 /// zweite Anstoß nicht: Wer zuerst kommt, fährt herunter, der andere findet
 /// <see cref="IHostApplicationLifetime.ApplicationStopping"/> schon ausgelöst.
 /// </summary>

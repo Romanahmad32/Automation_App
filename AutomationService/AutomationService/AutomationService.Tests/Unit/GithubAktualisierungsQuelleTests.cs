@@ -101,6 +101,51 @@ public sealed class GithubAktualisierungsQuelleTests
         await holen.Should().ThrowAsync<HttpRequestException>();
     }
 
+    /// <summary>
+    /// GitHubs Ratenlimit (#199) ist keine fehlende Verbindung: 429 immer, 403 nur mit
+    /// den Köpfen, an denen GitHub es kenntlich macht.
+    /// </summary>
+    [Theory]
+    [InlineData(HttpStatusCode.TooManyRequests, null, null)]
+    [InlineData(HttpStatusCode.Forbidden, "X-RateLimit-Remaining", "0")]
+    [InlineData(HttpStatusCode.Forbidden, "Retry-After", "60")]
+    public async Task Ein_Ratenlimit_wirft_eine_eigene_Ursache(HttpStatusCode status, string? kopf, string? wert)
+    {
+        var http = new HttpAttrappe().Antworte(Latest, () =>
+        {
+            var antwort = new HttpResponseMessage(status);
+            if (kopf is not null)
+            {
+                antwort.Headers.TryAddWithoutValidation(kopf, wert);
+            }
+
+            return antwort;
+        });
+
+        var holen = () => Quelle(http).HoleNeuesteAsync(CancellationToken.None);
+
+        (await holen.Should().ThrowAsync<QuelleAusgelastetException>()).Which.StatusCode.Should().Be(status);
+    }
+
+    /// <summary>
+    /// Ein 403 ohne diese Köpfe kommt auch von einem Kanzlei-Proxy, der GitHub sperrt —
+    /// „ausgelastet“ wäre dann falsch.
+    /// </summary>
+    [Fact]
+    public async Task Ein_403_ohne_Ratenlimit_Koepfe_bleibt_eine_gescheiterte_Anfrage()
+    {
+        var http = new HttpAttrappe().Antworte(Latest, () =>
+        {
+            var antwort = new HttpResponseMessage(HttpStatusCode.Forbidden);
+            antwort.Headers.TryAddWithoutValidation("X-RateLimit-Remaining", "42");
+            return antwort;
+        });
+
+        var holen = () => Quelle(http).HoleNeuesteAsync(CancellationToken.None);
+
+        (await holen.Should().ThrowAsync<HttpRequestException>()).Which.Should().NotBeOfType<QuelleAusgelastetException>();
+    }
+
     [Fact]
     public async Task Eine_ungueltige_Quelle_wirft_ohne_Anfrage()
     {

@@ -37,7 +37,8 @@ class AktualisierungsBegleiter extends StatefulWidget {
 
   static String fehlerText(LetzteAktualisierung letzte) =>
       'Die Aktualisierung auf Version ${letzte.zielVersion} hat nicht '
-      'geklappt. Ihre Daten sind unverändert.';
+      'geklappt. Ihre Daten sind sicher. Klicken Sie auf „Erneut '
+      'versuchen“, damit die Aktualisierung abgeschlossen wird.';
 
   @override
   State<AktualisierungsBegleiter> createState() =>

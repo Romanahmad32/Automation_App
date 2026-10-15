@@ -102,6 +102,53 @@ if (Test-Path $altesBackend) {
 
 Copy-Item (Join-Path $flutterAusgabe '*') $ziel -Recurse -Force
 
+# --- VC++-Laufzeit (app-lokal) ---------------------------------------------
+# automation_app.exe und die Plugin-DLLs importieren MSVCP140, VCRUNTIME140 und
+# VCRUNTIME140_1 (dumpbin /dependents). Auf einem frischen PC ohne
+# Visual-C++-Redistributable startet die App sonst nicht. Flutter empfiehlt fuer
+# die Auslieferung, genau diese drei DLLs neben die exe zu legen; Microsoft
+# erlaubt die app-lokale Weitergabe (Redist-DLLs der VS-Installation, "Distributable
+# Code"). Der Dienst (backend\) braucht sie nicht: seine Binaerdateien
+# importieren sie nicht. Fehlt eine DLL, bricht der Bau ab -- lieber rot als ein
+# Paket, das beim Anwalt nicht startet.
+function Copy-VcLaufzeit {
+    # Sysnative: ein 32-Bit-PowerShell auf 64-Bit-Windows sieht unter System32
+    # sonst die 32-Bit-DLLs (falsche Architektur fuer die 64-Bit-exe).
+    param([string]$Zielordner, [string]$SystemOrdner = (Join-Path $env:windir $(
+        if ([Environment]::Is64BitOperatingSystem -and -not [Environment]::Is64BitProcess) { 'Sysnative' } else { 'System32' })))
+    $dlls = 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll'
+    $quelle = $null
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+    if (Test-Path $vswhere) {
+        $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if ($vs) {
+            $crt = Get-ChildItem (Join-Path $vs 'VC/Redist/MSVC/*/x64/Microsoft.VC*.CRT') -Directory -ErrorAction SilentlyContinue |
+                Sort-Object { [version]($_.Parent.Parent.Name -replace '[^\d.]', '') } -Descending |
+                Where-Object { $d = $_.FullName; -not ($dlls | Where-Object { -not (Test-Path (Join-Path $d $_)) }) } |
+                Select-Object -First 1
+            if ($crt) { $quelle = $crt.FullName }
+        }
+    }
+    # Aus dem Redist-Ordner kommt der ganze Satz (ein kuenftiges Plugin kann
+    # auch msvcp140_1, concrt140 o. ae. brauchen); aus System32 nur die drei
+    # Pflicht-DLLs, denn dort ist "der ganze Satz" nicht abgrenzbar.
+    $weg = 'Redist-Ordner der Visual-Studio-Installation (alle *.dll)'
+    $kopieren = if ($quelle) { @(Get-ChildItem $quelle -Filter *.dll -File | ForEach-Object Name) } else { $dlls }
+    if (-not $quelle) {
+        $quelle = $SystemOrdner
+        $weg = 'System32-Rueckweg (nur die drei Pflicht-DLLs)'
+    }
+    foreach ($dll in $dlls) {
+        if (-not (Test-Path (Join-Path $quelle $dll))) {
+            throw "VC++-Laufzeit fehlt: $(Join-Path $quelle $dll). Visual Studio mit C++-Werkzeugen installieren (Redist-Ordner) -- sonst startet das Paket auf Rechnern ohne VC++-Redistributable nicht."
+        }
+    }
+    foreach ($dll in $kopieren) { Copy-Item (Join-Path $quelle $dll) $Zielordner -Force }
+    $fassung = (Get-Item (Join-Path $Zielordner 'vcruntime140.dll')).VersionInfo.FileVersion
+    Write-Host "-- VC++-Laufzeit [$weg]: $($kopieren -join ', ') aus $quelle (Version $fassung)" -ForegroundColor DarkGray
+}
+Copy-VcLaufzeit -Zielordner $ziel
+
 # --- Dienst ---------------------------------------------------------------
 # Nach dem Frontend, damit das Kopieren oben den Ordner nicht ueberschreibt.
 Write-Host "-- Lokaler Dienst (self-contained)" -ForegroundColor Cyan
@@ -119,6 +166,9 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish ist fehlgeschlagen." }
 # Rauchtest oder gar beim Anwender zu bemerken.
 $pflicht = @(
     'automation_app.exe',
+    'msvcp140.dll',
+    'vcruntime140.dll',
+    'vcruntime140_1.dll',
     'backend/AutomationService.exe',
     'backend/appsettings.json'
 )

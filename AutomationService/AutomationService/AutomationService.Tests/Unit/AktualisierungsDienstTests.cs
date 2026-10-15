@@ -111,6 +111,24 @@ public sealed class AktualisierungsDienstTests : IDisposable
         stand.FehlerArt.Should().BeNull("eine Ursache trägt nur der Zustand fehler");
     }
 
+    /// <summary>
+    /// GitHubs Ratenlimit (#199) hieß bisher „keine Verbindung ins Internet“ — der
+    /// Anwender suchte dann einen Fehler an seiner Leitung, den es nicht gibt.
+    /// </summary>
+    [Fact]
+    public async Task Ein_Ratenlimit_heisst_ausgelastet_und_nicht_ohne_Internet()
+    {
+        _umgebung.Quelle.Ausnahme = new QuelleAusgelastetException("Ratenlimit", System.Net.HttpStatusCode.Forbidden);
+        using var dienst = _umgebung.Dienst();
+
+        var stand = await dienst.PruefeAsync(CancellationToken.None);
+
+        stand.Zustand.Should().Be(AktualisierungsZustand.Unbekannt);
+        stand.Meldung.Should().Be(AktualisierungsMeldungen.Ausgelastet);
+        stand.Meldung.Should().NotContain("Internet");
+        stand.FehlerArt.Should().BeNull("eine Ursache trägt nur der Zustand fehler");
+    }
+
     [Fact]
     public async Task Eine_verschluckte_Anfrage_endet_am_Zeitlimit_statt_zu_haengen()
     {

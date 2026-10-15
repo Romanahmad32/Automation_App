@@ -101,14 +101,15 @@ public sealed class AktualisierungsDienst : IAktualisierungsDienst, IDisposable
         }
         catch (Exception ausnahme) when (!cancellationToken.IsCancellationRequested)
         {
-            // Ohne Netz, hinter einer Firewall, bei einem Ausfall von GitHub:
-            // erwartbar, also kein Fehler — aber auch keine Entwarnung.
+            // Ohne Netz, hinter einer Firewall, bei einem Ausfall von GitHub oder
+            // an seinem Ratenlimit: erwartbar, also kein Fehler — aber auch keine Entwarnung.
             _logger.LogInformation(ausnahme, "Die Prüfung auf Aktualisierungen ging nicht.");
             lock (_sperre)
             {
                 if (!_lage.LaeuftOderBereit)
                 {
-                    _lage.Setze(AktualisierungsZustand.Unbekannt, null, AktualisierungsMeldungen.NichtGeprueft);
+                    _lage.Setze(
+                        AktualisierungsZustand.Unbekannt, null, AktualisierungsMeldungen.NachGescheiterterPruefung(ausnahme));
                 }
 
                 return _lage.Momentaufnahme();
