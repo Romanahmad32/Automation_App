@@ -173,3 +173,7 @@ committed once and removed in the next commit is still in the repository.
 A `pre-commit` hook runs the same scan locally before a commit is created. It
 needs `gitleaks` (`winget install gitleaks`) or Docker; without either it stays
 silent, so CI remains the binding check. See [docs/RELEASE.md](docs/RELEASE.md).
+
+## License
+
+[MIT](LICENSE)
