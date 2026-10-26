@@ -74,7 +74,7 @@ dependencies:
   # Material kommt aus diesem Paket, nicht mehr aus package:flutter/material.dart
   # (#185). Fremdpakete wie google_fonts 9 liefern ihre Typen schon von hier —
   # mit dem alten Import waeren das zwei verschiedene Typen.
-  material_ui: ^1.6.0
+  material_ui: ^1.8.0
 
 dev_dependencies:
   flutter_test:
