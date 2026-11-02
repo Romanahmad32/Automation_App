@@ -61,7 +61,7 @@ dependencies:
   path_provider: ^2.1.6
   path_provider_windows: ^2.3.0
   google_fonts: ^9.0.0
-  pdfrx: ^2.6.5
+  pdfrx: ^2.11.0
   bloc_concurrency: ^0.3.0
   # Direkt importiert von den reinen Logik-Blocs (z. B. document_bloc.dart), die
   # ohne Flutter auskommen. Kam bisher nur transitiv ueber flutter_bloc herein —
@@ -74,7 +74,7 @@ dependencies:
   # Material kommt aus diesem Paket, nicht mehr aus package:flutter/material.dart
   # (#185). Fremdpakete wie google_fonts 9 liefern ihre Typen schon von hier —
   # mit dem alten Import waeren das zwei verschiedene Typen.
-  material_ui: ^1.6.0
+  material_ui: ^1.9.0
 
 dev_dependencies:
   flutter_test:
